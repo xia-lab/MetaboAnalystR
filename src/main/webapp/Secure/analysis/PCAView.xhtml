@@ -16,21 +16,19 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
         <script type="text/javascript">
-            var light;
-            var textColor;
-            var gridColor;
-            var pcaLoadX = "Loading " + "#{pcaBean.pcaLoadX}";
-            var pcaLoadY = "Loading " + "#{pcaBean.pcaLoadY}";
-            var pointMap;
-            var usr = "#{sessionBean1.getUserDir()}"
-            usr = usr.replace(/\/\//g, '/');
 
-            loadLabel = function (raw) {
-                pointMap = raw
-            }
+            var usr = "#{sessionBean1.getUserDir()}";
+            usr = usr.replace(/\/\//g, '/');
+            var light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+
 
             function extender() {
-                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                var textColor;
+                var gridColor;
+                var pcaLoadX = "Loading " + "#{pcaBean.pcaLoadX}";
+                var pcaLoadY = "Loading " + "#{pcaBean.pcaLoadY}";
+                var pointMap;
+
                 if (light === "light") {
                     textColor = "grey";
                     gridColor = 'lightgrey';
@@ -38,73 +36,78 @@
                     textColor = "white";
                     gridColor = 'rgb(200, 200, 200,0.2)';
                 }
-                $.getJSON(usr + "/pointMap.json", loadLabel);
+                $.getJSON(usr + "/pointMap.json", function (data) {
 
-                var options = {
-                    options: {
-                        scales: {
-                            y: {
-                                title: {
-                                    display: true,
-                                    color: textColor,
-                                    text: pcaLoadY
-                                },
-                                ticks: {
-                                    color: textColor
-                                },
-                                grid: {
-                                    color: gridColor
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    color: textColor,
-                                    text: pcaLoadX
-                                },
-                                ticks: {
-                                    color: textColor
-                                },
-                                grid: {
-                                    color: gridColor
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            zoom: {
-                                zoom: {
-                                    enabled: true,
-                                    drag: {
-                                        enabled: true,
-                                        borderColor: 'rgb(54, 162, 235)',
-                                        borderWidth: 1,
-                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                    pointMap = data;
+
+                    var options = {
+                        options: {
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    title: {
+                                        display: true,
+                                        color: textColor,
+                                        text: "Loading - Y"
                                     },
-                                    mode: 'xy'
+                                    ticks: {
+                                        color: textColor
+                                    },
+                                    grid: {
+                                        color: gridColor
+                                    }
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        color: textColor,
+                                        text: "Loading - X"
+                                    },
+                                    ticks: {
+                                        color: textColor
+                                    },
+                                    grid: {
+                                        color: gridColor
+                                    }
                                 }
                             },
-                            tooltip: {
-                                enabled: true,
-                                callbacks: {
-                                    label: function (tooltipItem, data) {
-                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
-                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
-                                        return id;
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                zoom: {
+                                    zoom: {
+                                        enabled: true,
+                                        drag: {
+                                            enabled: true,
+                                            borderColor: 'rgb(54, 162, 235)',
+                                            borderWidth: 1,
+                                            backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                        },
+                                        mode: 'xy'
+                                    }
+                                },
+                                tooltip: {
+                                    enabled: true,
+                                    callbacks: {
+                                        label: function (tooltipItem, data) {
+                                            var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                            var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                            return id;
+                                        }
                                     }
                                 }
                             }
                         }
+                    };
+                    $.extend(true, this.cfg.config, options);
+                    if (this.chart) {
+                        this.chart.update();
+                    } else {
+                        console.error("Chart.js instance not found on PrimeFaces widget.");
                     }
-                };
-
-                $.extend(true, this.cfg.config, options);
-
-
+                }.bind(this));
             }
-
             function setupTheme() {
                 var button = $("button[id$='toggleTm']");
                 //console.log(button)
@@ -112,7 +115,6 @@
                     //console.log("Clicking button: ", this); // Log the button element to be clicked
                     this.click(); // Trigger the click event
                 });
-
             }
             ;
 
@@ -127,9 +129,17 @@
                 transform: rotate(270deg);
             }
 
-            .custom-chart canvas {
-                width: 720px !important; /* The width you want */
-                height: 670px !important; /* The height you want */
+            #ac\:chart_canvas { /* Note the escaped colon if ac is a component ID */
+                width: 800px !important; /* Your desired width */
+                height: 720px !important; /* Your desired height */
+                display: block; /* Ensure it behaves as a block element */
+            }
+
+            /* If the chart is responsive, you might also need to ensure its parent containers allow it */
+            /* This might be needed if the chart still doesn't grow despite the canvas styling */
+            .ui-chart { /* The main PrimeFaces chart container div */
+                width: 800px !important;
+                height: 720px !important;
             }
         </style>
     </ui:define>
@@ -137,8 +147,6 @@
     <ui:define name="content">
         <h:inputHidden id="mydir" value="#{sessionBean1.getJsonDir('pca_score3d')}" />
         <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('pca_loading3d')}" />
-
-
 
         <h:panelGrid styleClass="my-content-panel">
             <h2>Principal Component Analysis (PCA)</h2>
@@ -164,7 +172,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_pair')}" alt="PCAPairImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:10in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pca_pair')}" alt="PCAPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -180,19 +190,21 @@
                             </h:panelGroup>
                             <p:commandButton value="Update" update=":ac:form2:screePane  :hisTab:cmdPane" actionListener="#{pcaBean.pcaScreeBtn_action()}"/>   
                         </h:panelGrid>
-                        <h:panelGrid id="screePane" style="width: 100%; padding-left: 10%">
-                            <h:outputText value ="The green line on top shows the accumulated variance explained; the blue line underneath shows the 
-                                          variance explained by individual PC"/>
-                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
-                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_scree')}" 
-                                               update=":myGraphPane"
-                                               oncomplete="PF('graphDialog').show()"
-                                               title="Customize the graphics output">
-                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                                </p:commandLink>
-                            </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_scree')}" alt="PCAScreeImage"/>
-                        </h:panelGrid>     
+
+                        <h:outputText value ="The green line on top shows the accumulated variance explained; the blue line underneath shows the 
+                                      variance explained by individual PC"/>
+                        <h:panelGrid id="screePane" style="text-align: right; padding-left: 700px; width: 760px;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_scree')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Customize the graphics output">
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
+                        <img onerror='this.style.display="none"' 
+                             style="width:10in; padding-left: 50px"
+                             src="#{sessionBean1.getCurrentImageURL('pca_scree')}" alt="PCAScreeImage"/>
+
                     </h:form>
                 </p:tab>
                 <p:tab title ="2D Scores Plot">
@@ -257,7 +269,9 @@
                             <h:panelGrid style="text-align: center; width:100%">
                                 <h:outputText escape="false" value="#{pcaBean.stat4PCA}" style="font-weight: bold; font-size: 14px;"/>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_score2d')}" alt="PCAScore2DImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pca_score2d')}" alt="PCAScore2DImage"/>
 
                             <p:dialog widgetVar="detailDialog" dynamic="true" 
                                       header="Pair-wise PERMANOVA"
@@ -337,11 +351,12 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>
-                    <h:panelGrid id="loadPane" style="text-align: center; width:100%" class="card">
-                        <p:chart id="chart" value="#{detailsBean.getModel1('pca')}"  
-                                 style="height:670px; width:95%; margin-top: 50px"
+                    <h:panelGrid id="loadPane" style="text-align: center; width:100%; margin-top: 20px">
+                        <p:chart id="chart" widgetVar="chart" 
+                                 value="#{detailsBean.getModel1('pca')}"  
                                  extender="extender">
-                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                                    update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
                         </p:chart> 
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('pca')}" update="chart" />
@@ -402,7 +417,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_biplot')}" alt="PCABiplotImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pca_biplot')}" alt="PCABiplotImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>

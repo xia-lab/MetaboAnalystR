@@ -57,9 +57,9 @@ public class ApplicationBean1 implements Serializable {
     private String sysCleaningCmd;
     private String baseExpDate = "2000-01-01 00:00:00";
     // 50M
-    private final int MAX_UPLOAD_SIZE = 50000000;
-    private final int MAX_SPEC_SIZE = 214958080;
-    private final int MAX_SPEC_NUM = 200;
+    public static final int MAX_UPLOAD_SIZE = 50000000;
+    public static int MAX_SPEC_SIZE = 214958080;
+    public static int MAX_SPEC_NUM = 200;
 
     private boolean compiled = false;
 
@@ -75,16 +75,14 @@ public class ApplicationBean1 implements Serializable {
     private static final String usr_home = "/users/";
     private String projectsHome = "/data/glassfish/projects/metaboanalyst/";
 
-    public ApplicationBean1() {
-        //initDirectories();
-    }
 
     public String getAppName() {
         return appName;
     }
+
     @PostConstruct
     public void initDirectories() {
-        String domain_url = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getRequestURL().toString();
+        String domain_url = ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRe‌​quest()).getRequestURL().toString();
         //System.out.println("here 1: domain_url====" + domain_url + "==========");
 
         ServletContext context = (ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext();
@@ -506,10 +504,6 @@ public class ApplicationBean1 implements Serializable {
 
     public String getRealPath() {
         return resourcePath;
-    }
-
-    public String getFirebaseInitFile() {
-        return resourcePath + "/firebase/firebase-init.json";
     }
 
     public String getApp_url() {

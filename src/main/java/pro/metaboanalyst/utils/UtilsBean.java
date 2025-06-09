@@ -14,6 +14,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
 import kong.unirest.Unirest;
 import pro.metaboanalyst.models.NameMapBean;
 import pro.metaboanalyst.models.User;
@@ -36,9 +37,12 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UtilsBean implements Serializable {
     @JsonIgnore
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
+    @Inject
+    private ApplicationBean1 ab;
+
     @JsonIgnore
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @Inject
+    private SessionBean1 sb;
     @JsonIgnore
     private static final Logger LOGGER = LogManager.getLogger(UtilsBean.class);
 
@@ -244,7 +248,7 @@ public class UtilsBean implements Serializable {
         }
 
         RConnection RC = sb.getRConnection();
-        String fileName = DataUtils.uploadFile(lipidFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        String fileName = DataUtils.uploadFile(sb, lipidFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
         try {
             String rcmd = "analyze.lipids(\"" + fileName + "\", iso=\"" + isomerOpt + "\")";
             RCenter.recordRCommand(RC, rcmd, true);

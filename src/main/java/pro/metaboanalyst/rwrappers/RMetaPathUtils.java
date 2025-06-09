@@ -10,7 +10,6 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -112,11 +111,12 @@ public class RMetaPathUtils {
         return false;
     }
 
-    public static String checkAllRT(RConnection RC) {
+    public static String checkAllRT(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CheckAllRT()";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMetaPathAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "performMetaPathAnalysis");
 
             return RC.eval(rCommand).asString();
         } catch (Exception rse) {
@@ -206,11 +206,13 @@ public class RMetaPathUtils {
         return 0;
     }
 
-    public static boolean setPeakEnrichMethod(RConnection RC, String algOpt, String version) {
+    public static boolean setPeakEnrichMethod(SessionBean1 sb, String algOpt, String version) {
+
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetPeakEnrichMethod(NA" + ", \"" + algOpt + "\", \"" + version + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMetaPathAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "performMetaPathAnalysis");
 
             //System.out.println(rCommand);
             return RC.eval(rCommand).asInteger() == 1;
@@ -220,16 +222,17 @@ public class RMetaPathUtils {
         return false;
     }
 
-    public static boolean performMetaMummiAnalysis(RConnection RC, String lib, String libVersion, int minMsetNum, int permNum, String metaLevel,
+    public static boolean performMetaMummiAnalysis(SessionBean1 sb, String lib, String libVersion, int minMsetNum, int permNum, String metaLevel,
             String combinelevel, String pvalmethod, String esmethod, String rankmetric, Boolean matchedfeats, double pvalCutoff) {
         try {
+            RConnection RC = sb.getRConnection();
             if (matchedfeats) {
                 String rCommand = "PerformMetaPSEA(NA, \"" + lib + "\", \"" + libVersion + "\", " + minMsetNum + ", "
                         + permNum + ", \"" + metaLevel + "\", \""
                         + combinelevel + "\", \"" + pvalmethod + "\", \""
                         + esmethod + "\", \"" + rankmetric + "\", TRUE, " + pvalCutoff + ");";
                 RCenter.recordRCommand(RC, rCommand);
-                JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMetaPathAnalysis");
+                sb.recordRCommandFunctionInfo(rCommand, "performMetaPathAnalysis");
 
                 return RC.eval(rCommand).asInteger() == 1;
             } else {
@@ -238,7 +241,7 @@ public class RMetaPathUtils {
                         + combinelevel + "\", \"" + pvalmethod + "\", \""
                         + esmethod + "\", \"" + rankmetric + "\", FALSE, " + pvalCutoff + ");";
                 RCenter.recordRCommand(RC, rCommand);
-                JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMetaPathAnalysis");
+                sb.recordRCommandFunctionInfo(rCommand, "performMetaPathAnalysis");
 
                 return RC.eval(rCommand).asInteger() == 1;
             }
@@ -267,7 +270,7 @@ public class RMetaPathUtils {
             sb.addGraphicsCMD("meta_bubble", rCommand);
             sb.addGraphicsMapLink("meta_bubble", "/Secure/metapath/MetaPathResultView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMetaPathAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "performMetaPathAnalysis");
 
             RC.eval(rCommand);
             return true;
@@ -358,10 +361,11 @@ public class RMetaPathUtils {
         return 0;
     }
 
-    public static int[] performPathSum(RConnection RC, double pvalCutoff) {
+    public static int[] performPathSum(SessionBean1 sb, double pvalCutoff) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "GetSigPathNums(" + pvalCutoff + ")";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "prepareMetaPathUpsetView");
+            sb.recordRCommandFunctionInfo(rCommand, "prepareMetaPathUpsetView");
 
             return RC.eval(rCommand).asIntegers();
         } catch (Exception rse) {
@@ -370,11 +374,12 @@ public class RMetaPathUtils {
         return null;
     }
 
-    public static int prepareMetaPathData(RConnection RC, String imgNm) {
+    public static int prepareMetaPathData(SessionBean1 sb, String imgNm) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PrepareMetaPathData(NA" + ", \"" + imgNm + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "prepareMetaPathUpsetView");
+            sb.recordRCommandFunctionInfo(rCommand, "prepareMetaPathUpsetView");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -384,11 +389,12 @@ public class RMetaPathUtils {
 
     }
 
-    public static void setSelectedMetaPathNames(RConnection RC, String[] nmVec) {
+    public static void setSelectedMetaPathNames(SessionBean1 sb, String[] nmVec) {
         try {
+            RConnection RC = sb.getRConnection();
             String nmVecS = String.join("\",\"", nmVec);
             String rCommand = "SelectMultiPathData(NA, c(\"" + nmVecS + "\"))";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "prepareMetaPathUpsetView");
+            sb.recordRCommandFunctionInfo(rCommand, "prepareMetaPathUpsetView");
 
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);

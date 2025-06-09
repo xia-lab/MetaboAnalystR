@@ -4,7 +4,9 @@
  */
 package pro.metaboanalyst.lts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.File;
 import java.util.HashMap;
@@ -13,7 +15,6 @@ import java.util.logging.Logger;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
-import pro.metaboanalyst.utils.DataUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,6 +36,13 @@ import pro.metaboanalyst.controllers.general.ApplicationBean1;
 @ApplicationScoped
 @Named("jobMonitor")
 public class JobMonitor extends Thread {
+
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+    @JsonIgnore
+    @Inject
+    private MailService ms;
 
     public void run() {
         System.out.println("Running into job monitor....");
@@ -143,7 +151,6 @@ public class JobMonitor extends Thread {
     }
 
     private boolean sendResumeEmailTest(String job_status, String jid, String email, String node, String folderName) {
-        MailService ms = (MailService) DataUtils.findBean("mailService");
 
         // Construct the resume job URL
         String resumeUrl = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml"
@@ -186,8 +193,6 @@ public class JobMonitor extends Thread {
 
     private boolean sendReminderEmail(String job_status, String jid, String email) {
 
-        MailService ms = (MailService) DataUtils.findBean("mailService");
-
         String htmlMsg = "<!DOCTYPE html>\n"
                 + "<html>\n"
                 + "<body style=\"font-family: Arial; font-size: 12px;\">\n"
@@ -218,8 +223,6 @@ public class JobMonitor extends Thread {
         HttpClient client = HttpClient.newHttpClient();
 
         if (node.equals("localhost")) {
-            // enforce url for local testing
-            ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
             baseUri = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
         }
 

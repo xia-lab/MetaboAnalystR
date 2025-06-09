@@ -53,12 +53,16 @@ public class RGraphUtils {
                     + xlimValue + ", " + ylimValue + " )";
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("path_view", rCommand);
-            if (nextpage.equals("smpdbpathview")) {
-                sb.addGraphicsMapLink("path_view_smpdbpathview", "/Secure/pathway/SMPDBResultView.xhtml");
-            } else if (nextpage.equals("integview")) {
-                sb.addGraphicsMapLink("path_view_integview", "/Secure/pathinteg/IntegResultView.xhtml");
-            } else {
-                sb.addGraphicsMapLink("path_view_pathview", "/Secure/pathway/PathResultView.xhtml");
+            switch (nextpage) {
+                case "smpdbpathview":
+                    sb.addGraphicsMapLink("path_view_smpdbpathview", "/Secure/pathway/SMPDBResultView.xhtml");
+                    break;
+                case "integview":
+                    sb.addGraphicsMapLink("path_view_integview", "/Secure/pathinteg/IntegResultView.xhtml");
+                    break;
+                default:
+                    sb.addGraphicsMapLink("path_view_pathview", "/Secure/pathway/PathResultView.xhtml");
+                    break;
             }
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -94,6 +98,15 @@ public class RGraphUtils {
             return RC.eval("GetCurrentImg(NA)").asString();
         } catch (Exception rse) {
             LOGGER.error("getCurrentImg", rse);
+            return null;
+        }
+    }
+
+    public static String getCurrentCmpdImgSize(RConnection RC) {
+        try {
+            return RC.eval("GetCurrentCmpdImgSize(NA)").asString();
+        } catch (Exception rse) {
+            LOGGER.error("getCmpdImgSize", rse);
             return null;
         }
     }

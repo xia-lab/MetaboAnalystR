@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.mummichog;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Arrays;
 import jakarta.inject.Named;
@@ -18,7 +19,7 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -29,25 +30,33 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("peakcBean")
 public class PeakCustomBean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
-
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
-
+    @JsonIgnore
     @Inject
     WorkflowBean wb;
 
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
+    @JsonIgnore
+    @Inject
+    private MummiAnalBean mab;
+    
     private DualListModel<String> currItems, adductItems;
 
     public void customButton_action() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_customButton_action(this);
+            jrd.record_customButton_action(this);
             return;
         }
-        MummiAnalBean mb = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
 
         String sourcenames = DataUtils.readTextFile(ab.getInternalData("source_currency.txt"));
         String[] newsnames = sourcenames.split("\n");
@@ -58,24 +67,24 @@ public class PeakCustomBean implements Serializable {
         currItems = new DualListModel(Arrays.asList(newsnames), Arrays.asList(newtnames));
 
         RConnection RC = sb.getRConnection();
-        String mode = REnrichUtils.getMummiMSMode(RC);
+        String mode = REnrichUtils.getMummiMSMode(sb);
         String adductSPath;
         String adductTPath;
 
         switch (mode) {
-            case "positive":
+            case "positive" -> {
                 adductSPath = ab.getInternalData("source_pos_add_list.txt");
                 adductTPath = ab.getInternalData("target_pos_add_list.txt");
-                break;
-            case "negative":
+            }
+            case "negative" -> {
                 adductSPath = ab.getInternalData("source_neg_add_list.txt");
                 adductTPath = ab.getInternalData("target_neg_add_list.txt");
-                break;
-            default:
+            }
+            default -> {
                 // need to deal w. mixed mode
                 adductSPath = ab.getInternalData("source_mixed_add_list.txt");
                 adductTPath = ab.getInternalData("target_mixed_add_list.txt");
-                break;
+            }
         }
 
         String allSAdducts = DataUtils.readTextFile(adductSPath);
@@ -88,28 +97,27 @@ public class PeakCustomBean implements Serializable {
 
         if (sb.getDataType().equals("mass_all") || sb.getDataType().equals("mass_table")) {
 
-            Double cutoff = REnrichUtils.getDefaultPvalCutoff(RC);
+            Double cutoff = REnrichUtils.getDefaultPvalCutoff(sb);
             if (cutoff == -1) {
                 cutoff = 0.001;
             }
-            mb.setPvalCutoff(cutoff);
+            mab.setPvalCutoff(cutoff);
         }
 
         int lvls = REnrichUtils.getPeakDataLevels(RC);
         if (sb.getDataType().equals("mass_table") && lvls > 2) {
-            mb.setDisabledGsea(true);
-            mb.setMultigroups(true);
+            mab.setDisabledGsea(true);
+            mab.setMultigroups(true);
         } else {
-            mb.setDisabledGsea(false);
-            mb.setMultigroups(false);
+            mab.setDisabledGsea(false);
+            mab.setMultigroups(false);
         }
 
         if (lvls > 2) {
             sb.addMessage("warn",
                     "Total of " + lvls + " groups found - ANOVA will be used for selecting significant peaks! Using 'Data Editor' to include <b>2</b> groups is recommended for easy interpretation.");
         }
-        JavaRecord.record_customButton_action(this);
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
+        jrd.record_customButton_action(this);
         wb.getCalledWorkflows().add("Functional Annotation");
     }
 
@@ -245,7 +253,7 @@ public class PeakCustomBean implements Serializable {
             addVec = new String[]{""};
         }
         RConnection RC = sb.getRConnection();
-        String mode = REnrichUtils.getMummiMSMode(RC);
+        String mode = REnrichUtils.getMummiMSMode(sb);
 
         RDataUtils.setAdductData(RC, addVec);
         int res = RDataUtils.performAdductMapping(RC, mode);
@@ -266,7 +274,7 @@ public class PeakCustomBean implements Serializable {
             addVec = new String[]{""};
         }
         RConnection RC = sb.getRConnection();
-        String mode = REnrichUtils.getMummiMSMode(RC);
+        String mode = REnrichUtils.getMummiMSMode(sb);
 
         RDataUtils.setAdductData(RC, addVec);
         int res = RDataUtils.performAdductMapping(RC, mode);

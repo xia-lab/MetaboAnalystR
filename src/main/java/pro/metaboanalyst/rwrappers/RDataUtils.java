@@ -24,7 +24,6 @@ import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rosuda.REngine.REXP;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  * Create a dataSet list object mSet$dataSet$cls : class information
@@ -707,11 +706,12 @@ public class RDataUtils {
     }
 
     //should be in the same directory format specify sample in row or column
-    public static boolean setInstrumentParams(RConnection RC, double instrumentOpt, String msModeOpt, String primaryIon, double rtFrac) {
+    public static boolean setInstrumentParams(SessionBean1 sb, double instrumentOpt, String msModeOpt, String primaryIon, double rtFrac) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "UpdateInstrumentParameters(NA, " + instrumentOpt + ", \"" + msModeOpt + "\", \"" + primaryIon + "\", " + rtFrac + ");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return (RC.eval(rCommand).asInteger() == 1);
         } catch (Exception rse) {
@@ -721,9 +721,10 @@ public class RDataUtils {
     }
 
     //zip data is from stream, not from file
-    public static boolean readZipData(RConnection RC, String inPath, String outPath, String dataType, String homeDir) {
+    public static boolean readZipData(SessionBean1 sb, String inPath, String outPath, String dataType, String homeDir) {
         try {
 
+            RConnection RC = sb.getRConnection();
             //first try System and R approach
             String rCommand = "UnzipUploadedFile(\"" + inPath + "\", \"" + outPath + "\");";
             boolean unzipOK = RC.eval(rCommand).asInteger() == 1;
@@ -740,7 +741,6 @@ public class RDataUtils {
             }
 
             if (!unzipOK) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Failed to unzip your file. Please make sure it is in standard zip format!");
                 return false;
             }
@@ -768,9 +768,10 @@ public class RDataUtils {
     }
 
     //zip example data is from stream, not from file
-    public static boolean readZipExampleData(RConnection RC, String inPath, String outPath, String dataType, String homeDir) {
+    public static boolean readZipExampleData(SessionBean1 sb, String inPath, String outPath, String dataType, String homeDir) {
         try {
 
+            RConnection RC = sb.getRConnection();
             //first try System and R approach
             String rCommand = "UnzipUploadedFile(\"" + inPath + "\", \"" + outPath + "\");";
             boolean unzipOK = RC.eval(rCommand).asInteger() == 1;
@@ -787,7 +788,6 @@ public class RDataUtils {
             }
 
             if (!unzipOK) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Failed to unzip your file. Please make sure it is in standard zip format!");
                 return false;
             }
@@ -1096,23 +1096,33 @@ public class RDataUtils {
         return null;
     }
 
+    public static String printCurrentClsInfo(RConnection RC) {
+        try {
+            return RC.eval("PrintCurrentCls()").asString();
+        } catch (Exception e) {
+            LOGGER.error("PrintCurrentCls", e);
+        }
+        return null;
+    }
+
     //----------------Data normalization-------------------
     //normalize the data
-    public static int normalizeData(RConnection RC, String rowNorm, String transNorm,
+    public static int normalizeData(SessionBean1 sb, String rowNorm, String transNorm,
             String scaleNorm, String refName, boolean includeRatio, int ratioNum) {
         try {
+            RConnection RC = sb.getRConnection();
             String ratioCMD = "ratio=FALSE, ratioNum=20";
             if (includeRatio) {
                 ratioCMD = "ratio=TRUE, ratioNum=" + ratioNum;
             }
-            String rCommand = null;
+            String rCommand;
             if (refName == null) {
                 rCommand = "Normalization(NA" + ", \"" + rowNorm + "\", \"" + transNorm + "\", \"" + scaleNorm + "\", " + ratioCMD + ")";
             } else {
                 rCommand = "Normalization(NA" + ", \"" + rowNorm + "\", \"" + transNorm + "\", \"" + scaleNorm + "\", \"" + refName + "\", " + ratioCMD + ")";
             }
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
+            sb.recordRCommandFunctionInfo(rCommand, "Normalization");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -1121,12 +1131,12 @@ public class RDataUtils {
         }
     }
 
-    public static int setRatioOption(RConnection RC, String opt) {
+    public static int setRatioOption(SessionBean1 sb, String opt) {
         try {
-            String rCommand = null;
-            rCommand = "setRatioOption(NA, \"" + opt + "\")";
+            RConnection RC = sb.getRConnection();
+            String rCommand = "setRatioOption(NA, \"" + opt + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
+            sb.recordRCommandFunctionInfo(rCommand, "Normalization");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -1138,8 +1148,7 @@ public class RDataUtils {
 
     public static int getFeatureNum(RConnection RC) {
         try {
-            String rCommand = null;
-            rCommand = "getFeatureNum(NA)";
+            String rCommand = "getFeatureNum(NA)";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -1174,7 +1183,7 @@ public class RDataUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotNormSummary(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
+            sb.recordRCommandFunctionInfo(rCommand, "Normalization");
 
             sb.addGraphicsCMD("norm", rCommand);
             sb.addGraphicsMapLink("norm", "/Secure/process/NormalizationView.xhtml");
@@ -1183,68 +1192,6 @@ public class RDataUtils {
         } catch (Exception e) {
             LOGGER.error("plotNormSummaryGraph", e);
         }
-    }
-
-
-    public static void plotNormSummaryGraphAI(SessionBean1 sb,
-            String imgName,
-            String format,
-            int dpi,
-            String userRequest) {
-        try {
-            RConnection RC = sb.getRConnection();
-
-            // 1) Get the AI customizer and customize the plot based on user request
-            //RPlotCustomizationAgent aiCustomizer = new RPlotCustomizationAgent();
-            //String customizedFunction = aiCustomizer.customizePlot("PlotNormSummary", userRequest);
-
-            // 2) Write the customized function to a temporary file
-            String tempFile = "PlotNormSummaryAI.R";
-            String rCommand = String.format(
-                "source('%s')", tempFile
-            );
-
-            // 3) Record & dispatch
-            System.out.println("[R CMD] " + rCommand);
-            RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
-            sb.addGraphicsCMD("norm", rCommand);
-            sb.addGraphicsMapLink("norm", "/Secure/process/NormalizationView.xhtml");
-
-            // 4) Execute the plot with the customized function
-            String plotCommand = String.format(
-                "PlotNormSummaryAI(NA, \"%s\", \"%s\", %d, width=NA)",
-                imgName, format, dpi
-            );
-            RC.voidEval(plotCommand);
-
-        } catch (Exception e) {
-            LOGGER.error("plotNormSummaryGraphAI", e);
-        }
-    }
-    /**
-     * Gets relevant data context for AI customization. This includes
-     * information about the data being plotted.
-     */
-    private static String getDataContext(RConnection RC) throws Exception {
-        StringBuilder context = new StringBuilder();
-
-        // Get number of compounds
-        RC.voidEval("numCompounds <- length(rownames(mSet$dataSet$norm))");
-        String numCompounds = RC.eval("numCompounds").asString();
-        context.append("Number of compounds: ").append(numCompounds).append("\n");
-
-        // Get data range
-        RC.voidEval("dataRange <- range(mSet$dataSet$norm, na.rm=TRUE)");
-        String range = RC.eval("paste(dataRange[1], dataRange[2], sep=' to ')").asString();
-        context.append("Data range: ").append(range).append("\n");
-
-        // Get number of samples
-        RC.voidEval("numSamples <- ncol(mSet$dataSet$norm)");
-        String numSamples = RC.eval("numSamples").asString();
-        context.append("Number of samples: ").append(numSamples).append("\n");
-
-        return context.toString();
     }
 
     //plot a boxplot and density for each compound
@@ -1256,7 +1203,7 @@ public class RDataUtils {
             sb.addGraphicsCMD("snorm", rCommand);
             sb.addGraphicsMapLink("snorm", "/Secure/process/NormalizationView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Normalization");
+            sb.recordRCommandFunctionInfo(rCommand, "Normalization");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {
@@ -1265,16 +1212,6 @@ public class RDataUtils {
     }
     //---------------Methods for access Data information-------------
     //get data information
-
-    public static void initPrenormData(RConnection RC) {
-        try {
-            String rCommand = "PreparePrenormData(NA)";
-            RCenter.recordRCommand(RC, rCommand);
-            RC.voidEval(rCommand);
-        } catch (Exception e) {
-            LOGGER.error("initPrenormData", e);
-        }
-    }
 
     public static void setPeakFormat(RConnection RC, String type) {
         try {
@@ -1558,11 +1495,12 @@ public class RDataUtils {
 
     //deselect certain compounds from further consideration
     // maxAllowed -1 all, 1 use empirical control 
-    public static int filterVariable(RConnection RC, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff) {
+    public static int filterVariable(SessionBean1 sb, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "FilterVariable(NA" + ", \"" + doQC + "\", " + rsd + ", \"" + varFilter + "\", " + varCutoff + ", \"" + intFilter + "\", " + intCutoff + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Filtering");
+            sb.recordRCommandFunctionInfo(rCommand, "Filtering");
 
             return (RC.eval(rCommand).asInteger());
         } catch (Exception e) {
@@ -1657,11 +1595,12 @@ public class RDataUtils {
         return 0;
     }
 
-    public static void removeVariableByPercent(RConnection RC, double perc) {
+    public static void removeVariableByPercent(SessionBean1 sb, double perc) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "RemoveMissingPercent(NA" + ", percent=" + perc + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMissingImpute");
+            sb.recordRCommandFunctionInfo(rCommand, "performMissingImpute");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {
@@ -1682,11 +1621,12 @@ public class RDataUtils {
     }
 
     // final sanity check to set up dataSet$proc
-    public static void imputeVariable(RConnection RC, String method) {
+    public static void imputeVariable(SessionBean1 sb, String method) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "ImputeMissingVar(NA" + ", method=\"" + method + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performMissingImpute");
+            sb.recordRCommandFunctionInfo(rCommand, "performMissingImpute");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {
@@ -1860,14 +1800,15 @@ public class RDataUtils {
     }
 
     //assign query list to R, note, direct "<-" only pass reference, not value
-    public static void updateMapData(RConnection RC, String[] qvec) {
+    public static void updateMapData(SessionBean1 sb, String[] qvec) {
         try {
+            RConnection RC = sb.getRConnection();
             String grpCmd = "ssp.cmpds<-" + DataUtils.createStringVector(qvec);
             RCenter.recordRCommand(RC, grpCmd, true);
             String updateCmd = "Update.MapData(NA" + ", ssp.cmpds);";
             RCenter.recordRCommand(RC, updateCmd);
-            JavaRecord.recordRCommandFunctionInfo(RC, grpCmd, "SSP");
-            JavaRecord.recordRCommandFunctionInfo(RC, updateCmd, "SSP");
+            sb.recordRCommandFunctionInfo(grpCmd, "SSP");
+            sb.recordRCommandFunctionInfo(updateCmd, "SSP");
 
             String rcmd = grpCmd + "; " + updateCmd;
             RC.voidEval(rcmd);
@@ -1924,11 +1865,12 @@ public class RDataUtils {
     }
 
     //set current metabolite set library for search
-    public static void setCurrentMsetLib(RConnection RC, String libType, int excludeNum) {
+    public static void setCurrentMsetLib(SessionBean1 sb, String libType, int excludeNum) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetCurrentMsetLib(NA" + ", \"" + libType + "\", " + excludeNum + ");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {
@@ -1948,12 +1890,13 @@ public class RDataUtils {
     }
 
     //use filter or not
-    public static void setMetabolomeFilter(RConnection RC, boolean useFilter) {
+    public static void setMetabolomeFilter(SessionBean1 sb, boolean useFilter) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetMetabolomeFilter(NA" + ", " + (useFilter ? "T" : "F") + ");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "paBn_proceed");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "paBn_proceed");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {
@@ -2013,8 +1956,9 @@ public class RDataUtils {
         return false;
     }
 
-    public static boolean setPathLib(RConnection RC, String path, String libVersion) {
+    public static boolean setPathLib(SessionBean1 sb, String path, String libVersion) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "";
             if (path.startsWith("smpdb")) {
                 path = path.split("-")[1];
@@ -2023,7 +1967,7 @@ public class RDataUtils {
                 rCommand = "SetKEGG.PathLib(NA, \"" + path + "\", \"" + libVersion + "\")";
             }
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "paBn_proceed");
+            sb.recordRCommandFunctionInfo(rCommand, "paBn_proceed");
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception rse) {
             LOGGER.error("setPathLib", rse);
@@ -2189,8 +2133,8 @@ public class RDataUtils {
             String[] msgs = getErrorMsgs(RC);
             msg = msg + "<tr><th> Possible causes of error (last one being the most relevant): </th></tr>";
             if (msgs.length > 0) {
-                for (int i = 0; i < msgs.length; i++) {
-                    msg = msg + "<tr><td align=\"left\">" + msgs[i] + "</td></tr>";
+                for (String msg1 : msgs) {
+                    msg = msg + "<tr><td align=\"left\">" + msg1 + "</td></tr>";
                 }
             } else {
                 msg = msg + "An unknown error occurred, please notify web admin for help.";
@@ -2229,11 +2173,12 @@ public class RDataUtils {
         }
     }
 
-    public static boolean setPeakEnrichMethod(RConnection RC, String algOpt, String version) {
+    public static boolean setPeakEnrichMethod(SessionBean1 sb, String algOpt, String version) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetPeakEnrichMethod(NA" + ", \"" + algOpt + "\", \"" + version + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception rse) {
@@ -2242,11 +2187,12 @@ public class RDataUtils {
         return false;
     }
 
-    public static void setOrganism(RConnection RC, String orgCode) {
+    public static void setOrganism(SessionBean1 sb, String orgCode) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetOrganism(NA" + ", \"" + orgCode + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "paBn_proceed");
+            sb.recordRCommandFunctionInfo(rCommand, "paBn_proceed");
 
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -2268,11 +2214,12 @@ public class RDataUtils {
         return 0;
     }
 
-    public static int prepareUpsetData(RConnection RC, String fileName) {
+    public static int prepareUpsetData(SessionBean1 sb, String fileName) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PrepareUpsetData(NA" + ", \"" + fileName + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Upset Diagram");
+            sb.recordRCommandFunctionInfo(rCommand, "Upset Diagram");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -2433,11 +2380,12 @@ public class RDataUtils {
         }
     }
 
-    public static void saveFilesInclusion(RConnection RC, String files, int number) {
+    public static void saveFilesInclusion(SessionBean1 sb, String files, int number) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "spectraInclusion(\'" + files + "\', " + number + ");";
             //RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "prepareSpecProc");
+            sb.recordRCommandFunctionInfo(rCommand, "prepareSpecProc");
 
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -2580,7 +2528,7 @@ public class RDataUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotMetaCorrHeatmap(NA, \"" + corOpt + "\", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Metadata Heatmap");
+            sb.recordRCommandFunctionInfo(rCommand, "Metadata Heatmap");
 
             sb.addGraphicsCMD("metaCorrHeatmap", rCommand);
             sb.addGraphicsMapLink("metaCorrHeatmap", "/Secure/multifac/MetaDataView.xhtml");
@@ -2598,10 +2546,10 @@ public class RDataUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotMetaHeatmap(NA" + ",  \"" + clustSelOpt + "\", \"" + distOpt + "\", \"" + clustOpt + "\", \"" + colOpt + "\",  " + includeRowNames + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Metadata Heatmap");
+            sb.recordRCommandFunctionInfo(rCommand, "Metadata Heatmap");
 
             String rCommand2 = "PlotStaticMetaHeatmap(NA" + ", \"" + viewOpt + "\", \"" + clustSelOpt + "\", \"" + distOpt + "\", \"" + clustOpt + "\", \"" + colOpt + "\",  " + includeRowNames + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "Metadata Heatmap");
+            sb.recordRCommandFunctionInfo(rCommand2, "Metadata Heatmap");
 
             sb.addGraphicsCMD("metaHeatmap", rCommand2);
             sb.addGraphicsMapLink("metaHeatmap", "/Secure/multifac/MetaDataView.xhtml");
@@ -2649,7 +2597,6 @@ public class RDataUtils {
         } catch (Exception e) {
             LOGGER.error("updateOptiLCMS", e);
         }
-        return;
     }
 
     public static String generateColorArray(RConnection RC, int n, String color, String filenm) {
@@ -3296,6 +3243,4 @@ public class RDataUtils {
         return;
 
     }
-    
-    
 }

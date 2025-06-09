@@ -13,90 +13,87 @@
     <ui:define name="myscript">
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
-
-    </ui:define>
-    <ui:define name="footerout"/>
-    <ui:define name="content">
-        <h:panelGrid styleClass="my-content-panel">
-            <script type="text/javascript">
-                var light;
-                var textColor;
-                var gridColor;
-                function extender() {
-                    light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
-                    console.log(light)
-                    if (light === "light") {
-                        textColor = "grey";
-                        gridColor = "lightgrey";
-                    } else {
-                        textColor = "white";
-                        gridColor = 'rgb(200, 200, 200,0.2)';
-                    }
-                    var pointMap = #{detailsBean.pointMapJson};
-                    var options = {
-                        options: {
-                            scales: {
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: '-log10(p)',
-                                        color: textColor
-                                    },
-                                    ticks: {
-                                        color: textColor
-                                    },
-                                    grid: {
-                                        color: gridColor
-                                    }
+        <script type="text/javascript">
+            var light;
+            var textColor;
+            var gridColor;
+            function extender() {
+                light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
+                if (light === "light") {
+                    textColor = "grey";
+                    gridColor = "lightgrey";
+                } else {
+                    textColor = "white";
+                    gridColor = 'rgb(200, 200, 200,0.2)';
+                }
+                var pointMap = #{detailsBean.pointMapJson};
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(p)',
+                                    color: textColor
                                 },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'log2(FC)',
-                                        color: textColor
-                                    },
-                                    ticks: {
-                                        color: textColor
-                                    },
-                                    grid: {
-                                        color: gridColor
-                                    }
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
                                 }
-                            }, plugins: {
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'log2(FC)',
+                                    color: textColor
+                                },
+                                ticks: {
+                                    color: textColor
+                                },
+                                grid: {
+                                    color: gridColor
+                                }
+                            }
+                        }, plugins: {
+                            zoom: {
                                 zoom: {
-                                    zoom: {
-                                        drag: {
-                                            enabled: true,
-                                            borderColor: 'rgb(54, 162, 235)',
-                                            borderWidth: 1,
-                                            backgroundColor: 'rgba(54, 162, 235, 0.3)'
-                                        },
-                                        pinch: {
-                                            enabled: true
-                                        },
-                                        mode: 'xy'
-                                    }
-                                }, // Adding tooltip configuration
-                                tooltip: {
-                                    enabled: true,
-                                    callbacks: {
-                                        label: function (tooltipItem, data) {
-                                            var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
-                                            var id = pointMap[pointKey]; // Assuming pointMap is accessible here
-                                            return id;
-                                        }
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            }, // Adding tooltip configuration
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
                                     }
                                 }
                             }
                         }
-                    };
-                    $.extend(true, this.cfg.config, options);
-                }
-                function setupTheme() {
-
-                    document.getElementById('toggleTm').click();
-                }
-            </script>
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+            function setupTheme() {
+                document.getElementById('toggleTm').click();
+            }
+        </script>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
             <h2>Volcano Plot</h2> 
             <p>
                 Volcano plot combines results from Fold Change (FC) Analysis and T-tests into one single graph which allows users to intuitively select 
@@ -216,15 +213,15 @@
                         </p>
                     </p:tooltip>
                 </h:panelGrid>
-                <h:panelGrid style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
-                    <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('volcano')}"  
-                                    style="height:630px; min-width:880px; width: 100%"
-                                    extender="extender">
-                        <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                    </p:chart>
-                </h:panelGrid>
+
+                <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('volcano')}"  
+                         style="height:630px; min-width:880px; width: 95%; text-align: center;"
+                         extender="extender">
+                    <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                </p:chart>
+
                 <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('volcano')}" update="chart" />
-                  
+
             </h:panelGrid>      
         </h:panelGrid> 
         <ui:include src="/template/_feature_dialog.xhtml" />

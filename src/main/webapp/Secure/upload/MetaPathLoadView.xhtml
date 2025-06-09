@@ -109,7 +109,7 @@
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Ion Mode:"/>
                         <p:selectOneMenu styleClass="menu"
                                          panelStyleClass="panel"
-                                         value="#{pLoadBean.dataIon}"
+                                         value="#{pLoadBean.selectedData.ionMode}"
                                          style="width:220px">
                             <f:selectItem itemLabel="Positive" itemValue="positive"/>
                             <f:selectItem itemLabel="Negative" itemValue="negative"/>
@@ -134,32 +134,32 @@
                         <p:outputLabel style="font-size:12px; font-weight: bold;"
                                        value="Data File:"
                                        id="regular"
-                                       rendered="#{pLoadBean.dataIon != 'mixed'}"/>
+                                       rendered="#{pLoadBean.selectedData.ionMode ne 'mixed'}"/>
                         <p:fileUpload value="#{pLoadBean.fileReg}"
                                       style="width: 240px; padding-left: 132px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="regular2"
-                                      rendered="#{pLoadBean.dataIon != 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode ne 'mixed'}"/>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold"
                                        value="Positive File:"
                                        id="positive"
-                                       rendered="#{pLoadBean.dataIon == 'mixed'}"/>
+                                       rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
                         <p:fileUpload value="#{pLoadBean.filePos}"
                                       style="width: 240px; padding-left: 106px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="positive2"
-                                      rendered="#{pLoadBean.dataIon == 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold"
                                        value="Negative File:"
                                        id="negative"
-                                       rendered="#{pLoadBean.dataIon == 'mixed'}"/>
+                                       rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
                         <p:fileUpload value="#{pLoadBean.fileNeg}"
                                       style="width: 240px; padding-left: 106px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="negative2"
-                                      rendered="#{pLoadBean.dataIon == 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
 
                     </h:panelGrid>
 
@@ -293,7 +293,7 @@
                 <h:form>
                     <h:panelGrid style="padding: 10px; padding-left: 35px; width:420px; font-size: 13px; line-height: 23px">
                         <p:pickList id="adductPane"
-                                    value="#{pLoadBean.selectedData.adductItems}"
+                                    value="#{pLoadBean.adductItems}"
                                     var ="add" itemValue="#{add}" itemLabel="#{add}">
                             <f:facet name="sourceCaption">Available</f:facet>
                             <f:facet name="targetCaption">Include</f:facet>

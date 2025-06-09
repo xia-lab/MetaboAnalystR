@@ -156,9 +156,9 @@ public class ListUploadBean implements Serializable {
         String[] qVec = DataUtils.getQueryNames(oraList, null);
         RDataUtils.setMapData(sb.getRConnection(), qVec);
         if (featType.equals("lipid")) {
-            SearchUtils.crossReferenceExactLipid(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());
         } else {
-            SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
         }
 
         sb.setDataUploaded();

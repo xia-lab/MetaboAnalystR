@@ -15,7 +15,6 @@ import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.ColumnModel;
 import pro.metaboanalyst.utils.DataUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.enterprise.context.SessionScoped;
@@ -32,7 +31,6 @@ import org.primefaces.model.DefaultStreamedContent;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.models.MetaDataBean;
-import pro.metaboanalyst.models.User;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RDoseUtils;
 import pro.metaboanalyst.workflows.WorkflowBean;
@@ -46,7 +44,10 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DoseResponseBean implements Serializable {
 
-    //private final ApplicationBean ab = (ApplicationBean) DataUtils.findBean("applicationBean");
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+
     @JsonIgnore
     @Inject
     private SessionBean1 sb;    //private final DoseResponseController drCtrl = (DoseResponseController) DataUtils.findBean("drCtrl");
@@ -58,6 +59,10 @@ public class DoseResponseBean implements Serializable {
     @JsonIgnore
     @Inject
     private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private DetailsBean dtb;
 
     private boolean exp2 = true;
     private boolean exp3 = true;
@@ -137,8 +142,8 @@ public class DoseResponseBean implements Serializable {
 
     private boolean contineousDoes = true;
 
-    private String analysisMeta = "";
-    private String primaryType = "";
+    private String analysisMeta;
+    private String primaryType;
     private String referenceGroupFromAnalysisMeta = "NA";
 
     public String getAnalysisMeta() {
@@ -147,11 +152,7 @@ public class DoseResponseBean implements Serializable {
                 List<MetaDataBean> beans = tb.getMetaDataBeans();
                 analysisMeta = beans.get(0).getName();
                 primaryType = RDataUtils.GetPrimaryType(sb.getRConnection(), analysisMeta);
-                if (primaryType.equals("disc")) {
-                    contineousDoes = false;
-                } else {
-                    contineousDoes = true;
-                }
+                contineousDoes = !primaryType.equals("disc");
             }
         } else {
             analysisMeta = "NA";
@@ -630,8 +631,8 @@ public class DoseResponseBean implements Serializable {
 
         int res;
         modelFitPerformed = false;
-        RDoseUtils.prepareDataForDoseResponse(RC);
-        int resPrep = RDoseUtils.prepareSignificantItems(RC, sigLevel, fcLevel, FDR, false, 0.05);
+        RDoseUtils.prepareDataForDoseResponse(sb);
+        int resPrep = RDoseUtils.prepareSignificantItems(sb, sigLevel, fcLevel, FDR, false, 0.05);
         if (resPrep == 0) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error!",
@@ -639,12 +640,12 @@ public class DoseResponseBean implements Serializable {
             return 0;
         }
         //this should run when the microservice is down!
-        res = RDoseUtils.performModelFit(RC, models);
+        res = RDoseUtils.performModelFit(sb, models);
 
         //System.out.println("=========" + res);
         //one more try
         if (res != 1) {
-            res = RDoseUtils.performModelFit(RC, models);
+            res = RDoseUtils.performModelFit(sb, models);
         }
 
         if (res != 1) {
@@ -683,7 +684,7 @@ public class DoseResponseBean implements Serializable {
         modelSelOption = "both";
         signLevel = Double.toString(cutoffval);
 
-        RDoseUtils.performDrcResFilter(sb.getRConnection(), modelSelOption, signLevel, models);
+        RDoseUtils.performDrcResFilter(sb, modelSelOption, signLevel, models);
 
         return 1;
     }
@@ -748,7 +749,7 @@ public class DoseResponseBean implements Serializable {
 
         int res;
         modelFitPerformed = false;
-        RDoseUtils.prepareDataForDoseResponse(RC);
+        RDoseUtils.prepareDataForDoseResponse(sb);
 
         res = RDoseUtils.performContModelFit(RC, models);
         if (res != 1) {
@@ -794,7 +795,7 @@ public class DoseResponseBean implements Serializable {
         //System.out.println("selfeature1");
 
         this.selectedFeature = selectedData;
-        currentFeatureImg = plotSelectedFeature(72, "png");
+        currentFeatureImg = plotSelectedFeature(150, "png");
         //System.out.println("==========" +currentFeatureImg);
     }
 
@@ -839,7 +840,6 @@ public class DoseResponseBean implements Serializable {
     }
 
     public String getCurrentFeatureImgPath() {
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
         String imgNm = currentFeatureImg;
         if (imgNm == null) {
             return ab.getRootContext() + "/resources/images/background.png";
@@ -903,7 +903,7 @@ public class DoseResponseBean implements Serializable {
                 resBeans.add(rb);
                 if (i < 10) {
                     selectedFeature = rb;
-                    recordPlotSelectedFeature(72, "png");
+                    recordPlotSelectedFeature(150, "png");
                 }
 
             }
@@ -935,24 +935,22 @@ public class DoseResponseBean implements Serializable {
     }
 
     public void prepareBMDRes() {
-        int res = RDoseUtils.performBMDAnal(sb.getRConnection(), bmdOption, numsds, getCtrlMode());
+        int res = RDoseUtils.performBMDAnal(sb, bmdOption, numsds, getCtrlMode());
 
         switch (res) {
-            case 1: {
+            case 1 -> {
                 String[] sigRes = RDoseUtils.getDRRes(sb.getRConnection());
                 setCurvNum(Integer.parseInt(sigRes[0]));
                 setBmdNum(Integer.parseInt(sigRes[1]));
                 bmdAnal = true;
-                RDoseUtils.plotDRModelBar(sb, sb.getRConnection(), sb.getNewImage("dr_barplot"), 72, "png");
-                RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 72, "png", getUnits(), getTransDose());
+                RDoseUtils.plotDRModelBar(sb, sb.getRConnection(), sb.getNewImage("dr_barplot"), 150, "png");
+                RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 150, "png", getUnits(), getTransDose());
                 populateDoseResBeans();
-                break;
             }
-            case 2:
+            case 2 ->
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO, "No Results", "No BMDs passed the quality filters."));
-                break;
-            case 3: {
+            case 3 -> {
                 String[] sigRes = RDoseUtils.getDRRes(sb.getRConnection());
                 setCurvNum(Integer.parseInt(sigRes[0]));
                 setBmdNum(Integer.parseInt(sigRes[1]));
@@ -960,12 +958,10 @@ public class DoseResponseBean implements Serializable {
                 populateDoseResBeans();
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO, "Few Results", "Only one BMD passed the quality filters so plots could not be made."));
-                break;
             }
-            default:
+            default ->
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error While Curve Fitting", "Please contact us via OmicsForum."));
-                break;
         }
     }
 
@@ -973,21 +969,19 @@ public class DoseResponseBean implements Serializable {
         int res = RDoseUtils.performContBMDAnal(sb.getRConnection(), bmdOption, numsds, getCtrlMode());
 
         switch (res) {
-            case 1: {
+            case 1 -> {
                 String[] sigRes = RDoseUtils.getDRRes(sb.getRConnection());
                 setCurvNum(Integer.parseInt(sigRes[0]));
                 setBmdNum(Integer.parseInt(sigRes[1]));
                 bmdAnal = true;
-                RDoseUtils.plotDRModelBar(sb, sb.getRConnection(), sb.getNewImage("dr_barplot"), 72, "png");
-                RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 72, "png", getUnits(), getTransDose());
+                RDoseUtils.plotDRModelBar(sb, sb.getRConnection(), sb.getNewImage("dr_barplot"), 150, "png");
+                RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 150, "png", getUnits(), getTransDose());
                 populateDoseResBeans();
-                break;
             }
-            case 2:
+            case 2 ->
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO, "No Results", "No BMDs passed the quality filters."));
-                break;
-            case 3: {
+            case 3 -> {
                 String[] sigRes = RDoseUtils.getDRRes(sb.getRConnection());
                 setCurvNum(Integer.parseInt(sigRes[0]));
                 setBmdNum(Integer.parseInt(sigRes[1]));
@@ -995,12 +989,10 @@ public class DoseResponseBean implements Serializable {
                 populateDoseResBeans();
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_INFO, "Few Results", "Only one BMD passed the quality filters so plots could not be made."));
-                break;
             }
-            default:
+            default ->
                 FacesContext.getCurrentInstance().addMessage(null,
                         new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error While Curve Fitting", "Please contact us via OmicsForum."));
-                break;
         }
     }
 
@@ -1027,13 +1019,8 @@ public class DoseResponseBean implements Serializable {
     }
 
     public void setupBmd() {
-
-        String usrName;
-
-        User usr = sb.getCurrentUser();
-        usrName = usr.getName();
-        bmd = "<a target='_blank' style='color: white' href = \"/FastBMD/resources/users/" + usrName + File.separator + "bmd.txt" + "\" download>" + "bmd.txt" + "</a>";
-
+        bmd = "<a target='_blank' style='color: white' href = \"/MetaboAnalyst/resources/users/"
+                + sb.getCurrentUser().getName() + File.separator + "bmd.txt" + "\" download>" + "bmd.txt" + "</a>";
     }
 
     public String getBmd() {
@@ -1045,7 +1032,7 @@ public class DoseResponseBean implements Serializable {
     }
 
     public void factorListenerDRPlots() {
-        RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 72, "png", getUnits(), getTransDose());
+        RDoseUtils.plotDRHistogram(sb, sb.getRConnection(), sb.getNewImage("dr_histogram"), 150, "png", getUnits(), getTransDose());
     }
 
     /*
@@ -1115,9 +1102,12 @@ public class DoseResponseBean implements Serializable {
         //} else {
         //    populateDeResBeans(sigLevel, fcLevel);
         //}
+
+        dePerformed = true;
     }
 
     public void performDoseDEAnalysis(int mode) {
+        dePerformed = false;
         if (mode == 0 && sb.getCurrentPageID().equals("Sig. analysis")) {
             return;
         }
@@ -1147,8 +1137,6 @@ public class DoseResponseBean implements Serializable {
             } else {
                 populateDeResBeans(sigLevel, fcLevel);
             }
-
-            dePerformed = true;
         } else {
             String msg = RDataUtils.getErrMsg(sb.getRConnection());
             sb.addMessage("Error", msg);
@@ -1157,14 +1145,14 @@ public class DoseResponseBean implements Serializable {
     }
 
     public void populateDeResBeans(double pLvl, double cfLevel) {
-        int res = 0;
+        int res;
         if (contineousDoes) {
             res = RDoseUtils.computeContDoseLimma(sb.getRConnection(), pLvl, cfLevel, FDR);
         } else {
             res = RDoseUtils.computeDoseLimma(sb.getRConnection(), pLvl, cfLevel, FDR);
         }
 
-        RDoseUtils.plotDoseVolcano(sb, sb.getRConnection(), sb.getNewImage("dose_volcano"), 72, "png");
+        RDoseUtils.plotDoseVolcano(sb, sb.getRConnection(), sb.getNewImage("dose_volcano"), 150, "png");
 
         if (res == 0) { // no sig
             sb.addMessage("Error", "No significant features found with current thresholds. Please adjust threhsold to select features to continue.");
@@ -1174,8 +1162,7 @@ public class DoseResponseBean implements Serializable {
             sigOK = false;
         } else if (res > 0) {
             sigOK = true;
-            DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-            db.update3CompModel("dose-de");
+            dtb.update3CompModel("dose-de");
             sb.addMessage("OK", "A total of " + res + " are identified based on your parameters.");
         }
     }
@@ -1186,12 +1173,7 @@ public class DoseResponseBean implements Serializable {
 
     public void analysisMetaChangeListener() {
         primaryType = RDataUtils.GetPrimaryType(sb.getRConnection(), analysisMeta);
-        if (primaryType.equals("disc")) {
-            contineousDoes = false;
-        } else {
-            contineousDoes = true;
-        }
-
+        contineousDoes = !primaryType.equals("disc");
     }
 
     public SelectItem[] getReferenceGroupFromAnalysisMetaOpts() {
@@ -1206,8 +1188,7 @@ public class DoseResponseBean implements Serializable {
     public Object getSortValue(DoseResultBean resBean, String property) {
         Object value = resBean.getValue(property);
 
-        if (value instanceof String) {
-            String valueStr = (String) value;
+        if (value instanceof String valueStr) {
 
             // Check if the string is numeric
             if (isNumeric(valueStr)) {
@@ -1226,7 +1207,7 @@ public class DoseResponseBean implements Serializable {
 // Utility method to check if a string is numeric
     private boolean isNumeric(String str) {
         try {
-            Double.parseDouble(str);
+            Double.valueOf(str);
             return true;
         } catch (NumberFormatException e) {
             return false;
@@ -1236,11 +1217,7 @@ public class DoseResponseBean implements Serializable {
     public boolean isMultiMeta() {
 
         String[] metaDataGroups = RDataUtils.getMetaDataGroups(sb.getRConnection());
-        if (metaDataGroups.length > 1) {
-            return true;
-        } else {
-            return false;
-        }
+        return metaDataGroups.length > 1;
     }
 
     public boolean isRobustTrend() {

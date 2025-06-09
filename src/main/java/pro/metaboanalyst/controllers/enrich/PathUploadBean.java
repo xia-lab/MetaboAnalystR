@@ -84,7 +84,7 @@ public class PathUploadBean implements Serializable {
                 RConnection RC = sb.getRConnection();
                 String[] qVec = DataUtils.getQueryNames(pathOraList, null);
                 RDataUtils.setMapData(RC, qVec);
-                SearchUtils.crossReferenceExact(RC, sb.getCmpdIDType());
+                SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
                 sb.setDataUploaded();
                 
                 return "Name check";
@@ -204,7 +204,7 @@ public class PathUploadBean implements Serializable {
             }
 
             String fileName = DataUtils.getJustFileName(csvFile.getFileName());
-            DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             sb.setDataUploaded();
             //sb.setCmpdIDType(qeaCmpdIDType);
             return processPathQeaData(fileName, dataFormat, clsOpt);
@@ -260,7 +260,7 @@ public class PathUploadBean implements Serializable {
         String dataType = "conc";
         if (sb.doLogin(dataType, "pathqea", false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadXLSXFile(metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadXLSXFile(sb, metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
             if (RDataUtils.validateMetabolon(RC, fileName)) {
                 String[] metaFactors, compoundIDs;

@@ -9,7 +9,6 @@ import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -47,17 +46,17 @@ public class TimeSeries {
             RC.assign("meta.vec.hm2", selectedMetas);
             RCenter.recordRCommand(RC, "meta.vec.hm2 <- " + DataUtils.convertArrayToVecInR(selectedMetas));
 
-            JavaRecord.recordRCommandFunctionInfo(RC, "meta.vec.hm2 <- " + DataUtils.convertArrayToVecInR(selectedMetas), "Heatmap2");
+            sb.recordRCommandFunctionInfo("meta.vec.hm2 <- " + DataUtils.convertArrayToVecInR(selectedMetas), "Heatmap2");
 
             RC.assign("sort.vec.hm2", sortNames);
 
-            JavaRecord.recordRCommandFunctionInfo(RC, "sort.vec.hm2 <- " + DataUtils.convertArrayToVecInR(sortNames), "Heatmap2");
+            sb.recordRCommandFunctionInfo("sort.vec.hm2 <- " + DataUtils.convertArrayToVecInR(sortNames), "Heatmap2");
 
             RCenter.recordRCommand(RC, "sort.vec.hm2 <- " + DataUtils.convertArrayToVecInR(sortNames));
             String rCommand = "PlotHeatMap2(NA" + ", \"" + imgName + "\", \"" + dataOpt + "\", \"" + scaleOpt + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + smplDist + "\",\"" + clstDist + "\",\"" + colors + "\", " + fzCol + "," + fzRow + ", " + annoFz + "," + annoHeight + "," + unitCol + ", " + unitRow + ", \"" + rankMethod + "\"," + topFeature + ", " + useSigFeature + ",  "
                     + drawBorder + ", " + showLegend + ", " + showAnnotLegend + ", " + showColNames + ", " + showRowNames + ", " + maxFeatNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Heatmap2");
+            sb.recordRCommandFunctionInfo(rCommand, "Heatmap2");
 
             sb.addGraphicsCMD("heatmap2", rCommand);
             sb.addGraphicsMapLink("heatmap2", "/Secure/multifac/Heatmap2View.xhtml");
@@ -111,19 +110,20 @@ public class TimeSeries {
         }
     }
 
-    public static int initANOVA2(RConnection RC, double thresh, String corType, String type, String phenOpt, String[] selectedMetas) {
+    public static int initANOVA2(SessionBean1 sb, double thresh, String corType, String type, String phenOpt, String[] selectedMetas) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("meta.vec.aov", selectedMetas);
             //RCenter.recordRCommand(RC, "meta.vec.aov <- " + Arrays.toString(selectedMetas));
             String rcmd = "meta.vec.aov <- " + DataUtils.convertArrayToVecInR(selectedMetas);
             RCenter.recordRCommand(RC, rcmd);
-        System.out.println(rcmd);
+            System.out.println(rcmd);
 
             String rCommand = "ANOVA2.Anal(NA, " + thresh + ", \"" + corType + "\", \"" + type + "\", \"" + phenOpt + "\", 500)";
             RCenter.recordRCommand(RC, rCommand);
-                    System.out.println(rCommand);
+            System.out.println(rCommand);
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multifactor anova");
+            sb.recordRCommandFunctionInfo(rCommand, "Multifactor anova");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -140,7 +140,7 @@ public class TimeSeries {
             sb.addGraphicsCMD("aov2", rCommand);
             sb.addGraphicsMapLink("aov2", "/Secure/multifac/Anova2View.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multifactor anova");
+            sb.recordRCommandFunctionInfo(rCommand, "Multifactor anova");
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
             System.out.println(rse);
@@ -202,15 +202,16 @@ public class TimeSeries {
         return null;
     }
 
-    public static int performASCA(RConnection RC, int a, int b, int x, int res, String[] selectedMetas) {
+    public static int performASCA(SessionBean1 sb, int a, int b, int x, int res, String[] selectedMetas) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("meta.vec.asca", selectedMetas);
             String rcmd = "meta.vec.asca <- " + DataUtils.convertArrayToVecInR(selectedMetas);
             RCenter.recordRCommand(RC, rcmd);
 
             String rCommand = "Perform.ASCA(NA" + ", " + a + ", " + b + ", " + x + ", " + res + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -219,11 +220,12 @@ public class TimeSeries {
         return 0;
     }
 
-    public static void performASCAVarSelection(RConnection RC, double speThresh, double lvThresh) {
+    public static void performASCAVarSelection(SessionBean1 sb, double speThresh, double lvThresh) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CalculateImpVarCutoff(NA" + ", " + speThresh + ", " + lvThresh + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -263,7 +265,7 @@ public class TimeSeries {
             sb.addGraphicsCMD("asca_scree", rCommand);
             sb.addGraphicsMapLink("asca_scree", "/Secure/multifac/AscaView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -279,7 +281,7 @@ public class TimeSeries {
             sb.addGraphicsCMD("asca_f" + type, rCommand);
             sb.addGraphicsMapLink("asca_f" + type, "/Secure/multifac/AscaView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -295,7 +297,7 @@ public class TimeSeries {
             sb.addGraphicsCMD("asca_fab", rCommand);
             sb.addGraphicsMapLink("asca_fab", "/Secure/multifac/AscaView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -311,7 +313,7 @@ public class TimeSeries {
             sb.addGraphicsCMD("asca_imp" + type, rCommand);
             sb.addGraphicsMapLink("asca_imp" + type, "/Secure/multifac/AscaView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ASCA");
+            sb.recordRCommandFunctionInfo(rCommand, "ASCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -350,17 +352,18 @@ public class TimeSeries {
         return null;
     }
 
-    public static int performMB(RConnection RC, int topPerc, String[] metas) {
+    public static int performMB(SessionBean1 sb, int topPerc, String[] metas) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("meta.vec.mb", metas);
             //RCenter.recordRCommand(RC, "meta.vec.mb <- " + Arrays.toString(metas));
             String rcmd = "meta.vec.mb <- " + DataUtils.convertArrayToVecInR(metas);
             RCenter.recordRCommand(RC, rcmd);
-            JavaRecord.recordRCommandFunctionInfo(RC, rcmd, "MEBA");
+            sb.recordRCommandFunctionInfo(rcmd, "MEBA");
 
             String rCommand = "performMB(NA" + ", " + topPerc + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "MEBA");
+            sb.recordRCommandFunctionInfo(rCommand, "MEBA");
 
             return (RC.eval(rCommand).asInteger());
         } catch (Exception rse) {
@@ -565,7 +568,7 @@ public class TimeSeries {
 
             String rCommand = "FeatureCorrelationMeta(NA" + ", \"" + algo + "\", \"" + tgtType + "\", \"" + tgtName + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "corBtn_action");
+            sb.recordRCommandFunctionInfo(rCommand, "corBtn_action");
 
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception rse) {

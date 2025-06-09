@@ -11,7 +11,6 @@ import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -27,7 +26,7 @@ public class RSpectraUtils {
         try {
             RConnection RC = sb.getRConnection();
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imgName;
             String rcmd = "plotSingleTIC(\"" + fileName + "\"," + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")";
@@ -37,9 +36,8 @@ public class RSpectraUtils {
             imgName = RC.eval(rcmd).asString();
             return imgName;
         } catch (REXPMismatchException | RserveException e) {
-
+            return null;
         }
-        return null;
     }
 
     // 1.2 PLOT summary of specific feature - MS spec module
@@ -47,10 +45,10 @@ public class RSpectraUtils {
         /// Note: This function is not using the image count (imageNm) because the fixed format of images at spectral report module
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             RConnection RC = sb.getRConnection();
-            //(FeatureNM, format = "png", dpi = 72, width = NA)            
+            //(FeatureNM, format = "png", dpi = 150, width = NA)            
             String featureimageNM = RC.eval("plotMSfeature(" + featureNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return featureimageNM;
         } catch (REXPMismatchException | RserveException e) {
@@ -63,7 +61,7 @@ public class RSpectraUtils {
     public static String plotXIC(RConnection RC, int featureNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String featureimageNM2 = RC.eval("PlotXICUpdate(" + featureNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return featureimageNM2;
@@ -77,7 +75,7 @@ public class RSpectraUtils {
     public static String plotTICs(RConnection RC, int imageNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imageName = RC.eval("plotTICs(" + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return imageName;
@@ -91,7 +89,7 @@ public class RSpectraUtils {
     public static String plotBPIs(RConnection RC, int imageNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imageName = RC.eval("plotBPIs(" + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return imageName;
@@ -105,7 +103,7 @@ public class RSpectraUtils {
     public static String plotRTcor(RConnection RC, int imageNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imageName = RC.eval("PlotSpectraRTadj(" + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return imageName;
@@ -119,7 +117,7 @@ public class RSpectraUtils {
     public static String plotBPIcor(RConnection RC, int imageNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imageName = RC.eval("PlotSpectraBPIadj(" + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return imageName;
@@ -132,7 +130,7 @@ public class RSpectraUtils {
     public static String plotIntenStats(RConnection RC, int imageNm, String format, int dpi, String width) {
         try {
             if (!"png".equals(format)) {
-                dpi = 72;
+                dpi = 150;
             }
             String imageName = RC.eval("PlotSpectraInsensityStatics(" + imageNm + ",\"" + format + "\"," + dpi + "," + width + ")").asString();
             return imageName;
@@ -662,11 +660,12 @@ public class RSpectraUtils {
     }
 
     // PerformSWATHDesignDetection
-    public static int PerformSWATHDesignDetection(RConnection RC, String file) {
+    public static int PerformSWATHDesignDetection(SessionBean1 sb, String file) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformSWATHDesignDetection(NA,\"" + file + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "prepareDIASpec");
+            sb.recordRCommandFunctionInfo(rCommand, "prepareDIASpec");
 
             int res = RC.eval(rCommand).asInteger();
             return res;

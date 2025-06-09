@@ -70,7 +70,10 @@
                             <i class="pi pi-palette" style="font-size: 1.1rem"/>
                         </p:commandLink>
                     </h:panelGrid>
-                    <img onerror='this.style.display="none"' style="padding-left: 100px" src="#{sessionBean1.getCurrentImageURL('ptn')}" alt="Patternimage"/>
+                    <img 
+                        onerror='this.style.display="none"' 
+                        style="width:8in; padding-left: 100px"
+                        src="#{sessionBean1.getCurrentImageURL('ptn')}" alt="Patternimage"/>
                 </h:panelGrid>  
             </h:form>
         </h:panelGrid> 

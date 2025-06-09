@@ -5,10 +5,12 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.model.SelectItem;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
@@ -28,8 +30,22 @@ import pro.metaboanalyst.controllers.multifac.MultifacBean;
 @Named("uploader")
 public class UploadBean implements Serializable {
 
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private DoseResponseBean drb;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
     private static final Logger LOGGER = LogManager.getLogger(UploadBean.class);
     /*
      * Handle file upoad (.csv or .txt)
@@ -92,7 +108,7 @@ public class UploadBean implements Serializable {
         if (sb.doLogin(dataType, "stat", false, paired)) {
             try {
                 RConnection RC = sb.getRConnection();
-                String fileName = DataUtils.uploadFile(dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                 if (fileName == null) {
                     sb.addMessage("Error", "Failed to read in the CSV file.");
                     return null;
@@ -170,15 +186,15 @@ public class UploadBean implements Serializable {
             try {
                 RConnection RC = sb.getRConnection();
                 String homDir = sb.getCurrentUser().getHomeDir();
-                DataUtils.uploadFile(zipFile, homDir, null, ab.isOnProServer());
+                DataUtils.uploadFile(sb, zipFile, homDir, null, ab.isOnProServer());
                 if (paired) {
-                    DataUtils.uploadFile(pairFile, homDir, "pairs.txt", ab.isOnProServer());
+                    DataUtils.uploadFile(sb, pairFile, homDir, "pairs.txt", ab.isOnProServer());
                 }
                 String homeDir = sb.getCurrentUser().getHomeDir();
                 String inPath = zipFile.getFileName();
                 String outPath = "upload";
 
-                if (RDataUtils.readZipData(RC, inPath, outPath, zipDataType, homeDir)) {
+                if (RDataUtils.readZipData(sb, inPath, outPath, zipDataType, homeDir)) {
 
                     sb.setDataUploaded();
                     sb.initNaviTree("stat-peak");
@@ -288,7 +304,7 @@ public class UploadBean implements Serializable {
             String name = DataUtils.getJustFileName(testFile);
             String outpath = homeDir + File.separator + name;
             DataUtils.fetchFile(testFile, new File(outpath));
-            if (!RDataUtils.readZipData(RC, outpath, "upload", dataType, homeDir)) {
+            if (!RDataUtils.readZipData(sb, outpath, "upload", dataType, homeDir)) {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             }
@@ -336,7 +352,7 @@ public class UploadBean implements Serializable {
         }
         if (sb.doLogin(dataType, "power", false, paired)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             if (RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
                 sb.setDataUploaded();
                 return "Data check";
@@ -380,9 +396,8 @@ public class UploadBean implements Serializable {
         }
         if (sb.doLogin(dataType, "dose", false, paired)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-            boolean read_res = false;
-            DoseResponseBean drb = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
+            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            boolean read_res;
 
             if (metaFile == null) {
                 if (dataClsOpt.equals("disc")) {
@@ -398,7 +413,7 @@ public class UploadBean implements Serializable {
                     return null;
                 }
             } else {
-                String metaName = DataUtils.uploadFile(metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                 if (metaName == null) {
                     return null;
                 }
@@ -455,14 +470,14 @@ public class UploadBean implements Serializable {
 
         if (sb.doLogin(dataType, "roc", false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             if (RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
                 if (metaFile == null) {
                     sb.setDataUploaded();
                     return "Data check";
 
                 } else {
-                    String metaName = DataUtils.uploadFile(metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                    String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                     if (metaName == null) {
                         return null;
                     }
@@ -473,8 +488,7 @@ public class UploadBean implements Serializable {
                         return null;
                     }
                     sb.setDataUploaded();
-                    MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-                    tb.setUniqueMetaList(null);
+                    mfb.setUniqueMetaList(null);
                     return "Data check";
                 }
             } else {
@@ -511,8 +525,7 @@ public class UploadBean implements Serializable {
             }
         }
         sb.setDataUploaded();
-        MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-        tb.setUniqueMetaList(null);
+        mfb.setUniqueMetaList(null);
         return "Data check";
     }
 
@@ -550,7 +563,7 @@ public class UploadBean implements Serializable {
         dataType = "mztab";
         if (sb.doLogin(dataType, "stat", false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(mzTabFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadFile(sb, mzTabFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
             if (RDataUtils.readMzTabData(RC, fileName, identifier)) {
                 sb.setDataUploaded();
@@ -666,7 +679,7 @@ public class UploadBean implements Serializable {
         dataType = "conc";
         if (sb.doLogin(dataType, analType, false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadXLSXFile(metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadXLSXFile(sb, metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
             if (RDataUtils.validateMetabolon(RC, fileName)) {
                 String[] metaFactors, compoundIDs;
@@ -834,7 +847,6 @@ public class UploadBean implements Serializable {
             return null;
         }
         RConnection RC = sb.getRConnection();
-        DoseResponseBean drb = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
         switch (option) {
             case 1 -> {
                 drb.setContineousDoes(true);

@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -14,10 +15,9 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.TimeSeries;
 import pro.metaboanalyst.rwrappers.UniVarTests;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -29,8 +29,17 @@ public class MultiCorrBean implements Serializable {
 
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
     @Inject
-    private MultifacBean tb;
+    private WorkflowBean wb;
+
+    @Inject
+    private MultifacBean mfb;
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private final String pageID = "Correlations";
 
     private String covFeatures;
@@ -84,8 +93,7 @@ public class MultiCorrBean implements Serializable {
 
     public String getPtnMeta() {
         if (ptnMeta.equals("")) {
-            MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
-            ptnMeta = mf.getAnalysisMetaOpts()[0].getValue().toString();
+            ptnMeta = mfb.getAnalysisMetaOpts()[0].getValue().toString();
         }
         return ptnMeta;
     }
@@ -116,10 +124,9 @@ public class MultiCorrBean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/PartialCorrView.xhtml");
             //do something here
         } else {
-            WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-            if (fp.getFunctionInfos().get("corBtn_action") != null) {
+            if (wb.getFunctionInfos().get("corBtn_action") != null) {
                 try {
-                    FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("corBtn_action"));
+                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("corBtn_action"));
                 } catch (Exception ex) {
 
                 }
@@ -128,10 +135,9 @@ public class MultiCorrBean implements Serializable {
     }
 
     public String corBtn_action() {
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_corBtn_action(this);
+            jrd.record_corBtn_action(this);
             return null;
         }
         String imgName = sb.getNewImage("ptn");
@@ -141,10 +147,10 @@ public class MultiCorrBean implements Serializable {
 
         if (covMetas == null) {
             String[] meta = new String[1];
-            meta[0] = tb.getMetaDataBeans().get(1).getName();
+            meta[0] = mfb.getMetaDataBeans().get(1).getName();
             covMetas = meta;
         }
-        JavaRecord.record_corBtn_action(this);
+        jrd.record_corBtn_action(this);
         if (tgtType.equals("featNm")) {
             if (ptnFeature.isEmpty()) {
                 sb.addMessage("Error", "Please specify a feature of interest!");
@@ -162,8 +168,8 @@ public class MultiCorrBean implements Serializable {
         }
 
         if (TimeSeries.performCorrAnal(sb, ptnDistMeasure, tgtType, tgtNm, covMetas)) {
-            UniVarTests.plotMatchedFeatures(sb, imgName, tgtType, "png", 72);
-            tb.setCorrPerformed(true);
+            UniVarTests.plotMatchedFeatures(sb, imgName, tgtType, "png", 150);
+            mfb.setCorrPerformed(true);
         } else {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
         }

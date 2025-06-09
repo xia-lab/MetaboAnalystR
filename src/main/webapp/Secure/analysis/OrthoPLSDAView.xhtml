@@ -15,10 +15,6 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
 
-    </ui:define>
-    <ui:define name="footerout"/>
-    <ui:define name="content">
-          
         <script type="text/javascript">
             var light;
             var textColor;
@@ -27,13 +23,11 @@
             var usr = "#{sessionBean1.getUserDir()}"
             usr = usr.replace(/\/\//g, '/');
             loadLabel = function (raw) {
-                console.log(raw)
-                pointMap = raw
+                pointMap = raw;
             }
 
             function extender() {
                 light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
-                console.log(light)
                 if (light === "light") {
                     textColor = "grey";
                     gridColor = 'lightgrey';
@@ -44,6 +38,7 @@
                 $.getJSON(usr + "/pointMap3.json", loadLabel);
                 var options = {
                     options: {
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
                                 title: {
@@ -73,25 +68,26 @@
                             }
                         }, plugins: {
                             legend: {
-                                display: false,
+                                display: false
                             },
                             zoom: {
-                                enabled: true,
-                                drag: {
-                                    enabled: true,
-                                    borderColor: 'rgb(54, 162, 235)',
-                                    borderWidth: 1,
-                                    backgroundColor: 'rgba(54, 162, 235, 0.3)'
-                                },
-                                mode: 'xy'
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    }, pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
                             },
                             tooltip: {
                                 enabled: true,
                                 callbacks: {
                                     label: function (tooltipItem, data) {
                                         var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
-                                        console.log(pointKey)
-                                        console.log(pointMap)
                                         var id = pointMap[pointKey]; // Assuming pointMap is accessible here
                                         return id;
                                     }
@@ -112,6 +108,32 @@
             }
             ;
         </script>
+        <style>
+            .vertical-text {
+                display:inline-block;
+                white-space: nowrap;
+                filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+                -webkit-transform: rotate(270deg);
+                -ms-transform: rotate(270deg);
+                transform: rotate(270deg);
+            }
+
+            #ac\:chart_canvas { /* Note the escaped colon if ac is a component ID */
+                width: 800px !important; /* Your desired width */
+                height: 720px !important; /* Your desired height */
+                display: block; /* Ensure it behaves as a block element */
+            }
+
+            /* If the chart is responsive, you might also need to ensure its parent containers allow it */
+            /* This might be needed if the chart still doesn't grow despite the canvas styling */
+            .ui-chart { /* The main PrimeFaces chart container div */
+                width: 800px !important;
+                height: 720px !important;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="footerout"/>
+    <ui:define name="content">
         <h:panelGrid styleClass="my-content-panel">
             <h2>Orthogonal PLS-DA </h2>
             <p>
@@ -162,7 +184,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('opls_score2d')}" alt="OPLSScore2DImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('opls_score2d')}" alt="OPLSScore2DImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>
@@ -220,16 +244,19 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>  
-                    <h:panelGrid style="text-align: center; padding-left: 10%; width:100%" class="surface-card shadow-1 p-4 text-800">
-                        <p:chart id="chart"  value="#{detailsBean.getModel1('opls')}"  
-                                        style="height:670px; width:95%; margin-top: 50px"
-                                        extender="extender">
-                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                    <h:panelGrid style="text-align: center; width:100%">
+                        <p:chart id="chart" widgetVar="chart" 
+                                 value="#{detailsBean.getModel1('opls')}"  
+                                 style="height:670px; width:95%; margin-top: 50px"
+                                 extender="extender">
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                                    update=":hisTab:cmdPane" 
+                                    oncomplete="PF('FeatureView').show();"/>
                         </p:chart>
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('opls')}" update="chart" />
                 </p:tab>
-                <p:tab title ="Imp. Features (VIP-plot)">
+                <p:tab title ="VIP Plot">
                     <h:form id="form6">
                         <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 25px">
                             <h:panelGrid columns="2" style="width: 500px">
@@ -260,7 +287,9 @@
                                     </p:commandLink>
                                 </h:panelGrid>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('opls_imp')}" alt="OplsImpImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('opls_imp')}" alt="OplsImpImage"/>
                         </h:panelGrid>     
                     </h:form>
                 </p:tab>
@@ -277,7 +306,9 @@
                                 <h:outputText escape="false" value="#{oplsBean.downloadLink}"/>
                             </h:panelGrid>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('opls_mdl')}" alt="OplsMdlImage"/>
+                        <img onerror='this.style.display="none"' 
+                             style="width:9in; padding-left: 50px"
+                             src="#{sessionBean1.getCurrentImageURL('opls_mdl')}" alt="OplsMdlImage"/>
                     </h:panelGrid>     
                 </p:tab>
                 <p:tab title ="Permutation">
@@ -306,7 +337,9 @@
                             </p>
                             <h:panelGrid id="permPane" style="width: 100%; text-align: center">
                                 <h:outputLabel style="font-weight: bold" value="#{oplsBean.permMsg}"/>
-                                <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('opls_perm')}" alt="OPLSPermutationImage"/>
+                                <img onerror='this.style.display="none"' 
+                                     style="width:8in; padding-left: 50px"
+                                     src="#{sessionBean1.getCurrentImageURL('opls_perm')}" alt="OPLSPermutationImage"/>
                             </h:panelGrid> 
                         </h:panelGrid>
                     </h:form>

@@ -23,7 +23,7 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.file.UploadedFile;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import jakarta.inject.Inject;
 import java.util.HashMap;
@@ -42,11 +42,23 @@ public class MetaLoadBean implements Serializable {
 
     @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
 
     @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private ProcessBean pcb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
     /**
      * Record the currently selected data
@@ -258,7 +270,7 @@ public class MetaLoadBean implements Serializable {
 
         checkLogIn();
 
-        fileName = DataUtils.uploadFile(file, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        fileName = DataUtils.uploadFile(sb, file, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
         int res = RMetaUtils.readIndExpressTable(sb.getRConnection(), fileName, dataFormat);
         if (res == 0) {
             String errMsg = RDataUtils.getErrMsg(sb.getRConnection());
@@ -338,13 +350,13 @@ public class MetaLoadBean implements Serializable {
                             + "You can only perform regular differential expression analysis "
                             + "using <b><u>Direct Merging</u></b> method.";
                 }
-                RDataUtils.plotMetaPCA(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 72, "png");
-                //RDataUtils.plotMetaDensity(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 72, "png");
+                RDataUtils.plotMetaPCA(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 150, "png");
+                //RDataUtils.plotMetaDensity(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 150, "png");
             }
         }
         procMsg = RDataUtils.getMetaProcMsg(sb.getRConnection());
         sb.setDataUploaded();
-        sb.setDataNormed(true);
+        sb.setDataNormed();
         //meta analysis default all selected        
         RDataUtils.setSelectedDataNames(sb.getRConnection(), selectedDataSets.toArray(String[]::new));
         setDataNum(selectedDataSets.size());
@@ -415,8 +427,7 @@ public class MetaLoadBean implements Serializable {
 
         sb.addMessage("info", "Three datasets were uploaded and processed on the server.");
 
-        sb.setDataUploaded(true);
-        sb.setDataNormed(true);
+        sb.setDataNormed();
     }
 
     public void perfromDefaultMetaProcess(DataModel dm) {
@@ -438,18 +449,16 @@ public class MetaLoadBean implements Serializable {
         int sampleNum = dm.getSmplNum();
         String groupinfo = dm.getGroupInfo();
 
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        if (pb.getDataSets() == null || pb.getDataSets().isEmpty()) {
-
-            pb.setDataSets(new ArrayList());
+        if (pcb.getDataSets() == null || pcb.getDataSets().isEmpty()) {
+            pcb.setDataSets(new ArrayList());
         }
-        DataModel ds = new DataModel(sb.getRConnection(), dm.getName());
+        DataModel ds = new DataModel(sb, dm.getName());
         ds.setSmplNum(sampleNum);
         ds.setGeneNum(featureNum);
         ds.setGroupInfo(groupinfo);
         ds.setName(dm.getName());
         ds.setDataName(dm.getFullName());
-        pb.getDataSets().add(ds);
+        pcb.getDataSets().add(ds);
 
     }
 
@@ -460,7 +469,7 @@ public class MetaLoadBean implements Serializable {
     public List<DataModel> getDataSets() {
         if (dataSets == null) {
             dataSets = new ArrayList();
-            dataSets.add(new DataModel(sb.getRConnection(), "Upload"));
+            dataSets.add(new DataModel(sb, "Upload"));
         }
         return dataSets;
     }
@@ -472,7 +481,7 @@ public class MetaLoadBean implements Serializable {
                 mDataSets.add(dataSets.get(i));
             }
             //now add the meta-dataSet
-            DataModel dm = new DataModel(sb.getRConnection(), "meta_dat");
+            DataModel dm = new DataModel(sb, "meta_dat");
             dm.setDeNum(getCurrentDeNum(analMethod));
             mDataSets.add(dm);
         }
@@ -526,7 +535,7 @@ public class MetaLoadBean implements Serializable {
 
     //only meta-analysis
     public void addNewData(String dataName) {
-        dataSets.add(new DataModel(sb.getRConnection(), dataName));
+        dataSets.add(new DataModel(sb, dataName));
     }
 
     public void deleteData(DataModel selectedData) {
@@ -573,9 +582,8 @@ public class MetaLoadBean implements Serializable {
 
     public String prepareUpsetView() {
 
-        JavaRecord.record_prepareUpsetView(this);
+        jrd.record_prepareUpsetView(this);
 
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
@@ -583,7 +591,7 @@ public class MetaLoadBean implements Serializable {
         }
 
         String fileName = sb.getNewImage("upset_stat");
-        int res = RDataUtils.prepareUpsetData(sb.getRConnection(), fileName);
+        int res = RDataUtils.prepareUpsetData(sb, fileName);
         if (res == 1) {
             return "Upset diagram";
         } else {
@@ -603,7 +611,7 @@ public class MetaLoadBean implements Serializable {
         }
         System.out.println(res + "==================RESSS");
         switch (res) {
-            case 0:
+            case 0 -> {
                 if (adjustBatch) {
                     allDataConsistent = false;
                     //integCheckMsg = "ComBat Normalization failed.";
@@ -613,20 +621,19 @@ public class MetaLoadBean implements Serializable {
                     //integCheckMsg = "Reverted back to raw expression data.";
                     sb.addMessage("info", "OK, reverted back to non-adjusted state!");
                 }
-
-                break;
-            default:
+            }
+            default -> {
                 allDataConsistent = true;
                 /*
                 integCheckMsg = "OK, ComBat normalization succeeded. "
-                        + "Click <b>Next</b> button to next page.";
+                + "Click <b>Next</b> button to next page.";
                  */
-                RDataUtils.plotMetaPCA(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 72, "png");
+                RDataUtils.plotMetaPCA(sb, sb.getRConnection(), sb.getNewImage("qc_meta_pca"), 150, "png");
                 if (adjustBatch) {
                     sb.addMessage("info", "OK, ComBat batch correction succeeded!");
                 }
-                break;
+            }
         }
-        JavaRecord.record_performBatchCorrection(this);
+        jrd.record_performBatchCorrection(this);
     }
 }

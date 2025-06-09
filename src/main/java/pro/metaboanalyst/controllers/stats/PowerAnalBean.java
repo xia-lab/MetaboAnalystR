@@ -100,11 +100,11 @@ public class PowerAnalBean implements Serializable {
 
     public void performPowerAnal() {
         PowerUtils.initPowerAnal(sb.getRConnection(), selectedContrast);
-        PowerUtils.plotPowerStatDiagnostics(sb, sb.getNewImage("power_stat"), "png", 72);
+        PowerUtils.plotPowerStatDiagnostics(sb, sb.getNewImage("power_stat"), "png", 150);
     }
 
     public String profileBtn_action() {
-        //PowerUtils.plotPowerProfile(sb, fdr, sb.getNewImage("power_profile"), "png", 72);
+        //PowerUtils.plotPowerProfile(sb, fdr, sb.getNewImage("power_profile"), "png", 150);
         fdr = 0.1;
         updateModel();
         return "powerview";
@@ -117,7 +117,7 @@ public class PowerAnalBean implements Serializable {
             sb.addMessage("Warn", "FDR level has been re-adjusted in order to get meaningful result.");
         }
         
-        double[] pwrs = PowerUtils.plotPowerProfile(sb, fdr, smplSize, sb.getNewImage("power_profile"), "png", 72);
+        double[] pwrs = PowerUtils.plotPowerProfile(sb, fdr, smplSize, sb.getNewImage("power_profile"), "png", 150);
         int[] smplNum = PowerUtils.getPowerValueX(sb.getRConnection()); //must be called after plotPowerProile
 
         List<ScatterDataPoint> myValues = new ArrayList<>();
@@ -152,7 +152,7 @@ public class PowerAnalBean implements Serializable {
             sb.addMessage("Warn", "FDR level has been re-adjusted in order to get meaningful result.");
         }
 
-        double[] pwrs = PowerUtils.plotPowerProfile(sb, fdr, smplSize, sb.getNewImage("power_profile"), "png", 72);
+        double[] pwrs = PowerUtils.plotPowerProfile(sb, fdr, smplSize, sb.getNewImage("power_profile"), "png", 150);
         int[] smplNum = PowerUtils.getPowerValueX(sb.getRConnection()); //must be called after plotPowerProile
         lineModel = new ScatterChartModel();
         ChartData data = new ChartData();

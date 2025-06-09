@@ -26,7 +26,8 @@ public class GraphStyleBean implements Serializable {
     private SessionBean1 sb;
     @Inject
     private GraphBean graphBean;
-
+    @Inject
+    private UnivBean ub;
     @Inject
     private ApplicationBean1 ab;
 
@@ -58,7 +59,7 @@ public class GraphStyleBean implements Serializable {
 
     public String iconPath(String code) {
         // e.g. volcano  →  /resources/images/volcano_icons/graph_0.png
-        String plotSrc = sb.getImgSource();                    // "volcano", "heatmap", …
+        String plotSrc = sb.getImageSource();                    // "volcano", "heatmap", …
         String path = ab.getRootContext() + "/resources/images/plot_icons/" + plotSrc + "/icon" + code + ".png";
         System.out.println("=====iconPath==" + path);
         return path;
@@ -68,12 +69,12 @@ public class GraphStyleBean implements Serializable {
      * thumbnail for the larger preview pane
      */
     public String getPreviewImage() {
-        String plotSource = sb.getImgSource();
+        String plotSource = sb.getImageSource();
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png";
     }
 
     public DefaultStreamedContent getPreviewContent() {
-        String plotSource = sb.getImgSource();
+        String plotSource = sb.getImageSource();
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png");
     }
 
@@ -81,10 +82,9 @@ public class GraphStyleBean implements Serializable {
      * apply + redraw R figure
      */
     public void applyStyle() {
-        String plotSource = sb.getImgSource();
+        String plotSource = sb.getImageSource();
         System.out.println("plotSource==" + plotSource);
         if (plotSource.equals("volcano")) {
-            UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
 
             if (Integer.parseInt(selectedStyle) == 0) {
                 if (ub.getLabelOpt().equals("all")) {

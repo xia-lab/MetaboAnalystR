@@ -4,8 +4,7 @@
  */
 package pro.metaboanalyst.controllers.general;
 
-import jakarta.annotation.PostConstruct;
-import pro.metaboanalyst.utils.DataUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,17 +18,32 @@ import pro.metaboanalyst.models.SampleBean;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 @ViewScoped
 @Named("normBean")
 public class NormBean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private WorkflowBean wb;
+
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private DoseResponseBean drb;
+
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rcb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
     private String rowNormOpt = "NULL";
     private String transNormOpt = "NULL";
@@ -38,10 +52,6 @@ public class NormBean implements Serializable {
     private String refGrp = null;
     private String refVar = null;
 
-    //@PostConstruct
-    public void preparePrenormData() {
-        RDataUtils.initPrenormData(sb.getRConnection());
-    }
 
     public String getRefVar() {
         return refVar;
@@ -171,7 +181,7 @@ public class NormBean implements Serializable {
 
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_PerformDataNormalization(this);
+            jrd.record_PerformDataNormalization(this);
             return;
         }
 
@@ -187,38 +197,34 @@ public class NormBean implements Serializable {
         };
 
         if (sb.getAnalType().equals("roc")) {
-            RDataUtils.setRatioOption(RC, ratioFilterOpt);
+            RDataUtils.setRatioOption(sb, ratioFilterOpt);
         }
 
-        int res = RDataUtils.normalizeData(RC, rowNormOpt, transNormOpt, scaleNormOpt, ref, includeRatio, ratioNumOpt);
-        JavaRecord.record_PerformDataNormalization(this);
+        int res = RDataUtils.normalizeData(sb, rowNormOpt, transNormOpt, scaleNormOpt, ref, includeRatio, ratioNumOpt);
+        jrd.record_PerformDataNormalization(this);
 
         if (res > 0) {
 
             if (sb.getAnalType().equals("dose")) {
-                DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
-                dr.setDePerformed(false);
+                drb.setDePerformed(false);
             }
 
             //plot the new image
-            RDataUtils.plotNormSummaryGraph(sb, sb.getNewImage("norm"), "png", 72);
-            RDataUtils.plotSampleNormSummaryGraph(sb, sb.getNewImage("snorm"), "png", 72);
+            RDataUtils.plotNormSummaryGraph(sb, sb.getNewImage("norm"), "png", 150);
+            RDataUtils.plotSampleNormSummaryGraph(sb, sb.getNewImage("snorm"), "png", 150);
             //now reset all data analysis to default
-            sb.setDataNormed(true);
+            sb.setDataNormed();
             int featureNum = RDataUtils.getNormFeatureNumber(RC);
             sb.updateFeatureNum(featureNum);
             sb.resetAnalysis();
             if (sb.getAnalType().equals("roc")) {
-                RocAnalBean rocAnalBean = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                rocAnalBean.resetData();
+                rcb.resetData();
             }
             sb.addMessage("OK", "Completed normalization. You can click <b>View Result</b> button to view the effect, or <b>Proceed</b> button to analysis page!");
             normPerformed = true;
 
             WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
             wb.getCalledWorkflows().add("Normalization");
-
-
         } else {
             sb.addMessage("Error", "Unknown error happened during data normalization process!");
         }

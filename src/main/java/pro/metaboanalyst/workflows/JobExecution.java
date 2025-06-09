@@ -26,7 +26,6 @@ import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -34,7 +33,6 @@ import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
-import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.lts.JobMonitor;
@@ -125,7 +123,7 @@ public class JobExecution implements Serializable {
                             stopStatusCheck = true;
                             String token = QuartzDbUtils.getTokenByJobId(jobId);
                             String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob");
-                            DataUtils.doRedirect(url);
+                            DataUtils.doRedirect(url, ab);
                             break;
                         case "FAILED":
                         case "ERROR":

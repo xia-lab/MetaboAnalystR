@@ -14,6 +14,7 @@ import java.util.List;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
+import java.util.Arrays;
 import pro.metaboanalyst.models.User;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -23,11 +24,12 @@ import pro.metaboanalyst.rwrappers.RMetaPathUtils;
 import pro.metaboanalyst.rwrappers.RMetaUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.DualListModel;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 import pro.metaboanalyst.controllers.general.ProcessBean;
 import pro.metaboanalyst.models.DataModel;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -45,6 +47,18 @@ public class MetaPathLoadBean implements Serializable {
     @Inject
     @JsonIgnore
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
+    @Inject
+    @JsonIgnore
+    private ProcessBean pcb;
     /**
      * Record the currently selected data
      */
@@ -68,16 +82,6 @@ public class MetaPathLoadBean implements Serializable {
 
     public void setDataFormat(String dataFormat) {
         this.dataFormat = dataFormat;
-    }
-
-    private String dataIon = "positive";
-
-    public String getDataIon() {
-        return dataIon;
-    }
-
-    public void setDataIon(String dataIon) {
-        this.dataIon = dataIon;
     }
 
     private String dataType = "massPeaks";
@@ -108,6 +112,8 @@ public class MetaPathLoadBean implements Serializable {
 
     public void setSelectedData(MetaPathModel selectedData) {
         this.selectedData = selectedData;
+        RMetaUtils.setCurrentData(sb.getRConnection(), selectedData.getName());
+        sb.addMessage("info", "Current data is: " + selectedData.getName() + ", ready for analysis.");
     }
 
     public MetaPathModel getData4Vis() {
@@ -219,6 +225,7 @@ public class MetaPathLoadBean implements Serializable {
 
         UploadedFile file = null;
         UploadedFile file2 = null;
+        String dataIon = selectedData.getIonMode();
 
         if ("mixed".equals(dataIon)) {
             file = filePos;
@@ -248,7 +255,6 @@ public class MetaPathLoadBean implements Serializable {
                 sb.addMessage("error", "The file size exceeds limit: " + ab.getMAX_UPLOAD_SIZE());
                 return false;
             }
-
         }
 
         String fileName = file.getFileName();
@@ -269,14 +275,14 @@ public class MetaPathLoadBean implements Serializable {
 
         checkLogIn();
 
-        fileName = DataUtils.uploadFile(file, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        fileName = DataUtils.uploadFile(sb, file, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
         int res = 0;
         int res2 = 0;
 
         if ("mixed".equals(dataIon)) {
             String fileName2 = file2.getFileName();
-            fileName2 = DataUtils.uploadFile(file2, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            fileName2 = DataUtils.uploadFile(sb, file2, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             res2 = RMetaPathUtils.readMetaPathTableMix(sb.getRConnection(), fileName, fileName2, dataFormat, dataType);
         } else {
             res = RMetaPathUtils.readMetaPathTable(sb.getRConnection(), fileName, dataFormat, dataType);
@@ -305,22 +311,6 @@ public class MetaPathLoadBean implements Serializable {
             selectedData.processMetaPathData();
             file = null;
             return true;
-        }
-
-    }
-
-    // Section III --- selectedData Utilities  <--------------
-    private MetaPathModel selectedDataSet;
-
-    public MetaPathModel getSelectedDataSet() {
-        return selectedDataSet;
-    }
-
-    public void setSelectedDataSet(MetaPathModel dm) {
-        if (!selectedDataSet.getName().equals(dm.getName())) {
-            this.selectedDataSet = dm;
-            RMetaUtils.setCurrentData(sb.getRConnection(), selectedDataSet.getName());
-            sb.addMessage("info", "Current data is: " + selectedDataSet.getName() + ", ready for analysis.");
         }
     }
 
@@ -352,6 +342,43 @@ public class MetaPathLoadBean implements Serializable {
         deleteData(selectedData);
     }
 
+    // Section V ---- Functional Utilities  <--------------
+    public void addNewData(String dataName) {
+        dataSets.add(new MetaPathModel(sb, dataName));
+    }
+
+    public void deleteData(MetaPathModel selectedData) {
+        dataSets.remove(selectedData);
+        //remove data from R inmex.vec 
+        RMetaUtils.removeData(sb.getRConnection(), selectedData.getFullName());
+        String homeDir = sb.getCurrentUser().getHomeDir();
+        String fileName = selectedData.getFullName();
+        File rmFile = new File(homeDir + File.separator + fileName);
+        rmFile.delete();
+        sb.addMessage("info", "The selected data entry is deleted");
+    }
+
+    public ArrayList<String> getCurrentDataSets() {
+
+        ArrayList<String> currentDataNms = new ArrayList();
+        for (int i = 0; i < dataSets.size(); i++) {
+            if (dataSets.get(i).isInclude()) {
+                currentDataNms.add(dataSets.get(i).getFullName());
+            }
+        }
+        return currentDataNms;
+    }
+
+    public MetaPathModel getData(String dataName) {
+        for (MetaPathModel dm : dataSets) {
+            if (dm.getFullName().equals(dataName)) {
+                //System.out.println("----------------- Getting this data dataName ---> " + dataName);
+                return dm;
+            }
+        }
+        return null;
+    }
+
     private List<MetaPathModel> dataSets;
 
     private List<MetaPathModel> mDataSets; //the contains meta
@@ -367,7 +394,7 @@ public class MetaPathLoadBean implements Serializable {
     public List<MetaPathModel> getDataSets() {
         if (dataSets == null) {
             dataSets = new ArrayList();
-            dataSets.add(new MetaPathModel(sb.getRConnection(), "Upload"));
+            dataSets.add(new MetaPathModel(sb, "Upload"));
         }
         return dataSets;
     }
@@ -403,7 +430,7 @@ public class MetaPathLoadBean implements Serializable {
     }
 
     public void updateMetaDataSets() {
-        int[] res = RMetaPathUtils.performPathSum(sb.getRConnection(), pvalCutoff);
+        int[] res = RMetaPathUtils.performPathSum(sb, pvalCutoff);
         currentDeNum = res.length;
         mDataSets = new ArrayList();
         int num = 0;
@@ -415,7 +442,7 @@ public class MetaPathLoadBean implements Serializable {
                 mDataSets.add(dataSets.get(i));
             }
         }
-        MetaPathModel dm = new MetaPathModel(sb.getRConnection(), "meta_dat");
+        MetaPathModel dm = new MetaPathModel(sb, "meta_dat");
         dm.setDeNum(res[res.length - 1]);
         //dm.setDe
         mDataSets.add(dm);
@@ -475,7 +502,7 @@ public class MetaPathLoadBean implements Serializable {
         }
 
         // 3. Define the global select datasets
-        String datas = DataUtils.createStringVector(selectedDataSets.toArray(new String[0]));
+        String datas = DataUtils.createStringVector(selectedDataSets.toArray(String[]::new));
         RMetaPathUtils.setInclusionDataSets(sb.getRConnection(), datas);
         //RDataUtils.setSelectedDataNames(sb.getRConnection(), selectedDataSets.toArray(new String[0]));
         setDataNum(selectedDataSets.size());
@@ -493,7 +520,7 @@ public class MetaPathLoadBean implements Serializable {
         metaDataSets.clear();
 
         switch (example) {
-            case 1:
+            case 1 -> {
                 System.out.println("Running Meta Path analysis example 1 @_@");
                 //first data
                 String inpath = ab.getResourceByAPI("A1_pos.csv");
@@ -537,15 +564,15 @@ public class MetaPathLoadBean implements Serializable {
                 perfromDefaultMetaProcess(selectedData);
                 selectedData.setInclude(true);
                 selectedData.setDisabledModify(true);
-                break;
-            case 2:
+            }
+            case 2 -> {
                 System.out.println("Running Meta Path analysis example 2 T_T");
                 //first data
-                inpath = ab.getResourceByAPI("A1_pos.csv");
+                String inpath = ab.getResourceByAPI("A1_pos.csv");
                 String inpath2 = ab.getResourceByAPI("A1_neg.csv");
-                name = DataUtils.getJustFileName(inpath);
+                String name = DataUtils.getJustFileName(inpath);
                 String name2 = DataUtils.getJustFileName(inpath2);
-                outpath = currentUser.getHomeDir() + File.separator + name;
+                String outpath = currentUser.getHomeDir() + File.separator + name;
                 String outpath2 = currentUser.getHomeDir() + File.separator + name2;
                 DataUtils.fetchFile(inpath, new File(outpath));
                 DataUtils.fetchFile(inpath2, new File(outpath2));
@@ -597,12 +624,12 @@ public class MetaPathLoadBean implements Serializable {
                 perfromDefaultMetaProcess(selectedData);
                 selectedData.setInclude(true);
                 selectedData.setDisabledModify(true);
-
-                break;
-            default:
+            }
+            default -> {
                 //No more examples for now! Do nothing but report an error
                 sb.addMessage("error", "Something wrong with your example selection !");
                 return;
+            }
         }
 
         sb.addMessage("info", "Three datasets were uploaded and processed on the server.");
@@ -619,11 +646,14 @@ public class MetaPathLoadBean implements Serializable {
         dm.performNormalization();
         dm.setNormed(true);
 
+        String dataIon;
         if (example == 1) {
             dataIon = "positive";
         } else {
             dataIon = "mixed";
         }
+        dm.setIonMode(dataIon);
+        dm.setAdductItems(getAdductItem(dataIon));
 
         dm.setSigLevel(0.05);
         dm.performPathAnalysis();
@@ -635,57 +665,18 @@ public class MetaPathLoadBean implements Serializable {
         int sampleNum = dm.getSmplNum();
         String groupinfo = dm.getGroupInfo();
 
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        if (pb.getDataSets() == null || pb.getDataSets().isEmpty()) {
-
-            pb.setDataSets(new ArrayList());
+        if (pcb.getDataSets() == null || pcb.getDataSets().isEmpty()) {
+            pcb.setDataSets(new ArrayList());
         }
         // System.out.println("pro.metaboanalyst.controllers.metapath.MetaPathLoadBean.perfromDefaultMetaProcess()"+dm.getName0()+"========="+dm.getName2());
-        DataModel ds = new DataModel(sb.getRConnection(), dm.getName0());
+        DataModel ds = new DataModel(sb, dm.getName0());
         ds.setSmplNum(sampleNum);
         ds.setGeneNum(featureNum);
         ds.setGroupInfo(groupinfo);
         ds.setName(dm.getName());
         ds.setDataName(dm.getName0());
-        pb.getDataSets().add(ds);
+        pcb.getDataSets().add(ds);
 
-    }
-
-    // Section V ---- Functional Utilities  <--------------
-    public void addNewData(String dataName) {
-        dataSets.add(new MetaPathModel(sb.getRConnection(), dataName));
-    }
-
-    public void deleteData(MetaPathModel selectedData) {
-        dataSets.remove(selectedData);
-        //remove data from R inmex.vec 
-        RMetaUtils.removeData(sb.getRConnection(), selectedData.getFullName());
-        String homeDir = sb.getCurrentUser().getHomeDir();
-        String fileName = selectedData.getFullName();
-        File rmFile = new File(homeDir + File.separator + fileName);
-        rmFile.delete();
-        sb.addMessage("info", "The selected data entry is deleted");
-    }
-
-    public ArrayList<String> getCurrentDataSets() {
-
-        ArrayList<String> currentDataNms = new ArrayList();
-        for (int i = 0; i < dataSets.size(); i++) {
-            if (dataSets.get(i).isInclude()) {
-                currentDataNms.add(dataSets.get(i).getFullName());
-            }
-        }
-        return currentDataNms;
-    }
-
-    public MetaPathModel getData(String dataName) {
-        for (MetaPathModel dm : dataSets) {
-            if (dm.getFullName().equals(dataName)) {
-                System.out.println("----------------- Getting this data dataName ---> " + dataName);
-                return dm;
-            }
-        }
-        return null;
     }
 
     private ArrayList<String> selectedDataNms = new ArrayList();
@@ -699,10 +690,10 @@ public class MetaPathLoadBean implements Serializable {
     }
 
     public String prepareMetaPathUpsetView() {
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
+
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_prepareMetaPathUpsetView(this);
+            jrd.record_prepareMetaPathUpsetView(this);
             return null;
         }
         selectedDataNms.clear();
@@ -722,13 +713,13 @@ public class MetaPathLoadBean implements Serializable {
                 }
             }
         }
-        RMetaPathUtils.setSelectedMetaPathNames(sb.getRConnection(), selectedDataNms.toArray(String[]::new));
+        RMetaPathUtils.setSelectedMetaPathNames(sb, selectedDataNms.toArray(String[]::new));
 
         String fileName = sb.getNewImage("upset_path");
-        int res = RMetaPathUtils.prepareMetaPathData(sb.getRConnection(), fileName);
+        int res = RMetaPathUtils.prepareMetaPathData(sb, fileName);
 
         if (res == 1) {
-            JavaRecord.record_prepareMetaPathUpsetView(this);
+            jrd.record_prepareMetaPathUpsetView(this);
             return "Upset diagram";
         } else {
             updateMetaDataSets();
@@ -740,11 +731,11 @@ public class MetaPathLoadBean implements Serializable {
     public String naiveDisPlot() {
         String fileRoot = ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator;
         String imageNM = "";
-        imageNM = selectedData.getName().split(" \\+ ")[0] + "_qc_boxdpi72.png";
+        imageNM = selectedData.getName().split(" \\+ ")[0] + "_qc_boxdpi150.png";
         if (selectedData.getName2() != null) {
             imageNM = selectedData.getName().split(" \\+ ")[0] + "_"
                     + selectedData.getName2().substring(0, selectedData.getName2().length() - 4)
-                    + "_dpi72_qc_box.png";
+                    + "_dpi150_qc_box.png";
         }
         return fileRoot + imageNM;
     }
@@ -756,9 +747,9 @@ public class MetaPathLoadBean implements Serializable {
 
         if (selectedData.getName2() != null) {
             filename2 = selectedData.getName2().substring(0, selectedData.getName2().length() - 4);
-            filename = filename + "_" + filename2 + "_dpi72_norm_box.png";
+            filename = filename + "_" + filename2 + "_dpi150_norm_box.png";
         } else {
-            filename = filename + "_norm_boxdpi72.png";
+            filename = filename + "_norm_boxdpi150.png";
         }
 
         StreamedContent FileImage = null;
@@ -781,4 +772,33 @@ public class MetaPathLoadBean implements Serializable {
         return "Meta-Analysis Params";
     }
 
+    public DualListModel<String> getAdductItem(String mode) {
+        //MetaPathLoadBean mplb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
+
+        String adductSPath;
+        String adductTPath;
+
+        switch (mode) {
+            case "positive" -> {
+                adductSPath = ab.getInternalData("source_pos_add_list.txt");
+                adductTPath = ab.getInternalData("target_pos_add_list.txt");
+            }
+            case "negative" -> {
+                adductSPath = ab.getInternalData("source_neg_add_list.txt");
+                adductTPath = ab.getInternalData("target_neg_add_list.txt");
+            }
+            default -> {
+                // need to deal w. mixed mode
+                adductSPath = ab.getInternalData("source_mixed_add_list.txt");
+                adductTPath = ab.getInternalData("target_mixed_add_list.txt");
+            }
+        }
+
+        String allSAdducts = DataUtils.readTextFile(adductSPath);
+        String[] newsadducts = allSAdducts.split("\n");
+
+        String allTAdducts = DataUtils.readTextFile(adductTPath);
+        String[] newtadducts = allTAdducts.split("\n");
+        return new DualListModel(Arrays.asList(newsadducts), Arrays.asList(newtadducts));
+    }
 }

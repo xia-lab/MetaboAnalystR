@@ -11,7 +11,6 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.UniVarTests;
-import pro.metaboanalyst.utils.DataUtils;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
@@ -19,7 +18,7 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -36,7 +35,15 @@ public class LimmaBean implements Serializable {
 
     @JsonIgnore
     @Inject
-    private MultifacBean tb;
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
     private String analysisMeta;
     private String analysisMeta2 = "NA";
@@ -64,7 +71,7 @@ public class LimmaBean implements Serializable {
 
     public String getAnalysisMeta() {
         if (analysisMeta == null) {
-            List<MetaDataBean> beans = tb.getMetaDataBeans();
+            List<MetaDataBean> beans = mfb.getMetaDataBeans();
             analysisMeta = beans.get(0).getName();
             primaryType = RDataUtils.GetPrimaryType(sb.getRConnection(), analysisMeta);
         }
@@ -93,9 +100,8 @@ public class LimmaBean implements Serializable {
 
     public String[] getAdjustedMeta() {
         if (adjustedMeta == null) {
-            MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
             adjustedMeta = new String[1];
-            adjustedMeta[0] = mf.getAnalysisMetaOpts()[0].getValue().toString();
+            adjustedMeta[0] = mfb.getAnalysisMetaOpts()[0].getValue().toString();
         }
         return adjustedMeta;
     }
@@ -171,22 +177,21 @@ public class LimmaBean implements Serializable {
         if (primaryType.equals("disc")) {
             String[] grpNames = RDataUtils.getUniqueMetaNames(sb.getRConnection(), analysisMeta);
             referenceGroupFromAnalysisMeta = grpNames[0];
-            tb.setDisableTwofac(false);
-        }else{
-             tb.setDisableTwofac(true);
+            mfb.setDisableTwofac(false);
+        } else {
+            mfb.setDisableTwofac(true);
         }
-         
-        if (tb.getCompDesign().equals("nest")) {
 
+        if (mfb.getCompDesign().equals("nest")) {
             setSelectedMeta();
         }
 
     }
 
     public void covScatterButton_action() {
-        JavaRecord.record_covScatterButton_action(this);
+        jrd.record_covScatterButton_action(this);
         double sigThresh = Double.parseDouble(covPThresh);
-        String newName = sb.getNewImage("covariate_plot") + "dpi72";
+        String newName = sb.getNewImage("covariate_plot") + "dpi150";
         String imgName = newName + ".png";
         String covJsonName = newName + ".json";
         int res = 0;
@@ -205,65 +210,65 @@ public class LimmaBean implements Serializable {
             }
         }
 
-        if (tb.getCompDesign().equals("cov")) {
+        if (mfb.getCompDesign().equals("cov")) {
             if (referenceGroupFromAnalysisMeta.equals(contrastFromAnalysisMeta)) {
                 sb.addMessage("Error", "Please make sure the reference group is not the same as the contrast group.");
                 return;
             }
 
-            res = UniVarTests.performCovariateAnal(sb, imgName, "png", 72, covStyleOpt, analysisMeta, adjustedMeta, referenceGroupFromAnalysisMeta, blockFac, sigThresh, covPvalType, contrastFromAnalysisMeta);
+            res = UniVarTests.performCovariateAnal(sb, imgName, "png", 150, covStyleOpt, analysisMeta, adjustedMeta, referenceGroupFromAnalysisMeta, blockFac, sigThresh, covPvalType, contrastFromAnalysisMeta);
 
         } else {
             if (analysisMeta2.equals(blockFac) && !analysisMeta2.equals("NA")) {
                 sb.addMessage("Error", "Please make sure blocking factor is not the same as second factor.");
                 return;
             }
-           for (String adjustedMeta1 : getAdjustedMeta()) {
+            for (String adjustedMeta1 : getAdjustedMeta()) {
                 if (adjustedMeta1.equals(analysisMeta2)) {
                     sb.addMessage("Error", "Please make sure primary data is not also selected in covariate options.");
                     return;
-                }  
+                }
             }
-            
-            String designType = tb.getNestCompOpt();
+
+            String designType = mfb.getNestCompOpt();
             String selectedContrast;
-   
+
             switch (designType) {
                 case "ref" -> {
-                    selectedContrast = tb.getSelectedGrp1();
+                    selectedContrast = mfb.getSelectedGrp1();
 
-                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 72, analysisMeta, analysisMeta2,adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
+                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 150, analysisMeta, analysisMeta2, adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
                 }
                 case "custom" -> {
-                    if (!tb.getSelectedGrp2().equals("NA")) {
-                        selectedContrast = tb.getSelectedGrp1() + " vs. " + tb.getSelectedGrp2();
+                    if (!mfb.getSelectedGrp2().equals("NA")) {
+                        selectedContrast = mfb.getSelectedGrp1() + " vs. " + mfb.getSelectedGrp2();
                     } else {
-                        selectedContrast = tb.getSelectedGrp1();
+                        selectedContrast = mfb.getSelectedGrp1();
                     }
-                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 72, analysisMeta, analysisMeta2,adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
+                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 150, analysisMeta, analysisMeta2, adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
                 }
                 case "inter" -> {
                     if (analysisMeta2.equals("NA") || analysisMeta2.equals(analysisMeta)) {
-                        sb.addMessage("error","Please make sure second factor is selected and not the same as primary factor.");
+                        sb.addMessage("error", "Please make sure second factor is selected and not the same as primary factor.");
 
                         return;
                     }
-                    selectedContrast = tb.getSelectedGrp1() + " vs. " + tb.getSelectedGrp2();
-                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 72, analysisMeta, analysisMeta2,adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
+                    selectedContrast = mfb.getSelectedGrp1() + " vs. " + mfb.getSelectedGrp2();
+                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 150, analysisMeta, analysisMeta2, adjustedMeta, designType, selectedContrast, "NA", "T", blockFac, sigThresh, covPvalType);
                 }
                 case "nested" -> {
-                    if (tb.getSelectedContrast1().equals(tb.getSelectedContrast2())) {
+                    if (mfb.getSelectedContrast1().equals(mfb.getSelectedContrast2())) {
                         sb.addMessage("error", "The two nested groups are the same. Please choose two different groups.");
                         return;
                     }
-                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 72, analysisMeta, analysisMeta2,adjustedMeta, designType, tb.getSelectedContrast1(), tb.getSelectedContrast2(), tb.isInterOnly() ? "T" : "F", blockFac, sigThresh, covPvalType);
+                    res = UniVarTests.performCombineFacAnal(sb, imgName, "png", 150, analysisMeta, analysisMeta2, adjustedMeta, designType, mfb.getSelectedContrast1(), mfb.getSelectedContrast2(), mfb.isInterOnly() ? "T" : "F", blockFac, sigThresh, covPvalType);
                 }
                 default -> {
                 }
             }
 
         }
-  
+
         if (res == -1) {
             sb.addMessage("Error", RDataUtils.getErrMsg(sb.getRConnection()));
             return;
@@ -279,17 +284,17 @@ public class LimmaBean implements Serializable {
         sb.addMessage("OK", msg);
 
         double rawCovThresh = UniVarTests.getRawCovThresh(sb.getRConnection());
-        tb.setRawCovThresh(rawCovThresh);
-        tb.setCovJsonName(covJsonName);
-        tb.setCovJsonName(covJsonName);
-        tb.setCovPerformed(true);
+        mfb.setRawCovThresh(rawCovThresh);
+        mfb.setCovJsonName(covJsonName);
+        mfb.setCovJsonName(covJsonName);
+        mfb.setCovPerformed(true);
     }
 
     public void doDefaultLm() {
-        WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-        if (fp.getFunctionInfos().get("Linear Models") != null) {
+
+        if (wb.getFunctionInfos().get("Linear Models") != null) {
             try {
-                FunctionInvoker.callSetters(fp.getFunctionInfos().get("Linear Models"));
+                FunctionInvoker.callSetters(wb.getFunctionInfos().get("Linear Models"));
             } catch (Exception ex) {
 
             }
@@ -297,7 +302,7 @@ public class LimmaBean implements Serializable {
     }
 
     public void compDesignChangeListener() {
-        if (tb.getCompDesign().equals("nest")) {
+        if (mfb.getCompDesign().equals("nest")) {
             setSelectedMeta();
         }
 
@@ -306,27 +311,27 @@ public class LimmaBean implements Serializable {
     public void setSelectedMeta() {
 
         if (analysisMeta.equals(analysisMeta2)) {
-            sb.addMessage("error","Two metadata are the same!");
+            sb.addMessage("error", "Two metadata are the same!");
         } else {
             if (!analysisMeta2.equals("NA")) {
                 String secdType = RDataUtils.GetPrimaryType(sb.getRConnection(), analysisMeta2);
                 if (secdType.equals("cont")) {
-                    tb.setRadioDisabled(true);
-                    tb.setDisableInter(false);
-                    tb.setNestCompOpt("inter");
+                    mfb.setRadioDisabled(true);
+                    mfb.setDisableInter(false);
+                    mfb.setNestCompOpt("inter");
 
                     return;
                 }
             }
-            tb.setRadioDisabled(false);
-            tb.setDisableInter(false);
+            mfb.setRadioDisabled(false);
+            mfb.setDisableInter(false);
 
             String[] conditionsArr = RDataUtils.setSelectedMetaInfo(sb.getRConnection(), "name", analysisMeta, analysisMeta2, blockFac, false, true);
             if (conditionsArr[0].equals("0") & conditionsArr.length == 1) {
                 sb.addMessage("error", "Please select the primary factor!");
                 return;
             }
-            tb.setGrpContrasts(conditionsArr);
+            mfb.setGrpContrasts(conditionsArr);
 
         }
 

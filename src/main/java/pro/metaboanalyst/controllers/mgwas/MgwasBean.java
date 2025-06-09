@@ -530,10 +530,10 @@ public class MgwasBean implements Serializable {
             String imgName3 = sb.getNewImage(exposure + "_mr_leaveoneout_plot");
             String imgName4 = sb.getNewImage(exposure + "_mr_funnel_plot");
 
-            MgwasUtils.plotScatter(sb, exposure, imgName1, "png", 72);
-            MgwasUtils.plotForest(sb, exposure, imgName2, "png", 72);
-            MgwasUtils.plotLeaveOneOut(sb, exposure, imgName3, "png", 72);
-            MgwasUtils.plotFunnel(sb, exposure, imgName4, "png", 72);
+            MgwasUtils.plotScatter(sb, exposure, imgName1, "png", 150);
+            MgwasUtils.plotForest(sb, exposure, imgName2, "png", 150);
+            MgwasUtils.plotLeaveOneOut(sb, exposure, imgName3, "png", 150);
+            MgwasUtils.plotFunnel(sb, exposure, imgName4, "png", 150);
         }
 
         return "MgwasResultView";
@@ -940,7 +940,7 @@ public class MgwasBean implements Serializable {
         name = compoundName + "_" + name;
 
         if (sb.getImgMap().keySet().contains(name)) {
-            String nm_img = ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(name) + "dpi72.png";
+            String nm_img = ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(name) + "dpi150.png";
             return nm_img;
         } else {
             return ab.getRootContext() + "/resources/images/temp.png";

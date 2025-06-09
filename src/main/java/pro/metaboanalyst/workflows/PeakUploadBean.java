@@ -267,7 +267,7 @@ public class PeakUploadBean implements Serializable {
 
         RDataUtils.setPeakFormat(RC, dataFormat);
         setMsModeOpt(msModeOpt);
-        RDataUtils.setInstrumentParams(RC, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
+        RDataUtils.setInstrumentParams(sb, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
         sb.setDataUploaded();
 
         if (RDataUtils.readPeakListData(RC, fileName)) {
@@ -342,7 +342,7 @@ public class PeakUploadBean implements Serializable {
         }
         sb.initNaviTree("mummichog-table");
         setMsModeOpt(msModeOpt);
-        RDataUtils.setInstrumentParams(RC, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
+        RDataUtils.setInstrumentParams(sb, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
         sb.setDataUploaded();
 
         RDataUtils.setRT(RC, rtIncluded);
@@ -405,7 +405,7 @@ public class PeakUploadBean implements Serializable {
                 return null;
             }
             fileName = DataUtils.getJustFileName(peakFile.getFileName());
-            DataUtils.uploadFile(peakFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            DataUtils.uploadFile(sb, peakFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
         } catch (Exception e) {
             //e.printStackTrace();
@@ -416,7 +416,7 @@ public class PeakUploadBean implements Serializable {
         sb.setDataUploaded();
         RConnection RC = sb.getRConnection();
         RDataUtils.setPeakFormat(RC, dataRankedBy);
-        RDataUtils.setInstrumentParams(RC, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
+        RDataUtils.setInstrumentParams(sb, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
 
         if (dataType.equals("table")) {
             RDataUtils.setRT(RC, rtIncluded);

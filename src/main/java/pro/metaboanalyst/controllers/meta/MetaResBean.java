@@ -4,6 +4,8 @@
  */
 package pro.metaboanalyst.controllers.meta;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.PostConstruct;
 import pro.metaboanalyst.models.ColumnModel;
 import pro.metaboanalyst.models.MetaResultBean;
 import pro.metaboanalyst.rwrappers.RMetaUtils;
@@ -33,32 +35,29 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 @Named("metaResBean")
 public class MetaResBean implements Serializable {
 
+    @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
-    private List<MetaResultBean> resBeans;
+    @JsonIgnore
+    @Inject
+    private MetaLoadBean mlb;
+
+    private List<MetaResultBean> resBeans = new ArrayList();
     private List<ColumnModel> columns = new ArrayList();
     private Map<String, List<MetaResultBean>> resBeanMap = new HashMap();
     private String selectedKey;
 
-    public MetaResBean() {
-
-        resBeans = new ArrayList();
-        populateResBeans();
-
-    }
-
     private String[] ids = null;
 
+    @PostConstruct
     public void populateResBeans() {
-        SessionBean1 sb1 = (SessionBean1) DataUtils.findBean("sessionBean1");
-        MetaLoadBean mb = (MetaLoadBean) DataUtils.findBean("loadBean");
 
-        RConnection RC = sb1.getRConnection();
-        if (RMetaUtils.checkMetaPerformed(RC, mb.getAnalMethod()) == 0) {
+        RConnection RC = sb.getRConnection();
+        if (RMetaUtils.checkMetaPerformed(RC, mlb.getAnalMethod()) == 0) {
             return;
         } else {
-            RDataUtils.toggleMetaRes(RC, mb.getAnalMethod());
+            RDataUtils.toggleMetaRes(RC, mlb.getAnalMethod());
         }
 
         resBeans.clear();
@@ -96,7 +95,7 @@ public class MetaResBean implements Serializable {
                     rb.setValue(columnKeys[m], resMat[i][m] + "");
                 }
 
-                if (i < mb.getCurrentDeNum(mb.getAnalMethod())) {
+                if (i < mlb.getCurrentDeNum(mlb.getAnalMethod())) {
                     rb.setSignificant(true);
                 } else {
                     rb.setSignificant(false);
@@ -115,7 +114,7 @@ public class MetaResBean implements Serializable {
         if (sortOrder == null) {
             sortOrder = "asc";
         }
-        resBeanMap.put(mb.getAnalMethod(), resBeans);
+        resBeanMap.put(mlb.getAnalMethod(), resBeans);
     }
 
     public Map<String, List<MetaResultBean>> getResBeanMap() {
@@ -166,7 +165,7 @@ public class MetaResBean implements Serializable {
     public void setSelectedFeature(MetaResultBean selectedData) {
         this.selectedFeature = selectedData;
         String geneID = selectedFeature.getID();
-        RMetaUtils.plotSelectedFeature(sb, geneID, "png", 72);
+        RMetaUtils.plotSelectedFeature(sb, geneID, "png", 150);
         currentFeatureImg = sb.getCurrentUser().getRelativeDir() + File.separator + "meta_ft_" + geneID + ".png";
     }
 
@@ -286,12 +285,10 @@ public class MetaResBean implements Serializable {
     }
 
     public void onTabChange(TabChangeEvent event) {
-        MetaLoadBean mb = (MetaLoadBean) DataUtils.findBean("loadBean");
-
         selectedKey = getKeyFromTableName(event.getTab().getTitle());         // tab title == key
-        mb.setAnalMethod(selectedKey);
+        mlb.setAnalMethod(selectedKey);
         populateResBeans();
-        System.out.println("selectedKey===" + selectedKey);
+        //System.out.println("selectedKey===" + selectedKey);
     }
 
     public static String getTableName(String key) {

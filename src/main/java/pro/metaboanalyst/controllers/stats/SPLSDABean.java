@@ -304,17 +304,17 @@ public class SPLSDABean implements Serializable {
 
         ChemoMetrics.initSPLS(sb, compNum, varNum, compVarOpt, validationOpt, foldNum, "F");
 
-        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 72, compNum);
-        ChemoMetrics.plotSPLS2DScore(sb, sb.getNewImage("spls_score2d"), "png", 72, 1, 2, 0.95, 1, 0, cexOpt);
-        ChemoMetrics.plotSPLS3DScore(sb, sb.getNewImage("spls_score3d"), "json", 72, 1, 2, 3);
+        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 150, compNum);
+        ChemoMetrics.plotSPLS2DScore(sb, sb.getNewImage("spls_score2d"), "png", 150, 1, 2, 0.95, 1, 0, cexOpt);
+        ChemoMetrics.plotSPLS3DScore(sb, sb.getNewImage("spls_score3d"), "json", 150, 1, 2, 3);
 
-        ChemoMetrics.plotSPLSLoading(sb, sb.getNewImage("spls_loading"), "png", 72, 1, viewOpt);
-        ChemoMetrics.plotSPLS3DLoading(sb, sb.getCurrentImage("spls_loading3d"), "json", 72, 1, 2, 3);
-        //ChemoMetrics.plotSPLSDAClassification(sb, sb.getNewImage("spls_cv"), "png", 72);
+        ChemoMetrics.plotSPLSLoading(sb, sb.getNewImage("spls_loading"), "png", 150, 1, viewOpt);
+        ChemoMetrics.plotSPLS3DLoading(sb, sb.getCurrentImage("spls_loading3d"), "json", 150, 1, 2, 3);
+        //ChemoMetrics.plotSPLSDAClassification(sb, sb.getNewImage("spls_cv"), "png", 150);
     }
 
     public void splsPairBtn_action() {
-        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 72, splsPairNum);
+        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 150, splsPairNum);
     }
 
     public void splsScore2dBtn_action() {
@@ -330,24 +330,24 @@ public class SPLSDABean implements Serializable {
             if (greyScale) {
                 useGreyScale = 1;
             }
-            ChemoMetrics.plotSPLS2DScore(sb, sb.getNewImage("spls_score2d"), "png", 72, splsScore2dX, splsScore2dY, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
+            ChemoMetrics.plotSPLS2DScore(sb, sb.getNewImage("spls_score2d"), "png", 150, splsScore2dX, splsScore2dY, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
         }
     }
 
     public void splsScore3dBtn_action() {
         if (compNum > 2) {
-            ChemoMetrics.plotSPLS3DScore(sb, sb.getNewImage("spls_score3d"), "json", 72, 1, 2, 3);
+            ChemoMetrics.plotSPLS3DScore(sb, sb.getNewImage("spls_score3d"), "json", 150, 1, 2, 3);
         } else {
             sb.addMessage("Error", "The current model contains less than 3 components!");
         }
     }
 
     public void splsLoadBtn_action() {
-        ChemoMetrics.plotSPLSLoading(sb, sb.getNewImage("spls_loading"), "png", 72, splsLoadX, viewOpt);
+        ChemoMetrics.plotSPLSLoading(sb, sb.getNewImage("spls_loading"), "png", 150, splsLoadX, viewOpt);
     }
 
     public void splsCvBtn_action() {
         ChemoMetrics.performSPLSCV(sb, compNum, varNum, compVarOpt, validationOpt, foldNum, "T");
-        ChemoMetrics.plotSPLSDAClassification(sb, sb.getNewImage("spls_cv"), "png", 72);
+        ChemoMetrics.plotSPLSDAClassification(sb, sb.getNewImage("spls_cv"), "png", 150);
     }
 }

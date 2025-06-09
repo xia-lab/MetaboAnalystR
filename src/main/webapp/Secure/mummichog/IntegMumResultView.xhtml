@@ -15,77 +15,88 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/mummichog_graphics_report.js"></script>
-        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.0.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.01.js"></script>
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
         <h:inputHidden id="mydir" value="#{sessionBean1.currentUser.relativeDir}" />
         <h:panelGrid styleClass="my-content-panel">
             <h2>Integrated Pathway Activity Profile</h2>
-            <p><b>Mouse over</b> any circle to view its name; <b>click</b> to view compound matches. More details are in the table at bottom</p>
+            <p>
+                <b>Mouse over</b> any circle to view its name; <b>click</b> to view compound matches. More details are in the table at bottom
+                The Integrated MS Peaks to Pathways plot summarizes the results  
+                combining p-values computed from mummichog (y-axis) and GSEA (x-axis). 
+                The size and color of the dots correspond to their transformed combined p-values.
+            </p>
             <h:form id="imgForm">
                 <p:remoteCommand name="myRemote" partialSubmit="true" process="@this" update="summaryForm" action="#{mummiAnalBean.showPathDialog()}"/>
 
-                <h:panelGrid id="imgPane" style="text-align: right; padding-left: 200px">
-                    <h:panelGrid columns="4" style="margin-left: 540px; width: 200px">                        
+                <h:panelGrid  id="graphPane" columns="2" style="padding-left:20px">
 
-                        <p:commandLink onclick="reset()"
-                                       title="Reset">
-                            <img style="width: 16px;" src="#{facesContext.externalContext.requestContextPath}/resources/images/reset-64.png"/>
-                        </p:commandLink>
-
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('integ_peaks')}" 
-                                       update=":myGraphPane"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customize the graphics output">
-                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                        </p:commandLink>
-
-                        <p:commandLink onclick="exportToPng()"
-                                       title="PNG download">
-                            <b>PNG</b>
-                        </p:commandLink>
-
-                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
-
+                    <h:panelGrid id="imgPane" class="surface-card shadow-1 p-4 text-800">
+                        <canvas id='canvas1' width='720px' height='670px' style='width:720px;height:670px'/>
                     </h:panelGrid>
-                    <p:tooltip for="helpIcon" styleClass="helpTip">
-                        <p>
-                            The Integrated MS Peaks to Pathways plot summarizes the results  
-                            combining p-values computed from mummichog (y-axis) and GSEA (x-axis). 
-                            The size and color of the dots correspond to their transformed combined p-values.
-                        </p>
-                    </p:tooltip>
-                    <h:panelGrid style="margin: auto; text-align: center" class="surface-card shadow-1 p-4 text-800">
-                        <canvas id='canvas1' width='630px' height='630px'/>
-                         
+
+                    <h:panelGrid style="width:400px; height: 360px; padding-left: 100px; font-size: 15px">   
+
+                        <p:commandButton value="Enrich Network" 
+                                         disabled="#{!mummiAnalBean.showMumNetwork}"
+                                         ajax="false" 
+                                         rendered="false"
+                                         icon="pi pi-caret-right"
+                                         style="width: 180px;"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#{mummiAnalBean.proceed2EnrichNet()}"/>
+
+                        <p:commandButton type="button"
+                                         onclick="resetScatterZoom();" 
+                                         immediate="true"
+                                         icon="pi pi-replay"
+                                         style="width: 180px;"
+                                         value="Reset Zoom"/> 
+
+                        <p:commandButton value="KEGG Network" 
+                                         rendered="#{mummiAnalBean.showMumNetwork}"
+                                         ajax="false" 
+                                         style="width: 180px;"
+                                         icon="pi pi-caret-right" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="Metabolic network"/> 
+
+                        <p:commandButton action="#{sessionBean1.graphicsLnk_action('integ_peaks')}" 
+                                         update=":myGraphPane" style="width: 180px;"
+                                         icon="pi pi-download"
+                                         oncomplete="PF('graphDialog').show()"
+                                         value="Hi-res Graphics"/>
+
+                        <p:commandButton onclick="exportToPng()" 
+                                         icon="pi pi-download"
+                                         style="width: 180px;"
+                                         value="PNG Download"/>
+
+                        <p:commandButton value="Pathway Hits" ajax="false" 
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         style="width: 180px;"
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.integPathEnrichFile}" />  
+                        </p:commandButton> 
+
+                        <p:commandButton value="Compound Hits" ajax="false" 
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         style="width: 180px;"
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
+                        </p:commandButton> 
                     </h:panelGrid>
                 </h:panelGrid>  
             </h:form> 
             <hr class="style-one"/> 
             <h:form id="resTblForm"> 
-                <h:panelGrid columns="3" style="width:90%; padding: 10px 10px 10px 50px; text-align: center">
-                    <p:commandButton value="Pathway Hits" ajax="false" 
-                                     onclick="PrimeFaces.monitorDownload(start, stop);"   
-                                     icon="pi pi-download">  
-                        <p:fileDownload value="#{mummiAnalBean.integPathEnrichFile}" />  
-                    </p:commandButton> 
-
-                    <p:commandButton value="Compound Hits" ajax="false" 
-                                     onclick="PrimeFaces.monitorDownload(start, stop);"   
-                                     icon="pi pi-download">  
-                        <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
-                    </p:commandButton> 
-
-                    <p:commandButton value="Network Explorer" 
-                                     rendered="#{mummiAnalBean.showMumNetwork}"
-                                     ajax="false" 
-                                     icon="pi pi-caret-right" 
-                                     onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()"                              
-                                     action="Metabolic network"/>
-                </h:panelGrid>
-
+                <h3>
+                    Detailed result table
+                </h3>
                 <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" 
                              class="surface-card shadow-1 p-0 text-800"
                              paginatorPosition="bottom" id="resTbl" style="width:100%;" var="ib" value="#{mummiAnalBean.integBeans}">  

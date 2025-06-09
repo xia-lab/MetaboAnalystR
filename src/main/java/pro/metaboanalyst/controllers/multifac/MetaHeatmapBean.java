@@ -14,7 +14,7 @@ import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -29,6 +29,11 @@ public class MetaHeatmapBean implements Serializable {
     private WorkflowBean wb;
     @Inject
     private SessionBean1 sb;
+    
+        @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+        
     private final String pageID = "Metadata";
 
     private String metaDistOpt = "euclidean";
@@ -106,16 +111,15 @@ public class MetaHeatmapBean implements Serializable {
 
     public void doDefaultMetaHeatmap() {
         if (!sb.isAnalInit(pageID)) {
-            JavaRecord.record_metaOverviewBn_action(this);
+            jrd.record_metaOverviewBn_action(this);
             sb.addNaviTrack(pageID, "/Secure/multifac/MetaDataView.xhtml");
-            RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 72);
+            RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 150);
             RDataUtils.plotMetaHeatmap(sb, "overview", "both", "euclidean", "ward.D", "bwm",
-                    includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 72);
+                    includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
         } else {
-            WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-            if (fp.getFunctionInfos().get("Metadata Heatmap") != null) {
+            if (wb.getFunctionInfos().get("Metadata Heatmap") != null) {
                 try {
-                    FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("Metadata Heatmap"));
+                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("Metadata Heatmap"));
                 } catch (Exception ex) {
 
                 }
@@ -124,11 +128,11 @@ public class MetaHeatmapBean implements Serializable {
     }
 
     public boolean metaOverviewBn_action() {
-        JavaRecord.record_metaOverviewBn_action(this);
+        jrd.record_metaOverviewBn_action(this);
         if (wb.isEditMode()) {
             return true;
         }
-        int res = RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 72);
+        int res = RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 150);
         if (res == 0) {
             sb.addMessage("Error", "Unknown error occured in the metadata correlation heatmap generation!");
             return false;
@@ -136,7 +140,7 @@ public class MetaHeatmapBean implements Serializable {
         }
 
         res = RDataUtils.plotMetaHeatmap(sb, metaViewOpt, metaClusterSelOpt, metaDistOpt, metaClusterOpt, metaColorOpt,
-                includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 72);
+                includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
         if (res == 0) {
             sb.addMessage("Error", "Please change standardization parameters and try again!");
             return false;

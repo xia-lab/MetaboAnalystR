@@ -4,10 +4,10 @@
  */
 package pro.metaboanalyst.lts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.utils.DataUtils;
@@ -29,7 +29,6 @@ import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import org.omnifaces.util.Faces;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import pro.metaboanalyst.rwrappers.RCenter;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -47,15 +46,25 @@ import java.util.logging.Logger;
 public class FireUserBean implements Serializable {
 
     @Inject
-    FireBase fb;
+    private FireBase fb;
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
 
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
     @Inject
-    DatabaseClient db;
+    private DatabaseClient db;
+
+    @Inject
+    private FireUserBean fub;
+
+    @Inject
+    private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
+    private MailService ms;
 
     //User details
     private String email = ""; // email is used as the username
@@ -206,16 +215,12 @@ public class FireUserBean implements Serializable {
     }
 
     public void doUserLogin() {
-        /*if (!ab.isOnVipServer()) {
-            checkDatabaseExists();
-        }*/
         boolean res = doUserLoginLocal();
         if (res) {
-            FireUserBean ulb = (FireUserBean) DataUtils.findBean("fireUserBean");
             Faces.addResponseCookie("user", email, "/", 3600);
-            fb.getUserMap().put(email, ulb);
+            fb.getUserMap().put(email, fub);
             setOmicsquareVerified(true);
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/ModuleView.xhtml", "info", "Login successful!");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/ModuleView.xhtml", "info", "Login successful!");
         }
     }
 
@@ -237,24 +242,10 @@ public class FireUserBean implements Serializable {
         }
     }
 
-    public void checkDatabaseExists() {
-        System.out.println(fb.getProjectDBPath());
-        File file = new File(fb.getProjectDBPath());
-        boolean exists = file.exists();
-        if (exists) {
-            System.out.println("OmicSquareDB exists.");
-        } else {
-            System.out.println("OmicSquareDB does not exist.");
-        }
-        RCenter.createProjectDb(fb.getRscriptsDBPath(), fb.getProjectDBPath());
-
-    }
-
     public void doRegister() {
 
         //boolean stepBool1 = db.PsqlDBAvailabilityCheck();
         //System.out.println("doGeneralLogin --> step1 + psqldb avalib: " + stepBool1);
- 
         if (!DataUtils.isValidEmail(email)) {
             sb.addMessage("error", "Please provide a valid email address!");
             return;
@@ -284,7 +275,6 @@ public class FireUserBean implements Serializable {
             }
         }
 
-        //checkDatabaseExists();
         String res = db.registerUser(email, password, fname, lname, institution);
 
         if (res.equals("User registered successfully.")) {
@@ -297,7 +287,7 @@ public class FireUserBean implements Serializable {
                 try {
                     //boolean res3 = doSendActivateCode(email, activateCode, ExpDate);
                     //if (res3) {
-                    DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Registration successful! Please check your inbox for activating your account! If you are unable to receive the email, please contact the admins!");
+                    DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Registration successful! Please check your inbox for activating your account! If you are unable to receive the email, please contact the admins!");
                     //}
                 } catch (Exception ex) {
                     java.util.logging.Logger.getLogger(FireUserBean.class.getName()).log(Level.SEVERE, null, ex);
@@ -331,20 +321,20 @@ public class FireUserBean implements Serializable {
                 boolean res3 = sendResetMessage(email, resetToken);
                 if (res3) {
                     sb.addMessage("info",
-                                    "Reset Invoked successfully! Please check your email (maybe in junk box) and follow the instruction to reset your password!");
+                            "Reset Invoked successfully! Please check your email (maybe in junk box) and follow the instruction to reset your password!");
                 } else {
                     sb.addMessage("error", "Unable to send email!");
                 }
             } catch (Exception ex) {
                 email = "";
                 sb.addMessage("error",
-                                "Reseting mail server is down, report this code: xxx00008 to administrator !");
+                        "Reseting mail server is down, report this code: xxx00008 to administrator !");
                 System.out.println(ex);
             }
 
         } else {
             email = "";
-            sb.addMessage("error",  "Email Not Exits! Please register first with this email!");
+            sb.addMessage("error", "Email Not Exits! Please register first with this email!");
         }
     }
 
@@ -365,7 +355,7 @@ public class FireUserBean implements Serializable {
             System.out.println(resetDone);
             if (resetDone.equals("Success")) {
                 db.deleteTokenForUser(email);
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Please login with new password!");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Please login with new password!");
             } else {
                 sb.addMessage("error", resetDone);
             }
@@ -375,7 +365,7 @@ public class FireUserBean implements Serializable {
     }
 
     public boolean sendResetMessage(String to, String resetToken) throws JsonProcessingException, IOException, InterruptedException {
-        MailService ms = (MailService) DataUtils.findBean("mailService");
+
         String url = "";
 
         if (ab.isOnLocalServer()) {
@@ -416,7 +406,7 @@ public class FireUserBean implements Serializable {
     public void activateAccount() {
         String res = db.checkActivationCode(email, activationCode);
         if (res.equals("Success!")) {
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Account has been activated! You can login by entering your password!");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Account has been activated! You can login by entering your password!");
         } else {
             sb.addMessage("error", res);
         }
@@ -536,14 +526,14 @@ public class FireUserBean implements Serializable {
             //URI uri = path.toUri();
             //HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
             //URL url = new URL(urlString);
-            URI uri = null;            
+            URI uri = null;
             try {
                 uri = new URI(urlString);
             } catch (URISyntaxException ex) {
                 Logger.getLogger(FireUserBean.class.getName()).log(Level.SEVERE, null, ex);
             }
             URL url = uri.toURL();
-            
+
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
@@ -554,9 +544,8 @@ public class FireUserBean implements Serializable {
                 urlParameters = "username=" + URLEncoder.encode(email, "UTF-8")
                         + "&password=" + URLEncoder.encode(password, "UTF-8");
             } else {
-                FireBaseController fc = (FireBaseController) DataUtils.findBean("fireBaseController");
 
-                fc.reloadUserInfo();
+                fbc.reloadUserInfo();
                 urlParameters = "username=" + URLEncoder.encode(email, "UTF-8")
                         + "&password=" + URLEncoder.encode(fb.getUserMap().get(email).getPassword(), "UTF-8");
             }
@@ -591,10 +580,10 @@ public class FireUserBean implements Serializable {
     public boolean loginHandshake(String tokenId) {
         if (fb.getLoginUserMap().containsKey(tokenId)) {
             FireUserBean ubObj = fb.getLoginUserMap().get(tokenId);
-            FireUserBean ub = (FireUserBean) DataUtils.findBean("fireUserBean");
-            ub.setFireUserBean(ubObj);
-            ub.setOmicsquareVerified(true);
-            System.out.println("handshake=====" + ub.getEmail());
+
+            fub.setFireUserBean(ubObj);
+            fub.setOmicsquareVerified(true);
+            System.out.println("handshake=====" + fub.getEmail());
             fb.getLoginUserMap().remove(tokenId);
 
             Faces.addResponseCookie("user", email, "/", 3600);
@@ -639,7 +628,7 @@ public class FireUserBean implements Serializable {
                         + token + "&projectId=" + projectId;
 
                 // Perform redirection
-                DataUtils.doRedirect(redirection_url);
+                DataUtils.doRedirect(redirection_url, ab);
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();

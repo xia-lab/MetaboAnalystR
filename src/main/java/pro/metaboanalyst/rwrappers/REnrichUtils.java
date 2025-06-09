@@ -9,7 +9,6 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -20,11 +19,12 @@ public class REnrichUtils {
     private static final Logger LOGGER = LogManager.getLogger(REnrichUtils.class);
 
     //assign query list to R, note, direct "<-" only pass reference, not value
-    public static boolean hypergeomTest(RConnection RC) {
+    public static boolean hypergeomTest(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CalculateHyperScore(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             return (RC.eval(rCommand).asInteger() == 1);
         } catch (Exception e) {
@@ -157,7 +157,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "CalculateGlobalTestScore(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             //here we use microservice
             rCommand = ".prepare.globaltest.score(NA)";
@@ -171,7 +171,7 @@ public class REnrichUtils {
             }
             rCommand = ".save.globaltest.score(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -312,7 +312,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand2 = "CalculateQeaScore(NA" + ", \"" + topoCode + "\", \"" + method + "\")";
             RCenter.recordRCommand(RC, rCommand2);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "paBn_proceed");
+            sb.recordRCommandFunctionInfo(rCommand2, "paBn_proceed");
 
             //here we use microservice
             String rCommand = ".prepare.qea.score(NA" + ", \"" + topoCode + "\", \"" + method + "\")";
@@ -326,7 +326,7 @@ public class REnrichUtils {
 
                 rCommand = ".save.qea.score(NA)";
                 RCenter.recordRCommand(RC, rCommand);
-                JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "paBn_proceed");
+                sb.recordRCommandFunctionInfo(rCommand2, "paBn_proceed");
 
                 return RC.eval(rCommand).asInteger() == 1;
             }
@@ -380,7 +380,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotEnrichPieChart(NA" + ", \"" + enrichType + "\", \"" + imgName + "\", \"" + format + "\", " + dpi + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             if (enrichType.equals("ora")) {
                 sb.addGraphicsCMD("ora_pie", rCommand);
@@ -403,7 +403,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotORA(NA" + ", \"" + imgName + "\", \"" + imgOpt + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             sb.addGraphicsCMD("ora", rCommand);
             sb.addGraphicsMapLink("ora", "/Secure/enrichment/OraView.xhtml");
@@ -419,7 +419,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotQEA.Overview(NA" + ", \"" + imgName + "\", \"" + imgOpt + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             sb.addGraphicsCMD("qea", rCommand);
             RC.voidEval(rCommand);
@@ -433,7 +433,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotEnrichDotPlot(NA" + ", \"" + enrichType + "\", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Enrichment");
+            sb.recordRCommandFunctionInfo(rCommand, "Enrichment");
 
             if (enrichType.equals("ora")) {
                 sb.addGraphicsCMD("ora_dot", rCommand);
@@ -485,7 +485,7 @@ public class REnrichUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotPSEAIntegPaths(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             sb.addGraphicsCMD("integ_peaks", rCommand);
             sb.addGraphicsMapLink("integ_peaks", "/Secure/mummichog/IntegMumResultView.xhtml");
@@ -496,12 +496,13 @@ public class REnrichUtils {
         }
     }
 
-    public static double getDefaultPvalCutoff(RConnection RC) {
+    public static double getDefaultPvalCutoff(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "GetDefaultPvalCutoff(NA)";
             String rCommand2 = "pvalue <- GetDefaultPvalCutoff(NA)";
             RCenter.recordRCommand(RC, rCommand2);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "InitLibrary");
+            sb.recordRCommandFunctionInfo(rCommand2, "InitLibrary");
 
             return RC.eval(rCommand).asDouble();
         } catch (Exception e) {
@@ -510,10 +511,11 @@ public class REnrichUtils {
         return -1;
     }
 
-    public static String getMummiMSMode(RConnection RC) {
+    public static String getMummiMSMode(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "GetMummiMode(NA)";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "InitLibrary");
+            sb.recordRCommandFunctionInfo(rCommand, "InitLibrary");
 
             return RC.eval(rCommand).asString();
         } catch (Exception rse) {
@@ -584,12 +586,13 @@ public class REnrichUtils {
         return false;
     }
 
-    public static boolean setupMummichogPval(RConnection RC, double pval) {
+    public static boolean setupMummichogPval(SessionBean1 sb, double pval) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetMummichogPval(NA, " + pval + ")";
             String rCommand2 = "SetMummichogPval(NA, pvalue)";
             RCenter.recordRCommand(RC, rCommand2);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return RC.eval(rCommand).asInteger() > 0;
         } catch (Exception e) {
@@ -598,11 +601,12 @@ public class REnrichUtils {
         return false;
     }
 
-    public static boolean convertTableToPeakList(RConnection RC) {
+    public static boolean convertTableToPeakList(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PreparePeakTable4PSEA(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception e) {
@@ -634,12 +638,13 @@ public class REnrichUtils {
     }
 
     //peak set enrichment analysis (integrate mummichog and GSEA)
-    public static boolean performPSEA(RConnection RC, String libOpt, String libVer, int minLib) {
+    public static boolean performPSEA(SessionBean1 sb, String libOpt, String libVer, int minLib) {
         try {
+            RConnection RC = sb.getRConnection();
             //show per num in R command
             String rCommand = "PerformPSEA(NA, \"" + libOpt + "\", \"" + libVer + "\", " + minLib + " , " + 100 + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return (RC.eval(rCommand).asInteger() == 1);
         } catch (Exception e) {
@@ -699,13 +704,14 @@ public class REnrichUtils {
         return 0;
     }
 
-    public static int createHeatmapJson(RConnection RC, String libOpt, String libVer,
+    public static int createHeatmapJson(SessionBean1 sb, String libOpt, String libVer,
             int minLib, String fileNm, String filt, String version) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CreateHeatmapJson(NA, \"" + libOpt + "\", \"" + libVer + "\", "
                     + minLib + " , \"" + fileNm + "\", \"" + filt + "\", \"" + version + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return (RC.eval(rCommand).asInteger());
 
@@ -715,11 +721,12 @@ public class REnrichUtils {
         return 0;
     }
 
-    public static int createListHeatmapJson(RConnection RC, String libOpt, String libVer, int minLib, String fileNm, String filt, String version) {
+    public static int createListHeatmapJson(SessionBean1 sb, String libOpt, String libVer, int minLib, String fileNm, String filt, String version) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CreateListHeatmapJson(NA, \"" + libOpt + "\", \"" + libVer + "\", " + minLib + " ,  \"" + fileNm + "\", \"" + filt + "\", \"" + version + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPeaks2Fun");
+            sb.recordRCommandFunctionInfo(rCommand, "performPeaks2Fun");
 
             return (RC.eval(rCommand).asInteger());
 
@@ -756,11 +763,12 @@ public class REnrichUtils {
         return null;
     }
 
-    public static boolean computePathHeatmap(RConnection RC, String libOpt, String fileNm, String type) {
+    public static boolean computePathHeatmap(SessionBean1 sb, String libOpt, String fileNm, String type) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "ComputePathHeatmap(NA, \"" + libOpt + "\", \"" + fileNm + "\", \"" + type + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "paBn_proceed");
+            sb.recordRCommandFunctionInfo(rCommand, "paBn_proceed");
 
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception e) {

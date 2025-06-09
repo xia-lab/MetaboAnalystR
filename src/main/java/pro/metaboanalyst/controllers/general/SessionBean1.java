@@ -39,7 +39,7 @@ import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import org.omnifaces.util.Faces;
 import pro.metaboanalyst.workflows.WorkflowView;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
@@ -61,7 +61,40 @@ public class SessionBean1 implements Serializable {
 
     @JsonIgnore
     @Inject
+    private WorkflowView wfv;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
     private DiagramView dv;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+
+    @JsonIgnore
+    @Inject
+    private FireBase fb;
+
+    @JsonIgnore
+    @Inject
+    private MnetResBean mnb;
+
+    @JsonIgnore
+    @Inject
+    private ResourceSemaphore resourceSemaphore;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     //****************user defined methods**************
     //USED TO BE FINAL, REMOVED FINAL AND ADDED SETTER FUNCTION FOR DESERIALIZATION FROM JSON
     //OTHERWISE, CAN NOT RESTORE STATE.
@@ -114,10 +147,6 @@ public class SessionBean1 implements Serializable {
     private HashMap<String, Integer> imgMap = new HashMap<>();
     private HashMap<String, String> reportImgMap = new HashMap<>();
     private HashMap<String, String> reportJsonMap = new HashMap<>();
-
-    public String getImgSource() {
-        return imgSource;
-    }
 
     private int fileCount = 0;
     private String currentPageID = "";
@@ -479,12 +508,9 @@ public class SessionBean1 implements Serializable {
     //0 logout only
     public void doLogout(int returnHome) {
         if (registeredLogin) {
-            FireUserBean ulb1 = (FireUserBean) DataUtils.findBean2("fireUserBean");
-            FireBase fb = (FireBase) DataUtils.findBean("fireBase");
-            System.out.println(ulb1.getEmail() + "emailLogin");
-            
-            Faces.addResponseCookie("user", ulb1.getEmail(), "/", 3600);
-            fb.getUserMap().put(ulb1.getEmail(), ulb1);
+
+            Faces.addResponseCookie("user", fub.getEmail(), "/", 3600);
+            fb.getUserMap().put(fub.getEmail(), fub);
         }
         if (loggedIn) {
             if (RC != null) {
@@ -499,7 +525,7 @@ public class SessionBean1 implements Serializable {
             FacesContext.getCurrentInstance().getViewRoot().getViewMap().clear();
             reset2DefaultState();
             if (returnHome == 1) {
-                DataUtils.doRedirect(ab.getDomainURL());
+                DataUtils.doRedirect(ab.getDomainURL(), ab);
             } else {
                 FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
             }
@@ -513,7 +539,7 @@ public class SessionBean1 implements Serializable {
                 FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
                 FacesContext.getCurrentInstance().getViewRoot().getViewMap().clear();
 
-                DataUtils.doRedirect(ab.getDomainURL());
+                DataUtils.doRedirect(ab.getDomainURL(), ab);
             }
         }
 
@@ -571,8 +597,8 @@ public class SessionBean1 implements Serializable {
     public void reset2DefaultState() {
         this.moduleURL = null;
         this.dataUploaded = false;
-        this.dataProcessed = false;
         this.integChecked = false;
+        this.dataProcessed = false;
         this.dataNormed = false;
         imgMap.clear();
         naviTrack.clear();
@@ -582,10 +608,34 @@ public class SessionBean1 implements Serializable {
 
     public void setDataUploaded() {
         this.dataUploaded = true;
-        this.dataProcessed = false;
         this.integChecked = false;
+        this.dataProcessed = false;
         this.dataNormed = false;
         addMessage("info", "Data upload successful.");
+    }
+
+    public void setIntegChecked() {
+        this.dataUploaded = true;
+        this.integChecked = true;
+        this.dataProcessed = false;
+        this.dataNormed = false;
+        addMessage("info", "Integrity check successful.");
+    }
+
+    public void setDataProcessed() {
+        this.dataUploaded = true;
+        this.integChecked = true;
+        this.dataProcessed = true;
+        this.dataNormed = false;
+        addMessage("info", "Data processed successful.");
+    }
+
+    public void setDataNormed() {
+        this.dataUploaded = true;
+        this.integChecked = true;
+        this.dataProcessed = true;
+        this.dataNormed = true;
+        addMessage("info", "Data normalization successful.");
     }
 
     public boolean isDataUploaded() {
@@ -600,31 +650,14 @@ public class SessionBean1 implements Serializable {
         return dataProcessed;
     }
 
-    public void setDataProcessed(boolean dataProcessed) {
-        this.dataProcessed = dataProcessed;
-        this.integChecked = false;
-        this.dataNormed = false;
-        addMessage("info", "Data process successful.");
-    }
-
     public boolean isIntegChecked() {
         return integChecked;
-    }
-
-    public void setIntegChecked(boolean integChecked) {
-        this.integChecked = integChecked;
-        this.dataNormed = false;
-        addMessage("info", "Integrity check successful.");
     }
 
     public boolean isDataNormed() {
         return dataNormed;
     }
 
-    public void setDataNormed(boolean dataNormed) {
-        this.dataNormed = dataNormed;
-        addMessage("info", "Data normalization successful.");
-    }
 
     /*
      * record the pages that have been visited or is visiting
@@ -690,7 +723,7 @@ public class SessionBean1 implements Serializable {
      */
     //@return path to image
     public String getCurrentImageURL(String name) {
-        return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi72.png";
+        return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
 
     /**
@@ -1105,13 +1138,11 @@ public class SessionBean1 implements Serializable {
             naviTrackAnalType.put(pageName, getAnalType());
             naviTrackStatus.put(pageName, true);  // 🔹 Track success/failure
 
-            WorkflowView wf = (WorkflowView) DataUtils.findBean("workflowView");
-            wf.addToWorkflow(naviCode);
+            wfv.addToWorkflow(naviCode);
         }
 
         if (pageName.equals("Upload")) {
-            FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
-            fb.reloadUserInfo();
+            fbc.reloadUserInfo();
         } else {
             //force random mem cleaning for R session
             if (Math.random() < 0.5) {
@@ -1202,7 +1233,7 @@ public class SessionBean1 implements Serializable {
             PrimeFaces.current().executeScript("PF('logoutProjDialog').show()");
         } else {
             doLogout(1);
-            DataUtils.doRedirect("/MetaboAnalyst/home.xhtml");
+            DataUtils.doRedirect("/MetaboAnalyst/home.xhtml", ab);
         }
     }
 
@@ -1355,12 +1386,11 @@ public class SessionBean1 implements Serializable {
     public void viewCmpdSummary(String name) {
         UniVarTests.setCmpdSummaryType(getRConnection(), getCmpdSummaryType());
         if (getAnalType().equals("mf") && getTsDesign().equals("multi")) {
-            MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-            tb.setBoxId(name);
-            tb.updateBoxplotMeta();
-            tb.setBoxMetaVersionNum(tb.getBoxMetaVersionNum() + 1);
+            mfb.setBoxId(name);
+            mfb.updateBoxplotMeta();
+            mfb.setBoxMetaVersionNum(mfb.getBoxMetaVersionNum() + 1);
         } else {
-            cmpdSummaryNm = UniVarTests.plotCmpdSummary(this, name, "NA", "NA", imgCount, "png", 72 + "");
+            cmpdSummaryNm = UniVarTests.plotCmpdSummary(this, name, "NA", "NA", imgCount, "png", 150 + "");
             //PrimeFaces.current().executeScript("PF('FeatureView').show();");
         }
         //System.out.println(name + "=======viewcmpd");
@@ -1378,6 +1408,16 @@ public class SessionBean1 implements Serializable {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + cmpdSummaryNm;
     }
 
+    private String cmpdImgSize = "width:7.5in; height:4.875in;";
+
+    public String getCmpdImgSize() {
+        return cmpdImgSize;
+    }
+
+    public void setCmpdImgSize(String cmpdSummaryImgSize) {
+        this.cmpdImgSize = cmpdSummaryImgSize;
+    }
+
     public boolean isSwitchMode() {
         return switchMode;
     }
@@ -1387,23 +1427,21 @@ public class SessionBean1 implements Serializable {
     }
 
     public String computeDspcNet() {
-        //WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         if (wb.isEditMode()) {
             addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_computeDspcNet();
+            jrd.record_computeDspcNet();
             return null;
         }
         setDspcNet(true);
-        int[] res = UniVarTests.computeDSPC(RC);
+        int[] res = UniVarTests.computeDSPC(this);
         if (res.length == 1 & res[0] == 0) {
             addMessage("error", "DSPC failed - possible reason: some variables are highly collinear or sample size is too small.");
             return null;
         }
 
         setVisMode("dspc");
-        MnetResBean mnb = (MnetResBean) DataUtils.findBean("mnetResBean");
-        JavaRecord.record_computeDspcNet();
+        jrd.record_computeDspcNet();
         return (mnb.setupDspcNetwork(res));
     }
 
@@ -1417,7 +1455,7 @@ public class SessionBean1 implements Serializable {
 
     //performPeaks2Fun;plsPermBtn_action;
     public Semaphore getPermissionToStart() {
-        ResourceSemaphore resourceSemaphore = (ResourceSemaphore) DataUtils.findBean("semaphore");
+
         Semaphore semaphore = resourceSemaphore.getSemaphore();
         try {
             if (semaphore.tryAcquire(ACQUIRE_TIMEOUT, TimeUnit.SECONDS)) {
@@ -1642,7 +1680,7 @@ public class SessionBean1 implements Serializable {
         }
         if (isWorkflowMode()) {
             if (dv.isWorkflowFinished()) {
-                DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/DashboardView.xhtml");
+                DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/DashboardView.xhtml", ab);
                 return;
             } else {
                 addMessage("Error", "Your result is not ready. If you have submmited job, please visit 'Workflow' page to check its status.");
@@ -1656,7 +1694,7 @@ public class SessionBean1 implements Serializable {
             return;
         }*/
         //for normal web-based analysis
-        DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/ResultView.xhtml");
+        DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/ResultView.xhtml", ab);
 
     }
 
@@ -1703,6 +1741,7 @@ public class SessionBean1 implements Serializable {
             pre = "<font color='red'>[ERROR]: ";
             noticeSize = noticeSize + 1;
             PrimeFaces.current().ajax().update(":formBell");
+            PrimeFaces.current().ajax().update(":errMessage");
         } else if (type.equalsIgnoreCase("warn")) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", msg));
@@ -1717,4 +1756,10 @@ public class SessionBean1 implements Serializable {
 
         notice.add(pre + msg + "</font>");
     }
+
+    //relay center
+    public void recordRCommandFunctionInfo(String rCmd, String functionName) {
+        jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
+    }
+
 }

@@ -5,9 +5,9 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -17,7 +17,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -29,6 +29,11 @@ public class ClassificationBean implements Serializable {
 
     @Inject
     SessionBean1 sb;
+    
+        @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+        
     private static final Logger LOGGER = LogManager.getLogger(ClassificationBean.class);
 
     private int treeNum = 500;
@@ -67,11 +72,10 @@ public class ClassificationBean implements Serializable {
                 return null;
             }
             Classifying.initRF(sb, treeNum, tryNum, rfRandom);
-            Classifying.plotRFClassication(sb, sb.getNewImage("rf_cls"), "png", 72);
-            Classifying.plotRFCmpd(sb, sb.getNewImage("rf_imp"), "png", 72);
-            Classifying.plotRFOutlier(sb, sb.getNewImage("rf_outlier"), "png", 72);
-            ClassificationBean b = (ClassificationBean) DataUtils.findBean("classBean");
-            JavaRecord.record_rfBn_action(b);
+            Classifying.plotRFClassication(sb, sb.getNewImage("rf_cls"), "png", 150);
+            Classifying.plotRFCmpd(sb, sb.getNewImage("rf_imp"), "png", 150);
+            Classifying.plotRFOutlier(sb, sb.getNewImage("rf_outlier"), "png", 150);
+            jrd.record_rfBn_action(this);
         } catch (Exception e) {
             //e.printStackTrace();
             LOGGER.error("rfBn_action", e);
@@ -129,10 +133,9 @@ public class ClassificationBean implements Serializable {
 
     public String svmBn_action() {
         Classifying.initSVMAnal(sb, validationOpt);
-        Classifying.plotSVMClassification(sb, sb.getNewImage("svm_cls"), "png", 72);
-        Classifying.plotSVMSigCmpds(sb, sb.getNewImage("svm_imp"), "png", 72);
-        ClassificationBean b = (ClassificationBean) DataUtils.findBean("classBean");
-        JavaRecord.record_svmBn_action(b);
+        Classifying.plotSVMClassification(sb, sb.getNewImage("svm_cls"), "png", 150);
+        Classifying.plotSVMSigCmpds(sb, sb.getNewImage("svm_imp"), "png", 150);
+        jrd.record_svmBn_action(this);
         return null;
     }
 

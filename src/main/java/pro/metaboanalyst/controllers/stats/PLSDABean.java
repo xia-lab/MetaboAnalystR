@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.Serializable;
 import java.util.concurrent.Semaphore;
@@ -31,6 +32,9 @@ public class PLSDABean implements Serializable {
     ApplicationBean1 ab;
     @Inject
     SessionBean1 sb;
+    @JsonIgnore
+    @Inject
+    private DetailsBean dtb;
     private int plsPairNum = 5;
     private int plsScore2dX = 1;
     private int plsScore2dY = 2;
@@ -59,9 +63,9 @@ public class PLSDABean implements Serializable {
     private int permNum = 0;
     private String plsVarOpt = "xvar";
     private String cexOpt = "na";
-     private int plsBiplotX = 1;
+    private int plsBiplotX = 1;
     private int plsBiplotY = 2;
-    private int plsBiplotFeat=10;
+    private int plsBiplotFeat = 10;
 
     public String getCexOpt() {
         return cexOpt;
@@ -340,21 +344,21 @@ public class PLSDABean implements Serializable {
     public void setPlsBiplotFeat(int plsBiplotFeat) {
         this.plsBiplotFeat = plsBiplotFeat;
     }
-   
+
     public void updatePLSDA() {
         ChemoMetrics.initPLS(sb);
-        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 72, plsPairNum);
-        ChemoMetrics.plotPLS2DScore(sb, sb.getNewImage("pls_score2d"), "png", 72, 1, 2, 0.95, 1, 0, cexOpt);
-        ChemoMetrics.plotPLS3DScore(sb, sb.getNewImage("pls_score3d"), "json", 72, 1, 2, 3);
-        ChemoMetrics.plotPLSLoading(sb, sb.getNewImage("pls_loading"), "png", 72, 1, 2);
-        ChemoMetrics.plotPLSImp(sb, sb.getNewImage("pls_imp"), "png", 72, "vip", "Comp. 1", 15, "FALSE");
-       ChemoMetrics.plotPLSBiplot(sb, sb.getNewImage("pls_biplot"), "png", 72, plsBiplotX, plsBiplotY,plsBiplotFeat);
+        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 150, plsPairNum);
+        ChemoMetrics.plotPLS2DScore(sb, sb.getNewImage("pls_score2d"), "png", 150, 1, 2, 0.95, 1, 0, cexOpt);
+        ChemoMetrics.plotPLS3DScore(sb, sb.getNewImage("pls_score3d"), "json", 150, 1, 2, 3);
+        ChemoMetrics.plotPLSLoading(sb, sb.getNewImage("pls_loading"), "png", 150, 1, 2);
+        ChemoMetrics.plotPLSImp(sb, sb.getNewImage("pls_imp"), "png", 150, "vip", "Comp. 1", 15, "FALSE");
+        ChemoMetrics.plotPLSBiplot(sb, sb.getNewImage("pls_biplot"), "png", 150, plsBiplotX, plsBiplotY, plsBiplotFeat);
         //plsCVBtn_action();
         sb.addMessage("Info", "Successfully updated all tabs except Cross Validation and Permutation - you can update them separately.");
     }
 
     public void plsPairBtn_action() {
-        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 72, plsPairNum);
+        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 150, plsPairNum);
     }
 
     public void plsScore2dBtn_action() {
@@ -370,7 +374,7 @@ public class PLSDABean implements Serializable {
             if (greyScale) {
                 useGreyScale = 1;
             }
-            ChemoMetrics.plotPLS2DScore(sb, sb.getNewImage("pls_score2d"), "png", 72, plsScore2dX, plsScore2dY, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
+            ChemoMetrics.plotPLS2DScore(sb, sb.getNewImage("pls_score2d"), "png", 150, plsScore2dX, plsScore2dY, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
         }
     }
 
@@ -388,8 +392,8 @@ public class PLSDABean implements Serializable {
         if (plsScore3dX == plsScore3dY || plsScore3dX == plsScore3dZ || plsScore3dY == plsScore3dZ) {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
-            ChemoMetrics.plotPLS3DScore(sb, sb.getNewImage("pls_score3d"), "json", 72, plsScore3dX, plsScore3dY, plsScore3dZ);
-            ChemoMetrics.plotPLS3DLoading(sb, sb.getCurrentImage("pls_loading3d"), "json", 72, 1, 2, 3);
+            ChemoMetrics.plotPLS3DScore(sb, sb.getNewImage("pls_score3d"), "json", 150, plsScore3dX, plsScore3dY, plsScore3dZ);
+            ChemoMetrics.plotPLS3DLoading(sb, sb.getCurrentImage("pls_loading3d"), "json", 150, 1, 2, 3);
 
             activeTab = 2;
         }
@@ -402,9 +406,8 @@ public class PLSDABean implements Serializable {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
             ChemoMetrics.updatePLSLoadType(sb, loadOpt);
-            ChemoMetrics.plotPLSLoading(sb, sb.getNewImage("pls_loading"), "png", 72, plsLoadX, plsLoadY);
-            DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-            db.update1CompModel("pls");
+            ChemoMetrics.plotPLSLoading(sb, sb.getNewImage("pls_loading"), "png", 150, plsLoadX, plsLoadY);
+            dtb.update1CompModel("pls");
             if (loadOpt.equals("custom")) {
                 sb.addMessage("info", "Please first click the points of interest and then re-gerenate the Splot in Image Dialog");
             } else {
@@ -426,14 +429,14 @@ public class PLSDABean implements Serializable {
 
         int res = ChemoMetrics.trainPLSClassifier(sb, cvOpt, cvFoldNum, searchCompNum, perfMeasure);
         if (res == 1) {
-            ChemoMetrics.plotPLSClassification(sb, sb.getNewImage("pls_cv"), "png", 72);
+            ChemoMetrics.plotPLSClassification(sb, sb.getNewImage("pls_cv"), "png", 150);
         } else {
             sb.addMessage("Error", "The parameters cause errors in cross validation. Make sure you have at least 20 samples");
         }
     }
 
     public String getPlsCVImg() {
-        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("pls_cv") + "dpi72.png";
+        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("pls_cv") + "dpi150.png";
     }
 
     public void plsImpBtn_action() {
@@ -441,7 +444,7 @@ public class PLSDABean implements Serializable {
         if (imp.equalsIgnoreCase("NA")) {
             sb.addMessage("Error", "Please perform cross validation first");
         } else {
-            ChemoMetrics.plotPLSImp(sb, sb.getNewImage("pls_imp"), "png", 72,
+            ChemoMetrics.plotPLSImp(sb, sb.getNewImage("pls_imp"), "png", 150,
                     impOpt, imp, impFeatNum, grayScale ? "TRUE" : "FALSE");
         }
     }
@@ -466,20 +469,19 @@ public class PLSDABean implements Serializable {
         }
 
         permMsg = ChemoMetrics.performPLSPermute(sb, permNum, permStat);
-        ChemoMetrics.plotPLSPermutation(sb, sb.getNewImage("pls_perm"), "png", 72);
+        ChemoMetrics.plotPLSPermutation(sb, sb.getNewImage("pls_perm"), "png", 150);
 
         semphore.release();
     }
- 
-     public void plsBiplotBtn_action() {
+
+    public void plsBiplotBtn_action() {
         if (plsBiplotX == plsBiplotY) {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
-            ChemoMetrics.plotPLSBiplot(sb, sb.getNewImage("pls_biplot"), "png", 72, plsBiplotX, plsBiplotY,plsBiplotFeat);
+            ChemoMetrics.plotPLSBiplot(sb, sb.getNewImage("pls_biplot"), "png", 150, plsBiplotX, plsBiplotY, plsBiplotFeat);
         }
     }
-    
-    
+
     public String getPerfTxt() {
         double[][] vals = ChemoMetrics.getPLS_CVMat(sb);
         String[] rownames = ChemoMetrics.getPLSCVRowNames(sb);

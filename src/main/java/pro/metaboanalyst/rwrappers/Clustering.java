@@ -7,7 +7,7 @@ package pro.metaboanalyst.rwrappers;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -23,7 +23,7 @@ public class Clustering {
             sb.addGraphicsMapLink("tree", "/Secure/analysis/TreeView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Dendrogram");
+            sb.recordRCommandFunctionInfo(rCommand, "Dendrogram");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -43,7 +43,7 @@ public class Clustering {
                     + colV + ", NULL, " + drawBorder + ", " + grpAve + ", " + showLegend + ", " + showAnnotLegend + ",  "
                     + showColNames + "," + showRowNames + "," + maxFeatureNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Heatmap");
+            sb.recordRCommandFunctionInfo(rCommand, "Heatmap");
 
             sb.addGraphicsCMD("heatmap", rCommand);
             sb.addGraphicsMapLink("heatmap", "/Secure/analysis/HeatmapView.xhtml");
@@ -104,11 +104,11 @@ public class Clustering {
             String rCommand = "Kmeans.Anal(NA" + ", " + clustNum + ")";
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "K-means");
+            sb.recordRCommandFunctionInfo(rCommand, "K-means");
 
             String rCommand2 = "PlotKmeans(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + colPal + "\", \"" + kmFacet + "\")";
             RCenter.recordRCommand(RC, rCommand2);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "K-means");
+            sb.recordRCommandFunctionInfo(rCommand2, "K-means");
 
             sb.addGraphicsCMD("km", rCommand2);
             sb.addGraphicsMapLink("km", "/Secure/analysis/KMView.xhtml");
@@ -124,7 +124,7 @@ public class Clustering {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotClustPCA(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + colPal + "\", \"km\", \"" + label + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "K-means");
+            sb.recordRCommandFunctionInfo(rCommand, "K-means");
 
             sb.addGraphicsCMD("km_pca", rCommand);
             sb.addGraphicsMapLink("km_pca", "/Secure/analysis/KMView.xhtml");
@@ -170,14 +170,14 @@ public class Clustering {
             String rCommand = "SOM.Anal(NA" + ", " + clx + "," + cly + ",\"" + init + "\"," + "\"" + nb + "\")";
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "SOM");
+            sb.recordRCommandFunctionInfo(rCommand, "SOM");
 
             String rCommand2 = "PlotSOM(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + colPal + "\", \"" + somFacet + "\")";
             RCenter.recordRCommand(RC, rCommand2);
             sb.addGraphicsCMD("som", rCommand2);
             sb.addGraphicsMapLink("som", "/Secure/analysis/SOMView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "SOM");
+            sb.recordRCommandFunctionInfo(rCommand2, "SOM");
 
             RC.voidEval(rCommand2);
         } catch (RserveException rse) {
@@ -193,7 +193,7 @@ public class Clustering {
             sb.addGraphicsCMD("som_pca", rCommand);
             sb.addGraphicsMapLink("som_pca", "/Secure/analysis/SOMView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "SOM");
+            sb.recordRCommandFunctionInfo(rCommand, "SOM");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {

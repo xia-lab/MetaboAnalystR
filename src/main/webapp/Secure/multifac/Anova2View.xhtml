@@ -22,7 +22,7 @@
             var gridColor;
             function extender() {
                 light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
-                console.log(light)
+                //console.log(light)
                 if (light === "light") {
                     textColor = "grey";
                     gridColor = 'lightgrey';
@@ -187,7 +187,9 @@
                     </h:panelGrid>
                 </h:panelGrid>
                 <h:panelGrid rendered="#{not sessionBean1.timeOnly}" style="width:100%; text-align: center">
-                    <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('aov2')}" alt="ANOVA2image"/>
+                    <img onerror='this.style.display="none"'
+                          style="width:9in;"
+                         src="#{sessionBean1.getCurrentImageURL('aov2')}" alt="ANOVA2image"/>
                 </h:panelGrid>
             </h:panelGrid>  
         </h:panelGrid>

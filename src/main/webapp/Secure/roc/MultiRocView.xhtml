@@ -60,7 +60,7 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('cls_roc')}" alt="ROCImage"/>
+                            <img onerror='this.style.display="none"' style="height:8in;" src="#{sessionBean1.getCurrentImageURL('cls_roc')}" alt="ROCImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -101,7 +101,7 @@
                                 </h:panelGrid>
                             </h:panelGrid>
                             <h:panelGrid columns="2">
-                                <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('cls_prob')}" alt="ProbImage"/>
+                                <img onerror='this.style.display="none"'  style="height:8in;"  src="#{sessionBean1.getCurrentImageURL('cls_prob')}" alt="ProbImage"/>
                                 <h:outputLabel style="font-weight: bold" escape="fasle" value="#{rocAnalBean.confMat}"/>
                             </h:panelGrid>
                         </h:panelGrid>     
@@ -117,7 +117,7 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('cls_accu')}" alt="PredImage"/>
+                        <img onerror='this.style.display="none"' style="width:9in;"  src="#{sessionBean1.getCurrentImageURL('cls_accu')}" alt="PredImage"/>
                     </h:panelGrid>  
                 </p:tab>
                 <p:tab title ="Sig. Features">
@@ -150,7 +150,7 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('cls_imp')}" alt="ROCImpImage"/>
+                            <img onerror='this.style.display="none"' style="width:8in;" src="#{sessionBean1.getCurrentImageURL('cls_imp')}" alt="ROCImpImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>

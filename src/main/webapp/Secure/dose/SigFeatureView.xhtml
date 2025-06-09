@@ -13,13 +13,115 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/hammerjs2.0.8.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>  
+        <script type="text/javascript">
 
+            function extender2() {
+                var pointMap = #{detailsBean.pointMapJson};
+                console.log(pointMap);
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(p)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Correlation Coefficient (r)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            // Adding tooltip configuration
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+
+            function extender() {
+                var pointMap = #{detailsBean.pointMapJson};
+                console.log(pointMap);
+                var options = {
+                    options: {
+                        scales: {
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '-log10(p)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'log10(FC)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            zoom: {
+                                zoom: {
+                                    drag: {
+                                        enabled: true,
+                                        borderColor: 'rgb(54, 162, 235)',
+                                        borderWidth: 1,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    },
+                                    mode: 'xy'
+                                }
+                            },
+                            // Adding tooltip configuration
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function (tooltipItem, data) {
+                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
+                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
+                                        return id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                $.extend(true, this.cfg.config, options);
+            }
+
+        </script>
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
         <h:inputHidden id="maxX" value="#{sessionBean1.featureNumber}" />
-
-
         <h:panelGrid style="width:95%; padding: 30px 20px 20px 40px; font-family: Arial, Helvetica, Geneva; line-height: 23px;" rendered="true">
             <h2 style="color: #2196F3">
                 Identification of potential features associated with exposure levels
@@ -72,7 +174,7 @@
                     </h:panelGrid>
                     <h:panelGroup rendered="#{!doseResponseBean.contineousDoes}">
 
-                        <div class="ui-message-info" style="margin-left: 50px; padding: 20px 30px 10px 30px; width: 480px; line-height: 23px">
+                        <div class="ui-message-info" style="margin-left: 50px; padding: 20px 30px 20px 30px; width: 480px; line-height: 23px">
                             <span class="ui-message-info-icon"/>
                             <span class="ui-message-info-detail"><b>Did you know?</b></span>
                             <p> For dose response analysis, this step is to select features that are more likely to have a dose-dependent behavior 
@@ -81,7 +183,6 @@
                                 than <b>1000 features</b> pass this step for computational reasons. <br/><br/> Please note: a feature will be selected if its fold-change 
                                 exceeds the threshold in <b>any</b> of the pairwise comparisons. 
                             </p>
-
                         </div>  
                     </h:panelGroup>
 
@@ -102,17 +203,18 @@
 
                     <h:panelGrid style="width:100%; text-align: center; padding-top: 20px">
                         <p:commandButton value="Submit"
-                                         style="width:130px; font-size: 14px !important;"
+                                         style="width:120px; font-size: 14px !important;"
                                          icon="pi pi-cog"
                                          onclick="PF('statusDialog').show()"
                                          oncomplete="PF('statusDialog').hide();"
-                                         ajax="false"
+                                         update=":form1:visBn :resForm"
                                          actionListener="#{doseResponseBean.updateDoseDEAnalysis()}"/>       
                     </h:panelGrid>
 
                     <h:panelGrid style="width:100%; text-align: center; padding-top: 20px">
                         <p:commandButton id="visBn" value="Proceed" style="width:130px;"
-                                         onclick="PF('statusDialog').show(); extender2()"
+                                         onclick="PF('statusDialog').show();
+                                                 extender()"
                                          oncomplete="PF('statusDialog').hide();"
                                          icon="pi pi-angle-double-right" 
                                          disabled="#{not doseResponseBean.sigOK}"
@@ -124,150 +226,44 @@
 
             <hr class="style-one"/>
 
-            <h:panelGrid id="impPane2" style="text-align: center; width: 100%;">
-                <h:form>
-                    <h:panelGrid columns="2" style="width: 100%;">
-                        <h:panelGrid style="width: 540px; text-align: left">
-                            <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
-                        </h:panelGrid>
-                        <h:panelGrid columns="3" style="width:200px; text-align: right;">
-                            <p:commandLink action="#{sessionBean1.detailsLnk_action('dose-de')}" 
-                                           title="View the detailed data table">
-                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                            </p:commandLink>
-
-                            <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
-                                <i class="pi pi-undo"></i>
-                            </p:commandLink>
-
-                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
-                        </h:panelGrid>
+            <h:form id="resForm" >
+                <h:panelGrid columns="2" style="width: 100%;">
+                    <h:panelGrid style="width: 540px; text-align: left">
+                        <p:outputLabel style="font-weight:bold; color: #FFAE20" value="Click a point to view; drag to zoom; reset zoom at bottom"/>
                     </h:panelGrid>
-                    <p:tooltip for="helpIcon" styleClass="helpTip">
-                        <p>
-                            Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
-                            represent the concentrations of the selected feature from all samples. The notch indicates
-                            the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
-                            The notch can be used to evaluate differences between groups; if the notches 
-                            do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
-                            with a yellow diamond.
-                        </p>
-                    </p:tooltip>
-                    <h:panelGrid style="text-align: center; width: 90%">
-                        <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel3('dose-de')}"  
-                                        style="height:420px; min-width:880px; width: 90%"
-                                        extender="extender2">
-                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                        </p:chart>
+                    <h:panelGrid columns="3" style="width:200px; text-align: right;">
+                        <p:commandLink action="#{sessionBean1.detailsLnk_action('dose-de')}" 
+                                       title="View the detailed data table">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                        </p:commandLink>
+
+                        <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
+                            <i class="pi pi-undo"></i>
+                        </p:commandLink>
+
+                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
                     </h:panelGrid>
-                </h:form>
-            </h:panelGrid>  
+                </h:panelGrid>
+                <p:tooltip for="helpIcon" styleClass="helpTip">
+                    <p>
+                        Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                        represent the concentrations of the selected feature from all samples. The notch indicates
+                        the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                        The notch can be used to evaluate differences between groups; if the notches 
+                        do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                        with a yellow diamond.
+                    </p>
+                </p:tooltip>
+                <p:chart id="chart" widgetVar="chart" 
+                         rendered="#{doseResponseBean.dePerformed}"
+                         value="#{detailsBean.getModel3('dose-de')}"  
+                         style="height:500px; min-width:880px; width: 90%; margin-left: 5%; padding: 20px"
+                         extender="#{detailsBean.doseExtender}">
+                    <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                            update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                </p:chart>
+            </h:form>
         </h:panelGrid>
-
         <ui:include src="/template/_feature_dialog.xhtml" />
-        <script type="text/javascript">
-            function extender2() {
-                var pointMap = #{detailsBean.pointMapJson};
-                //console.log(pointMap)
-                var options = {
-                    options: {
-                        scales: {
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: '-log10(p)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Correlation Coefficient (r)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            zoom: {
-                                zoom: {
-                                    drag: {
-                                        enabled: true,
-                                        borderColor: 'rgb(54, 162, 235)',
-                                        borderWidth: 1,
-                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
-                                    },
-                                    pinch: {
-                                        enabled: true
-                                    },
-                                    mode: 'xy'
-                                }
-                            },
-                            // Adding tooltip configuration
-                            tooltip: {
-                                enabled: true,
-                                callbacks: {
-                                    label: function (tooltipItem, data) {
-                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
-                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
-                                        return id;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-                $.extend(true, this.cfg.config, options);
-            }
-
-            function extender() {
-                var pointMap = #{detailsBean.pointMapJson};
-                //console.log(pointMap)
-                var options = {
-                    options: {
-                        scales: {
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: '-log10(p)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'log10(FC)'
-                                }
-                            }
-                        },
-                        plugins: {
-                            zoom: {
-                                zoom: {
-                                    drag: {
-                                        enabled: true,
-                                        borderColor: 'rgb(54, 162, 235)',
-                                        borderWidth: 1,
-                                        backgroundColor: 'rgba(54, 162, 235, 0.3)'
-                                    },
-                                    pinch: {
-                                        enabled: true
-                                    },
-                                    mode: 'xy'
-                                }
-                            },
-                            // Adding tooltip configuration
-                            tooltip: {
-                                enabled: true,
-                                callbacks: {
-                                    label: function (tooltipItem, data) {
-                                        var pointKey = tooltipItem.datasetIndex + ":" + tooltipItem.dataIndex;
-                                        var id = pointMap[pointKey]; // Assuming pointMap is accessible here
-                                        return id;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-                $.extend(true, this.cfg.config, options);
-            }
-
-        </script>
     </ui:define>
 </ui:composition>

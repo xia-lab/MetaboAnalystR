@@ -51,10 +51,16 @@
                         Exclude metadata that do not pass sanity check.
                     </li>
                 </ul>
+                <!--
                 <p:dataTable style="width:700px;" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
                              class="surface-card shadow-1 p-0 text-800" 
                              value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
-                             disabledSelection="#{multifacBean.disableMetaSelection}"  editMode="cell" editable="true">  
+                             disabledSelection="#{multifacBean.disableMetaSelection}"  editMode="cell" editable="true"> 
+                -->
+                <p:dataTable style="width:700px;" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
+                             class="surface-card shadow-1 p-0 text-800" 
+                             value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
+                             editMode="cell" editable="true"> 
                     <p:ajax event="cellEdit" listener="#{multifacBean.onCellEdit}"/>
 
                     <p:column headerText="Name">  
@@ -210,7 +216,7 @@
                 </p:tabView>
             </h:form>         
         </p:dialog>
-       
+
 
         <p:dialog widgetVar="rmDialog" dynamic="true" modal="true" appendTo="@(body)" header="Delete Metadata" position="center center"
                   hideEffect="explode" resizable="true"> 

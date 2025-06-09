@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -12,7 +13,7 @@ import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.SigVarSelect;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -24,7 +25,9 @@ public class SigVarBean implements Serializable {
 
     @Inject
     SessionBean1 sb;
-
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
     private boolean nonParSAM = false;
 
     public boolean isNonParSAM() {
@@ -96,12 +99,11 @@ public class SigVarBean implements Serializable {
         deltaMax = deltas[1];
         step = deltas[2];
 
-        SigVarSelect.plotSAM_FDR(sb, sb.getNewImage("sam_view"), "png", 72);
-        //SigVarSelect.PlotSAM_Cmpd(sb, sb.getNewImage("sam_imp"), "png", 72);
+        SigVarSelect.plotSAM_FDR(sb, sb.getNewImage("sam_view"), "png", 150);
+        //SigVarSelect.PlotSAM_Cmpd(sb, sb.getNewImage("sam_imp"), "png", 150);
         sb.addMessage("info", "The result is updated!");
 
-        SigVarBean b = (SigVarBean) DataUtils.findBean("sigBean");
-        JavaRecord.record_samBtn1_action(b);
+        jrd.record_samBtn1_action(this);
     }
 
     private double alpha = -99;
@@ -139,7 +141,6 @@ public class SigVarBean implements Serializable {
         SigVarSelect.initEBAM(sb, pairedAnal, equalVar, nonPar, alpha, ebamDelta, sb.getNewImage("ebam_view"), sb.getNewImage("ebam_imp"));
         sb.addMessage("info", "The <b>Result view</b> is updated!");
 
-        SigVarBean sv = (SigVarBean) DataUtils.findBean("sigBean");
-        JavaRecord.record_ebamBtn_action(sv);
+        jrd.record_ebamBtn_action(this);
     }
 }

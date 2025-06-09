@@ -5,22 +5,12 @@
 package pro.metaboanalyst.lts;
 
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
@@ -37,8 +27,6 @@ public class FireBase implements Serializable {
     @Inject
     ApplicationBean1 ab;
 
-    private FirebaseApp fireApp = null;
-    private Storage storage;
     private String projectPath = "";
 
     private ConcurrentHashMap<String, FireUserBean> userMap = new ConcurrentHashMap<>();
@@ -93,54 +81,8 @@ public class FireBase implements Serializable {
         return projectPath;
     }
 
-    public void initFirebase() {
-        /*
-        GoogleCredentials credentials;
-
-        try (FileInputStream serviceAccountStream = new FileInputStream(ab.getFirebaseInitFile())) {
-            credentials = GoogleCredentials.fromStream(serviceAccountStream);
-
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(credentials)
-                    .setProjectId("omicsquare-dashboard-2282c")
-                    .setStorageBucket("omicsquare-dashboard-2282c.appspot.com")
-                    .build();
-            fireApp = FirebaseApp.initializeApp(options);
-
-            storage = StorageOptions.newBuilder().setCredentials(credentials)
-                    .setProjectId("omicsquare-dashboard-2282c").build().getService();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(FireBase.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(FireBase.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        */
-    }
-
-    public FirebaseApp getFireApp() {
-        if (fireApp == null) {
-            initFirebase();
-        }
-        return fireApp;
-    }
-
     public String getAppLocation() {
         return appLocation;
-    }
-
-    public void setFireApp(FirebaseApp fireApp) {
-        this.fireApp = fireApp;
-    }
-
-    public Storage getStorage() {
-        if (storage == null) {
-            initFirebase();
-        }
-        return storage;
-    }
-
-    public void setStorage(Storage storage) {
-        this.storage = storage;
     }
 
     public ConcurrentHashMap<String, FireUserBean> getUserMap() {
@@ -149,10 +91,6 @@ public class FireBase implements Serializable {
 
     public void setUserMap(ConcurrentHashMap<String, FireUserBean> userMap) {
         this.userMap = userMap;
-    }
-
-    public String getFirebaseInitFile() {
-        return ab.getRealPath() + "/firebase/firebase-init.json";
     }
 
 }

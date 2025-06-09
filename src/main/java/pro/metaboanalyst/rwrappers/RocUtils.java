@@ -10,7 +10,6 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -51,11 +50,12 @@ public class RocUtils {
         return null;
     }
 
-    public static void performRocCVExplorer(RConnection RC, String cls, String rkOpt, int lvNum) {
+    public static void performRocCVExplorer(SessionBean1 sb, String cls, String rkOpt, int lvNum) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformCV.explore(NA" + ", \"" + cls + "\", \"" + rkOpt + "\", " + lvNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -123,7 +123,7 @@ public class RocUtils {
             sb.addGraphicsCMD("cls_prob", rCommand);
             sb.addGraphicsMapLink("cls_prob", "/Secure/roc/MultiRocView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -138,7 +138,7 @@ public class RocUtils {
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("cls_test_prob", rCommand);
             sb.addGraphicsMapLink("cls_test_prob", "/Secure/roc/RocTestView.xhtml");
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Evaluator ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Evaluator ROC");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -155,12 +155,12 @@ public class RocUtils {
             if (imgName.contains("cls_roc")) {
                 sb.addGraphicsCMD("cls_roc", rCommand);
                 sb.addGraphicsMapLink("cls_roc", "/Secure/roc/MultiRocView.xhtml");
-                JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+                sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             } else if (imgName.contains("cls_test_roc")) {
                 sb.addGraphicsCMD("cls_test_roc", rCommand);
                 sb.addGraphicsMapLink("cls_test_roc", "/Secure/roc/RocTestView.xhtml");
-                JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Evaluator ROC");
+                sb.recordRCommandFunctionInfo(rCommand, "Evaluator ROC");
 
             }
 
@@ -177,7 +177,7 @@ public class RocUtils {
             RC.voidEval(rCommand);
             sb.addGraphicsCMD("cls_test_roc", rCommand);
             sb.addGraphicsMapLink("cls_test_roc", "/Secure/roc/RocTestView.xhtml");
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Evaluator ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Evaluator ROC");
 
         } catch (RserveException rse) {
             LOGGER.error("PlotROC", rse);
@@ -192,7 +192,7 @@ public class RocUtils {
             RC.voidEval(rCommand);
             sb.addGraphicsCMD("cls_roc_lr", rCommand);
             sb.addGraphicsMapLink("cls_roc_lr", "/Secure/roc/RocTestView.xhtml");
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Evaluator ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Evaluator ROC");
 
         } catch (RserveException rse) {
             LOGGER.error("PlotROCLR", rse);
@@ -237,7 +237,7 @@ public class RocUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotImpBiomarkers(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", " + modelInx + ", \"" + measure + "\", " + featNum + ");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             RC.voidEval(rCommand);
             sb.addGraphicsCMD("cls_imp", rCommand);
@@ -271,7 +271,7 @@ public class RocUtils {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotAccuracy(NA" + ", \"" + imageName + "\", \"" + format + "\", " + dpi + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             RC.voidEval(rCommand);
             sb.addGraphicsCMD("cls_accu", rCommand);
@@ -494,11 +494,12 @@ public class RocUtils {
         }
     }
 
-    public static void setAnalysisMode(RConnection RC, String mode) {
+    public static void setAnalysisMode(SessionBean1 sb, String mode) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "SetAnalysisMode(NA" + ", \"" + mode + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Multivariate ROC");
+            sb.recordRCommandFunctionInfo(rCommand, "Multivariate ROC");
 
             RC.voidEval(rCommand);
         } catch (Exception e) {

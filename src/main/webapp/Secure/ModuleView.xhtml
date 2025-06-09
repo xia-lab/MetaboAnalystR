@@ -159,10 +159,8 @@
                             [metadata table]
                         </div>
                         <div class="ui-g-2  mypane3 mypane" onclick="window.location = '#{ctl.getModuleURL(8)}'">Biomarker Analysis</div>
-                        <div class="ui-g-2  mypane3 mypane" onclick="window.location = '#{ctl.getModuleURL(9)}'">Statistical Meta-analysis</div>
                         <div class="ui-g-2  mypane3 mypane" onclick="window.location = '#{ctl.getModuleURL(11)}'">Dose Response Analysis </div>
-
-
+                        <div class="ui-g-2  mypane3 mypane" onclick="window.location = '#{ctl.getModuleURL(9)}'">Statistical Meta-analysis</div>
                         <div class="ui-g-2 ui-g-nopad">
                             <div class="ui-g-12 mylabel">
                                 Annotated Features<br/>
@@ -185,15 +183,15 @@
                         <div class="ui-g-2  mypane5 mypane" onclick="window.location = '#{ctl.getModuleURL(12)}'">Causal Analysis <br/> [Mendelian randomization]</div>
                         <div class="ui-g-4"></div>
                     </div>
-                      <h:panelGrid columns="2" style='text-align:center; padding: 20px 10px 26px 10px; margin-top:30px; width:100%'> 
+                    <h:panelGrid columns="2" style='text-align:center; padding: 20px 10px 26px 10px; margin-top:30px; width:100%'> 
                         <p:commandButton value="Create Workflows" 
-                                     styleClass="ui-button-outlined ui-button-help" 
-                                     style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
-                                     action="WorkflowView"/>
+                                         styleClass="ui-button-outlined ui-button-help" 
+                                         style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
+                                         action="WorkflowView"/>
                         <p:commandButton value="Saved Project" 
-                                     styleClass="ui-button-outlined ui-button-info"
-                                     style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
-                                     action="ProjectView"/>
+                                         styleClass="ui-button-outlined ui-button-info"
+                                         style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
+                                         action="ProjectView"/>
                     </h:panelGrid>
                 </div> 
                 <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>
@@ -431,7 +429,7 @@
                             <span><a class="changeBlue" href="/MetaboAnalyst/Secure/upload/ReplicatesUpload.xhtml">Merging Duplicate Records</a></span>
                         </legend>
                         <div class="ui-fieldset-content" style="padding:10px"> 
-                          This is an utility module dedicated to merging <b>sample or feature duplicates</b> in your metabolomics data table.
+                            This is an utility module dedicated to merging <b>sample or feature duplicates</b> in your metabolomics data table.
                             These values can be merged by their simple arithmetic mean, minimum, maximum, medium, sum, or quantile.
                             Kernel density estimation can be applied to smooth values when many duplicates (over 3) are provided.
                         </div>

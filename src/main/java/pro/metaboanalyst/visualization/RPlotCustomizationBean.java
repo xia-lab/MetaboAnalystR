@@ -86,7 +86,7 @@ public class RPlotCustomizationBean implements Serializable {
                 return;
             }
 
-            String source = sb.getImgSource();
+            String source = sb.getImageSource();
             plotType = GRAPHICS_CMD_TO_R_FUNC.get(source);
 
             if (plotType == null) {
@@ -110,7 +110,7 @@ public class RPlotCustomizationBean implements Serializable {
     }
 
     public String getPreviewImage() {
-        String plotSource = sb.getImgSource();
+        String plotSource = sb.getImageSource();
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png" + "?t=" + System.currentTimeMillis();
     }
 

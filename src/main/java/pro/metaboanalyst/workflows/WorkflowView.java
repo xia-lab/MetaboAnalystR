@@ -81,7 +81,44 @@ public class WorkflowView implements Serializable {
 
     @JsonIgnore
     @Inject
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
     private FireBase fb;
+
+    @JsonIgnore
+    @Inject
+    private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
+    private FireProjectBean fpb;
+
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rocb;
+
+    @JsonIgnore
+    @Inject
+    private MnetMapBean mnmb;
+
+    @JsonIgnore
+    @Inject
+    private MappingBean mpb;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+    
+    @JsonIgnore
+    @Inject
+    private DatabaseClient dbc;
+    
+    @JsonIgnore
+    @Inject
+    private DiagramView dv;
+         
     private int activeIndex = 0;
 
     private String enrichOpt = "ORA";
@@ -142,7 +179,6 @@ public class WorkflowView implements Serializable {
                         pb.performMissingImpute();
                     }
                     case "Save Project" -> {
-                        FireBaseController fbc = (FireBaseController) DataUtils.findBean("fireBaseController");
                         fbc.saveProject("workflow");
                     }
                     case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak" -> {
@@ -180,7 +216,7 @@ public class WorkflowView implements Serializable {
                             return 2;
                         }
                         NormBean nb = (NormBean) getBeanInstance("nb");
-                        nb.preparePrenormData();
+                        //nb.preparePrenormData();
                         if (nb.getRowNormOpt().equals("SpecNorm") && nb.isSpecNormSpecifed()) {
                             RDataUtils.setSampleNormFactor(sb.getRConnection(), wb.getSampleBeans());
                         }
@@ -410,7 +446,7 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/QeaView.xhtml");
                         MsetBean mb = (MsetBean) getBeanInstance("mb");
-                        System.out.println(sb.getAnalType() + "=======QEA");
+                        //System.out.println(sb.getAnalType() + "=======QEA");
                         mb.submitBtn_action();
                     }
                     case "ORA" -> {
@@ -594,22 +630,21 @@ public class WorkflowView implements Serializable {
                     }
                     case "ROC Analysis" -> {
                         sb.addNaviTrack("ROC Analysis", "/Secure/roc/RocAnalysisView.xhtml");
-                        RocAnalBean roc = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                        roc.setSelMeta("Class");
+
+                        rocb.setSelMeta("Class");
                     }
                     case "Univariate ROC" -> {
                         boolean resBool = checkWorkflowContained(func);
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        RocAnalBean rocAnalBean = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                        rocAnalBean.performDefaultUnivAnalysis_internal();
-                        ArrayList<FeatureBean> featureBeans = rocAnalBean.getFeatureBeans();
+                        rocb.performDefaultUnivAnalysis_internal();
+                        ArrayList<FeatureBean> featureBeans = rocb.getFeatureBeans();
                         int limit = Math.min(3, featureBeans.size()); // Ensure we don't exceed the list size
 
                         for (int i = 0; i < limit; i++) {
                             FeatureBean feature = featureBeans.get(i);
-                            rocAnalBean.plotUnivROCSummary(feature.getName());
+                            rocb.plotUnivROCSummary(feature.getName());
                             System.out.println(feature);
                         }
 
@@ -941,10 +976,10 @@ public class WorkflowView implements Serializable {
                         //sb.addNaviTrack("Spectra result", "/Secure/spectra/SpectraResult.xhtml");
                     }
                     case "Annotation_List_network" -> { // for network
-                        MnetMapBean mb = (MnetMapBean) DataUtils.findBean("mnetMapBean");
-                        mb.setupCmpdNameMaps();
+
+                        mnmb.setupCmpdNameMaps();
                         //mb.setupGeneNameMaps();
-                        String res = mb.prepareNetworkData();
+                        String res = mnmb.prepareNetworkData();
                         if (res == null) {
                             success = false;
                         }
@@ -960,8 +995,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MappingBean mb = (MappingBean) DataUtils.findBean("mapBean");
-                        String res = mb.sspNextBn_action();
+                        String res = mpb.sspNextBn_action();
                         if (res == null) {
                             success = false;
                         }
@@ -1003,7 +1037,7 @@ public class WorkflowView implements Serializable {
             }
             return true;
         } else {
-            System.out.println("FunctionInfo not found for function type: " + functionType + "=======wb.isReloadingWorkflow()===" +wb.isReloadingWorkflow());
+            System.out.println("FunctionInfo not found for function type: " + functionType + "=======wb.isReloadingWorkflow()===" + wb.isReloadingWorkflow());
             return !wb.isReloadingWorkflow();
         }
     }
@@ -1058,9 +1092,8 @@ public class WorkflowView implements Serializable {
         // Add response to request map to pass to the client
         // Add response to the context
         if (res.equals("ok") && functionsStr.equals("Save Project")) {
-            FireProjectBean fbc = (FireProjectBean) DataUtils.findBean("fireProjectBean");
 
-            res = "ok=" + fbc.getSelectedProject().getId();
+            res = "ok=" + fpb.getSelectedProject().getId();
         }
         PrimeFaces.current().ajax().addCallbackParam("res", res);
     }
@@ -1231,7 +1264,7 @@ public class WorkflowView implements Serializable {
         // if (wb.getEditModeReturn().equals("overview")) {
         //    DataUtils.doRedirect("/MetaboAnalyst/xialabpro/WorkflowOverview.xhtml");
         // } else {
-        DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml");
+        DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", ab);
         //}
         return null;
     }
@@ -1252,7 +1285,7 @@ public class WorkflowView implements Serializable {
                 }
                 case "Normalization", "Normalization_Table", "Normalization Intensity" -> {
                     NormBean nb = (NormBean) getBeanInstance("nb");
-                    nb.preparePrenormData();
+                    //nb.preparePrenormData();
                     nb.performDataNormalization();
                 }
                 case "Volcano" -> {
@@ -1406,8 +1439,7 @@ public class WorkflowView implements Serializable {
                     //sb.addNaviTrack("Evaluator", "/Secure/roc/RocTestView.xhtml");
                 }
                 case "Univariate ROC" -> {
-                    RocAnalBean rocAnalBean = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                    rocAnalBean.performDefaultUnivAnalysis_internal();
+                    rocb.performDefaultUnivAnalysis_internal();
                 }
                 case "Metadata check" -> {
                     //MetaProcBean mp = (MetaProcBean) getBeanInstance("mp");
@@ -1556,9 +1588,9 @@ public class WorkflowView implements Serializable {
         wb.setEditMode(false);
         //if (wb.getEditModeReturn().equals("overview")) {
         //    wb.setEditModeReturn("default");
-        //    DataUtils.doRedirectWithGrowl("/MetaboAnalyst/xialabpro/WorkflowOverview.xhtml", "info", "Parameters have been saved!");
+        //    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/xialabpro/WorkflowOverview.xhtml", "info", "Parameters have been saved!");
         //} else {
-        DataUtils.doRedirectWithGrowl("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Parameters have been saved!");
+        DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Parameters have been saved!");
         //}
         return "";
     }
@@ -1576,13 +1608,11 @@ public class WorkflowView implements Serializable {
             }
             return;
         }
-        FireUserBean ulb = (FireUserBean) DataUtils.findBean("fireUserBean");
-        DatabaseClient db = (DatabaseClient) DataUtils.findBean("databaseClient");
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
+
 
         String path = sb.getCurrentUser().getHomeDir() + "/workflow.json";
         FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), path);
-        File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + ulb.getEmail());
+        File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + fub.getEmail());
         if (!projSubFolder.exists()) {
             boolean result = projSubFolder.mkdirs();
             if (result) {
@@ -1596,12 +1626,12 @@ public class WorkflowView implements Serializable {
         }
 
         String fileName = File.createTempFile("workflow_" + sb.getAnalType(), "").getName();
-        FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), fb.getProjectPath() + "user_folders/" + ulb.getEmail() + "/" + fileName + ".json");
+        FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileName + ".json");
         String fileNameOverview = fileName + "_overview";
-        DiagramView dv = (DiagramView) DataUtils.findBean("diagramView");
-        dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + ulb.getEmail() + "/" + fileNameOverview + ".json");
+   
+        dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
         HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
-        db.insertWorkflow(ulb.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName, ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
+        dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName, ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
         if (msgBool) {
             sb.addMessage("info", "Workflow has been successfully saved!");
         }
@@ -1616,57 +1646,34 @@ public class WorkflowView implements Serializable {
         }
     }*/
     public void updateWorkflowDescription() {
-        FireProjectBean fp = (FireProjectBean) DataUtils.findBean("fireProjectBean");
-        int id = fp.getSelectedProject().getId();
+        int id = fpb.getSelectedProject().getId();
         wb.setName("Saved Workflow");
         wb.setDescription("Workflow Associated with Project " + id);
     }
 
     public String getReadableType(String type) {
-        switch (type) {
-            case "network":
-                return "Network Analysis";
-            case "dose":
-                return "Dose Response Analysis";
-            case "metapaths":
-                return "Functional Meta-Analysis";
-            case "metadata":
-                return "Statistical Meta-Analysis";
-            case "raw":
-                return "LC-MS Spectra Processing";
-            case "pathinteg":
-                return "Joint Pathway Analysis";
-            case "stat":
-                return "Statistical Analysis [one factor]";
-            case "mf":
-                return "Statistical Analysis [metadata table]";
-            case "path":
-                return "Pathway Analysis";
-            case "mset":
-                return "Enrichment Analysis";
-            case "roc":
-                return "Biomarker Analysis";
-            case "power":
-                return "Power Analysis";
-            case "utils":
-                return "Other Utilities";
-            case "mass_all":
-            case "mummichog":
-            case "mass_table":
-                return "Functional Analysis of MS Peaks";
-            case "msetora":
-                return "Enrichment Analysis (ORA)";
-            case "msetqea":
-                return "Enrichment Analysis (QEA)";
-            case "pathqea":
-                return "Pathway Analysis (QEA)";
-            case "pathora":
-                return "Pathway Analysis (ORA)";
-            case "msetssp":
-                return "Enrichment Analysis (Single Sample Profiling data)";
-            default:
-                return type;
-        }
+        return switch (type) {
+            case "network" -> "Network Analysis";
+            case "dose" -> "Dose Response Analysis";
+            case "metapaths" -> "Functional Meta-Analysis";
+            case "metadata" -> "Statistical Meta-Analysis";
+            case "raw" -> "LC-MS Spectra Processing";
+            case "pathinteg" -> "Joint Pathway Analysis";
+            case "stat" -> "Statistical Analysis [one factor]";
+            case "mf" -> "Statistical Analysis [metadata table]";
+            case "path" -> "Pathway Analysis";
+            case "mset" -> "Enrichment Analysis";
+            case "roc" -> "Biomarker Analysis";
+            case "power" -> "Power Analysis";
+            case "utils" -> "Other Utilities";
+            case "mass_all", "mummichog", "mass_table" -> "Functional Analysis of MS Peaks";
+            case "msetora" -> "Enrichment Analysis (ORA)";
+            case "msetqea" -> "Enrichment Analysis (QEA)";
+            case "pathqea" -> "Pathway Analysis (QEA)";
+            case "pathora" -> "Pathway Analysis (ORA)";
+            case "msetssp" -> "Enrichment Analysis (Single Sample Profiling data)";
+            default -> type;
+        };
     }
 
     public String getUrl(String func) {

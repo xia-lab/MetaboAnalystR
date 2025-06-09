@@ -12,8 +12,6 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 import java.io.*;
 import java.util.ArrayList;
@@ -54,6 +52,53 @@ public class WfUploadBean implements Serializable {
 
     @Inject
     private WorkflowView wf;
+
+    @Inject
+    private TimeUploadBean tub;
+
+    @Inject
+    private UploadBean upb;
+
+    @Inject
+    private ProcessBean pcb;
+
+    @Inject
+    private EnrichUploadBean eub;
+
+    @Inject
+    private PathUploadBean pub;
+
+    @Inject
+    private MappingBean mapb;
+
+    @Inject
+    private MnetLoadBean mnlb;
+
+    @Inject
+    private MnetMapBean mntb;
+
+    @Inject
+    private PeakUploadBean pkub;
+
+    @Inject
+    private SpectraUploadBean spub;
+
+    @Inject
+    private SpectraProcessBean sppb;
+    @Inject
+    private SpectraControlBean spcb;
+
+    @Inject
+    private DiagramView dv;
+
+    @Inject
+    private MetaLoadBean mlb;
+
+    @Inject
+    private MetaPathLoadBean mplb;
+
+    @Inject
+    private NormBean normBean;
 
     private UploadedFile libFile;
 
@@ -336,7 +381,7 @@ public class WfUploadBean implements Serializable {
         }
         RConnection RC = sb.getRConnection();
 
-        String fileName = DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        String fileName = DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
         boolean resBool = false;
         if (metaFile != null) {
             resBool = RDataUtils.readTextDataTs(RC, fileName, dataFormat);
@@ -365,7 +410,7 @@ public class WfUploadBean implements Serializable {
 
             String metaName = "";
             if (metaFile != null) {
-                metaName = DataUtils.uploadFile(metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                 boolean res = RDataUtils.readMetaData(RC, metaName);
                 if (!res) {
                     sb.addMessage("Error", RDataUtils.getErrMsg(RC));
@@ -433,13 +478,12 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleTestDataUpload_mf() {
-        TimeUploadBean tb = (TimeUploadBean) DataUtils.findBean("tsuploader");
-        String res = tb.handleTestDataUpload();
+
+        String res = tub.handleTestDataUpload();
         if (res != null) {
             uploadInfo = "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
 
         }
@@ -447,13 +491,11 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleTestDataUpload_table() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
-        if (ub.getDataOpt().equals("pkcovid")) {
-            TimeUploadBean tb = (TimeUploadBean) DataUtils.findBean("tsuploader");
+        if (upb.getDataOpt().equals("pkcovid")) {
             wb.setDataName("https://api2.xialab.ca/api/download/metaboanalyst/cress_time1.csv");
             wb.setMetaName("https://api2.xialab.ca/api/download/metaboanalyst/cress_time1_meta.csv");
 
-            tb.setTimeDataOpt(testDataOpt);
+            tub.setTimeDataOpt(testDataOpt);
             handleTestDataUpload_mf();
         } else {
             handleTestDataUpload_roc();
@@ -466,8 +508,7 @@ public class WfUploadBean implements Serializable {
         if (res != null) {
             uploadInfo = "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
 
         }
@@ -475,7 +516,6 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleRocTestFileUpload() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
         if (!wb.isReloadingWorkflow()) {
             if (!sb.doLogin("conc", "stat", false, false)) {
                 return null;
@@ -483,7 +523,7 @@ public class WfUploadBean implements Serializable {
         }
 
         RConnection RC = sb.getRConnection();
-        if (ub.getDataOpt().equals("data1")) {
+        if (upb.getDataOpt().equals("data1")) {
             RDataUtils.readTextData(RC, ab.getResourceByAPI("plasma_nmr.csv"), "rowu", "disc");
             wb.setDataName(ab.getResourceByAPI("plasma_nmr.csv"));
 
@@ -501,22 +541,18 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleDoseTestFileUpload() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
-        String res = ub.handleDoseTestFileUpload();
+        String res = upb.handleDoseTestFileUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
         }
         return null;
     }
 
     public void handleOraListUpload() {
-        System.out.println("====================handleOraListUpload");
-        EnrichUploadBean ub = (EnrichUploadBean) DataUtils.findBean("enrichLoader");
-        String res = ub.handleOraListUpload();
+        String res = eub.handleOraListUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -525,48 +561,41 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleSspDataUpload() {
-        EnrichUploadBean ub = (EnrichUploadBean) DataUtils.findBean("enrichLoader");
-        String res = ub.handleSspDataUpload();
+        String res = eub.handleSspDataUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
         }
         return null;
     }
 
     public String handleQeaDataUpload() {
-        EnrichUploadBean ub = (EnrichUploadBean) DataUtils.findBean("enrichLoader");
-        String res = ub.handleQeaDataUpload();
+        String res = eub.handleQeaDataUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
         }
         return null;
     }
 
     public String msetQeaTestBn_action() {
-        EnrichUploadBean ub = (EnrichUploadBean) DataUtils.findBean("enrichLoader");
-        String res = ub.msetQeaTestBn_action();
+        String res = eub.msetQeaTestBn_action();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             fileUploaded = true;
         }
         return null;
     }
 
     public String navigateToEnrichUpload() {
-        System.out.println("enrichnav===========");
-        String url = "";
-        url = switch (enrichOpt) {
+        wb.setReturnType("individual");
+        String url = switch (enrichOpt) {
             case "ora" ->
                 "WfEnrichUploadView";
             case "ssp" ->
@@ -574,23 +603,21 @@ public class WfUploadBean implements Serializable {
             default ->
                 "WfQeaUploadView";
         };
-        wb.setReturnType("individual");
-
         return (url);
     }
 
     public void loadEnrichExample() {
-        EnrichUploadBean ub = (EnrichUploadBean) DataUtils.findBean("enrichLoader");
-        String res = "";
+
+        String res;
         switch (enrichOpt) {
             case "ora" -> {
-                ub.setExampleType("met");
-                ub.updateOraArea();
-                res = ub.handleOraListUpload();
+                eub.setExampleType("met");
+                eub.updateOraArea();
+                res = eub.handleOraListUpload();
             }
             case "ssp" -> {
-                ub.setUseMsetSspExample(true);
-                res = ub.handleSspDataUpload();
+                eub.setUseMsetSspExample(true);
+                res = eub.handleSspDataUpload();
             }
             default -> {
                 res = msetQeaTestBn_action();
@@ -600,8 +627,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String navigateToPathUpload() {
-        String url = "";
-        url = switch (enrichOpt) {
+        String url = switch (enrichOpt) {
             case "list" ->
                 "WfPathUploadView";
             default ->
@@ -613,24 +639,22 @@ public class WfUploadBean implements Serializable {
     }
 
     public void loadPathExample() {
-        PathUploadBean pb = (PathUploadBean) DataUtils.findBean("pathLoader");
         String res = "";
         switch (pathOpt) {
             case "list" -> {
-                pb.setUsePathListExample(true);
-                pb.handlePathListUpload();
+                pub.setUsePathListExample(true);
+                pub.handlePathListUpload();
             }
             default -> {
-                pb.setUsePathListExample(true);
-                pb.pathQeaExampleBn_action();
+                pub.setUsePathListExample(true);
+                pub.pathQeaExampleBn_action();
             }
         };
 
     }
 
     public String handlePathListUpload() {
-        PathUploadBean pb = (PathUploadBean) DataUtils.findBean("pathLoader");
-        String res = pb.handlePathListUpload();
+        String res = pub.handlePathListUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -640,8 +664,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String pathQeaExampleBn_action() {
-        PathUploadBean pb = (PathUploadBean) DataUtils.findBean("pathLoader");
-        String res = pb.pathQeaExampleBn_action();
+        String res = pub.pathQeaExampleBn_action();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -651,8 +674,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String pathQeaBn_action() {
-        PathUploadBean pb = (PathUploadBean) DataUtils.findBean("pathLoader");
-        String res = pb.pathQeaBn_action();
+        String res = pub.pathQeaBn_action();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -662,14 +684,12 @@ public class WfUploadBean implements Serializable {
     }
 
     public void sspNextBn_action() {
-        MappingBean mapb = (MappingBean) DataUtils.findBean("mapBean");
         mapb.sspNextBn_action();
         wb.setActiveIndex(3);
     }
 
     public void skipButton_action_default(int index) {
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        String res = pb.skipButton_action_default();
+        String res = pcb.skipButton_action_default();
         if (res != null) {
             wb.settingActiveIndex(index);
         } else {
@@ -678,8 +698,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public void prepareNetworkData() {
-        MnetMapBean net = (MnetMapBean) DataUtils.findBean("mnetMapBean");
-        String res = net.prepareNetworkData();
+        String res = mntb.prepareNetworkData();
         if (res != null) {
             //wb.setActiveIndex(2);
             wb.finishMultiPreparation("Gene List");
@@ -689,8 +708,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String navigateToNetUpload() {
-        String url = "";
-        url = switch (networkOpt) {
+        String url = switch (networkOpt) {
             case "list" ->
                 "WfNetUploadView";
             default ->
@@ -702,24 +720,23 @@ public class WfUploadBean implements Serializable {
     }
 
     public void loadNetExample() {
-        MnetLoadBean net = (MnetLoadBean) DataUtils.findBean("mnetLoader");
+
         String res = "";
         switch (networkOpt) {
             case "list" -> {
-                net.setExampleInputList("metabogene");
-                net.updateListArea();
-                net.integrityCheck();
+                mnlb.setExampleInputList("metabogene");
+                mnlb.updateListArea();
+                mnlb.integrityCheck();
             }
             default -> {
-                net.performExampleDspc();
+                mnlb.performExampleDspc();
             }
         };
 
     }
 
     public String handleMnetDataUpload() {
-        MnetLoadBean net = (MnetLoadBean) DataUtils.findBean("mnetLoader");
-        String res = net.handleMnetDataUpload();
+        String res = mnlb.handleMnetDataUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -729,8 +746,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String performExampleDspc() {
-        MnetLoadBean net = (MnetLoadBean) DataUtils.findBean("mnetLoader");
-        String res = net.performExampleDspc();
+        String res = mnlb.performExampleDspc();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -740,8 +756,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String integrityCheck() {
-        MnetLoadBean net = (MnetLoadBean) DataUtils.findBean("mnetLoader");
-        String res = net.integrityCheck();
+        String res = mnlb.integrityCheck();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -751,8 +766,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String navigateToMumUpload() {
-        String url = "";
-        url = switch (mumOpt) {
+        String url = switch (mumOpt) {
             case "list" ->
                 "WfMumUploadView";
             default ->
@@ -764,23 +778,21 @@ public class WfUploadBean implements Serializable {
     }
 
     public void loadMumExample() {
-        PeakUploadBean pk = (PeakUploadBean) DataUtils.findBean("peakLoader");
         String res = "";
         switch (mumOpt) {
             case "list" -> {
-                pk.processListExampleUpload();
+                pkub.processListExampleUpload();
             }
             default -> {
-                pk.setTableDataOpt("table_ibd");
-                pk.processTableExampleUpload();
+                pkub.setTableDataOpt("table_ibd");
+                pkub.processTableExampleUpload();
             }
         };
 
     }
 
     public String processListExampleUpload() {
-        PeakUploadBean pk = (PeakUploadBean) DataUtils.findBean("peakLoader");
-        String res = pk.processListExampleUpload();
+        String res = pkub.processListExampleUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -790,8 +802,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleMassAllUpload() {
-        PeakUploadBean pk = (PeakUploadBean) DataUtils.findBean("peakLoader");
-        String res = pk.processListExampleUpload();
+        String res = pkub.processListExampleUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -801,8 +812,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleMassAllUploadTable() {
-        PeakUploadBean pk = (PeakUploadBean) DataUtils.findBean("peakLoader");
-        String res = pk.handleMassAllUploadTable();
+        String res = pkub.handleMassAllUploadTable();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -812,8 +822,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String processTableExampleUpload() {
-        PeakUploadBean pk = (PeakUploadBean) DataUtils.findBean("peakLoader");
-        String res = pk.processTableExampleUpload();
+        String res = pkub.processTableExampleUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -823,19 +832,18 @@ public class WfUploadBean implements Serializable {
     }
 
     public String navigateToStatUpload() {
-        String url = "";
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
+        String url;
 
         switch (statOpt) {
             case "table" ->
                 url = "WfStatUploadView";
             case "mztab" -> {
                 url = "WfStatMztabUploadView";
-                ub.setTestDataOpt("mztabmouse");
+                upb.setTestDataOpt("mztabmouse");
             }
             default -> {
                 url = "WfStatZipUploadView";
-                ub.setTestDataOpt("nmrpeaklist");
+                upb.setTestDataOpt("nmrpeaklist");
             }
         };
         wb.setReturnType("individual");
@@ -844,45 +852,41 @@ public class WfUploadBean implements Serializable {
     }
 
     public void loadStatExample() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
         String res = "";
         switch (statOpt) {
             case "table" -> {
-                ub.setTestDataOpt("conccancer");
-                res = ub.handleStatTestFileUpload();
+                upb.setTestDataOpt("conccancer");
+                res = upb.handleStatTestFileUpload();
             }
             case "mztabmouse" -> {
-                ub.setTestDataOpt("mztabmouse");
-                res = ub.handleStatTestFileUpload();
+                upb.setTestDataOpt("mztabmouse");
+                res = upb.handleStatTestFileUpload();
             }
             default -> {
-                ub.setTestDataOpt("nmrpeaklist");
-                res = ub.handleStatTestFileUpload();
+                upb.setTestDataOpt("nmrpeaklist");
+                res = upb.handleStatTestFileUpload();
             }
         };
 
     }
 
     public void msPeakNextBn_action(int index) {
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        sb.setDataProcessed(true);
-        pb.performSanityCheck();
+        pcb.performSanityCheck();
+        sb.setIntegChecked();
 
         wb.setActiveIndex(index);
 
     }
 
     public void nmrNextBn_action(int index) {
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        sb.setDataProcessed(true);
-        pb.performSanityCheck();
+        pcb.performSanityCheck();
+        sb.setIntegChecked();
 
         wb.setActiveIndex(index);
     }
 
     public void handleZipFileUpload() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
-        String res = ub.handleZipFileUpload();
+        String res = upb.handleZipFileUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -891,8 +895,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public void handleStatTestFileUpload() {
-        UploadBean ub = (UploadBean) DataUtils.findBean("uploader");
-        String res = ub.handleStatTestFileUpload();
+        String res = upb.handleStatTestFileUpload();
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -908,8 +911,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public void loadMfExample() {
-        TimeUploadBean tb = (TimeUploadBean) DataUtils.findBean("tsuploader");
-        tb.handleTestDataUpload();
+        tub.handleTestDataUpload();
     }
 
     public String navigateToSpecUpload() {
@@ -925,10 +927,9 @@ public class WfUploadBean implements Serializable {
     }
 
     public String handleRawSpecAllUploadTable() {
-        SpectraUploadBean sub = (SpectraUploadBean) DataUtils.findBean("specLoader");
         String res = null;
         try {
-            res = sub.goToProcessing();
+            res = spub.goToProcessing();
         } catch (REXPMismatchException ex) {
             Logger.getLogger(WfUploadBean.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -941,23 +942,21 @@ public class WfUploadBean implements Serializable {
     }
 
     public String processSpecExampleUpload() {
-        SpectraUploadBean sub = (SpectraUploadBean) DataUtils.findBean("specLoader");
         String res = null;
         try {
             //sub.setSelectedExample("malaria");
-            res = sub.uploadExampleSpectra();
+            res = spub.uploadExampleSpectra();
         } catch (Exception ex) {
             Logger.getLogger(WfUploadBean.class.getName()).log(Level.SEVERE, null, ex);
         }
-        SpectraProcessBean sp = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
-        SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean("spectraController");
-        if (sp.isIsms2DIA()) {
-            sp.prepareDIASpec();
+
+        if (sppb.isIsms2DIA()) {
+            sppb.prepareDIASpec();
         } else {
-            sp.prepareSpecProc();
+            sppb.prepareSpecProc();
         }
-        sc.goToJobStatus(false);
-        System.out.println("===== processSpecExampleUpload res ===== >" + res);
+        spcb.goToJobStatus(false);
+        //System.out.println("===== processSpecExampleUpload res ===== >" + res);
         if (res != null) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
@@ -967,13 +966,12 @@ public class WfUploadBean implements Serializable {
     }
 
     public String processSpecDataUpload() {
-        SpectraUploadBean slb = (SpectraUploadBean) DataUtils.findBean("specLoader");
-        String res = slb.processSaintyCheck();
+        String res = spub.processSaintyCheck();
         if (res.equals("Spectra check")) {
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
             fileUploaded = true;
-            slb.setAllowGoogleDriveContinue(true);
+            spub.setAllowGoogleDriveContinue(true);
         }
         return null;
     }
@@ -981,16 +979,15 @@ public class WfUploadBean implements Serializable {
     public void skipButton_action_spec(int index) {
         //ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
         //String res = pb.skipButton_action_default();
-        SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
-        String res = spb.prepareSpecProc();
+        String res = sppb.prepareSpecProc();
         if (index == 2) {
-            if (spb.isIsms2DIA()) {
-                spb.prepareDIASpec();
+            if (sppb.isIsms2DIA()) {
+                sppb.prepareDIASpec();
             }
         }
         if (index == 3) {
-            if (spb.isIsms2DIA()) {
-                spb.prepareDIASpecProc();
+            if (sppb.isIsms2DIA()) {
+                sppb.prepareDIASpecProc();
             }
         }
         wb.settingActiveIndex(index);
@@ -998,7 +995,7 @@ public class WfUploadBean implements Serializable {
             if (index == -1) {
                 wb.finishMultiPreparation("LC-MS Spectra");
             } else {
-        wb.settingActiveIndex(index);
+                wb.settingActiveIndex(index);
             }
         } else {
             sb.addMessage("error", "Spectra processing failed!");
@@ -1006,35 +1003,37 @@ public class WfUploadBean implements Serializable {
     }
 
     public void navigateToTableUpload() {
-        DiagramView dv = (DiagramView) DataUtils.findBean("diagramView");
         dv.resetDiagram();
         wb.setActiveIndex(0);
 
-        if (tableOpt.equals("compound")) {
-            dv.navToPage("Compound Table");
-        } else if (tableOpt.equals("peak")) {
-            dv.navToPage("Peak Table");
-        } else {
-            dv.navToPage("Generic Table");
+        switch (tableOpt) {
+            case "compound" ->
+                dv.navToPage("Compound Table");
+            case "peak" ->
+                dv.navToPage("Peak Table");
+            default ->
+                dv.navToPage("Generic Table");
         }
     }
 
     public void navigateToListUpload() {
-        DiagramView dv = (DiagramView) DataUtils.findBean("diagramView");
+
         dv.resetDiagram();
         wb.setActiveIndex(0);
 
-        if (listOpt.equals("compound")) {
-            dv.navToPage("Metabolite List");
-        } else if (listOpt.equals("peak")) {
-            dv.navToPage("Peak List");
-        } else if (listOpt.equals("gene")) {
-            dv.navToPage("Gene List");
+        switch (listOpt) {
+            case "compound" ->
+                dv.navToPage("Metabolite List");
+            case "peak" ->
+                dv.navToPage("Peak List");
+            case "gene" ->
+                dv.navToPage("Gene List");
+            default -> {
+            }
         }
     }
 
     public void navigateToMultiTableUpload() {
-        DiagramView dv = (DiagramView) DataUtils.findBean("diagramView");
         dv.resetDiagram();
         wb.setActiveIndex(0);
 
@@ -1046,8 +1045,7 @@ public class WfUploadBean implements Serializable {
     }
 
     public String doDefaultMetaAnalysis() {
-        MetaLoadBean lb = (MetaLoadBean) DataUtils.findBean("loadBean");
-        lb.doDefaultMetaAnalysis();
+        mlb.doDefaultMetaAnalysis();
         //if (res != null) {
         uploadInfo = uploadInfo + "<br/>Upload and processing successful! Please click the <b>Proceed</b> button to the next step.";
         sb.addMessage("Info", "Data has been uploaded successfully");
@@ -1057,11 +1055,10 @@ public class WfUploadBean implements Serializable {
     }
 
     public void performMetaIntegrityCheck() {
-        MetaLoadBean lb = (MetaLoadBean) DataUtils.findBean("loadBean");
-        lb.performMetaIntegrityCheck();
+        mlb.performMetaIntegrityCheck();
         ArrayList<String> msgVec = new ArrayList();
 
-        if (lb.isAllDataConsistent()) {
+        if (mlb.isAllDataConsistent()) {
             RConnection RC = sb.getRConnection();
             String[] msgArray = RDataUtils.getSanityCheckMessage(RC);
             RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
@@ -1076,31 +1073,26 @@ public class WfUploadBean implements Serializable {
             }
             msg = msg + "</table>";
 
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.setMsgText(msg);
+            pcb.setMsgText(msg);
             //wb.setActiveIndex(1);
         }
     }
 
-    public String doDefaultMetaPathAnalysis() {
-        System.out.println("metaDefault==0");
-        MetaPathLoadBean lb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
-        lb.doDefaultMetaAnalysis();
-        System.out.println("metaDefault==1");
+    public void doDefaultMetaPathAnalysis() {
+        mplb.doDefaultMetaAnalysis();
+        //System.out.println("metaDefault==1");
         //if (res != null) {
         uploadInfo = uploadInfo + "<br/>Upload and processing successful! Please click the <b>Proceed</b> button to the next step.";
         sb.addMessage("Info", "Data has been uploaded successfully");
         fileUploaded = true;
-        //}
-        return null;
+
     }
 
     public void performMetaPathIntegrityCheck() {
-        MetaPathLoadBean lb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
-        lb.performMetaIntegrityCheck();
+        mplb.performMetaIntegrityCheck();
         ArrayList<String> msgVec = new ArrayList();
 
-        if (lb.isAllDataConsistent()) {
+        if (mplb.isAllDataConsistent()) {
             RConnection RC = sb.getRConnection();
             String[] msgArray = RDataUtils.getSanityCheckMessage(RC);
             RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
@@ -1115,24 +1107,19 @@ public class WfUploadBean implements Serializable {
             }
             msg = msg + "</table>";
 
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.setMsgText(msg);
+            pcb.setMsgText(msg);
             //wb.setActiveIndex(1);
         }
     }
 
     public void confirmAllData() {
-        MetaPathLoadBean lb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
-        lb.confirmAllData();
+        mplb.confirmAllData();
         wb.settingActiveIndex(1);
     }
 
     public void proceedToNorm(int tabInx) {
-        NormBean normBean = (NormBean) DataUtils.findBean("normBean");
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        pb.skipButton_action_default();
-        normBean.preparePrenormData();
 
+        pcb.skipButton_action_default();
         wb.settingActiveIndex(tabInx);
     }
 }

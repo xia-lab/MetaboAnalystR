@@ -37,11 +37,16 @@ public class IntegProcessBean implements Serializable {
     // Section I: Find other bean
     @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
+    
     @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private MummiAnalBean mab;
+    
     // Section II: variable
     private String datatype = "cmp";
     private double pvalCutoff = 0.01;
@@ -132,7 +137,7 @@ public class IntegProcessBean implements Serializable {
                     return null;
                 }
                 fileName = DataUtils.getJustFileName(peakFile.getFileName());
-                DataUtils.uploadFile(peakFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                DataUtils.uploadFile(sb, peakFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             } catch (Exception e) {
                 return null;
             }
@@ -142,35 +147,34 @@ public class IntegProcessBean implements Serializable {
         sb.setDataUploaded();
         RConnection RC = sb.getRConnection();
         RDataUtils.setPeakFormat(RC, RankOpt);
-        RDataUtils.setInstrumentParams(RC, ppmVal, msModeOpt, ECOpt ? "yes" : "no", rtFrac);
+        RDataUtils.setInstrumentParams(sb, ppmVal, msModeOpt, ECOpt ? "yes" : "no", rtFrac);
 
         if (RDataUtils.readPeakListData(RC, fileName)) {
-            MummiAnalBean mb = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
             String format = RDataUtils.GetPeakFormat(RC);
             switch (format) {
                 case "mpt", "mprt" -> {
-                    mb.setDisabledGsea(false);
-                    mb.setDisabledMum(false);
+                    mab.setDisabledGsea(false);
+                    mab.setDisabledMum(false);
                 }
                 case "mp", "mpr" -> {
-                    mb.setDisabledGsea(true);
-                    mb.setDisabledMum(false);
+                    mab.setDisabledGsea(true);
+                    mab.setDisabledMum(false);
                 }
                 case "rmp" -> {
                     // single column
-                    mb.setDisabledGsea(true);
-                    mb.setDisabledMum(false);
-                    mb.setDisabledMumPval(true);
+                    mab.setDisabledGsea(true);
+                    mab.setDisabledMum(false);
+                    mab.setDisabledMumPval(true);
                 }
                 default -> {
                     //rmt or mt or mtr
-                    mb.setDisabledGsea(false);
-                    mb.setDisabledMum(true);
-                    mb.setDisabledMumPval(true);
+                    mab.setDisabledGsea(false);
+                    mab.setDisabledMum(true);
+                    mab.setDisabledMumPval(true);
                 }
             }
             if (format.equals("mprt") || format.equals("mpr") || format.equals("mrt")) {
-                mb.setDisabledV2(true);
+                mab.setDisabledV2(true);
             }
             return "ID map";
         } else {
@@ -204,7 +208,7 @@ public class IntegProcessBean implements Serializable {
             return null;
         }
 
-        RDataUtils.setOrganism(sb.getRConnection(), integOrg);
+        RDataUtils.setOrganism(sb, integOrg);
         if (datatype.equals("cmp")) {
             returnPage = doJointSubmit1();
         } else if (datatype.equals("peak")) {
@@ -258,12 +262,11 @@ public class IntegProcessBean implements Serializable {
     }
 
     private int PerformMummiCore() {
-        RConnection RC = sb.getRConnection();
-        RDataUtils.setPeakEnrichMethod(RC, "mum", version);
+        RDataUtils.setPeakEnrichMethod(sb, "mum", version);
         int minMsetNum = 3;
         String pathDBOpt = integOrg + "_kegg";
-        if (REnrichUtils.setupMummichogPval(RC, pvalCutoff)) {
-            if (!REnrichUtils.performPSEA(RC, pathDBOpt, libVersion, minMsetNum)) {
+        if (REnrichUtils.setupMummichogPval(sb, pvalCutoff)) {
+            if (!REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
                 String msg = RDataUtils.getErrMsg(sb.getRConnection());
                 sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 return 0;
@@ -278,7 +281,7 @@ public class IntegProcessBean implements Serializable {
 
     public double findPvalue() {
         double pcutoff;
-        pcutoff = REnrichUtils.getDefaultPvalCutoff(sb.getRConnection());
+        pcutoff = REnrichUtils.getDefaultPvalCutoff(sb);
         if (pcutoff == -1) {
             pcutoff = 0.01;
         }
@@ -565,7 +568,7 @@ public class IntegProcessBean implements Serializable {
         pathLibOpt = new SelectItem[rowLen];
         String[] vals = {"hsa", "mmu", "rno", "ptr", "mcc", "mcf", "ocu", "cfa", "fca",
             "bta", "biu", "chx", "oas", "ssc", "ecb", "eai", "hai", "dro", "gga", "tgu",
-            "dre", "nfu", "smm", "shx", "sce", "cgr", "ppa", "cai", "pkz", "act", "ang",
+            "dre", "nfu", "smm", "shx", "sce", "cgr", "ppa", "cal", "pkz", "act", "ang",
             "afv", "cim", "cne", "cgi", "dme", "dsr", "dpe", "aara", "aag", "ame", "bmor",
             "api", "gmw", "cel", "bmy", "ath", "ghi", "ahf", "hbf", "osa", "taes", "zma",
             "cre", "cvr", "cme", "gmx", "eco", "sty", "sdy", "kpn", "kva", "ype", "smar",

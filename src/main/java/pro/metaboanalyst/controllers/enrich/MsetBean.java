@@ -31,7 +31,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import software.xdev.chartjs.model.data.BarData;
 import software.xdev.chartjs.model.data.PieData;
@@ -52,15 +52,23 @@ import software.xdev.chartjs.model.options.scale.cartesian.CartesianTickOptions;
 public class MsetBean implements Serializable {
 
     @Inject
-    WorkflowBean wb;
+    private WorkflowBean wb;
+
     @JsonIgnore
     private static final Logger LOGGER = LogManager.getLogger(MsetBean.class);
+
     @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
+
     @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private final List<String> chemLibs = Arrays.asList("super_class", "main_class", "sub_class");
     private String msetOpt = "smpdb_pathway";
     private String libOpt = "all";
@@ -137,7 +145,7 @@ public class MsetBean implements Serializable {
 
             // File libFile = new File(homeDir + File.separatorChar + fileName);
             // uploadedFile.write(libFile);
-            String fileName = DataUtils.uploadFile(msetLibFile, sb.getCurrentUser().getHomeDir(), null, false);
+            String fileName = DataUtils.uploadFile(sb, msetLibFile, sb.getCurrentUser().getHomeDir(), null, false);
             boolean res = RDataUtils.readMsetLibData(RC, fileName);
             if (res) {
                 checkMsg = RDataUtils.getMsetLibCheckMsg(RC);
@@ -199,7 +207,7 @@ public class MsetBean implements Serializable {
                 sb.addMessage("Error", "File is empty");
                 return;
             }
-            String fileName = DataUtils.uploadFile(metabolomeFile, sb.getCurrentUser().getHomeDir(), null, false);
+            String fileName = DataUtils.uploadFile(sb, metabolomeFile, sb.getCurrentUser().getHomeDir(), null, false);
             boolean res = RDataUtils.readHMDBRefLibData(RC, fileName);
             if (res) {
                 sb.addMessage("OK", RDataUtils.getRefLibCheckMsg(RC));
@@ -217,7 +225,7 @@ public class MsetBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_submitBtn_action(this);
+            jrd.record_submitBtn_action(this);
             return null;
         }
         RConnection RC = sb.getRConnection();
@@ -227,15 +235,15 @@ public class MsetBean implements Serializable {
         }
 
         if (libOpt.equals("self")) {
-            RDataUtils.setMetabolomeFilter(RC, true);
+            RDataUtils.setMetabolomeFilter(sb, true);
         } else {
-            RDataUtils.setMetabolomeFilter(RC, false);
+            RDataUtils.setMetabolomeFilter(sb, false);
         }
 
         //sb.setMsetLibType(msetOpt);
-        RDataUtils.setCurrentMsetLib(sb.getRConnection(), msetOpt, excludeNm);
+        RDataUtils.setCurrentMsetLib(sb, msetOpt, excludeNm);
 
-        JavaRecord.record_submitBtn_action(this);
+        jrd.record_submitBtn_action(this);
         if (sb.getAnalType().equals("msetqea")) {
             System.out.println("doGlobal===================");
             return doGlobalTest();
@@ -254,7 +262,7 @@ public class MsetBean implements Serializable {
 
     public String doHyperGeom() {
         RConnection RC = sb.getRConnection();
-        if (REnrichUtils.hypergeomTest(RC)) {
+        if (REnrichUtils.hypergeomTest(sb)) {
             populateOraBean();
             wb.getCalledWorkflows().add("ORA");
             return "oraview";
@@ -273,11 +281,11 @@ public class MsetBean implements Serializable {
 
         String imgName = sb.getNewImage("ora");
         String imgName2 = sb.getNewImage("ora_dot");
-        REnrichUtils.plotORA(sb, imgOpt, imgName, "png", 72);
-        REnrichUtils.plotEnrichmentDotPlot(sb, "ora", imgName2, "png", 72);
+        REnrichUtils.plotORA(sb, imgOpt, imgName, "png", 150);
+        REnrichUtils.plotEnrichmentDotPlot(sb, "ora", imgName2, "png", 150);
 
         if (isShowPie()) {
-            REnrichUtils.plotEnrichPieChart(sb, "ora", sb.getNewImage("ora_pie"), "png", 72);
+            REnrichUtils.plotEnrichPieChart(sb, "ora", sb.getNewImage("ora_pie"), "png", 150);
             preparePieChart(RC);
         }
 
@@ -331,7 +339,7 @@ public class MsetBean implements Serializable {
     }
 
     public String getMsetImgPath() {
-        String imgNm = REnrichUtils.plotQeaMset(sb, msetNm, "png", 72);
+        String imgNm = REnrichUtils.plotQeaMset(sb, msetNm, "png", 150);
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + imgNm;
     }
 
@@ -502,7 +510,7 @@ public class MsetBean implements Serializable {
 
         if (isShowPie()) {
             String imgName3 = sb.getNewImage("qea_pie");
-            REnrichUtils.plotEnrichPieChart(sb, "qea", imgName3, "png", 72);
+            REnrichUtils.plotEnrichPieChart(sb, "qea", imgName3, "png", 150);
             preparePieChart(RC);
         }
 
@@ -514,8 +522,8 @@ public class MsetBean implements Serializable {
             qeaBeans[i] = new QeaBean(rownames[i], "background-color:" + rowStyles[i], (int) mat[i][0], (int) mat[i][1],
                     mat[i][2], mat[i][3], mat[i][4], mat[i][5], mat[i][6]);
         }
-        REnrichUtils.plotQEA(sb, imgOpt, imgName, "png", 72);
-        REnrichUtils.plotEnrichmentDotPlot(sb, "qea", imgName2, "png", 72);
+        REnrichUtils.plotQEA(sb, imgOpt, imgName, "png", 150);
+        REnrichUtils.plotEnrichmentDotPlot(sb, "qea", imgName2, "png", 150);
         createBarModel(rownames, rowStyles, mat);
         wb.getCalledWorkflows().add("QEA");
     }

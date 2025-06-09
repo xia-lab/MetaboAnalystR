@@ -8,7 +8,6 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -22,23 +21,23 @@ public class SigVarSelect {
             String rCommand = "SAM.Anal(NA, \"" + method + "\", " + paired + ", " + equalVar + ", " + delta + ", \"" + imgName + "\")";
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "SAM");
+            sb.recordRCommandFunctionInfo(rCommand, "SAM");
 
             //No plotting, for record only
-            String rCommand2 = "PlotSAM.Cmpd(NA" + ", \"" + imgName + "\", \"png\", 72, width=NA)";
+            String rCommand2 = "PlotSAM.Cmpd(NA" + ", \"" + imgName + "\", \"png\", 150, width=NA)";
             sb.addGraphicsCMD("sam_imp", rCommand2);
             sb.addGraphicsMapLink("sam_imp", "/Secure/analysis/SAMView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand2);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "SAM");
+            sb.recordRCommandFunctionInfo(rCommand2, "SAM");
 
             //use microservice
-            rCommand = ".prepare.sam.anal(NA, \"" + method + "\", " + paired + ", " + equalVar + ", " + delta + ", \"" + imgName + "\", 72)";
+            rCommand = ".prepare.sam.anal(NA, \"" + method + "\", " + paired + ", " + equalVar + ", " + delta + ", \"" + imgName + "\", 150)";
             if (RC.eval(rCommand).asInteger() == 1) {
                 RCenter.performRserveMicro(sb.getCurrentUser().getHomeDir());
             }
             rCommand = ".save.sam.anal(NA)";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "SAM");
+            sb.recordRCommandFunctionInfo(rCommand, "SAM");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -55,7 +54,7 @@ public class SigVarSelect {
             sb.addGraphicsCMD("sam_view", rCommand);
             sb.addGraphicsMapLink("sam_view", "/Secure/analysis/SAMView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "SAM");
+            sb.recordRCommandFunctionInfo(rCommand, "SAM");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -151,22 +150,22 @@ public class SigVarSelect {
 
     public static int initEBAM(SessionBean1 sb, String paired, String equalVar, String nonPar, double A0, double delta, String imgA0, String imgSig) {
         try {
-            String rCommand = "EBAM.Init(NA, " + paired + ", " + equalVar + ", " + nonPar + ", " + A0 + ", " + delta + ", \"" + imgA0 + "\", \"" + imgSig + "\", " + 72 + ")";
+            String rCommand = "EBAM.Init(NA, " + paired + ", " + equalVar + ", " + nonPar + ", " + A0 + ", " + delta + ", \"" + imgA0 + "\", \"" + imgSig + "\", " + 150 + ")";
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "EBAM");
+            sb.recordRCommandFunctionInfo(rCommand, "EBAM");
             sb.addGraphicsCMD("ebam_view", rCommand);
             sb.addGraphicsMapLink("ebam_view", "/Secure/analysis/EBAMView.xhtml");
 
-            String rCommand2 = "PlotEBAM.Cmpd(NA" + ", \"" + imgSig + "\", \"png\", 72, width=NA)";
+            String rCommand2 = "PlotEBAM.Cmpd(NA" + ", \"" + imgSig + "\", \"png\", 150, width=NA)";
             RCenter.recordRCommand(RC, rCommand2);
             sb.addGraphicsCMD("ebam_imp", rCommand2);
             sb.addGraphicsMapLink("ebam_imp", "/Secure/analysis/EBAMView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand2, "EBAM");
+            sb.recordRCommandFunctionInfo(rCommand2, "EBAM");
 
             //use microservice
-            rCommand = ".prepare.ebam.init(NA, " + paired + ", " + equalVar + ", " + nonPar + ", " + A0 + ", " + delta + ", \"" + imgA0 + "\", \"" + imgSig + "\", " + 72 + ")";
+            rCommand = ".prepare.ebam.init(NA, " + paired + ", " + equalVar + ", " + nonPar + ", " + A0 + ", " + delta + ", \"" + imgA0 + "\", \"" + imgSig + "\", " + 150 + ")";
             if (RC.eval(rCommand).asInteger() == 1) {
                 RCenter.performRserveMicro(sb.getCurrentUser().getHomeDir());
             }

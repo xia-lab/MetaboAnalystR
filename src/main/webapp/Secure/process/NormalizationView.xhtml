@@ -7,7 +7,6 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">        
-        <f:event type="preRenderView"  listener="#{normBean.preparePrenormData()}"/> 
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Normalization', '/Secure/process/NormalizationView.xhtml')}"/> 
     </ui:define>
     <ui:define name="footerout"/>
@@ -230,7 +229,9 @@
                                            title="Customize the graphics output">
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
-                            <img src="#{sessionBean1.getCurrentImageURL('norm')}" alt="Normalization"/>
+                            <img style="width:9in;"
+                                src="#{sessionBean1.getCurrentImageURL('norm')}" 
+                                alt="Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                     <p:tab title ="Sample View">
@@ -242,7 +243,8 @@
                                            title="Customize the graphics output">
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
-                            <img src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
+                            <img style="width:9in;"
+                                src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                 </p:tabView>

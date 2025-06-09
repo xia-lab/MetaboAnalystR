@@ -42,12 +42,13 @@
                 $.getJSON(usr + "/pointMap2.json", loadLabel);
                 var options = {
                     options: {
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
                                 title: {
                                     display: true,
                                     color: textColor,
-                                    text: pcaLoadY
+                                    text: "Loading - Y"
                                 },
                                 ticks: {
                                     color: textColor
@@ -60,7 +61,7 @@
                                 title: {
                                     display: true,
                                     color: textColor,
-                                    text: pcaLoadX
+                                    text: "Loading - X"
                                 },
                                 ticks: {
                                     color: textColor
@@ -121,14 +122,25 @@
                 -ms-transform: rotate(270deg);
                 transform: rotate(270deg);
             }
+
+            #ac\:chart_canvas { /* Note the escaped colon if ac is a component ID */
+                width: 800px !important; /* Your desired width */
+                height: 720px !important; /* Your desired height */
+                display: block; /* Ensure it behaves as a block element */
+            }
+
+            /* If the chart is responsive, you might also need to ensure its parent containers allow it */
+            /* This might be needed if the chart still doesn't grow despite the canvas styling */
+            .ui-chart { /* The main PrimeFaces chart container div */
+                width: 800px !important;
+                height: 720px !important;
+            }
         </style>
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
         <h:inputHidden id="mydir" value="#{sessionBean1.getJsonDir('pls_score3d')}" />
         <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('pls_loading3d')}" />
-
-
 
         <h:panelGrid styleClass="my-content-panel">
             <h2>
@@ -181,9 +193,9 @@
                                 </p:selectOneMenu>
                                 <h:outputLabel style="font-weight: bold" value=" components"/>
                             </h:panelGroup>
-                            <p:commandButton value="Update" update=":ac:form1:pairPane  :hisTab:cmdPane" actionListener="#{plsBean.plsPairBtn_action()}"/>   
+                            <p:commandButton value="Update" update=":ac:form1:pairPane :hisTab:cmdPane" actionListener="#{plsBean.plsPairBtn_action()}"/>   
                         </h:panelGrid>
-                        <h:panelGrid id="pairPane" style="width: 100%; padding-left: 10%">
+                        <h:panelGrid id="pairPane" style="width: 100%; padding-left: 50px">
                             <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
                                 <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_pair')}" 
                                                update=":myGraphPane"
@@ -192,7 +204,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_pair')}" alt="PLSPairImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:10in;"
+                                 src="#{sessionBean1.getCurrentImageURL('pls_pair')}" alt="PLSPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -234,7 +248,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_score2d')}" alt="PLSScore2DImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pls_score2d')}" alt="PLSScore2DImage"/>
                             <h:panelGrid style="text-align: left">
                                 Note, PLS-DA maximizes the <b>covariance</b> between X (data) and Y (group). The variance displayed in the plot above 
                                 is the <b>explained variance for X</b>. Covariance and x-variance may not agree with each other in some cases. For instance, 
@@ -308,15 +324,53 @@
                             </p>
                         </p:tooltip>
                     </h:panelGrid>  
-                    <h:panelGrid id="loadPane" style="text-align: center;; width:100%" class="surface-card shadow-1 p-4 text-800">
-                        <p:chart id="chart" value="#{detailsBean.getModel1('pls')}"  
+                    <h:panelGrid id="loadPane" style="text-align: center;; width:100%">
+                        <p:chart id="chart" widgetVar="chart" 
+                                 value="#{detailsBean.getModel1('pls')}"  
                                  style="height:670px; width:95%; margin-top: 50px"
                                  extender="extender">
-                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                            <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" 
+                                    update=":hisTab:cmdPane" 
+                                    oncomplete="PF('FeatureView').show();"/>
                         </p:chart>
                     </h:panelGrid>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('pls')}" update="chart" />
 
+                </p:tab>
+                <p:tab title ="Biplot">
+                    <h:form id="form8">
+                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
+                            <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-right: 60px">
+                                <h:outputLabel style="font-weight: bold" value="Select PC for X-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotX}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>
+                                <h:outputLabel style="font-weight: bold" value="Select PC for Y-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotY}">
+                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
+                                </p:selectOneMenu>  
+                                <h:outputLabel style="font-weight: bold" value="Number of top features:"/>
+                                <h:panelGroup>
+                                    <p:inputText id="topFeat" value="#{plsBean.plsBiplotFeat}" style="width: 50px" required="true" requiredMessage="Must set the number of top features!"/>
+                                    <p:slider for="topFeat" minValue="1" maxValue="#{sessionBean1.featureNumber}" step="1" style="width: 50px" />
+                                </h:panelGroup>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form8:biplotPane  :hisTab:cmdPane" actionListener="#{plsBean.plsBiplotBtn_action()}"/>   
+                        </h:panelGrid>
+                        <h:panelGrid id="biplotPane" style="text-align: center; width: 1000px; padding-top: 20px">
+                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_biplot')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pls_biplot')}" alt="PLSBiplotImage"/>
+                        </h:panelGrid>  
+                    </h:form>
                 </p:tab>
                 <p:tab title ="Imp. Features">
                     <h:form id="form6">
@@ -344,7 +398,7 @@
                                         <f:selectItems value="#{plsBean.coefItems}" />
                                     </p:selectOneMenu>  
                                 </h:panelGrid>
-                                <h:outputLabel style="font-weight: bold" value="Show top feature number:"/>
+                                <h:outputLabel style="font-weight: bold" value="Top feature number:"/>
                                 <p:inputText style="width:50px" value="#{plsBean.impFeatNum}"/> 
                                 <h:outputLabel style="font-weight: bold" value="Use grey scale color:"/>
                                 <p:selectBooleanCheckbox value ="#{plsBean.grayScale}" style="line-height: 18px"/>
@@ -363,7 +417,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_imp')}" alt="PLSImpImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pls_imp')}" alt="PLSImpImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>
@@ -435,7 +491,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{plsBean.plsCVImg}" alt="PCACVImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:8in;"
+                                 src="#{plsBean.plsCVImg}" alt="PCACVImage"/>
                             <h:panelGrid style="text-align: left">
                                 <p>
                                     Q2 is an estimate of the predictive ability of the model, and is calculated via cross-validation (CV). 
@@ -500,41 +558,10 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_perm')}" alt="PLSPermutationImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:8in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pls_perm')}" alt="PLSPermutationImage"/>
                         </h:panelGrid> 
-                    </h:form>
-                </p:tab>
-                <p:tab title ="Biplot">
-                    <h:form id="form8">
-                        <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px;">
-                            <h:panelGrid columns="2" cellpadding="5" style="width:480px; padding-right: 60px">
-                                <h:outputLabel style="font-weight: bold" value="Select PC for X-axis:"/>
-                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotX}">
-                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
-                                </p:selectOneMenu>
-                                <h:outputLabel style="font-weight: bold" value="Select PC for Y-axis:"/>
-                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{plsBean.plsBiplotY}">
-                                    <f:selectItems value="#{plsBean.plsAllPCs}" />
-                                </p:selectOneMenu>  
-                                <h:outputLabel style="font-weight: bold" value="Number of top features:"/>
-                                <h:panelGroup>
-                                    <p:inputText id="topFeat" value="#{plsBean.plsBiplotFeat}" style="width: 50px" required="true" requiredMessage="Must set the number of top features!"/>
-                                    <p:slider for="topFeat" minValue="1" maxValue="#{sessionBean1.featureNumber}" step="1" style="width: 50px" />
-                                </h:panelGroup>
-                            </h:panelGrid>
-                            <p:commandButton value="Update" update=":ac:form8:biplotPane  :hisTab:cmdPane" actionListener="#{plsBean.plsBiplotBtn_action()}"/>   
-                        </h:panelGrid>
-                        <h:panelGrid id="biplotPane" style="text-align: center; width: 1000px; padding-top: 20px">
-                            <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
-                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pls_biplot')}" 
-                                               update=":myGraphPane"
-                                               oncomplete="PF('graphDialog').show()"
-                                               title="Customize the graphics output">
-                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                                </p:commandLink>
-                            </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pls_biplot')}" alt="PLSBiplotImage"/>
-                        </h:panelGrid>  
                     </h:form>
                 </p:tab>
             </p:tabView> 

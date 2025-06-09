@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.enrich;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,13 @@ import jakarta.inject.Inject;
 @Named("jointMapBean")
 public class JointMapBean implements Serializable {
 
+    @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private IntegProcessBean ipb;
     //for genes 
     private List<NameMapBean> geneNameMaps;
 
@@ -211,11 +216,11 @@ public class JointMapBean implements Serializable {
     public void setCurrentCmpdRowInx(int inx) {
         targetCmpd = DataUtils.getStringHTMLTag(cmpdNameMaps.get(inx).getQuery());
     }
-    
+
     public void setTargetCmpd(String cmpd) {
         targetCmpd = cmpd;
     }
-    
+
     public void selectCmpdCandidate() {
         String selectedNm = "";
         NameMapBean nmb = null;
@@ -246,8 +251,7 @@ public class JointMapBean implements Serializable {
     public String prepareData() {
         RConnection RC = sb.getRConnection();
         int res = RIntegUtils.prepareIntegData(RC);
-        IntegProcessBean ip = (IntegProcessBean) DataUtils.findBean("integProcesser");
-        String datatype = ip.getDatatype();
+        String datatype = ipb.getDatatype();
         if (res == 0) {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
             return null;

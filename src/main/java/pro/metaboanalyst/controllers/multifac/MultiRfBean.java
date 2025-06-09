@@ -5,20 +5,19 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.Classifying;
 import pro.metaboanalyst.rwrappers.RDataUtils;
-import pro.metaboanalyst.utils.DataUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -28,9 +27,20 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("mrfBean")
 public class MultiRfBean implements Serializable {
 
-    private static final Logger LOGGER = LogManager.getLogger(MultiRfBean.class);
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
+    private static final Logger LOGGER = LogManager.getLogger(MultiRfBean.class);
     private final String pageID = "RandomForest";
     private int treeNum = 500;
     private int tryNum = 7;
@@ -88,8 +98,7 @@ public class MultiRfBean implements Serializable {
 
     public String getRfMeta() {
         if (rfMeta == null) {
-            MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
-            rfMeta = mf.getAnalysisMetaOpts()[0].getValue().toString();
+            rfMeta = mfb.getAnalysisMetaOpts()[0].getValue().toString();
         }
         return rfMeta;
     }
@@ -112,10 +121,9 @@ public class MultiRfBean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/MultifacRFView.xhtml");
             //do something here
         } else {
-            WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-            if (fp.getFunctionInfos().get("RandomForest2") != null) {
+            if (wb.getFunctionInfos().get("RandomForest2") != null) {
                 try {
-                    FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("RandomForest2"));
+                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("RandomForest2"));
                 } catch (Exception ex) {
 
                 }
@@ -139,11 +147,10 @@ public class MultiRfBean implements Serializable {
 
     public boolean rfBn_action_time() {
         try {
-            WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
             if (wb.isEditMode()) {
                 sb.addMessage("Info", "Parameters have been updated!");
 
-                JavaRecord.record_rfBn_action_time(this);
+                jrd.record_rfBn_action_time(this);
                 return true;
             }
 
@@ -156,26 +163,25 @@ public class MultiRfBean implements Serializable {
             for (String predictedMeta1 : getPredictedMeta()) {
                 if (getRfMeta().equals(predictedMeta1)) {
                     sb.addMessage("Error", "Please do not include primary meta-data in predictor meta-data!");
-                return false;
+                    return false;
                 }
             }
-            JavaRecord.record_rfBn_action_time(this);
+            jrd.record_rfBn_action_time(this);
 
             int res = Classifying.initRFMeta(sb, treeNum, tryNum, rfRandom, rfMeta, predictedMeta);
 
             switch (res) {
-                case 1:
-                    Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls"), "png", 72);
-                    Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 72);
-                    Classifying.plotRFOutlierMf(sb, sb.getNewImage("rf_outlier"), "png", 72);
-                    break;
-                case 2:
-                    sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "
+                case 1 -> {
+                    Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls"), "png", 150);
+                    Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
+                    Classifying.plotRFOutlierMf(sb, sb.getNewImage("rf_outlier"), "png", 150);
+                }
+                case 2 -> sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "
                             + "categorical primary meta-data!");
-                    break;
-                default:
+                default -> {
                     sb.addMessage("Error", "Something wrong occured. " + RDataUtils.getErrMsg(sb.getRConnection()));
-                return false;
+                    return false;
+                }
             }
 
         } catch (Exception e) {

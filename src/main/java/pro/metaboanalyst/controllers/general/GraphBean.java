@@ -5,12 +5,14 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
@@ -22,7 +24,6 @@ import pro.metaboanalyst.rwrappers.RocUtils;
 import pro.metaboanalyst.rwrappers.TimeSeries;
 import pro.metaboanalyst.rwrappers.UniVarTests;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +37,30 @@ import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 @Named("graphBean")
 public class GraphBean implements Serializable {
 
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private DoseResponseBean drb;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rcb;
+
+    @JsonIgnore
+    @Inject
+    private SpectraProcessBean spb;
+
+    @JsonIgnore
+    @Inject
+    private MetaPathStatBean mpsb;
+    
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
 
     public void updateColorScheme() {
@@ -75,7 +99,7 @@ public class GraphBean implements Serializable {
 
         String key = sb.getImageSource();
         String imgName;
-        String mydpi = "72";
+        String mydpi = "150";
         String formatOpt = sb.getFormatOpt();
         if (formatOpt.equals("png") || formatOpt.equals("tiff")) {
             mydpi = sb.getDpiOpt() + "";
@@ -101,8 +125,7 @@ public class GraphBean implements Serializable {
                 imgName = TimeSeries.plotMBTimeProfile(sb, cmpdName, 100, formatOpt, mydpi + "");
             }
             case "metabolite_dr_curve" -> {
-                DoseResponseBean doseBean = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
-                imgName = doseBean.plotSelectedFeature(Integer.parseInt(mydpi), formatOpt);
+                imgName = drb.plotSelectedFeature(Integer.parseInt(mydpi), formatOpt);
             }
             case "cmpd" -> {
                 String cmpdName = sb.getCurrentCmpdName();
@@ -110,39 +133,38 @@ public class GraphBean implements Serializable {
                     sb.addMessage("Error", "No command found for plotting the image!");
                     return;
                 }
-                MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
 
-                tb.setBoxMetaVersionNum(tb.getBoxMetaVersionNum() + 1);
+                mfb.setBoxMetaVersionNum(mfb.getBoxMetaVersionNum() + 1);
 
-                imgName = UniVarTests.plotCmpdSummary(sb, cmpdName, "NA", "NA", tb.getBoxMetaVersionNum(), formatOpt, mydpi + "");
+                imgName = UniVarTests.plotCmpdSummary(sb, cmpdName, "NA", "NA", mfb.getBoxMetaVersionNum(), formatOpt, mydpi + "");
             }
             case "roc.univ" -> {
-                RocAnalBean rb = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                String cmpdName = rb.getCurrentCmpd();
+
+                String cmpdName = rcb.getCurrentCmpd();
                 if (cmpdName == null) {
                     sb.addMessage("Error", "No command found for plotting the image!");
                     return;
                 }
-                String isAUC = rb.isShowCI() ? "T" : "F";
-                String isOpt = rb.isShowOptPoint() ? "T" : "F";
-                String optMtd = rb.getOptimalDD();
-                String isPartial = rb.isPartialRoc() ? "T" : "F";
-                String measure = rb.getUnivPerfOpt();
-                double mycutoff = rb.getUnivThresh();
+                String isAUC = rcb.isShowCI() ? "T" : "F";
+                String isOpt = rcb.isShowOptPoint() ? "T" : "F";
+                String optMtd = rcb.getOptimalDD();
+                String isPartial = rcb.isPartialRoc() ? "T" : "F";
+                String measure = rcb.getUnivPerfOpt();
+                double mycutoff = rcb.getUnivThresh();
                 imgName = RocUtils.performUnivROC(sb, cmpdName, 100, formatOpt, mydpi, isAUC, isOpt, optMtd, isPartial, measure, mycutoff);
             }
             case "roc.boxplot" -> {
-                RocAnalBean rb = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                String cmpdName = rb.getCurrentCmpd();
+
+                String cmpdName = rcb.getCurrentCmpd();
                 if (cmpdName == null) {
                     sb.addMessage("Error", "No command found for plotting the image!");
                     return;
                 }
-                String isOpt = rb.isShowOptPoint() ? "T" : "F";
+                String isOpt = rcb.isShowOptPoint() ? "T" : "F";
                 imgName = RocUtils.plotUnivROCBP(sb, cmpdName, 100, formatOpt, mydpi, isOpt, "FALSE");
             }
             case "RTcor" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -150,7 +172,6 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "BPIcor" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -158,7 +179,6 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "IntensitySpec" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -166,7 +186,7 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "TICs" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -174,7 +194,7 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "BPIs" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -182,7 +202,7 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "TIC" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
                 int figureNM = spb.getFigureCount();
                 int figureNMNew = figureNM + 1;
                 spb.setFigureCount(figureNMNew);
@@ -190,19 +210,17 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "EIC_int" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
                 imgName = spb.plotMSfeatureUpdate();
                 spb.internalizeImage(imgName);
             }
             case "EICs" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                 String FeatureName = spb.plotXICUpdate();
                 imgName = FeatureName;
                 spb.internalizeImage(imgName);
             }
             case "EICg" -> {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
-                int dpi = 72;
+                int dpi = 150;
                 if (sb.getFormatOpt().equals("png")) {
                     dpi = sb.getDpiOpt();
                 }
@@ -211,7 +229,7 @@ public class GraphBean implements Serializable {
                 spb.internalizeImage(imgName);
             }
             case "metapath" -> {
-                MetaPathStatBean mpsb = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
+
                 imgName = mpsb.updatePlotPathMetaHigRes();
                 //System.out.println(imgName);
             }
@@ -229,11 +247,10 @@ public class GraphBean implements Serializable {
                     return;
                 }
                 if (key.equals("covariate_plot")) {
-                    MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-                    rcmd = rcmd.replace("default", tb.getCovStyleOpt());
+                    rcmd = rcmd.replace("default", mfb.getCovStyleOpt());
                 }
                 rcmd = rcmd.replace("png", formatOpt);
-                rcmd = rcmd.replace("72", mydpi + "");
+                rcmd = rcmd.replace("150", mydpi + "");
                 rcmd = rcmd.replace("width=NA", "width=" + sb.getSizeOpt());
                 imgName = sb.getCurrentImage(key);
                 imgName = imgName.replaceAll("\\/", "_");

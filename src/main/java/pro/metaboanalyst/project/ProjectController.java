@@ -16,7 +16,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.faces.application.FacesMessage;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -30,18 +29,20 @@ import pro.metaboanalyst.controllers.general.ApplicationBean1;
 public class ProjectController implements Serializable {
 
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
     @Inject
-    UserLoginBean ulb;
+    private UserLoginBean ulb;
+    @Inject
+    private ProjectBean pb;
+    
     private MariaDBController mdbb;
     private long userNM;
     private String dataPlace = "";
 
     public void createProject() throws SQLException {
 
-        ProjectBean pb = ((ProjectBean) DataUtils.findBean("projectBean"));
 
         // Get user and project infomation for creation
         userNM = ulb.getUserNM();
@@ -69,7 +70,7 @@ public class ProjectController implements Serializable {
 
         //make sure the project title is identical
         String proVeriQuery = "SELECT EXISTS(select * from devUsers.projects where userNM=" + userNM + " AND title = '" + newProTitle + "');";
-        ResultSet res = null;
+        ResultSet res;
         try {
             res = mdbb.runQuery(proVeriQuery);
             if (res.next()) {
@@ -115,10 +116,8 @@ public class ProjectController implements Serializable {
 
     public void callAccountDelete() {
 
-        ProjectBean pb = ((ProjectBean) DataUtils.findBean("projectBean"));
-
         // 1. delete all projects & userNM of the corresponding user
-        long usernm = pb.getUlb().getUserNM();
+        long usernm = ulb.getUserNM();
         MariaDBController mdbbim = pb.getMdbb();
 
         String deleteAcQuery = "delete from devUsers.projects where UserNM = " + usernm + ";";
@@ -139,7 +138,6 @@ public class ProjectController implements Serializable {
 
     public void callProjectDelete() {
 
-        ProjectBean pb = ((ProjectBean) DataUtils.findBean("projectBean"));
         ProjectModel selectedProject = pb.getSelectedProject();
 
         String Profolder = selectedProject.getFolder();
@@ -164,9 +162,7 @@ public class ProjectController implements Serializable {
 
     public void setupProjectTable() throws SQLException {
 
-        ProjectBean pb = ((ProjectBean) DataUtils.findBean("projectBean"));
         mdbb = ulb.getMdbb();
-
         userNM = ulb.getUserNM();
         List<ProjectModel> projectList = obtainProjectInfor();
 

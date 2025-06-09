@@ -5,7 +5,9 @@
  */
 package pro.metaboanalyst.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.model.StreamedContent;
@@ -22,8 +24,13 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 @Named("dpEstimator")
 public class MergeDuplicateBean {
 
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
 
     private String mergeType = "dup_smpl";
 
@@ -68,7 +75,7 @@ public class MergeDuplicateBean {
 
         RConnection RC = sb.getRConnection();
 
-        String fileName = DataUtils.uploadFile(duplicateTable, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        String fileName = DataUtils.uploadFile(sb, duplicateTable, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
         if (RDataUtils.readDPDataTB(RC, fileName, sampleCol)) {
             String msg = "Data <u>" + fileName + "</u> was uploaded successfully!";

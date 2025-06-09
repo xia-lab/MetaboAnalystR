@@ -7,6 +7,7 @@
 //explicitly assign arraylist to null
 package pro.metaboanalyst.spectra;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -39,7 +40,7 @@ import pro.metaboanalyst.rwrappers.RSpectraUtils;
 import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -61,6 +62,16 @@ public class SpectraUploadBean implements Serializable {
     @Inject
     private SpectraControlBean pcb;
 
+    @Inject
+    private ResourceSemaphore resourceSemaphore;
+
+    @Inject
+    private SpectraParamBean spb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private boolean spectraUploaded = false;
 
     public boolean isSpectraUploaded() {
@@ -70,7 +81,7 @@ public class SpectraUploadBean implements Serializable {
     public void setSpectraUploaded(boolean spectraUploaded) {
         this.spectraUploaded = spectraUploaded;
     }
-    
+
     private String selectedExample = "fastdata";
 
     public String getSelectedExample() {
@@ -101,7 +112,7 @@ public class SpectraUploadBean implements Serializable {
         }
         FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
         FacesContext.getCurrentInstance().getViewRoot().getViewMap().clear();
-        DataUtils.doRedirect("/MetaboAnalyst/Secure/upload/SpectraUpload.xhtml");
+        DataUtils.doRedirect("/MetaboAnalyst/Secure/upload/SpectraUpload.xhtml", ab);
     }
 
     private String[] fileNmsFromMeta;
@@ -146,7 +157,6 @@ public class SpectraUploadBean implements Serializable {
 
     public void handleFileUpload(FileUploadEvent event) {
 
-        ResourceSemaphore resourceSemaphore = (ResourceSemaphore) DataUtils.findBean("semaphore");
         Semaphore semaphore = resourceSemaphore.getUploadSemaphore();
 
         try {
@@ -177,7 +187,7 @@ public class SpectraUploadBean implements Serializable {
                     pkb.setErrMsgText("");
                     pcb.setMetaOk(false);
 
-                    metaName = DataUtils.uploadFile(file, homeDir, null, false);
+                    metaName = DataUtils.uploadFile(sb, file, homeDir, null, false);
                     int rawOK = RDataUtils.readRawMeta(sb.getRConnection(), metaName);
 
                     if (rawOK == 0) {
@@ -214,7 +224,7 @@ public class SpectraUploadBean implements Serializable {
                         if (!classFolder.exists()) {
                             classFolder.mkdir();
                         }
-                        fileName = DataUtils.uploadFile(file, homeDir, null, false);
+                        fileName = DataUtils.uploadFile(sb, file, homeDir, null, false);
 
                         int res = DataUtils.unzipDataRaw(homeDir + File.separator + fileName, homeDir + File.separator + "upload" + File.separator + className);
                         switch (res) {
@@ -230,7 +240,7 @@ public class SpectraUploadBean implements Serializable {
                                 break;
                         }
                     } else {
-                        fileName = DataUtils.uploadFile(file, homeDir, null, false);
+                        fileName = DataUtils.uploadFile(sb, file, homeDir, null, false);
                         int res = DataUtils.unzipDataRaw(homeDir + File.separator + fileName, homeDir + File.separator + "upload");
                         switch (res) {
                             case -1:
@@ -266,13 +276,13 @@ public class SpectraUploadBean implements Serializable {
             } else {
                 // code for timed-out
                 sb.addMessage("warn",
-                                "Too many users are uploading spectra at this time. Please try again later!");
+                        "Too many users are uploading spectra at this time. Please try again later!");
 
             }
         } catch (InterruptedException e) {
             // code for timed-out
             sb.addMessage("error",
-                            "Too many users are uploading spectra at this time. Please try again later!");
+                    "Too many users are uploading spectra at this time. Please try again later!");
 
         }
 
@@ -284,13 +294,17 @@ public class SpectraUploadBean implements Serializable {
             PrimeFaces.current().executeScript("PF('uploadSessionDialog').show()");
             return null;
         }
-        
+
         return switch (selectedExample) {
-            case "malaria" -> uploadMalariaExample();
-            case "dda_example" -> uploadDDAExample();
-            case "dia_example" -> uploadDIAExample();
-            default -> uploadIBDExample();
-        };    
+            case "malaria" ->
+                uploadMalariaExample();
+            case "dda_example" ->
+                uploadDDAExample();
+            case "dia_example" ->
+                uploadDIAExample();
+            default ->
+                uploadIBDExample();
+        };
 
     }
 
@@ -322,7 +336,6 @@ public class SpectraUploadBean implements Serializable {
         pkb.populateSpecBeans();
         pcb.setTotalNumberOfSamples(8);
         sb.setSaveEnabled(true);
-        SpectraParamBean spb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
         spb.setPolarity("negative");
         spectraUploaded = true;
         return "Spectra check";
@@ -365,7 +378,6 @@ public class SpectraUploadBean implements Serializable {
         pkb.setContainsMetaVal(containsMeta);
         pkb.populateSpecBeans();
         pcb.setTotalNumberOfSamples(30);
-        SpectraParamBean spb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
         spb.setPolarity("positive");
         spectraUploaded = true;
         return "Spectra check";
@@ -397,7 +409,7 @@ public class SpectraUploadBean implements Serializable {
         if (!markerfile.exists()) {
             int res = RSpectraUtils.getBloodRawData(sb.getRConnection(), homeDir);
             if (res == 0) {
-               sb.addMessage("error", "Sorry! Cannot find your data! Please ask zhiqiang.pang@xialab.ca!");
+                sb.addMessage("error", "Sorry! Cannot find your data! Please ask zhiqiang.pang@xialab.ca!");
             }
         }
 
@@ -410,7 +422,6 @@ public class SpectraUploadBean implements Serializable {
         pkb.populateSpecBeans();
         sb.setSaveEnabled(true);
         pcb.setTotalNumberOfSamples(30);
-        SpectraParamBean spb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
         spb.setPolarity("positive");
         spectraUploaded = true;
 
@@ -457,7 +468,6 @@ public class SpectraUploadBean implements Serializable {
         pkb.populateSpecBeans();
         sb.setSaveEnabled(true);
         pcb.setTotalNumberOfSamples(16);
-        SpectraParamBean spb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
         spb.setPolarity("negative");
         spectraUploaded = true;
 
@@ -559,7 +569,7 @@ public class SpectraUploadBean implements Serializable {
             }
             sb.setSaveEnabled(true);
             pkb.setRecordCMD(true);
-            JavaRecord.record_goToProcessing(this);
+            jrd.record_goToProcessing(this);
             return "Spectra check";
         } else {
             return "";
@@ -725,7 +735,6 @@ public class SpectraUploadBean implements Serializable {
         numOfUploadFiles--;
         if (numOfUploadFiles == 0) {
             //ab.minusUploadCount();
-            ResourceSemaphore resourceSemaphore = (ResourceSemaphore) DataUtils.findBean("semaphore");
             resourceSemaphore.getUploadSemaphore().release();
             sanityCheck();
         }
@@ -736,7 +745,6 @@ public class SpectraUploadBean implements Serializable {
         try {
             // clean up resources
             if (numOfUploadFiles > 0) {
-                ResourceSemaphore resourceSemaphore = (ResourceSemaphore) DataUtils.findBean("semaphore");
                 resourceSemaphore.getUploadSemaphore().release();
             }
         } catch (Exception e) {
@@ -771,9 +779,12 @@ public class SpectraUploadBean implements Serializable {
         //pkb.getSelectedData().setFormat("True");
 
         switch (res) {
-            case 1 -> sb.addMessage("info", "Your data has been centroid now!");
-            case -1 -> sb.addMessage("Error", "Sorry, This data cannot be centroid, please contact with administrator!");
-            case -2 -> sb.addMessage("Error", "Sorry, only mzML and mzXML are supported for now. Other formats will be supported soon!");
+            case 1 ->
+                sb.addMessage("info", "Your data has been centroid now!");
+            case -1 ->
+                sb.addMessage("Error", "Sorry, This data cannot be centroid, please contact with administrator!");
+            case -2 ->
+                sb.addMessage("Error", "Sorry, only mzML and mzXML are supported for now. Other formats will be supported soon!");
         }
 
         if (containsMeta) {
@@ -837,7 +848,7 @@ public class SpectraUploadBean implements Serializable {
                 return;
             }
             case 6 -> {
-                sb.addMessage("error","Multiple spectral formats found! Please make sure including only one format of spectral formats!");
+                sb.addMessage("error", "Multiple spectral formats found! Please make sure including only one format of spectral formats!");
                 return;
             }
             default -> {
@@ -849,14 +860,14 @@ public class SpectraUploadBean implements Serializable {
         System.out.println(" ==== CheckMetadataMatching ===> " + res3);
         if (res3 == 0) {
             String missing_files = RSpectraUtils.GetMissingFiles(RC);
-             sb.addMessage("error", "Spectra files are not matched!" + missing_files);
+            sb.addMessage("error", "Spectra files are not matched!" + missing_files);
             return;
         }
 
         // Let check the total size 
         boolean res4 = RSpectraUtils.GetFileTotalSizeBool(RC);
         if (!res4) {
-             sb.addMessage("error",  "Spectra files too large! You dataset is over 20GB. We cannot process it at this time.");
+            sb.addMessage("error", "Spectra files too large! You dataset is over 20GB. We cannot process it at this time.");
             return;
         } else {
             String[] allfiles = RSpectraUtils.GetAllSpectraFiles(RC);

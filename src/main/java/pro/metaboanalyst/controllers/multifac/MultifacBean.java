@@ -19,7 +19,6 @@ import org.primefaces.PrimeFaces;
 import org.primefaces.event.CellEditEvent;
 import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.Rserve.RConnection;
-
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
@@ -44,10 +43,15 @@ public class MultifacBean implements Serializable {
     @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private LimmaBean lmb;
+
     private boolean disableMetaSelection = false;
     @JsonIgnore
 
-    private List<MetaDataBean> metaDataBean = null;
+    private List<MetaDataBean> metaDataBeans = null;
     private MetaDataBean selectedMetaDataBean;
     private String selectedMetaData = "Class";
     private String[] metaOpts;
@@ -100,19 +104,19 @@ public class MultifacBean implements Serializable {
 
     public List<MetaDataBean> getMetaDataBeans() {
 
-        if (metaDataBean == null) {
-            initMetaDataBean();
+        if (metaDataBeans == null) {
+            initMetaData();
         }
 
-        return metaDataBean;
+        return metaDataBeans;
     }
 
-    public void initMetaDataBean() {
+    public void initMetaData() {
         RConnection RC = sb.getRConnection();
         String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
         String[] metaDataStatus = RDataUtils.getMetaDataStatus(RC);
 
-        metaDataBean = new ArrayList();
+        metaDataBeans = new ArrayList();
         String[] metatypes = RDataUtils.getMetaTypes(RC);
         if (metaDataGroups == null || metaDataStatus == null || metatypes == null) {
             sb.addMessage("Error", "Failed to parse the metadata information!");
@@ -126,19 +130,18 @@ public class MultifacBean implements Serializable {
 
             if (i == 0) {
                 if (metaDataGroups[i].toLowerCase().equals("time") && !sb.getTsDesign().equals("multi")) {
-                    metaDataBean.add(new MetaDataBean(metaDataGroups[i], metatype, i, true, true, metastatus));
+                    metaDataBeans.add(new MetaDataBean(sb, metaDataGroups[i], metatype, i, true, true, metastatus));
                 } else {
-                    metaDataBean.add(new MetaDataBean(metaDataGroups[i], metatype, i, true, false, metastatus));
+                    metaDataBeans.add(new MetaDataBean(sb, metaDataGroups[i], metatype, i, true, false, metastatus));
                 }
             } else if ((metaDataGroups[i].toLowerCase().equals("time") || metaDataGroups[i].toLowerCase().equals("subject")) && sb.getTsDesign().equals("time0")) {
-                metaDataBean.add(new MetaDataBean(metaDataGroups[i], metatype, i, false, true, metastatus));
+                metaDataBeans.add(new MetaDataBean(sb, metaDataGroups[i], metatype, i, false, true, metastatus));
             } else {
-                metaDataBean.add(new MetaDataBean(metaDataGroups[i], metatype, i, false, false, metastatus));
+                metaDataBeans.add(new MetaDataBean(sb, metaDataGroups[i], metatype, i, false, false, metastatus));
             }
-
         }
 
-        selectedMetaDataBean = metaDataBean.get(0);
+        selectedMetaDataBean = metaDataBeans.get(0);
 
     }
 
@@ -156,30 +159,26 @@ public class MultifacBean implements Serializable {
             return;
         }
 
-        if (metaDataBean.size() == 2) {
+        if (metaDataBeans.size() == 2) {
             sb.addMessage("Error", "Cannot remove the metadata, at least two is required to proceed!");
             return;
         }
 
         RDataUtils.removeSelectedMeta(sb.getRConnection(), selectedMetaDataBean.getName());
-        metaDataBean.remove(selectedMetaDataBean);
+        metaDataBeans.remove(selectedMetaDataBean);
         reinitVariables();
     }
 
     public void reinitVariables() {
         analysisMetaOpts = null;
-        metaDataBean = null;
+        metaDataBeans = null;
         boxMetaOpts = null;
         includedMetaData = null;
+        //discMetaOpts = null;
+        //discreteMetaOpts = null;
+        //uniqueMetaList = null;
     }
 
-    public List<MetaDataBean> getMetaDataBean() {
-        return metaDataBean;
-    }
-
-    public void setMetaDataBean(List<MetaDataBean> metaDataBean) {
-        this.metaDataBean = metaDataBean;
-    }
 
     public void editMeta(MetaDataBean meta) {
         selectedMetaDataBean = meta;
@@ -196,7 +195,6 @@ public class MultifacBean implements Serializable {
                 uniqueMetaNames.add(new SampleBean(allMetas[i], allMetas[i]));
             }
         }
-
     }
 
     public String getSelectedMetaData() {
@@ -235,7 +233,6 @@ public class MultifacBean implements Serializable {
                 return null;
             }
         }
-
         return discMetaOpts;
     }
 
@@ -248,7 +245,7 @@ public class MultifacBean implements Serializable {
     }
 
     public String getAov2Img() {
-        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("aov2") + "dpi72.png";
+        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("aov2") + "dpi150.png";
     }
 
     public String getCovJsonName() {
@@ -268,7 +265,7 @@ public class MultifacBean implements Serializable {
     }
 
     public void cmpdLnk_action() {
-        mbImage = TimeSeries.plotMBTimeProfile(sb, sb.getCurrentCmpdName(), count, "png", 72 + "");
+        mbImage = TimeSeries.plotMBTimeProfile(sb, sb.getCurrentCmpdName(), count, "png", 150 + "");
         count++;
     }
 
@@ -276,22 +273,26 @@ public class MultifacBean implements Serializable {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + mbImage;
     }
 
-
     public SelectItem[] getAnalysisMetaOpts() {
         if (isMultiMeta()) {
-
+            System.out.println("======here 1");
             if (analysisMetaOpts == null) {
+                            System.out.println("======here 2");
                 List<MetaDataBean> beans = getMetaDataBeans();
                 analysisMetaOpts = new SelectItem[beans.size()];
                 for (int i = 0; i < beans.size(); i++) {
+                                System.out.println("======here 3");
                     analysisMetaOpts[i] = new SelectItem(beans.get(i).getName(), beans.get(i).getName());
                 }
             }
         } else {
+                        System.out.println("======here 0");
             analysisMetaOpts = new SelectItem[1];
             if (sb.getAnalType().equals("dose")) {
+                    System.out.println("======here 00");
                 analysisMetaOpts[0] = new SelectItem("NA", "Dose");
             } else {
+                    System.out.println("======here 000");
                 analysisMetaOpts[0] = new SelectItem("NA", "Class");
             }
         }
@@ -335,8 +336,7 @@ public class MultifacBean implements Serializable {
         }
         RDataUtils.setMetaTypes(sb.getRConnection(), metas);
 
-        MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-        if (tb.getIncludedMetaData().length > 8) { // disable this requirement
+        if (getIncludedMetaData().length > 8) { // disable this requirement
             sb.addMessage("Error", "Please select at most eight different meta-data classes.");
             return;
         }
@@ -418,7 +418,6 @@ public class MultifacBean implements Serializable {
                 return;
             }
         }
-
         List<MetaDataBean> beans = getMetaDataBeans();
         for (int i = 0; i < beans.size(); i++) {
             MetaDataBean bean = beans.get(i);
@@ -429,7 +428,7 @@ public class MultifacBean implements Serializable {
         }
 
         UniVarTests.setCmpdSummaryType(sb.getRConnection(), sb.getCmpdSummaryType());
-        String cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, boxMetaVersionNum, "png", 72 + "");
+        String cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, boxMetaVersionNum, "png", 150 + "");
         String imgUrl = "/MetaboAnalyst/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + cmpdName;
         System.out.println(imgUrl);
         sb.setBoxplotUrl(imgUrl);
@@ -441,12 +440,12 @@ public class MultifacBean implements Serializable {
     }
 
     public void updateMultiFacBoxplotMeta(String type) {
-        LimmaBean lm = (LimmaBean) DataUtils.findBean("lmBean");
+
         String cmpdName;
         if (type.equals("default")) {
-            cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, lm.getAnalysisMeta(), "NA", 0, "png", 72 + "");
+            cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, lmb.getAnalysisMeta(), "NA", 0, "png", 150 + "");
         } else {
-            cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, 0, "png", 72 + "");
+            cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, 0, "png", 150 + "");
         }
         UniVarTests.setCmpdSummaryType(sb.getRConnection(), sb.getCmpdSummaryType());
         String imgUrl = "/MetaboAnalyst/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + cmpdName;
@@ -514,7 +513,6 @@ public class MultifacBean implements Serializable {
                     analysisMetaOptsAnova[i] = new SelectItem(beans.get(i).getName(), beans.get(i).getName(), null, false);
                 }
             }
-
         }
         return analysisMetaOptsAnova;
     }
@@ -711,12 +709,9 @@ public class MultifacBean implements Serializable {
 
     public boolean isMultiMeta() {
 
-        String[] metaDataGroups = RDataUtils.getMetaDataGroups(sb.getRConnection());
-        if (metaDataGroups.length > 1) {
-            return true;
-        } else {
-            return false;
-        }
+        //String[] metaDataGroups = RDataUtils.getMetaDataGroups(sb.getRConnection());
+        //return metaDataGroups.length > 1;
+        return getMetaDataBeans().size() > 1;
     }
 
 }

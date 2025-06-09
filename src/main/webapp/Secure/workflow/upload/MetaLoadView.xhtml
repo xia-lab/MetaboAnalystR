@@ -242,13 +242,13 @@
                             <h:form id="normForm">
                                 <p:panelGrid columns="2" style="width:100%">
                                     <p:outputLabel value="Normalization procedure"/>  
-                                    <h:panelGrid styleClass="noBorders">
+                                    <h:panelGrid>
                                         <p:selectOneMenu id="normRB" value="#{loadBean.selectedData.normOpt}">  
                                             <f:selectItem itemLabel="None" itemValue="none"/> 
                                             <f:selectItem itemLabel="Log2 transformation" itemValue="log"/> 
                                         </p:selectOneMenu> 
                                         <h:panelGrid columns="2">
-                                            <p:selectBooleanCheckbox value="#{loadBean.selectedData.autoscaleOpt}" style="line-height: 18px"/>
+                                            <p:selectBooleanCheckbox value="#{loadBean.selectedData.autoscaleOpt}" style="line-height: 21px"/>
                                             <h:outputText value="Perform auto-scaling" />
                                         </h:panelGrid>
                                     </h:panelGrid>
@@ -266,38 +266,39 @@
 
                     <p:dialog header="Analysis" widgetVar="analDialog" dynamic="true" modal="true" appendTo="@(body)" 
                               hideEffect="explode" resizable="true"> 
-                        <h:panelGrid id="analView" style="width:560px; padding: 0px 20px 10px 20px; line-height: 21px">
+                        <h:panelGrid id="analView" style="width:670px; padding: 20px 20px 10px 20px; line-height: 21px">
                             <p>
                                 You can perform differential analysis using linear models (limma). Note, this is for current exploratory analysis. 
                                 It will be re-computed using the p-value cutoff as specified in the meta-analysis (next page) and for 
                                 the Venn Diagram comparison. 
                             </p>
                             <h:form id="analForm">
-                                <p:panelGrid columns="2" style="width:420px; margin-left: 20px" styleClass="noBorders">
-                                    <h:outputLabel value="Set p value (FDR) cutoff"/>
-                                    <p:inputText  value="#{loadBean.selectedData.sigLevel}" required="true"
-                                                  requiredMessage="Must set a significance level"/>
-                                    <h:outputLabel value="Set fold change (FC) cutoff"/>
-                                    <p:inputText  value="#{loadBean.selectedData.fcLevel}" required="true"
-                                                  requiredMessage="Must set a fold change level"/>
-                                </p:panelGrid>
-                                <h:panelGrid style="width:100%; text-align: center">
-                                    <p:commandButton value="Submit"
-                                                     onclick="PF('statusDialog').show()"
-                                                     oncomplete="PF('statusDialog').hide()"
-                                                     actionListener="#{loadBean.selectedData.performDEAnalysis()}"
-                                                     update=":form:navipane :analForm:padding"/>
-                                </h:panelGrid>
-                                <h:panelGrid id="padding" style="padding-left: 60px; text-align: center;">
+                                <p:panelGrid columns="2" style="width:100%; text-align: center"  class="surface-card shadow-1 p-0 text-800">
+                                    <p:panelGrid columns="2">
+                                        <h:outputLabel value="P value (FDR):"/>
+                                        <p:inputText  value="#{loadBean.selectedData.sigLevel}" required="true"
+                                                      requiredMessage="Must set a significance level"/>
+                                        <h:outputLabel value="Fold change (FC):"/>
+                                        <p:inputText  value="#{loadBean.selectedData.fcLevel}" required="true"
+                                                      requiredMessage="Must set a fold change level"/>
+
+                                        <p:commandButton value="Submit"
+                                                         onclick="PF('statusDialog').show()"
+                                                         oncomplete="PF('statusDialog').hide()"
+                                                         actionListener="#{loadBean.selectedData.performDEAnalysis()}"
+                                                         update=":form:navipane :analForm:padding"/>
+                                        <p:commandButton value="Done"
+                                                         id="analBn"
+                                                         rendered ="#{loadBean.selectedData.analDone}"
+                                                         oncomplete="PF('analDialog').hide()"
+                                                         update=":form:navipane"/>
+                                    </p:panelGrid>
+
                                     <p:chart id="pie" rendered ="#{loadBean.selectedData.analDone}"
-                                                value="#{loadBean.selectedData.pieModel}" 
-                                                style="width:320px;height:180px" />
-                                    <p:commandButton value="Done"
-                                                     id="analBn"
-                                                     rendered ="#{loadBean.selectedData.analDone}"
-                                                     oncomplete="PF('analDialog').hide()"
-                                                     update=":form:navipane"/>
-                                </h:panelGrid>
+                                             value="#{loadBean.selectedData.pieModel}" 
+                                             style="width:300px;" />
+
+                                </p:panelGrid>
                             </h:form>
                         </h:panelGrid> 
                     </p:dialog>

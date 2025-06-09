@@ -11,7 +11,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -26,7 +26,7 @@ public class ChemoMetrics {
             String rCommand = "PCA.Anal(NA)";
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
 
             return RC.eval(rCommand).asInteger() == 1;
         } catch (RserveException rse) {
@@ -92,7 +92,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pca_loading", "/Secure/analysis/PCAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -128,7 +128,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pca_score2d", "/Secure/analysis/PCAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -144,7 +144,7 @@ public class ChemoMetrics {
             //tmp-test-js; sb.addGraphicsCMD("pca_score3d", rCommand_png);
             //System.out.println("============pca_score3d: " + rCommand_png);
             //tmp-test-js; RCenter.recordRCommand(RC, rCommand_png);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
             System.out.println(rse);
@@ -159,7 +159,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pca_score3dloading", "/Secure/analysis/PCAView.xhtml");
 
             //System.out.println("============pca_score3d: " + rCommand_png);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -185,7 +185,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pca_pair", "/Secure/analysis/PCAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -198,7 +198,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotPCABiplot(NA" + ", \"" + imageName + "\", \"" + format + "\", " + dpi + ", width=NA, " + pc1Inx + "," + pc2Inx + "," + topnum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
 
             sb.addGraphicsCMD("pca_biplot", rCommand);
             sb.addGraphicsMapLink("pca_biplot", "/Secure/analysis/PCAView.xhtml");
@@ -217,7 +217,7 @@ public class ChemoMetrics {
             sb.addGraphicsCMD("pls_biplot", rCommand);
             sb.addGraphicsMapLink("pls_biplot", "/Secure/analysis/PLSDAView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -230,7 +230,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotPCAScree(NA" + ", \"" + imageName + "\", \"" + format + "\", " + dpi + ", width=NA, " + pcNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PCA");
+            sb.recordRCommandFunctionInfo(rCommand, "PCA");
             sb.addGraphicsMapLink("pca_scree", "/Secure/analysis/PCAView.xhtml");
 
             sb.addGraphicsCMD("pca_scree", rCommand);
@@ -247,7 +247,7 @@ public class ChemoMetrics {
             if (sb.isKeepClsOrder()) {
                 rCommand = "PLSR.Anal(NA, reg=TRUE)";
             }
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger() == 1;
         } catch (Exception rse) {
@@ -265,7 +265,7 @@ public class ChemoMetrics {
                 rCommand = "OPLSR.Anal(NA, reg=TRUE)";
                 myCmd = ".prepare.oplsr.anal(NA,reg=TRUE)";
             }
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
             RCenter.recordRCommand(RC, rCommand);
 
             if (RC.eval(myCmd).asInteger() == 1) {
@@ -289,7 +289,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("opls_score2d", "/Secure/analysis/OrthoPLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -305,7 +305,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("opls_splot", "/Secure/analysis/OrthoPLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -340,7 +340,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "UpdateOPLS.Splot(NA, \"" + plotType + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -356,7 +356,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pls_loading", "/Secure/analysis/PLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -371,7 +371,7 @@ public class ChemoMetrics {
             sb.addGraphicsCMD("pls_score2d", rCommand);
             sb.addGraphicsMapLink("pls_score2d", "/Secure/analysis/PLSDAView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
@@ -392,7 +392,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pls_score3d", "/Secure/analysis/PLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand_png);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand_png, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand_png, "PLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -409,7 +409,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pls_loading3d", "/Secure/analysis/PLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -422,7 +422,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "SPLSR.Anal(NA, " + compNum + ", " + varNum + ", \"" + varSpec + "\", \"" + validOpt + "\", " + foldNum + ", " + doCV + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
             //use microservice
             rCommand = ".prepare.splsr.anal(NA, " + compNum + ", " + varNum + ", \"" + varSpec + "\", \"" + validOpt + "\", " + foldNum + ", " + doCV + ")";
@@ -443,7 +443,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotSPLSPairSummary(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, " + cmpdNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
             sb.addGraphicsCMD("spls_pair", rCommand);
             sb.addGraphicsMapLink("spls_pair", "/Secure/analysis/SparsePLSDAView.xhtml");
@@ -463,7 +463,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("spls_loading", "/Secure/analysis/SparsePLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -480,7 +480,7 @@ public class ChemoMetrics {
             sb.addGraphicsCMD("spls_score2d", rCommand);
             sb.addGraphicsMapLink("spls_score2d", "/Secure/analysis/SparsePLSDAView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -497,7 +497,7 @@ public class ChemoMetrics {
             sb.addGraphicsCMD("spls_loading3d", rCommand);
             sb.addGraphicsMapLink("spls_loading3d", "/Secure/analysis/SparsePLSDAView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -515,7 +515,7 @@ public class ChemoMetrics {
             sb.addGraphicsCMD("spls_score3d", rCommand_png);
             sb.addGraphicsMapLink("spls_score3d", "/Secure/analysis/SparsePLSDAView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
             RCenter.recordRCommand(RC, rCommand_png);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -528,7 +528,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "SPLSR.Anal(NA, " + compNum + ", " + varNum + ", \"" + varSpec + "\", \"" + validOpt + "\", " + foldNum + ", " + doCV + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
             //use microservice
             rCommand = ".prepare.splsr.anal(NA, " + compNum + ", " + varNum + ", \"" + varSpec + "\", \"" + validOpt + "\", " + foldNum + ", " + doCV + ")";
@@ -549,7 +549,7 @@ public class ChemoMetrics {
             String rCommand = "SPLSDA.CV(" + "\"" + LorT + "\"," + cmpdNum + ", \"" + choice + "\")";
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -567,7 +567,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("spls_perm", "/Secure/analysis/SparsePLSDAView.xhtml");
 
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
         } catch (RserveException rse) {
             System.out.println(rse);
@@ -583,7 +583,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("spls_cv", "/Secure/analysis/SparsePLSDAView.xhtml");
 
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "sPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "sPLSDA");
 
         } catch (Exception rse) {
             System.out.println(rse);
@@ -595,7 +595,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotPLSPairSummary(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, " + cmpdNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             sb.addGraphicsCMD("pls_pair", rCommand);
             sb.addGraphicsMapLink("pls_pair", "/Secure/analysis/PLSDAView.xhtml");
@@ -612,7 +612,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PLSDA.CV(NA" + ", \"" + cvOpt + "\", " + foldNum + "," + cmpdNum + ", \"" + choice + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -640,7 +640,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PLSDA.Permut(NA" + ", " + permutNum + ", \"" + type + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             return RC.eval(rCommand).asString();
         } catch (Exception rse) {
@@ -654,7 +654,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "OPLSDA.Permut(NA, " + permutNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             //use microservice
             rCommand = ".prepare.oplsda.permut(NA, " + permutNum + ")";
@@ -784,7 +784,7 @@ public class ChemoMetrics {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotOPLS.MDL(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             sb.addGraphicsCMD("opls_mdl", rCommand);
             sb.addGraphicsMapLink("opls_mdl", "/Secure/analysis/OrthoPLSDAView.xhtml");
@@ -835,7 +835,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("pls_imp", "/Secure/analysis/PLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "PLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "PLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -852,7 +852,7 @@ public class ChemoMetrics {
             sb.addGraphicsMapLink("opls_imp", "/Secure/analysis/OrthoPLSDAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "OrthoPLSDA");
+            sb.recordRCommandFunctionInfo(rCommand, "OrthoPLSDA");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {

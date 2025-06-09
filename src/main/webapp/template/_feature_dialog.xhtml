@@ -6,7 +6,7 @@
 
     <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/graphics_1.00.js"></script>
 
-    <p:dialog header="Feature View" widgetVar="FeatureView" dynamic="true" modal="true" appendTo="@(body)" height="450" width="650" 
+    <p:dialog header="Feature View" widgetVar="FeatureView" dynamic="true" modal="true" appendTo="@(body)" 
               hideEffect="explode" resizable="true" onShow="updateDialog()">
         <h:panelGrid id="visView" style="width:100%; padding: 10px;">
             <h:form id="visForm">
@@ -39,7 +39,9 @@
                     </h:panelGrid>
 
                     <h:panelGrid style="width:100%; padding: 10px; text-align: center">
-                        <img id="boximage" onerror='this.style.display="none"' src="#{sessionBean1.cmpdSummaryImg}" alt="FeatureImage"/>
+                        <img id="boximage" onerror='this.style.display="none"' 
+                             style="#{sessionBean1.cmpdImgSize}"
+                             src="#{sessionBean1.cmpdSummaryImg}" alt="FeatureImage1"/>
                     </h:panelGrid>
                 </h:panelGrid> 
                 <h:panelGrid rendered="#{sessionBean1.showMultiBoxView()}">
@@ -82,7 +84,9 @@
                                 <i class="pi pi-file" style="font-size: 1.4rem"/>
                             </p:commandLink>
                         </h:panelGrid>  
-                        <img id="boximage" onerror='this.style.display="none"' src="#{sessionBean1.boxplotUrl}" alt="FeatureImage"/>
+                        <img id="boximage" onerror='this.style.display="none"' 
+                             style="#{sessionBean1.cmpdImgSize}"
+                             src="#{sessionBean1.boxplotUrl}" alt="FeatureImage"/>
                     </h:panelGrid>  
                 </h:panelGrid> 
             </h:form>

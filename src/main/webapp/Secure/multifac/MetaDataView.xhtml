@@ -79,7 +79,7 @@
             <h:panelGrid id="hmPane" style="width: 100%;" >
                 <h3 style="font-size:1.2em">Metadata Correlation Heatmap</h3>
                 <h:form>
-                    <h:panelGrid style="text-align: right; margin-left: 360px;">
+                    <h:panelGrid style="text-align: right; margin-left: 80%;">
                         <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('metaCorrHeatmap')}" 
                                        update=":myGraphPane"
                                        oncomplete="PF('graphDialog').show()"
@@ -88,7 +88,9 @@
                         </p:commandLink>
                     </h:panelGrid>
                 </h:form>
-                <img onerror='this.style.display="none"'  src="#{sessionBean1.getCurrentImageURL('metaCorrHeatmap')}" alt="Meta-data correlation"/>
+                <img onerror='this.style.display="none"'  
+                      style="width:10in;"
+                     src="#{sessionBean1.getCurrentImageURL('metaCorrHeatmap')}" alt="Meta-data correlation"/>
 
                 <br/><br/>
                 <h3 style="font-size:1.2em">Metadata Heatmap</h3>

@@ -17,8 +17,6 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -69,7 +67,6 @@ import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -82,11 +79,11 @@ public class DiagramView implements Serializable {
 
     @JsonIgnore
     @Inject
-    ProcessBean procBean;
+    private ProcessBean pcb;
 
     @JsonIgnore
     @Inject
-    NormBean nb;
+    private NormBean nb;
 
     @JsonIgnore
     @Inject
@@ -106,8 +103,52 @@ public class DiagramView implements Serializable {
 
     @JsonIgnore
     @Inject
+    private WorkflowView wfv;
+
+    @JsonIgnore
+    @Inject
     private JobScheduler js;
 
+    @JsonIgnore
+    @Inject
+    private FireBase fbb;
+
+    @JsonIgnore
+    @Inject
+    private FireBaseController fcb;
+
+    @JsonIgnore
+    @Inject
+    private FireProjectBean fpb;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+
+    @JsonIgnore
+    @Inject
+    private HistoryBean hb;
+
+    @JsonIgnore
+    @Inject
+    private JobExecution jeb;
+
+    @JsonIgnore
+    @Inject
+    private MnetLoadBean mnb;
+
+    @JsonIgnore
+    @Inject
+    private DownloadBean dldb;
+
+    @JsonIgnore
+    @Inject
+    private MailService ms;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+    
     @JsonIgnore
     private DefaultDiagramModel model;
     private boolean workflowFinished = false;
@@ -1036,7 +1077,7 @@ public class DiagramView implements Serializable {
 
         String naviType = settingNaviType(clickedElement);
         if (!naviType.equals("")) {
-            DataUtils.doRedirectWithGrowl(
+            DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml",
                     "info",
                     "Please click on Data Preparation to try our example or upload your own data!"
@@ -1310,11 +1351,10 @@ public class DiagramView implements Serializable {
         if (!url.equals("")) {
             wb.setDataPreparationUrl("/MetaboAnalyst/" + url);
             if (url.equals("/Secure/workflow/upload/SpecGoogleUploadView.xhtml") & ab.isOnProServer() & !ab.isOnVipServer()) {
-                FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
-                String new_url = fb.goToSpectraWorkflowUpload();
-                //DataUtils.doRedirectWithGrowl("/" + new_url, "info", "Please start preparing your data!");
+                String new_url = fcb.goToSpectraWorkflowUpload();
+                //DataUtils.doRedirectWithGrowl(sb, "/" + new_url, "info", "Please start preparing your data!");
             } else {
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + url, "info", "Please start preparing your data!");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + url, "info", "Please start preparing your data!");
             }
             return;
         }
@@ -1339,7 +1379,7 @@ public class DiagramView implements Serializable {
             wb.setEditModeReturn("overview");
             wb.setEditMode(true);
             wb.setReloadingWorkflow(false);
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + url, "info", "Please prepare your data!");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + url, "info", "Please prepare your data!");
         } else {
             sb.addMessage("warn", "It is not supported yet!");
         }
@@ -1382,10 +1422,9 @@ public class DiagramView implements Serializable {
         List<String> moduleNms = wb.getModuleNames();
         System.out.println("moduleNms.contains(\"raw\")=====" + moduleNms.contains("raw"));
         if (moduleNms.contains("raw")) {
-            JobExecution jb = (JobExecution) DataUtils.findBean("jobExecution");
             //naviTypes.removeIf(element -> element.equals("raw"));
             //wb.setModuleNames(naviTypes);
-            jb.setStopStatusCheck(false);
+            jeb.setStopStatusCheck(false);
             executeModule("raw", "Spectra Processing");
             return false;
         }
@@ -1400,7 +1439,6 @@ public class DiagramView implements Serializable {
                 wb.setResultPageDisplay("multi");
             }
             int workflowIndex = 0;
-            WorkflowView wf = (WorkflowView) DataUtils.findBean("workflowView");
 
             // Loop through the unique sets of WorkflowParameters
             for (WorkflowParameters params : wb.getWorkflowOptions()) {
@@ -1437,19 +1475,16 @@ public class DiagramView implements Serializable {
                 if (!Arrays.asList(moduleNms).contains("stat")) {
                     RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), "stat");
                     try {
-                        wf.executeWorkflow("PCA");
-                        wf.executeWorkflow("Volcano");
+                        wfv.executeWorkflow("PCA");
+                        wfv.executeWorkflow("Volcano");
                     } catch (Exception ex) {
                         Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
 
                 // Save results and organize directories for each set of parameters
-                FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
-                HistoryBean hb = (HistoryBean) DataUtils.findBean("historyBean");
-
                 RCenter.saveRLoadImg(sb.getRConnection());
-                fb.saveJavaHistory();
+                fcb.saveJavaHistory();
                 String jh = hb.getJavaHistoryString();
                 jh = jh.replace(":\"[{\"", ":[{\\\"");
                 saveJsonStringToFile(jh, sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
@@ -1486,7 +1521,7 @@ public class DiagramView implements Serializable {
             }
         }
         //prepareFilteredWorkflow(input);
-        //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "Execution detail is displayed in the diagram below, you can select the module on the top left panel.");
+        //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "Execution detail is displayed in the diagram below, you can select the module on the top left panel.");
         for (Boolean value : successExecutionMap.values()) {
             if (Boolean.TRUE.equals(value)) {
                 workflowFinished = true;
@@ -1535,73 +1570,6 @@ public class DiagramView implements Serializable {
         }
     }
 
-    private void adjustParams(List<String> procs) {
-        List<String> unselectedProcs = secondLevelNodes;
-        unselectedProcs.removeAll(procs);
-        for (String name : unselectedProcs) {
-            switch (name) {
-                case "Spectra Processing" ->
-                    System.out.println("Handling Spectra Processing...");
-                // Add logic for Spectra Processing
-
-                case "Missing Value" ->
-                    System.out.println("Handling Missing Value...");
-
-                case "Data Filtering" -> {
-                    ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-                    pb.setDoQCFiltering(false);
-                    pb.setFilterCutoff(0);
-                    pb.setIntFilterCutoff(0);
-                    JavaRecord.record_filterButton_action(pb);
-                }
-
-                case "Data Normalization" -> {
-                    NormBean nb = (NormBean) DataUtils.findBean("normBean");
-                    nb.setTransNormOpt("NULL");
-                    nb.setScaleNormOpt("NULL");
-                    nb.setRowNormOpt("NULL");
-                    JavaRecord.record_PerformDataNormalization(nb);
-                }
-
-                case "Name Mapping" ->
-                    System.out.println("Handling Name Mapping...");
-                // Add logic for Name Mapping
-
-                default ->
-                    System.out.println("Unknown adjustParam: " + name);
-                // Add fallback logic for unknown nodes
-            }
-        }
-
-        List<String> selectedProcs = secondLevelNodes;
-        selectedProcs.removeAll(procs);
-        for (String name : selectedProcs) {
-            switch (name) {
-                case "Spectra Processing" ->
-                    System.out.println("Handling Spectra Processing...");
-                // Add logic for Spectra Processing
-
-                case "Missing Value" ->
-                    System.out.println("Handling Missing Value...");
-
-                case "Data Filtering" ->
-                    System.out.println("Handling Data Filtering...");
-                // Add logic for Data Filtering
-
-                case "Data Normalization" ->
-                    System.out.println("Handling Data Normalization...");
-                // Add logic for Data Normalization
-
-                case "Name Mapping" ->
-                    System.out.println("Handling Name Mapping...");
-                // Add logic for Name Mapping
-
-                default ->
-                    System.out.println("Unknown adjustParam: " + name);
-                // Add fallback logic for unknown nodes
-            }
-        }
-    }
     private LinkedHashSet<String> lastExecutedSteps = new LinkedHashSet<>();
 
     public LinkedHashSet<String> getLastExecutedSteps() {
@@ -1712,10 +1680,8 @@ public class DiagramView implements Serializable {
                         sb.setRegression(false);
 
                         //if (uploadListOpt.equals("genemetabo") || uploadListOpt.equals("metabo")) {
-                        MnetLoadBean net = (MnetLoadBean) DataUtils.findBean("mnetLoader");
-
-                        net.setCmpdList(wb.getOraList());
-                        net.handleCmpdListUpload();
+                        mnb.setCmpdList(wb.getOraList());
+                        mnb.handleCmpdListUpload();
 
                         //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                         sb.setDataUploaded();
@@ -1729,11 +1695,8 @@ public class DiagramView implements Serializable {
                     } else {
                         okBool = false;
                         errMsg = "Lipid is not supported.";
-
                     }
-
                 }
-
             }
             case "roc" -> {
                 sb.setDataType("disc");
@@ -1966,11 +1929,10 @@ public class DiagramView implements Serializable {
 
             }
         }
-        WorkflowView wf = (WorkflowView) DataUtils.findBean("workflowView");
         if (okBool) {
             for (String nm : steps) {
                 try {
-                    int res = wf.executeWorkflow(nm);
+                    int res = wfv.executeWorkflow(nm);
                     if (res == 0) {
                         sb.addMessage("error", "Error occured at this step: " + nm);
                     } else if (res == 1) {
@@ -2066,10 +2028,9 @@ public class DiagramView implements Serializable {
         String clickedElement = FacesContext.getCurrentInstance()
                 .getExternalContext().getRequestParameterMap().get("nodeId");
         if (clickedElement != null) {
-            DownloadBean dldb = (DownloadBean) DataUtils.findBean("downloader");
             boolean res = dldb.generateReportByModule(settingAnalType(clickedElement.replace("_report", "")), "html");
             if (res) {
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Please click on Data Preparation to try our example or upload your own data!");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Please click on Data Preparation to try our example or upload your own data!");
             } else {
                 PrimeFaces.current().executeScript("PF('statusDialog').hide()");
             }
@@ -2193,7 +2154,6 @@ public class DiagramView implements Serializable {
     }
 
     public boolean resumeRawProject(String folderName, String jobId, String email) {
-        FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
 
         Map<String, Object> obj = db.obtainFolderNameProject(folderName);
         Optional<Map.Entry<String, Object>> matchingEntry = obj.entrySet().stream()
@@ -2203,7 +2163,7 @@ public class DiagramView implements Serializable {
         if (matchingEntry.isPresent()) {
             Object token2 = matchingEntry.get().getValue();
             try {
-                boolean res1 = fb.loadProject(token2 + "", "workflow");
+                boolean res1 = fcb.loadProject(token2 + "", "workflow");
             } catch (Exception ex) {
                 Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -2239,7 +2199,6 @@ public class DiagramView implements Serializable {
     }
 
     public boolean sendRawResume(String to, String jobId, String shareLink) throws JsonProcessingException, IOException, InterruptedException {
-        MailService ms = (MailService) DataUtils.findBean("mailService");
 
         String htmlMsg = "<!DOCTYPE html>\n"
                 + "<html>\n"
@@ -2265,7 +2224,6 @@ public class DiagramView implements Serializable {
     }
 
     public boolean sendRawResumeTest(String to, String jobId, String shareLink) throws JsonProcessingException, IOException, InterruptedException {
-        MailService ms = (MailService) DataUtils.findBean("mailService");
 
         String htmlMsg = "<!DOCTYPE html>\n"
                 + "<html>\n"
@@ -2506,54 +2464,7 @@ public class DiagramView implements Serializable {
         sb.doLogout(0);
         sb.addMessage("info", "Workflow has been reset. You can upload your data again.");
     }
-    /*
-    public boolean resumeWorkflowRaw() throws Exception {
 
-        String folderName = sb.getCurrentUser().getName();
-        if (sb.getCurrentUser().getHomeDir().startsWith("/data/glassfish/projects/")) {
-            boolean res = sb.doLogin("conc", "stat", false, false);
-        }
-
-        String fileName = "metaboanalyst_input.csv";
-
-        String inPath = "/data/glassfish/projects/metaboanalyst/" + folderName + "/" + fileName;
-        String currentPath = sb.getCurrentUser().getHomeDir() + "/" + fileName;
-
-        File inputFile = new File(inPath);
-        File outputFile = new File(currentPath);
-
-        if (!inputFile.exists()) {
-            System.out.println("Source file does not exist: " + inPath);
-            return false;
-        }
-
-        try {
-            Path inPathObj = inputFile.toPath();
-            Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rwxrwxrwx"); // Example: Owner: rwx, Group: r-x, Others: r-x
-            Files.setPosixFilePermissions(inPathObj, perms);
-            System.out.println("Updated permissions for: " + inPath);
-        } catch (UnsupportedOperationException e) {
-            System.out.println("Permission update not supported on this platform.");
-        } catch (IOException e) {
-            System.out.println("Failed to update permissions for: " + inPath);
-            e.printStackTrace();
-        }
-
-        if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs()) {
-            System.out.println("Failed to create destination directory: " + outputFile.getParentFile().getAbsolutePath());
-            return false;
-        }
-
-        DataUtils.copyFile(inputFile, outputFile);
-
-        wb.setDataName(fileName);
-        wb.setDataFormat("colu");
-        wb.setDataType("disc");
-        selectionMap.put("Spectra Processing", false);
-
-        return startWorkflow();
-    }
-     */
     //workflow
     private String statusMsg = "Job not started yet.";
 
@@ -2575,14 +2486,12 @@ public class DiagramView implements Serializable {
             }
         } else {
 
-            JobExecution jb = (JobExecution) DataUtils.findBean("jobExecution");
-            jb.setStopStatusCheck(true);
+            jeb.setStopStatusCheck(true);
             startWorkflow();
         }
     }
 
     public void submitWorkflowOther() {
-        JobExecution jb = (JobExecution) DataUtils.findBean("jobExecution");
 
         List<String> naviTypes = new ArrayList<>();
 
@@ -2606,9 +2515,8 @@ public class DiagramView implements Serializable {
             return;
         }
 
-        FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
-        FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-
+        //FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
+        //FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
         if (!sb.isLoggedIn()) {
             sb.addMessage("warn", "Please prepare your data first by clicking on the upload icon!");
             return;
@@ -2627,7 +2535,7 @@ public class DiagramView implements Serializable {
         boolean saveSuccess = false;
 
         try {
-            saveSuccess = fb.saveProject("share");
+            saveSuccess = fcb.saveProject("share");
         } catch (Exception ex) {
             Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, "Error saving project", ex);
         }
@@ -2647,15 +2555,15 @@ public class DiagramView implements Serializable {
         jobDataMap.put("appName", ab.getAppName());
         jobDataMap.put("node", ab.getToolLocation());
 
-        jobDataMap.put("email", fu.getEmail());
+        jobDataMap.put("email", fub.getEmail());
         jobDataMap.put("type", type);
         jobDataMap.put("folderName", sb.getCurrentUser().getHomeDir());
         jobDataMap.put("jobId", jobNM);
 
-        jb.setStopStatusCheck(false);
-        jb.setStatusMsg("Job is running...");
-        jb.setCurrentJobId(jobNM);
-        jb.setCurrentStartTime(DataUtils.obtainTimestampText());
+        jeb.setStopStatusCheck(false);
+        jeb.setStatusMsg("Job is running...");
+        jeb.setCurrentJobId(jobNM);
+        jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         updateNoticeStartWorkflow();
 
         JobDetail job = newJob(WorkflowJob.class)
@@ -2696,51 +2604,47 @@ public class DiagramView implements Serializable {
         } catch (SchedulerException ex) {
             Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
         }
-        jb.setCurrentJobId(jobNM);
-        jb.setCurrentStartTime(DataUtils.obtainTimestampText());
+        jeb.setCurrentJobId(jobNM);
+        jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
         sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.");
     }
 
     private void updatingParams(WorkflowParameters params) {
 
-        procBean.setRemoveMissing(params.isRemoveMissing());
-        procBean.setMissingImputeOpt(params.getMissingImputeOpt());
-        procBean.setReplaceVarOpt(params.getReplaceVarOpt());
-        procBean.setImputeAlgOpt(params.getImputeAlgOpt());
+        pcb.setRemoveMissing(params.isRemoveMissing());
+        pcb.setMissingImputeOpt(params.getMissingImputeOpt());
+        pcb.setReplaceVarOpt(params.getReplaceVarOpt());
+        pcb.setImputeAlgOpt(params.getImputeAlgOpt());
 
-        procBean.setDoQCFiltering(params.isDoQCFiltering());
-        procBean.setQcCutoff(params.getQcCutoff());
-        procBean.setVarFilterOpt(params.getVarFilterOpt());
-        procBean.setFilterCutoff(params.getFilterCutoff());
-        procBean.setIntFilterOpt(params.getIntFilterOpt());
-        procBean.setIntFilterCutoff(params.getIntFilterCutoff());
+        pcb.setDoQCFiltering(params.isDoQCFiltering());
+        pcb.setQcCutoff(params.getQcCutoff());
+        pcb.setVarFilterOpt(params.getVarFilterOpt());
+        pcb.setFilterCutoff(params.getFilterCutoff());
+        pcb.setIntFilterOpt(params.getIntFilterOpt());
+        pcb.setIntFilterCutoff(params.getIntFilterCutoff());
 
         nb.setRowNormOpt(params.getRowNormOpt());
         nb.setTransNormOpt(params.getTransNormOpt());
         nb.setScaleNormOpt(params.getScaleNormOpt());
 
         switch (nb.getRowNormOpt()) {
-            case "SpecNorm":
+            case "SpecNorm" ->
                 nb.setSpecNormSpecifed(params.isSpecNormSpecifed());
-                break;
-            case "SamplePQN":
+            case "SamplePQN" ->
                 nb.setRefSmpl(params.getRefSmpl());
-                break;
-            case "GroupPQN":
+            case "GroupPQN" ->
                 nb.setRefGrp(params.getRefGrp());
-                break;
-            case "CompNorm":
+            case "CompNorm" ->
                 nb.setRefVar(params.getRefVar());
-                break;
-            default:
-                break;
+            default -> {
+            }
         }
 
-        System.out.println(params.getDetailText());
-        JavaRecord.record_performMissingImpute(procBean);
-        JavaRecord.record_filterButton_action(procBean);
-        JavaRecord.record_PerformDataNormalization(nb);
+        //System.out.println(params.getDetailText());
+        jrd.record_performMissingImpute(pcb);
+        jrd.record_filterButton_action(pcb);
+        jrd.record_PerformDataNormalization(nb);
 
     }
     private int showNotifNum = 0;
@@ -2769,11 +2673,10 @@ public class DiagramView implements Serializable {
     }
 
     public void updateNoticeStartWorkflow() {
-        JobExecution jb = (JobExecution) DataUtils.findBean("jobExecution");
 
-        String startTime = jb.getCurrentStartTime();
-        String jobId = jb.getCurrentJobId();
-        String statusMsg = jb.getStatusMsg();  // or any other status
+        String startTime = jeb.getCurrentStartTime();
+        String jobId = jeb.getCurrentJobId();
+        String statusMsg = jeb.getStatusMsg();  // or any other status
 
         StringBuilder sbd = new StringBuilder();
         sbd.append(startTime).append("\n")
@@ -2792,9 +2695,7 @@ public class DiagramView implements Serializable {
         String[] lines = sbd.toString().split("\\n");
 
         // Add each line as an element to the ArrayList
-        for (String line : lines) {
-            sb.getNotice().add(line);
-        }
+        sb.getNotice().addAll(Arrays.asList(lines));
 
         // For demonstration, print out each line
         for (String line : lines) {
@@ -2882,10 +2783,10 @@ public class DiagramView implements Serializable {
 
     public void initWorkflowBasedOnProject() {
         String url = "";
-        FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
-        ProjectModel selectedProject = pb.getSelectedProject();
+
+        ProjectModel selectedProject = fpb.getSelectedProject();
         String workflowType = "";
-        switch (pb.getSelectedProject().getType()) {
+        switch (fpb.getSelectedProject().getType()) {
             case "raw" -> {
                 url = "/Secure/workflow/upload/SpecGoogleUploadView.xhtml";
                 workflowType = "LC-MS Spectra";
@@ -2957,14 +2858,11 @@ public class DiagramView implements Serializable {
         }
         wb.setReloadingWorkflowType("Generic Table");
 
-        boolean res = sb.doLogin(pb.getSelectedProject().getDataType(), pb.getSelectedProject().getType(), false, false);
+        boolean res = sb.doLogin(fpb.getSelectedProject().getDataType(), fpb.getSelectedProject().getType(), false, false);
         if (!res) {
             sb.addMessage("error", "Unable to create user folder!");
             return;
         }
-
-        FireUserBean ulb = (FireUserBean) DataUtils.findBean("fireUserBean");
-        FireBase fb = (FireBase) DataUtils.findBean("fireBase");
 
         if (sb.getCurrentUser() == null) {
             sb.addMessage("Warn", "Please start an analysis session first!");
@@ -2972,14 +2870,14 @@ public class DiagramView implements Serializable {
         }
 
         String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
-        String bucketObjectName = "user_folders/" + ulb.getEmail() + "/" + selectedProject.getFolderName() + ".zip";
-        String localFilePath = fb.getProjectPath() + bucketObjectName;
+        String bucketObjectName = "user_folders/" + fub.getEmail() + "/" + selectedProject.getFolderName() + ".zip";
+        String localFilePath = fbb.getProjectPath() + bucketObjectName;
         File f = new File(localFilePath);
         if (f.exists()) {
             DataUtils.extractFileFromZip(localFilePath, "workflow.json", destDirPath + "workflow.json");
         } else {
-            FireBaseController fbc = (FireBaseController) DataUtils.findBean("fireBaseController");
-            fbc.downloadObject(selectedProject.getHostname(), ulb.getEmail(), selectedProject.getFolderName(), destDirPath + selectedProject.getFolderName() + ".zip");
+
+            fcb.downloadObject(selectedProject.getHostname(), fub.getEmail(), selectedProject.getFolderName(), destDirPath + selectedProject.getFolderName() + ".zip");
             DataUtils.extractFileFromZip(destDirPath + selectedProject.getFolderName() + ".zip", "workflow.json", destDirPath + "workflow.json");
         }
 
@@ -2987,7 +2885,7 @@ public class DiagramView implements Serializable {
         wb.setFunctionInfos(functionInfos);
         wb.setReloadingWorkflow(true);
         wb.setActiveIndex(0);
-        DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + url, "info", "Workflow loaded successfully! Please upload your dataset now.");
+        DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + url, "info", "Workflow loaded successfully! Please upload your dataset now.");
     }
 
     public void selectBlock(String moduleType) {
@@ -2997,7 +2895,7 @@ public class DiagramView implements Serializable {
     }
 
     public String convertToBlockName(String code) {
-        String moduleName = "";
+        String moduleName;
         switch (code) {
             case "raw" ->
                 moduleName = "Spectra Processing";

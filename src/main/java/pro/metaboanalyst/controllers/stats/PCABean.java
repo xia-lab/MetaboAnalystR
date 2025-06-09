@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Named;
@@ -13,7 +14,6 @@ import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
-import pro.metaboanalyst.utils.DataUtils;
 
 /**
  *
@@ -24,7 +24,12 @@ import pro.metaboanalyst.utils.DataUtils;
 public class PCABean implements Serializable {
 
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private DetailsBean dtb;
+
     private int pcaPairNum = 5;
 
     public String getStat4PCA() {
@@ -89,7 +94,7 @@ public class PCABean implements Serializable {
     }
 
     public String pcaPairBtn_action() {
-        ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 72, pcaPairNum);
+        ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 150, pcaPairNum);
         return null;
     }
 
@@ -124,7 +129,7 @@ public class PCABean implements Serializable {
     }
 
     public void pcaScreeBtn_action() {
-        ChemoMetrics.plotPCAScree(sb, sb.getNewImage("pca_scree"), "png", 72, pcaScreeNum);
+        ChemoMetrics.plotPCAScree(sb, sb.getNewImage("pca_scree"), "png", 150, pcaScreeNum);
     }
 
     private boolean displayNames = false;
@@ -175,8 +180,8 @@ public class PCABean implements Serializable {
     public void setPcaScoreY(int pcaScoreY) {
         this.pcaScoreY = pcaScoreY;
     }
-    
-   public String pcaScore2dBtn_action() {
+
+    public String pcaScore2dBtn_action() {
         if (pcaScoreX == pcaScoreY) {
             sb.addMessage("Error", "X and Y axes are of the same PC");
         } else {
@@ -193,7 +198,7 @@ public class PCABean implements Serializable {
             if (greyScale) {
                 useGreyScale = 1;
             }
-            ChemoMetrics.plotPCA2DScore(sb, sb.getNewImage("pca_score2d"), "png", 72, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt);
+            ChemoMetrics.plotPCA2DScore(sb, sb.getNewImage("pca_score2d"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt);
 
         }
         return null;
@@ -240,9 +245,9 @@ public class PCABean implements Serializable {
         if (pcaScore3dX == pcaScore3dY || pcaScore3dX == pcaScore3dZ || pcaScore3dY == pcaScore3dZ) {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
-            //ChemoMetrics.PlotPCA3DScore(sb, sb.getNewImage("pca_score3d"), "png", 72, pcaScore3dX, pcaScore3dY, pcaScore3dZ, rotationAngle);
-            ChemoMetrics.plotPCA3DScore(sb, sb.getNewImage("pca_score3d"), "json", 72, pcaScore3dX, pcaScore3dY, pcaScore3dZ);
-            ChemoMetrics.plotPCA3DLoading(sb, sb.getNewImage("pca_loading3d"), "json", 72, pcaScore3dX, pcaScore3dY, pcaScore3dZ);
+            //ChemoMetrics.PlotPCA3DScore(sb, sb.getNewImage("pca_score3d"), "png", 150, pcaScore3dX, pcaScore3dY, pcaScore3dZ, rotationAngle);
+            ChemoMetrics.plotPCA3DScore(sb, sb.getNewImage("pca_score3d"), "json", 150, pcaScore3dX, pcaScore3dY, pcaScore3dZ);
+            ChemoMetrics.plotPCA3DLoading(sb, sb.getNewImage("pca_loading3d"), "json", 150, pcaScore3dX, pcaScore3dY, pcaScore3dZ);
         }
     }
 
@@ -284,9 +289,8 @@ public class PCABean implements Serializable {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
             ChemoMetrics.updatePCALoadType(sb, loadOpt);
-            ChemoMetrics.plotPCALoading(sb, sb.getNewImage("pca_loading"), "png", 72, pcaLoadX, pcaLoadY);
-            DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-            db.update1CompModel("pca");
+            ChemoMetrics.plotPCALoading(sb, sb.getNewImage("pca_loading"), "png", 150, pcaLoadX, pcaLoadY);
+            dtb.update1CompModel("pca");
             if (loadOpt.equals("custom")) {
                 sb.addMessage("info", "Please first click the points of interest and then re-gerenate the Splot in Image Dialog");
             } else {
@@ -313,7 +317,7 @@ public class PCABean implements Serializable {
     public void setPcaBiplotY(int pcaBiplotY) {
         this.pcaBiplotY = pcaBiplotY;
     }
-       private int pcaBiplotFeat=10;
+    private int pcaBiplotFeat = 10;
 
     public int getPcaBiplotFeat() {
         return pcaBiplotFeat;
@@ -322,13 +326,12 @@ public class PCABean implements Serializable {
     public void setPcaBiplotFeat(int pcaBiplotFeat) {
         this.pcaBiplotFeat = pcaBiplotFeat;
     }
-    
 
     public void pcaBiplotBtn_action() {
         if (pcaBiplotX == pcaBiplotY) {
             sb.addMessage("Error", "Detected the same PC on two axes!");
         } else {
-            ChemoMetrics.plotPCABiplot(sb, sb.getNewImage("pca_biplot"), "png", 72, pcaBiplotX, pcaBiplotY,pcaBiplotFeat);
+            ChemoMetrics.plotPCABiplot(sb, sb.getNewImage("pca_biplot"), "png", 150, pcaBiplotX, pcaBiplotY, pcaBiplotFeat);
         }
     }
 

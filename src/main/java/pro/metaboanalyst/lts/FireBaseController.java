@@ -15,16 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.cloud.FirestoreClient;
 import org.apache.logging.log4j.LogManager;
 import org.zeroturnaround.zip.ZipUtil;
 import jakarta.faces.context.FacesContext;
@@ -105,24 +95,35 @@ public class FireBaseController implements Serializable {
 
     private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(FireBaseController.class);
     @Inject
-    DatabaseClient db;
+    private DatabaseClient db;
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
     @Inject
-    FireUserBean ulb;
+    private FireUserBean fub;
 
     @Inject
-    FireBase fb;
+    private FireBase fb;
     @Inject
-    HistoryBean hb;
+    private HistoryBean hb;
     @Inject
-    FireProjectBean pb;
+    private FireProjectBean pb;
 
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
 
     @Inject
-    WorkflowBean wb;
+    private WorkflowBean wb;
+
+    @Inject
+    private MultifacBean mfb;
+
+    @Inject
+    private MsetBean mstb;
+    @Inject
+    private UtilsBean utb;
+
+    @Inject
+    private DiagramView dv;
 
     private String shareableLink = "";
 
@@ -170,51 +171,6 @@ public class FireBaseController implements Serializable {
         this.naviUrlAfterLogin = naviUrlAfterLogin;
     }
 
-    public String verifyToken(String idToken) throws FirebaseAuthException {
-        if (fb.getFireApp() == null) {
-            fb.initFirebase();
-        }
-        FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-        String uid = decodedToken.getUid();
-        ulb.setOmicsquareToken(uid);
-        ulb.setOmicsquareVerified(true);
-        //sb.setRegisteredLogin(true);
-
-        try {
-            retrieveUserInfo();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
-            Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return (uid);
-    }
-
-    public String retrieveUserInfo() throws InterruptedException, ExecutionException {
-
-        Firestore db = FirestoreClient.getFirestore();
-        String uid = ulb.getOmicsquareToken();
-
-        DocumentReference docRef = db.collection("users").document(uid);
-        ApiFuture<DocumentSnapshot> future = docRef.get();
-        DocumentSnapshot document = future.get();
-        if (!document.exists()) {
-            System.out.println("No such document!");
-            return "NA";
-        }
-
-        Map<String, Object> docData = document.getData();
-        if (docData.get("displayName") == null) {
-            ulb.setFname("NA");
-        } else {
-            ulb.setFname(docData.get("displayName").toString());
-        }
-        ulb.setEmail(docData.get("email").toString());
-        ulb.setStatus(docData.get("status").toString());
-
-        return "";
-    }
-
     public boolean saveProject(String type) throws Exception {
         if (sb.getCurrentUser() == null) {
             sb.addMessage("Error", "Please start analysis before saving!");
@@ -255,9 +211,7 @@ public class FireBaseController implements Serializable {
             case "assist" ->
                 folderName = "assist";
             default -> {
-
-                folderName = ulb.getEmail();
-
+                folderName = fub.getEmail();
             }
         }
 
@@ -297,11 +251,11 @@ public class FireBaseController implements Serializable {
             case "home" ->
                 doXialabLogout();
             case "module" -> {
-                DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/ModuleView.xhtml");
+                DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/ModuleView.xhtml", ab);
             }
             case "omicsquare" -> {
                 sb.doLogout(0);
-                DataUtils.doRedirect("https://www.xialab.ca/translation.xhtml");
+                DataUtils.doRedirect("https://www.xialab.ca/translation.xhtml", ab);
             }
             default -> {
             }
@@ -328,7 +282,7 @@ public class FireBaseController implements Serializable {
             case "assist" ->
                 folderName = "assist";
             default -> {
-                folderName = ulb.getEmail();
+                folderName = fub.getEmail();
 
             }
         }
@@ -351,45 +305,13 @@ public class FireBaseController implements Serializable {
         return false;
     }
 
-    public void uploadObject(String bucketName, String objectName, String filePath) throws IOException {
-
-        // The ID of your GCP project
-        //String projectId = "omicsquare-dashboard-2282c";
-        // The ID of your GCS bucket
-        // Optional: set a generation-match precondition to avoid potential race
-        // conditions and data corruptions. The request returns a 412 error if the
-        // preconditions are not met.
-        // For a target object that does not yet exist, set the DoesNotExist precondition.
-        //Storage.BlobTargetOption precondition = Storage.BlobTargetOption.doesNotExist();
-        // If the destination already exists in your bucket, instead set a generation-match
-        // precondition:
-        // Storage.BlobTargetOption precondition = Storage.BlobTargetOption.generationMatch();
-        //Bucket bucket = StorageClient.getInstance().bucket();
-        BlobId blobId = BlobId.of(bucketName, objectName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-        Storage storage = fb.getStorage();
-        Storage.BlobTargetOption precondition;
-        if (storage.get(bucketName, objectName) == null) {
-            // For a target object that does not yet exist, set the DoesNotExist precondition.
-            // This will cause the request to fail if the object is created before the request runs.
-            precondition = Storage.BlobTargetOption.doesNotExist();
-            storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)), precondition);
-
-        } else {
-            storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));
-
-        }
-
-        System.out.println("Save Project Finished - File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
-    }
-
     public void writeDoc(String folderName, String type) throws InterruptedException, ExecutionException, JsonProcessingException {
-        String uid = "";
+
         long idNum = 0;
         String token = DataUtils.generateToken(folderName);
         sb.setShareToken(token);
 
-        uid = ulb.getEmail();
+        String uid = fub.getEmail();
 
         saveState();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
@@ -456,19 +378,51 @@ public class FireBaseController implements Serializable {
 
     }
 
+    @Inject
+    private SpectraProcessBean sppb;
+    @Inject
+    private SpectraControlBean spcb;
+    @Inject
+    private SpectraParamBean spmb;
+    @Inject
+    private IntegProcessBean itpb;
+    @Inject
+    private IntegResBean itrb;
+    @Inject
+    private PathBean patb;
+
+    @Inject
+    private MetaPathStatBean mpsb;
+    @Inject
+    private MetaPathLoadBean mplb;
+    @Inject
+    private MetaLoadBean mlb;
+    @Inject
+    private DoseResponseBean drb;
+
+    @Inject
+    private RocAnalBean rab;
+
+    @Inject
+    private PowerAnalBean pab;
+
+    @Inject
+    private MnetResBean mnrb;
+
+    @Inject
+    private MummiAnalBean mab;
+
+    @Inject
+    private TandemMSBean tmsb;
+    @Inject
+    private WorkflowView wfv;
+
     public void saveState() {
         // Save basic state
 
-        MultifacBean mfb = (MultifacBean) DataUtils.findBean2("multifacBean");
-        MsetBean mb = (MsetBean) DataUtils.findBean2("msetBean");
-        UtilsBean ub = (UtilsBean) DataUtils.findBean2("utilBean");
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean2("workflowBean");
-        SessionBean1 sb = (SessionBean1) DataUtils.findBean2("sessionBean1");
-        DiagramView dv = (DiagramView) DataUtils.findBean2("diagramView");
-
         hb.getJavaHistory().put("NA.dummy.SessionBean1", DataUtils.convertObjToJson(sb));
-        hb.getJavaHistory().put("NA.dummy.MsetBean", DataUtils.convertObjToJson(mb));
-        hb.getJavaHistory().put("NA.dummy.UtilsBean", DataUtils.convertObjToJson(ub));
+        hb.getJavaHistory().put("NA.dummy.MsetBean", DataUtils.convertObjToJson(mstb));
+        hb.getJavaHistory().put("NA.dummy.UtilsBean", DataUtils.convertObjToJson(utb));
         hb.getJavaHistory().put("NA.dummy.WorkflowBean", DataUtils.convertObjToJson(wb));
         hb.getJavaHistory().put("NA.dummy.DiagramView", DataUtils.convertObjToJson(dv));
 
@@ -486,55 +440,48 @@ public class FireBaseController implements Serializable {
 
             switch (analTypePrefix) {
                 case "raw" -> {
-                    SpectraProcessBean sp = (SpectraProcessBean) DataUtils.findBean2("spectraProcessor");
-                    SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean2("spectraController");
-                    SpectraParamBean spmb = (SpectraParamBean) DataUtils.findBean2("spectraParamer");
 
                     hb.getJavaHistory().put("NA.dummy.SpectraParamBean", DataUtils.convertObjToJson(spmb));
-                    hb.getJavaHistory().put("NA.dummy.SpectraProcessBean", DataUtils.convertObjToJson(sp));
-                    hb.getJavaHistory().put("NA.dummy.SpectraControlBean", DataUtils.convertObjToJson(sc));
+                    hb.getJavaHistory().put("NA.dummy.SpectraProcessBean", DataUtils.convertObjToJson(sppb));
+                    hb.getJavaHistory().put("NA.dummy.SpectraControlBean", DataUtils.convertObjToJson(spcb));
                 }
                 case "mset" -> {
-                    IntegProcessBean ip = (IntegProcessBean) DataUtils.findBean2("integProcesser");
-                    IntegResBean ir = (IntegResBean) DataUtils.findBean2("integResBean");
 
-                    hb.getJavaHistory().put("NA.dummy.IntegProcessBean", DataUtils.convertObjToJson(ip));
-                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(ir));
+                    hb.getJavaHistory().put("NA.dummy.IntegProcessBean", DataUtils.convertObjToJson(itpb));
+                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(itrb));
                 }
 
                 case "path" -> {
-                    PathBean patb = (PathBean) DataUtils.findBean2("pathBean");
+
                     hb.getJavaHistory().put("NA.dummy.PathBean", DataUtils.convertObjToJson(patb));
-                    IntegResBean ir = (IntegResBean) DataUtils.findBean2("integResBean");
-                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(ir));
+                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(itrb));
                 }
 
                 default -> {
                     // Handle specific analysis types
                     switch (module) {
                         case "metapaths":
-                            MetaPathStatBean mps = (MetaPathStatBean) DataUtils.findBean2("pMetaStatBean");
-                            MetaPathLoadBean mpl = (MetaPathLoadBean) DataUtils.findBean2("pLoadBean");
-                            hb.getJavaHistory().put("NA.dummy.MetaPathLoadBean", DataUtils.convertObjToJson(mpl));
-                            hb.getJavaHistory().put("NA.dummy.MetaPathStatBean", DataUtils.convertObjToJson(mps));
+
+                            hb.getJavaHistory().put("NA.dummy.MetaPathLoadBean", DataUtils.convertObjToJson(mplb));
+                            hb.getJavaHistory().put("NA.dummy.MetaPathStatBean", DataUtils.convertObjToJson(mpsb));
                             break;
 
                         case "metadata":
-                            MetaLoadBean mlb = (MetaLoadBean) DataUtils.findBean2("loadBean");
+
                             hb.getJavaHistory().put("NA.dummy.MetaLoadBean", DataUtils.convertObjToJson(mlb));
                             break;
                         case "dose":
-                            DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean2("doseResponseBean");
-                            hb.getJavaHistory().put("NA.dummy.DoseResponseBean", DataUtils.convertObjToJson(dr));
+
+                            hb.getJavaHistory().put("NA.dummy.DoseResponseBean", DataUtils.convertObjToJson(drb));
                             hb.getJavaHistory().put("NA.dummy.MultifacBean", DataUtils.convertObjToJson(mfb));
                             break;
                         case "roc":
-                            RocAnalBean rab = (RocAnalBean) DataUtils.findBean2("rocAnalBean");
+
                             hb.getJavaHistory().put("NA.dummy.RocAnalBean", DataUtils.convertObjToJson(rab));
                             break;
 
                         case "power":
-                            PowerAnalBean pab = (PowerAnalBean) DataUtils.findBean2("powerAnalBean");
+
                             hb.getJavaHistory().put("NA.dummy.PowerAnalBean", DataUtils.convertObjToJson(pab));
                             break;
 
@@ -543,19 +490,19 @@ public class FireBaseController implements Serializable {
                             break;
 
                         case "network":
-                            MnetResBean mnb = (MnetResBean) DataUtils.findBean2("mnetResBean");
-                            hb.getJavaHistory().put("NA.dummy.MnetResBean", DataUtils.convertObjToJson(mnb));
+
+                            hb.getJavaHistory().put("NA.dummy.MnetResBean", DataUtils.convertObjToJson(mnrb));
                             break;
 
                         case "mummichog":
                         case "mass_table":
                         case "mass_all":
-                            MummiAnalBean mab = (MummiAnalBean) DataUtils.findBean2("mummiAnalBean");
+
                             hb.getJavaHistory().put("NA.dummy.MummiAnalBean", DataUtils.convertObjToJson(mab));
                             break;
 
                         case "tandemMS":
-                            TandemMSBean tmsb = (TandemMSBean) DataUtils.findBean2("tandemMS");
+
                             hb.getJavaHistory().put("NA.dummy.TandemMSBean", DataUtils.convertObjToJson(tmsb));
                             break;
 
@@ -564,13 +511,11 @@ public class FireBaseController implements Serializable {
                             break;
                     }
                 }
-
             }
         }
 
-        WorkflowView wf = (WorkflowView) DataUtils.findBean("workflowView");
         try {
-            wf.generateWorkflowJson();
+            wfv.generateWorkflowJson();
         } catch (IOException ex) {
             Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -684,10 +629,10 @@ public class FireBaseController implements Serializable {
         sb.setShareToken(shareToken);
         boolean check = sb.doLogin(dataType, analType, regression, paired, folderName, true);
         if (check) {
-            System.out.println(org + "=====org");
+            //System.out.println(org + "=====org");
             if (!org.equals("NA")) {
                 sb.setOrg(org);
-                RDataUtils.setOrganism(sb.getRConnection(), org);
+                RDataUtils.setOrganism(sb, org);
             }
         }
         String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
@@ -699,10 +644,10 @@ public class FireBaseController implements Serializable {
             case "assist" ->
                 userFolderName = "assist";
             default -> {
-                if (ulb.getEmail() == null || ulb.getEmail().isEmpty()) {
+                if (fub.getEmail() == null || fub.getEmail().isEmpty()) {
                     userFolderName = email;
                 } else {
-                    userFolderName = ulb.getEmail();
+                    userFolderName = fub.getEmail();
                 }
             }
         }
@@ -741,28 +686,6 @@ public class FireBaseController implements Serializable {
         String naviType = sb.getNaviType();
         sb.setNaviTree(NaviUtils.createNaviTree(naviType));
         return true;
-    }
-
-    public void downloadObjectFire(String bucketName, String objectName, String destFilePath) {
-
-        System.out.println(
-                "To download object "
-                + objectName
-                + " from bucket name "
-                + bucketName
-                + " to "
-                + destFilePath);
-
-        Blob blob = fb.getStorage().get(BlobId.of(bucketName, objectName));
-        blob.downloadTo(Paths.get(destFilePath));
-
-        System.out.println(
-                "Downloaded object "
-                + objectName
-                + " from bucket name "
-                + bucketName
-                + " to "
-                + destFilePath);
     }
 
     public void downloadObject(String serverLocation, String email, String folderName, String destFilePath) {
@@ -849,27 +772,27 @@ public class FireBaseController implements Serializable {
     public void runJavaMethod(String myClassType, String myMethod, String myParamType, String myParam) {
         // Initialize the map to hold all beans
         Map<String, Object> beanClassMap = new HashMap<>();
-        beanClassMap.put("DiagramView", DataUtils.findBean("diagramView"));
+        beanClassMap.put("DiagramView", dv);
 
-        beanClassMap.put("SessionBean1", DataUtils.findBean("sessionBean1"));
-        beanClassMap.put("SpectraProcessBean", DataUtils.findBean("spectraProcessor"));
-        beanClassMap.put("SpectraControlBean", DataUtils.findBean("spectraController"));
-        beanClassMap.put("SpectraParamBean", DataUtils.findBean("spectraParamer"));
-        beanClassMap.put("WorkflowBean", DataUtils.findBean("workflowBean"));
-        beanClassMap.put("PathBean", DataUtils.findBean("pathBean"));
-        beanClassMap.put("IntegProcessBean", DataUtils.findBean("integProcesser"));
-        beanClassMap.put("IntegResBean", DataUtils.findBean("integResBean"));
-        beanClassMap.put("MsetBean", DataUtils.findBean("msetBean"));
-        beanClassMap.put("UtilsBean", DataUtils.findBean("utilBean"));
-        beanClassMap.put("MetaLoadBean", DataUtils.findBean("loadBean"));
-        beanClassMap.put("MetaPathLoadBean", DataUtils.findBean("pLoadBean"));
-        beanClassMap.put("TandemMSBean", DataUtils.findBean("tandemMS"));
-        beanClassMap.put("MetaPathStatBean", DataUtils.findBean("pMetaStatBean"));
-        beanClassMap.put("MnetResBean", DataUtils.findBean("mnetResBean"));
-        beanClassMap.put("MultifacBean", DataUtils.findBean("multifacBean"));
-        beanClassMap.put("MummiAnalBean", DataUtils.findBean("mummiAnalBean"));
-        beanClassMap.put("PowerAnalBean", DataUtils.findBean("powerAnalBean"));
-        beanClassMap.put("RocAnalBean", DataUtils.findBean("rocAnalBean"));
+        beanClassMap.put("SessionBean1", sb);
+        beanClassMap.put("SpectraProcessBean", sppb);
+        beanClassMap.put("SpectraControlBean", spcb);
+        beanClassMap.put("SpectraParamBean", spmb);
+        beanClassMap.put("WorkflowBean", wb);
+        beanClassMap.put("PathBean", patb);
+        beanClassMap.put("IntegProcessBean", itpb);
+        beanClassMap.put("IntegResBean", itrb);
+        beanClassMap.put("MsetBean", mstb);
+        beanClassMap.put("UtilsBean", utb);
+        beanClassMap.put("MetaLoadBean", mlb);
+        beanClassMap.put("MetaPathLoadBean", mplb);
+        beanClassMap.put("TandemMSBean", tmsb);
+        beanClassMap.put("MetaPathStatBean", mpsb);
+        beanClassMap.put("MnetResBean", mnrb);
+        beanClassMap.put("MultifacBean", mfb);
+        beanClassMap.put("MummiAnalBean", mab);
+        beanClassMap.put("PowerAnalBean", pab);
+        beanClassMap.put("RocAnalBean", rab);
 
         // Print debug information
         //System.out.println("myClassType: " + myClassType + ", myMethod: " + myMethod + ", myParamType: " + myParamType + ", myParam: " + myParam);
@@ -890,65 +813,41 @@ public class FireBaseController implements Serializable {
         try {
             Class<?>[] paramString = new Class<?>[1];
             switch (myParamType) {
-                case "noparam":
+                case "noparam" -> {
                     method = cls.getDeclaredMethod(myMethod, new Class<?>[0]);
                     method.invoke(obj);
-                    break;
-                case "stringparam":
+                }
+                case "stringparam" -> {
                     paramString[0] = String.class;
                     method = cls.getDeclaredMethod(myMethod, paramString);
                     method.invoke(obj, myParam);
-                    break;
-                case "intparam":
+                }
+                case "intparam" -> {
                     paramString[0] = int.class;
                     method = cls.getDeclaredMethod(myMethod, paramString);
-                    method.invoke(obj, Integer.parseInt(myParam));
-                    break;
-                case "doubleparam":
+                    method.invoke(obj, Integer.valueOf(myParam));
+                }
+                case "doubleparam" -> {
                     paramString[0] = double.class;
                     method = cls.getDeclaredMethod(myMethod, paramString);
-                    method.invoke(obj, Double.parseDouble(myParam));
-                    break;
-                case "booleanparam":
+                    method.invoke(obj, Double.valueOf(myParam));
+                }
+                case "booleanparam" -> {
                     paramString[0] = boolean.class;
                     method = cls.getDeclaredMethod(myMethod, paramString);
-                    method.invoke(obj, Boolean.parseBoolean(myParam));
-                    break;
-                case "omicsModelList":
+                    method.invoke(obj, Boolean.valueOf(myParam));
+                }
+                case "omicsModelList" -> {
                     paramString[0] = ArrayList.class;
                     method = cls.getDeclaredMethod(myMethod, paramString);
                     // ArrayList<OmicsModel> dataSets = (ArrayList<OmicsModel>) DataUtils.convertJsonToObj(myParam, myParamType);
                     // method.invoke(obj, dataSets);
-                    break;
-                case "SessionBean1":
-                case "DiagramView":
-                case "SpectraProcessBean":
-                case "SpectraControlBean":
-                case "IntegProcessBean":
-                case "IntegResBean":
-                case "MsetBean":
-                case "PathBean":
-                case "TandemMSBean":
-                case "SpectraParamBean":
-                case "UtilsBean":
-                case "MetaLoadBean":
-                case "MetaPathLoadBean":
-                case "MetaPathStatBean":
-                case "MnetResBean":
-                case "MultifacBean":
-                case "MummiAnalBean":
-                case "RocAnalBean":
-                case "WorkflowView":
-                case "WorkflowBean":
-                case "PowerAnalBean":
-
+                }
+                case "SessionBean1", "DiagramView", "SpectraProcessBean", "SpectraControlBean", "IntegProcessBean", "IntegResBean", "MsetBean", "PathBean", "TandemMSBean", "SpectraParamBean", "UtilsBean", "MetaLoadBean", "MetaPathLoadBean", "MetaPathStatBean", "MnetResBean", "MultifacBean", "MummiAnalBean", "RocAnalBean", "WorkflowView", "WorkflowBean", "PowerAnalBean" -> {
                     paramString[0] = ArrayList.class;
                     DataUtils.convertJsonToObj(obj, myParam, myParamType);
-                    break;
-
-                default:
-                    LOGGER.error("Unsupported parameter type: " + myParamType);
-                    return;
+                }
+                default -> LOGGER.error("Unsupported parameter type: " + myParamType);
             }
         } catch (Exception ex) {
             LOGGER.error("Error executing method: " + myMethod + " on class: " + myClassType, ex);
@@ -960,7 +859,7 @@ public class FireBaseController implements Serializable {
         String navitype = sb.getNaviType();
         sb.setNaviType("NA");
         sb.buildCustomNaviTree();
-        DataUtils.doRedirect("/MetaboAnalyst/" + sb.getCurrentNaviUrl());
+        DataUtils.doRedirect("/MetaboAnalyst/" + sb.getCurrentNaviUrl(), ab);
     }
 
     public void navToProject(String naviString) {
@@ -977,7 +876,7 @@ public class FireBaseController implements Serializable {
             naviString = pb.getSelectedProject().getNaviStr();
         }
 
-        DataUtils.doRedirect("/MetaboAnalyst/" + naviString);
+        DataUtils.doRedirect("/MetaboAnalyst/" + naviString, ab);
     }
 
     public String getShareableLink() {
@@ -998,14 +897,14 @@ public class FireBaseController implements Serializable {
         String value = Faces.getRequestCookie("user");
         if (value != null) {
             String tokenId = value;
-            System.out.println("ulb.getEmail()==reloadUserInfo===" + ulb.getEmail());
+            System.out.println("fub.getEmail()==reloadUserInfo===" + fub.getEmail());
             System.out.println("fb.getUserMap().containsKey(tokenId)=====" + fb.getUserMap().containsKey(tokenId));
-            if (fb.getUserMap().containsKey(tokenId) && ulb.getEmail().equals("")) {
+            if (fb.getUserMap().containsKey(tokenId) && fub.getEmail().equals("")) {
                 FireUserBean ubObj = fb.getUserMap().get(tokenId);
-                System.out.println("reloaduser====111111=" + fb.getUserMap().get(tokenId).getEmail());
+                //System.out.println("reloaduser====111111=" + fb.getUserMap().get(tokenId).getEmail());
 
-                System.out.println("reloaduser====22=" + ubObj.getEmail());
-                ulb.setFireUserBean(ubObj);
+                //System.out.println("reloaduser====22=" + ubObj.getEmail());
+                fub.setFireUserBean(ubObj);
                 sb.setRegisteredLogin(true);
                 userInit = true;
             }
@@ -1029,8 +928,8 @@ public class FireBaseController implements Serializable {
 
         if (!projInit) {
             reloadUserInfo();
-            if (ulb.getEmail() == null || ulb.getEmail().equals("")) {// on local do not need to login
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
+            if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
             } else {
                 pb.setActiveTabIndex(0);
                 //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
@@ -1043,7 +942,7 @@ public class FireBaseController implements Serializable {
     public void toModuleView() throws IOException {
 
         if (ab.isOnLocalServer()) {
-            DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml");
+            DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml", ab);
         } else {
             PrimeFaces.current().executeScript("PF('notLoginDialog').show()");
         }
@@ -1073,7 +972,7 @@ public class FireBaseController implements Serializable {
     public boolean setupProjectTable() {
 
         try {
-            ArrayList<HashMap<String, Object>> res = db.getProjectsFromPostgres(ulb.getEmail(), ab.getAppName(), ab.getToolLocation());
+            ArrayList<HashMap<String, Object>> res = db.getProjectsFromPostgres(fub.getEmail(), ab.getAppName(), ab.getToolLocation());
             pb.setProjectTable(new ArrayList());
             if (res == null) {
                 return false;
@@ -1191,7 +1090,7 @@ public class FireBaseController implements Serializable {
         sb.setOrg(selectedProject.getOrg());
         sb.setShareToken(selectedProject.getShareToken());
         String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
-        String userFolderName = ulb.getEmail();
+        String userFolderName = fub.getEmail();
 
         String bucketObjectName = "/user_folders/" + userFolderName + "/" + folderName + ".zip";
         String localFilePath = fb.getProjectPath() + bucketObjectName;
@@ -1222,14 +1121,14 @@ public class FireBaseController implements Serializable {
 
         setFireDocName(selectedProject.getTitle());
         setFireDocDescription(selectedProject.getDescription());
-        System.out.println("navibool====222" + sb.getNaviTrack().size());
+        //System.out.println("navibool====222" + sb.getNaviTrack().size());
 
         if (naviBool) {
             if (sb.getCurrentNaviUrl() != null) {
                 String modifiedPath = sb.getCurrentNaviUrl().replace("StaticHeatmapView", "HeatmapView");
                 sb.setCurrentNaviUrl(modifiedPath);
             }
-            System.out.println("navibool====" + sb.getCurrentNaviUrl());
+            //System.out.println("navibool====" + sb.getCurrentNaviUrl());
             navToProject(sb.getCurrentNaviUrl());
         }
         return true;
@@ -1254,12 +1153,11 @@ public class FireBaseController implements Serializable {
         sb.setOrg(selectedProject.getOrg());
         sb.setShareToken(selectedProject.getShareToken());
 
-        String userFolderName = ulb.getEmail();
-        SpectraControlBean pcb = (SpectraControlBean) DataUtils.findBean("spectraController");
-
+        String userFolderName = fub.getEmail();
+        
         long jobid = db.extractRawJobStatus(folderName, userFolderName);
-        pcb.setCurrentJobId((long) jobid);
-        pcb.setJobSubmitted(true);
+        spcb.setCurrentJobId((long) jobid);
+        spcb.setJobSubmitted(true);
         RCenter.loadHistory(sb.getRConnection());
 
         if (javaHistory.isEmpty()) {
@@ -1284,7 +1182,7 @@ public class FireBaseController implements Serializable {
 
     public void generateHighDef(HttpServletResponse response) {
         String key = sb.getImageSource();
-        String mydpi = "72";
+        String mydpi = "150";
         String formatOpt = sb.getFormatOpt();
         int dpiOpt = sb.getDpiOpt();
         if (formatOpt.equals("png") || formatOpt.equals("tiff")) {
@@ -1296,10 +1194,10 @@ public class FireBaseController implements Serializable {
             return;
         }
         rcmd = rcmd.replace("png", formatOpt);
-        rcmd = rcmd.replace("72", mydpi + "");
-        String imgName = key + "_" + sb.getImgMap().get(key) + "_dpi72.png";
+        rcmd = rcmd.replace("150", mydpi + "");
+        String imgName = key + "_" + sb.getImgMap().get(key) + "_dpi150.png";
         imgName = imgName.replace("png", formatOpt);
-        imgName = imgName.replace("72", mydpi + "");
+        imgName = imgName.replace("150", mydpi + "");
 
         try {
             // Execute the R command
@@ -1328,7 +1226,7 @@ public class FireBaseController implements Serializable {
 
     public void generateHighDef2() {
         String key = sb.getImageSource();
-        String mydpi = "72";
+        String mydpi = "150";
         String formatOpt = sb.getFormatOpt();
         int dpiOpt = sb.getDpiOpt();
         if (formatOpt.equals("png") || formatOpt.equals("tiff")) {
@@ -1358,9 +1256,9 @@ public class FireBaseController implements Serializable {
             return;
         }
         rcmd = rcmd.replace("png", formatOpt);
-        rcmd = rcmd.replace("72", mydpi + "");
+        rcmd = rcmd.replace("150", mydpi + "");
 
-        String imgName = key + "_" + sb.getImgMap().get(key) + "_dpi72.png";
+        String imgName = key + "_" + sb.getImgMap().get(key) + "_dpi150.png";
 
         if (sb.getImgMap().get(key) == null) {
             imgName = key + ".png";
@@ -1369,7 +1267,7 @@ public class FireBaseController implements Serializable {
             String pathway_nm = sts[1];
             pathway_nm = pathway_nm.replaceAll("\\s", "_");
             pathway_nm = pathway_nm.replaceAll(",", "");
-            imgName = pathway_nm + "_dpi72.png";
+            imgName = pathway_nm + "_dpi150.png";
         }
 
         imgName = imgName.replace("png", formatOpt);
@@ -1381,7 +1279,7 @@ public class FireBaseController implements Serializable {
             imgName = imgName.replace("raw_spec_msf_", "");
         }
 
-        imgName = imgName.replace("72", mydpi + "");
+        imgName = imgName.replace("150", mydpi + "");
 
         System.out.println("now the imgName is ==> " + imgName);
         System.out.println("now the rcmd is ==> " + rcmd);
@@ -1406,7 +1304,7 @@ public class FireBaseController implements Serializable {
             }
 
             // Redirect to the image URL
-            DataUtils.doRedirect("/" + ab.getAppName() + "/" + imageURL);
+            DataUtils.doRedirect("/" + ab.getAppName() + "/" + imageURL, ab);
 
         } catch (Exception e) {
             LOGGER.error("generateHighDef", e);
@@ -1482,8 +1380,6 @@ public class FireBaseController implements Serializable {
             case "pca_pair_meta" ->
                 sb.setCurrentNaviUrl("/Secure/multifac/LivePCAView.xhtml");
             case "heatmap_mummichog" -> {
-                MummiAnalBean mab = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
-
                 if (sb.getReportJsonMap().containsKey("heatmap_mummichog")) {
                     mab.setHeatmapName(sb.getReportJsonMap().get("heatmap_mummichog"));
                 }
@@ -1491,15 +1387,11 @@ public class FireBaseController implements Serializable {
             }
             case "heatmap_pathway" -> {
                 if (sb.getReportJsonMap().containsKey("heatmap_pathway")) {
-                    PathBean patb = (PathBean) DataUtils.findBean("pathBean");
-
                     patb.setHeatmapName(sb.getReportJsonMap().get("heatmap_pathway"));
                 }
                 sb.setCurrentNaviUrl("/Secure/viewer/HeatmapView.xhtml");
             }
             case "network_gsea", "network_integ", "network_mummichog" -> {
-                MummiAnalBean mab = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
-
                 switch (analNavi) {
                     case "network_gsea" -> {
                         String[] stringArray = new String[1];
@@ -1565,9 +1457,8 @@ public class FireBaseController implements Serializable {
             case "svm_cls" ->
                 sb.setCurrentNaviUrl("/Secure/analysis/RSVMView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeTab=0");
             case "roc_univ", "roc_boxplot" -> {
-                RocAnalBean rb = (RocAnalBean) DataUtils.findBean("rocAnalBean");
-                rb.setCurrentCmpd(null);
-                rb.performDefaultDetailRocAnalysis(cmpd);
+                rab.setCurrentCmpd(null);
+                rab.performDefaultDetailRocAnalysis(cmpd);
                 sb.setCurrentNaviUrl("/Secure/roc/RocDetailView.xhtml");
             }
             case "tt_table" -> {
@@ -1769,7 +1660,7 @@ public class FireBaseController implements Serializable {
         String folderName = selectedProject.getFolderName();
 
         if (checkBatchTemplateDir()) {
-            System.out.println("now the folderName in extractRhist2BatchTemplate is ===> " + folderName);
+            //System.out.println("now the folderName in extractRhist2BatchTemplate is ===> " + folderName);
             String Batch_temp_path_this_proj = fb.getProjectPath();
             Batch_temp_path_this_proj = Batch_temp_path_this_proj + "BatchProcess/" + ab.getAppName() + "/" + folderName + "_RBatchTemplate.qs";
             return Batch_temp_path_this_proj;
@@ -1802,7 +1693,7 @@ public class FireBaseController implements Serializable {
 
     public void checkLogoutModule() {
         if (sb.getCurrentUser() == null) {
-            DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml");
+            DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml", ab);
         } else {
             PrimeFaces.current().executeScript("PF('saveWarningDialogModule').show()");
         }
@@ -1813,11 +1704,9 @@ public class FireBaseController implements Serializable {
         Faces.addResponseCookie("user", "", "/", 0);
 
         // Assuming you have access to the FireBase instance (fb) and the user's token
-        FireBase fb = (FireBase) DataUtils.findBean("fireBase");
-        FireUserBean ulb1 = (FireUserBean) DataUtils.findBean("fireUserBean");
-
-        if (fb != null && ulb1 != null) {
-            String userToken = ulb1.getOmicsquareToken();
+   
+        if (fb != null && fub != null) {
+            String userToken = fub.getOmicsquareToken();
             if (fb.getUserMap().containsKey(userToken)) {
                 fb.getUserMap().remove(userToken);
             }
@@ -1861,8 +1750,7 @@ public class FireBaseController implements Serializable {
         } else {
             myURL = "https://vip.metaboanalyst.ca/MetaboAnalyst/Secure/upload/SpectraUpload.xhtml";;
             if (!ab.isOnVipServer()) {
-                FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-                fu.sendPostRequest("vip", "spec");
+                fub.sendPostRequest("vip", "spec");
                 return myURL;
             }
         }
@@ -1882,8 +1770,7 @@ public class FireBaseController implements Serializable {
 
         String myURL = "https://vip.metaboanalyst.ca/MetaboAnalyst/Secure/workflow/upload/SpecGoogleUploadView.xhtml";;
         if (!ab.isOnVipServer()) {
-            FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-            fu.sendPostRequest("vip", "WfSpecGoogleUploadView");
+            fub.sendPostRequest("vip", "WfSpecGoogleUploadView");
             return myURL;
         }
 
@@ -1896,8 +1783,7 @@ public class FireBaseController implements Serializable {
     }
 
     public void addDoseFeatureToReport() {
-        DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
-        RDataUtils.addDoseFeatureToReport(sb.getRConnection(), dr.getSelectedFeature().getName(), dr.getCurrentFeatureImg());
+        RDataUtils.addDoseFeatureToReport(sb.getRConnection(), drb.getSelectedFeature().getName(), drb.getCurrentFeatureImg());
         sb.addMessage("info", "This feature has been added to report!");
     }
 

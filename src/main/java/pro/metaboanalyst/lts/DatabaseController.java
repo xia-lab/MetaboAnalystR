@@ -4,7 +4,9 @@
  */
 package pro.metaboanalyst.lts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -22,9 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
+import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RCenter;
 
 /**
@@ -35,13 +37,19 @@ import pro.metaboanalyst.rwrappers.RCenter;
 @Named("databaseController")
 public class DatabaseController implements Serializable {
 
+    @JsonIgnore
     @Inject
-    FireBase fb;
+    private ApplicationBean1 ab;
+    @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private SessionBean1 sb;
+    @JsonIgnore
+    @Inject
+    private FireBase fb;
 
     public String registerUser(String email, String password, String firstname, String lastname, String institution) {
-        String hashedPassword = RCenter.hashPassword(fb.getRscriptsDBPath(), fb.getProjectDBPath(), password);
+
+        String hashedPassword = RCenter.hashPassword(sb, fb.getRscriptsDBPath(), fb.getProjectDBPath(), password);
 
         Connection con = null;
         PreparedStatement checkStmt = null;
@@ -117,7 +125,7 @@ public class DatabaseController implements Serializable {
         // Assuming DatabaseConnectionPool.getDataSource() is always available or throws an exception if not.
 
         // Hash the password using SHA-256
-        String hashedPassword = RCenter.hashPassword(fb.getRscriptsDBPath(),
+        String hashedPassword = RCenter.hashPassword(sb, fb.getRscriptsDBPath(),
                 fb.getProjectDBPath(), password);
 
         Connection con = null;
@@ -218,12 +226,11 @@ public class DatabaseController implements Serializable {
     }
 
     public String[] loginUserDocker(String email, String password) {
-        System.out.println("loginUser --> step0");
+        //System.out.println("loginUser --> step0");
         // Check PSQL db availability (This can be a method that checks if pool is available or not)
         // Assuming DatabaseConnectionPool.getDataSource() is always available or throws an exception if not.
-
         // Hash the password using SHA-256
-        String hashedPassword = RCenter.hashPassword(fb.getRscriptsDBPath(),
+        String hashedPassword = RCenter.hashPassword(sb, fb.getRscriptsDBPath(),
                 fb.getProjectDBPath(), password);
 
         Connection con = null;
@@ -289,7 +296,7 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
+    public static int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
         // Convert all values in rawDocData to String, handling single quotes
         Map<String, String> docData = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawDocData.entrySet()) {
@@ -368,7 +375,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    private void setPreparedStatementParameters(PreparedStatement pstmt, Map<String, String> docData) throws SQLException {
+    private static void setPreparedStatementParameters(PreparedStatement pstmt, Map<String, String> docData) throws SQLException {
         // Assuming that you handle data type conversion where necessary, e.g., converting string to integer/date
         pstmt.setString(1, docData.get("userid"));
         pstmt.setString(2, docData.get("name"));
@@ -410,7 +417,7 @@ public class DatabaseController implements Serializable {
         pstmt.setString(19, docData.get("foldername"));
     }
 
-    public int updateProjectTitleDescription(String newName, String newDescription, int id) {
+    public static int updateProjectTitleDescription(String newName, String newDescription, int id) {
         int result = 0;
         Connection con = null;
         PreparedStatement checkStmt = null;
@@ -486,7 +493,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public ArrayList<HashMap<String, Object>> getProjectsFromPostgres(String email, String toolName, String toolLocation) {
+    public static ArrayList<HashMap<String, Object>> getProjectsFromPostgres(String email, String toolName, String toolLocation) {
         ArrayList<HashMap<String, Object>> projects = new ArrayList<>();
         Connection con = null;
         PreparedStatement stmt = null;
@@ -550,7 +557,7 @@ public class DatabaseController implements Serializable {
         return projects; // Return the list of projects
     }
 
-    public int deleteProjectById(Long id) {
+    public static int deleteProjectById(Long id) {
         int result = 0;
         Connection con = null;
         PreparedStatement stmt = null;
@@ -595,7 +602,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public Map<String, Object> loadProject(String token) {
+    public static Map<String, Object> loadProject(String token) {
         Map<String, Object> projectData = new HashMap<>();
         Connection con = null;
         PreparedStatement stmt = null;
@@ -650,7 +657,7 @@ public class DatabaseController implements Serializable {
         return projectData;
     }
 
-    public String insertToken(String email, String resetToken, String expDate) {
+    public static String insertToken(String email, String resetToken, String expDate) {
         String result = "Insert unsuccessful."; // Default failure message
         Connection con = null;
         PreparedStatement stmt = null;
@@ -707,7 +714,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public String checkUserExists(String email) {
+    public static String checkUserExists(String email) {
         String result = "Error checking user existence."; // Default error message
         Connection con = null;
         PreparedStatement stmt = null;
@@ -753,7 +760,7 @@ public class DatabaseController implements Serializable {
         return result; // Return the result message
     }
 
-    public String verifyToken(String token) {
+    public static String verifyToken(String token) {
         String result = "Error encountered: Token not found."; // Default error message for token not found
         Connection con = null;
         PreparedStatement stmt = null;
@@ -796,7 +803,7 @@ public class DatabaseController implements Serializable {
         return result; // Return the userNM or error message
     }
 
-    public String deleteTokenForUser(String email) {
+    public static String deleteTokenForUser(String email) {
         String result = "Error encountered during deletion."; // Default error message
         Connection con = null;
         PreparedStatement stmt = null;
@@ -844,9 +851,8 @@ public class DatabaseController implements Serializable {
         try {
             con = DatabaseConnectionPool.getConnection();
             con.setAutoCommit(false); // Start transaction
-
             // Hash the new password using SHA-256
-            String hashedPassword = RCenter.hashPassword(fb.getRscriptsDBPath(),
+            String hashedPassword = RCenter.hashPassword(sb, fb.getRscriptsDBPath(),
                     fb.getProjectDBPath(), new_password);
 
             // Check if the email exists
@@ -902,7 +908,7 @@ public class DatabaseController implements Serializable {
         return result; // Return the result message
     }
 
-    public String addActivationCode(String activateCode, String expDate, String email) {
+    public static String addActivationCode(String activateCode, String expDate, String email) {
         String result = "Error encountered during update."; // Default error message
         Connection con = null;
         PreparedStatement stmt = null;
@@ -941,7 +947,7 @@ public class DatabaseController implements Serializable {
         return result; // Return the result message
     }
 
-    public String checkActivationCode(String email, String activationCode) {
+    public static String checkActivationCode(String email, String activationCode) {
         String result = "Error encountered during activation."; // Default error message
         Connection con = null;
         PreparedStatement stmt = null;
@@ -1007,7 +1013,7 @@ public class DatabaseController implements Serializable {
         return result; // Return the result message
     }
 
-    public String deleteUserAndProjects(String userId) {
+    public static String deleteUserAndProjects(String userId) {
         String result = "Initialization"; // Default message
         Connection con = null;
         PreparedStatement projectStmt = null;
@@ -1061,7 +1067,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public int checkMatchingFolderNameProject(String folderName) {
+    public static int checkMatchingFolderNameProject(String folderName) {
         int matchedId = -1; // Default id indicating no match found
         Connection con = null;
         PreparedStatement stmt = null;
@@ -1101,7 +1107,7 @@ public class DatabaseController implements Serializable {
         return matchedId; // Return the matched id or -1 if no match found
     }
 
-    public int transferProject(int id, String newEmail, String suffix, String toolLocation) {
+    public static int transferProject(int id, String newEmail, String suffix, String toolLocation) {
         int result = 0;
         Connection con = null;
         PreparedStatement fetchStmt = null;
@@ -1184,11 +1190,11 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public int detectDockerUserNum() {
+    public static int detectDockerUserNum() {
 
         Connection con = null;
         PreparedStatement insertStmt = null;
-        ResultSet rs = null;
+        ResultSet rs;
         int userCount = 0;
 
         try {
@@ -1220,7 +1226,7 @@ public class DatabaseController implements Serializable {
     }
 
     // the following section is used for raw spectra jobs
-    public int recordRawJob(long JobID, String email, String Project_folder, String JobPos) {
+    public static int recordRawJob(long JobID, String email, String Project_folder, String JobPos) {
 
         int result = 0;
         Date CurrentDate = new Date();
@@ -1297,7 +1303,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public int updateRawJobStatus(long JobID, String currentJobStatus, String JobPos) {
+    public static int updateRawJobStatus(long JobID, String currentJobStatus, String JobPos) {
 
         int result = 0;
 
@@ -1353,13 +1359,13 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public int extractRawJobStatus(String folder, String userid) {
+    public static int extractRawJobStatus(String folder, String userid) {
 
         int result = 0;
 
         Connection con = null;
         PreparedStatement stmt = null;
-        ResultSet rs = null;
+        ResultSet rs;
         ResultSet tables = null;
 //        
         try {
@@ -1411,7 +1417,7 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    public ArrayList<HashMap<String, Object>> getAllWorkflows(String toolName, String email) {
+    public static ArrayList<HashMap<String, Object>> getAllWorkflows(String toolName, String email) {
         Connection con = null;
         PreparedStatement stmt = null;
         ResultSet res = null;
@@ -1478,7 +1484,7 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public String insertWorkflow(String email, String name, String description, String module, String toolName, String filename, String location, String input, String analysisGoal, String analysisMethods, String output, String other) {
+    public static String insertWorkflow(String email, String name, String description, String module, String toolName, String filename, String location, String input, String analysisGoal, String analysisMethods, String output, String other) {
         Connection con = null;
         PreparedStatement insertStmt = null;
 
@@ -1528,7 +1534,7 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public Map<String, Object> loadProjectById(String id) {
+    public static Map<String, Object> loadProjectById(String id) {
         Map<String, Object> projectData = new HashMap<>();
         Connection con = null;
         PreparedStatement stmt = null;
@@ -1583,7 +1589,7 @@ public class DatabaseController implements Serializable {
         return projectData;
     }
 
-    public Map<String, Object> obtainFolderNameProject(String folderName) {
+    public static Map<String, Object> obtainFolderNameProject(String folderName) {
         Map<String, Object> projectDetails = new HashMap<>(); // To store all column values of the matched project
         Connection con = null;
         PreparedStatement stmt = null;

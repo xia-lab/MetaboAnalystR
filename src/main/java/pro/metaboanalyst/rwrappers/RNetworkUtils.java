@@ -9,7 +9,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.controllers.general.SessionBean1;
 
 /**
  *
@@ -19,11 +19,12 @@ public class RNetworkUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(RNetworkUtils.class);
 
-    public static int doEnrichmentTest_KO01100(RConnection RC, String dbType, String fileNm) {
+    public static int doEnrichmentTest_KO01100(SessionBean1 sb, String dbType, String fileNm) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformKOEnrichAnalysis_KO01100(NA" + ", \"" + dbType + "\", \"" + fileNm + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "doMnetworkAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "doMnetworkAnalysis");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -32,11 +33,12 @@ public class RNetworkUtils {
         return 0;
     }
 
-    public static void prepareKeggQueryJson(RConnection RC) {
+    public static void prepareKeggQueryJson(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PrepareKeggQueryJson(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "doMnetworkAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "doMnetworkAnalysis");
 
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -67,12 +69,13 @@ public class RNetworkUtils {
         return null;
     }
 
-    public static int[] searchNetDB(RConnection RC, String dbType, String dbName, Double minScore) {
+    public static int[] searchNetDB(SessionBean1 sb, String dbType, String dbName, Double minScore) {
         try {
+            RConnection RC = sb.getRConnection();
             String useExp = "FALSE";
             String rCommand = "SearchNetDB(NA" + ", \"" + dbType + "\", \"" + dbName + "\", " + useExp + ", " + minScore + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "doMnetworkAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "doMnetworkAnalysis");
 
             return RC.eval(rCommand).asIntegers();
         } catch (Exception rse) {
@@ -81,11 +84,12 @@ public class RNetworkUtils {
         return new int[0];
     }
 
-    public static int[] performDSPC(RConnection RC) {
+    public static int[] performDSPC(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformDSPC(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "doMnetworkAnalysis");
+            sb.recordRCommandFunctionInfo(rCommand, "doMnetworkAnalysis");
 
             return RC.eval(rCommand).asIntegers();
         } catch (Exception rse) {
@@ -131,7 +135,7 @@ public class RNetworkUtils {
             int exists = RC.eval(checkFunc).asInteger();
             if (exists != 1) {
                 RC.voidEval(".load.scripts.on.demand('networks_enrich.Rc')");
-                RC.voidEval (".load.scripts.on.demand('networks_view.Rc')");
+                RC.voidEval(".load.scripts.on.demand('networks_view.Rc')");
                 return null;
             }
             String rCommand = "GetNetsNameString();";

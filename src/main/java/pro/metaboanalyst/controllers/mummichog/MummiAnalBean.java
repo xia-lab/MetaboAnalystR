@@ -18,7 +18,6 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultStreamedContent;
 import org.rosuda.REngine.Rserve.RConnection;
-
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.model.ListDataModel;
@@ -30,7 +29,7 @@ import java.util.concurrent.Semaphore;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -47,6 +46,13 @@ public class MummiAnalBean implements Serializable {
 
     @Inject
     private WorkflowBean wb;
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
+    @JsonIgnore
+    @Inject
+    private SpectraParamBean spb;
 
     private String enrichOpt = "fisher";
     private String filterOpt = "filtered";
@@ -146,6 +152,11 @@ public class MummiAnalBean implements Serializable {
             return null;
         }
         return "Metabolic network";
+    }
+
+    //TODO
+    public String proceed2EnrichNet() {
+        return "enrich network";
     }
 
     public void showPathDialog() {
@@ -255,7 +266,7 @@ public class MummiAnalBean implements Serializable {
         if (listModel == null) {
             algOpts = new String[1];
             algOpts[0] = "mum";
-            RMetaPathUtils.setPeakEnrichMethod(sb.getRConnection(), "mum", mumVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "mum", mumVersion);
             populateResTable("mum");
         }
         return listModel;
@@ -269,7 +280,7 @@ public class MummiAnalBean implements Serializable {
         if (listGSEAModel == null) {
             algOpts = new String[1];
             algOpts[0] = "gsea";
-            RMetaPathUtils.setPeakEnrichMethod(sb.getRConnection(), "gsea", mumVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "gsea", mumVersion);
             populateResTable("gsea");
         }
         return listGSEAModel;
@@ -284,7 +295,7 @@ public class MummiAnalBean implements Serializable {
             algOpts = new String[2];
             algOpts[0] = "gsea";
             algOpts[1] = "mum";
-            RMetaPathUtils.setPeakEnrichMethod(sb.getRConnection(), "integ", mumVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "integ", mumVersion);
             populateResTable("integ");
         }
         return listIntegModel;
@@ -302,14 +313,14 @@ public class MummiAnalBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_performPeaks2Fun(this);
+            jrd.record_performPeaks2Fun(this);
             return null;
         }
         if (algOpts.length == 0) {
             sb.addMessage("Error", "Select algorithm(s) to perform enrichment analysis!");
             return null;
         }
-        JavaRecord.record_performPeaks2Fun(this);
+        jrd.record_performPeaks2Fun(this);
         wb.getCalledWorkflows().add("Heatmap");
         //throttling
         Semaphore semphore = sb.getPermissionToStart();
@@ -323,9 +334,8 @@ public class MummiAnalBean implements Serializable {
         String version = mumVersion;
 
         if (isModuleSwitch()) {
-            SpectraParamBean sp = (SpectraParamBean) DataUtils.findBean("spectraParamer");
-            String TmpMSModeOpt = sp.getPolarity();
-            RDataUtils.setInstrumentParams(RC, instrumentOpt, TmpMSModeOpt, "yes", 0.02);
+            String TmpMSModeOpt = spb.getPolarity();
+            RDataUtils.setInstrumentParams(sb, instrumentOpt, TmpMSModeOpt, "yes", 0.02);
         }
 
         if (analOption.equals("heatmap")) {
@@ -340,39 +350,39 @@ public class MummiAnalBean implements Serializable {
                 return null;
             }
 
-            RDataUtils.setPeakEnrichMethod(RC, "mum", version);
+            RDataUtils.setPeakEnrichMethod(sb, "mum", version);
             String[] libNmArr = pathDBOpt.split("_", 0);
             sb.setOrg(libNmArr[0]);
-            RDataUtils.setOrganism(sb.getRConnection(), libNmArr[0]);
+            RDataUtils.setOrganism(sb, libNmArr[0]);
             heatmapName = "metaboanalyst_heatmap_" + sb.getFileCount() + ".json";
             sb.setHeatmapType("mummichog");
             if (sb.getDataType().equals("mass_table")) {
-                REnrichUtils.createHeatmapJson(RC, pathDBOpt, libVersion, minMsetNum, heatmapName, filterOpt, version);
+                REnrichUtils.createHeatmapJson(sb, pathDBOpt, libVersion, minMsetNum, heatmapName, filterOpt, version);
             } else {
-                REnrichUtils.createListHeatmapJson(RC, pathDBOpt, libVersion, minMsetNum, heatmapName, filterOpt, version);
+                REnrichUtils.createListHeatmapJson(sb, pathDBOpt, libVersion, minMsetNum, heatmapName, filterOpt, version);
             }
 
             nextpage = "Heatmap view";
 
         } else if (algOpts.length > 1) {
 
-            RDataUtils.setPeakEnrichMethod(RC, "integ", version);
+            RDataUtils.setPeakEnrichMethod(sb, "integ", version);
             nextpage = "peakintegview";
             String imgName = sb.getNewImage("integ_peaks");
 
             if (sb.getDataType().equals("mass_table")) {
-                boolean res = REnrichUtils.convertTableToPeakList(RC);
+                boolean res = REnrichUtils.convertTableToPeakList(sb);
                 if (!res) {
                     String msg = RDataUtils.getErrMsg(sb.getRConnection());
                     sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 }
             }
 
-            if (REnrichUtils.setupMummichogPval(RC, pvalCutoff)) {
+            if (REnrichUtils.setupMummichogPval(sb, pvalCutoff)) {
 
-                if (REnrichUtils.performPSEA(RC, pathDBOpt, libVersion, minMsetNum)) {
+                if (REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
                     // first create plot
-                    REnrichUtils.plotPSEAIntegPaths(sb, imgName, "png", 72);
+                    REnrichUtils.plotPSEAIntegPaths(sb, imgName, "png", 150);
 
                     ArrayList<IntegBean> integBeans = new ArrayList();
                     String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -395,22 +405,22 @@ public class MummiAnalBean implements Serializable {
 
         } else if (algOpts[0].equals("mum")) {
 
-            RDataUtils.setPeakEnrichMethod(RC, "mum", version);
+            RDataUtils.setPeakEnrichMethod(sb, "mum", version);
             nextpage = "mummires";
             String imgName = sb.getNewImage("peaks_to_paths");
 
             if (sb.getDataType().equals("mass_table")) {
-                boolean res = REnrichUtils.convertTableToPeakList(RC);
+                boolean res = REnrichUtils.convertTableToPeakList(sb);
                 if (!res) {
                     String msg = RDataUtils.getErrMsg(sb.getRConnection());
                     sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 }
             }
-            if (REnrichUtils.setupMummichogPval(RC, pvalCutoff)) {
-                if (REnrichUtils.performPSEA(RC, pathDBOpt, libVersion, minMsetNum)) {
+            if (REnrichUtils.setupMummichogPval(sb, pvalCutoff)) {
+                if (REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
 
                     // first create plot
-                    REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 72);
+                    REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 150);
 
                     ArrayList<MummiBean> mummiBeans = new ArrayList();
                     String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -432,22 +442,22 @@ public class MummiAnalBean implements Serializable {
             }
 
         } else {
-            RDataUtils.setPeakEnrichMethod(RC, algOpts[0], version);
+            RDataUtils.setPeakEnrichMethod(sb, algOpts[0], version);
             nextpage = "gseapkview";
             String imgName = sb.getNewImage("peaks_to_paths_gsea");
 
             if (sb.getDataType().equals("mass_table")) {
-                boolean res = REnrichUtils.convertTableToPeakList(RC);
+                boolean res = REnrichUtils.convertTableToPeakList(sb);
                 if (!res) {
                     String msg = RDataUtils.getErrMsg(sb.getRConnection());
                     sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 }
             }
 
-            if (REnrichUtils.performPSEA(RC, pathDBOpt, libVersion, minMsetNum)) {
+            if (REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
 
                 // first create plot
-                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 72);
+                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 150);
 
                 ArrayList<GseaBean> gseaBeans = new ArrayList();
                 String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -518,7 +528,7 @@ public class MummiAnalBean implements Serializable {
         if (type.equals("mum")) {
             System.out.println("REnrichUtils.checkMumExists" + REnrichUtils.checkMumExists(RC, "mum"));
             if (REnrichUtils.checkMumExists(RC, "mum") == 0) {
-listModel = new ListDataModel<>(new ArrayList<>());
+                listModel = new ListDataModel<>(new ArrayList<>());
                 return false;
             }
             ArrayList<MummiBean> mummiBeans = new ArrayList();

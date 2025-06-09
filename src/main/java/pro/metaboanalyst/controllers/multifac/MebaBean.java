@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.faces.model.ListDataModel;
 import java.io.File;
 import java.io.Serializable;
@@ -15,10 +16,9 @@ import java.util.Arrays;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.FeatureBean;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -28,11 +28,21 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("mebaBean")
 public class MebaBean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
 
+    @JsonIgnore
     @Inject
-    private MultifacBean tb;
+    private WorkflowBean wb;
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private final String pageID = "MEBA";
 
     private String[] mebaMetas = null;
@@ -72,15 +82,15 @@ public class MebaBean implements Serializable {
     public void doDefaultMEBA() {
         if (!sb.isAnalInit(pageID)) {
             sb.addNaviTrack(pageID, "/Secure/multifac/TimeCourseView.xhtml");
-            if (mebaMetas == null) {
-                mebaMetas = tb.getDiscMetaOpts();
+            //if (mebaMetas == null) {
+                mebaMetas = mfb.getDiscMetaOpts();
                 //System.out.println(mebaMetas.length);
-            }
+            //}
         } else {
-            WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-            if (fp.getFunctionInfos().get("MEBA") != null) {
+
+            if (wb.getFunctionInfos().get("MEBA") != null) {
                 try {
-                    FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("MEBA"));
+                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
                 } catch (Exception ex) {
 
                 }
@@ -101,10 +111,9 @@ public class MebaBean implements Serializable {
             return;
         }
 
-        MebaBean b = (MebaBean) DataUtils.findBean("mebaBean");
-        JavaRecord.record_mbButton_action(b);
+        jrd.record_mbButton_action(this);
         RConnection RC = sb.getRConnection();
-        int res = TimeSeries.performMB(RC, 10, mebaMetas);
+        int res = TimeSeries.performMB(sb, 10, mebaMetas);
         if (res == 0) {
             String msg = "Please make sure data are balanced for time-series analysis. In particular, "
                     + "for each time point, all experiments must exist and cannot be missing!";

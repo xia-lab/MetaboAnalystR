@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.utils.DataUtils;
 
 /**
@@ -27,14 +25,13 @@ import pro.metaboanalyst.utils.DataUtils;
  */
 public class SchedulerUtils {
 
-    public static String getJobStatus(long id) {
+    public static String getJobStatus(long id, String usrHomeDir) {
 
         if (id == 0) {
             return "RUNNING";
         }
 
         String res = "Pending";
-
         String stateQuery = "sacct -j " + id + ".batch --format=state";
 
         try {
@@ -51,21 +48,21 @@ public class SchedulerUtils {
                 //System.out.println("Raw spectra Job " + id + " has been checked for status successfully !");
             }
             if (res.equals("Pending") & rr.equals("nullnull")) {
-                res = getJobStatusAlternative();
+                res = getJobStatusAlternative(usrHomeDir);
             }
 
         } catch (Exception e) {
             // When running on genap, there is impossible to communicate the Slurm directly, as a result, Exception appears!
             // In this case, using getJobStatusAlternative to get the status [Maybe slow and not quite sensitive]
             System.out.println("Exception or Genap Running while trying to execute [getJobStatus] " + id + res);
-            res = getJobStatusAlternative();
+            res = getJobStatusAlternative(usrHomeDir);
         }
 
         res = res.replaceAll("\\s+", "");
         return res;
     }
 
-    public static String getJobStatusMS2(long id) {
+    public static String getJobStatusMS2(long id, String usrName) {
 
         if (id == 0) {
             return "RUNNING";
@@ -89,26 +86,25 @@ public class SchedulerUtils {
                 //System.out.println("Raw spectra Job " + id + " has been checked for status successfully !");
             }
             if (res.equals("Pending") & rr.equals("nullnull")) {
-                res = getJobStatusAlternativeMS2();
+                res = getJobStatusAlternativeMS2(usrName);
             }
 
         } catch (Exception e) {
             // When running on genap, there is impossible to communicate the Slurm directly, as a result, Exception appears!
             // In this case, using getJobStatusAlternative to get the status [Maybe slow and not quite sensitive]
             System.out.println("Exception or Genap Running while trying to execute [getJobStatus] " + id + res);
-            res = getJobStatusAlternativeMS2();
+            res = getJobStatusAlternativeMS2(usrName);
         }
 
         res = res.replaceAll("\\s+", "");
         return res;
     }
 
-    public static String getJobStatusAlternative() {
-        SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-
+    public static String getJobStatusAlternative(String usrHomeDir) {
+   
         // Setting read several marker files as the status
         // 0. ExecuteRawSpec.sh as the initializing marker
-        String Marker0 = sb.getCurrentUser().getHomeDir() + "/ExecuteRawSpec.sh";
+        String Marker0 = usrHomeDir + "/ExecuteRawSpec.sh";
         String Status0;
         File myObj0 = new File(Marker0);
         if (!myObj0.exists()) {
@@ -118,7 +114,7 @@ public class SchedulerUtils {
         }
 
         // 1. log_progress (0, Non-zero, 100)
-        String Marker1 = sb.getCurrentUser().getHomeDir() + "/log_progress.txt";
+        String Marker1 = usrHomeDir + "/log_progress.txt";
         String Status1 = "";
 
         try {
@@ -147,7 +143,7 @@ public class SchedulerUtils {
         }
 
         // 2. metaboanalyst_input.csv as the finished marker
-        String Marker2 = sb.getCurrentUser().getHomeDir() + "/metaboanalyst_input.csv";
+        String Marker2 = usrHomeDir + "/metaboanalyst_input.csv";
         String Status2;
         File myObj2 = new File(Marker2);
         if (myObj2.exists()) {
@@ -157,7 +153,7 @@ public class SchedulerUtils {
         }
 
         // 3. spectra_3d_loading.json as the finished marker2
-        String Marker3 = sb.getCurrentUser().getHomeDir() + "/spectra_3d_loading.json";
+        String Marker3 = usrHomeDir + "/spectra_3d_loading.json";
         String Status3;
         File myObj3 = new File(Marker3);
         if (myObj3.exists()) {
@@ -167,7 +163,7 @@ public class SchedulerUtils {
         }
 
         // 4. metaboanalyst_spec_proc.txt as the finished marker4
-        String Marker4 = sb.getCurrentUser().getHomeDir() + "/metaboanalyst_spec_proc.txt";
+        String Marker4 = usrHomeDir + "/metaboanalyst_spec_proc.txt";
         String Status4;
         long bytes = 0;
         Path path = Paths.get(Marker4);
@@ -207,7 +203,7 @@ public class SchedulerUtils {
         }
 
         // 5. if this job has been killed or not
-        String Marker5 = sb.getCurrentUser().getHomeDir() + "/JobKill";
+        String Marker5 = usrHomeDir + "/JobKill";
         String Status5 = "";
 
         try {
@@ -252,12 +248,12 @@ public class SchedulerUtils {
         return Status;
     }
 
-    public static String getJobStatusAlternativeMS2() {
-        SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    public static String getJobStatusAlternativeMS2(String usrName) {
+
         String absolute_path = "/data/glassfish/projects/metaboanalyst/ms2_tmp/";
         // Setting read several marker files as the status
         // 0. ExecuteRawSpec.sh as the initializing marker
-        String Marker0 = absolute_path + sb.getCurrentUser().getName() + "/ExecuteRawSpec.sh";
+        String Marker0 = absolute_path + usrName + "/ExecuteRawSpec.sh";
         String Status0;
         File myObj0 = new File(Marker0);
         if (!myObj0.exists()) {
@@ -265,10 +261,10 @@ public class SchedulerUtils {
         } else {
             Status0 = "";
         }
-        System.out.println("sb.getCurrentUser().getHomeDir() ==> " + sb.getCurrentUser().getHomeDir());
-        System.out.println("sb.getCurrentUser().getName() ==> " + sb.getCurrentUser().getName());
+        //System.out.println("sb.getCurrentUser().getHomeDir() ==> " + sb.getCurrentUser().getHomeDir());
+        //System.out.println("sb.getCurrentUser().getName() ==> " + sb.getCurrentUser().getName());
         // 1. log_progress (0, Non-zero, 100)
-        String Marker1 = absolute_path + sb.getCurrentUser().getName() + "/log_progress.txt";
+        String Marker1 = absolute_path + usrName + "/log_progress.txt";
         String Status1 = "";
 
         try {
@@ -297,7 +293,7 @@ public class SchedulerUtils {
         }
 
         // 2. MS2_rsession.RData as the finished marker
-        String Marker2 = absolute_path + sb.getCurrentUser().getName() + "/MS2_rsession.RData";
+        String Marker2 = absolute_path + usrName + "/MS2_rsession.RData";
         String Status2;
         File myObj2 = new File(Marker2);
         if (myObj2.exists()) {
@@ -307,7 +303,7 @@ public class SchedulerUtils {
         }
 
         // 3. MS2_searching_results.qs as the finished marker2
-        String Marker3 = absolute_path + sb.getCurrentUser().getName() + "/MS2_searching_results.qs";
+        String Marker3 = absolute_path + usrName + "/MS2_searching_results.qs";
         String Status3;
         File myObj3 = new File(Marker3);
         if (myObj3.exists()) {
@@ -317,7 +313,7 @@ public class SchedulerUtils {
         }
 
         // 4. metaboanalyst_spec_proc.txt as the finished marker4
-        String Marker4 = absolute_path + sb.getCurrentUser().getName() + "/metaboanalyst_ms2_search.txt";
+        String Marker4 = absolute_path + usrName + "/metaboanalyst_ms2_search.txt";
         String Status4;
         long bytes = 0;
         Path path = Paths.get(Marker4);
@@ -356,7 +352,7 @@ public class SchedulerUtils {
         }
 
         // 5. if this job has been killed or not
-        String Marker5 = absolute_path + sb.getCurrentUser().getName() + "/JobKill";
+        String Marker5 = absolute_path + usrName + "/JobKill";
         String Status5 = "";
 
         try {
@@ -401,13 +397,12 @@ public class SchedulerUtils {
         return Status;
     }
 
-    public static int getJobIDAlternative() {
+    public static int getJobIDAlternative(String usrHomeDir) {
 
         int jobid = 0;
-        SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
 
         try {
-            String JobIDtxt = sb.getCurrentUser().getHomeDir() + "/JobID.txt";
+            String JobIDtxt = usrHomeDir + "/JobID.txt";
             File JobIDFile = new File(JobIDtxt);
             if (!JobIDFile.exists()) {
                 JobIDFile.createNewFile();
@@ -440,11 +435,11 @@ public class SchedulerUtils {
 
     }
 
-    public static int getJobProgress(String folder) {
+    public static int getJobProgress(String spectraPath, String folder) {
         int progress = 0;
 
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-        String spectraPath = ab.getRaw_spec_folder();
+        //ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
+        //String spectraPath = ab.getRaw_spec_folder();
 
         String Marker1 = spectraPath + folder + "/log_progress.txt";
 

@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.event.TransferEvent;
@@ -23,7 +24,8 @@ import org.rosuda.REngine.Rserve.RConnection;
 public class EditBean implements Serializable {
     
     @JsonIgnore
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @Inject
+    private SessionBean1 sb;
 
     private DualListModel<String> sampleItems, featureItems, groupItems;
 

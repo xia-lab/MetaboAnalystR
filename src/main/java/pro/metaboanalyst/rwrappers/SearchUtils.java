@@ -7,7 +7,7 @@ package pro.metaboanalyst.rwrappers;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.controllers.general.SessionBean1;
 
 /**
  *
@@ -58,11 +58,12 @@ public class SearchUtils {
         }
     }
 
-    public static void crossReferenceExact(RConnection RC, String query_type) {
+    public static void crossReferenceExact(SessionBean1 sb, String query_type) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CrossReferencing(NA" + ", \"" + query_type + "\");";
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Sanity Check");
+            sb.recordRCommandFunctionInfo(rCommand, "Sanity Check");
 
             RCenter.recordRCommand(RC, rCommand);
         } catch (Exception e) {
@@ -70,11 +71,12 @@ public class SearchUtils {
         }
     }
 
-    public static void crossReferenceExactLipid(RConnection RC, String query_type) {
+    public static void crossReferenceExactLipid(SessionBean1 sb, String query_type) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "CrossReferencing(NA" + ", \"" + query_type + "\", lipid = T);";
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Sanity Check");
+            sb.recordRCommandFunctionInfo(rCommand, "Sanity Check");
             RCenter.recordRCommand(RC, rCommand);
         } catch (Exception e) {
             LOGGER.error("crossReferenceExactLipid", e);

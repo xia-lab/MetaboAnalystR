@@ -72,7 +72,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('pca_pair_meta')}" alt="PCAPairImage" width="100%"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:10in;"
+                                 src="#{sessionBean1.getCurrentImageURL('pca_pair_meta')}" alt="PCAPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>

@@ -20,7 +20,7 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -37,6 +37,10 @@ public class MnetResBean implements Serializable {
     @JsonIgnore
     @Inject
     private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
     /**
      * Network methods
      */
@@ -112,7 +116,7 @@ public class MnetResBean implements Serializable {
         String visMode = sb.getVisMode();
         netOK = false;
 
-        int[] res = RNetworkUtils.searchNetDB(sb.getRConnection(), dbType, visMode, confThresh);
+        int[] res = RNetworkUtils.searchNetDB(sb, dbType, visMode, confThresh);
         nodeCount = res[0];
         edgeCount = res[1];
 
@@ -147,14 +151,14 @@ public class MnetResBean implements Serializable {
 
     //type is globaltest or DE-hypergeo test
     public String prepareKEGGNetwork() {
-        RNetworkUtils.prepareKeggQueryJson(sb.getRConnection());
+        RNetworkUtils.prepareKeggQueryJson(sb);
         String nm = "network_enrichment_pathway_0";
-        RNetworkUtils.doEnrichmentTest_KO01100(sb.getRConnection(), "pathway", nm);
+        RNetworkUtils.doEnrichmentTest_KO01100(sb, "pathway", nm);
         return "MnetView";
     }
 
     public String prepareDspcNetwork() {
-        int[] res = RNetworkUtils.performDSPC(sb.getRConnection());
+        int[] res = RNetworkUtils.performDSPC(sb);
         if (res.length == 1 & res[0] == 0) {
             sb.addMessage("error", "DSPC failed - possible reason: some variables are highly collinear or sample size is too small.");
             return null;
@@ -200,12 +204,12 @@ public class MnetResBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("info", "Parameters have been updated!");
 
-            JavaRecord.record_doMnetworkAnalysis(visMode);
+            jrd.record_doMnetworkAnalysis(visMode);
             return null;
         }
 
         String networkpage;
-        JavaRecord.record_doMnetworkAnalysis(visMode);
+        jrd.record_doMnetworkAnalysis(visMode);
 
         //WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
         switch (visMode) {

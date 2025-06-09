@@ -4,13 +4,11 @@
  */
 package pro.metaboanalyst.rwrappers;
 
-import java.util.Arrays;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -34,7 +32,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "FC.Anal(NA" + ", " + fcThresh + ", " + cmpType + ", " + paired + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Fold Change");
+            sb.recordRCommandFunctionInfo(rCommand, "Fold Change");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -47,7 +45,7 @@ public class UniVarTests {
             String rCommand = "PlotFC(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Fold Change");
+            sb.recordRCommandFunctionInfo(rCommand, "Fold Change");
 
             sb.addGraphicsCMD("fc", rCommand);
             sb.addGraphicsMapLink("fc", "/Secure/analysis/FoldChangeView.xhtml");
@@ -102,7 +100,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "Ttests.Anal(NA" + ", " + nonpar + ", " + pthresh + ", " + paired + ", " + equalVar + ", \"" + pvalType + "\", FALSE)"; //"p" or "u"
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "T-test");
+            sb.recordRCommandFunctionInfo(rCommand, "T-test");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -139,7 +137,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotTT(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "T-test");
+            sb.recordRCommandFunctionInfo(rCommand, "T-test");
 
             sb.addGraphicsCMD("tt", rCommand);
             sb.addGraphicsMapLink("tt", "/Secure/analysis/TtestView.xhtml");
@@ -351,7 +349,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "Volcano.Anal(NA" + ", " + paired + ", " + fcThresh + ", " + cmpType + ", " + nonpar + ", " + pThresh + ", " + varEqual + ", \"" + vcPvalType + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Volcano");
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -364,7 +362,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotVolcano(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Volcano");
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
 
             sb.addGraphicsCMD("volcano", rCommand);
             sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
@@ -461,7 +459,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "ANOVA.Anal(NA, " + nonPar + ", " + thresh + ", FALSE)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ANOVA");
+            sb.recordRCommandFunctionInfo(rCommand, "ANOVA");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -488,7 +486,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             RC.assign("adj.vec", adjustedVar);
             String rcmd = "adj.vec <- " + DataUtils.convertArrayToVecInR(adjustedVar);
-            JavaRecord.recordRCommandFunctionInfo(RC, rcmd, "Linear Models");
+            sb.recordRCommandFunctionInfo(rcmd, "Linear Models");
 
             RCenter.recordRCommand(RC, rcmd);
             String rCommand = "CovariateScatter.Anal(NA" + ", \"" + imgName + "\", \"" + format + "\", \"" + analysisVar + "\", \"" + reference + "\", \"" + block + "\" , " + thresh + ", \"" + pvalType + "\", \"" + contrast + "\")";
@@ -496,8 +494,8 @@ public class UniVarTests {
             sb.addGraphicsCMD("covariate_plot", plotCommand);
             sb.addGraphicsMapLink("covariate_plot", "/Secure/multifac/LinearModelView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Linear Models");
-            JavaRecord.recordRCommandFunctionInfo(RC, plotCommand, "Linear Models");
+            sb.recordRCommandFunctionInfo(rCommand, "Linear Models");
+            sb.recordRCommandFunctionInfo(plotCommand, "Linear Models");
             RCenter.recordRCommand(RC, rCommand);
             RCenter.recordRCommand(RC, plotCommand);
             RC.eval(rCommand).asInteger();
@@ -563,7 +561,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotANOVA(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "ANOVA");
+            sb.recordRCommandFunctionInfo(rCommand, "ANOVA");
 
             sb.addGraphicsCMD("aov", rCommand);
             sb.addGraphicsMapLink("aov", "/Secure/analysis/AnovaView.xhtml");
@@ -662,8 +660,10 @@ public class UniVarTests {
             RCenter.recordRCommand(RC, rCommand);
             sb.setCurrentCmpdName(cmpdName);
             sb.addGraphicsCMD("cmpd", rCommand);
-
-            return RC.eval(rCommand).asString();
+            String imgNm = RC.eval(rCommand).asString();
+            String size = RGraphUtils.getCurrentCmpdImgSize(RC);
+            sb.setCmpdImgSize(size);
+            return imgNm;
         } catch (Exception rse) {
             System.out.println(rse);
         }
@@ -710,7 +710,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "Match.Pattern(NA" + ", \"" + dist + "\", \"" + pattern + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Pattern Search");
+            sb.recordRCommandFunctionInfo(rCommand, "Pattern Search");
 
             if (RC.eval(rCommand).asInteger() == 1) {
                 return true;
@@ -728,7 +728,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "FeatureCorrelation(NA" + ", \"" + dist + "\", \"" + featName + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Pattern Search");
+            sb.recordRCommandFunctionInfo(rCommand, "Pattern Search");
 
             if (RC.eval(rCommand).asInteger() == 1) {
                 return true;
@@ -749,8 +749,8 @@ public class UniVarTests {
             sb.addGraphicsCMD("ptn", rCommand);
             sb.addGraphicsMapLink("ptn", "/Secure/analysis/PatternView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "corBtn_action");
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Pattern Search");
+            sb.recordRCommandFunctionInfo(rCommand, "corBtn_action");
+            sb.recordRCommandFunctionInfo(rCommand, "Pattern Search");
 
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -816,7 +816,7 @@ public class UniVarTests {
             sb.addGraphicsCMD("corr", rCommand);
             sb.addGraphicsMapLink("corr", "/Secure/analysis/CorrelationView.xhtml");
 
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Correlation Heatmap");
+            sb.recordRCommandFunctionInfo(rCommand, "Correlation Heatmap");
 
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -961,11 +961,12 @@ public class UniVarTests {
         return null;
     }
 
-    public static int[] computeDSPC(RConnection RC) {
+    public static int[] computeDSPC(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "ComputeDSPC(NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "computeDspcNet");
+            sb.recordRCommandFunctionInfo(rCommand, "computeDspcNet");
 
             return RC.eval(rCommand).asIntegers();
         } catch (Exception rse) {
@@ -985,13 +986,14 @@ public class UniVarTests {
             System.out.println(rse);
         }
     }
-
+    
+    
     public static void plotVolcanoCustom(SessionBean1 sb, String imgName, int plotLbl, int plotTheme, String format, int dpi, int labelNum, int plotStyle) {
         try {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotVolcanoCustom(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + "," + plotStyle + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Volcano");
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
 
             sb.addGraphicsCMD("volcano", rCommand);
             sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
@@ -1006,7 +1008,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotVolcanoAI(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Volcano");
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
 
             sb.addGraphicsCMD("volcano", rCommand);
             sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
@@ -1016,6 +1018,5 @@ public class UniVarTests {
             System.out.println(rse);
         }
     }
-    
 
 }

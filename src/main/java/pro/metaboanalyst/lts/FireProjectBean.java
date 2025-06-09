@@ -52,11 +52,13 @@ public class FireProjectBean implements Serializable {
     private FireBaseController fbc;
 
     @Inject
-    private FireUserBean ub;
+    private FireUserBean fub;
 
     @Inject
     private SessionBean1 sb;
 
+    @Inject
+    private DownloadBean dwb;
     //Project details
     private String title;
     private String description;
@@ -201,7 +203,7 @@ public class FireProjectBean implements Serializable {
             //FireBase fb = (FireBase) DataUtils.findBean("fireBase");
             //FireUserBean ub = (FireUserBean) DataUtils.findBean("fireUserBean");
 
-            String folderNm = ub.getEmail();
+            String folderNm = fub.getEmail();
             db.deleteProjectById((long) selectedProject.getId());
 
             DataUtils.deleteFile(fb.getProjectPath() + "/user_folders/" + folderNm + "/", selectedProject.getFolderName() + ".zip");
@@ -273,10 +275,9 @@ public class FireProjectBean implements Serializable {
         //System.out.println("/" + ab.getAppName() + sb.getCurrentUser().getRelativeDir() + "/Analysis_Report.html" + "====" + newFile.exists());
 
         if (!newFile.exists()) {
-            DownloadBean dwb = (DownloadBean) DataUtils.findBean("downloader");
             dwb.generateReport("html");
         }
-        DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml");
+        DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", ab);
         return true;
     }
 
@@ -285,8 +286,7 @@ public class FireProjectBean implements Serializable {
         String this_datatype = selectedProject.getDataType();
 
         if (!selectedProject.getHostname().equals(ab.getToolLocation()) && selectedProject.getDataType().equals("spec")) {
-            FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-            fu.sendPostRequestLoadProject(selectedProject.getHostname(), selectedProject.getId() + "");
+            fub.sendPostRequestLoadProject(selectedProject.getHostname(), selectedProject.getId() + "");
             return false;
         }
 
@@ -330,16 +330,16 @@ public class FireProjectBean implements Serializable {
 
     public void deleteAccount() {
 
-        String res = db.deleteUserAndProjects(ub.getEmail());
+        String res = db.deleteUserAndProjects(fub.getEmail());
 
         if (res.equals("Successfully deleted user and associated projects.")) {
-            boolean deletedDirectoryFlag = DataUtils.deleteDir(fb.getProjectPath() + "/user_folders/" + ub.getEmail() + "/");
+            boolean deletedDirectoryFlag = DataUtils.deleteDir(fb.getProjectPath() + "/user_folders/" + fub.getEmail() + "/");
             if (deletedDirectoryFlag) {
-                fb.getUserMap().remove(ub.getEmail());  // Remove the entry from the userMap
+                fb.getUserMap().remove(fub.getEmail());  // Remove the entry from the userMap
                 DataUtils.removeCookie("user");
-                ub.setEmail("");
+                fub.setEmail("");
                 sb.doLogout(0);
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/home.xhtml", "info", "Successfully deleted user and associated projects!");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/home.xhtml", "info", "Successfully deleted user and associated projects!");
             } else {
                 sb.addMessage("error", "Successfully deleted user and associated projects info from database but unable to delete the project files!");
             }
@@ -462,7 +462,7 @@ public class FireProjectBean implements Serializable {
             return;
         }
         //System.out.println(destDirPath + selectedProject.getFolderName() + "_copy.zip" + "======destPath");
-        fbc.downloadObject(selectedProject.getHostname(), ub.getEmail(), selectedProject.getFolderName(), destDirPath + selectedProject.getFolderName() + "_copy.zip");
+        fbc.downloadObject(selectedProject.getHostname(), fub.getEmail(), selectedProject.getFolderName(), destDirPath + selectedProject.getFolderName() + "_copy.zip");
         sb.addMessage("info", "Transfer finished!");
 
     }

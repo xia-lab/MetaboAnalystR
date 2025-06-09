@@ -23,9 +23,8 @@ import pro.metaboanalyst.models.MummiBean;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.REnrichUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import jakarta.inject.Inject;
 
@@ -40,14 +39,24 @@ public class MetaPathStatBean implements Serializable {
 
     @JsonIgnore
     @Inject
-    SessionBean1 sb;
-    @JsonIgnore
-    @Inject
-    MetaPathLoadBean mplb;
-    @JsonIgnore
-    @Inject
-    MummiAnalBean mumb;
+    private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private MetaPathLoadBean mplb;
+
+    @JsonIgnore
+    @Inject
+    private MummiAnalBean mumb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+       @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+       
     //@JsonIgnore
     //RConnection RC = sb.getRConnection();
     private boolean resOK = false;
@@ -245,10 +254,9 @@ public class MetaPathStatBean implements Serializable {
     private ListDataModel<GseaBean> listGSEAModel = null;
 
     public String performMetaPathAnalysis() {
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_performMetaPathAnalysis(this);
+            jrd.record_performMetaPathAnalysis(this);
             return null;
         }
 
@@ -258,21 +266,21 @@ public class MetaPathStatBean implements Serializable {
 
         if (pathAlgOpt.equals("mummichog")) {
             if (pathAlgVersion.equalsIgnoreCase("v2")) {
-                if (RMetaPathUtils.checkAllRT(RC).equals("false")) {
+                if (RMetaPathUtils.checkAllRT(sb).equals("false")) {
                     sb.addMessage("Error", "Cannout perform V2 if not all studies contain retention time information!");
                     return null;
                 }
             }
-            RMetaPathUtils.setPeakEnrichMethod(RC, "mum", pathAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "mum", pathAlgVersion);
         } else {
-            RMetaPathUtils.setPeakEnrichMethod(RC, "gsea", pathAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "gsea", pathAlgVersion);
         }
 
-        resOK = RMetaPathUtils.performMetaMummiAnalysis(RC, lib, libVersion, minMsetNum, permuNUm,
+        resOK = RMetaPathUtils.performMetaMummiAnalysis(sb, lib, libVersion, minMsetNum, permuNUm,
                 "pathway", combinelevel, pvalmethod, esmethod, rankmetric, false, pvalCutoff);
 
         if (resOK) {
-            JavaRecord.record_performMetaPathAnalysis(this);
+            jrd.record_performMetaPathAnalysis(this);
             double pvalCutoffPlot = mplb.getPvalCutoff();
             plotOK = RMetaPathUtils.plotPathwayMetaAnalysis(sb, sb.getNewImage("meta_bubble"),
                     plotType, pvalCutoffPlot, overlap, maxPaths, "png", 300);
@@ -306,25 +314,25 @@ public class MetaPathStatBean implements Serializable {
         }
 
         if (pathAlgVersion.equalsIgnoreCase("v2")) {
-            if (RMetaPathUtils.checkAllRT(RC).equals("false")) {
+            if (RMetaPathUtils.checkAllRT(sb).equals("false")) {
                 sb.addMessage("Error", "Cannout perform V2 if not all studies contain retention time information!");
             }
         }
 
         if (cpdAlgOpt.equals("mummichog")) {
-            RMetaPathUtils.setPeakEnrichMethod(RC, "mum", pathAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "mum", pathAlgVersion);
         } else {
-            RMetaPathUtils.setPeakEnrichMethod(RC, "gsea", pathAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "gsea", pathAlgVersion);
         }
 
-        resOK = RMetaPathUtils.performMetaMummiAnalysis(RC, lib, libVersion, minMsetNum, permuNUm,
+        resOK = RMetaPathUtils.performMetaMummiAnalysis(sb, lib, libVersion, minMsetNum, permuNUm,
                 metaLevel, combinelevel, pvalmethod, esmethod, rankmetric, matchedfeats, pvalCutoff);
 
         if (resOK) {
             if (cpdAlgOpt.equals("mummichog")) {
 
                 String imgName = sb.getNewImage("peaks_to_paths");
-                REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 72);
+                REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 150);
 
                 ArrayList<MummiBean> mummiBeans = new ArrayList();
                 String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -344,7 +352,7 @@ public class MetaPathStatBean implements Serializable {
             } else if (cpdAlgOpt.equals("gsea")) {
 
                 String imgName = sb.getNewImage("peaks_to_paths_gsea");
-                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 72);
+                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 150);
 
                 ArrayList<GseaBean> gseaBeans = new ArrayList();
                 String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -367,39 +375,38 @@ public class MetaPathStatBean implements Serializable {
     }
 
     public String performMetaPoolAnalysis() {
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
+
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-
-            JavaRecord.record_performMetaPoolAnalysis(this);
+            jrd.record_performMetaPoolAnalysis(this);
             return null;
         }
         //RMetaPathUtils.resumeGlobalEnvir(RC);
         RConnection RC = sb.getRConnection();
         if (poolAlgVersion.equalsIgnoreCase("v2")) {
-            if (RMetaPathUtils.checkAllRT(RC).equals("false")) {
+            if (RMetaPathUtils.checkAllRT(sb).equals("false")) {
                 sb.addMessage("Error", "Cannout perform V2 if not all studies contain retention time information!");
             }
         }
 
         if (poolAlgOpt.equals("mummichog")) {
-            RMetaPathUtils.setPeakEnrichMethod(RC, "mum", poolAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "mum", poolAlgVersion);
         } else {
-            RMetaPathUtils.setPeakEnrichMethod(RC, "gsea", poolAlgVersion);
+            RMetaPathUtils.setPeakEnrichMethod(sb, "gsea", poolAlgVersion);
         }
 
-        resOK = RMetaPathUtils.performMetaMummiAnalysis(RC, lib, libVersion, minMsetNum, permuNUm,
+        resOK = RMetaPathUtils.performMetaMummiAnalysis(sb, lib, libVersion, minMsetNum, permuNUm,
                 "cpd", "pool", pvalmethod, esmethod, rankmetric, false, pvalCutoff);
 
         if (resOK) {
-            JavaRecord.record_performMetaPoolAnalysis(this);
+            jrd.record_performMetaPoolAnalysis(this);
             //sb.addNaviTrack("Pooling peaks", null);
             resOK2 = resOK;
 
             if (poolAlgOpt.equals("mummichog")) {
 
                 String imgName = sb.getNewImage("peaks_to_paths");
-                REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 72);
+                REnrichUtils.plotPeaks(sb, imgName, "mummichog", "png", 150);
 
                 ArrayList<MummiBean> mummiBeans = new ArrayList();
                 String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -419,7 +426,7 @@ public class MetaPathStatBean implements Serializable {
             } else if (poolAlgOpt.equals("gsea")) {
 
                 String imgName = sb.getNewImage("peaks_to_paths_gsea");
-                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 72);
+                REnrichUtils.plotPeaks(sb, imgName, "gsea", "png", 150);
 
                 ArrayList<GseaBean> gseaBeans = new ArrayList();
                 String[] rownames = REnrichUtils.getMummiPathNames(RC);
@@ -497,7 +504,7 @@ public class MetaPathStatBean implements Serializable {
         int dpi = sb.getDpiOpt();
         String format = sb.getFormatOpt();
         if (format.equals("pdf") || format.equals("tiff")) {
-            dpi = 72;
+            dpi = 150;
         }
         String sizeop = sb.getSizeOpt();
         int width;
@@ -532,12 +539,12 @@ public class MetaPathStatBean implements Serializable {
                 return "MnetView";
             }
         } catch (Exception e) {
-            sb.addMessage("error","Failed to perform the network analysis");
+            sb.addMessage("error", "Failed to perform the network analysis");
             return null;
         }
 
         if (res != 1) {
-            sb.addMessage("error","Failed to perform the network analysis");
+            sb.addMessage("error", "Failed to perform the network analysis");
             return null;
         }
         return null;

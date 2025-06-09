@@ -26,7 +26,7 @@ public class MailService {
         sendGridFromEmail = "support@xialab.ca";
         this.sg = new SendGrid("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");
         //System.getenv("SENDGRID_API_KEY")
-        System.out.println(System.getenv("SENDGRID_API_KEY") + "=====apikey");
+        //System.out.println(System.getenv("SENDGRID_API_KEY") + "=====apikey");
         if (sendGridFromEmail == null) {
             System.clearProperty("sendgrid.fromemail");
         } else {
@@ -59,9 +59,9 @@ public class MailService {
             Response response = sg.api(request);
 
             // Print the response for debugging
-            System.out.println(response.getStatusCode());
-            System.out.println(response.getBody());
-            System.out.println(response.getHeaders());
+            //System.out.println(response.getStatusCode());
+            //System.out.println(response.getBody());
+            //System.out.println(response.getHeaders());
 
             // Check response code for success
             if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
@@ -77,6 +77,4 @@ public class MailService {
             return false;
         }
     }
-
-
 }

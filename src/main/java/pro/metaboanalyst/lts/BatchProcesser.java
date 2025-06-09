@@ -30,12 +30,18 @@ import pro.metaboanalyst.utils.DataUtils;
 public class BatchProcesser implements Serializable {
 
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
     @Inject
-    FireProjectBean pbb;
+    private FireProjectBean pbb;
 
+    @Inject
+    private DownloadBean dwb;
+    
+    @Inject
+    private FireBaseController fbc;
+    
     private String homeDir;
     private boolean jobSubmitted = false;
 
@@ -55,8 +61,7 @@ public class BatchProcesser implements Serializable {
 
         RCenter.LoadRLoadImg(sb.getRConnection(), "Rload_batch.RData");
         RCenter.saveRLoadImg(sb.getRConnection());
-        DownloadBean db = (DownloadBean) DataUtils.findBean("downloader");
-        db.generateReport("html");
+        dwb.generateReport("html");
 
     }
 
@@ -86,7 +91,7 @@ public class BatchProcesser implements Serializable {
     }
 
     public boolean exeBatchProcessing() {
-        FireBaseController fbc = (FireBaseController) DataUtils.findBean("fireBaseController");
+
         // This function include four steps :  
         // 0). save the project first;
         // 1). organize and generate exe_batch.sh; 
@@ -122,7 +127,7 @@ public class BatchProcesser implements Serializable {
         jobSubmitted = DataUtils.SubmitJob(JobSubmission);
         // redirect to the job status page
         String url = "/" + ab.getAppName() + "/xialabpro/BatchProgress.xhtml";
-        DataUtils.doRedirect(url);
+        DataUtils.doRedirect(url, ab);
 
         return jobSubmitted;
     }
@@ -132,7 +137,7 @@ public class BatchProcesser implements Serializable {
         initprogress();
         pbb.setBatchModeEnabled(true);
         File file0 = new File(homeDir + "/progress_value");
-        Scanner input0 = null;
+        Scanner input0;
         String str = "0";
 
         try {
@@ -170,8 +175,7 @@ public class BatchProcesser implements Serializable {
                 RCenter.saveRLoadImg(sb.getRConnection());
 
                 if (delay == 6) {
-                    DownloadBean db = (DownloadBean) DataUtils.findBean("downloader");
-                    db.generateReport("html");
+                    dwb.generateReport("html");
                 }
             }
         }

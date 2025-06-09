@@ -58,19 +58,23 @@
                             <i class="pi pi-palette" style="font-size: 1.1rem"/>
                         </p:commandLink>
                     </h:panelGrid>
-                    <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('sam_imp')}" alt="SAM result"/>
+                    <img onerror='this.style.display="none"' 
+                         style="width:8in; padding-left: 100px"
+                         src="#{sessionBean1.getCurrentImageURL('sam_imp')}" alt="SAM result"/>
                 </h:panelGrid> 
             </h:form>
 
         </h:panelGrid> 
-        <p:dialog widgetVar="paramDialog" dynamic="true" modal="false" appendTo="@(body)" height="480"
+        <p:dialog widgetVar="paramDialog" dynamic="true" modal="false" appendTo="@(body)" 
                   header="Parameter Tuning"
                   hideEffect="explode" resizable="true">
             <h:panelGrid id="sumPane" style="text-align: center; width: 100%; padding: 10px">
                 <p>
                     You can adjust delta value to control FDR and number of significant features
                 </p>
-                <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('sam_view')}" alt="SAM"/>
+                <img onerror='this.style.display="none"' 
+                     style="width:8in;"
+                     src="#{sessionBean1.getCurrentImageURL('sam_view')}" alt="SAM"/>
             </h:panelGrid> 
         </p:dialog>
     </ui:define>

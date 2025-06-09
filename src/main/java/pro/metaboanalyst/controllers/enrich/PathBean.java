@@ -26,7 +26,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -46,6 +46,10 @@ public class PathBean implements Serializable {
     @JsonIgnore
     @Inject
     private SessionBean1 sb;
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     @JsonProperty("libVersion")
     private String libVersion = "current";
     @JsonProperty("libOpt")
@@ -175,7 +179,7 @@ public class PathBean implements Serializable {
                 sb.addMessage("Error", "File is empty");
                 return;
             }
-            String fileName = DataUtils.uploadFile(refLibFile, sb.getCurrentUser().getHomeDir(), null, false);
+            String fileName = DataUtils.uploadFile(sb, refLibFile, sb.getCurrentUser().getHomeDir(), null, false);
             boolean res = RDataUtils.readKEGGRefLibData(RC, fileName);
             if (res) {
                 sb.addMessage("OK", RDataUtils.getRefLibCheckMsg(RC));
@@ -193,12 +197,12 @@ public class PathBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_paBn_proceed(this);
+            jrd.record_paBn_proceed(this);
             return null;
         }
         String type = sb.getAnalType();
-        JavaRecord.record_paBn_proceed(this);
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
+        jrd.record_paBn_proceed(this);
+
         if (type.equals("pathqea")) {
             wb.getCalledWorkflows().add("paBn_proceed_qea");
         } else {
@@ -214,27 +218,27 @@ public class PathBean implements Serializable {
     public String paBn_action() {
 
         RConnection RC = sb.getRConnection();
-        if (RDataUtils.setPathLib(RC, libOpt, libVersion)) {
+        if (RDataUtils.setPathLib(sb, libOpt, libVersion)) {
 
             String nextpage;
             if (libOpt.startsWith("smpdb")) {
                 libOpt = libOpt.split("-")[1];
-                RDataUtils.setOrganism(sb.getRConnection(), libOpt);
+                RDataUtils.setOrganism(sb, libOpt);
                 nextpage = "smpdbpathview";
             } else {
                 nextpage = "pathview";
             }
 
             if (refLibOpt.equals("all")) {
-                RDataUtils.setMetabolomeFilter(sb.getRConnection(), false);
+                RDataUtils.setMetabolomeFilter(sb, false);
             } else {
-                RDataUtils.setMetabolomeFilter(sb.getRConnection(), true);
+                RDataUtils.setMetabolomeFilter(sb, true);
             }
 
             if (sb.getAnalType().equalsIgnoreCase("pathqea")) {
 
                 if (REnrichUtils.doPathQeaTest(sb, topoCode, qeaStatCode)) {
-                    RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, 0, 0, nextpage);
+                    RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, 0, 0, nextpage);
                     String[] pathnames = REnrichUtils.getQEApathNames(RC);
                     String[] keggLnks = REnrichUtils.getQEAKeggIDs(RC);
                     String[] smpdbLnks = null;
@@ -258,7 +262,7 @@ public class PathBean implements Serializable {
                     return null;
                 }
             } else if (REnrichUtils.doPathOraTest(sb, topoCode, oraStatCode)) {
-                RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, 0, 0, nextpage);
+                RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, 0, 0, nextpage);
                 String[] rownames = REnrichUtils.getORApathNames(RC);
                 String[] keggLnks = REnrichUtils.getORAKeggIDs(RC);
                 String[] smpdbLnks = null;
@@ -287,23 +291,23 @@ public class PathBean implements Serializable {
     public String paBn_heatmap(String type) {
 
         RConnection RC = sb.getRConnection();
-        if (RDataUtils.setPathLib(RC, libOpt, libVersion)) {
+        if (RDataUtils.setPathLib(sb, libOpt, libVersion)) {
 
             if (libOpt.startsWith("smpdb")) {
                 setEnrType(libOpt);
                 libOpt = libOpt.split("-")[1];
-                RDataUtils.setOrganism(sb.getRConnection(), libOpt);
+                RDataUtils.setOrganism(sb, libOpt);
             } else {
             }
 
             if (refLibOpt.equals("all")) {
-                RDataUtils.setMetabolomeFilter(sb.getRConnection(), false);
+                RDataUtils.setMetabolomeFilter(sb, false);
             } else {
-                RDataUtils.setMetabolomeFilter(sb.getRConnection(), true);
+                RDataUtils.setMetabolomeFilter(sb, true);
             }
             String fileNm = "metaboanalyst_heatmap_" + sb.getFileCount() + ".json";
             setHeatmapName(fileNm);
-            if (REnrichUtils.computePathHeatmap(RC, libOpt, fileNm, type)) {
+            if (REnrichUtils.computePathHeatmap(sb, libOpt, fileNm, type)) {
                 sb.setHeatmapType("pathway");
                 return "Heatmap view";
             } else {
@@ -387,7 +391,7 @@ public class PathBean implements Serializable {
     }
 
     public void updatePathView() {
-        RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, xlim, ylim, "pathview");
+        RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, xlim, ylim, "pathview");
     }
 
     private boolean switchORAtab = true, switchQEAtab = true;

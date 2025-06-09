@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.controllers.enrich;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -27,13 +28,25 @@ import jakarta.inject.Inject;
 @Named("integLoader")
 public class IntegLoadBean implements Serializable {
 
-    // Section I: find beans
+    @JsonIgnore
     @Inject
     ApplicationBean1 ab;
+
+    @JsonIgnore
     @Inject
     SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private IntegProcessBean ipb;
+
+    //Section IV: Variables, setter and getter
+    private boolean useExample = false;
+    private String exampleOrder = "genecmp";
+    private String cmpdL;
+    private String geneL;
+    
     private static final Logger LOGGER = LogManager.getLogger(IntegLoadBean.class);
-    private final IntegProcessBean ipb = (IntegProcessBean) DataUtils.findBean("integProcesser");
 
     // Section II: Update Area
     public void updateListArea(int num) {
@@ -119,29 +132,19 @@ public class IntegLoadBean implements Serializable {
         //System.out.println(" ---- exampleOrder ----> " + exampleOrder);
         useExample = true;
         switch (exampleOrder) {
-            case "genecmp":
+            case "genecmp" ->
                 updateListArea(1);
-                break;
-            case "genepeak":
+            case "genepeak" ->
                 updateListArea(2);
-                break;
-            case "protcmp":
+            case "protcmp" ->
                 updateListArea(3);
-                break;
-            case "biugenecmp":
+            case "biugenecmp" ->
                 updateListArea(4);
-                break;
-            default:
-                break;
+            default -> {
+            }
         }
 
     }
-
-    //Section IV: Variables, setter and getter
-    private boolean useExample = ipb.isUseExample();
-    private String exampleOrder = "genecmp";
-    private String cmpdL = ipb.getCmpdList();
-    private String geneL = ipb.getGeneList();
 
     public String getExampleOrder() {
         return exampleOrder;

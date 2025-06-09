@@ -59,6 +59,30 @@ public class WorkflowBean implements Serializable {
     @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+
+    @JsonIgnore
+    @Inject
+    private FireBase fbb;
+    @JsonIgnore
+    @Inject
+    private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
+    private DatabaseClient dbc;
+
+    @JsonIgnore
+    @Inject
+    private ProcessBean procBean;
+    
+    @JsonIgnore
+    @Inject
+    private NormBean normBean;
+
     @JsonIgnore
     private ArrayList<HashMap<String, Object>> workflowList;
     @JsonIgnore
@@ -482,10 +506,8 @@ public class WorkflowBean implements Serializable {
         if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
             return; // Skip ajax requests.
         }
-        FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-        DatabaseClient db = (DatabaseClient) DataUtils.findBean("databaseClient");
 
-        workflowList = db.getAllWorkflows(ab.getAppName(), fu.getEmail());
+        workflowList = dbc.getAllWorkflows(ab.getAppName(), fub.getEmail());
 
         for (HashMap<String, Object> myworkflow : workflowList) {
             myworkflow.put("type", "Custom"); // Set the "type" key to "Custom"
@@ -543,13 +565,13 @@ public class WorkflowBean implements Serializable {
         calledWorkflows.add("Data Preparation");
         editMode = false;
         if (returnType.equals("individual")) {
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
 
-            //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
+            //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
         } else {
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "Data preparation is complete.");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "Data preparation is complete.");
 
-            //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "Data preparation is complete");
+            //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "Data preparation is complete");
         }
         return "WorkflowView";
     }
@@ -558,19 +580,19 @@ public class WorkflowBean implements Serializable {
         calledWorkflows.add("Data Preparation");
         editMode = false;
         if (returnType.equals("individual")) {
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
-            //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
+            //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
         } else {
             convertSelections();
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "Data preparation is complete.");
-            //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "Data preparation is complete");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "Data preparation is complete.");
+            //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "Data preparation is complete");
         }
         return "WorkflowView";
     }
 
     public void selectWorkflow() {
         sb.setNaviType((String) selectedWorkflow.get("module"));
-        DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
+        DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
 
     }
 
@@ -596,8 +618,8 @@ public class WorkflowBean implements Serializable {
         dv.disableAnalNodes(input);
         dv.setInput(input);
         //dv.prepareFilteredWorkflow(input);
-        DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
-        //DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "You can now start the workflow.");
+        DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
+        //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "You can now start the workflow.");
         return null;
     }
 
@@ -628,20 +650,16 @@ public class WorkflowBean implements Serializable {
             return null;
         }
 
-        FireUserBean ulb = (FireUserBean) DataUtils.findBean("fireUserBean");
-        FireBase fb = (FireBase) DataUtils.findBean("fireBase");
-        FireBaseController fc = (FireBaseController) DataUtils.findBean("fireBaseController");
-
         if (sb.getCurrentUser() == null) {
             sb.addMessage("Warn", "Please start an analysis session first!");
             return null;
         }
 
         String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
-        String bucketObjectName = "/user_folders/" + ulb.getEmail() + "/" + selectedWorkflow.get("filename") + ".json";
-        String localFilePath = fb.getProjectPath() + bucketObjectName;
-        String bucketObjectName2 = "/user_folders/" + ulb.getEmail() + "/" + selectedWorkflow.get("filename") + "_overview.json";
-        String localFilePath2 = fb.getProjectPath() + bucketObjectName2;
+        String bucketObjectName = "/user_folders/" + fub.getEmail() + "/" + selectedWorkflow.get("filename") + ".json";
+        String localFilePath = fbb.getProjectPath() + bucketObjectName;
+        String bucketObjectName2 = "/user_folders/" + fub.getEmail() + "/" + selectedWorkflow.get("filename") + "_overview.json";
+        String localFilePath2 = fbb.getProjectPath() + bucketObjectName2;
         File f = new File(localFilePath);
         if (f.exists()) {
             try {
@@ -652,8 +670,8 @@ public class WorkflowBean implements Serializable {
                 Logger.getLogger(WorkflowBean.class.getName()).log(Level.SEVERE, null, ex);
             }
         } else {
-            fc.downloadObject(selectedWorkflow.get("location") + "", ulb.getEmail(), selectedWorkflow.get("filename") + ".json", destDirPath + selectedWorkflow.get("filename") + ".json");
-            fc.downloadObject(selectedWorkflow.get("location") + "", ulb.getEmail(), selectedWorkflow.get("filename") + "_overview.json", destDirPath + selectedWorkflow.get("filename") + "_overview.json");
+            fbc.downloadObject(selectedWorkflow.get("location") + "", fub.getEmail(), selectedWorkflow.get("filename") + ".json", destDirPath + selectedWorkflow.get("filename") + ".json");
+            fbc.downloadObject(selectedWorkflow.get("location") + "", fub.getEmail(), selectedWorkflow.get("filename") + "_overview.json", destDirPath + selectedWorkflow.get("filename") + "_overview.json");
 
         }
         functionInfos = FunctionInvoker.loadFunctionInfosFromFile(destDirPath + selectedWorkflow.get("filename") + ".json");
@@ -783,7 +801,7 @@ public class WorkflowBean implements Serializable {
         if (getDataPreparationUrl().isEmpty()) {
             sb.addMessage("Error", "Please use 'Input Preparation' in the Workflow page to upload your data first.");
         } else {
-            DataUtils.doRedirect(getDataPreparationUrl());
+            DataUtils.doRedirect(getDataPreparationUrl(), ab);
         }
         return null;
     }
@@ -1048,9 +1066,6 @@ public class WorkflowBean implements Serializable {
 
     public void addParamOpts() {
         try {
-
-            ProcessBean procBean = (ProcessBean) DataUtils.findBean("procBean");
-            NormBean normBean = (NormBean) DataUtils.findBean("normBean");
             String folderName = "Workflow_" + (workflowOptions.size() + 1);
             WorkflowParameters params = new WorkflowParameters(
                     procBean.isRemoveMissing(),

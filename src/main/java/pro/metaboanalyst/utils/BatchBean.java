@@ -5,9 +5,11 @@
  */
 package pro.metaboanalyst.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
@@ -24,8 +26,13 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 @Named("batchLoader")
 public class BatchBean implements Serializable {
 
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
+
 
     // Set data option
     private String dataOpt = "col";
@@ -212,7 +219,7 @@ public class BatchBean implements Serializable {
 
         String label = dataName;
 
-        String fileName = DataUtils.uploadFile(batchFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        String fileName = DataUtils.uploadFile(sb, batchFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
         if (label.equalsIgnoreCase("")) {
             label = fileName.substring(0, fileName.length() - 4);
         }
@@ -272,7 +279,7 @@ public class BatchBean implements Serializable {
         RConnection RC = sb.getRConnection();
 
         // String label = dataName;
-        fileName = DataUtils.uploadFile(batchTableFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        fileName = DataUtils.uploadFile(sb, batchTableFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
         //if (label.equalsIgnoreCase("")) {
         //    label = fileName.substring(0, fileName.length() - 4);

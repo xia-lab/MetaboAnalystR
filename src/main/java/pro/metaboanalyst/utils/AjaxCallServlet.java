@@ -155,7 +155,7 @@ public class AjaxCallServlet extends HttpServlet {
         } else if (funcName.equalsIgnoreCase("getImageMap")) {
 
             String leftImgURL = prefix + "/resources/users" + File.separator
-                    + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + sb.getCurrentImage("path_view") + "dpi72.png";
+                    + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + sb.getCurrentImage("path_view") + "dpi150.png";
             String urlCode = "leftImgURL=\"" + leftImgURL + "\"";
 
             String imgMapInfo = RGraphUtils.getOverviewImgMap(sb.getRConnection());

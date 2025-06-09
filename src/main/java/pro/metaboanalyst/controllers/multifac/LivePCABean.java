@@ -5,18 +5,17 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.List;
 import jakarta.enterprise.context.RequestScoped;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.DataUtils;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
@@ -28,9 +27,19 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 public class LivePCABean implements Serializable {
 
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
+
     @Inject
-    MultifacBean tb ;
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private final String pageID = "iPCA";
     private int pcaPairNum = 5;
     private String colOpt;
@@ -47,7 +56,7 @@ public class LivePCABean implements Serializable {
 
     public String getColOpt() {
         if (colOpt == null) {
-            colOpt = tb.getMetaDataBeans().get(0).getName();
+            colOpt = mfb.getMetaDataBeans().get(0).getName();
         }
         return colOpt;
     }
@@ -66,10 +75,10 @@ public class LivePCABean implements Serializable {
 
     public String getShapeOpt() {
         if (shapeOpt == null) {
-            List<MetaDataBean> beans = tb.getMetaDataBeans();
+            List<MetaDataBean> beans = mfb.getMetaDataBeans();
             for (int i = 1; i < beans.size(); i++) {
                 if (!beans.get(i).getParam().equals("cont")) {
-                    shapeOpt = tb.getMetaDataBeans().get(i).getName();
+                    shapeOpt = mfb.getMetaDataBeans().get(i).getName();
                     break;
                 }
             }
@@ -87,33 +96,31 @@ public class LivePCABean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
             ChemoMetrics.initPCA(sb);
 
-            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 72, pcaPairNum, getColOpt(), getShapeOpt());
+            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
             TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", colOpt, shapeOpt);
         } else {
-            WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-            if (fp.getFunctionInfos().get("PCA 3D") != null) {
+
+            if (wb.getFunctionInfos().get("PCA 3D") != null) {
                 try {
-                    FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("PCA 3D"));
+                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("PCA 3D"));
                 } catch (Exception ex) {
 
                 }
             }
-
         }
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
         wb.getCalledWorkflows().add("iPCA");
     }
 
     public void updatePCA3D() {
         sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
         ChemoMetrics.initPCA(sb);
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 72, pcaPairNum, getColOpt(), getShapeOpt());
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
         TimeSeries.initIPCA(sb.getRConnection(), sb.getNewImage("ipca_3d") + ".json", colOpt, shapeOpt);
 
     }
 
     public String pcaPairBtn_action() {
-        List<MetaDataBean> beans = tb.getMetaDataBeans();
+        List<MetaDataBean> beans = mfb.getMetaDataBeans();
         for (int i = 0; i < beans.size(); i++) {
             String type = beans.get(i).getParam();
             String name = beans.get(i).getName();
@@ -125,7 +132,7 @@ public class LivePCABean implements Serializable {
             }
         }
 
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 72, pcaPairNum, colOpt, shapeOpt);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, colOpt, shapeOpt);
         return null;
     }
 }

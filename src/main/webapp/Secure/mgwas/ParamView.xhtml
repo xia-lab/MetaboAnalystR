@@ -86,7 +86,7 @@
                         Acquisition of independent IVs by performing linkage disequilibrium (LD) clumping. 
                     </h:panelGroup>
                     <h:panelGroup layout="block" style="width:540px">
-                        <p:selectOneRadio id="ldClump" layout="grid" columns="1" value="#{mgwasBean.ldclumpOpt}">  
+                        <p:selectOneRadio id="ldClump" layout="pageDirection" columns="1" value="#{mgwasBean.ldclumpOpt}">  
                             <f:selectItem itemLabel="Do not check for LD between SNPs" itemValue="no_ldclump" />
                             <f:selectItem itemLabel="Use clumping to prune SNPs for LD" itemValue="use_ldclump"/>
                             <p:ajax event="change" update="form:ldClump"/>
@@ -115,7 +115,7 @@
                         outcome are associated with the same allele. 
                     </h:panelGroup>                   
                     <h:panelGroup>
-                        <p:selectOneRadio id="harmonize" columns="1" value="#{mgwasBean.harmonizeOpt}" layout="grid">  
+                        <p:selectOneRadio id="harmonize" columns="1" value="#{mgwasBean.harmonizeOpt}" layout="pageDirection">  
                             <f:selectItem itemLabel="Assume all alleles are presented on the forward strand" itemValue="1" />
                             <f:selectItem itemLabel="Try to infer the forward strand alleles using allele frequency information" itemValue="2" />
                             <f:selectItem itemLabel="Correct the strand for non-palindromic SNPs, but drop all palindromic SNPs" itemValue="3" />
@@ -128,7 +128,7 @@
                         To exclude SNPs that are associated with multiple metabolites
                     </h:panelGroup>                   
                     <h:panelGroup>
-                        <p:selectOneRadio id="pleio" columns="1" value="#{mgwasBean.pleiotropyOpt}" layout="grid">  
+                        <p:selectOneRadio id="pleio" columns="1" value="#{mgwasBean.pleiotropyOpt}" layout="pageDirection">  
                             <f:selectItem itemLabel="Include SNPs associated with multiple metabolites" itemValue="true" />
                             <f:selectItem itemLabel="Exclude SNPs associated with multiple metabolites" itemValue="false" />
                             <p:ajax event="change" update="form"/>
@@ -136,7 +136,7 @@
                     </h:panelGroup>
 
                 </p:panelGrid>
-                <h:panelGrid columns="2" style="width:90%; padding: 20px; text-align: center;">
+                <h:panelGrid style="width:90%; padding: 20px; text-align: center;">
                     <p:commandButton value="Submit"
                                      style="width:140px"
                                      update="form"

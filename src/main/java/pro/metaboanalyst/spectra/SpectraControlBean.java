@@ -17,9 +17,7 @@ import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.project.MariaDBController;
-import pro.metaboanalyst.project.ProjectBean;
 import pro.metaboanalyst.project.SchedulerUtils;
-import pro.metaboanalyst.project.UserLoginBean;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
@@ -74,10 +72,22 @@ public class SpectraControlBean implements Serializable {
     @JsonIgnore
     private FireUserBean fub;
 
+    @JsonIgnore
+    @Inject
+    private FireBaseController fbc;
+    
     @Inject
     @JsonIgnore
-    DatabaseClient db;
+    private DatabaseClient db;
 
+    @JsonIgnore   
+    @Inject
+    private SpectraProcessBean spb;
+
+    @JsonIgnore   
+    @Inject
+    private DiagramView dv;
+    
     private boolean createdShareLink = false;
     private LinkedHashMap<String, String> javaHistory = new LinkedHashMap<>();
     // Section 0 : Variable Section - count--------------
@@ -223,7 +233,7 @@ public class SpectraControlBean implements Serializable {
             res = pid != -1;
         } else {
             // Running the real datasets
-            SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+
             boolean ms2Opt = spb.getMs2DataOpt().equals("ms1");
             isms2 = !ms2Opt;
 
@@ -323,7 +333,7 @@ public class SpectraControlBean implements Serializable {
                 setCurrentJobId(JobID);
                 if (JobID != 0) {
                     if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
-                        String jobStatus = SchedulerUtils.getJobStatus(JobID);
+                        String jobStatus = SchedulerUtils.getJobStatus(JobID, sb.getCurrentUser().getHomeDir());
                         setCurrentJobStatus(jobStatus);
                     } else {
                         String jobStatus = "Local submitted";
@@ -331,7 +341,6 @@ public class SpectraControlBean implements Serializable {
                     }
                 }
                 if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
-                    DiagramView dv = (DiagramView) DataUtils.findBean("diagramView");
                     dv.setRawJobId(JobID + "");
                     System.out.println("fub.getEmail  ---> " + fub.getEmail());
                     System.out.println("    JobID     ---> " + JobID);
@@ -442,13 +451,13 @@ public class SpectraControlBean implements Serializable {
         if ("Running".equals(currentJobStatus) && count > 20) {
             if (count % 15 == 0) {
                 // query status from slurm every 15 seconds when it is running & submitted 20 sec later
-                jobStatus = SchedulerUtils.getJobStatus(currentJobId);
+                jobStatus = SchedulerUtils.getJobStatus(currentJobId, sb.getCurrentUser().getHomeDir());
             } else {
                 jobStatus = "RUNNING";
             }
         } else {
             // In other cases, keep querying until failed or finished
-            jobStatus = SchedulerUtils.getJobStatus(currentJobId);
+            jobStatus = SchedulerUtils.getJobStatus(currentJobId, sb.getCurrentUser().getHomeDir());
         }
 
         double jobProgress = getProgress2();
@@ -493,22 +502,22 @@ public class SpectraControlBean implements Serializable {
     public String finishProgress() throws FileNotFoundException {
         // add graphics information before returning results page
         // TIC
-        String rCommand = "OptiLCMS::plotTICs(mSet = NULL, imgName = \"raw_spec_tic.png\", format = \"png\", dpi = 72, width = 12);";
+        String rCommand = "OptiLCMS::plotTICs(mSet = NULL, imgName = \"raw_spec_tic.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_tic", rCommand);
         sb.addGraphicsMapLink("raw_spec_tic", "/Secure/spectra/SpectraResult.xhtml");
 
         // BPI
-        rCommand = "OptiLCMS::plotBPIs(mSet = NULL, imgName = \"raw_spec_bpi.png\", format = \"png\", dpi = 72, width = 12);";
+        rCommand = "OptiLCMS::plotBPIs(mSet = NULL, imgName = \"raw_spec_bpi.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_bpi", rCommand);
         sb.addGraphicsMapLink("raw_spec_bpi", "/Secure/spectra/SpectraResult.xhtml");
 
         // Intensity raw_spec_int
-        rCommand = "OptiLCMS::PlotSpectraInsensityStistics(mSet = NULL, imgName = \"raw_spec_int.png\", format = \"png\", dpi = 72, width = 12);";
+        rCommand = "OptiLCMS::PlotSpectraInsensityStistics(mSet = NULL, imgName = \"raw_spec_int.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_int", rCommand);
         sb.addGraphicsMapLink("raw_spec_int", "/Secure/spectra/SpectraResult.xhtml");
 
         // PCA
-        rCommand = "OptiLCMS::PlotSpectraPCA(mSet = NULL, imgName = \"raw_spec_pca.png\", format = \"png\", dpi = 72, width = 12);";
+        rCommand = "OptiLCMS::PlotSpectraPCA(mSet = NULL, imgName = \"raw_spec_pca.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_pca", rCommand);
         sb.addGraphicsMapLink("raw_spec_pca", "/Secure/spectra/SpectraResult.xhtml");
 
@@ -518,7 +527,6 @@ public class SpectraControlBean implements Serializable {
 
             if (jobStatus.equals("Finished") && progress2 == 100) {
 
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                 spb.setRecordCMD(true);
                 if (!spb.populateRawResBeans()) {
                     return null;
@@ -551,7 +559,6 @@ public class SpectraControlBean implements Serializable {
                 return null;
             }
              */
-            SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
             if (!spb.populateRawResBeans()) {
                 return null;
             }
@@ -620,11 +627,10 @@ public class SpectraControlBean implements Serializable {
             setCreatedShareLink(false);
             //return to the job status web page
             if (saveBool) {
-                FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
                 boolean res = false;
                 try {
                     sb.addNaviTrack("Job Status", "/Secure/spectra/JobStatusView.xhtml");
-                    res = fb.saveProject("project");
+                    res = fbc.saveProject("project");
                 } catch (Exception ex) {
                     java.util.logging.Logger.getLogger(SpectraControlBean.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -632,7 +638,8 @@ public class SpectraControlBean implements Serializable {
                 if (!res) {
                     sb.addMessage("error", "Project saving failed!");
                 } else {
-                    DataUtils.doRedirectWithGrowl("/MetaboAnalyst/Secure/spectra/JobStatusView.xhtml", "info", "Project saving is successful, you can access your project in your <b>Project View</b> page later.");
+                    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/spectra/JobStatusView.xhtml", "info", "Project saving is successful, you can access your project in your <b>Project View</b> page later.");
+                    
                 }
             } else {
                 return "Job status";
@@ -651,7 +658,7 @@ public class SpectraControlBean implements Serializable {
             if (id == 0) {
                 return;
             }
-            String status = SchedulerUtils.getJobStatus(id);
+            String status = SchedulerUtils.getJobStatus(id, sb.getCurrentUser().getHomeDir());
             if (status.equals("Pending") || status.equals("Running")) {
                 SchedulerUtils.killJob(getCurrentJobId());
             }
@@ -898,7 +905,7 @@ public class SpectraControlBean implements Serializable {
             if (jobId == 0) {
                 status = "Submitting...";
             } else {
-                status = SchedulerUtils.getJobStatus(jobId);
+                status = SchedulerUtils.getJobStatus(jobId, sb.getCurrentUser().getHomeDir());
             }
         } else {
             if (getCurrentJobStatus().equals("Submitting...")) {
@@ -925,7 +932,7 @@ public class SpectraControlBean implements Serializable {
             sb.addMessage("Error", "Unable to delete running job!");
             return;
         }
-        String status = SchedulerUtils.getJobStatus(id);
+        String status = SchedulerUtils.getJobStatus(id, sb.getCurrentUser().getHomeDir());
         if (status.equals("Pending") || status.equals("Running")) {
             boolean res = SchedulerUtils.killJob(getCurrentJobId());
             if (res) {
@@ -975,170 +982,6 @@ public class SpectraControlBean implements Serializable {
         boolean res2 = mdbb.disconnect();
         System.out.println("MysqlDBAvailabilityCheck result: (double true is working)" + res + "|" + res2);
         return res;
-
-    }
-
-    private void recordJob(long JobID) {
-
-        String recordQuery;
-
-        if (sb.isRegisteredLogin()) {
-            // record for prjects module (project --> guestfolder <-- jobs)
-
-            ProjectBean pb = (ProjectBean) DataUtils.findBean("projectBean");
-            UserLoginBean ulb = pb.getUlb();
-
-            long userNM = ulb.getUserNM();
-            Date CurrentDate = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String CurDate = sdf.format(CurrentDate);
-            String proFolder = pb.getSelectedProject().getFolder();
-            String JobPos = "dev";
-            if (ab.isOnProServer()) {
-                JobPos = "dev";
-            } else if (ab.isOnQiangPc()) {
-                JobPos = "qiang";
-            } else {
-                JobPos = "unknown";
-            }
-
-            MariaDBController mdbbIm = pb.getMdbb();
-
-            recordQuery = "insert into devUsers.jobs (userNM, jobID, jobSubTime, jobStatus, jobFolder, jobPosition, jobType) values ("
-                    + userNM + ","
-                    + JobID + ",'"
-                    + CurDate + "','"
-                    + "submitted" + "','"
-                    + proFolder + "','"
-                    + JobPos + "','"
-                    + "mass');";
-
-            String updateQuery = "update devUsers.projects set status = 'submitted' where projectFolderNM = '"
-                    + proFolder
-                    + "' AND userNM = "
-                    + userNM + ";";
-
-            try {
-                mdbbIm.runUpdate(recordQuery);
-                mdbbIm.runUpdate(updateQuery);
-                sb.addMessage("info", "Job saved and updated successfully!");
-            } catch (SQLException ex) {
-                sb.addMessage("error",
-                        "Job Saving server is down, report this code: xxj00001 to administrator !");
-            }
-
-        } else {
-            // record for partial link or traffic stats
-            try {
-                boolean dbAviRes = MysqlDBAvailabilityCheck();
-                if (!dbAviRes) {
-                    sb.addMessage("error",
-                            "Job Saving server is down, report this code: xxj00002 to administrator !");
-                }
-            } catch (Exception ex) {
-                sb.addMessage("error",
-                        "Job Saving server is down, report this code: xxj00003 to administrator !");
-            }
-
-            long userNM = -1;
-            Date CurrentDate = new Date();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String CurDate = sdf.format(CurrentDate);
-            String proFolder = sb.getCurrentUser().getName();
-            String JobPos = "dev";
-            if (ab.isOnProServer()) {
-                JobPos = "dev";
-            } else if (ab.isOnQiangPc()) {
-                JobPos = "qiang";
-            } else {
-                JobPos = "unk";
-            }
-
-            recordQuery = "insert into devUsers.jobs (userNM, jobID, jobSubTime, jobStatus, jobFolder, jobPosition, jobType) values ("
-                    + userNM + ","
-                    + JobID + ",'"
-                    + CurDate + "','"
-                    + "submitted" + "','"
-                    + proFolder + "','"
-                    + JobPos + "','"
-                    + "mass');";
-
-            try {
-                mdbb.runUpdate(recordQuery);
-                sb.addMessage("info", "Job saved successfully!");
-            } catch (SQLException ex) {
-                sb.addMessage("error",
-                        "Job Saving server is down, report this code: xxj00009 to administrator !");
-            }
-        }
-    }
-
-    private void updateJobStatus(long JobID) {
-
-        String JobPos = "dev";
-        if (ab.isOnProServer()) {
-            JobPos = "dev";
-        } else if (ab.isOnQiangPc()) {
-            JobPos = "qiang";
-        } else {
-            JobPos = "unk";
-        }
-
-        if (JobID > 0) {
-
-            ProjectBean pb = (ProjectBean) DataUtils.findBean("projectBean");
-            MariaDBController mdbbIm = pb.getMdbb();
-
-            String updateQuery = "update devUsers.jobs set jobStatus = '"
-                    + currentJobStatus
-                    + "' where jobID = "
-                    + JobID
-                    + " AND jobPosition = '"
-                    + JobPos + "';";
-
-            try {
-                mdbbIm.runUpdate(updateQuery);
-            } catch (Exception ex) {
-                sb.addMessage("error",
-                        "Job Saving server is down, report this code: xxj00004 to administrator !");
-            }
-        }
-
-        if (sb.isRegisteredLogin()) {
-            updateProjectStatus(sb.getCurrentUser().getName());
-        }
-    }
-
-    private void updateProjectStatus(String guestFolder) {
-
-        if (guestFolder != null) {
-
-            String dataPlace = "dev";
-            if (ab.isOnProServer()) {
-                dataPlace = "dev";
-            } else if (ab.isOnQiangPc()) {
-                dataPlace = "qiang";
-            } else {
-                dataPlace = "unk";
-            }
-
-            ProjectBean pb = (ProjectBean) DataUtils.findBean("projectBean");
-            MariaDBController mdbbIm = pb.getMdbb();
-
-            String updateQuery = "update devUsers.projects set status = '"
-                    + currentJobStatus
-                    + "' where projectFolderNM = '"
-                    + guestFolder
-                    + "' AND dataplace= '"
-                    + dataPlace + "';";
-
-            try {
-                mdbbIm.runUpdate(updateQuery);
-            } catch (Exception ex) {
-                sb.addMessage("error",
-                        "Project Saving server is down, report this code: xxp00014 to administrator !");
-            }
-        }
     }
 
     public void updateJobPartialLink() {

@@ -10,7 +10,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -25,7 +25,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "RF.Anal(NA" + ", " + treeNum + "," + tryNum + "," + randomOn + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest");
 
             RC.voidEval(rCommand);
         } catch (Exception rse) {
@@ -39,11 +39,11 @@ public class Classifying {
             RC.assign("meta.vec.rf", predictedMeta);
             String rcmd = "meta.vec.rf <- " + DataUtils.convertArrayToVecInR(predictedMeta);
             RCenter.recordRCommand(RC, rcmd);
-            JavaRecord.recordRCommandFunctionInfo(RC, rcmd, "Random Forest2");
+            sb.recordRCommandFunctionInfo(rcmd, "Random Forest2");
 
             String rCommand = "RF.AnalMeta(NA, " + treeNum + "," + tryNum + "," + randomOn + ", \"" + primary + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rcmd, rCommand);
+            sb.recordRCommandFunctionInfo(rcmd, rCommand);
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -58,7 +58,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotRF.Classify(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest");
 
             sb.addGraphicsCMD("rf_cls", rCommand);
             sb.addGraphicsMapLink("rf_cls", "/Secure/analysis/RFView.xhtml");
@@ -74,7 +74,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotRF.VIP(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest");
 
             sb.addGraphicsCMD("rf_imp", rCommand);
             sb.addGraphicsMapLink("rf_imp", "/Secure/analysis/RFView.xhtml");
@@ -94,7 +94,7 @@ public class Classifying {
             sb.addGraphicsMapLink("rf_cls", "/Secure/multifac/MultifacRFView.xhtml");
 
             RC.voidEval(rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest2");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest2");
 
         } catch (Exception rse) {
             LOGGER.error("PlotRFClassicationMeta", rse);
@@ -106,7 +106,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotRF.VIPMeta(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest2");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest2");
 
             sb.addGraphicsCMD("rf_imp", rCommand);
             sb.addGraphicsMapLink("rf_imp", "/Secure/multifac/MultifacRFView.xhtml");
@@ -122,7 +122,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotRF.Outlier(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest");
 
             sb.addGraphicsCMD("rf_outlier", rCommand);
             sb.addGraphicsMapLink("rf_outlier", "/Secure/analysis/RFView.xhtml");
@@ -138,7 +138,7 @@ public class Classifying {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotRF.Outlier(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Random Forest2");
+            sb.recordRCommandFunctionInfo(rCommand, "Random Forest2");
 
             sb.addGraphicsCMD("rf_outlier", rCommand);
             sb.addGraphicsMapLink("rf_outlier", "/Secure/multifac/MultifacRFView.xhtml");

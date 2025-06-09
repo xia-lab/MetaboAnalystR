@@ -234,7 +234,7 @@ public class MnetLoadBean implements Serializable {
             }
         }
 
-        RDataUtils.setOrganism(sb.getRConnection(), netOrg);
+        RDataUtils.setOrganism(sb, netOrg);
 
         // if (uploadListOpt.equals("genemetabo") || uploadListOpt.equals("genes")) {
         if (!(geneList == null | geneList.trim().length() == 0)) {
@@ -291,8 +291,8 @@ public class MnetLoadBean implements Serializable {
                 return null;
             }
             String fileName = DataUtils.getJustFileName(csvFile.getFileName());
-            DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-            RDataUtils.setOrganism(sb.getRConnection(), netOrg);
+            DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            RDataUtils.setOrganism(sb, netOrg);
             sb.setDataUploaded();
             //MnetResBean mnb = (MnetResBean) DataUtils.findBean("mnetResBean");
             sb.setVisMode("dspc");
@@ -313,7 +313,7 @@ public class MnetLoadBean implements Serializable {
             sb.addMessage("Error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
             return null;
         }
-        RDataUtils.setOrganism(sb.getRConnection(), netOrg);
+        RDataUtils.setOrganism(sb, netOrg);
         sb.setDataUploaded();
         //MnetResBean mnb = (MnetResBean) DataUtils.findBean("mnetResBean");
         sb.setVisMode("dspc");
@@ -344,7 +344,7 @@ public class MnetLoadBean implements Serializable {
                 if (RDataUtils.getMetabolomicsWorkbenchData(RC, nmdrStudyId)) {
                     if (RDataUtils.readMetabolomicsWorkbenchData(RC, nmdrStudyId, "rowu", "disc")) {
                         sb.setDataUploaded();
-                        RDataUtils.setOrganism(sb.getRConnection(), netOrg);
+                        RDataUtils.setOrganism(sb, netOrg);
                         sb.setCmpdIDType("name");
                         sb.initNaviTree("dspc");
                         return "Data check";

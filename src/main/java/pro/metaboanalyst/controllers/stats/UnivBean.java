@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.RequestScoped;
 import java.io.File;
 import java.io.Serializable;
@@ -20,7 +21,7 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultStreamedContent;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -30,15 +31,22 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @RequestScoped
 @Named("univBean")
 public class UnivBean implements Serializable {
-
+    @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
-
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
 
     @Inject
     private WorkflowBean wb;
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
+    @JsonIgnore
+    @Inject
+    private DetailsBean dtb;
 
     private String pairedFcAnal = "FALSE";
 
@@ -121,12 +129,10 @@ public class UnivBean implements Serializable {
         String paired = pairedFcAnal.equals("TRUE") ? "TRUE" : "FALSE";
         UniVarTests.initFC(sb, fcThresh, cmpType, paired);
 
-        UniVarTests.plotFC(sb, sb.getNewImage("fc"), "png", 72);
-        DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-        db.update3CompModel("fc");
+        UniVarTests.plotFC(sb, sb.getNewImage("fc"), "png", 150);
+        dtb.update3CompModel("fc");
 
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_fcButton_action(ub);
+        jrd.record_fcButton_action(this);
         return null;
     }
 
@@ -224,13 +230,12 @@ public class UnivBean implements Serializable {
         } else {
             sb.setTtSig(true);
         }
-        DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-        db.update2CompModel("tt");
-        UniVarTests.plotTT(sb, sb.getNewImage("tt"), "png", 72);
+
+        dtb.update2CompModel("tt");
+        UniVarTests.plotTT(sb, sb.getNewImage("tt"), "png", 150);
         sb.addMessage("info", RDataUtils.getCurrentMsg(RC));
 
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_ttButton_action(ub);
+        jrd.record_ttButton_action(this);
     }
 
     private String corDirection = "col";
@@ -321,21 +326,17 @@ public class UnivBean implements Serializable {
                     + "Direction of Comparison to indicate what is considered up and down");
             return null;
         }
-                    System.out.println("vcButton_action=====");
-
         UniVarTests.performVolcano(sb, pairedVC, vcFcThresh, cmpType, nonpar, vcPThresh, equalVar, vcPvalType);
         //if (pairedVC.equals("FALSE")) {
-        DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-        db.update3CompModel("volcano");
+        dtb.update3CompModel("volcano");
         //}
         //System.out.println(labelOpt + "======labelOpt");
         if (labelOpt.equals("all")) {
-            UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), plotLbl, plotTheme, "png", 72, -1);
+            UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), plotLbl, plotTheme, "png", 150, -1);
         } else {
-            UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), plotLbl, plotTheme, "png", 72, sb.getVolcanoLabelNum());
+            UniVarTests.plotVolcano(sb, sb.getNewImage("volcano"), plotLbl, plotTheme, "png", 150, sb.getVolcanoLabelNum());
         }
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_vcButton_action(ub);
+        jrd.record_vcButton_action(this);
         return null;
     }
 
@@ -392,13 +393,11 @@ public class UnivBean implements Serializable {
         } else {
             sb.setAnovaSig(true);
         }
-        DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-        db.update2CompModel("aov");
-        UniVarTests.plotAOV(sb, sb.getNewImage("aov"), "png", 72);
+        dtb.update2CompModel("aov");
+        UniVarTests.plotAOV(sb, sb.getNewImage("aov"), "png", 150);
         sb.addMessage("info", RDataUtils.getCurrentMsg(sb.getRConnection()));
 
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_aovButton_action(ub);
+        jrd.record_aovButton_action(this);
     }
 
     private boolean fixRange = false;
@@ -472,11 +471,10 @@ public class UnivBean implements Serializable {
         String clst = noClust ? "T" : "F";
         //String top = topCB.isChecked() ? "T" : "F";
         //int topNum= Integer.parseInt(topFld.getText().toString());
-        UniVarTests.plotCorrHeatMap(sb, sb.getNewImage("corr"), "png", 72, corDirection, hmDistMeasure, colContrast, fix, clst, fontSize, unit, corrThresh);
+        UniVarTests.plotCorrHeatMap(sb, sb.getNewImage("corr"), "png", 150, corDirection, hmDistMeasure, colContrast, fix, clst, fontSize, unit, corrThresh);
         //PrimeFaces.current().scrollTo("form1:corrPane");
 
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_corrBtn_action(ub);
+        jrd.record_corrBtn_action(this);
         wb.getCalledWorkflows().add("Correlation Heatmap");
 
     }
@@ -554,13 +552,11 @@ public class UnivBean implements Serializable {
     public String ptnBtn_action() {
         String imgName = sb.getNewImage("ptn");
         RConnection RC = sb.getRConnection();
-
-        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
-        JavaRecord.record_ptnBtn_action(ub);
+        jrd.record_ptnBtn_action(this);
         switch (ptnType) {
             case "featptn" -> {
                 if (UniVarTests.matchFeaturePattern(sb, ptnDistMeasure, ptnFeature)) {
-                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 72);
+                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 150);
                     wb.getCalledWorkflows().add("Pattern Search");
 
                 } else {
@@ -577,7 +573,7 @@ public class UnivBean implements Serializable {
 
                     return null;
                 } else if (UniVarTests.matchPattern(sb, ptnDistMeasure, ptnTemplate)) {
-                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 72);
+                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 150);
                     wb.getCalledWorkflows().add("Pattern Search");
 
                 } else {
@@ -595,7 +591,7 @@ public class UnivBean implements Serializable {
                     return null;
                 }
                 if (UniVarTests.matchPattern(sb, ptnDistMeasure, usrPtn)) {
-                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 72);
+                    UniVarTests.plotMatchedFeatures(sb, imgName, "feature", "png", 150);
                     wb.getCalledWorkflows().add("Pattern Search");
 
                 } else {
@@ -612,15 +608,12 @@ public class UnivBean implements Serializable {
 
     public void setupVolcano() throws Exception {
         if (!sb.isAnalInit("Volcano")) {
-            System.out.println("setupVolcano=====");
             sb.addNaviTrack("Volcano", "/Secure/analysis/VolcanoView.xhtml");
             UniVarTests.performVolcano(sb, "FALSE", 2, 0, "F", 0.1, "TRUE", "raw");
-            UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 72, -1);
+            UniVarTests.plotVolcano(sb, sb.getCurrentImage("volcano"), 1, 0, "png", 150, -1);
         }
-
         wb.getCalledWorkflows().add("Volcano");
-        DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-        db.update3CompModel("volcano");
+        dtb.update3CompModel("volcano");
     }
 
     public void generateUnivReport() {
@@ -641,6 +634,6 @@ public class UnivBean implements Serializable {
 
     public void doDefaultStaticCorrelation() {
 
-        UniVarTests.plotStaticCorrHeatMap(sb, sb.getCurrentImage("corr_heatmap"), "png", 72, "col", "pearson", "bwm", "overview", "F", "F", 0.0);
+        UniVarTests.plotStaticCorrHeatMap(sb, sb.getCurrentImage("corr_heatmap"), "png", 150, "col", "pearson", "bwm", "overview", "F", "F", 0.0);
     }
 }

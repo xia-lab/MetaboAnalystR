@@ -47,7 +47,8 @@
                                              actionListener="#{mrfBean.rfBn_action_time()}"/>   
                         </h:panelGrid>
                         <h:panelGrid columns="2" id="sumPane" style="padding-top: 20px">
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
+                            <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px" 
+                                 src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
                             <h:outputText escape="false" value="#{mrfBean.confText}"/>
                         </h:panelGrid>        
                     </h:form>
@@ -68,7 +69,7 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_imp')}" alt="RFImp"/>
+                        <img onerror='this.style.display="none"' style="width:8in; padding-left: 40px" src="#{sessionBean1.getCurrentImageURL('rf_imp')}" alt="RFImp"/>
                     </h:panelGrid> 
                 </p:tab>
                 <p:tab title ="Outlier Detection">
@@ -76,7 +77,8 @@
                         <p>
                             Only top 5 potential outliers are labeled
                         </p>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('rf_outlier')}" alt="RFoutlier"/>
+                        <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px"
+                             src="#{sessionBean1.getCurrentImageURL('rf_outlier')}" alt="RFoutlier"/>
                     </h:panelGrid> 
                 </p:tab>
             </p:tabView> 

@@ -13,12 +13,11 @@ import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.workflows.FunctionInvoker;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -37,7 +36,11 @@ public class AscaBean implements Serializable {
     private SessionBean1 sb;
 
     @Inject
-    private MultifacBean tb;
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
     private static final Logger LOGGER = LogManager.getLogger(AscaBean.class);
 
@@ -106,7 +109,7 @@ public class AscaBean implements Serializable {
 
     public String[] getSelectedMetasAsca() {
         if (selectedMetasAsca == null) {
-            selectedMetasAsca = tb.getDiscMetaOpts();
+            selectedMetasAsca = mfb.getDiscMetaOpts();
         }
         return selectedMetasAsca;
     }
@@ -121,17 +124,16 @@ public class AscaBean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/AscaView.xhtml");
         }
 
-        WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-        if (fp.getFunctionInfos().get("ASCA") != null) {
+        if (wb.getFunctionInfos().get("ASCA") != null) {
             try {
-                FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("ASCA"));
+                FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("ASCA"));
             } catch (Exception ex) {
 
             }
         }
 
         if (selectedMetasAsca == null) {
-            selectedMetasAsca = tb.getDiscMetaOpts();
+            selectedMetasAsca = mfb.getDiscMetaOpts();
         }
 
     }
@@ -159,9 +161,7 @@ public class AscaBean implements Serializable {
     public boolean mdlBtn_action() {
 
         try {
-
-            AscaBean b = (AscaBean) DataUtils.findBean("ascaBean");
-            JavaRecord.record_mdlBtn_action(b);
+            jrd.record_mdlBtn_action(this);
             if (wb.isEditMode()) {
                 return true;
             }
@@ -175,7 +175,7 @@ public class AscaBean implements Serializable {
                 sb.addMessage("Error", "The number of components for Model.a or Model.b cannot be zero!");
                 return false;
             }
-            int res = TimeSeries.performASCA(sb.getRConnection(), mdlANum, mdlBNum, mdlABNum, mdlResNum, selectedMetasAsca);
+            int res = TimeSeries.performASCA(sb, mdlANum, mdlBNum, mdlABNum, mdlResNum, selectedMetasAsca);
 
             if (res == -1) {
                 sb.addMessage("Error", "Selected metadata must be categorical!");
@@ -187,20 +187,20 @@ public class AscaBean implements Serializable {
             }
             String colorBW = useGreyCol ? "TRUE" : "FALSE";
 
-            if (!tb.isAscaInit()) {
-                TimeSeries.plotASCAscree(sb, sb.getCurrentImage("asca_scree"), "png", 72);
-                tb.setAscaInit(true);
+            if (!mfb.isAscaInit()) {
+                TimeSeries.plotASCAscree(sb, sb.getCurrentImage("asca_scree"), "png", 150);
+                mfb.setAscaInit(true);
             }
 
             // TimeSeries.performASCAPermutation(RC, 20);
-            // TimeSeries.plotASCAPermSummary(sb, sb.getCurrentImage("asca_perm"), "png", 72);
-            TimeSeries.performASCAVarSelection(RC, 0.05, 0.90);
-            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impa"), "png", 72, "a");
-            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impb"), "png", 72, "b");
-            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impab"), "png", 72, "ab");
-            TimeSeries.plotASCAModels(sb, sb.getCurrentImage("asca_fa"), "png", 72, "a", colorBW);
-            TimeSeries.plotASCAModels(sb, sb.getCurrentImage("asca_fb"), "png", 72, "b", colorBW);
-            TimeSeries.plotASCAInteraction(sb, sb.getCurrentImage("asca_fab"), "png", 72, colorBW);
+            // TimeSeries.plotASCAPermSummary(sb, sb.getCurrentImage("asca_perm"), "png", 150);
+            TimeSeries.performASCAVarSelection(sb, 0.05, 0.90);
+            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impa"), "png", 150, "a");
+            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impb"), "png", 150, "b");
+            TimeSeries.plotASCAImpVar(sb, sb.getCurrentImage("asca_impab"), "png", 150, "ab");
+            TimeSeries.plotASCAModels(sb, sb.getCurrentImage("asca_fa"), "png", 150, "a", colorBW);
+            TimeSeries.plotASCAModels(sb, sb.getCurrentImage("asca_fb"), "png", 150, "b", colorBW);
+            TimeSeries.plotASCAInteraction(sb, sb.getCurrentImage("asca_fab"), "png", 150, colorBW);
 
         } catch (NumberFormatException e) {
             //e.printStackTrace();
@@ -230,7 +230,7 @@ public class AscaBean implements Serializable {
         }
 
         TimeSeries.performASCAPermutation(sb.getRConnection(), permNum);
-        TimeSeries.plotASCAPermSummary(sb, sb.getNewImage("asca_perm"), "png", 72);
+        TimeSeries.plotASCAPermSummary(sb, sb.getNewImage("asca_perm"), "png", 150);
         sb.addMessage(status, msg);
     }
 
@@ -238,11 +238,11 @@ public class AscaBean implements Serializable {
         // TODO: Process the action. Return value is a navigation
         // case name where null will return to the same page.
         try {
-            TimeSeries.performASCAVarSelection(sb.getRConnection(), alphaThresh, lvlThresh);
+            TimeSeries.performASCAVarSelection(sb, alphaThresh, lvlThresh);
 
-            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impa"), "png", 72, "a");
-            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impb"), "png", 72, "b");
-            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impab"), "png", 72, "ab");
+            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impa"), "png", 150, "a");
+            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impb"), "png", 150, "b");
+            TimeSeries.plotASCAImpVar(sb, sb.getNewImage("asca_impab"), "png", 150, "ab");
 
         } catch (NumberFormatException e) {
             //e.printStackTrace();

@@ -394,27 +394,6 @@ RC.voidEval(
         }
     }
 
-    public static void createProjectDb(String scriptPath, String path) {
-        try {
-            RConnection RC;
-            try {
-                DataUtils.testRserve();
-                RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
-            } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-                sb.addMessage("Error", "Please start your Rserver with the right permission!");
-                return;
-            }
-            RC.voidEval("source(\"" + scriptPath + "\")");
-            String rCommand = "CreateProjectDb()";
-            RC.assign("projectDbPath", path);
-            System.out.println(rCommand);
-            RC.eval(rCommand);
-            RC.close();
-        } catch (Exception rse) {
-            LOGGER.error("CreateProjectDb", rse);
-        }
-    }
 
     public static void deleteProjectById(
             String scriptPath,
@@ -633,8 +612,7 @@ RC.voidEval(
         }
     }
 
-    public static Map<String, Object> loadProject(String scriptPath,
-            String dbPath, String token) {
+    public static Map<String, Object> loadProject(String scriptPath, String dbPath, String token) {
         Map<String, Object> resultMap = new HashMap<>();
         try {
             DataUtils.testRserve();
@@ -670,14 +648,13 @@ RC.voidEval(
         return resultMap;
     }
 
-    public static String checkUserExists(String scriptPath, String path, String email) {
+    public static String checkUserExists(SessionBean1 sb, String scriptPath, String path, String email) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -694,14 +671,13 @@ RC.voidEval(
         }
     }
 
-    public static String insertToken(String scriptPath, String path, String email, String resetToken, String expDate) {
+    public static String insertToken(SessionBean1 sb, String scriptPath, String path, String email, String resetToken, String expDate) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -718,14 +694,13 @@ RC.voidEval(
         }
     }
 
-    public static String verifyToken(String scriptPath, String path, String resetToken) {
+    public static String verifyToken(SessionBean1 sb, String scriptPath, String path, String resetToken) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -742,14 +717,13 @@ RC.voidEval(
         }
     }
 
-    public static String resetPassword(String scriptPath, String path, String password, String email) {
+    public static String resetPassword(SessionBean1 sb, String scriptPath, String path, String password, String email) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -766,14 +740,13 @@ RC.voidEval(
         }
     }
 
-    public static String deleteTokenForUser(String scriptPath, String path, String email) {
+    public static String deleteTokenForUser(SessionBean1 sb, String scriptPath, String path, String email) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -790,7 +763,7 @@ RC.voidEval(
         }
     }
 
-    public static String checkActivationCode(String scriptPath, String projectDbPath, String email, String activationCode) {
+    public static String checkActivationCode(SessionBean1 sb, String scriptPath, String projectDbPath, String email, String activationCode) {
         try {
             // Establish an R connection
             RConnection RC;
@@ -798,7 +771,6 @@ RC.voidEval(
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -882,7 +854,7 @@ RC.voidEval(
         }
     }
 
-    public static int checkMatchingFolderNameProject(String scriptPath, String projectDbPath, String folderName) {
+    public static int checkMatchingFolderNameProject(SessionBean1 sb, String scriptPath, String projectDbPath, String folderName) {
         try {
             // Establish an R connection
             RConnection RC;
@@ -890,7 +862,6 @@ RC.voidEval(
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return -1;
             }
@@ -916,7 +887,7 @@ RC.voidEval(
         }
     }
 
-    public static String deleteUserAndProjects(String scriptPath, String projectDbPath, String userId) {
+    public static String deleteUserAndProjects(SessionBean1 sb, String scriptPath, String projectDbPath, String userId) {
         try {
             // Establish an R connection
             RConnection RC;
@@ -924,7 +895,6 @@ RC.voidEval(
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }
@@ -1009,14 +979,13 @@ RC.voidEval(
         }
     }
 
-    public static String hashPassword(String scriptPath, String projectDbPath, String password) {
+    public static String hashPassword(SessionBean1 sb, String scriptPath, String projectDbPath, String password) {
         try {
             RConnection RC;
             try {
                 DataUtils.testRserve();
                 RC = new RConnection(RCenter.RserveIP, RCenter.Rport);
             } catch (Exception e) {
-                SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
                 sb.addMessage("Error", "Please start your Rserver with the right permission!");
                 return "";
             }

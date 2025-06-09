@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,7 +35,13 @@ import pro.metaboanalyst.utils.NaviUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
+import org.primefaces.model.TreeNode;
+import pro.metaboanalyst.controllers.enrich.IntegProcessBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
+import pro.metaboanalyst.spectra.SpectraControlBean;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
+import static pro.metaboanalyst.utils.NaviUtils.selectNode;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -45,19 +52,413 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("ctl")
 public class GenericControllers implements Serializable {
 
+    @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
+
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private SpectraProcessBean spb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+
+    @JsonIgnore
+    @Inject
+    private UserLoginBean ulb;
+
+    @JsonIgnore
+    @Inject
+    private IntegProcessBean ipb;
+
+    @JsonIgnore
+    @Inject
+    private MetaPathStatBean pmb;
+
+    @JsonIgnore
+    @Inject
+    private SpectraControlBean pfb;
+
+    @JsonIgnore
+    @Inject
+    private MetaPathLoadBean plb;
+
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
     private static final String ORIG_STYLE = "color: inherit; text-decoration: underline";
     private static final String HIGHLIGHT_STYLE = "color: maroon; text-decoration: none";
+    private static final List<String> twoGrpsMethods = Arrays.asList(new String[]{"T-test", "Volcano plot", "Fold change", "EBAM", "SVM", "OrthoPLSDA"});
 
     /*
      * navigation tree
      */
     public void onNodeSelect(NodeSelectEvent event) {
-        NaviUtils.selectNaviTreeNode(sb, event.getTreeNode());
+
+        TreeNode node = event.getTreeNode();
+        String naviKey = node.getData().toString();
+        String analType = sb.getAnalType();
+
+        //make sure to load right analType
+        String currentAnalType = sb.getNaviTrackAnalType().get(naviKey);
+        if (currentAnalType != null && !currentAnalType.equals(sb.getAnalType())) {
+            analType = currentAnalType;
+            RDataUtils.setAnalType(sb.getRConnection(), analType);
+        }
+
+        if (analType.equals("utils")) {
+            FacesContext.getCurrentInstance().getApplication().getNavigationHandler()
+                    .handleNavigation(FacesContext.getCurrentInstance(), "null", naviKey);
+            return;
+        }
+
+        if (!naviKey.equals("Upload") && !naviKey.equals("Exit")) {
+            if (!sb.isDataUploaded()) {
+                sb.addMessage("Error", "You need to upload a dataset first!");
+                PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                return;
+            }
+        }
+        selectNode(node);
+        String dataType = sb.getDataType();
+        switch (naviKey) {
+            case "Pre-process":
+                if (dataType.equals("conc") || dataType.equals("specbin") || dataType.equals("pktable")) {
+                    sb.addMessage("Error", "Your data type does not need this procedure!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "Data check":
+                if (dataType.equals("conc") || dataType.equals("specbin") || dataType.equals("pktable") || dataType.equals("mass_all") || dataType.equals("mass_table")) {
+                    break;
+                } else if (!sb.isDataProcessed()) {
+                    sb.addMessage("Error", "Your need to pre-process your data first!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+            case "Name check":
+                if (!dataType.equals("conc")) {
+                    sb.addMessage("Error", "The procedure is only applicable to compound concentration data!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "Conc. check":
+                if (!analType.equals("msetssp")) {
+                    sb.addMessage("Error", "The procedure is only applicable to single sample profiling!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                } else {
+                    naviKey = "msetssp";
+                }
+                break;
+            case "Data editor":
+                if (analType.startsWith("mummichog")) {
+                    if (!sb.getDataType().equals("mass_table")) {
+                        sb.addMessage("Error", "The option is only applicable for peak table, not peak list!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                }
+
+                if (!sb.isAnalInit("Normalization")) {
+                    sb.addMessage("Error", "The data need to be further processed till normalization page for this procedure! ");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "Missing value":
+            case "Metadata check":
+            case "Data filter":
+            case "Normalization":
+                if (analType.startsWith("mummichog")) {
+                    if (!sb.getDataType().equals("mass_table")) {
+                        sb.addMessage("Error", "The option is only applicable for peak table, not peak list!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                } else if (!sb.isIntegChecked()) {
+                    sb.addMessage("Error", "The data need to pass integrity check first!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "GSEA result":
+            case "Mummi. result":
+            case "Integ. result":
+                String naviPath = sb.getNaviTrack().get(naviKey);
+                if (naviPath != null) {
+                    DataUtils.doRedirect(naviPath, ab);
+                    return;
+                } else {
+                    sb.addMessage("Error", "Please set parameters first and use the 'Proceed' button to access this page.");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                }
+                break;
+            case "Metabolic network":
+                if (sb.getNaviTrack().get("Mummi. result") != null
+                        || sb.getNaviTrack().get("GSEA result") != null
+                        || sb.getNaviTrack().get("Integ. result") != null) {
+                    break;
+                } else {
+                    sb.addMessage("Error", "Please perform enrichment analysis first before viewing them in the network.");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+            case "DSPC network":
+                naviKey = sb.computeDspcNet();
+            case "Set parameter":
+                //need to work out unspecific case
+                if (analType.startsWith("mset")) {
+                    naviKey = "enrichparam";
+                } else if (analType.startsWith("pathinteg")) {
+
+                    if (ipb.getDatatype().equals("peak")) {
+                        naviKey = "IntegAnalPeak";
+                    } else {
+                        naviKey = "IntegAnal";
+                    }
+                } else if (analType.startsWith("path")) {
+                    naviKey = "pathparam";
+                } else if (analType.startsWith("power")) {
+                    naviKey = "powerparam";
+                } else if (analType.startsWith("network")) {
+                    naviKey = "MnetParam";
+                } else if (analType.startsWith("roc")) {
+                    naviKey = "Multivariate";
+                } else if (analType.startsWith("mummichog")) {
+                    if (sb.getDataType().equals("mass_table")) {
+                        naviKey = "mzlibview";
+                    } else {
+                        naviKey = "mzlibview";
+                    }
+                } else if (analType.startsWith("metapaths")) {
+                    naviKey = "Meta-Analysis Params";
+                    pmb.setResOK(false);
+                    pmb.setResOK2(false);
+                }
+                break;
+            case "View result":
+                //need to work out unspecific case
+                if (analType.equals("msetora") || analType.equals("msetssp")) {
+                    naviKey = "oraview";
+                } else if (analType.equals("msetqea")) {
+                    naviKey = "qeaview";
+                } else if (analType.startsWith("pathinteg")) {
+                    naviKey = "integview";
+                } else if (analType.startsWith("path")) {
+                    naviKey = "pathview";
+                } else if (analType.startsWith("power")) {
+                    naviKey = "powerview";
+                } else if (analType.startsWith("mummichog")) {
+                    naviKey = "mummires";
+                    node.setExpanded(true);
+                } else if (analType.equals("gsea_peaks")) {
+                    naviKey = "gseapkview";
+                } else if (analType.equals("integ_peaks")) {
+                    naviKey = "peakintegview";
+                } else if (analType.startsWith("metapaths")) {
+                    sb.addMessage("Error", "Select the result page ('Meta path' or 'Pooling peaks') you want to reach from the sub-nodes!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "Upload":
+                if (sb.isSwitchMode()) {
+                    sb.addMessage("Error", "The upload page is undefined after you switched to a new module. Please exit to restart again.");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                } else {
+                    String naviPath1 = sb.getNaviTrack().get("Upload");
+                    if (naviPath1 != null) {
+                        DataUtils.doRedirect(naviPath1, ab);
+                        return;
+                    }
+                }
+                break;
+            case "Correlations":
+                if (analType.equals("mf")) {
+                    naviKey = "CorrelationTest";
+                }
+                break;
+            case "RandomForest":
+                if (analType.equals("mf")) {
+                    naviKey = "RandomForest2";
+                }
+                break;
+            case "ID map":
+            case "Download":
+                break;
+            case "Spectra check":
+            case "Spectra processing":
+
+                if (!pfb.isDataConfirmed() || pfb.getIncludedFileNamesString().equals("")) {
+                    sb.addMessage("Error", "No right spectra files selected or confirmed!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+
+                if (pfb.isJobSubmitted() && (pfb.getCurrentJobStatus().contains("Pending") || pfb.getCurrentJobStatus().contains("Running"))) {
+                    sb.addMessage("Error", "Job is running, can not modify parameters again!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                } else {
+                    pfb.setStopStatusCheck(true);
+                    pfb.setJobSubmitted(false);
+                    pfb.setPerformedPlan(false);
+                    pfb.setCurrentJobId(0);
+                    pfb.setCurrentJobStatus("Submitting...");
+                    pfb.setProgress2(0.0);
+                }
+                break;
+            case "Spectra result":
+
+                if (!pfb.isDataConfirmed() || pfb.getIncludedFileNamesString().equals("")) {
+                    sb.addMessage("Error", "No right spectra files selected or confirmed!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+
+                if (!pfb.getCurrentJobStatus().contains("Finished") || !pfb.getFinishedJobStatus().contains("Finished")) {
+                    sb.addMessage("Error", "Please wait until the job is finished!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+                break;
+            case "Job status":
+
+                if (!pfb.isDataConfirmed() || pfb.getIncludedFileNamesString().equals("")) {
+                    sb.addMessage("Error", "No right spectra files selected or confirmed!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+
+                String currentPage = FacesContext.getCurrentInstance().getViewRoot().getViewId();
+                if (currentPage.contains("SpectraProcess")) {
+                    sb.addMessage("Error", "Please click on submit job button located at the bottom of the page instead!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                } else {
+                    pfb.setCurrentJobId(pfb.getFinishedJobId());
+                    pfb.setProgress2(pfb.getFinishedProgress2());
+                    pfb.setCurrentJobStatus(pfb.getFinishedJobStatus());
+                    pfb.setStopStatusCheck(false);
+                    pfb.setJobSubmitted(true);
+                    pfb.setPerformedPlan(true);
+                }
+                break;
+            case "Meta-Analysis Params":
+                break;
+            case "Meta paths":
+                naviKey = "Meta-Analysis Results";
+
+                if (pmb.isResOK() && pmb.isPlotOK()) {
+                    break;
+                } else {
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    sb.addMessage("Error", "Your result is not ready! Click Submit button for processing from the 'Set parameter' page!");
+                    return;
+                }
+            case "Pooling peaks":
+
+                if (pmb.getPoolAlgOpt().equals("mummichog")) {
+                    naviKey = "mummires";
+                } else if (pmb.getPoolAlgOpt().equals("gsea_peaks")) {
+                    naviKey = "gseapkview";
+                }
+
+                if (pmb.isResOK2()) {
+                    break;
+                } else {
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    sb.addMessage("Error", "Your result is not ready! Click Submit button for processing from the 'Set parameter' page!");
+                    return;
+                }
+            case "Upset diagram":
+                //MetaPathLoadBean plb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
+                if (!sb.getNaviTrack().containsKey("Upset diagram")) {
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    sb.addMessage("Error", "Please select datasets you wish to process by click 'UpSet diagram' button from Result page! ");
+                    return;
+                }
+                break;
+            case "Network viewer":
+                if (sb.getAnalType().equals("metapaths")) {
+                    if (plb.getSelectedData().getName() != null) {
+                        sb.addMessage("Error", "Click 'Network Analysis' button from Results page to continue!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                }
+                break;
+            case "Heatmap view":
+                if (analType.startsWith("mummichog")) {
+                    if (!sb.getDataType().equals("mass_table")) {
+                        sb.addMessage("Error", "The option is only applicable for peak table, not peak list!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                }
+                break;
+            default://all statisitcal 
+                if (sb.getAnalType().equals("stat")) {
+                    if (!sb.isDataNormed()) {
+                        sb.addMessage("Error", "The data need to be normalized first!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                }
+                if (naviKey.equals("ASCA")) {
+                    if (sb.isTimeOnly()) {
+                        sb.addMessage("Error", "This method has not been tested for time-series only data!");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                } else if (naviKey.equals("MEBA")) {
+                    if (!sb.isContainsTime()) {
+                        sb.addMessage("Error", "This method only work on time-series data.");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                }
+                if (sb.isMultiGroup()) {
+                    if (twoGrpsMethods.contains(naviKey)) {
+                        sb.addMessage("Error", "The method is only applicable for two-group data analysis! "
+                                + "You can use <b>Data Editor</b> => <b>Edit Groups</b> to specify two groups of interest for analysis.");
+                        PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                        return;
+                    }
+                } else if (naviKey.equals("ANOVA")) {
+                    sb.addMessage("Error", "The method is only for multi-group data analysis!");
+                    PrimeFaces.current().executeScript("PF('statusDialog').hide()");
+                    return;
+                }
+
+        }
+        //System.out.println("end==========" + naviKey);
+        //test if we have entered URL in the track
+        if (sb.getNaviTrack().keySet().contains(naviKey)) {
+            String key = sb.getNaviTrack().get(naviKey);
+            if (!key.equals("0")) {
+                DataUtils.doRedirect(sb.getNaviTrack().get(naviKey), ab);
+            }
+        } else {
+            FacesContext.getCurrentInstance().getApplication().getNavigationHandler()
+                    .handleNavigation(FacesContext.getCurrentInstance(), "null", naviKey);
+        }
+
     }
 
     public ArrayList<String> getMsgVec() {
@@ -99,10 +500,9 @@ public class GenericControllers implements Serializable {
             LOGGER.error("RConnection is null or invalid in getCmdVec");
             return myCmds;
         }
-        
+
         try {
             if (sb.isLoggedIn() && sb.getDataType().equals("spec") && ab.isInDocker()) {
-                SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                 if (spb.isRecordCMD()) {
                     spb.setRecordCMD(false);
                     String[] cmds = RCenter.getRCommandHistory(RC);
@@ -259,7 +659,6 @@ public class GenericControllers implements Serializable {
         simpleMenuModel.getElements().add(menuItem);
 
         //set the 4th URL
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         menuItem = new DefaultMenuItem();
         menuItem.setValue("Data Prep.");
         //menuItem.setOnclick("doLogoutModule();");
@@ -313,7 +712,7 @@ public class GenericControllers implements Serializable {
     }
 
     public String toModuleView() {
-        return ((ApplicationBean1) DataUtils.findBean("applicationBean1")).getDomainURL() + "/Secure/ModuleView.xhtml";
+        return ab.getDomainURL() + "/Secure/ModuleView.xhtml";
         //return ((ApplicationBean1) DataUtils.findBean("applicationBean1")).getDomainURL() + "ModuleView.xhtml";
     }
 
@@ -359,7 +758,7 @@ public class GenericControllers implements Serializable {
     public void redirectToLogin() {
         System.out.println("redirectToLogin===> " + "/" + ab.getAppName() + "/users/LoginView.xhtml");
         PrimeFaces.current().executeScript("PF('notLoginDialog').hide()");
-        DataUtils.doRedirect("/" + ab.getAppName() + "/users/LoginView.xhtml");
+        DataUtils.doRedirect("/" + ab.getAppName() + "/users/LoginView.xhtml", ab);
     }
 
     public String setUtilOpt(String utilOpt) {
@@ -420,8 +819,7 @@ public class GenericControllers implements Serializable {
                 return "MnetParam";
             }
             case "mf" -> {
-                MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-                tb.setAscaInit(false);
+                mfb.setAscaInit(false);
                 return "Multi-factors";
             }
             case "power" -> {
@@ -506,11 +904,9 @@ public class GenericControllers implements Serializable {
 
         return moduleURL + url1;
          */
-        FireUserBean ub = (FireUserBean) DataUtils.findBean("fireUserBean");
-        if (ub.isOmicsquareVerified()) {
+        if (fub.isOmicsquareVerified()) {
 
         } else if (sb.getCurrentLoginUser() != null) {
-            UserLoginBean ulb = (UserLoginBean) DataUtils.findBean("userLoginBean");
             UserLoginModel currentLoginUser = sb.getCurrentLoginUser();
             String sessionToken = sb.getSessionToken();
             if (ulb.isJustloggedin()) {

@@ -38,7 +38,7 @@ public class MetaProcBean implements Serializable {
     private SessionBean1 sb;
 
     @Inject
-    private MultifacBean tb;
+    private MultifacBean mfb;
 
     private String msgTextMeta;
 
@@ -116,27 +116,27 @@ public class MetaProcBean implements Serializable {
     }
 
     public void updateMetaPerSample() {
-        RDataUtils.setSampleGroups(sb.getRConnection(), sb.getSampleBeans(), tb.getSelectedMetaData());
-        tb.initMetaDataBean();
+        RDataUtils.setSampleGroups(sb.getRConnection(), sb.getSampleBeans(), mfb.getSelectedMetaData());
+        mfb.initMetaData();
         sb.addMessage("Info", "Successfully updated the selected metadata!");
 
     }
 
     public void updateMetaPerFactor() {
-        List<SampleBean> beans = tb.getUniqueMetaNames();
+        List<SampleBean> beans = mfb.getUniqueMetaNames();
         String[] metas = new String[beans.size()];
         for (int i = 0; i < beans.size(); i++) {
             metas[i] = beans.get(i).getGroup();
         }
-        RDataUtils.updateMetaLevels(sb.getRConnection(), tb.getSelectedMetaData(), metas);
-        tb.reinitVariables();
-        tb.initMetaDataBean();
+        RDataUtils.updateMetaLevels(sb.getRConnection(), mfb.getSelectedMetaData(), metas);
+        mfb.reinitVariables();
+        mfb.initMetaData();
         sb.addMessage("Info", "The updated metadata is show <b style='color: orange'>as a new metadata at the bottom of the table</b>! You can click its name to to update it to a new name.");
     }
 
     public String metacheck_confirm_proceed() {
         //int res = RDataUtils.sanityCheckMeta(sb.getRConnection(), 0);
-        Iterator<MetaDataBean> it = tb.getMetaDataBean().iterator();
+        Iterator<MetaDataBean> it = mfb.getMetaDataBeans().iterator();
         int countOk = 0;
         while (it.hasNext()) {
             MetaDataBean bean = it.next();
@@ -151,7 +151,7 @@ public class MetaProcBean implements Serializable {
             return null;
         }
 
-        Iterator<MetaDataBean> i = tb.getMetaDataBean().iterator();
+        Iterator<MetaDataBean> i = mfb.getMetaDataBeans().iterator();
         while (i.hasNext()) {
             MetaDataBean bean = i.next();
             String status = bean.getStatus();

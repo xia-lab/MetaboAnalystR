@@ -7,6 +7,7 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{procBean.performSanityCheck()}"/> 
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Data check', '/Secure/process/SanityCheck.xhtml')}"/> 
     </ui:define>
     <ui:define name="footerout"/>
@@ -40,7 +41,7 @@
                         <h:panelGrid id="btnPane" columns="5" style="width: 780px; text-align: center; padding-left: 60px; padding-top: 20px; padding-right: 40px">        
 
                             <p:commandButton value="View Data"  style="width:150px;" 
-                                                    icon="pi pi-external-link"
+                                             icon="pi pi-external-link"
                                              onclick="PF('viewDataDialog').show()"/>
 
                             <p:commandButton value="Edit Groups" style="width:120px;" 
@@ -131,13 +132,13 @@
                 </h:panelGrid>
             </h:form>         
         </p:dialog>
-        
-           <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
-                      width="800px" hideEffect="explode" resizable="true">
-                <p>
-                    Your uploaded (raw) data are shown below for manual inspection. It represents the computer's view of your data. 
-                    The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
-                    <ul>
+
+        <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                  width="800px" hideEffect="explode" resizable="true">
+            <p>
+                Your uploaded (raw) data are shown below for manual inspection. It represents the computer's view of your data. 
+                The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
+                <ul>
                     <li>
                         If this is in tabular format, make sure that you correctly specify samples in rows or samples in columns 
                     </li>
@@ -150,9 +151,9 @@
                         <a href="https://www.ablebits.com/office-addins-blog/convert-excel-csv/" target="_blank">this link may be helpful</a>. 
                     </li>
                 </ul>
-                </p>
-                <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
+            </p>
+            <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
 
-            </p:dialog>
+        </p:dialog>
     </ui:define>
 </ui:composition>

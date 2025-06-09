@@ -79,131 +79,110 @@
                             <p:column headerText="P value">
                                 <h:outputText value="#{mrResult.pvalue2}" />
                             </p:column>
-
                         </p:dataTable>
-                        <p:tabView id="ac2" style="border: none; font-size: 13px;">
+                        <p:tabView id="ac2" style="border: none; font-size: 13px; margin-top: 20px">
                             <p:tab title ="Forest Plot">
-                                <h:panelGrid columns = "2">
-                                    <h:panelGrid id="impPane1" style="text-align: center; padding: 20px">
-                                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                                            <p:commandLink  title="Download the detailed data table">
-                                                <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_single')}"/>
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                                            </p:commandLink>
-                                            <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName, 'mr_forest_plot')}" 
-                                                           update=":myGraphPane"
-                                                           oncomplete="PF('graphDialog').show()"
-                                                           title="Customize the graphics output">
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                                            </p:commandLink>
-                                        </h:panelGrid>
-                                        <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_forest_plot')}" alt="ForestPlotImage"/>
+                                <h:panelGrid id="impPane1" style="text-align: center; padding: 20px">
+                                    <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                        <p:commandLink  title="Download the detailed data table">
+                                            <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_single')}"/>
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName, 'mr_forest_plot')}" 
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics output">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>
                                     </h:panelGrid>
-                                    <h:panelGrid style="width: 420px; padding-left: 5px; margin-left: 20px">
-                                        <div class="ui-message-info" style="background-color: #f9f1e7; border-color: #f9f1e7; padding: 20px 18px 10px 30px; line-height: 23px; font-size: 14px">
-                                            <span class="ui-message-info-icon"/>
-                                            <span class="ui-message-info-detail">
-                                                <b>Tips</b>
-                                            </span>
-                                            <p>
-                                                The forest plot compares the causal effect calculated using the methods that include all the SNPs to using each SNP separately.
-                                            </p>    
-                                        </div>
+                                    <img onerror='this.style.display="none"' 
+                                         style="width:9in; padding-left: 20px"
+                                         src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_forest_plot')}" alt="ForestPlotImage"/>
+                                    <h:panelGrid style="text-align: left; padding-top: 20px">
+                                        <p>
+                                            The forest plot compares the causal effect calculated using the methods that include all the SNPs to 
+                                            using each SNP separately.
+                                        </p>
                                     </h:panelGrid>
                                 </h:panelGrid>
-
                             </p:tab>
                             <p:tab title ="Scatter Plot">
-                                <h:panelGrid columns = "2">
-                                    <h:panelGrid id="impPane2" style="text-align: center; padding: 20px">
-                                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                                            <p:commandLink  title="Download the detailed data table">
-                                                <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res')}"/>
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                                            </p:commandLink>
-                                            <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName,'mr_scatter_plot')}" 
-                                                           update=":myGraphPane"
-                                                           oncomplete="PF('graphDialog').show()"
-                                                           title="Customize the graphics output">
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                                            </p:commandLink>
-                                        </h:panelGrid>
 
-                                        <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_scatter_plot')}" alt="ComparePlotImage"/>
+                                <h:panelGrid id="impPane2" style="text-align: center; padding: 20px">
+                                    <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                        <p:commandLink  title="Download the detailed data table">
+                                            <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res')}"/>
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName,'mr_scatter_plot')}" 
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics output">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>
                                     </h:panelGrid>
-                                    <h:panelGrid style="width: 420px; padding-left: 5px; margin-left: 20px">
-                                        <div class="ui-message-info" style="background-color: #f9f1e7; border-color: #f9f1e7; padding: 20px 18px 10px 30px; line-height: 23px; font-size: 14px">
-                                            <span class="ui-message-info-icon"/>
-                                            <span class="ui-message-info-detail">
-                                                <b>Tips</b>
-                                            </span>
-                                            <p>
-                                                The scatter plot shows the relationships between SNP effects on exposure against the SNP effects on the outcome, 
-                                                with the slope indicating the causal association
-                                            </p>    
-                                        </div>
+
+                                    <img onerror='this.style.display="none"' 
+                                         style="width:8in; padding-left: 20px"
+                                         src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_scatter_plot')}" alt="ComparePlotImage"/>
+
+                                    <h:panelGrid style="text-align: left; padding-top: 20px">
+                                        <p>
+                                            The scatter plot shows the relationships between SNP effects on exposure against the SNP effects on the outcome, 
+                                            with the slope indicating the causal association
+                                        </p>
                                     </h:panelGrid>
                                 </h:panelGrid>
+
                             </p:tab>
                             <p:tab title ="Funnel Plot">
-                                <h:panelGrid columns = "2">
-                                    <h:panelGrid id="impPane3" style="text-align: center; padding: 20px">
-                                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                                            <p:commandLink  title="Download the detailed data table">
-                                                <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_single')}"/>
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                                            </p:commandLink>
-                                            <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName,'mr_funnel_plot')}" 
-                                                           update=":myGraphPane"
-                                                           oncomplete="PF('graphDialog').show()"
-                                                           title="Customize the graphics output">
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                                            </p:commandLink>
-                                        </h:panelGrid>
-                                        <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_funnel_plot')}" alt="FunnelPlotImage"/>
+                                <h:panelGrid id="impPane3" style="text-align: center; padding: 20px">
+                                    <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                        <p:commandLink  title="Download the detailed data table">
+                                            <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_single')}"/>
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName,'mr_funnel_plot')}" 
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics output">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>
                                     </h:panelGrid>
-                                    <h:panelGrid style="width: 420px; padding-left: 5px; margin-left: 20px">
-                                        <div class="ui-message-info" style="background-color: #f9f1e7; border-color: #f9f1e7; padding: 20px 18px 10px 30px; line-height: 23px; font-size: 14px">
-                                            <span class="ui-message-info-icon"/>
-                                            <span class="ui-message-info-detail">
-                                                <b>Tips</b>
-                                            </span>
-                                            <p>
-                                                A funnel plot’s asymmetry can be used to determine how reliable a certain MR method is. 
-                                                Wider spread implies greater heterogeneity, which may be due to horizontal pleiotropy.
-                                            </p>    
-                                        </div>
+                                    <img onerror='this.style.display="none"' 
+                                         style="width:8in; padding-left: 20px"
+                                         src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_funnel_plot')}" alt="FunnelPlotImage"/>
+
+                                    <h:panelGrid style="text-align: left; padding-top: 20px">
+                                        <p>
+                                            A funnel plot’s asymmetry can be used to determine how reliable a certain MR method is. 
+                                            Wider spread implies greater heterogeneity, which may be due to horizontal pleiotropy.
+                                        </p>
                                     </h:panelGrid>
                                 </h:panelGrid>
                             </p:tab>
                             <p:tab title ="Leave-one-out Sensitivity Analysis">
-                                <h:panelGrid columns = "2">
-                                    <h:panelGrid id="impPane4" style="text-align: center; padding: 20px">
-                                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                                            <p:commandLink  title="Download the detailed data table">
-                                                <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_loo')}"/>
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                                            </p:commandLink>
-                                            <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName, 'mr_leaveoneout_plot')}" 
-                                                           update=":myGraphPane"
-                                                           oncomplete="PF('graphDialog').show()"
-                                                           title="Customize the graphics output">
-                                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                                            </p:commandLink>
-                                        </h:panelGrid>
-                                        <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName, 'mr_leaveoneout_plot')}" alt="SensPlotImage"/>
+                                <h:panelGrid id="impPane4" style="text-align: center; padding: 20px">
+                                    <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                        <p:commandLink  title="Download the detailed data table">
+                                            <p:fileDownload value="#{mgwasBean.downloadCSVFile('mr_res_loo')}"/>
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{mgwasBean.graphicsLnk_action_mr(metRes.compoundName, 'mr_leaveoneout_plot')}" 
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics output">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>
                                     </h:panelGrid>
-                                    <h:panelGrid style="width: 420px; padding-left: 5px; margin-left: 20px">
-                                        <div class="ui-message-info" style="background-color: #f9f1e7; border-color: #f9f1e7; padding: 20px 18px 10px 30px; line-height: 23px; font-size: 14px">
-                                            <span class="ui-message-info-icon"/>
-                                            <span class="ui-message-info-detail">
-                                                <b>Tips</b>
-                                            </span>
-                                            <p>
-                                                To determine whether a single SNP is having a disproportionately larger impact on an association. 
-                                                Each dot represents the MR analysis excluding that specific SNP using IVW method. 
-                                            </p>    
-                                        </div>
+                                    <img onerror='this.style.display="none"'
+                                         style="width:8in; padding-left: 20px"
+                                         src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName, 'mr_leaveoneout_plot')}" alt="SensPlotImage"/>
+                                    <h:panelGrid style="text-align: left; padding-top: 20px">
+                                        <p>
+                                            To determine whether a single SNP is having a disproportionately larger impact on an association. 
+                                            Each dot represents the MR analysis excluding that specific SNP using IVW method. 
+                                        </p>
                                     </h:panelGrid>
                                 </h:panelGrid>
                             </p:tab>

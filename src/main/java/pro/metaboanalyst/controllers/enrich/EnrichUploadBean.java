@@ -87,9 +87,9 @@ public class EnrichUploadBean implements Serializable {
         String[] qVec = DataUtils.getQueryNames(msetOraList, null);
         RDataUtils.setMapData(sb.getRConnection(), qVec);
         if (featType.equals("lipid")) {
-            SearchUtils.crossReferenceExactLipid(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());
         } else {
-            SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
         }
 
         sb.setDataUploaded();
@@ -181,7 +181,7 @@ public class EnrichUploadBean implements Serializable {
             }
             sb.setDataUploaded();
             sb.initNaviTree("enrich-ssp");
-            SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             return "Name check";
         }
         return null;
@@ -236,7 +236,7 @@ public class EnrichUploadBean implements Serializable {
                 sb.addMessage("error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
                 return null;
             }
-            String fileName = DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             sb.setDataUploaded();
             //sb.setCmpdIDType(cmpdIDType);
             sb.initNaviTree("enrich-qea");
@@ -380,7 +380,7 @@ public class EnrichUploadBean implements Serializable {
         String dataType = "conc";
         if (sb.doLogin(dataType, "msetqea", false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadXLSXFile(metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadXLSXFile(sb, metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
             if (RDataUtils.validateMetabolon(RC, fileName)) {
                 String[] metaFactors, compoundIDs;

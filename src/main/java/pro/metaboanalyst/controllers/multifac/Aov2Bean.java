@@ -17,8 +17,7 @@ import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -37,7 +36,15 @@ public class Aov2Bean implements Serializable {
     private SessionBean1 sb;
 
     @Inject
-    private MultifacBean tb;
+    private MultifacBean mfb;
+
+    @Inject
+    private DetailsBean dtb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private final String pageID = "ANOVA2";
 
     private double pthresh = 0.05;
@@ -85,27 +92,25 @@ public class Aov2Bean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/Anova2View.xhtml");
         }
 
-        WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-        if (fp.getFunctionInfos().get("Multifactor ANOVA") != null) {
+        if (wb.getFunctionInfos().get("Multifactor ANOVA") != null) {
             try {
-                FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("Multifactor ANOVA"));
+                FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("Multifactor ANOVA"));
             } catch (Exception ex) {
                 Logger.getLogger(Aov2Bean.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
         if (selectedMetasAnova == null) {
-            selectedMetasAnova = tb.getDiscMetaOpts();
+            selectedMetasAnova = mfb.getDiscMetaOpts();
         }
 
     }
 
     public boolean aov2Bn_action() {
-        Aov2Bean b = (Aov2Bean) DataUtils.findBean("aov2Bean");
 
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_aov2Bn_action(b);
+            jrd.record_aov2Bn_action(this);
             return true;
         }
         System.out.println(selectedMetasAnova.length + "=====selectedMetasAnova");
@@ -113,22 +118,19 @@ public class Aov2Bean implements Serializable {
             sb.addMessage("Error", "Please select exactly two meta-data classes!");
             return false;
         }
-        JavaRecord.record_aov2Bn_action(b);
+        jrd.record_aov2Bn_action(this);
 
-        int res = TimeSeries.initANOVA2(sb.getRConnection(), pthresh, pvalOpt, sb.getTsDesign(), phenOpt, selectedMetasAnova);
+        int res = TimeSeries.initANOVA2(sb, pthresh, pvalOpt, sb.getTsDesign(), phenOpt, selectedMetasAnova);
         switch (res) {
-            case 0:
+            case 0 ->
                 sb.addMessage("Error", RDataUtils.getErrMsg(sb.getRConnection()));
-                break;
-            case -1:
+            case -1 ->
                 sb.addMessage("Error", "Selected metadata must be categorical!");
-                break;
-            default:
-                DetailsBean db = (DetailsBean) DataUtils.findBean("detailsBean");
-                db.update2CompModel("aov2");
-                TimeSeries.plotAOV2(sb, sb.getNewImage("aov2"), "png", 72);
-                tb.setAov2Performed(true);
-                break;
+            default -> {
+                dtb.update2CompModel("aov2");
+                TimeSeries.plotAOV2(sb, sb.getNewImage("aov2"), "png", 150);
+                mfb.setAov2Performed(true);
+            }
         }
         return true;
     }

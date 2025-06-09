@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
 import jakarta.faces.context.FacesContext;
 import java.io.File;
@@ -72,23 +73,99 @@ import pro.metaboanalyst.workflows.WorkflowParameters;
 @Named("downloader")
 public class DownloadBean implements Serializable {
 
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private static final Logger LOGGER = LogManager.getLogger(DownloadBean.class);
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
 
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
+
+    @JsonIgnore
     @Inject
     private WorkflowBean wb;
 
+    @JsonIgnore
     @Inject
-    private FireBaseController fb;
+    private FireBaseController fbc;
 
+    @JsonIgnore
+    @Inject
+    private MsetBean mstb;
+
+    @JsonIgnore
+    @Inject
+    private FigureCaptionUtils fcu;
+
+    @JsonIgnore
+    @Inject
+    private FireUserBean fub;
+
+    @JsonIgnore
+    @Inject
+    private FireBase fbb;
+    
+    @JsonIgnore
+    @Inject
+    private DatabaseClient dbc;
+
+    @JsonIgnore
+    @Inject
+    private FireProjectBean fpb;
+
+    @JsonIgnore
+    @Inject
+    private SpectraProcessBean spb;
+
+    @JsonIgnore
+    @Inject
+    private MummiAnalBean mab;
+    
+    @JsonIgnore
+    @Inject
+    private DetailsBean dtb;
+    
+    @JsonIgnore
+    @Inject
+    private DoseResponseBean drb;
+            
+    @JsonIgnore
+    @Inject
+    private MetaPathStatBean mpb;
+    
+    @JsonIgnore
+    @Inject
+    private  MetaResBean mrb;
+    
+    @JsonIgnore
+    @Inject
+    private MetaLoadBean mlb;
+            
+    @JsonIgnore
+    @Inject
+    private  MgwasBean mgwb;
+        
+    @JsonIgnore
+    @Inject
+    private  MultifacBean mfb;
+    @JsonIgnore
+    @Inject
+    private  LimmaBean lmb;
+
+    @JsonIgnore
+    @Inject
+    private  MetaLoadBean ldb;
+    @JsonIgnore
+    @Inject
+    private  MetaStatBean msb;
+        
     private ResultBean[] downloads;
 
     public ResultBean[] getDownloads() {
         return downloads;
     }
     private String bestNormOpt = "";
-
+    private static final Logger LOGGER = LogManager.getLogger(DownloadBean.class);
     private boolean tableInit = false;
     private List<String> galleryStatImages;
     private List<String> galleryIntImages;
@@ -140,15 +217,13 @@ public class DownloadBean implements Serializable {
         if (!tableInit) {
 
             if (wb.getCalledWorkflows().contains("ORA")) {
-                MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
-                if (mb.getOraBeans() == null) {
-                    mb.populateOraBean();
+                if (mstb.getOraBeans() == null) {
+                    mstb.populateOraBean();
                 }
             }
             if (wb.getCalledWorkflows().contains("QEA")) {
-                MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
-                if (mb.getQeaBeans() == null) {
-                    mb.populateQeaBean();
+                if (mstb.getQeaBeans() == null) {
+                    mstb.populateQeaBean();
                 }
             }
 
@@ -173,7 +248,6 @@ public class DownloadBean implements Serializable {
     }
 
     public void setupGalleryStat(String subFolder) {
-        FigureCaptionUtils fc = (FigureCaptionUtils) DataUtils.findBean("figureCaptionUtils");
 
         galleryImages = new ArrayList<>();
 
@@ -261,9 +335,9 @@ public class DownloadBean implements Serializable {
             String interactiveUrl = (key != null) ? sb.getGraphicsMapLink().get(key) : "#";
 
             if (interactiveUrl.equals("#")) {
-                key = picture.replaceAll("(_\\d+_dpi72)?\\.png$", "");
+                key = picture.replaceAll("(_\\d+_dpi150)?\\.png$", "");
 
-                boolean res = fb.handleNaviCases(key.replaceAll("_demo", ""), "");
+                boolean res = fbc.handleNaviCases(key.replaceAll("_demo", ""), "");
                 if (res) {
                     interactiveUrl = sb.getCurrentNaviUrl();
                 } else {
@@ -272,9 +346,9 @@ public class DownloadBean implements Serializable {
             }
 
             if (picture.contains("_demo")) {
-                galleryImages.add(new GalleryImage(fc.obtainLegend(key) + " (visit to update)", path, "/MetaboAnalyst" + interactiveUrl));
+                galleryImages.add(new GalleryImage(fcu.obtainLegend(key) + " (visit to update)", path, "/MetaboAnalyst" + interactiveUrl));
             } else {
-                galleryImages.add(new GalleryImage(fc.obtainLegend(key), path, "/MetaboAnalyst" + interactiveUrl));
+                galleryImages.add(new GalleryImage(fcu.obtainLegend(key), path, "/MetaboAnalyst" + interactiveUrl));
             }
         }
     }
@@ -298,7 +372,7 @@ public class DownloadBean implements Serializable {
     private static final Pattern BASE_PATTERN //   «qc_multi_pca»
             = Pattern.compile("^(.+?)_\\d+(?:_dpi\\d+)?\\.png$", Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern INDEX_PATTERN //   «1» in qc_multi_pca_1_dpi72.png
+    private static final Pattern INDEX_PATTERN //   «1» in qc_multi_pca_1_dpi150.png
             = Pattern.compile("_(\\d+)(?:_dpi\\d+)?\\.png$", Pattern.CASE_INSENSITIVE);
 
     public void setupDownloadTable(String subFolder) {
@@ -497,7 +571,7 @@ public class DownloadBean implements Serializable {
         Path path = Paths.get(sb.getCurrentUser().getHomeDir() + "/Analysis_Report.html");
         boolean reportAlreadyExists = Files.exists(path);
         if (reportAlreadyExists) {
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Existing report loaded, click on 'Update' to include the latest changes!");
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Existing report loaded, click on 'Update' to include the latest changes!");
         } else {
             generateReport("html");
         }
@@ -515,12 +589,10 @@ public class DownloadBean implements Serializable {
             return;
         }
 
-        FireUserBean fub = (FireUserBean) DataUtils.findBean("fireUserBean");
-
         RConnection RC = sb.getRConnection();
 
         // report generation is not available for utilies modules
-        System.out.println("generateReport for this module ===> " + sb.getAnalType());
+        //System.out.println("generateReport for this module ===> " + sb.getAnalType());
         RDataUtils.setAnalType(RC, sb.getAnalType());
         if (sb.getAnalType().equals("utils")) {
             sb.addMessage("Warn", "Report generation is not available for modules in utilies!");
@@ -531,24 +603,21 @@ public class DownloadBean implements Serializable {
         Gson gson = new Gson();
         String jsonStr = gson.toJson(sb.getReportImgMap());
         //generate share link
-        FireBase fbb = (FireBase) DataUtils.findBean("fireBase");
-        DatabaseClient db = (DatabaseClient) DataUtils.findBean("databaseClient");
 
         try {
-            int res = db.checkMatchingFolderNameProject(sb.getCurrentUser().getName());
+            int res = dbc.checkMatchingFolderNameProject(sb.getCurrentUser().getName());
             if (res == -1) {
-                fb.saveProject("project");
+                fbc.saveProject("project");
             }
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(DownloadBean.class.getName()).log(Level.SEVERE, null, ex);
         }
-        String rpath = ab.getRscriptsLoaderPath();
+        //String rpath = ab.getRscriptsLoaderPath();
         RCenter.loadReporterFuns(sb, sb.getAnalType());
 
         RCenter.setReportImgMap(sb.getRConnection(), jsonStr);
 
-        FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
-        ProjectModel currentProject = pb.getSelectedProject();
+        ProjectModel currentProject = fpb.getSelectedProject();
         boolean projectSaved = false;
         if (currentProject != null) {
             if (currentProject.getFolderName().equals(sb.getCurrentUser().getName())) {
@@ -556,14 +625,14 @@ public class DownloadBean implements Serializable {
             }
         }
 
-        if (pb.isBatchModeEnabled()) {
-            String newJH = RCenter.updateJSFHistory(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+        if (fpb.isBatchModeEnabled()) {
+            String newJH = RCenter.updateJSFHistory(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             if (!newJH.equals("")) {
                 System.out.println("Found a str to update the jsf history *_*");
             } else {
                 System.out.println("Cannot find a str to update the jsf history");
             }
-            String[] graphicsMap_str = RCenter.extractGraphicsMap(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+            String[] graphicsMap_str = RCenter.extractGraphicsMap(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             HashMap<String, String> graphicsMap = sb.getGraphicsMap();
             String[] kc; // key + cmd
             for (String s : graphicsMap_str) {
@@ -573,7 +642,7 @@ public class DownloadBean implements Serializable {
                 }
             }
             // resume image map
-            String[] ImgMap_str = RCenter.extractImgMap(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+            String[] ImgMap_str = RCenter.extractImgMap(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             String[] kcx; // key + cmd
             HashMap<String, Integer> imgMap = sb.getImgMap();
             for (String s : ImgMap_str) {
@@ -585,8 +654,8 @@ public class DownloadBean implements Serializable {
             sb.setImgMap(imgMap);
         }
 
-        fb.setShareableLink(ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + DataUtils.generateToken(sb.getCurrentUser().getName()));
-        String sharableLink = fb.getShareableLink();
+        fbc.setShareableLink(ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + DataUtils.generateToken(sb.getCurrentUser().getName()));
+        String sharableLink = fbc.getShareableLink();
         RCenter.SetSharingLink(RC, sharableLink);
         String filePath;
         if (format.equals("slides")) {
@@ -599,9 +668,8 @@ public class DownloadBean implements Serializable {
         RCenter.setReportFormat(sb.getRConnection(), format);
 
         // boolean res = RCenter.prepareReport(RC, usr.getName(), fb.getShareableLink());
-        boolean res = RCenter.prepareReport(RC, fub.getEmail(), fb.getShareableLink());
+        boolean res = RCenter.prepareReport(RC, fub.getEmail(), fbc.getShareableLink());
         if (sb.getDataType().equals("spec")) {
-            SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
             if (format.equals("slides")) {
                 spb.internalizeImage("Analysis_Presentation.pptx");
             } else {
@@ -615,12 +683,12 @@ public class DownloadBean implements Serializable {
             } else {
 
                 if (reportAlreadyExists) {
-                    DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report has been successfully updated!");
+                    DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report has been successfully updated!");
                 } else {
                     if (projectSaved) {
-                        DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report has been successfully created!");
+                        DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report has been successfully created!");
                     } else {
-                        DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report and project have been successfully created!");
+                        DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report and project have been successfully created!");
 
                     }
                 }
@@ -656,14 +724,6 @@ public class DownloadBean implements Serializable {
             return false;
         }
 
-        FireUserBean fub = (FireUserBean) DataUtils.findBean("fireUserBean");
-        /*
-        if (fub.getEmail() == null) {
-            fb.setNaviUrlAfterLogin(sb.getCurrentNaviUrl());
-            DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please log in first!");
-            return;
-        }
-         */
         RConnection RC = sb.getRConnection();
 
         // report generation is not available for utilies modules
@@ -679,24 +739,21 @@ public class DownloadBean implements Serializable {
         Gson gson = new Gson();
         String jsonStr = gson.toJson(sb.getReportImgMap());
         //generate share link
-        FireBase fbb = (FireBase) DataUtils.findBean("fireBase");
-        DatabaseClient db = (DatabaseClient) DataUtils.findBean("databaseClient");
 
         try {
-            int res = db.checkMatchingFolderNameProject(sb.getCurrentUser().getName());
+            int res = dbc.checkMatchingFolderNameProject(sb.getCurrentUser().getName());
             if (res == -1) {
-                fb.saveProject("project");
+                fbc.saveProject("project");
             }
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(DownloadBean.class.getName()).log(Level.SEVERE, null, ex);
         }
-        String rpath = ab.getRscriptsLoaderPath();
+        //String rpath = ab.getRscriptsLoaderPath();
         RCenter.loadReporterFuns(sb, module);
 
         RCenter.setReportImgMap(sb.getRConnection(), jsonStr);
 
-        FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
-        ProjectModel currentProject = pb.getSelectedProject();
+        ProjectModel currentProject = fpb.getSelectedProject();
         boolean projectSaved = false;
         if (currentProject != null) {
             if (currentProject.getFolderName().equals(sb.getCurrentUser().getName())) {
@@ -704,14 +761,14 @@ public class DownloadBean implements Serializable {
             }
         }
 
-        if (pb.isBatchModeEnabled()) {
-            String newJH = RCenter.updateJSFHistory(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+        if (fpb.isBatchModeEnabled()) {
+            String newJH = RCenter.updateJSFHistory(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             if (!newJH.equals("")) {
                 System.out.println("Found a str to update the jsf history *_*");
             } else {
                 System.out.println("Cannot find a str to update the jsf history");
             }
-            String[] graphicsMap_str = RCenter.extractGraphicsMap(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+            String[] graphicsMap_str = RCenter.extractGraphicsMap(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             HashMap<String, String> graphicsMap = sb.getGraphicsMap();
             String[] kc; // key + cmd
             for (String s : graphicsMap_str) {
@@ -721,7 +778,7 @@ public class DownloadBean implements Serializable {
                 }
             }
             // resume image map
-            String[] ImgMap_str = RCenter.extractImgMap(sb.getRConnection(), fbb.getProjectDBPath(), pb.getTemplateToken());
+            String[] ImgMap_str = RCenter.extractImgMap(sb.getRConnection(), fbb.getProjectDBPath(), fpb.getTemplateToken());
             String[] kcx; // key + cmd
             HashMap<String, Integer> imgMap = sb.getImgMap();
             for (String s : ImgMap_str) {
@@ -733,9 +790,9 @@ public class DownloadBean implements Serializable {
             sb.setImgMap(imgMap);
         }
 
-        fb.setShareableLink(ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + DataUtils.generateToken(sb.getCurrentUser().getName()));
-        String sharableLink = fb.getShareableLink();
-        System.out.println("sharableLink ===> " + sharableLink);
+        fbc.setShareableLink(ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + DataUtils.generateToken(sb.getCurrentUser().getName()));
+        String sharableLink = fbc.getShareableLink();
+        //System.out.println("sharableLink ===> " + sharableLink);
         RCenter.SetSharingLink(RC, sharableLink);
 
         Path path = Paths.get(sb.getCurrentUser().getHomeDir() + "/Analysis_Report_" + module + ".html");
@@ -743,24 +800,23 @@ public class DownloadBean implements Serializable {
         RCenter.setReportFormat(sb.getRConnection(), "html");
 
         // boolean res = RCenter.prepareReport(RC, usr.getName(), fb.getShareableLink());
-        boolean res = RCenter.prepareReportByModule(RC, fub.getEmail(), fb.getShareableLink(), module);
+        boolean res = RCenter.prepareReportByModule(RC, fub.getEmail(), fbc.getShareableLink(), module);
         wb.setReportModule(module);
         sb.setAnalType(module);
         RDataUtils.setAnalType(RC, module);
         if (sb.getDataType().equals("spec")) {
-            SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
             spb.internalizeImage("Analysis_Report_" + module + ".html");
         }
 
         if (res) {
 
             if (reportAlreadyExists) {
-                DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report successfully updated!");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report successfully updated!");
             } else {
                 if (projectSaved) {
-                    DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report successfully created!");
+                    DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report successfully created!");
                 } else {
-                    DataUtils.doRedirectWithGrowl("/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report and project have been successfully created!");
+                    DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/ReportView.xhtml", "info", "Report and project have been successfully created!");
 
                 }
             }
@@ -960,9 +1016,9 @@ public class DownloadBean implements Serializable {
                     newDataType = "mass_table";
                     treeOpt = "mummichgo-table";
                     //mummi specif updates
-                    MummiAnalBean mb = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
-                    mb.setDisabledV2(true);
-                    mb.setModuleSwitch(true);
+            
+                    mab.setDisabledV2(true);
+                    mab.setModuleSwitch(true);
                 } else {
                     newDataType = "pktable";
                 }
@@ -972,9 +1028,8 @@ public class DownloadBean implements Serializable {
                 //update the data type
                 newDataType = "mass_table";
                 //mummi specif updates
-                MummiAnalBean mb = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
-                mb.setDisabledV2(true);
-                mb.setModuleSwitch(true);
+                mab.setDisabledV2(true);
+                mab.setModuleSwitch(true);
             }
 
             if (mdlOpt.equals("pathway")) {
@@ -994,8 +1049,7 @@ public class DownloadBean implements Serializable {
     }
 
     private void prepData(String newDataType, String newAnalType, String treeType) {
-        sb.setDataUploaded();
-        sb.setDataProcessed(true);
+        sb.setDataProcessed();
         sb.setDataType(newDataType);
         sb.setAnalType(newAnalType);
         sb.setPaired(false);
@@ -1064,14 +1118,14 @@ public class DownloadBean implements Serializable {
         // Step 2: Retrieve bestNormOpt
         if (summaryNormResults.containsKey("bestNormOpt")) {
             Object bestNormOptObj = summaryNormResults.get("bestNormOpt");
-            if (bestNormOptObj instanceof REXPString) {
+            if (bestNormOptObj instanceof REXPString rEXPString) {
                 try {
-                    bestNormOpt = ((REXPString) bestNormOptObj).asString(); // Convert REXPString to Java String
+                    bestNormOpt = rEXPString.asString(); // Convert REXPString to Java String
                 } catch (Exception e) {
                     System.err.println("Error converting bestNormOpt to String: " + e.getMessage());
                 }
-            } else if (bestNormOptObj instanceof String) {
-                bestNormOpt = (String) bestNormOptObj;
+            } else if (bestNormOptObj instanceof String string) {
+                bestNormOpt = string;
             } else {
                 System.err.println("Unexpected type for bestNormOpt: " + bestNormOptObj.getClass().getName());
             }
@@ -1095,41 +1149,41 @@ public class DownloadBean implements Serializable {
 
             // A) numDE
             int numDE = -1;
-            if (details.get("numDE") instanceof Number) {
-                numDE = ((Number) details.get("numDE")).intValue();
+            if (details.get("numDE") instanceof Number number) {
+                numDE = number.intValue();
             }
 
             // B) normality description
             String normalityDesc = null;
-            if (details.get("normalityInfo") instanceof String) {
-                normalityDesc = (String) details.get("normalityInfo");
+            if (details.get("normalityInfo") instanceof String string) {
+                normalityDesc = string;
             } else {
                 normalityDesc = "No Mardia test results";
             }
 
             // C) PCA group separation info
             String pcaPermInfo = null;
-            if (details.get("pcaPermInfo") instanceof String) {
-                pcaPermInfo = (String) details.get("pcaPermInfo");
+            if (details.get("pcaPermInfo") instanceof String string) {
+                pcaPermInfo = string;
             } else {
                 pcaPermInfo = "No PCA PERMANOVA results";
             }
 
             int numDEpval = -1;
-            if (details.get("numDEpval") instanceof Number) {
-                numDEpval = ((Number) details.get("numDEpval")).intValue();
+            if (details.get("numDEpval") instanceof Number number) {
+                numDEpval = number.intValue();
             }
 
             int numDEfc = -1;
-            if (details.get("numDEfc") instanceof Number) {
-                numDEfc = ((Number) details.get("numDEfc")).intValue();
+            if (details.get("numDEfc") instanceof Number number) {
+                numDEfc = number.intValue();
             }
 
             // D) Param description (using normOpt)
             String paramDescription = normOpt;
 
             // E) Image path for PCA
-            String imageName = sb.getCurrentUser().getOrigRelativeDir() + File.separator + normOpt + File.separator + sb.getCurrentImage("pca_score2d") + "dpi72.png";
+            String imageName = sb.getCurrentUser().getOrigRelativeDir() + File.separator + normOpt + File.separator + sb.getCurrentImage("pca_score2d") + "dpi150.png";
 
             // Create a new RunSummary
             RunSummary summary = new RunSummary(
@@ -1185,7 +1239,6 @@ public class DownloadBean implements Serializable {
     }
 
     public void loadResults(String subFolder) {
-        FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
 
         //Change path
         sb.getCurrentUser().setHomeDir(sb.getCurrentUser().getOrigHomeDir() + "/" + subFolder);
@@ -1199,8 +1252,8 @@ public class DownloadBean implements Serializable {
         RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getHomeDir() + "/");
         RCenter.setResourceDir(sb.getRConnection(), ab.getRealPath());
 
-        String javaHistory = fb.readJsonStringFromFile(sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
-        int res1 = fb.loadJavaHistory(javaHistory);
+        String javaHistory = fbc.readJsonStringFromFile(sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
+        int res1 = fbc.loadJavaHistory(javaHistory);
         for (String module : wb.getModuleNames()) {
             RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), module);
         }
@@ -1212,14 +1265,10 @@ public class DownloadBean implements Serializable {
     }
 
     public boolean containsModule(String module) {
-        boolean res = false;
+        boolean res;
         if (sb.getAnalType().equals(module)) {
             res = true;
-        } else if (wb.getModuleNames().contains(module)) {
-            res = true;
-        } else {
-            res = false;
-        }
+        } else res = wb.getModuleNames().contains(module);
 
         return res;
     }
@@ -1239,11 +1288,10 @@ public class DownloadBean implements Serializable {
         selectedWorkflowParams = opt;
     }
 
-    private static int getAnalysisOrderIndex(String figure) {
-        FigureCaptionUtils fc = (FigureCaptionUtils) DataUtils.findBean("figureCaptionUtils");
+    private int getAnalysisOrderIndex(String figure) {
 
-        for (int i = 0; i < fc.getANALYSIS_ORDER().size(); i++) {
-            if (figure.startsWith(fc.getANALYSIS_ORDER().get(i))) {
+        for (int i = 0; i < fcu.getANALYSIS_ORDER().size(); i++) {
+            if (figure.startsWith(fcu.getANALYSIS_ORDER().get(i))) {
                 return i;
             }
         }
@@ -1251,40 +1299,38 @@ public class DownloadBean implements Serializable {
     }
 
     public void populateResTable() {
-        DetailsBean bean = (DetailsBean) DataUtils.findBean("detailsBean");
 
         if (containsModule("stat")) {
             //if (naviContainsUrl("/Secure/analysis/VolcanoView.xhtml")) {
-            bean.setInit(false);
-            bean.setupDetailsTable(true, "volcano");
+            dtb.setInit(false);
+            dtb.setupDetailsTable(true, "volcano");
             //}else if (naviContainsUrl("/Secure/analysis/PLSDAView.xhtml")) {
-            bean.setupDetailsTable(true, "pls.vip");
+            dtb.setupDetailsTable(true, "pls.vip");
             //}else if (naviContainsUrl("/Secure/analysis/PatternView.xhtml")) {
-            bean.setupDetailsTable(true, "template");
+            dtb.setupDetailsTable(true, "template");
             //}else if (naviContainsUrl("/Secure/analysis/RFView.xhtml")) {
-            bean.setupDetailsTable(true, "rf");
+            dtb.setupDetailsTable(true, "rf");
             //}
-            bean.setupDetailsTable(true, "opls.vip");
-            bean.setupDetailsTable(true, "spls.loadings");
-            bean.setupDetailsTable(true, "pca");
+            dtb.setupDetailsTable(true, "opls.vip");
+            dtb.setupDetailsTable(true, "spls.loadings");
+            dtb.setupDetailsTable(true, "pca");
 
-            bean.setupDetailsTable(true, "svm");
-            bean.setupDetailsTable(true, "anova");
+            dtb.setupDetailsTable(true, "svm");
+            dtb.setupDetailsTable(true, "anova");
 
-            bean.setupDetailsTable(true, "ebam");
-            bean.setupDetailsTable(true, "sam");
+            dtb.setupDetailsTable(true, "ebam");
+            dtb.setupDetailsTable(true, "sam");
 
         }
         if (containsModule("mf")) {
-            bean.setupDetailsTable(true, "cov");
-            bean.setupDetailsTable(true, "anova2");
-            bean.setupDetailsTable(true, "multirf");
+            dtb.setupDetailsTable(true, "cov");
+            dtb.setupDetailsTable(true, "anova2");
+            dtb.setupDetailsTable(true, "multirf");
         }
         if (containsModule("dose")) {
-            bean.setupDetailsTable(true, "dose-de");
-            DoseResponseBean doseBean = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
-            if (doseBean.isBmdAnal()) {
-                doseBean.populateDoseResBeans();
+            dtb.setupDetailsTable(true, "dose-de");
+            if (drb.isBmdAnal()) {
+                drb.populateDoseResBeans();
             }
         }
 
@@ -1299,20 +1345,17 @@ public class DownloadBean implements Serializable {
             );
 
             for (String a : analyses) {
-                bean.setupDetailsTable(true, a);
+                dtb.setupDetailsTable(true, a);
             }
             //bean.setupDetailsTable(true, "enrichment_network");
         }
 
         if (containsModule("metapaths")) {
-            MetaPathStatBean mp = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
-            if (mp.getResBeans() == null) {
-                mp.populateResBeans();
+            if (mpb.getResBeans() == null) {
+                mpb.populateResBeans();
             }
         }
         if (containsModule("metadata")) {
-            MetaResBean mr = (MetaResBean) DataUtils.findBean("metaResBean");
-            MetaLoadBean mb = (MetaLoadBean) DataUtils.findBean("loadBean");
 
             List<String> analyses = List.of(
                     "metap",
@@ -1320,22 +1363,22 @@ public class DownloadBean implements Serializable {
                     "merge"
             );
             for (String a : analyses) {
-                mb.setAnalMethod(a);
-                mr.populateResBeans();
+                mlb.setAnalMethod(a);
+                mrb.populateResBeans();
             }
 
         }
         if (containsModule("mgwas")) {
-            MgwasBean mg = (MgwasBean) DataUtils.findBean("mgwasBean");
+        
             if (RDataUtils.checkDetailsTablePerformed(sb.getRConnection(), "harmonized.dat")) {
-                mg.setupTable("harmonized.dat");
+                mgwb.setupTable("harmonized.dat");
             }
             if (RDataUtils.checkDetailsTablePerformed(sb.getRConnection(), "mr_results_merge")) {
-                mg.setupMRResTable();
+                mgwb.setupMRResTable();
             }
         }
         if (containsModule("pathinteg")) {
-            bean.setupDetailsTable(true, "match_integ");
+            dtb.setupDetailsTable(true, "match_integ");
         }
 
     }
@@ -1352,47 +1395,41 @@ public class DownloadBean implements Serializable {
 
     public String generateSummaryLM() {
         StringBuilder summary = new StringBuilder();
-        MultifacBean multifacBean = (MultifacBean) DataUtils.findBean("multifacBean");
-        LimmaBean lmBean = (LimmaBean) DataUtils.findBean("lmBean");
-
+     
         // Retrieve selections from multifacBean and lmBean
-        String comparisonOption = multifacBean.getNestCompOpt();
-        String studyDesign = multifacBean.getCompDesign();
-        String primaryMetadata = lmBean.getAnalysisMeta();
-        String secondaryMetadata = lmBean.getAnalysisMeta2();
-        String referenceGroup = lmBean.getReferenceGroupFromAnalysisMeta();
-        String contrast = lmBean.getContrastFromAnalysisMeta();
-        List<String> covariates = Arrays.asList(lmBean.getAdjustedMeta());
-        String blockingFactor = lmBean.getBlockFac();
-        String pValueCutoff = lmBean.getCovPThresh();
-        String pValueType = lmBean.getCovPvalType();
+        String comparisonOption = mfb.getNestCompOpt();
+        String studyDesign = mfb.getCompDesign();
+        String primaryMetadata = lmb.getAnalysisMeta();
+        String secondaryMetadata = lmb.getAnalysisMeta2();
+        String referenceGroup = lmb.getReferenceGroupFromAnalysisMeta();
+        String contrast = lmb.getContrastFromAnalysisMeta();
+        List<String> covariates = Arrays.asList(lmb.getAdjustedMeta());
+        String blockingFactor = lmb.getBlockFac();
+        String pValueCutoff = lmb.getCovPThresh();
+        String pValueType = lmb.getCovPvalType();
 
         // Add comparison option
         switch (comparisonOption) {
-            case "ref":
-                summary.append("- Comparison: Against a common control\n");
-                break;
-            case "custom":
-                summary.append("- Comparison: Specific comparison\n");
-                break;
-            case "inter":
-                summary.append("- Comparison: Interactivity\n");
-                break;
-            case "nested":
-                summary.append("- Comparison: Nested comparisons\n");
-                break;
-            default:
-                summary.append("- Comparison: Not specified\n");
-                break;
+            case "ref" -> summary.append("- Comparison: Against a common control\n");
+            case "custom" -> summary.append("- Comparison: Specific comparison\n");
+            case "inter" -> summary.append("- Comparison: Interactivity\n");
+            case "nested" -> summary.append("- Comparison: Nested comparisons\n");
+            default -> summary.append("- Comparison: Not specified\n");
         }
 
-        // Add study design
-        if ("cov".equals(studyDesign)) {
-            summary.append("- Study Design: Single Factor\n");
-        } else if ("nest".equals(studyDesign)) {
-            summary.append("- Study Design: Two Factors\n");
-        } else {
+        if (null == studyDesign) {
             summary.append("- Study Design: Not specified\n");
+        } else // Add study design
+        switch (studyDesign) {
+            case "cov":
+                summary.append("- Study Design: Single Factor\n");
+                break;
+            case "nest":
+                summary.append("- Study Design: Two Factors\n");
+                break;
+            default:
+                summary.append("- Study Design: Not specified\n");
+                break;
         }
 
         // Add primary metadata
@@ -1434,25 +1471,29 @@ public class DownloadBean implements Serializable {
     }
 
     public String generateMetaAnalysisSummary() {
-        MetaLoadBean mb = (MetaLoadBean) DataUtils.findBean("loadBean");
-        MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
+      
         StringBuilder summary = new StringBuilder("<ul>"); // Start an HTML unordered list
 
-        String analysisMethod = mb.getAnalMethod(); // Get the selected meta-analysis method
+        String analysisMethod = ldb.getAnalMethod(); // Get the selected meta-analysis method
 
-        if ("metap".equals(analysisMethod)) {
-            summary.append("<li><b>Analysis Method:</b> P-value Combination</li>");
-            summary.append("<li><b>Combination Method:</b> ").append(ms.getMetapMethod()).append("</li>");
-            summary.append("<li><b>P-value Significance Level:</b> ").append(ms.getMetpSigLvl()).append("</li>");
-        } else if ("votecount".equals(analysisMethod)) {
-            summary.append("<li><b>Analysis Method:</b> Vote Counting</li>");
-            summary.append("<li><b>Significance Level:</b> ").append(ms.getVcSigLvl()).append("</li>");
-            summary.append("<li><b>Minimum Votes Required:</b> ").append(ms.getMinVote()).append("</li>");
-        } else if ("merge".equals(analysisMethod)) {
-            summary.append("<li><b>Analysis Method:</b> Direct Merging</li>");
-            summary.append("<li><b>Significance Level:</b> ").append(ms.getDmSigLvl()).append("</li>");
-        } else {
+        if (null == analysisMethod) {
             summary.append("<li><b>Analysis Method:</b> Not Specified</li>");
+        } else switch (analysisMethod) {
+            case "metap" -> {
+                summary.append("<li><b>Analysis Method:</b> P-value Combination</li>");
+                summary.append("<li><b>Combination Method:</b> ").append(msb.getMetapMethod()).append("</li>");
+                summary.append("<li><b>P-value Significance Level:</b> ").append(msb.getMetpSigLvl()).append("</li>");
+            }
+            case "votecount" -> {
+                summary.append("<li><b>Analysis Method:</b> Vote Counting</li>");
+                summary.append("<li><b>Significance Level:</b> ").append(msb.getVcSigLvl()).append("</li>");
+                summary.append("<li><b>Minimum Votes Required:</b> ").append(msb.getMinVote()).append("</li>");
+            }
+            case "merge" -> {
+                summary.append("<li><b>Analysis Method:</b> Direct Merging</li>");
+                summary.append("<li><b>Significance Level:</b> ").append(msb.getDmSigLvl()).append("</li>");
+            }
+            default -> summary.append("<li><b>Analysis Method:</b> Not Specified</li>");
         }
 
         summary.append("</ul>"); // Close the unordered list

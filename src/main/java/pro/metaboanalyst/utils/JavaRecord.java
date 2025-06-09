@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.utils;
 
+import jakarta.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 import org.rosuda.REngine.Rserve.RConnection;
@@ -49,8 +50,7 @@ import pro.metaboanalyst.workflows.WorkflowBean;
  * @author zgy
  */
 public class JavaRecord {
-
-    private static final WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
+    private static WorkflowBean wb;
 
     public static void record_skipButton_action_default(SessionBean1 sb) {
         FunctionInfo functionInfo = new FunctionInfo("Sanity Check", "ProcessBean.skipButton_action_default", "Sanity check function");

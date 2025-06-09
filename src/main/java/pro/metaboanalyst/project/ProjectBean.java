@@ -21,14 +21,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.faces.application.FacesMessage;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
-import org.primefaces.model.DefaultTreeNode;
-import org.primefaces.model.TreeNode;
 import pro.metaboanalyst.models.User;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
@@ -51,15 +47,25 @@ public class ProjectBean implements Serializable {
 
     @Inject
     private ApplicationBean1 ab;
+
     @Inject
     private SessionBean1 sb;
+
     @Inject
     private UserLoginBean ulb;
 
-    public UserLoginBean getUlb() {
-        return ulb;
-    }
+    @Inject
+    private SpectraProcessBean spb;
 
+    @Inject
+    private SpectraUploadBean sub;
+
+    @Inject
+    private SpectraControlBean scb;
+
+    @Inject
+    private SpectraParamBean spmb;
+    
     private final static int PROJECT_LIMITS = 10;
 
     //Project details
@@ -88,9 +94,7 @@ public class ProjectBean implements Serializable {
 
     @PostConstruct
     public void init() {
-         UserLoginBean ulb = (UserLoginBean) DataUtils.findBean("userLoginBean");
-
-         mdbb = ulb.getMdbb();
+        mdbb = ulb.getMdbb();
     }
 
     public MariaDBController getMdbb() {
@@ -115,11 +119,11 @@ public class ProjectBean implements Serializable {
                 case "genap" ->
                     "https://genap.metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml?funcNm=LoadProject&ID=" + UserIden + "_" + folderNum;
                 default ->
-                     ab.getBaseUrlDyn() + "faces/AjaxHandler.xhtml?funcNm=LoadProject&ID=" + UserIden + "_" + folderNum;
+                    ab.getBaseUrlDyn() + "faces/AjaxHandler.xhtml?funcNm=LoadProject&ID=" + UserIden + "_" + folderNum;
             }; //  if (ab.isOnGenapPublicDev()) {
             //      reDirectLink = "http://206.12.89.229:8080/MetaboAnalyst/faces/AjaxHandler.xhtml?funcNm=LoadProject?ID=" + UserIden + "_" + folderNum;
             //  }
-            DataUtils.doRedirect(reDirectLink);
+            DataUtils.doRedirect(reDirectLink, ab);
         }
     }
 
@@ -141,7 +145,7 @@ public class ProjectBean implements Serializable {
     public String loadnewProject() {
         //Process Naive status
         boolean ok = sb.doLogin("spec", "raw", false, false);
-        if(!ok){
+        if (!ok) {
             return null;
         }
         //Here we get the guest folder name
@@ -214,7 +218,6 @@ public class ProjectBean implements Serializable {
         SpectraControlBean scb = null;
         long jobID = 0;
         String jobStatus = ""; //NOTE: status is the recorded 'status' from mysql db, while the 'jobStatus' is the real status of a certain job from slurm.
-        SpectraProcessBean spb = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
 
         //read job status + guest folder
         String readQuery = "select status,projectFolderNM,dataplace from devUsers.projects where userNM ="
@@ -234,7 +237,7 @@ public class ProjectBean implements Serializable {
                 //dataPlace = res.getString(3);
             }
         } catch (SQLException ex) {
-            sb.addMessage("error","Project server is down, report this code: xxxp00016 to administrator !");
+            sb.addMessage("error", "Project server is down, report this code: xxxp00016 to administrator !");
             return null;
         } finally {
             mdbb.disconnect();
@@ -295,7 +298,6 @@ public class ProjectBean implements Serializable {
                 }
             }
 
-            SpectraUploadBean sub = (SpectraUploadBean) DataUtils.findBean("specLoader");
             sub.setUploadedFileNames(uploadedFiles);
 
             if (groups > 0) {
@@ -312,7 +314,6 @@ public class ProjectBean implements Serializable {
 
         if ("submitted".equals(status.toLowerCase()) || "finished".equals(status.toLowerCase())) {
 
-            scb = (SpectraControlBean) DataUtils.findBean("spectraController"); //grab this bean first
             scb.setDataConfirmed(true);
 
             // Obtain file inclusion info
@@ -327,8 +328,7 @@ public class ProjectBean implements Serializable {
 
                 String ModeInfo = RSpectraUtils.retrieveModeInfo(RC);
                 if ("auto".equals(ModeInfo)) {
-                    SpectraParamBean sppb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
-                    sppb.setMeth("auto");
+                    spmb.setMeth("auto");
                 }
 
                 RList reslist = RDataUtils.readFilesInclusion(RC);
@@ -336,7 +336,7 @@ public class ProjectBean implements Serializable {
                 scb.setTotalNumberOfSamples(reslist.at(1).asInteger());
             } catch (Exception ex) {
                 scb.setIncludedFileNamesString("");
-                sb.addMessage("error","Rserve seems not working correctly. The result might be influenced !");
+                sb.addMessage("error", "Rserve seems not working correctly. The result might be influenced !");
             }
 
             // Obtain job ID from mysql db
@@ -376,7 +376,7 @@ public class ProjectBean implements Serializable {
                 if (jobID == 0) {
                     sb.addMessage("error", "Project server is down, report this code: xxxp00019 to administrator !");
                 } else {
-                    jobStatus = SchedulerUtils.getJobStatus(jobID);
+                    jobStatus = SchedulerUtils.getJobStatus(jobID, sb.getCurrentUser().getHomeDir());
                 }
 
                 scb.setCurrentJobStatus(jobStatus);
@@ -522,7 +522,6 @@ public class ProjectBean implements Serializable {
 
         // initialize/grab some parameters and beans
         String partialID = sb.getPartialId();
-        SpectraControlBean scb = (SpectraControlBean) DataUtils.findBean("spectraController");
         String jobStatus = null;
         String jobFolder;
         //verify partial link expiration
@@ -593,7 +592,6 @@ public class ProjectBean implements Serializable {
             }
         }
 
-        SpectraUploadBean sub = (SpectraUploadBean) DataUtils.findBean("specLoader");
         sub.setUploadedFileNames(uploadedFiles);
         scb.setDataConfirmed(true);
         if (groups > 0) {
@@ -616,8 +614,7 @@ public class ProjectBean implements Serializable {
 
             String ModeInfo = RSpectraUtils.retrieveModeInfo(RC);
             if ("auto".equals(ModeInfo)) {
-                SpectraParamBean spb = (SpectraParamBean) DataUtils.findBean("spectraParamer");
-                spb.setMeth("auto");
+                spmb.setMeth("auto");
             }
 
             RList reslist = RDataUtils.readFilesInclusion(RC);
@@ -652,7 +649,7 @@ public class ProjectBean implements Serializable {
                 sb.addMessage("error",
                         "Project server is down, report this code: xxxp00019 to administrator !");
             } else {
-                jobStatus = SchedulerUtils.getJobStatus(jobID);
+                jobStatus = SchedulerUtils.getJobStatus(jobID, sb.getCurrentUser().getHomeDir());
             }
 
             scb.setCurrentJobStatus(jobStatus);
@@ -855,13 +852,13 @@ public class ProjectBean implements Serializable {
         User currentUser;
         RConnection RC;
         if (!isPartial) {
-            currentUser = DataUtils.loadRawUser(guestName);
+            currentUser = DataUtils.loadRawUser(guestName, ab);
             RC = RCenter.getRConnectionRawSharing(currentUser.getHomeDir(), ab.getRscriptLoaderPath(), analType);
         } else if (analType.equals("raw") && ab.shouldUseScheduler()) {
-            currentUser = DataUtils.loadRawUser(guestName);
+            currentUser = DataUtils.loadRawUser(guestName, ab);
             RC = RCenter.getRConnectionRawSharing(currentUser.getHomeDir(), ab.getRscriptLoaderPath(), analType);
         } else {
-            currentUser = DataUtils.loadUser(guestName);
+            currentUser = DataUtils.loadUser(guestName, ab.getRealUserHomePath());
             RC = RCenter.getCleanRConnection();
             RCenter.recordRserveConnection(RC, currentUser.getHomeDir() + guestName);
         }

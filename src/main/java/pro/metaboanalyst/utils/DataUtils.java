@@ -10,7 +10,8 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.Bean;
+import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.enterprise.util.AnnotationLiteral;
 import java.io.BufferedOutputStream;
@@ -87,6 +88,7 @@ public class DataUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(DataUtils.class);
 
+    /*
     @SuppressWarnings("unchecked")
     public static Object findBean(String beanName) { // DOESN't work with project saving.
         Instance<Object> instance = CDI.current().select(new NamedLiteral(beanName));
@@ -97,7 +99,7 @@ public class DataUtils {
         FacesContext context = FacesContext.getCurrentInstance();
         return (T) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
     }
-
+     */
     // NamedLiteral class to represent @Named(beanName)
     public static class NamedLiteral extends AnnotationLiteral<jakarta.inject.Named> implements jakarta.inject.Named {
 
@@ -759,18 +761,15 @@ public class DataUtils {
         return output.toString();
     }
 
-    public static String uploadFile(UploadedFile file, String homeDir, String outFileNm, boolean onServer) {
+    public static String uploadFile(SessionBean1 sb, UploadedFile file, String homeDir, String outFileNm, boolean onServer) {
 
         if (file == null || file.getSize() == 0) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Empty file?");
             return null;
         }
 
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-        if (onServer & file.getSize() > ab.getMAX_UPLOAD_SIZE()) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-            sb.addMessage("Error", "The file size exceeds limit:" + ab.getMAX_UPLOAD_SIZE());
+        if (onServer & file.getSize() > ApplicationBean1.MAX_UPLOAD_SIZE) {
+            sb.addMessage("Error", "The file size exceeds limit:" + ApplicationBean1.MAX_UPLOAD_SIZE);
             return null;
         }
 
@@ -796,24 +795,20 @@ public class DataUtils {
                 LOGGER.error("uploadFile", e);
             }
         } else {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Only tab delimited (.txt) or comma separated (.csv) files are accepted. If file is mzTab, ensure it has been validated!");
             return null;
         }
         return fileName;
     }
 
-    public static String uploadMSPFile(UploadedFile file, String homeDir, String outFileNm, boolean onPublicServer) {
+    public static String uploadMSPFile(SessionBean1 sb, UploadedFile file, String homeDir, String outFileNm, boolean onPublicServer) {
 
         if (file == null || file.getSize() == 0) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Empty file?");
             return null;
         }
 
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
         if (onPublicServer & file.getSize() > 5000000) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "The file size exceeds limit: 5M");
             return null;
         }
@@ -840,7 +835,6 @@ public class DataUtils {
                 LOGGER.error("uploadFile", e);
             }
         } else {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Only *msp or *.mgf file is accepted!");
             return null;
         }
@@ -1289,7 +1283,7 @@ public class DataUtils {
         }
     }
 
-    public static void doRedirectWithGrowl(String url, String messageType, String message) {
+    public static void doRedirectWithGrowl(SessionBean1 sb, String url, String messageType, String message) {
         try {
             FacesContext facesContext = FacesContext.getCurrentInstance();
             Flash flash = facesContext.getExternalContext().getFlash();
@@ -1300,14 +1294,13 @@ public class DataUtils {
 
             // Perform the redirect
             facesContext.getExternalContext().redirect(url);
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage(messageType, message);
         } catch (IOException ioe) {
             LOGGER.error("doRedirect", ioe);
         }
     }
 
-    public static void doRedirect(String url) {
+    public static void doRedirect(String url, ApplicationBean1 ab) {
         FacesContext context = FacesContext.getCurrentInstance();
         if (context == null) {
             System.out.println("FacesContext is null");
@@ -1317,7 +1310,6 @@ public class DataUtils {
         try {
             if (!context.getResponseComplete()) {
                 if (url.startsWith("/")) {
-                    ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
                     String redirectUrl = ab.getApp_url() + url;
                     System.out.println("Redirecting to URL: " + redirectUrl);
                     context.getExternalContext().redirect(redirectUrl);
@@ -1335,11 +1327,9 @@ public class DataUtils {
         }
     }
 
-    public static User loadUser(String guestName) {
+    public static User loadUser(String guestName, String realUserHomePath) {
         try {
-            ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-            //try to clean the user folder to remove old files (more than 1 day)
-            String realUserHomePath = ab.getRealUserHomePath();
+
             DataUtils.deleteFilesOlderThanNdays(realUserHomePath, 1);
             //first create a random user names
             User user = new User();
@@ -1362,9 +1352,8 @@ public class DataUtils {
         return null;
     }
 
-    public static User loadRawUser(String guestName) {
+    public static User loadRawUser(String guestName, ApplicationBean1 ab) {
         try {
-            ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
             //try to clean the user folder to remove old files (more than 1 day)
             String userHomePath;
             if (ab.shouldUseScheduler()) {
@@ -1395,18 +1384,15 @@ public class DataUtils {
     }
 
     // '"curl -H "C-H Content-Type: application/json" -X POST -d "{\"name\": \"prof_website\",  \"entities\":{\"page\": \"entity_value\"}}" https://www.omicsbot.ca/conversations/19dcb8ae575447748cbdba384a22af51/trigger_intent?output_channel=latest"'
-    public static String uploadXLSXFile(UploadedFile file, String homeDir, String outFileNm, boolean onServer) {
+    public static String uploadXLSXFile(SessionBean1 sb, UploadedFile file, String homeDir, String outFileNm, boolean onServer) {
 
         if (file == null || file.getSize() == 0) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Empty file?");
             return null;
         }
 
-        ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-        if (onServer & file.getSize() > ab.getMAX_UPLOAD_SIZE()) {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-            sb.addMessage("Error", "The file size exceeds limit:" + ab.getMAX_UPLOAD_SIZE());
+        if (onServer & file.getSize() > ApplicationBean1.MAX_UPLOAD_SIZE) {
+            sb.addMessage("Error", "The file size exceeds limit:" + ApplicationBean1.MAX_UPLOAD_SIZE);
             return null;
         }
 
@@ -1432,7 +1418,6 @@ public class DataUtils {
                 LOGGER.error("uploadFile", e);
             }
         } else {
-            SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
             sb.addMessage("Error", "Only xlsx/XLSX or xls files are accepted for metabolon dataset!");
             return null;
         }
@@ -1857,8 +1842,7 @@ public class DataUtils {
         return now.format(formatter);
     }
 
-    public static boolean sendRawFinishEmail(String node, String to, String jobId, String folderName) {
-        MailService ms = (MailService) DataUtils.findBean("mailService");
+    public static boolean sendRawFinishEmail(MailService ms, String node, String to, String jobId, String folderName) {
         // Construct base URL
         String baseUrl = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml";
 
@@ -1963,5 +1947,35 @@ public class DataUtils {
         }
         System.err.println("File not found in archive: " + targetFileName);
         return false;
+    }
+
+    public static Object getBeanInstanceByName(String beanName) {
+        try {
+            BeanManager beanManager = CDI.current().getBeanManager();
+
+            Set<Bean<?>> beans = beanManager.getBeans(beanName);
+
+            if (beans.isEmpty()) {
+                System.err.println("No CDI bean found with name: {0}" + beanName);
+                return null;
+            }
+
+            Bean<?> bean = beanManager.resolve(beans);
+
+            if (bean == null) {
+                System.err.println("Could not resolve CDI bean with name: {0}" + beanName);
+                return null;
+            }
+
+            // Get the contextual reference without knowing the exact type at compile time for the return.
+            return beanManager.getReference(
+                    bean,
+                    bean.getBeanClass(),
+                    beanManager.createCreationalContext(bean)
+            );
+        } catch (Exception e) {
+            System.err.println("CDI container is not available. Ensure this code runs within a Jakarta EE environment or after CDI is initialized. Error: " + e.getMessage());
+            return null;
+        }
     }
 }

@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetSetBean;
 import pro.metaboanalyst.models.PABean;
@@ -138,7 +140,7 @@ public class IntegResBean implements Serializable {
         }
         int res = RIntegUtils.performIntegPathwayAnalysis(RC, topoOpt, enrichOpt, pathDBOpt, integOpt);
         if (res == 1) {
-            RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, 0, 0,"integview");
+            RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, 0, 0,"integview");
             RIntegUtils.createIntegPathResults(RC);
             populateIntegResBeans();
             return "integview";
@@ -167,7 +169,7 @@ public class IntegResBean implements Serializable {
             }
             int res = RIntegUtils.performIntegPathwayAnalysis(RC, topoOpt, enrichOpt, pathDBOpt, integOpt);
             if (res == 1) {
-                RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, 0, 0, "integview");
+                RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, 0, 0, "integview");
                 RIntegUtils.createIntegPathResults(RC);
             } else {
                 String err = RDataUtils.getErrMsg(RC);
@@ -270,6 +272,6 @@ public class IntegResBean implements Serializable {
     }
 
     public void updatePathView() {
-        RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 72, 0, 0, "integview");
+        RGraphUtils.plotPathSummary(sb, showGrid ? "T" : "F", sb.getNewImage("path_view"), "png", 150, 0, 0, "integview");
     }
 }

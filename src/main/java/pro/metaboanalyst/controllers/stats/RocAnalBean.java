@@ -20,7 +20,6 @@ import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.rosuda.REngine.Rserve.RConnection;
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
@@ -31,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -55,6 +54,13 @@ public class RocAnalBean implements Serializable {
     @Inject
     private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
     List<String> selectedSmpl1, selectedSmpl2;
     String rocDetailImg = null;
     String rocDetailBp = null;
@@ -354,7 +360,7 @@ public class RocAnalBean implements Serializable {
     public String performExploreAnalysis() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_performExploreAnalysis(this);
+            jrd.record_performExploreAnalysis(this);
             return null;
         }
 
@@ -364,20 +370,19 @@ public class RocAnalBean implements Serializable {
         }
 
         setAnalMode("explore");
-        RocUtils.setAnalysisMode(sb.getRConnection(), analMode);
+        RocUtils.setAnalysisMode(sb, analMode);
         RConnection RC = sb.getRConnection();
         RocUtils.prepareROCData(RC, selMeta, factor1, factor2);
-        RocUtils.performRocCVExplorer(RC, clsMethodOpt, featRankOpt, lvNum);
-        RocUtils.plotProbView(sb, sb.getNewImage("cls_prob"), "png", 72, -1, 0, 0);
-        RocUtils.plotImpBiomarkers(sb, sb.getNewImage("cls_imp"), "png", 72, -1, "freq", 15);
-        RocUtils.plotAccuracies(sb, sb.getNewImage("cls_accu"), "png", 72);
-        RocUtils.plotROC(sb, sb.getNewImage("cls_roc"), "png", 72, 0, "threshold", 0, 0, "fpr", 0.5);
+        RocUtils.performRocCVExplorer(sb, clsMethodOpt, featRankOpt, lvNum);
+        RocUtils.plotProbView(sb, sb.getNewImage("cls_prob"), "png", 150, -1, 0, 0);
+        RocUtils.plotImpBiomarkers(sb, sb.getNewImage("cls_imp"), "png", 150, -1, "freq", 15);
+        RocUtils.plotAccuracies(sb, sb.getNewImage("cls_accu"), "png", 150);
+        RocUtils.plotROC(sb, sb.getNewImage("cls_roc"), "png", 150, 0, "threshold", 0, 0, "fpr", 0.5);
         setupMdlOptions();
         showConf = false;
         showMisCls = false;
         rankMeasure = "freq";
-        JavaRecord.record_performExploreAnalysis(this);
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
+        jrd.record_performExploreAnalysis(this);
         wb.getCalledWorkflows().add("Multivariate ROC");
         return "Explorer";
     }
@@ -388,7 +393,7 @@ public class RocAnalBean implements Serializable {
             return;
         }
         setAnalMode("test");
-        RocUtils.setAnalysisMode(sb.getRConnection(), analMode);
+        RocUtils.setAnalysisMode(sb, analMode);
         RConnection RC = sb.getRConnection();
         RocUtils.prepareROCData(RC, selMeta, factor1, factor2);
         testInit = false;
@@ -424,7 +429,7 @@ public class RocAnalBean implements Serializable {
 
     public void performDefaultUnivAnalysis_internal() {
 
-        JavaRecord.record_performDefaultUnivAnalysis_internal(this);
+        jrd.record_performDefaultUnivAnalysis_internal(this);
         if (wb.isEditMode()) {
             return;
         }
@@ -434,7 +439,7 @@ public class RocAnalBean implements Serializable {
             return;
         }
         setAnalMode("univ");
-        RocUtils.setAnalysisMode(sb.getRConnection(), analMode);
+        RocUtils.setAnalysisMode(sb, analMode);
         RConnection RC = sb.getRConnection();
         RocUtils.prepareROCData(RC, selMeta, factor1, factor2);
         if (!univInit) {
@@ -564,6 +569,7 @@ public class RocAnalBean implements Serializable {
             sb.addMessage("Error", "No features were selected!");
             return false;
         }
+
         RConnection RC = sb.getRConnection();
         String nm = selectedFeatureBeans.get(0).getName();
         featText = nm;
@@ -580,8 +586,10 @@ public class RocAnalBean implements Serializable {
         } catch (Exception e) {
             //e.printStackTrace();
             LOGGER.error("setupVarTester", e);
+            sb.addMessage("Error", "Failed to set up selected features!");
             return false;
         }
+
     }
 
     private boolean setupSmplTester() {
@@ -700,11 +708,11 @@ public class RocAnalBean implements Serializable {
     }
 
     public void updateMultiROC() {
-        RocUtils.plotROC(sb, sb.getNewImage("cls_roc"), "png", 72, rocMdlDD, "threshold", showConf ? 1 : 0, 0, multPerfOpt, rocCutOff);
+        RocUtils.plotROC(sb, sb.getNewImage("cls_roc"), "png", 150, rocMdlDD, "threshold", showConf ? 1 : 0, 0, multPerfOpt, rocCutOff);
     }
 
     public void updateProbView() {
-        RocUtils.plotProbView(sb, sb.getNewImage("cls_prob"), "png", 72, rocMdlDD, showMisCls ? 1 : 0, 0);
+        RocUtils.plotProbView(sb, sb.getNewImage("cls_prob"), "png", 150, rocMdlDD, showMisCls ? 1 : 0, 0);
     }
 
     public String getConfMat() {
@@ -740,7 +748,7 @@ public class RocAnalBean implements Serializable {
     }
 
     public void updateImpView() {
-        RocUtils.plotImpBiomarkers(sb, sb.getNewImage("cls_imp"), "png", 72, rocMdlDD, rankMeasure, featNum);
+        RocUtils.plotImpBiomarkers(sb, sb.getNewImage("cls_imp"), "png", 150, rocMdlDD, rankMeasure, featNum);
         //PrimeFaces.current().scrollTo("ac:form4:impPane");
     }
 
@@ -759,8 +767,8 @@ public class RocAnalBean implements Serializable {
         String isOpt = showOptPoint ? "T" : "F";
         String optMtd = optimalDD;
 
-        univROCImg = RocUtils.performUnivROC(sb, cmpdName, count, "png", "72", isAUC, isOpt, optMtd, isPartial, measure, mycutoff);
-        univROCBoxPlot = RocUtils.plotUnivROCBP(sb, cmpdName, count, "png", "72", isOpt, "FALSE");
+        univROCImg = RocUtils.performUnivROC(sb, cmpdName, count, "png", "150", isAUC, isOpt, optMtd, isPartial, measure, mycutoff);
+        univROCBoxPlot = RocUtils.plotUnivROCBP(sb, cmpdName, count, "png", "150", isOpt, "FALSE");
 
         sb.getImgMap().put("roc_boxplot_" + cmpdName, count);
         sb.getImgMap().put("roc_univ_" + cmpdName, count);
@@ -788,15 +796,15 @@ public class RocAnalBean implements Serializable {
             sb.addMessage("Error", "Failed to perform the analysis! " + err);
         }
 
-        RocUtils.plotROCTest(sb, sb.getNewImage("cls_test_roc"), "png", 72, 0, avgMtd, 0, showHoldOut ? 1 : 0, "fpr", 0.5);
-        RocUtils.plotProbViewTest(sb, sb.getNewImage("cls_test_prob"), "png", 72, -1, 0, 0);
-        RocUtils.plotTestAccuracies(sb, sb.getNewImage("cls_test_accu"), "png", 72);
+        RocUtils.plotROCTest(sb, sb.getNewImage("cls_test_roc"), "png", 150, 0, avgMtd, 0, showHoldOut ? 1 : 0, "fpr", 0.5);
+        RocUtils.plotProbViewTest(sb, sb.getNewImage("cls_test_prob"), "png", 150, -1, 0, 0);
+        RocUtils.plotTestAccuracies(sb, sb.getNewImage("cls_test_accu"), "png", 150);
         setupMdlOptions();
         setupSamplePredTable();
         showConf = false;
         if (clsMethodOpt.equals("lr")) {
             showConfLR = false;
-            RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 72, showConfLR ? 1 : 0);
+            RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 150, showConfLR ? 1 : 0);
         }
     }
 
@@ -809,9 +817,9 @@ public class RocAnalBean implements Serializable {
             RConnection RC = sb.getRConnection();
             RocUtils.setCustomData(RC);
             RocUtils.performRocCVTest(RC, clsMethodOpt, lvNum);
-            RocUtils.plotROCTest(sb, sb.getCurrentImage("cls_test_roc"), "png", 72, 0, avgMtd, 0, 0, "fpr", 0.5);
-            RocUtils.plotProbViewTest(sb, sb.getCurrentImage("cls_test_prob"), "png", 72, -1, 0, 0);
-            RocUtils.plotTestAccuracies(sb, sb.getCurrentImage("cls_test_accu"), "png", 72);
+            RocUtils.plotROCTest(sb, sb.getCurrentImage("cls_test_roc"), "png", 150, 0, avgMtd, 0, 0, "fpr", 0.5);
+            RocUtils.plotProbViewTest(sb, sb.getCurrentImage("cls_test_prob"), "png", 150, -1, 0, 0);
+            RocUtils.plotTestAccuracies(sb, sb.getCurrentImage("cls_test_accu"), "png", 150);
             setupMdlOptions();
             setupSamplePredTable();
             //sb.addNaviTrack("Evaluator", null);
@@ -820,7 +828,7 @@ public class RocAnalBean implements Serializable {
             showConfLR = false;
             //  multivInit = false; // b/c overwrite the explorer, force re-generate
             if (clsMethodOpt.equals("lr")) {
-                RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 72, showConfLR ? 1 : 0);
+                RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 150, showConfLR ? 1 : 0);
             }
         }
         if (forceUpdate) {
@@ -857,11 +865,11 @@ public class RocAnalBean implements Serializable {
     }
 
     public void updateTestRoc() {
-        RocUtils.plotROCTest(sb, sb.getNewImage("cls_test_roc"), "png", 72, 0, avgMtd, showConf ? 1 : 0, showHoldOut ? 1 : 0, multPerfOpt, rocCutOff);
+        RocUtils.plotROCTest(sb, sb.getNewImage("cls_test_roc"), "png", 150, 0, avgMtd, showConf ? 1 : 0, showHoldOut ? 1 : 0, multPerfOpt, rocCutOff);
     }
 
     public void updateROCLRplot() {
-        RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 72, showConfLR ? 1 : 0);
+        RocUtils.plotROCLR(sb, sb.getNewImage("cls_roc_lr"), "png", 150, showConfLR ? 1 : 0);
     }
 
     public boolean isShowPredCls() {
@@ -873,7 +881,7 @@ public class RocAnalBean implements Serializable {
     }
 
     public void updateTestProbView() {
-        RocUtils.plotProbViewTest(sb, sb.getNewImage("cls_test_prob"), "png", 72, rocMdlDD, showMisCls ? 1 : 0, showPredCls ? 1 : 0);
+        RocUtils.plotProbViewTest(sb, sb.getNewImage("cls_test_prob"), "png", 150, rocMdlDD, showMisCls ? 1 : 0, showPredCls ? 1 : 0);
     }
 
     public String getPerfMeasure() {
@@ -899,7 +907,7 @@ public class RocAnalBean implements Serializable {
         }
         int res = RocUtils.performPermut(sb.getRConnection(), perfMeasure, permNum);
         if (res == 1) {
-            RocUtils.plotPermut(sb, sb.getNewImage("roc_perm"), "png", 72);
+            RocUtils.plotPermut(sb, sb.getNewImage("roc_perm"), "png", 150);
         } else {
             String err = RDataUtils.getErrMsg(sb.getRConnection());
             sb.addMessage("Error", err);
@@ -1108,8 +1116,8 @@ public class RocAnalBean implements Serializable {
         count++;
         String myImg = currentCmpd.replaceAll("\\/", "_") + "_" + count;
         String[] res = RocUtils.getROCcoords(sb.getRConnection(), fld, val, "TRUE", myImg);
-        rocDetailImg = myImg + "_dpi72.png";
-        rocDetailBp = RocUtils.plotUnivROCBP(sb, currentCmpd, count, "png", "72", "FALSE", "TRUE");
+        rocDetailImg = myImg + "_dpi150.png";
+        rocDetailBp = RocUtils.plotUnivROCBP(sb, currentCmpd, count, "png", "150", "FALSE", "TRUE");
 
         cutoff = res[0];
         spec = res[1];
@@ -1135,7 +1143,7 @@ public class RocAnalBean implements Serializable {
     }
 
     public String getRocDetailImg() {
-        System.out.println("univROCImg======" + univROCImg);
+        //System.out.println("univROCImg======" + univROCImg);
         if (rocDetailImg == null) {
             System.out.println("univROCImg======" + rocDetailImg);
 
@@ -1170,10 +1178,6 @@ public class RocAnalBean implements Serializable {
         this.featureRatioOptOut = featureRatioOptOut;
     }
 
-    @JsonIgnore
-    @Inject
-    private MultifacBean mf;
-
     //metadata selection
     private String selMeta = "NA";
     private String factor1 = "NA";
@@ -1188,7 +1192,7 @@ public class RocAnalBean implements Serializable {
             list.add(new SelectItem(grp, grp));
         }
 
-        mf.setUniqueMetaList(list);
+        mfb.setUniqueMetaList(list);
     }
 
     public String[] getGrps() {
@@ -1200,7 +1204,7 @@ public class RocAnalBean implements Serializable {
     }
 
     public String getSelMeta() {
-        
+
         return selMeta;
     }
 
@@ -1210,7 +1214,7 @@ public class RocAnalBean implements Serializable {
 
     public String getFactor1() {
         if (factor1.equals("NA")) {
-            factor1 = mf.getUniqueMetaList().get(0).getValue().toString();
+            factor1 = mfb.getUniqueMetaList().get(0).getValue().toString();
         }
         return factor1;
     }

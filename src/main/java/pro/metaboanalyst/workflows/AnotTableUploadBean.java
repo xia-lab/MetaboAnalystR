@@ -30,6 +30,9 @@ public class AnotTableUploadBean implements Serializable {
     @Inject
     private ApplicationBean1 ab;
 
+    @Inject
+    private ProcessBean pcb;
+    
     private String uploadInfo = "";
     private boolean fileUploaded = false;
     private boolean containMeta;
@@ -138,7 +141,7 @@ public class AnotTableUploadBean implements Serializable {
             }
 
             String fileName = DataUtils.getJustFileName(csvFile.getFileName());
-            DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
             sb.setDataUploaded();
             //sb.setCmpdIDType(qeaCmpdIDType);
             wb.setDataName(fileName);
@@ -158,8 +161,7 @@ public class AnotTableUploadBean implements Serializable {
             fileUploaded = true;
             uploadInfo = uploadInfo + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.";
             sb.addMessage("Info", "Data has been uploaded successfully");
-            ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-            pb.performSanityCheck();
+            pcb.performSanityCheck();
             return "null";
         } else {
             String err = RDataUtils.getErrMsg(sb.getRConnection());

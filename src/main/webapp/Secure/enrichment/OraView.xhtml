@@ -51,7 +51,7 @@
 
             function extender() {
                 light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
-                console.log(light)
+                //console.log(light)
                 if (light === "light") {
                     textColor = "grey";
                     gridColor = 'lightgrey';
@@ -194,7 +194,9 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('ora_dot')}" alt="OraDotImage"/>
+                        <img onerror='this.style.display="none"' 
+                             style="width:10in"
+                             src="#{sessionBean1.getCurrentImageURL('ora_dot')}" alt="OraDotImage"/>
                     </h:panelGrid>  
                 </p:panel>
             </h:form>                  

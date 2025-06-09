@@ -8,14 +8,8 @@ package pro.metaboanalyst.models;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.inject.Inject;
 import pro.metaboanalyst.rwrappers.RDataUtils;
-import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 
@@ -26,8 +20,6 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MetaDataBean implements Serializable {
 
-    @JsonIgnore
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
     private int id;
     private String name;
     private String param;
@@ -37,11 +29,10 @@ public class MetaDataBean implements Serializable {
     private String histPath;
     private List<SampleBean> metaEditBeans = null;
     private boolean disabled;
+    private SessionBean1 sb;
 
-    public MetaDataBean() {
-    }
-
-    public MetaDataBean(String name, String param, int id, boolean primary, boolean disabled, String status) {
+    public MetaDataBean(SessionBean1 sb, String name, String param, int id, boolean primary, boolean disabled, String status) {
+        this.sb = sb;
         this.name = name;
         this.param = param;
         this.id = id;

@@ -7,7 +7,6 @@ package pro.metaboanalyst.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.utils.DataUtils;
 import pro.metaboanalyst.rwrappers.RMetaUtils;
 import java.beans.ConstructorProperties;
 import java.io.Serializable;
@@ -31,10 +30,9 @@ public class DataModel implements Serializable {
 
     @JsonIgnore
     private static final Logger LOGGER = LogManager.getLogger(DataModel.class);
-    @JsonIgnore
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
 
     @JsonIgnore
+    private SessionBean1 sb;
     private RConnection RC;
     private String name;
     private String dataName;
@@ -94,9 +92,10 @@ public class DataModel implements Serializable {
         this.primaryMeta = primaryMeta;
     }
 
-    public DataModel(RConnection RC, String name) {
-        this.RC = RC;
+    public DataModel(SessionBean1 sb, String name) {
+        this.sb = sb;
         this.name = name;
+        RC = sb.getRConnection();
     }
 
     public double getFcLevel() {
@@ -332,8 +331,7 @@ public class DataModel implements Serializable {
     }
 
     public void plotDataProfile() {
-        SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
-        RMetaUtils.plotDataProfiles(sb.getRConnection(), name, sb.getNewImage("qc_boxplot"), sb.getNewImage("qc_pca"));
+        RMetaUtils.plotDataProfiles(sb.getRConnection(), name, sb.getNewImage("qc_boxplot"), sb.getNewImage("qc_pca"), "png", 150);
     }
 
     public String getFeatureType() {

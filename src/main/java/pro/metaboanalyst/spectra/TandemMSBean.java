@@ -58,11 +58,15 @@ public class TandemMSBean implements Serializable {
 
     @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
     @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private FireBaseController fbc;
+            
     private String tandemMSList;
     private double precMZ = 0.0000, ppm_val1 = 5.0, ppm_val2 = 10.0;
     private String ionMode = "postive"; // can be "positive" or "negative"
@@ -413,8 +417,8 @@ public class TandemMSBean implements Serializable {
             sb.addMessage("Error", "Failed to perform MS/MS database searching!");
         } else {
             // let plot a summary plot at first
-            int res3 = RSpectraUtils.PlotMS2SummarySingle(sb.getRConnection(), "0L", "MS2Summary_res", 72, "png", "10", "6");
-            summarize_res_plot = "MS2Summary_res_72.png";
+            int res3 = RSpectraUtils.PlotMS2SummarySingle(sb.getRConnection(), "0L", "MS2Summary_res", 150, "png", "10", "6");
+            summarize_res_plot = "MS2Summary_res_150.png";
             if (res3 == 0) {
                 sb.addMessage("Error", "Failed to summarize the MS/MS analysis results!");
             }
@@ -453,11 +457,11 @@ public class TandemMSBean implements Serializable {
     }
 
     public int plotMirrorMatching() {
-        String imageNM = "mirror_plotting_" + resNum + "_" + precMZ + "_72.png";
+        String imageNM = "mirror_plotting_" + resNum + "_" + precMZ + "_150.png";
         mirrorplot_imgNM = imageNM;
-        mirrorplot_jsonNM = "mirror_plotting_" + resNum + "_" + precMZ + "_72.json";
+        mirrorplot_jsonNM = "mirror_plotting_" + resNum + "_" + precMZ + "_150.json";
         int res = RSpectraUtils.plotMirror(sb.getRConnection(),
-                resNum + 1, precMZ, ppm_val1, imageNM, 72,
+                resNum + 1, precMZ, ppm_val1, imageNM, 150,
                 "png", 10, 6);
         jsonHashMap.put(resNum + "", mirrorplot_jsonNM);
         imgsHashMap.put(resNum + "", mirrorplot_imgNM);
@@ -678,7 +682,7 @@ public class TandemMSBean implements Serializable {
         // upload the msp file now
         RConnection RC = sb.getRConnection();
         boolean onProServer = ab.isOnVipServer() || ab.isInDocker() || ab.isOnProServer();
-        String fileName = DataUtils.uploadMSPFile(dataFile, sb.getCurrentUser().getHomeDir(), null, onProServer);
+        String fileName = DataUtils.uploadMSPFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, onProServer);
         if (fileName == null) {
             return null;
         }
@@ -1199,11 +1203,10 @@ public class TandemMSBean implements Serializable {
             //System.out.println("IOException while trying to execute [JobSubmission: sbatch]" + JobSubmission);
         }
 
-        FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
         boolean res = false;
         try {
             sb.addNaviTrack("MS2 Job status", "/Secure/spectra/Secure/spectra/MS2JobStatus.xhtml");
-            res = fb.saveProject("project");
+            res = fbc.saveProject("project");
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(SpectraControlBean.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -1211,7 +1214,7 @@ public class TandemMSBean implements Serializable {
         if (!res) {
             sb.addMessage("error", "Project saving failed!");
         } else {
-            DataUtils.doRedirectWithGrowl("/MetaboAnalyst/Secure/spectra/MS2JobStatus.xhtml", "info", "Project saving is successful, you can access your project in your <b>Project View</b> page later.");
+            DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/spectra/MS2JobStatus.xhtml", "info", "Project saving is successful, you can access your project in your <b>Project View</b> page later.");
         }
 
     }
@@ -1445,13 +1448,13 @@ public class TandemMSBean implements Serializable {
         if ("Running".equals(jobStatus) && checkcount > 20) {
             if (checkcount % 15 == 0) {
                 // query status from slurm every 15 seconds when it is running & submitted 20 sec later
-                jobStatus = SchedulerUtils.getJobStatusMS2(jobID);
+                jobStatus = SchedulerUtils.getJobStatusMS2(jobID, sb.getCurrentUser().getName());
             } else {
                 jobStatus = "RUNNING";
             }
         } else {
             // In other cases, keep querying until failed or finished
-            jobStatus = SchedulerUtils.getJobStatusMS2(jobID);
+            jobStatus = SchedulerUtils.getJobStatusMS2(jobID, sb.getCurrentUser().getName());
         }
         if (jobStatus.equalsIgnoreCase("failed")) {
             stopStatusCheck = false;

@@ -38,7 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import pro.metaboanalyst.models.MS2ResutlsBean;
 import pro.metaboanalyst.models.SwathBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -70,6 +70,10 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private ApplicationBean1 ab;
 
+        @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+        
     /// 1.3 PCA -3D Json File
     String featureNM = "";
     // Section 1 : Plotting function -----------------------
@@ -238,7 +242,7 @@ public class SpectraProcessBean implements Serializable {
     }
 
     public void plotSingleTIC() {
-        RSpectraUtils.plotSingleTIC(sb, ticName, -1, "png", 72, "NA");
+        RSpectraUtils.plotSingleTIC(sb, ticName, -1, "png", 150, "NA");
     }
 
     public String plotTIC() {
@@ -295,22 +299,22 @@ public class SpectraProcessBean implements Serializable {
     /// plot summary of the single feature
     public String plotMSfeature(String type) {
         if (type.equals("png")) {
-            featureimageNM = RSpectraUtils.plotMSfeature(sb, featureNum, "png", 72, "NA");
+            featureimageNM = RSpectraUtils.plotMSfeature(sb, featureNum, "png", 150, "NA");
             internalizeImage(featureimageNM);
-            String rcmd = "plotMSfeature(\"" + featureNum + "\", \"png\", 72, NA" + ")";
+            String rcmd = "plotMSfeature(\"" + featureNum + "\", \"png\", 150, NA" + ")";
             String newfnm = featureimageNM.replaceAll(".png", "");
             sb.addGraphicsCMD("raw_spec_msf_" + newfnm, rcmd);
             sb.addGraphicsMapLink("raw_spec_msf_" + newfnm, "/Secure/spectra/SpectraResult.xhtml");
 
             return featureimageNM;
         } else if (type.equals("svg")) {
-            featureimageNM = RSpectraUtils.plotMSfeature(sb, featureNum, "png", 72, "NA");
-            String rcmd = "plotMSfeature(\"" + featureNum + "\", \"png\", 72, NA" + ")";
+            featureimageNM = RSpectraUtils.plotMSfeature(sb, featureNum, "png", 150, "NA");
+            String rcmd = "plotMSfeature(\"" + featureNum + "\", \"png\", 150, NA" + ")";
             String newfnm = featureimageNM.replaceAll(".png", "");
             sb.addGraphicsCMD("raw_spec_msf_" + newfnm, rcmd);
             sb.addGraphicsMapLink("raw_spec_msf_" + newfnm, "/Secure/spectra/SpectraResult.xhtml");
 
-            svgStringBox = RSpectraUtils.plotMSfeature(sb, featureNum, "svg2", 72, "NA");
+            svgStringBox = RSpectraUtils.plotMSfeature(sb, featureNum, "svg2", 150, "NA");
             internalizeEIC(featureNum);
             return featureNum + "";
         } else {
@@ -357,14 +361,14 @@ public class SpectraProcessBean implements Serializable {
         String featureXICTitle = RSpectraUtils.plotXIC(sb.getRConnection(),
                 featureNum,
                 "png",
-                72,
+                150,
                 "NA");
-        this.XICSImgName = "EIC_" + featureXICTitle + "_sample_72.png";
-        XICGImgName = "EIC_" + featureXICTitle + "_group_72.png";
+        this.XICSImgName = "EIC_" + featureXICTitle + "_sample_150.png";
+        XICGImgName = "EIC_" + featureXICTitle + "_group_150.png";
     }
 
     public String plotXICUpdate() {
-        int dpi = 72;
+        int dpi = 150;
         if (sb.getFormatOpt().equals("png")) {
             dpi = sb.getDpiOpt();
         }
@@ -590,7 +594,7 @@ public class SpectraProcessBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_prepareSpecProc(this);
+            jrd.record_prepareSpecProc(this);
             return null;
         }
 
@@ -622,13 +626,13 @@ public class SpectraProcessBean implements Serializable {
 
         RConnection RC = sb.getRConnection();
         String FilesInclusion = DataUtils.createStringVector(incFiles.toArray(new String[0]));
-        RDataUtils.saveFilesInclusion(RC, FilesInclusion, incFiles.size());
+        RDataUtils.saveFilesInclusion(sb, FilesInclusion, incFiles.size());
 
         sparam.initializeAdductList();
 
         sc.setIncludedFileNamesString(FilesInclusion);
         sc.setDataConfirmed(true);
-        JavaRecord.record_prepareSpecProc(this);
+        jrd.record_prepareSpecProc(this);
         if (ms2DataOpt.equals("dda")) {
             return "MS2 spectra";
         }
@@ -687,9 +691,8 @@ public class SpectraProcessBean implements Serializable {
             }
         }
 
-        RConnection RC = sb.getRConnection();
-        String FilesInclusion = DataUtils.createStringVector(incFiles.toArray(new String[0]));
-        RDataUtils.saveFilesInclusion(RC, FilesInclusion, incFiles.size());
+        String FilesInclusion = DataUtils.createStringVector(incFiles.toArray(String[]::new));
+        RDataUtils.saveFilesInclusion(sb, FilesInclusion, incFiles.size());
 
         sparam.initializeAdductList();
 
@@ -713,7 +716,7 @@ public class SpectraProcessBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_prepareDIASpec(this);
+            jrd.record_prepareDIASpec(this);
             return null;
         }
 
@@ -744,9 +747,9 @@ public class SpectraProcessBean implements Serializable {
         String ms2file = ms2files[0];
         String ms2file2detect = homeDir + File.separator + "upload/MS2/" + ms2file;
 
-        int resx = RSpectraUtils.PerformSWATHDesignDetection(sb.getRConnection(), ms2file2detect);
+        int resx = RSpectraUtils.PerformSWATHDesignDetection(sb, ms2file2detect);
         if (resx == 1) {
-            JavaRecord.record_prepareDIASpec(this);
+            jrd.record_prepareDIASpec(this);
             double[] alllowMZs = RSpectraUtils.GetSWATHDesginLow(sb.getRConnection());
             double[] allhigMZs = RSpectraUtils.GetSWATHDesginUp(sb.getRConnection());
 
@@ -786,10 +789,10 @@ public class SpectraProcessBean implements Serializable {
             fragDB_path = "/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite";
         }
 
-        mirrorplot_imgNM = "mirror_plotting_" + resNum + "_" + subidx + "_72.png";
-        mirrorplot_jsonNM = "mirror_plotting_" + resNum + "_" + subidx + "_72.json";
+        mirrorplot_imgNM = "mirror_plotting_" + resNum + "_" + subidx + "_150.png";
+        mirrorplot_jsonNM = "mirror_plotting_" + resNum + "_" + subidx + "_150.json";
         int resx = RSpectraUtils.PerformMirrorPlottingWeb(sb.getRConnection(), fragDB_path,
-                current_ft_label, resNum, subidx, 10, mirrorplot_imgNM, 72,
+                current_ft_label, resNum, subidx, 10, mirrorplot_imgNM, 150,
                 "png", 10, 6);
 
         internalizeImage(mirrorplot_jsonNM);

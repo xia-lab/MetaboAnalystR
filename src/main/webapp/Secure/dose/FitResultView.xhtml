@@ -10,9 +10,6 @@
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('View result', '/Secure/dose/FitResultView.xhtml')}"/> 
     </ui:define>
     <ui:define name="footerout"/>
-    <ui:define name="myscript">
-
-    </ui:define>
     <ui:define name="content">
         <h:panelGrid style="padding:30px 40px 20px 40px; font-family: Arial, Helvetica, Geneva; line-height: 23px; width:96%;">
             <h2>
@@ -35,6 +32,7 @@
                     </p:commandLink> 
                 </h:panelGrid>
                 <img onerror='this.style.display="none"'
+                     style="width:10in;"
                      src="#{sessionBean1.getCurrentImageURL('dr_histogram')}"
                      alt="CurveFitBar"/>
             </h:panelGrid>

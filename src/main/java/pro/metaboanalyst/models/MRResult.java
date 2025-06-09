@@ -10,6 +10,7 @@ package pro.metaboanalyst.models;
  * @author jianguox
  */
 public class MRResult {
+    
     private String rowID;
     private String numberOfSNPs;
     private String beta;

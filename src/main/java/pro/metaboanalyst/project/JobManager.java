@@ -23,6 +23,7 @@ import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
+import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.RawJobsBean;
 
@@ -41,6 +42,10 @@ public class JobManager implements Serializable {
     @JsonIgnore
     private SessionBean1 sb;
 
+    @Inject
+    @JsonIgnore
+    private ApplicationBean1 ab;
+    
     private boolean managerPage = false;
 
     public boolean isManagerPage() {
@@ -98,7 +103,7 @@ public class JobManager implements Serializable {
                 jobDate.add(format.format(p.getCreationDate()));
                 jobSampleNum.add(p.getSampleNum());
                 jobNode.add(p.getNodes());
-                jobProgress.add(SchedulerUtils.getJobProgress(p.getFolder()));
+                jobProgress.add(SchedulerUtils.getJobProgress(ab.getRaw_spec_folder(), p.getFolder()));
 
             }
 

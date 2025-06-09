@@ -67,14 +67,16 @@
                         <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.ascaInit}"/>
                     </h:panelGrid>
                     <h:panelGrid id="pairPane" style="padding: 20px">
-                        <img onerror='this.style.display="none"'  src="#{sessionBean1.getCurrentImageURL('asca_scree')}"  alt="ASCAScreeImage"/>
+                        <img onerror='this.style.display="none"'  
+                             style="width:8in;" 
+                             src="#{sessionBean1.getCurrentImageURL('asca_scree')}"  alt="ASCAScreeImage"/>
                     </h:panelGrid>        
                 </p:tab>
                 <p:tab title ="Major Patterns">
-                    <h:panelGrid id="screePane" style="padding: 20px">
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_fa')}"/>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_fb')}"/>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_fab')}"/>
+                    <h:panelGrid id="screePane" style="padding: 20px; text-align: center; width:90%">
+                        <img onerror='this.style.display="none"'  style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fa')}"/>
+                        <img onerror='this.style.display="none"' style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fb')}"/>
+                        <img onerror='this.style.display="none"' style="height:8in;"  src="#{sessionBean1.getCurrentImageURL('asca_fab')}"/>
                     </h:panelGrid>     
                 </p:tab>
                 <p:tab title ="Sig. Features">
@@ -93,7 +95,8 @@
                                              actionListener="#{ascaBean.sigBn_action()}"/>   
                         </h:panelGrid>
                         <h:panelGrid columns="2" id="impPane">
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_impa')}" alt="SigAImage"/>
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impa')}" alt="SigAImage"/>
                             <h:panelGrid style="padding-left: 80px;">
                                 <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impa')}" 
                                                update=":myGraphPane"
@@ -108,7 +111,8 @@
                                     <i class="pi pi-table" style="font-size: 1.0rem">&nbsp;  Outliers</i>
                                 </p:commandLink>                                
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_impb')}" alt="SigBImage"/>
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impb')}" alt="SigBImage"/>
                             <h:panelGrid style="padding-left: 80px;">
                                 <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impb')}" 
                                                update=":myGraphPane"
@@ -123,7 +127,8 @@
                                     <i class="pi pi-table" style="font-size: 1.0rem">&nbsp; Outliers</i>
                                 </p:commandLink>                                
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_impab')}" alt="SigABImage"/>
+                            <img onerror='this.style.display="none"' style="width:7in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_impab')}" alt="SigABImage"/>
                             <h:panelGrid style="padding-left: 80px;">
                                 <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_impab')}"
                                                update=":myGraphPane"
@@ -166,7 +171,8 @@
                             </p>
                         </h:panelGrid>
                         <h:panelGrid id="permPane" style="text-align: center; width: 100%;">
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('asca_perm')}" alt="AscaPermImage"/>
+                            <img onerror='this.style.display="none"' style="width:8in;"
+                                 src="#{sessionBean1.getCurrentImageURL('asca_perm')}" alt="AscaPermImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>

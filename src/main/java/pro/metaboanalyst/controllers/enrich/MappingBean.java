@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.enrich;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import pro.metaboanalyst.rwrappers.SearchUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ProcessBean;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -32,12 +33,25 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("mapBean")
 public class MappingBean implements Serializable {
 
+    @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
+
+    @JsonIgnore
     @Inject
-    WorkflowBean wb;
+    private WorkflowBean wb;
+
+    @JsonIgnore
+    @Inject
+    private ProcessBean pcb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
     private String[] selectedCmpdList = null;
     private NameMapBean[] nameMaps = null;
@@ -51,8 +65,7 @@ public class MappingBean implements Serializable {
         if (nameMaps == null) {
             setupNameMaps();
         }
-                ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-                pb.setNameMaps(nameMaps);
+        pcb.setNameMaps(nameMaps);
         return nameMaps;
     }
 
@@ -88,8 +101,7 @@ public class MappingBean implements Serializable {
         // int res = SearchUtils.performApproxSearch(RC, current_hitInx)
         String[] mapRes = SearchUtils.getNameMapTable(RC);
         row_count = SearchUtils.getNameMapRowNumber(RC);
-        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
-        pb.setRow_count(row_count);
+        pcb.setRow_count(row_count);
         NameMapBean nameMap = new NameMapBean();
         if (mapRes == null || row_count == 0) {
             nameMaps = new NameMapBean[1];
@@ -257,7 +269,7 @@ public class MappingBean implements Serializable {
     }
 
     public String getSspImg() {
-        String sspImgName = REnrichUtils.plotCmpdConcRange(sb.getRConnection(), target, "png", 72);
+        String sspImgName = REnrichUtils.plotCmpdConcRange(sb.getRConnection(), target, "png", 150);
         String url = ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sspImgName;
         return url;
     }
@@ -282,13 +294,13 @@ public class MappingBean implements Serializable {
     public String sspNextBn_action() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_sspNextBn_action(this);
+            jrd.record_sspNextBn_action(this);
             return null;
         }
         String[] selectedCmpds = getSelectedCmpdList();
         if (selectedCmpds.length > 0) {
-            JavaRecord.record_sspNextBn_action(this);
-            RDataUtils.updateMapData(sb.getRConnection(), selectedCmpds);
+            jrd.record_sspNextBn_action(this);
+            RDataUtils.updateMapData(sb, selectedCmpds);
             wb.getCalledWorkflows().add("SSP");
             return "enrichparam";
         } else {

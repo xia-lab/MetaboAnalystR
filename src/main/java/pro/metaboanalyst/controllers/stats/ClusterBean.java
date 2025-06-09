@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -14,7 +15,7 @@ import pro.metaboanalyst.rwrappers.Clustering;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.PrimeFaces;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -31,6 +32,9 @@ public class ClusterBean implements Serializable {
     @Inject
     private WorkflowBean wb;
 
+        @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
     private String clustMethodOpt;
     private String clustDistOpt;
     private String scaleOpt = "row";
@@ -203,11 +207,10 @@ public class ClusterBean implements Serializable {
 
     public String treeButton_action() {
         String imgName = sb.getNewImage("tree");
-        Clustering.plotClustTree(sb, imgName, "png", 72, clustDistOpt, clustMethodOpt);
+        Clustering.plotClustTree(sb, imgName, "png", 150, clustDistOpt, clustMethodOpt);
         PrimeFaces.current().scrollTo("form1:treePane");
 
-        ClusterBean b = (ClusterBean) DataUtils.findBean("clusterBean");
-        JavaRecord.record_treeButton_action(b);
+        jrd.record_treeButton_action(this);
         return null;
     }
 
@@ -355,9 +358,9 @@ public class ClusterBean implements Serializable {
         int fzCol = Integer.parseInt(fontSizeCol);
         int fzRow = Integer.parseInt(fontSizeRow);
         if (useTopFeature) {
-            Clustering.plotSubHeatMap(sb, sb.getNewImage("heatmap"), "png", 72, dataOpt, scaleOpt, hmDistOpt, hmMethodOpt, hmColorOpt, fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, selectMethodOpt, topThresh, rowV, colV, (drawBorders) ? "T" : "F", (grpAves) ? "T" : "F", (showLegend) ? "T" : "F", (showAnnotLegend) ? "T" : "F", showColnm ? "T" : "F", showRownm ? "T" : "F");
+            Clustering.plotSubHeatMap(sb, sb.getNewImage("heatmap"), "png", 150, dataOpt, scaleOpt, hmDistOpt, hmMethodOpt, hmColorOpt, fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, selectMethodOpt, topThresh, rowV, colV, (drawBorders) ? "T" : "F", (grpAves) ? "T" : "F", (showLegend) ? "T" : "F", (showAnnotLegend) ? "T" : "F", showColnm ? "T" : "F", showRownm ? "T" : "F");
         } else {
-            Clustering.plotHeatMap(sb, sb.getNewImage("heatmap"), "png", 72, dataOpt, scaleOpt, hmDistOpt, hmMethodOpt, hmColorOpt,
+            Clustering.plotHeatMap(sb, sb.getNewImage("heatmap"), "png", 150, dataOpt, scaleOpt, hmDistOpt, hmMethodOpt, hmColorOpt,
                     fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, rowV, colV, (drawBorders) ? "T" : "F", (grpAves) ? "T" : "F",
                     (showLegend) ? "T" : "F", (showAnnotLegend) ? "T" : "F", showColnm ? "T" : "F",
                     showRownm ? "T" : "F", maxFeatureNum);
@@ -380,21 +383,20 @@ public class ClusterBean implements Serializable {
     public String kmButton_action() {
 
         if (kmFacet.equalsIgnoreCase("separate")) {
-            Clustering.plotKmeans(sb, sb.getNewImage("km"), "png", 72, kmClustNm, kmColPal, "T");
+            Clustering.plotKmeans(sb, sb.getNewImage("km"), "png", 150, kmClustNm, kmColPal, "T");
         } else {
-            Clustering.plotKmeans(sb, sb.getNewImage("km"), "png", 72, kmClustNm, kmColPal, "F");
+            Clustering.plotKmeans(sb, sb.getNewImage("km"), "png", 150, kmClustNm, kmColPal, "F");
         }
 
         if (kmLabel) {
-            Clustering.plotKmeansPCA(sb, sb.getNewImage("km_pca"), "png", 72, kmColPal, "T");
+            Clustering.plotKmeansPCA(sb, sb.getNewImage("km_pca"), "png", 150, kmColPal, "T");
         } else {
-            Clustering.plotKmeansPCA(sb, sb.getNewImage("km_pca"), "png", 72, kmColPal, "F");
+            Clustering.plotKmeansPCA(sb, sb.getNewImage("km_pca"), "png", 150, kmColPal, "F");
         }
 
         PrimeFaces.current().scrollTo("ac:form1:kmPane");
 
-        ClusterBean b = (ClusterBean) DataUtils.findBean("clusterBean");
-        JavaRecord.record_kmButton_action(b);
+        jrd.record_kmButton_action(this);
         return null;
     }
 
@@ -458,20 +460,19 @@ public class ClusterBean implements Serializable {
     public String somButton_action() {
 
         if (somFacet.equalsIgnoreCase("separate")) {
-            Clustering.plotSOM(sb, sb.getNewImage("som"), "png", 72, somXdim, somYdim, somInitOpt, somNbOpt, somColPal, "T");
+            Clustering.plotSOM(sb, sb.getNewImage("som"), "png", 150, somXdim, somYdim, somInitOpt, somNbOpt, somColPal, "T");
         } else {
-            Clustering.plotSOM(sb, sb.getNewImage("som"), "png", 72, somXdim, somYdim, somInitOpt, somNbOpt, somColPal, "F");
+            Clustering.plotSOM(sb, sb.getNewImage("som"), "png", 150, somXdim, somYdim, somInitOpt, somNbOpt, somColPal, "F");
         }
 
         if (somLabel) {
-            Clustering.plotSOMPCA(sb, sb.getNewImage("som_pca"), "png", 72, somColPal, "T");
+            Clustering.plotSOMPCA(sb, sb.getNewImage("som_pca"), "png", 150, somColPal, "T");
         } else {
-            Clustering.plotSOMPCA(sb, sb.getNewImage("som_pca"), "png", 72, somColPal, "F");
+            Clustering.plotSOMPCA(sb, sb.getNewImage("som_pca"), "png", 150, somColPal, "F");
         }
 
         PrimeFaces.current().scrollTo("ac:form1:somPane");
-        ClusterBean b = (ClusterBean) DataUtils.findBean("clusterBean");
-        JavaRecord.record_somButton_action(b);
+        jrd.record_somButton_action(this);
         return null;
     }
 

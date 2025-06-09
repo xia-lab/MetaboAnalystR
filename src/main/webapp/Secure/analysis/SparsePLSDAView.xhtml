@@ -76,7 +76,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('spls_pair')}" alt="PLSPairImage"/>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:10in;"
+                                 src="#{sessionBean1.getCurrentImageURL('spls_pair')}" alt="PLSPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -117,7 +119,9 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('spls_score2d')}" alt="SPLSScore2DImage"/>
+                            <img onerror='this.style.display="none"' 
+                                  style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('spls_score2d')}" alt="SPLSScore2DImage"/>
                         </h:panelGrid>  
                     </h:form>
                 </p:tab>
@@ -153,7 +157,9 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('spls_loading')}" alt="SPLSLoad2DImage"/>
+                        <img onerror='this.style.display="none"' 
+                              style="width:9in; padding-left: 50px"
+                             src="#{sessionBean1.getCurrentImageURL('spls_loading')}" alt="SPLSLoad2DImage"/>
                     </h:panelGrid>  
                 </p:tab>
                 <p:tab title ="Synchronized 3D Plots">
@@ -177,7 +183,7 @@
                     especially for small data size. 
                     <h:form id="form55">
                         <h:panelGrid  columns="2" style="line-height: 25px">
-                            <h:panelGrid columns="2" style="width:320px; padding-left: 20px">
+                            <h:panelGrid columns="2" style="width:320px; padding: 10px">
                                 <h:outputLabel style="font-weight: bold" value="Validation method:"/>
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{splsBean.cvOpt}">
                                     <f:selectItem itemLabel="5-fold CV" itemValue="5" /> 
@@ -192,7 +198,9 @@
                             </h:panelGrid>
                         </h:panelGrid>
 
-                        <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('spls_cv')}" alt="SPLSclass"/>
+                        <img onerror='this.style.display="none"' 
+                              style="width:8in; padding-left: 50px"
+                             src="#{sessionBean1.getCurrentImageURL('spls_cv')}" alt="SPLSclass"/>
                     </h:form>
                 </p:tab>
             </p:tabView> 

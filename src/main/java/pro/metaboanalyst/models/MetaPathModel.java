@@ -8,13 +8,13 @@ package pro.metaboanalyst.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
 import pro.metaboanalyst.utils.DataUtils;
@@ -37,13 +37,9 @@ public class MetaPathModel {
     @JsonIgnore
     private static final Logger LOGGER = LogManager.getLogger(MetaPathModel.class);
 
-    @JsonIgnore
-    ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-
-    @JsonIgnore
-    SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
     //Section I ----> variables, getter and setter of this model <-------
     @JsonIgnore
+    private SessionBean1 sb;
     private RConnection RC;
     private String name;
     private String name2;
@@ -79,9 +75,6 @@ public class MetaPathModel {
     private String msgText;
     @JsonIgnore
     private String pieModel;
-
-    // Section IV --------> adducts customization <--------
-    private DualListModel<String> adductItems = new DualListModel(Arrays.asList("Unknown"), Arrays.asList("Unknowns"));
 
     @JsonCreator
     @ConstructorProperties({"name", "name2", "dataName", "groupInfo", "smplNum", "geneNum", "smplNum2", "geneNum2", "modeNum",
@@ -206,6 +199,14 @@ public class MetaPathModel {
         }
     }
 
+    public String getIonMode() {
+        return ionMode;
+    }
+
+    public void setIonMode(String dataIon) {
+        this.ionMode = dataIon;
+    }
+
     public boolean isAllDone() {
         return allDone;
     }
@@ -255,8 +256,9 @@ public class MetaPathModel {
         this.geneNum2 = geneNum2;
     }
 
-    public MetaPathModel(RConnection RC, String name) {
-        this.RC = RC;
+    public MetaPathModel(SessionBean1 sb, String name) {
+        this.sb = sb;
+        RC = sb.getRConnection();
         this.name = name;
     }
 
@@ -318,6 +320,18 @@ public class MetaPathModel {
 
     public void setAdducts(String[] adducts) {
         this.adducts = adducts;
+    }
+    
+        // Section IV --------> adducts customization <--------
+    // should be here, if the mode is fixed per ion mode  not per data
+    private DualListModel<String> adductItems;
+
+    public DualListModel<String> getAdductItems() {
+        return adductItems;
+    }
+
+    public void setAdductItems(DualListModel<String> adductItems) {
+        this.adductItems = adductItems;
     }
 
     public String getName() {
@@ -549,14 +563,12 @@ public class MetaPathModel {
     }
      */
     public void performPathAnalysis() {
-        MetaPathLoadBean mplb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
 
         include = false;
         disabledModify = false;
         allDone = false;
         diapos2 = "center top";
 
-        ionMode = mplb.getDataIon();
         double res = RMetaPathUtils.prepareMetaPath(RC, ionMode, name, name2, ppm, "v1", sigLevel, MumRT);
         setAnalDone(true);
 
@@ -604,47 +616,6 @@ public class MetaPathModel {
             return "pi pi-check";
         }
         return "pi pi-info-circle";
-    }
-
-    public void initilizeAdductItem() {
-        MetaPathLoadBean mplb = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
-
-        String adductSPath;
-        String adductTPath;
-        String mode = mplb.getDataIon();
-
-        switch (mode) {
-            case "positive":
-                adductSPath = ab.getInternalData("source_pos_add_list.txt");
-                adductTPath = ab.getInternalData("target_pos_add_list.txt");
-                break;
-            case "negative":
-                adductSPath = ab.getInternalData("source_neg_add_list.txt");
-                adductTPath = ab.getInternalData("target_neg_add_list.txt");
-                break;
-            default:
-                // need to deal w. mixed mode
-                adductSPath = ab.getInternalData("source_mixed_add_list.txt");
-                adductTPath = ab.getInternalData("target_mixed_add_list.txt");
-                break;
-        }
-
-        String allSAdducts = DataUtils.readTextFile(adductSPath);
-        String[] newsadducts = allSAdducts.split("\n");
-
-        String allTAdducts = DataUtils.readTextFile(adductTPath);
-        String[] newtadducts = allTAdducts.split("\n");
-        adductItems = new DualListModel(Arrays.asList(newsadducts), Arrays.asList(newtadducts));
-
-    }
-
-    public DualListModel<String> getAdductItems() {
-        initilizeAdductItem();
-        return adductItems;
-    }
-
-    public void setAdductItems(DualListModel<String> adductItems) {
-        this.adductItems = adductItems;
     }
 
     public void doTransfer(TransferEvent event) {

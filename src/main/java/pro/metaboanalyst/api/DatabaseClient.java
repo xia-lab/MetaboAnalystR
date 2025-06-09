@@ -1,5 +1,6 @@
 package pro.metaboanalyst.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
@@ -11,22 +12,28 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.lts.DatabaseController;
-import pro.metaboanalyst.utils.DataUtils;
 
 @RequestScoped
 @Named("databaseClient")
 public class DatabaseClient {
 
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+    
+    @JsonIgnore
+    @Inject
+    private DatabaseController dbc;
+    
     private static final Logger LOGGER = Logger.getLogger(DatabaseClient.class.getName());
     private final ApiClient apiClient;
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private final DatabaseController db = (DatabaseController) DataUtils.findBean("databaseController");
 
     public DatabaseClient() {
         apiClient = new ApiClient();
@@ -34,7 +41,7 @@ public class DatabaseClient {
 
     public String registerUser(String email, String password, String firstname, String lastname, String institution) {
         if (ab.isInDocker()) {
-            return db.registerUser(email, password, firstname, lastname, institution);
+            return dbc.registerUser(email, password, firstname, lastname, institution);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -53,7 +60,7 @@ public class DatabaseClient {
 
     public String[] loginUser(String email, String password, String toolName) {
         if (ab.isInDocker()) {
-            return db.loginUserDocker(email, password);
+            return dbc.loginUserDocker(email, password);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -72,7 +79,7 @@ public class DatabaseClient {
 
     public int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
         if (ab.isInDocker()) {
-            return db.writeProjectToPostgres(rawDocData, projectType, tableName);
+            return DatabaseController.writeProjectToPostgres(rawDocData, projectType, tableName);
         } else {
             try {
                 Map<String, Object> payload = new HashMap<>(rawDocData);
@@ -89,7 +96,7 @@ public class DatabaseClient {
 
     public int updateProjectTitleDescription(String newName, String newDescription, int id) {
         if (ab.isInDocker()) {
-            return db.updateProjectTitleDescription(newName, newDescription, id);
+            return DatabaseController.updateProjectTitleDescription(newName, newDescription, id);
         } else {
             try {
                 Map<String, Object> payload = new HashMap<>();
@@ -106,7 +113,7 @@ public class DatabaseClient {
 
     public ArrayList<HashMap<String, Object>> getProjectsFromPostgres(String email, String toolName, String toolLocation) {
         if (ab.isInDocker()) {
-            return db.getProjectsFromPostgres(email, toolName, toolLocation);
+            return DatabaseController.getProjectsFromPostgres(email, toolName, toolLocation);
         } else {
             try {
                 String response = apiClient.get("/database/projects?email=" + email + "&toolName=" + toolName + "&toolLocation=" + toolLocation);
@@ -120,7 +127,7 @@ public class DatabaseClient {
 
     public int deleteProjectById(Long id) {
         if (ab.isInDocker()) {
-            return db.deleteProjectById(id);
+            return DatabaseController.deleteProjectById(id);
         } else {
             try {
                 String response = apiClient.delete("/database/projects/" + id);
@@ -134,7 +141,7 @@ public class DatabaseClient {
 
     public Map<String, Object> loadProject(String token) {
         if (ab.isInDocker()) {
-            return db.loadProject(token);
+            return DatabaseController.loadProject(token);
         } else {
             try {
                 String response = apiClient.get("/database/projects/load?token=" + token);
@@ -148,7 +155,7 @@ public class DatabaseClient {
 
     public Map<String, Object> loadProjectById(String id) {
         if (ab.isInDocker()) {
-            return db.loadProjectById(id);
+            return DatabaseController.loadProjectById(id);
         } else {
             try {
                 String response = apiClient.get("/database/projects/loadById?id=" + id);
@@ -162,7 +169,7 @@ public class DatabaseClient {
 
     public String insertToken(String email, String resetToken, String expDate) {
         if (ab.isInDocker()) {
-            return db.insertToken(email, resetToken, expDate);
+            return DatabaseController.insertToken(email, resetToken, expDate);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -179,7 +186,7 @@ public class DatabaseClient {
 
     public String checkUserExists(String email) {
         if (ab.isInDocker()) {
-            return db.checkUserExists(email);
+            return DatabaseController.checkUserExists(email);
         } else {
             try {
                 return apiClient.get("/database/tokens/check?email=" + email);
@@ -192,7 +199,7 @@ public class DatabaseClient {
 
     public String verifyToken(String token) {
         if (ab.isInDocker()) {
-            return db.verifyToken(token);
+            return DatabaseController.verifyToken(token);
         } else {
             try {
                 String response = apiClient.get("/database/tokens/verify?token=" + token);
@@ -206,7 +213,7 @@ public class DatabaseClient {
 
     public String deleteTokenForUser(String email) {
         if (ab.isInDocker()) {
-            return db.deleteTokenForUser(email);
+            return DatabaseController.deleteTokenForUser(email);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -221,7 +228,7 @@ public class DatabaseClient {
 
     public String resetPassword(String email, String newPassword) {
         if (ab.isInDocker()) {
-            return db.resetPassword(email, newPassword);
+            return dbc.resetPassword(email, newPassword);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -237,7 +244,7 @@ public class DatabaseClient {
 
     public String addActivationCode(String activateCode, String expDate, String email) {
         if (ab.isInDocker()) {
-            return db.addActivationCode(activateCode, expDate, email);
+            return DatabaseController.addActivationCode(activateCode, expDate, email);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -254,7 +261,7 @@ public class DatabaseClient {
 
     public String checkActivationCode(String email, String activationCode) {
         if (ab.isInDocker()) {
-            return db.checkActivationCode(email, activationCode);
+            return DatabaseController.checkActivationCode(email, activationCode);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -270,7 +277,7 @@ public class DatabaseClient {
 
     public String deleteUserAndProjects(String userId) {
         if (ab.isInDocker()) {
-            return db.deleteUserAndProjects(userId);
+            return DatabaseController.deleteUserAndProjects(userId);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -285,7 +292,7 @@ public class DatabaseClient {
 
     public int checkMatchingFolderNameProject(String folderName) {
         if (ab.isInDocker()) {
-            return db.checkMatchingFolderNameProject(folderName);
+            return DatabaseController.checkMatchingFolderNameProject(folderName);
         } else {
             try {
                 String response = apiClient.get("/database/projects/match?folderName=" + folderName);
@@ -299,7 +306,7 @@ public class DatabaseClient {
 
     public int transferProject(int id, String newEmail, String suffix, String toolLocation) {
         if (ab.isInDocker()) {
-            return db.transferProject(id, newEmail, suffix, toolLocation);
+            return DatabaseController.transferProject(id, newEmail, suffix, toolLocation);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -319,7 +326,7 @@ public class DatabaseClient {
     // Raw spectra job functions
     public int recordRawJob(long JobID, String email, String Project_folder, String jobPos) {
         if (ab.isInDocker()) {
-            return db.recordRawJob(JobID, email, Project_folder, jobPos);
+            return DatabaseController.recordRawJob(JobID, email, Project_folder, jobPos);
         } else {
             try {
                 Map<String, Object> payload = new HashMap<>();
@@ -337,7 +344,7 @@ public class DatabaseClient {
 
     public int updateRawJobStatus(long JobID, String currentJobStatus, String jobPos) {
         if (ab.isInDocker()) {
-            return db.updateRawJobStatus(JobID, currentJobStatus, jobPos);
+            return DatabaseController.updateRawJobStatus(JobID, currentJobStatus, jobPos);
         } else {
             try {
                 Map<String, Object> payload = new HashMap<>();
@@ -354,7 +361,7 @@ public class DatabaseClient {
 
     public int extractRawJobStatus(String folder, String userid) {
         if (ab.isInDocker()) {
-            return db.extractRawJobStatus(folder, userid);
+            return DatabaseController.extractRawJobStatus(folder, userid);
         } else {
             try {
                 Map<String, String> payload = new HashMap<>();
@@ -373,7 +380,7 @@ public class DatabaseClient {
         if (ab.isInDocker()) {
             // If running on Docker, call the database method directly and assume db.getAllWorkflows(tool)
             // returns an ArrayList<HashMap<String, Object>>
-            return db.getAllWorkflows(tool, email);
+            return DatabaseController.getAllWorkflows(tool, email);
         } else {
             try {
                 // Create a payload with the tool
@@ -397,7 +404,7 @@ public class DatabaseClient {
 
     public String insertWorkflow(String email, String name, String description, String module, String toolName, String filename, String location, String input, String analysisGoal, String analysisMethods, String output, String other) {
         if (ab.isInDocker()) {
-            return db.insertWorkflow(email, name, description, module, toolName, filename, location, input, analysisGoal, analysisMethods, output, other);
+            return DatabaseController.insertWorkflow(email, name, description, module, toolName, filename, location, input, analysisGoal, analysisMethods, output, other);
         } else {
             try {
                 // Create the payload
@@ -426,7 +433,7 @@ public class DatabaseClient {
 
     public Map<String, Object> obtainFolderNameProject(String folderName) {
         if (ab.isInDocker()) {
-            return db.obtainFolderNameProject(folderName);
+            return DatabaseController.obtainFolderNameProject(folderName);
         } else {
             try {
                 String response = apiClient.get("/database/projects/details?folderName=" + URLEncoder.encode(folderName, StandardCharsets.UTF_8));
@@ -461,6 +468,6 @@ public class DatabaseClient {
     }
 
     public int detectDockerUserNum() {
-        return db.detectDockerUserNum();
+        return DatabaseController.detectDockerUserNum();
     }
 }

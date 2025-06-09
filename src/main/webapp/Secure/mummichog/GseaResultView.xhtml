@@ -15,7 +15,7 @@
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/chartjs-plugin-zoom.min.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/pro_utils.js"></script>
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/mummichog_graphics_report.js"></script>
-        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.0.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/mummichog_graphics_1.01.js"></script>
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
@@ -24,71 +24,77 @@
             <h2>GSEA Pathway Activity Profile</h2>
             <p>
                 <u>Mouse over</u> any circle to view its name; <u>click</u> a circle to view compound matches. Click the <u>Network Explorer</u> to view
-                results in the KEGG global metabolic network. 
+                results in the KEGG global metabolic network.  The Normalized Enrichment Score (NES) is GSEA enrichment score normalized to the average enrichment score of random samples of the same size.
             </p>
             <h:form id="imgForm">
                 <p:remoteCommand name="myRemote" partialSubmit="true" process="@this" update="summaryForm" action="#{mummiAnalBean.showPathDialog()}"/>
 
-                <h:panelGrid id="imgPane" style="text-align: right; padding-left: 200px">
-                    <h:panelGrid columns="4" style="margin-left: 540px; width: 200px">                      
+                <h:panelGrid id="graphPane" columns="2" style="padding-left: 20px">
 
-                        <p:commandLink onclick="reset()"
-                                       title="Reset">
-                            <img style="width: 16px;" src="#{facesContext.externalContext.requestContextPath}/resources/images/reset-64.png"/>
-                        </p:commandLink>
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('peaks_to_paths_peak')}" 
-                                       update=":myGraphPane"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customize the graphics output">
-                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                        </p:commandLink>
+                    <h:panelGrid id="imgPane" class="surface-card shadow-1 p-4 text-800">
+                        <canvas id='canvas1'  width='720px' height='650px' style='width:720px;height:650px'/>
+                    </h:panelGrid>  
 
-                        <p:commandLink onclick="exportToPng()"
-                                       title="PNG download">
-                            <b>PNG</b>
-                        </p:commandLink>
+                    <h:panelGrid style="width:400px; height: 360px; padding-left: 100px; font-size: 15px">   
 
-                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        <p:commandButton value="Enrich Network" 
+                                         disabled="#{!mummiAnalBean.showMumNetwork}"
+                                         ajax="false" 
+                                         rendered="false"
+                                         icon="pi pi-caret-right"
+                                         style="width: 180px;"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#{mummiAnalBean.proceed2EnrichNet()}"/>
+
+                        <p:commandButton type="button"
+                                         onclick="resetScatterZoom();" 
+                                         immediate="true"
+                                         icon="pi pi-replay"
+                                         style="width: 180px;"
+                                         value="Reset Zoom"/> 
+
+                        <p:commandButton value="KEGG Network" 
+                                         ajax="false" 
+                                         disabled="#{!mummiAnalBean.showMumNetwork or !pMetaStatBean.showNetwork}"
+                                         style="width: 180px;"
+                                         icon="pi pi-caret-right" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                                           
+                                         action="Metabolic network"/>
+
+                        <p:commandButton action="#{sessionBean1.graphicsLnk_action('peaks_to_paths_peak')}"
+                                         update=":myGraphPane" style="width: 180px;"
+                                         icon="pi pi-download"
+                                         oncomplete="PF('graphDialog').show()"
+                                         value="Hi-res Graphics"/>
+
+                        <p:commandButton onclick="exportToPng()" 
+                                         icon="pi pi-download"
+                                         style="width: 180px;"
+                                         value="PNG Download"/>
+
+
+                        <p:commandButton value="Pathway Hits" ajax="false" 
+                                         style="width: 180px;"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.gseaPathEnrichFile}" />  
+                        </p:commandButton> 
+
+                        <p:commandButton value="Compound Hits" ajax="false" 
+                                         style="width: 180px;"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);"   
+                                         icon="pi pi-download">  
+                            <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
+                        </p:commandButton> 
 
                     </h:panelGrid>
-                    <p:tooltip for="helpIcon" styleClass="helpTip">
-                        <p>
-                            The Normalized Enrichment Score is GSEA enrichment score normalized to the average enrichment score of random samples of the same size.
-                        </p>
-                    </p:tooltip>
-                    <h:panelGrid class="surface-card shadow-1 p-4 text-800">
-                        <canvas id='canvas1'  width='630px' height='540px'/>
-                          
-                    </h:panelGrid>  
                 </h:panelGrid>  
             </h:form>
             <hr class="style-one"/> 
             <h:form id="resTblForm">
-                <h:panelGrid columns="3" style="width:90%; padding: 10px 10px 10px 50px; text-align: center">                 
 
-                    <p:commandButton value="Pathway Hits" ajax="false" 
-                                     style="width: 160px;"
-                                     onclick="PrimeFaces.monitorDownload(start, stop);"   
-                                     icon="pi pi-download">  
-                        <p:fileDownload value="#{mummiAnalBean.gseaPathEnrichFile}" />  
-                    </p:commandButton> 
-
-                    <p:commandButton value="Compound Hits" ajax="false" 
-                                     style="width: 160px;"
-                                     onclick="PrimeFaces.monitorDownload(start, stop);"   
-                                     icon="pi pi-download">  
-                        <p:fileDownload value="#{mummiAnalBean.cmpdHitFile}" />  
-                    </p:commandButton> 
-
-                    <p:commandButton value="Network Explorer" 
-                                     ajax="false" 
-                                     disabled="#{!mummiAnalBean.showMumNetwork or !pMetaStatBean.showNetwork}"
-                                     style="width: 180px;"
-                                     icon="pi pi-caret-right" 
-                                     onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()"                                           
-                                     action="Metabolic network"/>
-                </h:panelGrid>
                 <h3>
                     Detailed result table
                 </h3>

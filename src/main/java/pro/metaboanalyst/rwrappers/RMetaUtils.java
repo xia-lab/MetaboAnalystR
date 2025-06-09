@@ -6,7 +6,6 @@ package pro.metaboanalyst.rwrappers;
 
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -65,9 +64,9 @@ public class RMetaUtils {
         return 0;
     }
 
-    public static int plotDataProfiles(RConnection RC, String dataName, String boxName, String pcaName) {
+    public static int plotDataProfiles(RConnection RC, String dataName, String boxName, String pcaName, String format, int dpi) {
         try {
-            String rCommand = "PlotDataProfile(\"" + dataName + "\", \"" + boxName + "\", \"" + pcaName + "\");";
+            String rCommand = "PlotDataProfile(\"" + dataName + "\", \"" + boxName + "\", \"" + pcaName + "\", \"" + format + "\", " + dpi + ")";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -82,17 +81,20 @@ public class RMetaUtils {
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("meta_ft_" + symb, rCommand);
             RC.voidEval(rCommand);
+            String size = RGraphUtils.getCurrentCmpdImgSize(RC);
+            sb.setCmpdImgSize(size);
         } catch (Exception rse) {
             System.out.println(rse);
         }
     }
 
-    public static int performVoteCounting(RConnection RC, double sigLvl, double minVote) {
+    public static int performVoteCounting(SessionBean1 sb, double sigLvl, double minVote) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformVoteCounting(NA" + ", " + sigLvl + ", " + minVote + ")";
 
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performVoteCounting");
+            sb.recordRCommandFunctionInfo(rCommand, "performVoteCounting");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -101,11 +103,12 @@ public class RMetaUtils {
         return 0;
     }
 
-    public static int performPvalCombination(RConnection RC, String method, double sigLvl) {
+    public static int performPvalCombination(SessionBean1 sb, String method, double sigLvl) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformPvalCombination(NA" + ", \"" + method + "\", " + sigLvl + ")";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performPvalCombination");
+            sb.recordRCommandFunctionInfo(rCommand, "performPvalCombination");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -125,10 +128,11 @@ public class RMetaUtils {
         return 0;
     }
 
-    public static int performMetaMerge(RConnection RC, double sigLvl) {
+    public static int performMetaMerge(SessionBean1 sb, double sigLvl) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PerformMetaMerge(NA" + ", " + sigLvl + ")";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "performDirectMerging");
+            sb.recordRCommandFunctionInfo(rCommand, "performDirectMerging");
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {

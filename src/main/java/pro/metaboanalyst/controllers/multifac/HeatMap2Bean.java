@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +18,7 @@ import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.TimeSeries;
-import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -29,12 +29,19 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("hm2Bean")
 public class HeatMap2Bean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
-
+    @JsonIgnore
     @Inject
-    private MultifacBean tb;
-
+    private WorkflowBean wb;
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+   @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+   
     private final String pageID = "Heatmap2";
     private boolean includeRowNames = false;
     private boolean showLegend = true;
@@ -58,14 +65,6 @@ public class HeatMap2Bean implements Serializable {
 
     public void setFontSizeOpt(String fontSizeOpt) {
         this.fontSizeOpt = fontSizeOpt;
-    }
-
-    public MultifacBean getTb() {
-        return tb;
-    }
-
-    public void setTb(MultifacBean tb) {
-        this.tb = tb;
     }
 
     public String getFontSizeCol() {
@@ -272,31 +271,30 @@ public class HeatMap2Bean implements Serializable {
     //set up default, but not actually perform action
     public void doDefaultHeatmap2() {
 
-        WorkflowBean fp = (WorkflowBean) DataUtils.findBean("workflowBean");
-        if (fp.getFunctionInfos().get("Heatmap2") != null) {
+        if (wb.getFunctionInfos().get("Heatmap2") != null) {
             try {
-                FunctionInvoker.invokeFunction(fp.getFunctionInfos().get("Heatmap2"));
+                FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("Heatmap2"));
             } catch (Exception ex) {
 
             }
         }
 
         if (selectedMetas == null) {
-            int metaNum = tb.getMetaDataBeans().size();
-            if (tb.getMetaDataBeans().size() > 4) {
+            int metaNum = mfb.getMetaDataBeans().size();
+            if (mfb.getMetaDataBeans().size() > 4) {
                 metaNum = 4;
             }
             String[] meta = new String[metaNum];
 
             for (int i = 0; i < metaNum; i++) {
-                meta[i] = tb.getMetaDataBeans().get(i).getName();
+                meta[i] = mfb.getMetaDataBeans().get(i).getName();
             }
             selectedMetas = meta;
         }
 
         if (smplSortOpt == null) {
             String[] meta = new String[1];
-            meta[0] = tb.getMetaDataBeans().get(0).getName();
+            meta[0] = mfb.getMetaDataBeans().get(0).getName();
             smplSortOpt = meta;
             if (!smplSortOptList.contains(meta[0])) {
                 smplSortOptList.add(meta[0]);
@@ -309,7 +307,7 @@ public class HeatMap2Bean implements Serializable {
         int fzRow = Integer.parseInt(fontSizeRow);
         if (!sb.isAnalInit(pageID)) {
             sb.addNaviTrack(pageID, "/Secure/multifac/Heatmap2View.xhtml");
-            TimeSeries.plotHeatMap2(sb, sb.getCurrentImage("heatmap2"), "norm", "row", "png", 72, "euclidean", "ward.D", "bwm", fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, "mean", 2000, smplSortOpt, "F", "F", "T", "T", "T", "F", selectedMetas);
+            TimeSeries.plotHeatMap2(sb, sb.getCurrentImage("heatmap2"), "norm", "row", "png", 150, "euclidean", "ward.D", "bwm", fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, "mean", 2000, smplSortOpt, "F", "F", "T", "T", "T", "F", selectedMetas);
         }
          */
     }
@@ -333,9 +331,8 @@ public class HeatMap2Bean implements Serializable {
     }
 
     public boolean hm2Bn_action() {
-        JavaRecord.record_hm2b_action(this);
+        jrd.record_hm2b_action(this);
 
-        WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
@@ -385,7 +382,7 @@ public class HeatMap2Bean implements Serializable {
         int fzCol = Integer.parseInt(fontSizeCol);
         int fzRow = Integer.parseInt(fontSizeRow);
         String[] smplSortArray = smplSortOptList.toArray(String[]::new);
-        int res = TimeSeries.plotHeatMap2(sb, sb.getNewImage("heatmap2"), dataOpt, scaleOpt, "png", 72, distOpt, clusterOpt, colorOpt, fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, selectMethodOpt, topThresh, smplSortArray,
+        int res = TimeSeries.plotHeatMap2(sb, sb.getNewImage("heatmap2"), dataOpt, scaleOpt, "png", 150, distOpt, clusterOpt, colorOpt, fzCol, fzRow, annoFz, annoHeight, unitCol, unitRow, selectMethodOpt, topThresh, smplSortArray,
                 useTopFeature ? "T" : "F", drawBorders ? "T" : "F", showLegend ? "T" : "F", showAnnotLegend ? "T" : "F", showColnm ? "T" : "F", showRownm ? "T" : "F",
                 selectedMetas, maxFeatureNum);
         if (res == 0) {

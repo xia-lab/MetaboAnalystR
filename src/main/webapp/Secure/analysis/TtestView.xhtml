@@ -97,16 +97,14 @@
                         with a yellow diamond. 
                     </p>
                 </p:tooltip>
-                <h:panelGrid style="text-align: center; width: 90%; margin: auto" class="surface-card shadow-1 p-4 text-800">
-                    <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('tt')}"  
-                                    style="height:420px; width: 100%"
-                                    extender="extender">
-                        <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
-                    </p:chart>
-                    <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('tt')}" update="chart" />
-                      
 
-                </h:panelGrid>
+                <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('tt')}"  
+                         style="height:480px; min-width:880px; width: 95%; text-align: center"
+                         extender="extender">
+                    <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
+                </p:chart>
+                <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('tt')}" update="chart" />
+
             </h:panelGrid>        
         </h:panelGrid> 
         <p:dialog widgetVar="UniReportDialog" dynamic="true" modal="true" appendTo="@(body)" height="160"

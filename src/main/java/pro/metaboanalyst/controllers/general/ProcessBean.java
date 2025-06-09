@@ -4,12 +4,10 @@
  */
 package pro.metaboanalyst.controllers.general;
 
-import pro.metaboanalyst.utils.DataUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -24,17 +22,33 @@ import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.models.DataModel;
 import pro.metaboanalyst.models.NameMapBean;
 import pro.metaboanalyst.rwrappers.RCenter;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 @ViewScoped
 @Named("procBean")
 public class ProcessBean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private WorkflowBean wb;
+
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private IntegProcessBean ipb;
+
+    @JsonIgnore
+    @Inject
+    private DoseResponseBean drb;
+
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
     private String msgText;
 
@@ -131,9 +145,12 @@ public class ProcessBean implements Serializable {
         this.msgText = msgText;
     }
 
-    @PostConstruct
+
     public void performSanityCheck() {
 
+        if(sb.isIntegChecked()){
+            return;
+        }
         RConnection RC = sb.getRConnection();
         if (RC == null) {
             System.out.println("sanity RC is null");
@@ -158,7 +175,7 @@ public class ProcessBean implements Serializable {
                         sb.setupDataSize(featureNum, sampleNum);
                         proceedBnDisabled = false;
 
-                        DataModel ds = new DataModel(RC, "upload");
+                        DataModel ds = new DataModel(sb, "upload");
                         ds.setSmplNum(sampleNum);
                         ds.setGeneNum(featureNum);
                         dataSets.add(ds);
@@ -175,7 +192,7 @@ public class ProcessBean implements Serializable {
                         String primInfo = RDataUtils.getPrimaryInfo(RC);
                         String factors = RDataUtils.getFactors(RC);
 
-                        DataModel ms = new DataModel(RC, "meta");
+                        DataModel ms = new DataModel(sb, "meta");
                         ms.setSmplNum(sampleNum);
                         ms.setPrimaryMeta(primInfo);
                         ms.setGroupInfo(factors);
@@ -188,7 +205,6 @@ public class ProcessBean implements Serializable {
                 }
                 case "pathinteg" -> {
                     editBnDisabled = true;
-                    IntegProcessBean ipb = (IntegProcessBean) DataUtils.findBean("integProcesser");
                     if (!ipb.getDatatype().equals("peak")) {
                         return;
                     }
@@ -219,13 +235,13 @@ public class ProcessBean implements Serializable {
                         String primInfo = RDataUtils.getPrimaryInfo(RC);
                         String factors = RDataUtils.getFactors(RC);
 
-                        DataModel ds = new DataModel(RC, "upload");
+                        DataModel ds = new DataModel(sb, "upload");
 
                         ds.setSmplNum(sampleNum);
                         ds.setGeneNum(featureNum);
                         dataSets.add(ds);
 
-                        DataModel ms = new DataModel(RC, "meta");
+                        DataModel ms = new DataModel(sb, "meta");
 
                         ms.setSmplNum(sampleNum);
                         ms.setPrimaryMeta(primInfo);
@@ -270,6 +286,7 @@ public class ProcessBean implements Serializable {
         }
         msg = msg + "</table>";
         msgText = msg;
+        sb.setIntegChecked();
         //System.out.println(msgText + "======msgText");
     }
 
@@ -282,7 +299,7 @@ public class ProcessBean implements Serializable {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
 
-            JavaRecord.record_skipButton_action_default(sb);
+            jrd.record_skipButton_action_default(sb);
             return null;
         }
 
@@ -298,14 +315,14 @@ public class ProcessBean implements Serializable {
             sb.setMultiGroup(RDataUtils.getGroupNumber(RC) > 2);
         }
         //sb.setPageInit("sanity");
-        sb.setIntegChecked(true);
+        sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
         //sb.setupDataOpts();
-        JavaRecord.record_skipButton_action_default(sb);
+        jrd.record_skipButton_action_default(sb);
 
         if (analType.equals("mf")) {
             return "Metadata check";
-        }else if (analType.equals("dose")) {
+        } else if (analType.equals("dose")) {
             String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
             if (metaDataGroups.length > 1) {
                 return "Metadata check";
@@ -315,16 +332,16 @@ public class ProcessBean implements Serializable {
         //for targeted metabolomics, need to perform name check
         if (analType.equals("msetqea") || analType.equals("pathqea")) {
             if (sb.getFeatType().equals("lipid")) {
-                SearchUtils.crossReferenceExactLipid(sb.getRConnection(), sb.getCmpdIDType());
+                SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());
             } else {
-                SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+                SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             }
             return "Name check";
         }
         //dspc
         if (analType.equals("network")
                 & (sb.getCmpdIDType().equals("name") || sb.getCmpdIDType().equals("hmdb") || sb.getCmpdIDType().equals("kegg"))) {
-            SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+            SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             return "Name check";
         }
 
@@ -355,7 +372,7 @@ public class ProcessBean implements Serializable {
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         if (!filtered) {
-            RDataUtils.filterVariable(RC, doQC, qcCutoff, "none", -1, "mean", 0);
+            RDataUtils.filterVariable(sb, doQC, qcCutoff, "none", -1, "mean", 0);
         }
 
         return "Normalization";
@@ -364,7 +381,7 @@ public class ProcessBean implements Serializable {
     public void filterButton_action() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_filterButton_action(this);
+            jrd.record_filterButton_action(this);
             return;
         }
         RConnection RC = sb.getRConnection();
@@ -375,7 +392,7 @@ public class ProcessBean implements Serializable {
             msg = "QC filtering: yes";
         }
 
-        int res = RDataUtils.filterVariable(RC, doQC, qcCutoff, varFilterOpt, filterCutoff, intFilterOpt, intFilterCutoff);
+        int res = RDataUtils.filterVariable(sb, doQC, qcCutoff, varFilterOpt, filterCutoff, intFilterOpt, intFilterCutoff);
         if (res == 0) {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
             return;
@@ -388,14 +405,10 @@ public class ProcessBean implements Serializable {
         filtered = true;
 
         if (sb.getAnalType().equals("dose")) {
-            DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
-            dr.setDePerformed(false);
+            drb.setDePerformed(false);
         }
-
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
-
         wb.getCalledWorkflows().add("Filtering");
-        JavaRecord.record_filterButton_action(this);
+        jrd.record_filterButton_action(this);
     }
 
     private boolean filtered = false;
@@ -437,7 +450,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String nmrNextBn_action() {
-        sb.setDataProcessed(true);
+        sb.setDataProcessed();
         return "Data check";
     }
 
@@ -489,7 +502,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String msPeakNextBn_action() {
-        sb.setDataProcessed(true);
+        sb.setDataProcessed();
         return "Data check";
     }
 
@@ -548,45 +561,40 @@ public class ProcessBean implements Serializable {
 
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
-            JavaRecord.record_performMissingImpute(this);
+            jrd.record_performMissingImpute(this);
             return null;
         }
         if (removeMissing) {
             double percent = missingPercent / 100.0;
-            RDataUtils.removeVariableByPercent(RC, percent);
+            RDataUtils.removeVariableByPercent(sb, percent);
         }
 
         String method = missingImputeOpt;
         switch (missingImputeOpt) {
-            case "replaceCol":
-                method = replaceVarOpt;
-                break;
-            case "impute":
-                method = imputeAlgOpt;
-                break;
+            case "replaceCol" -> method = replaceVarOpt;
+            case "impute" -> method = imputeAlgOpt;
         }
-        RDataUtils.imputeVariable(RC, method);
-        sb.setIntegChecked(true);
+        RDataUtils.imputeVariable(sb, method);
+        sb.setDataProcessed();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();
-        JavaRecord.record_performMissingImpute(this);
+        jrd.record_performMissingImpute(this);
 
         if (analType.equals("mf")) {
             return "Metadata check";
-        }else if (analType.equals("dose")) {
+        } else if (analType.equals("dose")) {
             String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
             if (metaDataGroups.length > 1) {
                 return "Metadata check";
             }
         }
 
-
         if (analType.equals("msetqea") || analType.equals("pathqea")) {
             if (sb.getFeatType().equals("lipid")) {
-                SearchUtils.crossReferenceExactLipid(sb.getRConnection(), sb.getCmpdIDType());
+                SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());
             } else {
-                SearchUtils.crossReferenceExact(sb.getRConnection(), sb.getCmpdIDType());
+                SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             }
             return "Name check";
         }

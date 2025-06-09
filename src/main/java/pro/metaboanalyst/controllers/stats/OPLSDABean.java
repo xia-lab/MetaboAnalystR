@@ -5,14 +5,14 @@
  */
 package pro.metaboanalyst.controllers.stats;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
-import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.JavaRecord;
+import pro.metaboanalyst.workflows.JavaRecord;
 
 /**
  *
@@ -23,8 +23,12 @@ import pro.metaboanalyst.utils.JavaRecord;
 public class OPLSDABean implements Serializable {
 
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
 
+        @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
+        
     private boolean displayConfs = true;
     private boolean displayNames = false;
     private boolean displayFeatNames = true;
@@ -126,10 +130,9 @@ public class OPLSDABean implements Serializable {
         if (greyScale) {
             useGreyScale = 1;
         }
-        ChemoMetrics.plotOPLS2DScore(sb, sb.getNewImage("opls_score2d"), "png", 72, 1, 2, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
+        ChemoMetrics.plotOPLS2DScore(sb, sb.getNewImage("opls_score2d"), "png", 150, 1, 2, conf, displayNames ? 1 : 0, useGreyScale, cexOpt);
 
-        OPLSDABean b = (OPLSDABean) DataUtils.findBean("oplsBean");
-        JavaRecord.recordOplsdaAction(b);
+        jrd.recordOplsdaAction(this);
         return null;
     }
 
@@ -145,30 +148,27 @@ public class OPLSDABean implements Serializable {
 
     public void updateOrthoPLSDA() {
         ChemoMetrics.initOPLS(sb);
-        ChemoMetrics.plotOPLS2DScore(sb, sb.getNewImage("opls_score2d"), "png", 72, 1, 2, 0.95, 1, 0, cexOpt);
-        ChemoMetrics.plotOplsSplot(sb, sb.getNewImage("opls_splot"), "all", "png", 72);
-        ChemoMetrics.plotOPLSImp(sb, sb.getCurrentImage("opls_imp"), "png", 72, "vip", "tscore", 15, "FALSE");
-        ChemoMetrics.plotOplsMdlView(sb, sb.getNewImage("opls_mdl"), "png", 72);
+        ChemoMetrics.plotOPLS2DScore(sb, sb.getNewImage("opls_score2d"), "png", 150, 1, 2, 0.95, 1, 0, cexOpt);
+        ChemoMetrics.plotOplsSplot(sb, sb.getNewImage("opls_splot"), "all", "png", 150);
+        ChemoMetrics.plotOPLSImp(sb, sb.getCurrentImage("opls_imp"), "png", 150, "vip", "tscore", 15, "FALSE");
+        ChemoMetrics.plotOplsMdlView(sb, sb.getNewImage("opls_mdl"), "png", 150);
 
-        OPLSDABean b = (OPLSDABean) DataUtils.findBean("oplsBean");
-        JavaRecord.recordOplsdaAction(b);
+        jrd.recordOplsdaAction(this);
     }
 
     public String oplsPermBtn_action() {
         ChemoMetrics.performOPLSPermute(sb, permNum, permStat);
-        permMsg = ChemoMetrics.plotOPLSPermutation(sb, sb.getNewImage("opls_perm"), "png", 72, permNum);
+        permMsg = ChemoMetrics.plotOPLSPermutation(sb, sb.getNewImage("opls_perm"), "png", 150, permNum);
 
-        OPLSDABean b = (OPLSDABean) DataUtils.findBean("OPLSDABean");
-        //JavaRecord.recordOplsdaAction(b);
+        //jrd.recordOplsdaAction(b);
         return null;
     }
 
     public void updateSplot() {
         ChemoMetrics.updateOplsSplotType(sb, loadOpt);
-        ChemoMetrics.plotOplsSplot(sb, sb.getNewImage("opls_splot"), loadOpt, "png", 72);
+        ChemoMetrics.plotOplsSplot(sb, sb.getNewImage("opls_splot"), loadOpt, "png", 150);
 
-        OPLSDABean b = (OPLSDABean) DataUtils.findBean("OPLSDABean");
-        JavaRecord.recordOplsdaAction(b);
+        jrd.recordOplsdaAction(this);
         if (loadOpt.equals("custom")) {
             sb.addMessage("info", "Please first click the points of interest and then re-gerenate the Splot in Image Dialog");
         } else {
@@ -208,11 +208,10 @@ public class OPLSDABean implements Serializable {
 
     public String oplsImpBtn_action() {
 
-        ChemoMetrics.plotOPLSImp(sb, sb.getNewImage("opls_imp"), "png", 72,
+        ChemoMetrics.plotOPLSImp(sb, sb.getNewImage("opls_imp"), "png", 150,
                 impOpt, compOpt, impFeatNum, grayScale ? "TRUE" : "FALSE");
 
-        OPLSDABean b = (OPLSDABean) DataUtils.findBean("OPLSDABean");
-        JavaRecord.recordOplsdaAction(b);
+        jrd.recordOplsdaAction(this);
         return null;
     }
 

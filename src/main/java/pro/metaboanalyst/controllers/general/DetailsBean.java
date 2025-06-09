@@ -5,6 +5,7 @@
  */
 package pro.metaboanalyst.controllers.general;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
 import java.io.File;
 import java.io.Serializable;
@@ -14,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import jakarta.faces.view.ViewScoped;
 import jakarta.faces.model.ListDataModel;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +43,6 @@ import software.xdev.chartjs.model.charts.ScatterChart;
 import software.xdev.chartjs.model.dataset.ScatterDataset;
 import software.xdev.chartjs.model.data.ScatterData;
 
-
 /**
  *
  * @author jianguox
@@ -50,8 +51,18 @@ import software.xdev.chartjs.model.data.ScatterData;
 @Named("detailsBean")
 public class DetailsBean implements Serializable {
 
-    private final ApplicationBean1 ab = (ApplicationBean1) DataUtils.findBean("applicationBean1");
-    private final SessionBean1 sb = (SessionBean1) DataUtils.findBean("sessionBean1");
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+
     private String[] colnames = null;
     private String[] rownames = null;
     private String[] stringCol = null;
@@ -786,7 +797,7 @@ public class DetailsBean implements Serializable {
 
             ArrayList<MetaValueBean> metaBeans;
             MetaValueBean mb;
-            String[] rownames = RDataUtils.getSampleNames(RC);
+            rownames = RDataUtils.getSampleNames(RC);
             metaBeans = new ArrayList<>();
             for (int i = 0; i < rownames.length; i++) {
                 mb = new MetaValueBean();
@@ -801,9 +812,8 @@ public class DetailsBean implements Serializable {
             }
             listMetaModel = new ListDataModel(metaBeans);
 
-            MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-            if (tb.getIncludedMetaData() == null) {
-                tb.setIncludedMetaData(colnames);
+            if (mfb.getIncludedMetaData() == null) {
+                mfb.setIncludedMetaData(colnames);
             }
         }
         initMeta = true;
@@ -1177,9 +1187,8 @@ public class DetailsBean implements Serializable {
         if (!curType.equals("aov2")) {
             updateCmpdName(cmpdID);
         }
-        MultifacBean tb = (MultifacBean) DataUtils.findBean("multifacBean");
-        tb.setBoxId(cmpdID);
-        tb.updateBoxplotMeta();
+        mfb.setBoxId(cmpdID);
+        mfb.updateBoxplotMeta();
     }
 
     private void updateCmpdName(String cmpdID) {
@@ -1257,32 +1266,7 @@ public class DetailsBean implements Serializable {
 
         scatterChart.getData().addDataset(scatterDataset);
 
-        // Optionally, set other options or customize the chart as needed
-        //scatterChart.setOptions(/* Configure Options here */);
-        // Assuming rendering method or conversion to a JSON/string representation for further use
         model1 = scatterChart.toJson();
-        /*
-                       model1 = new ScatterChart()
-                .setData(myValues)
-
-                        .setLabel("Red Dataset")
-                        .setBorderColor(new RColor(249, 24, 24))
-                        .setShowLine(Boolean.FALSE)
-                        .setFill(new Fill<Boolean>(true)))
-                )
-                .setOptions(new LineOptions()
-                        .setResponsive(true)
-                        .setShowLine(Boolean.FALSE)
-                        .setScales(new Scales()
-                                .addScale(Scales.ScaleAxis.X, new LinearScale().setPosition(ScalesPosition.BOTTOM)))
-                        .setPlugins(new Plugins()
-                                .setTitle(new Title()
-                                        .setDisplay(true)
-                                        .setText("Scatter Chart")))
-                ).toJson();
-                
-         */
-
     }
 
     private String mdl2Type = "aov";
@@ -1514,6 +1498,13 @@ public class DetailsBean implements Serializable {
         model3 = scatterChart.toJson();
     }
 
+    public String getDoseExtender() {
+        if (curType.equals("dose-de")) {
+            return "extender";
+        } else {
+            return "extender2";
+        }
+    }
     private String pointMapJson = new Gson().toJson("");
 
     public String getPointMapJson() {
@@ -1642,7 +1633,7 @@ public class DetailsBean implements Serializable {
 
     public StreamedContent getFileByKey(String key, String type) {
         try {
-            String fullPath = "";
+            String fullPath;
             if (type.equals("enr")) {
                 fullPath = hashFileName.get(key);
             } else {

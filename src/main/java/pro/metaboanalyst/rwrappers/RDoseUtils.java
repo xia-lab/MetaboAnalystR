@@ -7,7 +7,6 @@ package pro.metaboanalyst.rwrappers;
 
 import java.util.Arrays;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.utils.DataUtils;
 import org.rosuda.REngine.REXP;
 import org.rosuda.REngine.Rserve.RConnection;
@@ -16,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.controllers.dose.DoseResponseModel;
-import pro.metaboanalyst.utils.JavaRecord;
 
 /**
  *
@@ -26,14 +24,15 @@ public class RDoseUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(DataUtils.class);
 
-    public static int performDoseDEAnal(RConnection RC) {
+    public static int performDoseDEAnal(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             //System.out.println("DE22==============");
             //String robustTrend = robustTrendBool ? "T" : "F";
 
             String rCommand = "PerformDoseDEAnal();";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "DE Analysis");
+            sb.recordRCommandFunctionInfo(rCommand, "DE Analysis");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -42,14 +41,15 @@ public class RDoseUtils {
         }
     }
 
-    public static int prepareSignificantItems(RConnection RC, double sigLevel, double fcLevel, boolean fdrFilterPass, boolean wtTest, double wtSigLevel) {
+    public static int prepareSignificantItems(SessionBean1 sb, double sigLevel, double fcLevel, boolean fdrFilterPass, boolean wtTest, double wtSigLevel) {
         try {
+            RConnection RC = sb.getRConnection();
             // Convert Java boolean to R boolean representation
             String fdrFilterPassR = fdrFilterPass ? "TRUE" : "FALSE";
             String wtTestR = wtTest ? "TRUE" : "FALSE";
 
             String rCommand = "PrepareSigDRItems(NA, " + sigLevel + "," + fcLevel + "," + fdrFilterPassR + "," + wtTestR + ", " + wtSigLevel + ");";
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             System.out.println(rCommand);
             RCenter.recordRCommand(RC, rCommand);
@@ -59,11 +59,12 @@ public class RDoseUtils {
         return 0;
     }
 
-    public static int prepareDataForDoseResponse(RConnection RC) {
+    public static int prepareDataForDoseResponse(SessionBean1 sb) {
         try {
+            RConnection RC = sb.getRConnection();
             String rCommand = "PrepareDataForDoseResponse(NA);";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -81,12 +82,13 @@ public class RDoseUtils {
         return 0;
     }
 
-    public static int performModelFit(RConnection RC, String[] models) {
+    public static int performModelFit(SessionBean1 sb, String[] models) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("models", models);
             String rCommand = "PerformDRFit(NA);";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -110,7 +112,7 @@ public class RDoseUtils {
         try {
             String rCommand = "PlotDRModelBars(NA, \"" + plotName + "\", " + dpi + ", \"" + type + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             sb.addGraphicsCMD("dr_barplot", rCommand);
             sb.addGraphicsMapLink("dr_barplot", "/Secure/dose/ModelFitView.xhtml");
@@ -125,7 +127,7 @@ public class RDoseUtils {
         try {
             String rCommand = "PlotDoseVolcano(NA, \"" + plotName + "\", " + dpi + ", \"" + type + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Sig. analysis");
+            sb.recordRCommandFunctionInfo(rCommand, "Sig. analysis");
 
             sb.addGraphicsCMD("dose_volcano", rCommand);
             sb.addGraphicsMapLink("dose_volcano", "/Secure/dose/SigFeatureView.xhtml");
@@ -140,7 +142,7 @@ public class RDoseUtils {
         try {
             String rCommand = "PlotDRHistogram(NA, \"" + plotName + "\", " + dpi + ", \"" + type + "\", \"" + units + "\", \"" + scale + "\");";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             sb.addGraphicsCMD("dr_histogram", rCommand);
             sb.addGraphicsMapLink("dr_histogram", "/Secure/dose/ModelFitView.xhtml");
@@ -391,14 +393,15 @@ public class RDoseUtils {
         return 0;
     }
 
-    public static int performBMDAnal(RConnection RC, String bmdOption, String numsds, String ctrlMode) {
+    public static int performBMDAnal(SessionBean1 sb, String bmdOption, String numsds, String ctrlMode) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("bmd.pass.option", bmdOption);
             RC.assign("num.sds", numsds);
             RC.assign("ctrl.mode", ctrlMode);
             String rCommand = "PerformBMDCalc(NA);";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
@@ -428,14 +431,15 @@ public class RDoseUtils {
         return null;
     }
 
-    public static int performDrcResFilter(RConnection RC, String option, String pval, String[] models) {
+    public static int performDrcResFilter(SessionBean1 sb, String option, String pval, String[] models) {
         try {
+            RConnection RC = sb.getRConnection();
             RC.assign("fit.select", option);
             RC.assign("lof.pval", pval);
             RC.assign("models", models);
             String rCommand = "FilterDRFit(NA);";
             RCenter.recordRCommand(RC, rCommand);
-            JavaRecord.recordRCommandFunctionInfo(RC, rCommand, "Curve Fitting");
+            sb.recordRCommandFunctionInfo(rCommand, "Curve Fitting");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {

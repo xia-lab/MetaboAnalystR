@@ -108,12 +108,12 @@ public class TimeUploadBean implements Serializable {
                 if (tsDesign.equals("time0") || tsDesign.equals("time")) {
                     tb.setDisableMetaSelection(true);
                 }
-                String fileName = DataUtils.uploadFile(csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                String fileName = DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                 if (fileName == null) {
                     return null;
                 }
                 if (RDataUtils.readTextDataTs(RC, fileName, tsFormat)) {
-                    String metaName = DataUtils.uploadFile(metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                    String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                     if (metaName == null) {
                         return null;
                     }
@@ -146,13 +146,6 @@ public class TimeUploadBean implements Serializable {
         String testMetaFile;
         String tsDesign;
         switch (timeDataOpt) {
-            case "time2" -> {
-                tsDataType = "pktable";
-                tsDesign = "multi";  //indicate whether this is actual time series
-                tsFormat = "colu"; // not ts here is for metadata module
-                fileName = ab.getResourceByAPI("cress_time.csv");
-                testMetaFile = ab.getResourceByAPI("cress_time_meta.csv");
-            }
             case "pkcovid" -> {
                 tsDataType = "pktable";
                 tsDesign = "multi";
@@ -173,6 +166,13 @@ public class TimeUploadBean implements Serializable {
                 tsFormat = "rowmf";
                 fileName = ab.getResourceByAPI("diabetes_lipids.txt");
                 testMetaFile = ab.getResourceByAPI("diabetes_metadata.csv");
+            }
+            case "time2" -> {
+                tsDataType = "pktable";
+                tsDesign = "time";  //indicate whether this is actual time series
+                tsFormat = "colu"; // not ts here is for metadata module
+                fileName = ab.getResourceByAPI("cress_time.csv");
+                testMetaFile = ab.getResourceByAPI("cress_time_meta.csv");
             }
             default -> {
                 tsDataType = "pktable";
@@ -233,7 +233,7 @@ public class TimeUploadBean implements Serializable {
 
         if (sb.doLogin("pktable", analType, false, false)) {
             RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadXLSXFile(metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String fileName = DataUtils.uploadXLSXFile(sb, metabolonFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
 
             if (RDataUtils.validateMetabolon(RC, fileName)) {
                 String[] metaFactors, compoundIDs;

@@ -359,7 +359,9 @@ m.z             p.value                 t.score     mode
                                              oncomplete="PF('statusDialog').hide()"
                                              ajax="false" 
                                              action="#{integProcesser.jointProceed()}"/>
-                            <p:commandLink style="font-size: 14px; font-weight: bold" value="Try our example" onclick="PF('testDataDialog').show();" actionListener="#{integProcesser.setUseExample(true)}"/>
+                            <p:commandLink style="font-size: 14px; font-weight: bold" value="Try our example" 
+                                           onclick="PF('testDataDialog').show();" 
+                                           actionListener="#{integProcesser.setUseExample(true)}"/>
                         </h:panelGrid>
 
                     </h:form>
