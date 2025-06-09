@@ -46,7 +46,6 @@ import static pro.metaboanalyst.rwrappers.RCenter.cleanRCmd;
 import pro.metaboanalyst.spectra.SpectraParamBean;
 import pro.metaboanalyst.spectra.SpectraUploadBean;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
-import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
  *

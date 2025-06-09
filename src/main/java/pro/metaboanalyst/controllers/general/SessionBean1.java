@@ -125,7 +125,7 @@ public class SessionBean1 implements Serializable {
     private boolean regression = false;
     private boolean keepClsOrder = true; //for multiple groups using PLS-DA and othogonal PLS-DA
     private boolean dataUploaded = false;
-    private boolean dataProcessed = false;
+    private boolean dataPreprocessed = false;
     private boolean integChecked = false;
     private boolean dataNormed = false;
     @JsonIgnore
@@ -597,8 +597,8 @@ public class SessionBean1 implements Serializable {
     public void reset2DefaultState() {
         this.moduleURL = null;
         this.dataUploaded = false;
+        this.dataPreprocessed = false;
         this.integChecked = false;
-        this.dataProcessed = false;
         this.dataNormed = false;
         imgMap.clear();
         naviTrack.clear();
@@ -608,32 +608,32 @@ public class SessionBean1 implements Serializable {
 
     public void setDataUploaded() {
         this.dataUploaded = true;
+        this.dataPreprocessed = false;
         this.integChecked = false;
-        this.dataProcessed = false;
         this.dataNormed = false;
         addMessage("info", "Data upload successful.");
     }
 
+    public void setDataPreprocessed() {
+        this.dataUploaded = true;
+        this.dataPreprocessed = true;
+        this.integChecked = true;
+        this.dataNormed = false;
+        addMessage("info", "Data pre-processed successful.");
+    }
+
     public void setIntegChecked() {
         this.dataUploaded = true;
+        this.dataPreprocessed = true;
         this.integChecked = true;
-        this.dataProcessed = false;
         this.dataNormed = false;
         addMessage("info", "Integrity check successful.");
     }
 
-    public void setDataProcessed() {
-        this.dataUploaded = true;
-        this.integChecked = true;
-        this.dataProcessed = true;
-        this.dataNormed = false;
-        addMessage("info", "Data processed successful.");
-    }
-
     public void setDataNormed() {
         this.dataUploaded = true;
+        this.dataPreprocessed = true;
         this.integChecked = true;
-        this.dataProcessed = true;
         this.dataNormed = true;
         addMessage("info", "Data normalization successful.");
     }
@@ -646,8 +646,8 @@ public class SessionBean1 implements Serializable {
         this.dataUploaded = dataUploaded;
     }
 
-    public boolean isDataProcessed() {
-        return dataProcessed;
+    public boolean isDataPreprocessed() {
+        return dataPreprocessed;
     }
 
     public boolean isIntegChecked() {

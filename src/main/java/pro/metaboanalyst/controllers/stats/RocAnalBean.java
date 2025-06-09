@@ -181,6 +181,14 @@ public class RocAnalBean implements Serializable {
         rocMdlDD = 0;
     }
 
+    public void setupSampleTable() {
+        setAnalMode("test");
+        if (sampleItems1 == null) {
+            prepareSampleBeans();
+        }
+        //sb.registerPage("Builder");
+    }
+
     public int getBestModelIndex() {
         return RocUtils.getBestModelInx(sb.getRConnection());
     }
@@ -363,7 +371,10 @@ public class RocAnalBean implements Serializable {
             jrd.record_performExploreAnalysis(this);
             return null;
         }
-
+        if ("NA".equals(selMeta)) {
+            sb.addMessage("Warn", "Please choose a metadata factor!");
+            return null;
+        }
         if (getFactor1().equals(getFactor2())) {
             sb.addMessage("Warn", "Both factors can not be the same.");
             return null;
@@ -433,7 +444,10 @@ public class RocAnalBean implements Serializable {
         if (wb.isEditMode()) {
             return;
         }
-
+        if ("NA".equals(selMeta)) {
+            sb.addMessage("Warn", "Please choose a metadata factor!");
+            return;
+        }
         if (getFactor1().equals(getFactor2())) {
             sb.addMessage("Warn", "Both factors can not be the same.");
             return;

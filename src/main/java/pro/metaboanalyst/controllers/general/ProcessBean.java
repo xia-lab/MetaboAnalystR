@@ -450,7 +450,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String nmrNextBn_action() {
-        sb.setDataProcessed();
+        sb.setDataPreprocessed();
         return "Data check";
     }
 
@@ -502,7 +502,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String msPeakNextBn_action() {
-        sb.setDataProcessed();
+        sb.setDataPreprocessed();
         return "Data check";
     }
 
@@ -575,7 +575,7 @@ public class ProcessBean implements Serializable {
             case "impute" -> method = imputeAlgOpt;
         }
         RDataUtils.imputeVariable(sb, method);
-        sb.setDataProcessed();
+        sb.setDataPreprocessed();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();

@@ -8,16 +8,8 @@ package pro.metaboanalyst.utils;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import jakarta.faces.context.FacesContext;
-import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.controllers.enrich.IntegProcessBean;
-import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
-import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
-import pro.metaboanalyst.spectra.SpectraControlBean;
-import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
-import pro.metaboanalyst.rwrappers.RDataUtils;
 
 /**
  *

@@ -101,7 +101,7 @@
                             <p:commandButton value="Update" update=":ac:form2:screePane  :hisTab:cmdPane" actionListener="#{rocAnalBean.updateTestProbView()}"/>   
 
                         </h:panelGrid>
-                        <h:panelGrid id="screePane" style="width: 100%;">
+                        <h:panelGrid id="screePane"  style="text-align: center; width: 100%;">
                             <h:panelGrid style="text-align: right; padding-left: 650px; width: 760px;">
                                 <h:panelGrid columns="2" style="width:120px; text-align: right;">
                                     <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_test_prob')}" 
@@ -113,16 +113,17 @@
                                 </h:panelGrid>
                             </h:panelGrid>
                             <h:panelGrid columns="2">
-                                <img onerror='this.style.display="none"' style="height:8in;"
+                                <img onerror='this.style.display="none"' 
+                                     style="height:8in; margin-right: 20px"
                                      src="#{sessionBean1.getCurrentImageURL('cls_test_prob')}" alt="ProbTestImage"/>
-                                <h:outputLabel style="font-weight: bold" escape="fasle" value="#{rocAnalBean.testConfMat}"/>
+                                <h:outputLabel style="font-weight: bold; font-size: 1.2rem" escape="fasle" value="#{rocAnalBean.testConfMat}"/>
                             </h:panelGrid>
                         </h:panelGrid>     
                     </h:form>
                 </p:tab>
 
                 <p:tab title ="CV Prediction">
-                    <h:outputLabel style="font-weight: bold" value="#{rocAnalBean.accuText}"/>
+
                     <h:panelGrid id="score2dPane" style="text-align: center; width: 100%;">
                         <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
                             <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_test_accu')}" 
@@ -132,6 +133,7 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
+                        <h:outputLabel style="font-weight: bold; font-size: 1.1rem" value="#{rocAnalBean.accuText}"/>
                         <img onerror='this.style.display="none"' style="width:9in;"
                              src="#{sessionBean1.getCurrentImageURL('cls_test_accu')}" alt="PredTestImage"/>
                     </h:panelGrid>  
@@ -168,7 +170,7 @@
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
                             </h:panelGrid>
-                            <img onerror='this.style.display="none"' style="width:9in;"
+                            <img onerror='this.style.display="none"' style="width:8in;"
                                  src="#{sessionBean1.getCurrentImageURL('roc_perm')}" alt="ROCPermImage"/>
                         </h:panelGrid>  
                     </h:form>
