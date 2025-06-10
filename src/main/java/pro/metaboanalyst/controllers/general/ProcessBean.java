@@ -145,10 +145,15 @@ public class ProcessBean implements Serializable {
         this.msgText = msgText;
     }
 
+    //note this is viewscoped; need to init when visit this page
+    private boolean sanityChecked = false;
 
     public void performSanityCheck() {
 
-        if(sb.isIntegChecked()){
+        //if (sb.isIntegChecked()) {
+        //    return;
+        //}
+        if (sanityChecked) {
             return;
         }
         RConnection RC = sb.getRConnection();
@@ -286,6 +291,7 @@ public class ProcessBean implements Serializable {
         }
         msg = msg + "</table>";
         msgText = msg;
+        sanityChecked = true;
         sb.setIntegChecked();
         //System.out.println(msgText + "======msgText");
     }
@@ -571,8 +577,10 @@ public class ProcessBean implements Serializable {
 
         String method = missingImputeOpt;
         switch (missingImputeOpt) {
-            case "replaceCol" -> method = replaceVarOpt;
-            case "impute" -> method = imputeAlgOpt;
+            case "replaceCol" ->
+                method = replaceVarOpt;
+            case "impute" ->
+                method = imputeAlgOpt;
         }
         RDataUtils.imputeVariable(sb, method);
         sb.setDataPreprocessed();

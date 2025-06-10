@@ -19,7 +19,6 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.PhaseEvent;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.event.PhaseListener;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -52,6 +51,13 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("phaseListener")
 public class MyPhaseListener implements PhaseListener {
 
+    /*
+    * Do not inject narrower scoped bean into application scoped bean
+    * PhaseListeners are typically instantiated and managed by the 
+    * JSF implementation itself (e.g., Mojarra or MyFaces). They are usually application-scoped singletons.
+    * CDI  is a separate specification that manages the lifecycle and dependencies of CDI beans.
+    * For CDI to @Inject a dependency into a class, CDI must be the one instantiating and managing that class. 
+    * Since JSF instantiates PhaseListeners, CDI doesn't get a chance to perform the injection.
     @Inject
     private ApplicationBean1 ab;
     @Inject
@@ -76,7 +82,7 @@ public class MyPhaseListener implements PhaseListener {
     private WorkflowBean wfb;
     @Inject
     private DatabaseClient dbc;
-    
+     */
     public static final String USER_SESSION_KEY = "MA6_PRO_user";
     private static final String PartialPersistence = "Share"; //ok
     private static final String LoadingProject = "LoadProject"; //ok
@@ -128,10 +134,9 @@ public class MyPhaseListener implements PhaseListener {
         String rootId = (context.getViewRoot() != null) ? context.getViewRoot().getViewId() : request.getRequestURL().toString();
 
         //if (event.getPhaseId() == PhaseId.RESTORE_VIEW && context.getViewRoot() == null) {
-            //context.setViewRoot(context.getApplication().getViewHandler().createView(context, "/home.xhtml"));
-            //System.out.println("Setting default view /home.xhtml");
+        //context.setViewRoot(context.getApplication().getViewHandler().createView(context, "/home.xhtml"));
+        //System.out.println("Setting default view /home.xhtml");
         //}
-
         if (funcNm != null) {
             switch (funcNm) {
                 case LOGIN_EXTERNAL ->
@@ -165,10 +170,15 @@ public class MyPhaseListener implements PhaseListener {
 
         if (rootId.contains(JobManager)) {
 
+            FacesContext facesContext = event.getFacesContext(); // Get the current FacesContext
+
+            // Retrieve your session-scoped bean from the session map
+            // The key is typically the @Named value, or the decapitalized class name
+            SessionBean1 sb = (SessionBean1) facesContext.getExternalContext().getSessionMap().get("sessionBean1");
+            UserLoginBean ulb = (UserLoginBean) facesContext.getExternalContext().getSessionMap().get("userLoginBean");
             if (!(sb.isRegisteredLogin() && ulb.isJobManager())) {
                 context.getApplication().getNavigationHandler().handleNavigation(context, "*", "Exit");
                 context.responseComplete();
-                return; // Ensure no further processing
             }
         } else if (rootId.contains(resetToken)) {
             handleResetRequest(event);
@@ -203,7 +213,10 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        ProjectBean prjb = (ProjectBean) context.getExternalContext().getSessionMap().get("projectBean");
+        SpectraControlBean spcb = (SpectraControlBean) context.getExternalContext().getSessionMap().get("spectraController");
         try {
             String partialId = request.getParameter("ID");
             sb.setPartialId(partialId);
@@ -244,6 +257,10 @@ public class MyPhaseListener implements PhaseListener {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
+        MailService ms = (MailService) context.getExternalContext().getSessionMap().get("mailService");
         try {
             String folderName = request.getParameter("folderName");
             String jobId = request.getParameter("jobId");
@@ -289,6 +306,7 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
         String token = request.getParameter("token");
         if (token != null) {
             sb.setResetToken(token);
@@ -299,12 +317,12 @@ public class MyPhaseListener implements PhaseListener {
         PrimeFaces.current().executeScript("PF('statusDialog').show();");
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        ProjectBean prjb = (ProjectBean) context.getExternalContext().getSessionMap().get("projectBean");
+        UserLoginBean ulb = (UserLoginBean) context.getExternalContext().getSessionMap().get("userLoginBean");
         try {
             String projectLoadingCode = request.getParameter("ID");
             String userId = projectLoadingCode.split("_")[0];
             long UserNM = Long.parseLong(userId);
-
             String guestFolder = projectLoadingCode.split("_")[1];
             String pageFlag = "";
             boolean ready;
@@ -369,6 +387,9 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
+        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
         try {
 
             String tokenId = request.getParameter("tokenId");
@@ -423,7 +444,9 @@ public class MyPhaseListener implements PhaseListener {
     private void handleVerifiedRequest(PhaseEvent event) {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
         try {
             //boolean success = fu.reloadUserInfo();
             String tokenId = (String) request.getParameter("token");
@@ -460,6 +483,7 @@ public class MyPhaseListener implements PhaseListener {
     private void handleActivationRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
+        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
         try {
             //System.out.println("activateView===========");
             String activationCode = context.getExternalContext().getRequestParameterMap().get("code");
@@ -493,7 +517,8 @@ public class MyPhaseListener implements PhaseListener {
 
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
-
+        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
+        FireBase fb = (FireBase) context.getExternalContext().getSessionMap().get("fireBase");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
         //If no parameters are passed, then, try to parse the JSON body of the API request
@@ -538,7 +563,7 @@ public class MyPhaseListener implements PhaseListener {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
-
+        FireBase fb = (FireBase) context.getExternalContext().getSessionMap().get("fireBase");
         try {
             String email = request.getParameter("email");
             String folderName = request.getParameter("folderName");
@@ -580,9 +605,13 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
+        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
+        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
         try {
-           
+
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
             String jobId = request.getParameter("jobId");
@@ -617,7 +646,11 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
+        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
+        WorkflowBean wfb = (WorkflowBean) context.getExternalContext().getSessionMap().get("workflowBean");
         try {
             String tokenId = request.getParameter("tokenId");
             boolean res = fbc.loadProject(tokenId, "workflow");
@@ -645,10 +678,15 @@ public class MyPhaseListener implements PhaseListener {
 
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-
+        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
+        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
+        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
+        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
+        DatabaseClient dbc = (DatabaseClient) context.getExternalContext().getSessionMap().get("databaseClient");
         try {
             String folderName = request.getParameter("folderName");
-            String jobId = request.getParameter("jobId");
+            //String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
             Map<String, Object> obj = dbc.obtainFolderNameProject(folderName);
             Optional<Map.Entry<String, Object>> matchingEntry = obj.entrySet().stream()

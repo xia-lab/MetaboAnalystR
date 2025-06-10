@@ -38,6 +38,7 @@ import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import org.omnifaces.util.Faces;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.workflows.WorkflowView;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -66,6 +67,10 @@ public class SessionBean1 implements Serializable {
     @JsonIgnore
     @Inject
     private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rab;
 
     @JsonIgnore
     @Inject
@@ -313,7 +318,6 @@ public class SessionBean1 implements Serializable {
         }
 
         if (!ab.isCompiled()) {
-
             if (!ab.compileRScripts(analType)) {
                 addMessage("error", "Cannot connect to Rserver! Please start your Rserver with the right permission!");
                 return false;
@@ -325,9 +329,7 @@ public class SessionBean1 implements Serializable {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (reload) {
@@ -346,7 +348,7 @@ public class SessionBean1 implements Serializable {
         }
         //System.out.println("pro.metaboanalyst.controllers.general.SessionBean1.doLogin()" + analType);
         RC = getRConnection(myAnalType);
-        System.out.println("CURRENTUSER===" + getCurrentUser().getOrigHomeDir());
+        //System.out.println("CURRENTUSER===" + getCurrentUser().getOrigHomeDir());
 
         if (RC == null) {
             addMessage("Error", "Cannot connect to Rserve. Please make sure that your application has been authenticated, and start your Rserver with the right permission!");
@@ -422,7 +424,6 @@ public class SessionBean1 implements Serializable {
 
     public boolean doSpecLogin(String dataType, String analType, boolean isRegression, boolean paired, String previousFolderName, boolean reload) {
         if (!ab.isCompiled()) {
-
             if (!ab.compileRScripts(analType)) {
                 addMessage("error", "Cannot connect to Rserver! Please start your Rserver with the right permission!");
                 return false;
@@ -434,9 +435,7 @@ public class SessionBean1 implements Serializable {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (reload) {
@@ -601,9 +600,28 @@ public class SessionBean1 implements Serializable {
         this.integChecked = false;
         this.dataNormed = false;
         imgMap.clear();
+        
+        //this is called in data upload, need to keep this entry
+        String uploadVal = null;
+        boolean uploaded = false;
+        if (naviTrack.keySet().contains("Upload")) {
+            uploaded = true;
+            uploadVal = naviTrack.get("Upload");
+            if(uploadVal.startsWith("/MetaboAnalyst")){
+                uploadVal = uploadVal.substring("/MetaboAnalyst".length());
+            }
+        }
         naviTrack.clear();
         naviTrackAnalType.clear();
-
+        if(uploaded){
+            addNaviTrack("Upload", uploadVal);
+        }
+        //reset sessionbean of individual module
+        if ("roc".equals(analType)) {
+            rab.resetState();
+        } else if ("mf".equals(analType)) {
+            rab.resetState();
+        }
     }
 
     public void setDataUploaded() {
@@ -1531,14 +1549,13 @@ public class SessionBean1 implements Serializable {
             }
         }
 
+        //clear previous state
         if (currentUser != null) {
             if (RC != null) {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (analType.equals("raw") && ab.shouldUseScheduler()) {
@@ -1652,7 +1669,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void performCleaning() {
-
+        //to make sure key resources are in default state when users try different data from upload page
         long elapse = (System.currentTimeMillis() - ab.getLastCleaningTime()) / 1000; //in seconds
         //call after 10 min break
         if (elapse > 600) {

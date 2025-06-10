@@ -53,10 +53,10 @@ public class MultifacBean implements Serializable {
 
     private List<MetaDataBean> metaDataBeans = null;
     private MetaDataBean selectedMetaDataBean;
-    private String selectedMetaData = "Class";
+    private String selectedMetaData;
     private String[] metaOpts;
     private String[] discMetaOpts;
-    private String covJsonName = "";
+    private String covJsonName;
     private double rawCovThresh = 0.05;
     private boolean ascaInit = false;
     private String mbImage = null;
@@ -75,8 +75,8 @@ public class MultifacBean implements Serializable {
     private String defaultText = "The analysis has not been performed yet.";
     private SelectItem[] analysisMetaOptsAnova;
     private String covStyleOpt = "default";
-    private List<SampleBean> uniqueMetaNames = null;
-    private List<SelectItem> uniqueMetaList = null;
+    private List<SampleBean> uniqueMetaNames;
+    private List<SelectItem> uniqueMetaList;
     private int boxMetaVersionNum = 0;
     private String compDesign = "cov";
     private String selectedCondition;
@@ -169,14 +169,19 @@ public class MultifacBean implements Serializable {
         reinitVariables();
     }
 
+    public void resetState(){
+        reinitVariables();
+        discMetaOpts = null;
+        discreteMetaOpts = null;
+        uniqueMetaList = null;
+        uniqueMetaNames = null;
+    }
+    
     public void reinitVariables() {
         analysisMetaOpts = null;
         metaDataBeans = null;
         boxMetaOpts = null;
         includedMetaData = null;
-        //discMetaOpts = null;
-        //discreteMetaOpts = null;
-        //uniqueMetaList = null;
     }
 
 

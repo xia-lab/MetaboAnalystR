@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
 
 /**
  *
@@ -467,7 +468,6 @@ public class UploadBean implements Serializable {
             sb.addMessage("Error", "File is empty");
             return null;
         }
-
         if (sb.doLogin(dataType, "roc", false, false)) {
             RConnection RC = sb.getRConnection();
             String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
@@ -503,6 +503,7 @@ public class UploadBean implements Serializable {
         if (!sb.doLogin("conc", "roc", false, false)) {
             return null;
         }
+
         RConnection RC = sb.getRConnection();
         switch (dataOpt) {
             case "data1" ->
