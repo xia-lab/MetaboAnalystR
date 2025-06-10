@@ -1188,7 +1188,8 @@ qc.gini <- function(dataSet, x, threshold = 0.95,
   }
 }
 
-SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", threshold = 0.1) {
+SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
+  save.image("summarize.RData");
   dataSet <- readDataset(fileName)
   
   summary_df <- data.frame(Sample = character(), 
@@ -1202,11 +1203,14 @@ SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", thresho
                            Outlier_Dendrogram = numeric(),
                            stringsAsFactors = FALSE)
   
-  if (grepl("_norm", imgNameBase)) {
+  if (grepl("norm", imgNameBase)) {
     data <- dataSet$data.norm
   } else {
-    data <- dataSet$data.anot
+    data <- .get.annotated.data();
   }
+  print("SummarizeQC");
+
+  print(head(data))
   
   HighCoverageGeneCount <- colSums(data > 5)
   ncov5_df <- data.frame(Sample = names(HighCoverageGeneCount), 

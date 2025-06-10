@@ -459,3 +459,34 @@ SetInitLib <-function(library){
   paramSet$init.lib <- library;
   saveSet(paramSet);
 }
+
+BuildCoexpNet <- function(dataName,
+                          power = NULL,
+                          cor_func = c("pearson", "bicor", "spearman"),
+                          network_type = c("signed", "signed_hybrid", "unsigned"),
+                          deepSplit = 2,
+                          minModuleSize = 30,
+                          mergeCutHeight = 0.25,
+                          maxBlockSize = 5000,
+                          n_threads = 8,
+                          filters = list(counts = c(0, 0), var = 0),
+                          auto_power = TRUE,
+                          enrichFDR = 0.05,
+                          imgName = "coexp_dendro",
+                          dpi = 72,
+                          format = "png") {
+
+  if(!exists("my.build.coexp.net")){ 
+     compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_coexp.Rc"));    
+  }
+
+return(my.build.coexp.net(
+    dataName, power, cor_func, network_type,
+    deepSplit,              # OK
+    minModuleSize,          # OK
+    mergeCutHeight,         # <-- was duplicate
+    maxBlockSize, n_threads, filters,
+    auto_power, enrichFDR, imgName, dpi, format  # + format only if you keep it
+))
+
+}

@@ -291,6 +291,81 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   imgSet$PlotDRModelBars <- imgNm;
   saveSet(imgSet);
 }
+PlotDRFilterSummary <- function(imgNm, dpi = 72, format = "png") {
+  
+  ## 1 ── Load data -----------------------------------------------------------
+  paramSet <- readSet(paramSet, "paramSet")
+  dataSet  <- readDataset(paramSet$dataName)
+  
+  require(ggplot2)
+  require(Cairo)
+  
+  ## 2 ── Build counts --------------------------------------------------------
+  dres   <- dataSet$bmdcalc.obj$bmdcalc.res
+  fitres <- dataSet$bmdcalc.obj$fitres.bmd
+  
+  n_total   <- length(dataSet$itemselect$item)      # “Initial” = sig. features
+  n_fitted  <- nrow(dres)                           # “Fitted”  = BMD-modelled
+  
+  mask_conv   <- dres$conv.pass
+  mask_ci1    <- mask_conv & dres$CI.pass
+  mask_ci2    <- mask_ci1  & dres$CI.pass2
+  mask_low    <- mask_ci2  & dres$ld.pass
+  mask_high   <- mask_low  & dres$hd.pass
+  
+  lof_thr <- 0.05
+  fit_ok  <- rep(FALSE, n_fitted)
+  hit     <- match(dres$id, fitres$gene.id, nomatch = 0)
+  fit_ok[hit > 0] <- fitres$lof.p[hit] >= lof_thr
+  mask_fitp <- mask_high & fit_ok
+  
+  counts <- c(
+    Initial      = n_total,
+    Fitted       = n_fitted,
+    `BMD/BMDL`   = sum(mask_conv),
+    `BMDU/BMDL`  = sum(mask_ci1),
+    `BMDU/BMD`   = sum(mask_ci2),
+    Lowdose      = sum(mask_low),
+    Highdose     = sum(mask_high),
+    FitP         = sum(mask_fitp),
+    All          = sum(mask_fitp)
+  )
+  
+  pct <- round(counts / n_total * 100)
+  
+  df <- data.frame(
+    step    = factor(names(counts), levels = rev(names(counts))), # reverse for ggplot
+    count   = counts,
+    percent = pct
+  )
+  
+  ## 3 ── Build the bar plot --------------------------------------------------
+  p <- ggplot(df, aes(x = step, y = count, fill = percent)) +
+    geom_col(width = 0.7, colour = "black") +
+    geom_text(aes(label = paste0(count, " (", percent, "%)")),
+              hjust = 1.05, colour = "white", size = 3.8) +
+    scale_fill_gradient(low = "#6AA2AD", high = "#C5D97B") +
+    coord_flip(clip = "off") +
+    labs(x = NULL, y = "Features Remaining") +
+    theme_minimal(base_size = 11) +
+    theme(
+      legend.position = "none",
+      plot.margin = margin(10, 40, 10, 120),   # extra left margin for long labels
+      axis.text.y = element_text(face = "bold")
+    )
+  
+  ## 4 ── Save & register -----------------------------------------------------
+  outFile <- paste0(imgNm, "dpi", dpi, ".", format)
+  Cairo(file = outFile, width = 6.5, height = 4.5, unit = "in",
+        dpi = dpi, type = format, bg = "white")
+  print(p)
+  dev.off()
+  
+  imgSet <- readSet(imgSet, "imgSet")
+  imgSet$PlotDRFilterSummary <- outFile
+  saveSet(imgSet)
+}
+
 
 PlotDRHistogramNew <- function(imgNm, dpi, format, units, scale, width=NA) {
   #save.image("dr.RData");
