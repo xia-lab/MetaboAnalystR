@@ -356,7 +356,7 @@ PlotDRFilterSummary <- function(imgNm, dpi = 72, format = "png") {
   
   ## 4 ── Save & register -----------------------------------------------------
   outFile <- paste0(imgNm, "dpi", dpi, ".", format)
-  Cairo(file = outFile, width = 6.5, height = 4.5, unit = "in",
+  Cairo(file = outFile, width = 8, height = 6, unit = "in",
         dpi = dpi, type = format, bg = "white")
   print(p)
   dev.off()
