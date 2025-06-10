@@ -409,7 +409,7 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 12;
+    w <- 10;
     h <- 9;
   }else if(width == 0){
     h <- w <- 7;

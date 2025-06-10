@@ -35,12 +35,12 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smpl
   # plot the tree
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- minH <- 630;
+    w <- 9;
+    minH <- 630;
     myH <- nrow(hc.dat)*10 + 150;
     if(myH < minH){
       myH <- minH;
     }   
-    w <- round(w/72,2);
     h <- round(myH/72,2);
   }else if(width == 0){
     w <- h <- 7.2;
@@ -174,7 +174,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal 
   clust.num <- length(unique(group))
   
   df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = group, clust[,-3], mSetObj$dataSet$norm, check.names = F)
-  long <- melt(setDT(df), id.vars = c("Samples", "Cluster", "x", "y"), variable.name = "Feature")
+  long <- data.table::melt(setDT(df), id.vars = c("Samples", "Cluster", "x", "y"), variable.name = "Feature")
   long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
   long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
   long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
@@ -302,7 +302,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
   mSetObj$imgSet$kmeans <- imgName;
   
   df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = as.factor(mSetObj$analSet$kmeans$cluster), mSetObj$dataSet$norm, check.names = F)
-  long <- melt(setDT(df), id.vars = c("Samples","Cluster"), variable.name = "Feature")
+  long <- data.table::melt(setDT(df), id.vars = c("Samples","Cluster"), variable.name = "Feature")
   long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
   long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
   long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]

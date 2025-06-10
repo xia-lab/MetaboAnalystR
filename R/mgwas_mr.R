@@ -112,12 +112,18 @@ readOpenGWASKey <- function(){
 }
 
 extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
-  cat("Processing into extractGwasDB from local \n")
-  if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
-    database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite"
+  
+   cat("Processing into extractGwasDB from local \n")
+   if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
+        database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite";
+        database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
+   }else if(file.exists("/Users/xialab/Dropbox/sqlite")){
+        database_path <- "/Users/xialab/Dropbox/sqlite/openGWAS_nonProxy.sqlite";
+        database_path2 <- "/Users/xialab/Dropbox/sqlite/openGWAS_withProxy.sqlite";
    }else{
-  database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
-  }
+        database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
+        database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
+   }
 
   require("DBI")
   require("RSQLite")
@@ -136,11 +142,6 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   res_outcome_dt <- cbind(res_dt1, meta_dt)
   
   if(proxies){
-    if(file.exists("/Users/lzy/sqlite/openGWAS_withProxy.sqlite")){
-    database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
-   }else{
-    database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
-}
     con <- dbConnect(RSQLite::SQLite(), database_path2)
     query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
     res2 <- dbGetQuery(con, query_stat2)
@@ -150,8 +151,7 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
     if(nrow(res_dt2)==0){
       return(res_outcome_dt)
     }
-    res_outcome_dt2 <- res_dt2[,colnames(res_outcome_dt)]
-    
+    res_outcome_dt2 <- res_dt2[,colnames(res_outcome_dt)];
     res_outcome_dt <- rbind(res_outcome_dt, res_outcome_dt2)
   }
   return(res_outcome_dt)
@@ -293,6 +293,7 @@ GetMRMatColNames<-function(mSetObj=NA, type){
     return(colnames(mSetObj$dataSet$mr_results))
   }
 }
+
 PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
@@ -305,13 +306,13 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
     imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
-    w <- 12
+    w <- 10
   } else if (width == 0) {
     w <- 7
   } else {
     w <- width
   }
-  h <- 9
+  h <- w*4/5;
   
   # Record img
   imageName <- imgName
@@ -362,19 +363,35 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 7
     mrres_exposure$a[mrres_exposure$method == "MR Egger (bootstrap)"] <- temp$b_i
   }
   
-  p <- ggplot(exposure_data, aes(x = beta.exposure, y = beta.outcome)) +
-    geom_errorbar(aes(ymin = beta.outcome - se.outcome, ymax = beta.outcome + se.outcome), colour = "grey", width = 0) +
-    geom_errorbarh(aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
-    geom_point() +
-    geom_abline(data = mrres_exposure, aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
-    scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
-    labs(colour = "MR Test", x = paste("SNP effect on", exposure), y = "Outcome effect") +
-theme_minimal() +
-    theme(legend.position = "right", legend.direction = "vertical") +
-    guides(colour = guide_legend(ncol = 2))
   
+p <- ggplot(exposure_data, aes(x = beta.exposure, y = beta.outcome)) +
+  geom_errorbar(aes(ymin = beta.outcome - se.outcome, ymax = beta.outcome + se.outcome), colour = "grey", width = 0) +
+  geom_errorbarh(aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
+  geom_point() +
+  geom_abline(data = mrres_exposure, aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
+  scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", "#ffff99", "#b15928")) +
+  labs(colour = "MR Test", x = paste("SNP effect on", exposure), y = "Outcome effect") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    legend.direction = "vertical",
+    guides(colour = guide_legend(ncol = 1)),
+    text = element_text(size = 14),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+
+    # --- Changes for grid and box ---
+    # Remove major and minor grid lines
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    # Add a box around the plot area (the axis lines)
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5) # You can adjust linewidth as needed
+  )
+
   return(p)
 }
+
 PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
@@ -385,7 +402,7 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
-    w <- 9
+    w <- 8
   } else if (width == 0) {
     w <- 7
   } else {
@@ -429,18 +446,34 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   
   exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
   exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure
-  p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
-    geom_vline(xintercept = ifelse(exponentiate, 1, 0), linetype = "dotted") +
-    geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
-    geom_point(aes(colour = as.factor(tot))) +
-    scale_colour_manual(values = c("black", "red")) +
-    scale_size_manual(values = c(0.3, 1)) +
-    theme_minimal() +
-    theme(legend.position = "none", text = element_text(size = 14)) +
-    labs(y = "", x = "MR effect size")
+
+p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
+  geom_vline(xintercept = ifelse(exponentiate, 1, 0), linetype = "dotted") +
+  geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
+  geom_point(aes(colour = as.factor(tot))) +
+  scale_colour_manual(values = c("black", "red")) +
+  scale_size_manual(values = c(0.3, 1)) +
+  labs(y = "", x = "MR effect size") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    text = element_text(size = 14),
+
+    # Remove major and minor grid lines
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    # Add a box around the plot area (axis lines)
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5), # Adjust linewidth as needed
+
+    # Increase margins for axis labels
+    axis.title.x = element_text(margin = margin(t = 15)), # Adds space above the x-axis label
+    axis.title.y = element_text(margin = margin(r = 15))  # Adds space to the right of the y-axis label
+  )
   
   return(p)
 }
+
 PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
@@ -451,7 +484,7 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
     imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
-    w <- 9
+    w <- 8
   } else if (width == 0) {
     w <- 7
   } else {
@@ -492,15 +525,29 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
   exposure_data <- exposure_data[order(exposure_data$b), ] #
 
 
-  p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
-    geom_vline(xintercept = 0, linetype = "dotted") +
-    geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
-    geom_point(aes(colour = as.factor(tot))) +
-    scale_colour_manual(values = c("black", "red")) +
-    scale_size_manual(values = c(0.3, 1)) +
-    theme_minimal() +
-    theme(legend.position = "none", text = element_text(size = 14)) +
-    labs(y = "", x = "MR leave-one-out sensitivity analysis")
+p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
+  geom_point(aes(colour = as.factor(tot))) +
+  scale_colour_manual(values = c("black", "red")) +
+  scale_size_manual(values = c(0.3, 1)) +
+  labs(y = "", x = "MR leave-one-out sensitivity analysis") +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    text = element_text(size = 14),
+
+    # Remove major and minor grid lines
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    # Add a box around the plot area (axis lines)
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5), # Adjust linewidth as needed
+
+    # Increase margins for axis labels
+    axis.title.x = element_text(margin = margin(t = 15)), # Adds space above the x-axis label
+    axis.title.y = element_text(margin = margin(r = 15))  # Adds space to the right of the y-axis label
+  )
   
   return(p)
 
@@ -516,13 +563,13 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
     imgName <- paste0(imgName, "dpi", dpi, ".", format)
   }
   if (is.na(width)) {
-    w <- 12
+    w <- 7
   } else if (width == 0) {
     w <- 7
   } else {
     w <- width
   }
-  h <- 9
+  h <- w
   
   # Record img
   imageName <- imgName
@@ -556,15 +603,29 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72
   exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
   exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure 
   
-  p <- ggplot(exposure_data, aes(y = 1/se, x = b)) +
-    geom_point() +
-    geom_vline(data = subset(exposure_data, SNP %in% am), aes(xintercept = b, colour = SNP)) +
-    scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99", 
-                                   "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a", 
-                                   "#ffff99", "#b15928")) +
-    labs(y = expression(1 / SE[IV]), x = expression(beta[IV]), colour = "MR Method") +
-    theme_minimal(base_size = 14) +
-    theme(legend.position = "right", legend.direction = "vertical", text = element_text(size = 14))
+p <- ggplot(exposure_data, aes(y = 1/se, x = b)) +
+  geom_point(shape = 21, size = 3, fill = "lightgrey") + # Modified geom_point
+  geom_vline(data = subset(exposure_data, SNP %in% am), aes(xintercept = b, colour = SNP)) +
+  scale_colour_manual(values = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+                                 "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a",
+                                 "#ffff99", "#b15928")) +
+  labs(y = expression(1 / SE[IV]), x = expression(beta[IV]), colour = "MR Method") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    legend.direction = "vertical",
+    text = element_text(size = 14),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+
+    # --- Changes for grid, box, and points ---
+    # Remove major and minor grid lines
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    # Add a box around the plot area (the axis lines)
+    panel.border = element_rect(colour = "black", fill = NA, linewidth = 0.5) # Adjust linewidth as needed
+  )
   
   return(p)
 }

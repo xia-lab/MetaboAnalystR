@@ -1603,7 +1603,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
-    w <- 7;
+    w <- 8;
   }else if(width == 0){
     w <- 7;
   }else{

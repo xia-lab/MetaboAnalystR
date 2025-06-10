@@ -573,7 +573,7 @@ PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
   pclabels <- paste0("PC", 1:pc.num, " (", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%)");
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 11;
+    w <- 10;
   }else if(width == 0){
     w <- 9;
   }else{

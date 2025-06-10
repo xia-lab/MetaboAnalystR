@@ -4526,7 +4526,7 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   if(ids == "overall"){
     .on.public.web <<- F;
     is.rt <- mSetObj$paramSet$mumRT;
-    mSetObj<-PreparePrenormData(mSetObj)
+    #mSetObj<-PreparePrenormData(mSetObj)
     mSetObj<-Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
     mSetObj<-Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE)
     mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode);

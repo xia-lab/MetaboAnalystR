@@ -116,7 +116,7 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- h <- 7.2;
+    w <- h <- 8;
   }else if(width == 0){
     w <- h <- 7.2;
   }else{

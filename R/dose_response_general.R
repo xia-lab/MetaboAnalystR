@@ -624,9 +624,9 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     
     ft_names <- rownames(mSetObj[["dataSet"]][["limma_dose_sig_res"]])
     dt <- mSetObj[["dataSet"]][["norm"]]
-    print(rownames(dt));
+    #print(rownames(dt));
     dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
-    print(dose_vec);
+    #print(dose_vec);
 
     ft_linear_idx <- vapply(ft_names, function(x){
       which(x == colnames(dt))
@@ -1234,8 +1234,8 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     res <- merge(res, res.mods, by.x="item", by.y="feature.id", all.x=TRUE)
     
     # debug
-    print("=== Column names in `res` before formatting:")
-    print(colnames(res))
+    #print("=== Column names in `res` before formatting:")
+    #print(colnames(res))
     
     # format numeric columns
     num.cols     <- c("lof.p","bmd","bmdl","bmdu","b","c","d","e")
@@ -1420,7 +1420,7 @@ GetFitResultMatrix <- function(){
     colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")
   }
 
-  print(head(res))
+  #print(head(res))
   return(res)
 }
 

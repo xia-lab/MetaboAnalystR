@@ -10,7 +10,7 @@
 #'@export
 CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   
-  save.image("consist.RData");
+  #save.image("consist.RData");
   mSetObj <- .get.mSet(mSetObj);
   mdata.all  <- mSetObj$mdata.all;
   msg <- c()  # Initialize the message variable
@@ -518,7 +518,7 @@ if(!exists('meta.mat')){
 #'@param single.type Default is "fc"
 #'@export
 GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
-  save.image("metares.RData");
+  #save.image("metares.RData");
   mSetObj <- .get.mSet(mSetObj);
 
   if(!exists('meta.mat')){

@@ -46,6 +46,11 @@ getFeatureNum <- function(mSetObj=NA){
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
 
+  # call this to make sure always restart from the same footing, and taking care of prefiltering steps
+  # before it was called externally. This simplifies as internal private function
+
+  .prepare.prenorm.data(mSetObj);
+
   mSetObj <- .get.mSet(mSetObj);
   
   # PreparePrenormData() called already
@@ -355,7 +360,6 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   }else if(width>0){
     w = width
     h = width*1.25
-    # w <- 7.2; h <- 9;
   }
   
   mSetObj$imgSet$norm <- imgName
@@ -363,6 +367,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   proc.data <- qs::qread("data_proc.qs");
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
   layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE))
   
   # since there may be too many compounds, only plot a subsets (50) in box plot
@@ -430,6 +435,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
   
   return(.set.mSet(mSetObj));
 }
+
 
 #'Two plot summary plot: Sample View of before and after normalization
 #'@description For each plot, the top is a density plot and the bottom is a box plot.
@@ -593,7 +599,12 @@ save(mSetObj, file = "mSetObj__UpdateData.rda")
 #'@import qs
 #'@export
 
+
 PreparePrenormData <- function(mSetObj=NA){
+    # nothing to do. The function is internal only
+}
+
+.prepare.prenorm.data <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   

@@ -811,7 +811,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   }
   
   plotType <- mSetObj$paramSet$cmpdSummaryType
-  #print(paste("plottype==", plotType))
+
   if(.on.public.web){
     load_ggplot()
     load_grid()
@@ -847,8 +847,8 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     imgName <- paste(imgName, "_", count, "_summary_dpi", dpi, ".", format, sep="");
   }
   
-  w <- 7.5;
-  
+  my.w <- 7.5;
+  my.h <- my.w * 0.65;
   
   mSetObj$imgSet$cmpdSum <- imgName;
   
@@ -863,8 +863,8 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       file   = imgName,
       unit   = "in",
       dpi    = dpi,
-      width  = w,
-      height = w * 0.65,
+      width  = my.w,
+      height = my.h,
       type   = format,
       bg     = "white"
     )
@@ -920,35 +920,33 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       
       df.orig <- data.frame(x = xvar, y = proc.data[, cmpdNm])
 
-p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
-  geom_point(size = 1.8, color = "black") +        # points are black
-  geom_smooth(method = "lm", se = TRUE, color = "blue") +  # line is blue
-  labs(title = "Original Conc.", x = NULL, y = NULL) +
-  theme_bw() +
-  theme(
-    plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
-    axis.text.x     = element_text(angle = 90, hjust = 1),
-    panel.grid      = element_blank(),
-    plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
-    axis.text       = element_text(size = 10),
-    legend.position = "none"
-  )
+      p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
+        geom_point(size = 1.8, color = "black") +        # points are black
+        geom_smooth(method = "lm", se = TRUE, color = "blue") +  # line is blue
+        labs(title = "Original Conc.", x = NULL, y = NULL) +
+        theme_bw() + theme(
+            plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+            axis.text.x     = element_text(angle = 90, hjust = 1),
+            panel.grid      = element_blank(),
+            plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+            axis.text       = element_text(size = 10),
+            legend.position = "none"
+        );
 
       df.norm <- data.frame(x = xvar, y = mSetObj$dataSet$norm[, cmpdNm])
 
       p.norm <- ggplot(df.norm, aes(x = x, y = y)) +
-  geom_point(size = 1.8, color = "black") +  # points are now all black
-  geom_smooth(method = "lm", se = TRUE, color = "blue") +
-  labs(title = "Normalized Conc.", x = NULL, y = NULL) +
-  theme_bw() +
-  theme(
-    plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
-    axis.text.x     = element_text(angle = 90, hjust = 1),
-    panel.grid      = element_blank(),
-    plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
-    axis.text       = element_text(size = 10),
-    legend.position = "none"
-  )
+        geom_point(size = 1.8, color = "black") +  # points are now all black
+        geom_smooth(method = "lm", se = TRUE, color = "blue") +
+        labs(title = "Normalized Conc.", x = NULL, y = NULL) +
+        theme_bw() + theme(
+            plot.title      = element_text(size = 11, hjust = 0.5, face = "bold"),
+            axis.text.x     = element_text(angle = 90, hjust = 1),
+            panel.grid      = element_blank(),
+            plot.margin     = margin(t = 0.35, r = 0.25, b = 0.15, l = 0.5, "cm"),
+            axis.text       = element_text(size = 10),
+            legend.position = "none"
+        );
     }
     
     ## Arrange and save both panels
@@ -969,7 +967,9 @@ p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
     mSetObj$dataSet$time.fac <- sel.meta.df[,which(tolower(colnames(sel.meta.df)) == "time")]
     .set.mSet(mSetObj);
     
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height= 6, type=format, bg="white");
+    my.w <- 8;
+    my.h <- 6;
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=my.w, height= my.h, type=format, bg="white");
     plotProfile(mSetObj, cmpdNm);
     dev.off();
     
@@ -1053,9 +1053,9 @@ p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
       )
     
     ## render & save
-    h <- 6.5
+    my.h <- 6.5
     Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
-                 width = w, height = h, type = format, bg = "white")
+                 width = my.w, height = my.h, type = format, bg = "white")
     print(p.time)
     dev.off()
 
@@ -1085,15 +1085,16 @@ p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
       row.num <- ceiling(img.num/2)
       
       if(row.num == 1){
-        h <- w*5/9;
+        my.h <- my.w*5/9;
       }else{
-        h <- w*0.5*row.num;
+        my.h <- my.w*0.5*row.num;
       }
       
       if(cls.type2 == "cont"){
-        h <- h +1;
+        my.h <- my.h +1;
       }
-      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=my.w, height=my.h, type=format, bg="white");
       
       col <- unique(GetColorSchema(in.fac));
       
@@ -1138,7 +1139,10 @@ p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
       dev.off()
     }
   }
-  
+
+  mSetObj$paramSet$cmpd.img.name <-  imgName;
+  mSetObj$paramSet$cmpd.img.size <- paste0("width:", my.w, "in; height:", my.h, "in;"); 
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(imgName);
@@ -1182,6 +1186,12 @@ GetMetaInfo <- function(mSetObj=NA){
   }else{
     return(c(mSetObj$dataSet$facA.lbl, mSetObj$dataSet$facB.lbl));
   }
+}
+
+# current feature image size (which is not fixed)
+GetCurrentCmpdImgSize <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    return(mSetObj$paramSet$cmpd.img.size);
 }
 
 #'Get all group names
@@ -1335,28 +1345,52 @@ GetNameCheckMsgs <- function(mSetObj=NA){
   return(mSet$msgSet$nmcheck.msg);
 }
 
-
 ValidateMetabolonData <- function(file_path = NULL) {
-  if(.on.public.web){
-    # make this lazy load
     if(!exists("my.validate.metabolon.data")){ # public web on same user dir
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.validate.metabolon.data(file_path));
-  }else{
-    return(my.validate.metabolon.data(file_path));
-  }
 }
 
 ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
-  if(.on.public.web){
-    # make this lazy load
     if(!exists("my.read.metabolon.sheets")){ # public web on same user dir
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
-  }else{
-    return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
+}
+
+ExtractMetabolonCompoundIDs  <- function(mSetObj = NA, file_path = NULL){
+    if(!exists("my.extract.metabolon.compounds")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.extract.metabolon.compounds(mSetObj, file_path));
+}
+
+ExtractMetabolonMetaFactors <- function(mSetObj = NA, file_path = NULL){
+    if(!exists("my.extract.metabolon.metafactors")){ # public web on same user dir
+      .load.scripts.on.demand("util_metabolon.Rc");    
+    }
+    return(my.extract.metabolon.metafactors(mSetObj, file_path));
+}
+
+GetMetabolonMetaFactor <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$metafactors -> metafactors;
+  if(.on.public.web){
+    return(metafactors)
+  } else {
+    return(mSetObj)
+  }
+}
+
+GetMetabolonCMPDIDs <- function(mSetObj = NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$cmpdIDs -> cmpdIDs;
+  if(is.null(cmpdIDs)){cmpdIDs <- "NULL"}
+  if(.on.public.web){
+    return(cmpdIDs)
+  } else {
+    return(mSetObj)
   }
 }
 
@@ -1505,4 +1539,10 @@ Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="ro
     mSetObj[["dataSet"]][["cls.type"]] <- lbl.type;
     qs::qsave(int.mat, file="data_orig.qs");
     return(.set.mSet(mSetObj));
+}
+
+PrintCurrentCls <- function(mSetObj=NA){
+   mSetObj <- .get.mSet(mSet);
+print("Current class info ....");
+print(mSetObj$dataSet$cls);
 }

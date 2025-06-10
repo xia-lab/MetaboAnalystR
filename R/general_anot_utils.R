@@ -251,6 +251,7 @@ PerformCmpdMapping <- function(mSetObj=NA, cmpdIDs, org, idType){
 #'@param idType Input the ID type
 #'@export
 #'
+
 PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -264,7 +265,7 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   mSetObj$dataSet$gene.mat <- gene.mat;
   mSetObj$dataSet$gene <- gene.vec;
 
-  if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+  if(!(org %in% kegg.model.orgs)){
     # for newly added species (including a lot of non-model species. There are no curated gene sqlites
     # therefore, using another direct matching function to match the KEGG entry directly and quickly
     enIDs <- doGeneEntryMapping(gene.vec, org, idType);
@@ -273,6 +274,9 @@ PerformGeneMapping <- function(mSetObj=NA, geneIDs, org, idType){
   } else {
     enIDs <- doGeneIDMapping(gene.vec, org, idType);
   }
+
+  # For some org, KEGG_Entry contains "CAALFM_C202970CA  CDS", the " CDS" should be trimmed to match pathway
+  enIDs <- sub("  CDS$", "", enIDs);
 
   if(idType == "kos"){
     kos <- gene.vec;
@@ -569,9 +573,12 @@ doGeneEntryMapping <- function(q.vec, org, type){
   return(kegg_entries);
 }
 
+# those KEGG organisms support gene IDs from other databases. Others will directly use KEGG_entry
+kegg.model.orgs <- c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla");
+
 doAllGeneIDMapping <- function(gene.vec, org, idType){
 
-    if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+    if(!(org %in% kegg.model.orgs)){
       # for newly added species (including a lot of non-model species. There are no curated gene sqlites
       # therefore, using another direct matching function to match the KEGG entry directly and quickly
       entrezs <- doGeneEntryMapping(gene.vec, org, idType);
@@ -592,7 +599,7 @@ convert2KeggEntry <- function(q.vec, type, org){
       download.file(sqlite_url,destfile = sqlite.path, method = "curl")
     }
     con <- .get.sqlite.con(sqlite.path);
-    db.map = dbReadTable(con, org);
+    db.map <- dbReadTable(con, org);
 
     #"ncbi_proteinID", "kegg_embl", "kegg_entry" , "gene_name", "KO"
     if(type == "symbol"){ # gene symbol

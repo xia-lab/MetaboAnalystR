@@ -468,7 +468,7 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
              axis.text       = element_text(colour = "black"))
 
   ## ---------- 3. Cairo output ---------------------------------------------
-  outFile <- paste0(imgNm, "_dpi72" , ".", format)
+  outFile <- paste0(imgNm, "_dpi", dpi, ".", format)
   Cairo::Cairo(file   = outFile,
                width  = 8, height = 6,
                unit   = "in", dpi = dpi,

@@ -419,7 +419,7 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
 #'@export
 
 PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=100){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$analSet$tester.method <- method;
   mSetObj$analSet$tester.lvNum <- lvNum;
@@ -1215,7 +1215,8 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
   
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 9; h <- 8;
+  w <- 9; 
+  h <- 8;
   
   mSetObj$imgSet$roc.prob.plot <- imgName;
   mSetObj$imgSet$roc.prob.name <- mdl.inx

@@ -71,6 +71,7 @@ PrepareIntegData <- function(mSetObj=NA){
       mSetObj$dataSet$pathinteg.imps <- list();
     }
     mSetObj$dataSet$pathinteg.imps$gene.mat <- gene.mat;
+
     done <- 1;
   }
   
@@ -202,7 +203,6 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       uniq.len <- current.kegglib$gene.counts;
     }
     
-    
   } else { # integ (other p values)
     
     if(is.null(mSetObj$dataSet$pathinteg.imps$cmpd.mat) | is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
@@ -222,8 +222,11 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     
     gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
 
-    if(!(mSetObj$org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
-        rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), mSetObj[["dataSet"]][["q.type.gene"]], mSetObj$org);        
+    if(mSetObj$org %in% kegg.model.orgs){     
+       # rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), mSetObj[["dataSet"]][["q.type.gene"]], mSetObj$org);   
+        rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), "entrez", mSetObj$org);     
+        na.inx <- is.na(rownames(gene.mat));
+        gene.mat <- gene.mat[!na.inx,, drop=FALSE];
     }
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
     rownames(gene.mat) <- gene.vec;
@@ -854,7 +857,7 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
     mSetObj$dataSet$q.type.gene -> idType -> type;
     query_new_db <- FALSE;
 
-    if(!(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno", "kpn", "kva", "dme", "pfa", "ath", "bsu", "bta", "cdi", "cel", "cjo", "cvr", "dma", "ean", "eco", "fcd", "ham", "nlf", "omk", "osa", "xla"))){
+    if(!(org %in% kegg.model.orgs)){
       # for newly added species (including a lot of non-model species. There are no curated gene sqlites
       # therefore, using another direct matching function to match the KEGG entry directly and quickly
       query_new_db <- TRUE;
@@ -1098,7 +1101,7 @@ PlotInmexGraph <- function(mSetObj, pathName,
     }
     w <- h <- width;
 
-    Cairo::Cairo(file = imgName, dpi=dpi, width=w, height=h, type=format, bg="white");
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     par(mai=rep(0,4));
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     dev.off();
