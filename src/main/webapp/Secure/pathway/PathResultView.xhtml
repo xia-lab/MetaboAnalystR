@@ -43,14 +43,7 @@
             <h:form>
                 <h:panelGrid columns="2" style="text-align: right; padding-right:20px; width:1080px;">
                     <h:panelGrid columns="2" style="text-align: right; padding-right:30px; width:980px;">
-                        <h:panelGrid columns="2" style="text-align: right; padding-right:10px; width:500px;">
-                            <h:panelGrid columns="5" style="text-align: left; padding-left:30px; padding-right: 30px; width:100%;">
-                                <p:selectBooleanCheckbox value ="#{pathBean.showGrid}" style="line-height: 18px"/>
-                                <h:outputLabel style="font-weight: bold" value="Show gridline"/>
-                                <p:commandLink onclick="PF('plotparam').show()" value="More options" style="padding-left: 2px; padding-right: 2px"/>
-                                <p:spacer style="width:40px"/>
-                                <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
-                            </h:panelGrid>
+                        <h:panelGrid style="text-align: right; padding-right:10px; width:500px;">
                             <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('path_view')}" 
                                            update=":myGraphPane"
                                            oncomplete="PF('graphDialog').show()"
@@ -77,7 +70,27 @@
                         src="../viewer/_path_viewer_v1.8.html?userID=#{sessionBean1.currentUser.name}" 
                         style="border-width: 0px; height: 560px; width: 1200px"></iframe>
             </h:panelGrid>
+            <h:form>
+                <h:panelGrid style="text-align: center; padding:20px; width: 100%">
+                    <h:panelGrid columns="7" style="padding-left: 10%">
+                        <p:selectBooleanCheckbox value ="#{pathBean.showGrid}" style="line-height: 18px"/>
+                        <h:outputLabel style="font-weight: bold" value="Show gridline"/>
+                        <p:commandLink onclick="PF('plotparam').show()" value="More options" style="padding-left: 2px; padding-right: 2px"/>
+                        <p:spacer style="width:40px"/>
+                        <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
 
+                        <p:spacer style="width:200px"/>
+                        <p:commandButton value="Enrichment Network" 
+                                         ajax="false" 
+                                         disabled="true"
+                                         icon="pi pi-caret-right"
+                                         style="width: 180px;"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
             <hr class="style-one"/>
             <h:form id="resTblForm" style="padding:10px 20px 10px 40px;">
                 <p>

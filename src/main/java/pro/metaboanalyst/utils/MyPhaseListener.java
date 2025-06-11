@@ -288,9 +288,9 @@ public class MyPhaseListener implements PhaseListener {
                     RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
                             & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP2"))) {
-                        boolean res2 = DataUtils.sendRawFinishEmail(ms, "vip2", email, jobId, folderName);
+                        DataUtils.sendRawFinishEmail(ms, "vip2", email, jobId, folderName);
                     } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
-                        boolean res2 = DataUtils.sendRawFinishEmail(ms, "vip", email, jobId, folderName);
+                        DataUtils.sendRawFinishEmail(ms, "vip", email, jobId, folderName);
                     }
                 }
             }
