@@ -50,8 +50,10 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     hit.inx <- which(colnames(resTable) == "baseMean"); 
     dataSet$comp.res <- dataSet$comp.res.list[[inx]];
     resTable <- dataSet$comp.res;
-  } else if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
+  } else if (dataSet$de.method=="limma"){
     hit.inx <- which(colnames(resTable) == "AveExpr");
+  } else if(dataSet$de.method=="wtt"){
+    hit.inx <- which(colnames(resTable) == "t");
   } else {
     hit.inx <- which(colnames(resTable) == "logCPM");
   }

@@ -32,9 +32,11 @@ GetMetaCol<- function(dataName=""){
   anal.type <- paramSet$anal.type;
   if(anal.type == "onedata"){
     colNms <- colnames(dataSet$comp.res);
-    if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
+    if (dataSet$de.method=="limma"){
       inx <- match("AveExpr", colNms)
-    } else if (dataSet$de.method=="deseq2"){
+    } else if(dataSet$de.method=="wtt"){
+      inx <- match("t", colNms)
+  } else if (dataSet$de.method=="deseq2"){
       inx <- match("baseMean", colNms)
       return(names(dataSet$comp.res.list));
     } else {
@@ -83,8 +85,10 @@ GetMetaColLength<- function(dataName=""){
   dataSet <- readDataset(dataName);
   paramSet <- readSet(paramSet, "paramSet");
 
-  if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
+  if (dataSet$de.method=="limma"){
     inx <- match("AveExpr", colnames(dataSet$comp.res))
+  }  else if(dataSet$de.method=="wtt"){
+    inx <- match("t", colnames(dataSet$comp.res))
   } else if (dataSet$de.method=="deseq2"){
     return(length(dataSet$comp.res.list));
   } else {
@@ -246,9 +250,11 @@ GetExpressResultMatrix <-function(dataName="", inxt){
         inx <- match("baseMean", colnames(dataSet$comp.res))
         res <- dataSet$comp.res.list[[inxt]];
     }else{
-        if (dataSet$de.method=="limma" || dataSet$de.method=="wtt"){
+        if (dataSet$de.method=="limma"){
             inx <- match("AveExpr", colnames(dataSet$comp.res))
-        } else {
+        } else if(dataSet$de.method=="wtt"){
+            inx <- match("t", colnames(dataSet$comp.res))
+  } else {
             inx <- match("logCPM", colnames(dataSet$comp.res))
         }
         res <- dataSet$comp.res;
@@ -458,35 +464,4 @@ SetInitLib <-function(library){
   paramSet <- readSet(paramSet, "paramSet");
   paramSet$init.lib <- library;
   saveSet(paramSet);
-}
-
-BuildCoexpNet <- function(dataName,
-                          power = NULL,
-                          cor_func = c("pearson", "bicor", "spearman"),
-                          network_type = c("signed", "signed_hybrid", "unsigned"),
-                          deepSplit = 2,
-                          minModuleSize = 30,
-                          mergeCutHeight = 0.25,
-                          maxBlockSize = 5000,
-                          n_threads = 8,
-                          filters = list(counts = c(0, 0), var = 0),
-                          auto_power = TRUE,
-                          enrichFDR = 0.05,
-                          imgName = "coexp_dendro",
-                          dpi = 72,
-                          format = "png") {
-
-  if(!exists("my.build.coexp.net")){ 
-     compiler::loadcmp(paste0(resource.dir, "rscripts/ExpressAnalystR/R/utils_coexp.Rc"));    
-  }
-
-return(my.build.coexp.net(
-    dataName, power, cor_func, network_type,
-    deepSplit,              # OK
-    minModuleSize,          # OK
-    mergeCutHeight,         # <-- was duplicate
-    maxBlockSize, n_threads, filters,
-    auto_power, enrichFDR, imgName, dpi, format  # + format only if you keep it
-))
-
 }
