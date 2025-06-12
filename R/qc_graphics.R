@@ -751,128 +751,87 @@ PlotDataDendrogram <- function(fileName, imgName,threshold, dpi, format){
   }
   return("NA");
 }
-
-qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot", dpi = 72, format = "png", interactive = FALSE) {
-  require("Cairo")
-  
-  # Ensure dpi is a positive number
-  dpi <- as.numeric(dpi)
-  if (dpi <= 0) {
-    stop("DPI must be a positive number.")
-  }
-  
-  # Calculate Spearman's rank correlation matrix
-  spearman_corr <- cor(x, method = "spearman", use = "pairwise.complete.obs")
-  
-  # Convert correlation matrix to distance matrix (1 - correlation)
-  distance_matrix <- as.dist(1 - spearman_corr)
-  
-  # Perform hierarchical clustering
-  hc <- hclust(distance_matrix, method = "average")
-  
-  # Identify samples with a maximum distance greater than the threshold
-  distance_matrix_full <- as.matrix(distance_matrix)
-  max_distances <- apply(distance_matrix_full, 1, max)
-  samples_to_highlight <- names(max_distances[max_distances > threshold])
-  
-  # Create a dendrogram object
-  dend <- as.dendrogram(hc)
-  
-  # Determine the labels' colors based on outlier status
-  label_colors <- ifelse(labels(dend) %in% samples_to_highlight, "red", "black")
-  
-  # Plotting parameters
-  width <- 8
-  height <- 6
-  
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
-  imgNm <- paste0(fileNm, format, sep = "")
-  
-  if (interactive) {
-    stop("Interactive mode is not supported with base R plotting.")
-  } else {
-  if(dpi == 72){
-  dpi <- dpi *1.34
-  }
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
-    
-    # Plot the dendrogram with base R
-    plot(dend, main = "Dendrogram", ylab = "Height", xlab = "", cex.axis = 0.8, cex.lab = 1.2)
-    
-    # Add colors to the labels
-    labels <- labels(dend)
-    n <- length(labels)
-    for (i in 1:n) {
-      x <- i
-      y <- -0.1 # Positioning below the axis (adjust as necessary)
-      text(x, y, labels[i], srt = 90, adj = 1, xpd = NA, col = label_colors[i], cex = 0.8)
-    }
-    
-    dev.off()
-    return("NA")
-  }
-}
 qc.dendrogram <- function(dataSet, x, threshold = 0.1,
                           imgNm   = "Dendrogram_plot",
                           dpi     = 72,
                           format  = "png",
                           interactive = FALSE) {
+
   ## ── packages ───────────────────────────────────────
   require(ggplot2)
-  require(ggrepel)      # for tidy labels
+  require(ggrepel)
   require(Cairo)
-  
-  ## ── dpi check ──────────────────────────────────────
+
+  ## dpi sanity
   dpi <- as.numeric(dpi)
-  if (dpi <= 0) stop("DPI must be a positive number.")
-  
-  ## ── compute max pair-wise Spearman distance per sample ─
+  if (dpi <= 0) stop("DPI must be positive.")
+
+  ## ── 1. distance summary per sample ─────────────────
   spearman_corr <- cor(x, method = "spearman",
                        use = "pairwise.complete.obs")
-  dist_mat      <- as.dist(1 - spearman_corr)
-  max_dist      <- apply(as.matrix(dist_mat), 1, max)
-  
-  df <- data.frame(Sample      = names(max_dist),
-                   MaxDistance = as.numeric(max_dist),
-                   stringsAsFactors = FALSE)
-  df$Status <- ifelse(df$MaxDistance > threshold, "Outlier", "Normal")
-  
-  ## ── build box-plot ─────────────────────────────────
-  g <- ggplot(df, aes(x = "", y = MaxDistance)) +
-        geom_boxplot(outlier.shape = NA, fill = "grey80") +
-        geom_jitter(aes(color = Status), width = 0.25, height = 0) +
+  max_dist <- apply(as.matrix(as.dist(1 - spearman_corr)), 1, max)
+
+  df <- data.frame(
+    Sample      = names(max_dist),
+    MaxDistance = as.numeric(max_dist),
+    Status      = ifelse(max_dist > threshold, "Outlier", "Normal"),
+    stringsAsFactors = FALSE
+  )
+
+  ## ── 2. decide which outliers get a label ───────────
+  out_idx <- which(df$Status == "Outlier")
+  label_idx <- if (length(out_idx) <= 20) {
+                 out_idx
+               } else {
+                 out_idx[order(df$MaxDistance[out_idx],
+                               decreasing = TRUE)[1:20]]
+               }
+  df$LabelMe <- FALSE
+  df$LabelMe[label_idx] <- TRUE
+
+  ## ── 3. fixed jitter so text aligns with dot ────────
+  set.seed(1)                       # reproducible jitter
+  df$xj <- jitter(rep(1, nrow(df)), amount = 0.25)
+
+  ## ── 4. build the plot ──────────────────────────────
+  g <- ggplot(df, aes(x = xj, y = MaxDistance)) +
+        geom_boxplot(aes(x = 1), outlier.shape = NA,
+                     width = 0.4, fill = "grey80") +
+        geom_point(aes(color = Status), size = 2.2) +
         geom_hline(yintercept = threshold, linetype = "dashed",
                    color = "blue") +
-        geom_text_repel(data = subset(df, Status == "Outlier"),
-                        aes(label = Sample), nudge_x = 0.35, size = 3) +
+        geom_text_repel(data = df[df$LabelMe, ],
+                        aes(label = Sample),
+                        max.overlaps = Inf,
+                        box.padding = 0.35,
+                        segment.size = 0.2,
+                        size = 4.2) +
         scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
                            name = "Sample status") +
-        theme_minimal(base_size = 11) +
+        theme_minimal(base_size = 12) +
         labs(x = NULL,
              y = "Max pair-wise distance (1 − Spearman ρ)") +
         theme(axis.text.x  = element_blank(),
               axis.ticks.x = element_blank())
-  
-  ## ── output ─────────────────────────────────────────
-  width  <- 8
-  height <- 6
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
-  imgNm  <- paste0(fileNm, format)
-  
+
+  ## ── 5. output file or interactive view ─────────────
+  outFile <- paste0(imgNm, "dpi", dpi, ".", format)
+
   if (interactive) {
     require(plotly)
     m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
     return(layout(plotly::ggplotly(g),
                   autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-    if (dpi == 72) dpi <- dpi * 1.34   # keep original scaling rule
-    Cairo(file = imgNm, width = width, height = height,
+    if (dpi == 72) dpi <- dpi * 1.34
+    Cairo(file = outFile, width = 8, height = 6,
           type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
-    return("NA")
+    return(outFile)
   }
 }
+
 
 
 GetSummaryTable <- function(dataName){
