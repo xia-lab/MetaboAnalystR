@@ -635,7 +635,7 @@ public class SessionBean1 implements Serializable {
     public void setDataPreprocessed() {
         this.dataUploaded = true;
         this.dataPreprocessed = true;
-        this.integChecked = true;
+        this.integChecked = false;
         this.dataNormed = false;
         addMessage("info", "Data pre-processed successful.");
     }
