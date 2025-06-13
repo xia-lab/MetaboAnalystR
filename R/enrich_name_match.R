@@ -395,3 +395,35 @@ GetIsLipids <- function(mSetObj=NA){
   
   return(is.lipid)
 }
+
+ConvertKEGGtoName <- function(mSetObj = NA,
+                              kegg.vec,
+                              lipid    = NULL) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(lipid)) {
+    lipid <- isTRUE(mSetObj$lipid.feats)
+  }
+
+  cmpd.db <- switch(
+    TRUE,
+    (anal.type %in% c("msetora", "msetssp", "msetqea") && lipid) ~
+      .get.my.lib("lipid_compound_db.qs"),
+    (anal.type == "utils") ~
+      .get.my.lib("master_compound_db.qs"),
+    TRUE ~
+      .get.my.lib("compound_db.qs")
+  )
+
+  if (!lipid && "lipid" %in% colnames(cmpd.db)) {
+    cmpd.db <- cmpd.db[ cmpd.db$lipid == 0, ]      # exclude lipids if needed
+  }
+
+  ## do the mapping -----------------------------------------------------
+  match.idx <- match(kegg.vec, cmpd.db$kegg_id)
+  out       <- cmpd.db$name[ match.idx ]
+  names(out) <- kegg.vec
+
+  return(out)
+}

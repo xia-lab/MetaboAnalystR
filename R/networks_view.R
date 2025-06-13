@@ -871,7 +871,10 @@ PerformLayOut <- function(net.nm, algo){
   pos.xy;
 }
 
-UpdateNetworkLayout <- function(algo, filenm){
+UpdateNetworkLayout <- function(algo, filenm, curr.nm="NA"){
+  if(curr.nm != "NA"){
+    current.net.nm <<- curr.nm;
+  }
   current.net <- pheno.comps[[current.net.nm]];
   #pos.xy <- PerformLayOut_mem(current.net.nm, algo);
   pos.xy <- PerformLayOut(current.net.nm, algo);
@@ -931,46 +934,6 @@ sync2vecs <- function(src.vec, tgt.vec){
   }
   ord.inx <- match(rank(tgt.vec, ties.method="random"), 1:length(tgt.vec));
   src.vec[ord.inx];
-}
-
-generate_breaks = function(x, n, center = F){
-  if(center){
-    m = max(abs(c(min(x, na.rm = T), max(x, na.rm = T))))
-    res = seq(-m, m, length.out = n + 1)
-  }
-  else{
-    res = seq(min(x, na.rm = T), max(x, na.rm = T), length.out = n + 1)
-  }
-  return(res)
-}
-
-ComputeColorGradient <- function(nd.vec, background="black", centered){
-  color <- GetColorGradient(background, centered);
-  breaks <- generate_breaks(nd.vec, length(color), center = centered);
-  return(scale_vec_colours(nd.vec, col = color, breaks = breaks));
-}
-
-GetColorGradient <- function(background, center){
-  if(background == "black"){
-    if(center){
-      return(c(colorRampPalette(c("#31A231", "#5BC85B", "#90EE90", "#C1FFC1"))(50), colorRampPalette(c("#FF9DA6", "#FF7783", "#E32636", "#BD0313"))(50)));
-    }else{
-      return(colorRampPalette(rev(heat.colors(9)))(100));
-    }
-  }else{ # white background
-    if(center){
-      return(c(colorRampPalette(c("#137B13", "#31A231", "#5BC85B", "#90EE90"))(50), colorRampPalette(c("#FF7783", "#E32636", "#BD0313", "#96000D"))(50)));
-    }else{
-      # return(colorRampPalette(c("grey", "orange", "red", "darkred"))(100));
-      # return(colorRampPalette(c("#80d0f0", rainbow(8, start=0.8, end=1)))(100));
-      return(colorRampPalette(hsv(h = seq(0.72, 1, 0.035), s = 0.72, v = 1))(100));
-    }
-  }
-}
-
-scale_vec_colours = function(x, col = rainbow(10), breaks = NA){
-  breaks <- sort(unique(breaks));
-  return(col[as.numeric(cut(x, breaks = breaks, include.lowest = T))])
 }
 
 # for a given graph, obtain the smallest subgraphs that contain

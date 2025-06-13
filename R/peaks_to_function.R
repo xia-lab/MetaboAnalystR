@@ -3487,55 +3487,74 @@ GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
   return(res);
 }
 
-GetMummichogHTMLPathSet <- function(mSetObj=NA, msetNm){
+GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
 
-  mSetObj <- .get.mSet(mSetObj);
-  inx <- which(mSetObj$pathways$name == msetNm)
-  
-  mset <- mSetObj$pathways$cpds[[inx]];
-  mum.version <- mSetObj$paramSet$version;
-  
-  # all matched compounds
-  if(mum.version == "v2" & mSetObj$paramSet$mumRT){
+  mSetObj <- .get.mSet(mSetObj)
+  inx     <- which(mSetObj$pathways$name == msetNm)
+  mset    <- mSetObj$pathways$cpds[[ inx ]]      # vector of KEGG (or custom) IDs
+
+  ## -----------------------------------------------------------------
+  ##  Name lookup table  (compound_db.qs, same as elsewhere)
+  ## -----------------------------------------------------------------
+  cmpd.db   <- .get.my.lib("compound_db.qs")
+  kegg2name <- setNames(cmpd.db$name, cmpd.db$kegg_id)
+
+  ## For every entry in mset, show common name if present, else the ID
+  display <- ifelse(is.na(kegg2name[mset]) |
+                      kegg2name[mset] == ""  |
+                      kegg2name[mset] == "NA",
+                    mset,                      # keep original ID
+                    kegg2name[mset])           # mapped common name
+
+  ## -----------------------------------------------------------------
+  ##  Gather all / significant hits  (unchanged logic)
+  ## -----------------------------------------------------------------
+  mum.version <- mSetObj$paramSet$version
+  hasRT       <- mSetObj$paramSet$mumRT
+
+  if (identical(mum.version, "v2") && isTRUE(hasRT)) {
     hits.all <- unique(unlist(mSetObj$ecpd_cpd_dict))
-  }else{
+  } else {
     hits.all <- unique(mSetObj$total_matched_cpds)
   }
-  anal.type0 <- mSetObj$paramSet$anal.type;
-  if(anal.type0 == "mummichog" | anal.type0 == "integ_peaks"){
-    
-    # get the sig compounds
-    if(mum.version == "v2" & mSetObj$paramSet$mumRT){
-      hits.sig <- mSetObj$input_ecpdlist;
-      hits.sig.inx <- match(hits.sig, names(mSetObj$ecpd_cpd_dict));
-      hits.sig <- unlist(mSetObj$ecpd_cpd_dict[hits.sig.inx]);
-    }else{
-      hits.sig <- mSetObj$input_cpdlist;
+
+  anal.type0 <- mSetObj$paramSet$anal.type
+
+  if (anal.type0 %in% c("mummichog", "integ_peaks")) {
+
+    if (identical(mum.version, "v2") && isTRUE(hasRT)) {
+      hits.sig <- mSetObj$input_ecpdlist
+      hits.sig <- unlist(mSetObj$ecpd_cpd_dict[ match(hits.sig,
+                                                      names(mSetObj$ecpd_cpd_dict)) ])
+    } else {
+      hits.sig <- mSetObj$input_cpdlist
     }
-    
-    # highlighting with different colors
-    refs <- mset %in% hits.all;
-    sigs <- mset %in% hits.sig;
-    
-    red.inx <- which(sigs);
-    blue.inx <- which(refs & !sigs);
-    
-    # use actual cmpd names
-    nms <- mset;
-    nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
-    nms[blue.inx] <- paste("<font color=\"blue\">", "<b>", nms[blue.inx], "</b>", "</font>",sep="");
-  } else {
-    refs <- mset %in% hits.all;
-    red.inx <- which(refs);
-    nms <- mset;
-    nms[red.inx] <- paste("<font color=\"red\">", "<b>", nms[red.inx], "</b>", "</font>",sep="");
+
+    refs <- mset %in% hits.all
+    sigs <- mset %in% hits.sig
+
+    red.inx  <- which(sigs)
+    blue.inx <- which(refs & !sigs)
+
+  } else {                                        # other analysis types
+    refs     <- mset %in% hits.all
+    red.inx  <- which(refs)
+    blue.inx <- integer(0)
   }
-  
-  # for large number, return only hits (context already enough)
-  if(length(nms) > 200){
-    nms <- nms[refs];
+
+  ## -----------------------------------------------------------------
+  ##  Colour the display names
+  ## -----------------------------------------------------------------
+  nms <- display
+  nms[red.inx]  <- paste0("<font color=\"red\"><b>",  nms[red.inx],  "</b></font>")
+  nms[blue.inx] <- paste0("<font color=\"blue\"><b>", nms[blue.inx], "</b></font>")
+
+  ## If the pathway is huge, show only those that were in hits.all
+  if (length(nms) > 200) {
+    nms <- nms[refs]
   }
-  return(cbind(msetNm, paste(unique(nms), collapse="; ")));
+
+  cbind(msetNm, paste(unique(nms), collapse = "; "))
 }
 
 
@@ -4561,3 +4580,4 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   .set.mSet(mSetObj);
   return(PerformPSEA("NA", libNm, "current", 3, 100, F));
 }
+
