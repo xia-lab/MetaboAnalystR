@@ -173,9 +173,9 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
   imgName <<- paste(hmdbID, "dpi", dpi, ".png", sep="");
   
   if(is.na(width)){
-    w <- h <- 7;
+    w <- h <- 6;
   }else if(width == 0){
-    w <- 7;
+    w <- 5;
   }else{
     w <- h <- width;
   }

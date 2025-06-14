@@ -9,10 +9,9 @@
 PCA.Anal <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  # RhpcBLASctl::blas_set_num_threads(2);
-  # RhpcBLASctl::omp_set_num_threads(2);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
- 
+  contrib <- factoextra::get_pca_var(pca)$contrib[, 1:8]; # keep top 8 should be sufficient
+
   # obtain variance explained
   sum.pca <- summary(pca);
   imp.pca <- sum.pca$importance;
@@ -21,7 +20,7 @@ PCA.Anal <- function(mSetObj=NA){
   cum.pca <- imp.pca[3,]; # cummulated variance explained
 
   # store the item to the pca object
-  mSetObj$analSet$pca<-append(pca, list(std=std.pca, variance=var.pca, cum.var=cum.pca));
+  mSetObj$analSet$pca<-append(pca, list(std=std.pca, variance=var.pca, cum.var=cum.pca, contrib = contrib));
   fast.write.csv(signif(mSetObj$analSet$pca$x,5), file="pca_score.csv");
   fast.write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
   mSetObj$analSet$pca$loading.type <- "all";
@@ -604,27 +603,28 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, i
   }
   h <- w;
   
-  mSetObj$imgSet$pca.biplot<-imgName;
+    mSetObj$imgSet$pca.biplot<-imgName;
 
- library(ggplot2)
- library(ggrepel)
- library(dplyr)
- library(factoextra) 
-  pca <- prcomp(mSetObj$dataSet$norm, scale=F);
- 
-  cls <- mSetObj$dataSet$cls;
-  cls.type <- mSetObj$dataSet$cls.type;
-   if(mSetObj$dataSet$type.cls.lbl=="integer"){
-     cls <- as.factor(as.numeric(levels(cls))[cls]);
-   }else{
+    library(ggplot2)
+    library(ggrepel)
+    library(dplyr)
+    #library(factoextra) 
+    #pca <- prcomp(mSetObj$dataSet$norm, scale=F);
+    pca<-mSetObj$analSet$pca;
+    contrib <- mSetObj$analSet$pca$contrib;
+    contrib_pc1_pc2 <- contrib[, 1] + contrib[, 2]
+
+    top_10_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:topnum]
+    top_10_features <- top_10_features[!is.na(top_10_features)];
+
+    cls <- mSetObj$dataSet$cls;
+    cls.type <- mSetObj$dataSet$cls.type;
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+        cls <- as.factor(as.numeric(levels(cls))[cls]);
+    }else{
       cls <- cls;
-  }
- 
-  contrib <- get_pca_var(pca)$contrib
-contrib_pc1_pc2 <- contrib[, 1] + contrib[, 2]
+    }
 
-top_10_features <- names(sort(contrib_pc1_pc2, decreasing = TRUE))[1:topnum]
-top_10_features <- top_10_features[!is.na(top_10_features)]
 
 ind_data <- data.frame(
   PC1 = scores[, choices[1]] / lam[1],
@@ -649,7 +649,8 @@ group_names <- levels(ind_data$Group)
 group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_names)
 
  cols <- GetColorSchema(cls); 
- 
+  xlabel = paste("PC",inx1, "(", round(100*mSetObj$analSet$pca$variance[inx1],1), "%)");
+ ylabel = paste("PC",inx2, "(", round(100*mSetObj$analSet$pca$variance[inx2],1), "%)");
 p <- ggplot() +
   geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
   stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
@@ -659,9 +660,7 @@ p <- ggplot() +
                   size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
-  labs(title = "Biplot",
-       x = paste("PC", inx1, " (", round(summary(pca)$importance[2, inx1] * 100, 2), "%)", sep = ""),
-       y = paste("PC", inx2, " (", round(summary(pca)$importance[2, inx2] * 100, 2), "%)", sep = "")) +
+  labs(title = "Biplot", x = xlabel, y = ylabel) +
   theme_minimal() +
  scale_color_manual(values = cols) +
   scale_fill_manual(values = cols) +
