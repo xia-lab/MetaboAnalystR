@@ -1772,7 +1772,7 @@ GetMetaPathGroupNames <-function(mSetObj=NA, dataName){
   #return(levels(mSetObj$dataSet$cls));
 }
 
-PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotName2 =NULL, dataformat){
+PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotName2 =NULL, dataformat, dpi){
   #dataSet <- qs::qread(dataName);
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1821,10 +1821,9 @@ PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotNam
     datatable2[is.na(datatable2)] <-0;
     dataName2 <- tools::file_path_sans_ext(basename(dataName2));
         
-    qc.biBoxPlot(datatable, datatable2, 
-                 dataName, dataName2, vertical = TRUE);
+    qc.biBoxPlot(datatable, datatable2, dataName, dataName2, "png", dpi, vertical = TRUE);
   } else {
-    qc.boxplot(datatable, paste0(dataName, boxplotName));
+    qc.boxplot(datatable, paste0(dataName, boxplotName), "png", dpi);
   }
 
 }
@@ -2147,8 +2146,7 @@ setInclusionDataSets <- function(mSetObj=NA, datasVec){
   return(.set.mSet(mSetObj));
 }
 
-qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, 
-                         format="png", dpi=72, width=NA, vertical = TRUE){
+qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", dpi=72, width=NA, vertical = TRUE){
 
   imgNm <- paste(imgNm1,"_",imgNM2, "_dpi", dpi, "_norm_box", ".", format, sep="");
   
