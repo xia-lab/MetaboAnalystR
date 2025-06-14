@@ -27,6 +27,37 @@
                     (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref.</a>). Note for KNN, k is set to 10 (the default value). 
                     Please choose the one that is the most appropriate for your data. 
                 </p>
+                
+                             <h:panelGrid id="mvPlotPane"
+                             style="width:95%; padding:20px;">
+                    <p>
+                        <b>Data-completeness plot:</b><br/>
+                        Each bar shows the percentage of observed&nbsp;(non-missing)
+                        values for an individual sample.
+                    </p>
+
+                    <!-- toolbar (same as before) -->
+                    <h:panelGrid columns="1"
+                                 style="text-align:right;
+                                 padding-left:600px; width:660px;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss')}"
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customise the graphics output">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                        </p:commandLink>
+                    </h:panelGrid>
+
+                    <!-- scrollable image container -->
+                    <p:scrollPanel mode="native"
+                                   style="width:660px; height:500px; overflow-y:auto;">
+                        <img onerror="this.style.display='none'"
+                             src="#{sessionBean1.getCurrentImageURL('qc_miss')}"
+                             alt="Missing-value lollipop plot"
+                             style="max-width:100%;"/>
+                    </p:scrollPanel>
+                </h:panelGrid>
+                
                 <h:panelGrid style="border: solid gray thin; line-height: 28px; padding: 20px 20px 20px 30px; width: 670px; margin-left: 30px; margin-bottom: 20px" class="surface-card shadow-1 p-4 text-800">
                     <p:outputLabel value="Step 1. Remove features with too many missing values" style="font-size: 13px; font-weight: bold"/>
                     <h:panelGrid columns="4" style="padding-bottom: 12px">

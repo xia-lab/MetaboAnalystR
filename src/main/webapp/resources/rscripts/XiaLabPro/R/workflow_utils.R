@@ -440,7 +440,7 @@ if (grepl("roc_univ", type)) {
         "Wider spread implies greater heterogeneity, which may be due to horizontal pleiotropy."
     )
 }else if (grepl("norm_boxdpi", type)) {
-    file_base <- sub("_norm_boxdpi72", "", type)  # Remove the suffix
+    file_base <- sub("_norm_boxdpi150", "", type)  # Remove the suffix
     descr <- paste0(
         "<b>[", file_base, " - Normalized Box Plot]</b>: ",
         "The box plot  displays the distribution of normalized values for the selected feature across different groups. ",

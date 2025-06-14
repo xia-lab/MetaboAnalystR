@@ -52,18 +52,21 @@
             </h:panelGrid>
         </h:form>
         <p:dialog widgetVar="detailDialog" dynamic="true" modal="false" draggable="true"
+                  header="Details"
                   appendTo="@(body)" hideEffect="explode" resizable="true"> 
-            <p:panel style="width:560px; height:500px; border: none">
-                <h:panelGrid id="detailView" style="padding:5px; font-size: 11px; width: 550px; height:500px;">
+
+            <p:tabView id="detailView" style="padding:5px; font-size: 12px;">
+                <p:tab title="Distribution">
                     <h:panelGrid id="imgPane" style="text-align: center; width: 100%;">
-                        <img onerror='this.style.display="none"' src="#{mapBean.sspImg}" alt="SSPImage"/>
+                        <img onerror='this.style.display="none"' 
+                             style="width:7in"
+                             src="#{mapBean.sspImg}" alt="SSPImage"/>
                     </h:panelGrid> 
+                </p:tab>
+                <p:tab title="References">
                     <h:outputText escape="false" value="#{mapBean.sspDetailTxt}"/>
-                    <h:panelGrid style="width:100%; text-align: center">
-                        <p:commandButton value="OK" onclick="PF('detailDialog').hide()"/>
-                    </h:panelGrid>
-                </h:panelGrid> 
-            </p:panel>
+                </p:tab>
+            </p:tabView> 
         </p:dialog>
     </ui:define>
 </ui:composition>
