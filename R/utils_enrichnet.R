@@ -170,8 +170,8 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   wd <- wd[!is.na(wd[,3]),]
   
   g <- graph_from_data_frame(wd[,-3], directed=F)
-  print(wd);
-  g <- delete_edges(g, E(g)[wd[,3] < 0])  # Remove weak connections
+
+  g <- delete_edges(g, E(g)[wd[,3] < 0.05])  # Remove weak connections
   
   if(vcount(g) == 0){
     print("No connections above threshold!")
@@ -346,7 +346,6 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   }
   
   enr.mat <- apply(enr.mat, 1, as.list)
-  print(head(enr.mat));
   
   netData <- list(
     nodes = nodes, 
