@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ai.xialab</groupId>
     <artifactId>MetaboAnalyst-Pro</artifactId>
-    <version>4.04</version>
+    <version>4.05</version>
     <packaging>war</packaging>
     <name>MetaboAnalyst</name>
     <properties>

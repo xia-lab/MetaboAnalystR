@@ -10,6 +10,7 @@
         <f:event type="preRenderView" listener="#{sessionBean1.initNaviTree('metaPath')}"/>
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Upload', '/Secure/upload/MetaPathLoadView.xhtml')}"/>
     </ui:define>
+    <ui:define name="leftpaneout"/> 
     <ui:define name="content">
         <h:panelGrid styleClass="my-content-panel">
             <h2>Please upload and process your data</h2>
@@ -182,7 +183,8 @@
                 </h:panelGrid>
                 <h:panelGrid cellpadding="10" style="width: 300px">
                     <h:outputText style = "padding-left: 30px; padding-bottom: 0px" value="Data distribution of the peaks (max 100)"/>
-                    <img onerror='this.style.display="none"' style="width: 300px; padding: 0px" src="#{pLoadBean.naiveDisPlot()}"/>
+                    <img onerror='this.style.display="none"' 
+                         style="width: 300px; padding: 0px" src="#{pLoadBean.naiveDisPlot()}"/>
                 </h:panelGrid>
             </h:panelGrid>
             <h:panelGrid style="width:100%; text-align: center">
@@ -243,41 +245,42 @@
 
         <p:dialog header="Data Analysis" widgetVar="analDialog" dynamic="true" modal="true" appendTo="@(body)" id ="analDialogid"
                   hideEffect="explode" resizable="true" position="#{pLoadBean.selectedData.diapos2}">
-            <h:panelGrid id="analView" style="width:500px; padding: 0px 20px 10px 20px; line-height: 21px">
+            <h:panelGrid id="analView" style="width:670px; padding: 0px 20px 10px 20px; line-height: 21px">
                 <p>
                     T-tests will be performed on the uploaded peak table to determine the number of significant peaks. 
                     Note that the mummichog algorithm (Li et al. 2013) works best when there are 10~25% significant peaks.
                     The pie chart below shows the percentage of significant peaks in your dataset.        
                 </p>
                 <h:form id="analForm">
-                    <h:panelGrid columns="2" style="width:420px; margin-left: 20px;">
+                    <p:panelGrid columns="2" style="width:100%; vertical-align: middle"  class="surface-card shadow-1 p-0 text-800">
+                        <h:panelGrid columns="2" style="margin-left: 20px;">
+                            <h:outputLabel value="Set p value cutoff" style="font-size:12px; font-weight: bold"/>
+                            <p:inputText  value="#{pLoadBean.selectedData.sigLevel}" style = "width: 120px" required="true"/>
+                            <h:outputLabel value="Customize adducts (Optional):" style="font-size:12px; font-weight: bold"/>
+                            <p:commandLink value="Edit Adducts" onclick="PF('addDialog').show()"/>
 
-                        <h:outputLabel value="Set p value cutoff" style="font-size:12px; font-weight: bold"/>
-                        <p:inputText  value="#{pLoadBean.selectedData.sigLevel}" style = "width: 120px" required="true"/>
-                        <h:outputLabel value="Customize adducts (Optional):" style="font-size:12px; font-weight: bold"/>
-                        <p:commandLink value="Edit Adducts" onclick="PF('addDialog').show()"/>
+                            <h:outputLabel value="Species" rendered = "false"/>
+                            <p:inputText  value="#{pLoadBean.selectedData.sigLevel}" required="true" rendered = "false"/>
 
-                        <h:outputLabel value="Species" rendered = "false"/>
-                        <p:inputText  value="#{pLoadBean.selectedData.sigLevel}" required="true" rendered = "false"/>
-                    </h:panelGrid>
-                    <h:panelGrid id="padding" style="padding-left: 90px; text-align: center;">
+                            <p:spacer/><p:spacer/>
+                            <p:commandButton value="Submit"
+                                             onclick="PF('statusDialog').show()"
+                                             oncomplete="PF('statusDialog').hide();"
+                                             actionListener="#{pLoadBean.selectedData.performPathAnalysis()}"
+                                             update=":form:navipane :analForm"/>
+
+                            <p:commandButton value="Done" id="padding2"
+                                             rendered ="#{pLoadBean.selectedData.analDone}"
+                                             oncomplete="PF('analDialog').hide()"
+                                             update=":form:navipane"/>
+                        </h:panelGrid>
+
                         <p:chart id="pie" rendered ="#{pLoadBean.selectedData.analDone}"
-                                    value="#{pLoadBean.selectedData.pieModel}"
-                                    style="width:300px;height:160px"/> 
-                    </h:panelGrid>
+                                 value="#{pLoadBean.selectedData.pieModel}"
+                                 style="width:300px;"/> 
+                    </p:panelGrid>
 
-                    <h:panelGrid columns="2" style="width:100%; text-align: center; padding-top: 20px;">
-                        <p:commandButton value="Submit"
-                                         onclick="PF('statusDialog').show()"
-                                         oncomplete="PF('statusDialog').hide(); PF('analDialog').show()"
-                                         actionListener="#{pLoadBean.selectedData.performPathAnalysis()}"
-                                         update=":form:navipane :analForm"/>
 
-                        <p:commandButton value="Done" id="padding2"
-                                         rendered ="#{pLoadBean.selectedData.analDone}"
-                                         oncomplete="PF('analDialog').hide()"
-                                         update=":form:navipane"/>
-                    </h:panelGrid>
                 </h:form>
             </h:panelGrid>
         </p:dialog>
@@ -285,22 +288,22 @@
         <p:dialog header="Adduct Customization" widgetVar="addDialog" showEffect="fade" hideEffect="fade" dynamic="true"
                   modal="true" closable="true" draggable="false" resizable="false"
                   appendTo="@(body)">
-            <h:panelGrid id="addView" style="width:360px; padding: 0px 20px 10px 20px; line-height: 21px">
+            <h:panelGrid id="addView" style="width:480px; padding: 10px; line-height: 23px">
                 <p> 
                     Please customize the adducts based on your experimental conditions (e.g. Mobile Phases). 
                     Click the <b>Confirm</b> button to finalize these changes.
                 </p>
                 <h:form>
-                    <h:panelGrid style="padding: 10px; padding-left: 35px; width:420px; font-size: 13px; line-height: 23px">
+                    <h:panelGrid style="padding: 20px; width:100%; font-size: 12px; line-height: 21px" class="surface-card shadow-1 p-0 text-800">
                         <p:pickList id="adductPane"
-                                    value="#{pLoadBean.adductItems}"
+                                    value="#{pLoadBean.selectedData.adductItems}"
                                     var ="add" itemValue="#{add}" itemLabel="#{add}">
                             <f:facet name="sourceCaption">Available</f:facet>
                             <f:facet name="targetCaption">Include</f:facet>
                             <p:ajax event="transfer" listener="#{pLoadBean.selectedData.doTransfer}"/>
                         </p:pickList>
 
-                        <h:panelGrid style="width:100%; padding-right: 45px; padding-top: 10px; text-align: center">
+                        <h:panelGrid style="width:100%; padding-top: 20px; text-align: center">
                             <p:commandButton value="Confirm" style="width:80px"
                                              actionListener="#{pLoadBean.selectedData.defineAdducts}"
                                              oncomplete="PF('addDialog').hide(); PF('summaryDialog').show()"/>

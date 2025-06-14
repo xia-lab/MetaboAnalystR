@@ -204,7 +204,7 @@
                     the Venn Diagram comparison. 
                 </p>
                 <h:form id="analForm">
-                    <p:panelGrid columns="2" style="width:100%; text-align: center"  class="surface-card shadow-1 p-0 text-800">
+                    <p:panelGrid columns="2" style="width:100%; vertical-align: middle"  class="surface-card shadow-1 p-0 text-800">
                         <p:panelGrid columns="2">
                             <h:outputLabel value="P value (FDR):"/>
                             <p:inputText  value="#{loadBean.selectedData.sigLevel}" required="true"
@@ -212,7 +212,7 @@
                             <h:outputLabel value="Fold change (FC):"/>
                             <p:inputText  value="#{loadBean.selectedData.fcLevel}" required="true"
                                           requiredMessage="Must set a fold change level"/>
-
+                            <p:spacer/><p:spacer/>
                             <p:commandButton value="Submit"
                                              onclick="PF('statusDialog').show()"
                                              oncomplete="PF('statusDialog').hide()"

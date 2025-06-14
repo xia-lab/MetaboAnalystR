@@ -8,16 +8,13 @@ package pro.metaboanalyst.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.inject.Inject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.event.TransferEvent;
 import org.primefaces.model.DualListModel;
 import org.rosuda.REngine.Rserve.RConnection;
-import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
-import pro.metaboanalyst.utils.DataUtils;
 import java.beans.ConstructorProperties;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -484,7 +481,7 @@ public class MetaPathModel {
     }
 
     public void PlotPathDataProfile() {
-        RMetaPathUtils.plotPathDataProfile(RC, name, name2, "_qc_box", "_qc_box2", dataformat);
+        RMetaPathUtils.plotPathDataProfile(RC, name, name2, "_qc_box", "_qc_box2", dataformat, 150);
     }
 
     public void performNormalization() {
