@@ -257,6 +257,40 @@ SanityCheckData <- function(mSetObj=NA){
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
   
+  if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
+    na.mat <- is.na(int.mat);
+
+    grp.sizes      <- table(cls);                      
+    feats          <- ncol(int.mat);                    
+    miss.by.grp    <- sapply(levels(cls), function(g)
+                       sum(na.mat[cls == g, , drop = FALSE]));
+    present.by.grp <- grp.sizes*feats - miss.by.grp;
+    chisq.tab      <- cbind(missing = miss.by.grp,
+                            present = present.by.grp);
+    chi.res        <- suppressWarnings(chisq.test(chisq.tab));
+    chi.p          <- chi.res$p.value;
+
+    miss.per.smp <- rowSums(na.mat);                    
+    aov.res      <- aov(miss.per.smp ~ cls);
+    anova.p      <- summary(aov.res)[[1]][["Pr(>F)"]][1];
+
+    if(is.null(mSetObj$analSet)){
+      mSetObj$analSet <- list();
+    }
+    mSetObj$analSet$missTest <- list(chi.p = chi.p,
+                                     anova.p = anova.p);
+
+    msg <- c(msg,
+             sprintf("Chi-square test (missing × group): p = %.3g.", chi.p),
+             sprintf("ANOVA on per-sample missing counts: p = %.3g.", anova.p));
+
+    if(chi.p < 0.05 || anova.p < 0.05){
+      msg <- c(msg,
+               "<font color='red'><b>Warning:</b> Missing-value patterns differ significantly between groups.</font>",
+               "<font color='red'>Please click on 'Missing Values' to examine the data in detail.</font>");
+    }
+  }
+
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
 
   if(is.null(mSetObj$dataSet$meta.info)){
@@ -654,3 +688,162 @@ if(colnm=="NA"){
 
   return(cls[cls!="NA"]);
 }
+
+#' Plot Non-Missing Value Lollipop (inch dimensions)
+#'
+#' @description
+#'   Generates a lollipop plot showing, for every sample, the percentage
+#'   of non-missing values.  The graphic device now uses inches
+#'   (default 8 × 6) rather than pixels.
+#'
+#' @usage
+#'   PlotMissingLollipop(mSetObj = NA,
+#'                       imgName  = "miss_lollipop",
+#'                       format   = "png",
+#'                       dpi      = 300,
+#'                       width    = 8,
+#'                       height   = 6)
+#'
+#' @param mSetObj  The working mSet object.
+#' @param imgName  Base file name (no extension).
+#' @param format   "png", "tiff", "pdf", or "svg" (default "png").
+#' @param dpi      Resolution (dots per inch).  Default 300.
+#' @param width    Width **in inches**.  If \code{NA}, a heuristic
+#'                 (0.25 in per sample, min 8 in) is applied.
+#' @param height   Height **in inches** (default 6).
+#'
+#' @import qs
+#' @import ggplot2
+#' @importFrom Cairo Cairo
+#' @export
+#'
+#' Plot Non-Missing Value Lollipop (auto-coloured by meta type)
+#'
+#' @description
+#'   Generates a lollipop plot where stems and points are coloured by a
+#'   user-selected metadata column.  If the column is marked
+#'   \code{"cont"} in \code{mSetObj$dataSet$meta.types}, a
+#'   continuous gradient is applied; otherwise a discrete palette is
+#'   used.  If no \code{meta.info} exists, the function colours by the
+#'   class labels and treats them as discrete.
+#'
+#' @usage
+#'   PlotMissingLollipop(mSetObj = NA,
+#'                       imgName  = "miss_lollipop",
+#'                       format   = "png",
+#'                       dpi      = 150,
+#'                       width    = NA,
+#'                       groupCol = NULL)
+#'
+#' @param mSetObj  MetaboAnalyst object.
+#' @param imgName  Base output name (no extension).
+#' @param format   Image format: "png", "tiff", "pdf", or "svg". Default "png".
+#' @param dpi      Device resolution (dpi). Default 150.
+#' @param width    Width in inches; if \code{NA}, uses 0.25" per sample (≥ 8").
+#' @param groupCol Metadata column to colour by (default = first column or "Class").
+#'
+#' @export
+#'
+PlotMissingLollipop <- function(mSetObj = NA,
+                                imgName  = "miss_lollipop",
+                                format   = "png",
+                                dpi      = 150,
+                                width    = NA,
+                                groupCol = NULL) {
+
+  require("ggplot2")
+  require("qs")
+  require("Cairo")
+
+  ## -------- Retrieve data & completeness --------------------------------
+  mSetObj <- .get.mSet(mSetObj)
+
+  int.mat <- if (file.exists("preproc.qs")) {
+    qs::qread("preproc.qs")
+  } else if (!is.null(mSetObj$dataSet$orig)) {
+    mSetObj$dataSet$orig
+  } else {
+    AddErrMsg("No processed data found for lollipop plot!")
+    return(0)
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  pct.complete <- 100 * rowMeans(!is.na(int.mat))
+  samp.nms     <- rownames(int.mat)
+
+  ## -------- Resolve group vector & type ---------------------------------
+  has.meta <- !is.null(mSetObj$dataSet$meta.info)
+
+  if (has.meta) {
+    meta.df <- mSetObj$dataSet$meta.info
+
+    if (is.null(groupCol)) groupCol <- colnames(meta.df)[1]
+    if (!groupCol %in% colnames(meta.df)) {
+      AddErrMsg(sprintf("Column '%s' not in meta.info – using first column.", groupCol))
+      groupCol <- colnames(meta.df)[1]
+    }
+
+    grp.vec  <- meta.df[[groupCol]]
+    col.idx  <- which(colnames(meta.df) == groupCol)
+    grp.type <- if (!is.null(mSetObj$dataSet$meta.types)) {
+      mSetObj$dataSet$meta.types[col.idx]
+    } else "disc"
+
+  } else {                               # fall back to class labels
+    grp.vec  <- mSetObj$dataSet$cls
+    groupCol <- "Class"
+    grp.type <- "disc"
+  }
+
+  ## Cast according to type -----------
+  if (grp.type == "cont") {
+    grp.vec  <- as.numeric(grp.vec)
+    colour_aes <- scale_colour_gradient(low = "#56B1F7", high = "#132B43")
+  } else {                              # treat as discrete / factor
+    grp.vec  <- factor(grp.vec)
+    colour_aes <- scale_colour_discrete()
+  }
+
+  ## -------- Assemble plotting frame -------------------------------------
+  df <- data.frame(
+    Sample  = factor(samp.nms, levels = samp.nms),
+    Percent = pct.complete,
+    Group   = grp.vec
+  )
+
+  ## -------- Device size --------------------------------------------------
+  height  <- max(6, length(samp.nms) * 0.25)
+  width <- 8
+  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+
+  ## -------- Plot & save --------------------------------------------------
+  Cairo::Cairo(file = img.full, width = width, height = height,
+               dpi = dpi, units = "in", type = format)
+
+  p <- ggplot(df, aes(x = Sample, y = Percent, colour = Group)) +
+       geom_segment(aes(xend = Sample, y = 0, yend = Percent), size = 0.8) +
+       geom_point(size = 3) +
+       coord_flip() +
+       labs(x = NULL, y = "Non-missing (%)", colour = groupCol) +
+       ylim(0, 100) +
+       theme_minimal(base_size = 14) +
+       theme(axis.text.y = element_text(size = 8),
+             panel.grid.major.y = element_blank()) +
+       colour_aes        # discrete or continuous scale
+
+  print(p)
+  dev.off()
+
+  ## -------- Book-keeping -------------------------------------------------
+  mSetObj$imgSet$miss.lollipop <- img.full
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Lollipop plot saved (%s, %.1f × %.1f in, %d dpi) – coloured by '%s' (%s).",
+            format, width, height, dpi, groupCol, grp.type)
+  )
+
+  return(.set.mSet(mSetObj))
+}
+
+
