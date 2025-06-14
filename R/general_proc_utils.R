@@ -253,44 +253,48 @@ SanityCheckData <- function(mSetObj=NA){
   mSetObj$dataSet$missingCount <- naCount;
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
-  msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>",
+
+  if(naCount == 0){
+    msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
+  }else{
+    msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>",
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
   
-  if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
-    na.mat <- is.na(int.mat);
+    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
+        na.mat <- is.na(int.mat);
 
-    grp.sizes      <- table(cls);                      
-    feats          <- ncol(int.mat);                    
-    miss.by.grp    <- sapply(levels(cls), function(g)
+        grp.sizes      <- table(cls);                      
+        feats          <- ncol(int.mat);                    
+        miss.by.grp    <- sapply(levels(cls), function(g)
                        sum(na.mat[cls == g, , drop = FALSE]));
-    present.by.grp <- grp.sizes*feats - miss.by.grp;
-    chisq.tab      <- cbind(missing = miss.by.grp,
+        present.by.grp <- grp.sizes*feats - miss.by.grp;
+        chisq.tab      <- cbind(missing = miss.by.grp,
                             present = present.by.grp);
-    chi.res        <- suppressWarnings(chisq.test(chisq.tab));
-    chi.p          <- chi.res$p.value;
+        chi.res        <- suppressWarnings(chisq.test(chisq.tab));
+        chi.p          <- chi.res$p.value;
 
-    miss.per.smp <- rowSums(na.mat);                    
-    aov.res      <- aov(miss.per.smp ~ cls);
-    anova.p      <- summary(aov.res)[[1]][["Pr(>F)"]][1];
+        miss.per.smp <- rowSums(na.mat);                    
+        aov.res      <- aov(miss.per.smp ~ cls);
+        anova.p      <- summary(aov.res)[[1]][["Pr(>F)"]][1];
 
-    if(is.null(mSetObj$analSet)){
-      mSetObj$analSet <- list();
-    }
-    mSetObj$analSet$missTest <- list(chi.p = chi.p,
+        if(is.null(mSetObj$analSet)){
+            mSetObj$analSet <- list();
+        }
+        mSetObj$analSet$missTest <- list(chi.p = chi.p,
                                      anova.p = anova.p);
 
-    msg <- c(msg,
+        msg <- c(msg,
              sprintf("Chi-square test (missing × group): p = %.3g.", chi.p),
              sprintf("ANOVA on per-sample missing counts: p = %.3g.", anova.p));
 
-    if(chi.p < 0.05 || anova.p < 0.05){
-      msg <- c(msg,
+        if(chi.p < 0.05 || anova.p < 0.05){
+            msg <- c(msg,
                "<font color='red'><b>Warning:</b> Missing-value patterns differ significantly between groups.</font>",
                "<font color='red'>Please click on 'Missing Values' to examine the data in detail.</font>");
+        }
     }
   }
-
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
 
   if(is.null(mSetObj$dataSet$meta.info)){
