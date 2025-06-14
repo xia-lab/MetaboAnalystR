@@ -40,7 +40,9 @@
                     </li>
                 </ul>
                 <h:panelGrid style="padding-left: 10%">
-                    <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('power_stat')}" alt="statImg"/>
+                    <img onerror='this.style.display="none"' 
+                          style="height:9in;"
+                         src="#{sessionBean1.getCurrentImageURL('power_stat')}" alt="statImg"/>
                     <h:panelGrid style="width: 100%; text-align: center; padding-top: 20px">
                         <p:commandButton value="Proceed" ajax="false" 
                                          icon="pi pi-caret-right" 
