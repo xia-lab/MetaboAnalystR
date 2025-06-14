@@ -619,13 +619,13 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
   listres
 }
 
-PlotDataProfile<-function(dataName, boxplotName, pcaName){
+PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=72){
   dataSet <- qs::qread(dataName);
   if(.on.public.web){
     load_lattice()
   }
-  qc.boxplot(dataSet$data, boxplotName);
-  qc.pcaplot(dataSet$data, pcaName);
+  qc.boxplot(dataSet$data, boxplotName, format, dpi);
+  qc.pcaplot(dataSet$data, pcaName, format, dpi);
 }
 
 qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){

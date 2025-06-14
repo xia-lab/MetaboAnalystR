@@ -613,7 +613,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
     stop("Please double check the batch, class and order information is not missing ")
   }
   
-  Plot.sampletrend(mSetObj,paste(imgName,"Trend"),method="QC_RLSC");
+  plot.sample.trend(mSetObj,paste(imgName,"trend_"),method="QC_RLSC");
   
   best.table <- mSetObj$dataSet$adjusted.mat
   
@@ -639,7 +639,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
+PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=150, width=NA,method){
   
   #mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -747,7 +747,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,method){
+plot.sample.trend <- function(mSetObj, imgName, format="png", dpi=150, width=NA,method){
   
   #mSetObj <- .get.mSet(mSetObj)
   
@@ -797,7 +797,7 @@ Plot.sampletrend <- function(mSetObj, imgName, format="png", dpi=72, width=NA,me
 #'@param width width
 #'@param dpi dpi
 #'@export
-plot_dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72){
+plot.sample.dist <- function(mSetObj=NA, imgName,format="png", width=NA, dpi=150){
   library(ggplot2)
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -805,7 +805,7 @@ plot_dist <- function(mSetObj=NA, imgName="dist",format="png", width=NA, dpi=72)
   }else{
     w <- width;
   }
-  h <- w*6/11;
+  h <- 5;
   
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
@@ -4302,22 +4302,6 @@ decorana <- function (veg, iweigh = 0, iresc = 4, ira = 0, mk = 26, short = 0,
   return(dat);
 }
 
-.get.mSet <- function(mSetObj=NA){
-  if(.on.public.web){
-    return(mSet)
-  }else{
-    return(mSetObj);
-  }
-}
-.set.mSet <- function(mSetObj=NA){
-  if(.on.public.web){
-    mSet <<- mSetObj;
-    print("mmmmsssettt");
-    print(mSet$dataSet$meta.info);
-    return (1);
-  }
-  return(mSetObj);
-}
 
 
 

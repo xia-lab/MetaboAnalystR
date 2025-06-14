@@ -1839,15 +1839,16 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
   anal.mode <- mSetObj$analSet$mode;
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 9; h <- 7;
+  w <- 8; h <- 4;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   y.vec <- mSetObj$analSet$ROCtest$accu.mat[1,];
   ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
-  boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
-  stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
-  
+  #boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
+  #stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
+  boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.7, 0.7), xlab="Predictive Accuracy", horizontal = TRUE);
+  stripchart(y.vec, method = "jitter", add = T, pch=19);
   accu.info <- paste ("The average accuracy based on 100 cross validations is", round(mean(y.vec), 3));
   
   mSetObj$imgSet$roc.testpred <- imgName;

@@ -61,9 +61,9 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
-    w <- 10;
+    w <- 9;
   }else if(width == 0){
-    w <- 10;
+    w <- 8;
   }else{
     w <- width;
   }
