@@ -233,7 +233,7 @@ CreateGraph <- function(mSetObj=NA){
     overall.graph <-simplify(graph_from_data_frame(topedge.list, directed=FALSE, vertices=NULL), edge.attr.comb="first");
     seed.graph <<- seed.proteins;
   }else{
-    overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
+    overall.graph <- simplify(graph_from_data_frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
     # add node expression value
     #newIDs <- names(seed.expr);
     newIDs <- seed.graph;

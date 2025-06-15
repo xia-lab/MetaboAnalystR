@@ -256,44 +256,24 @@ SanityCheckData <- function(mSetObj=NA){
 
   if(naCount == 0){
     msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
-  }else{
-    msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>",
+  }else{  
+    msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
+        miss.msg <- "";
+        kw.p <- .test.missing.sig(int.mat, cls);
+
+        if(kw.p <= 0.05){
+            miss.msg <- "<font color='red'>Missing-value patterns differ significantly between groups.</font>";
+        }else{
+            miss.msg <- "No significant differences were detected in missing-value patterns across different groups.";
+        }
+        mSetObj$dataSet$missTest <- kw.p;
+        mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+        msg<-c(msg,  miss.msg);
+    }
+    msg<-c(msg,
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
-  
-    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
-        na.mat <- is.na(int.mat);
-
-        grp.sizes      <- table(cls);                      
-        feats          <- ncol(int.mat);                    
-        miss.by.grp    <- sapply(levels(cls), function(g)
-                       sum(na.mat[cls == g, , drop = FALSE]));
-        present.by.grp <- grp.sizes*feats - miss.by.grp;
-        chisq.tab      <- cbind(missing = miss.by.grp,
-                            present = present.by.grp);
-        chi.res        <- suppressWarnings(chisq.test(chisq.tab));
-        chi.p          <- chi.res$p.value;
-
-        miss.per.smp <- rowSums(na.mat);                    
-        aov.res      <- aov(miss.per.smp ~ cls);
-        anova.p      <- summary(aov.res)[[1]][["Pr(>F)"]][1];
-
-        if(is.null(mSetObj$analSet)){
-            mSetObj$analSet <- list();
-        }
-        mSetObj$analSet$missTest <- list(chi.p = chi.p,
-                                     anova.p = anova.p);
-
-        msg <- c(msg,
-             sprintf("Chi-square test (missing × group): p = %.3g.", chi.p),
-             sprintf("ANOVA on per-sample missing counts: p = %.3g.", anova.p));
-
-        if(chi.p < 0.05 || anova.p < 0.05){
-            msg <- c(msg,
-               "<font color='red'><b>Warning:</b> Missing-value patterns differ significantly between groups.</font>",
-               "<font color='red'>Please click on 'Missing Values' to examine the data in detail.</font>");
-        }
-    }
   }
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
 
@@ -319,6 +299,16 @@ SanityCheckData <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
+.test.missing.sig <- function(int.mat, cls){
+       na.mat         <- is.na(int.mat);
+       grp.sizes      <- table(cls);                      
+       feats          <- ncol(int.mat);                    
+       miss.by.grp    <- sapply(levels(cls), function(g)
+                       sum(na.mat[cls == g, , drop = FALSE]));
+       miss.per.smp <- rowSums(na.mat);                   
+       kw.res      <-  kruskal.test(miss.per.smp ~ cls);
+       return(kw.res$p.value);
+}
 
 #'Replace missing or zero values
 #'@description This function will replace zero/missing values by half of the smallest
@@ -680,17 +670,25 @@ ContainMissing <- function(mSetObj=NA){
   }
 }
 
-GetMetaDataCol <- function(colnm){
+GetMetaDataCol <- function(mSetObj=NA, colnm){
   
-  mSetObj <- .get.mSet(mSetObj);
-if(colnm=="NA"){
-  cls<-levels(mSetObj$dataSet$meta.info[,1])
-}else{
-  meta <- factor(mSetObj$dataSet$meta.info[,colnm])
-  cls<-levels(meta)
+    mSetObj <- .get.mSet(mSetObj);
+    if(colnm=="NA"){
+        cls<-levels(mSetObj$dataSet$meta.info[,1])
+    }else{
+        meta <- factor(mSetObj$dataSet$meta.info[,colnm])
+        cls<-levels(meta)
+    }
+    return(cls[cls!="NA"]);
 }
 
-  return(cls[cls!="NA"]);
+GetMissingTestMsg <- function(mSetObj=NA){
+    mSetObj <- .get.mSet(mSetObj);
+    msg <- mSetObj$msgSet$miss.msg;
+    if(is.null(msg)){
+        return("NA");
+    }
+    return(msg);
 }
 
 #' Plot Non-Missing Value Lollipop (inch dimensions)
@@ -748,7 +746,7 @@ if(colnm=="NA"){
 #'
 #' @export
 #'
-PlotMissingLollipop <- function(mSetObj = NA,
+PlotMissingDistr <- function(mSetObj = NA,
                                 imgName  = "miss_lollipop",
                                 format   = "png",
                                 dpi      = 150,
@@ -758,7 +756,7 @@ PlotMissingLollipop <- function(mSetObj = NA,
   require("ggplot2")
   require("qs")
   require("Cairo")
-
+  require("patchwork")
   ## -------- Retrieve data & completeness --------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
@@ -773,7 +771,8 @@ PlotMissingLollipop <- function(mSetObj = NA,
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  pct.complete <- 100 * rowMeans(!is.na(int.mat))
+  #pct.complete <- 100 * rowMeans(!is.na(int.mat))
+  pct.missing <- 100 * rowMeans(is.na(int.mat))
   samp.nms     <- rownames(int.mat)
 
   ## -------- Resolve group vector & type ---------------------------------
@@ -812,31 +811,67 @@ PlotMissingLollipop <- function(mSetObj = NA,
   ## -------- Assemble plotting frame -------------------------------------
   df <- data.frame(
     Sample  = factor(samp.nms, levels = samp.nms),
-    Percent = pct.complete,
+    Percent = pct.missing,
     Group   = grp.vec
   )
 
   ## -------- Device size --------------------------------------------------
-  height  <- max(6, length(samp.nms) * 0.25)
-  width <- 8
+  height  <- max(6, length(samp.nms) * 0.25) + 3.5
+  width <- 7
   img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
 
   ## -------- Plot & save --------------------------------------------------
   Cairo::Cairo(file = img.full, width = width, height = height,
                dpi = dpi, units = "in", type = format)
+colour_aes <- scale_color_discrete()
+# --- p1: Lollipop Chart (Horizontal) ---
+p1 <- ggplot(df, aes(x = Sample, y = Percent, colour = Group)) +
+  geom_segment(aes(xend = Sample, y = 0, yend = Percent), size = 0.8) +
+  geom_point(size = 3) +
+  coord_flip() +
+  labs(x = NULL, y = "Missing Percentage", colour = groupCol) + # Ensure 'colour = groupCol' here
+  ylim(0, 100) +
+  theme_minimal(base_size = 14) +
+  theme(panel.grid.major.y = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 20, unit = "pt")),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.margin = unit(c(5.5, 5.5, 5.5, 5.5), "pt")
+  ) +
+  colour_aes # This scale handles the colors for the points/segments
 
-  p <- ggplot(df, aes(x = Sample, y = Percent, colour = Group)) +
-       geom_segment(aes(xend = Sample, y = 0, yend = Percent), size = 0.8) +
-       geom_point(size = 3) +
-       coord_flip() +
-       labs(x = NULL, y = "Non-missing (%)", colour = groupCol) +
-       ylim(0, 100) +
-       theme_minimal(base_size = 14) +
-       theme(axis.text.y = element_text(size = 8),
-             panel.grid.major.y = element_blank()) +
-       colour_aes        # discrete or continuous scale
+# --- p2: Boxplot (Horizontal) ---
+p2 <- ggplot(df, aes(x = Group, y = Percent)) +
+  geom_boxplot(aes(fill = Group), # 'fill' is for box color
+               outlier.shape = 21,
+               outlier.size = 2) +
+  coord_flip() +
+  labs(x = NULL, y = "Missing Percentage", fill = groupCol) + # --- CRITICAL: Use 'fill = groupCol' here too ---
+  ylim(0, 100) +
+  theme_minimal(base_size = 14) +
+  theme(panel.grid.major.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        plot.margin = unit(c(5.5, 5.5, 0, 5.5), "pt")
+  ) +
+  # --- CRITICAL: Use a matching fill scale ---
+  # If 'colour_aes' was scale_color_discrete(), use scale_fill_discrete().
+  # If 'colour_aes' was scale_color_manual(values = my_colors), use scale_fill_manual(values = my_colors).
+  scale_fill_discrete()
 
-  print(p)
+# --- Combine with shared axes, adjusted heights, and COLLECTED LEGEND ---
+combined_plot <- p2 / p1 +
+  plot_layout(heights = c(1, 3),
+              axes = "collect",
+              axis_titles = "collect",
+              guides = "collect" # --- This is the key for collecting legends ---
+              ) +
+  # --- Apply theme elements globally to all plots in the patchwork ---
+  plot_annotation(tag_levels = 'A') & theme(legend.position = "bottom") # Position the single collected legend
+  # The '&' operator applies a theme element to all subplots in the patchwork.
+
+print(combined_plot)
   dev.off()
 
   ## -------- Book-keeping -------------------------------------------------
@@ -849,5 +884,6 @@ PlotMissingLollipop <- function(mSetObj = NA,
 
   return(.set.mSet(mSetObj))
 }
+
 
 

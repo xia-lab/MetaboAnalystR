@@ -271,7 +271,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   if(nrow(b.mat) > 0){
     colnames(b.mat) <- c("source", "target")
-    bg <- graph.data.frame(b.mat, directed=F)
+    bg <- graph_from_data_frame(b.mat, directed=F)
     
     # Color nodes
     V(bg)$color <- "#00FFFF"  # Default compound color
