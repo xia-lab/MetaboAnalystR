@@ -68,26 +68,34 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   colnames(enr.mat) <- gsub("[ .]", "_", colnames(enr.mat))   # <-- NEW
   
-  # Filter for significant results (p < 0.05)
-  sig.inx <- pvals <= 0.05
-  if(sum(sig.inx) < 2){
-    print("Not enough significant pathways for network analysis!")
-    return(0)
-  }
-  
-  # Keep top results if too many
-  if(sum(sig.inx) > 50){
-    top.inx <- order(pvals)[1:50]
-    enr.mat <- enr.mat[top.inx, , drop=FALSE]
-    pvals <- pvals[top.inx]
-    hits <- hits[top.inx]
-    sig.inx <- rep(TRUE, 50)
-  } else {
-    enr.mat <- enr.mat[sig.inx, , drop=FALSE]
-    pvals <- pvals[sig.inx]
-    hits <- hits[sig.inx]
-  }
-  
+max.show   <- 20
+sig.cutoff <- 0.05
+
+sig.idx <- which(pvals <= sig.cutoff)
+n.sig   <- length(sig.idx)
+
+if (n.sig == 0) {
+  message("No significant pathways (p ≤ 0.05); using the top ",
+          max.show, " overall.")
+}
+
+## 1.  Start with all pathways ordered by p-value (smallest first)
+ord.all   <- order(pvals)                       # indices
+
+## 2.  Always keep the first `max.show` entries in that order
+keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+
+## 3.  Subset all objects
+enr.mat   <- enr.mat[ keep.idx , , drop = FALSE ]
+pvals     <- pvals  [ keep.idx ]
+hits      <- hits   [ keep.idx ]
+
+## 4.  Ensure we still have at least two pathways
+if (nrow(enr.mat) < 2) {
+  message("Fewer than two pathways to display — aborting network build.")
+  return(0)
+}
+
   require(igraph)
   require(reshape)
   
