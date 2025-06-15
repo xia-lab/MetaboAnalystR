@@ -628,7 +628,7 @@ PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=72){
   qc.pcaplot(dataSet$data, pcaName, format, dpi);
 }
 
-qc.boxplot <- function(dat, imgNm, format="png", dpi=72, width=NA){
+qc.boxplot <- function(dat, imgNm, format="png", dpi=150, width=NA){
 
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require("lattice");

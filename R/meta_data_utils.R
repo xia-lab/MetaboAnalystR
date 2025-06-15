@@ -290,6 +290,12 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
 }
 
 #removed setcurrentdata, never used?
+SetCurrentData <- function(nm){
+  #if(dataSet$name != nm){
+    dataSet <- readRDS(nm);
+  #}
+  return(1);
+}
 
 #'Remove data object, the current dataSet will be the last one by default 
 #'@param dataName Input name of data to remove
