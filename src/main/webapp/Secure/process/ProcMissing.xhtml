@@ -7,6 +7,7 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{procBean.imputeButton_action()}"/> 
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Missing value', '/Secure/process/ProcMissing.xhtml')}"/> 
     </ui:define>
     <ui:define name="content">
@@ -36,7 +37,7 @@
                         Missing value distributions
                     </h3>
                     <p>
-                        <h:outputText value="#{procBean.missingMsg}" style="font-size: 14px; color:darkblue" escape="false"/>. 
+                        <h:outputText value="#{procBean.missingMsg}" style="font-size: 14px; color:orange" escape="false"/>. 
                         When missing value distributions are significantly different across groups, 
                         It may be more appropriate to estimate LoD/mean/median/min values for individual groups.
                     </p>
@@ -55,8 +56,9 @@
 
                 </h:panelGrid>
 
-                <h:panelGrid style="border: 1px dashed grey; padding: 20px 20px 20px 40px;
-                             background-color: #F9F9FB; width: 780px; margin-left: 5%">
+                <h:panelGrid 
+                    class="surface-card shadow-1 p-4 text-800"
+                    style="border: 1px dashed grey; padding: 20px 20px 20px 40px; width: 780px; margin-left: 8%">
                     <p:outputLabel value="Step 1. Remove features with too many missing values" style="font-size: 13px; font-weight: bold"/>
                     <h:panelGrid columns="4" style="padding-bottom: 12px">
                         <p:selectBooleanCheckbox value="#{procBean.removeMissing}" style="line-height: 18px"/> 

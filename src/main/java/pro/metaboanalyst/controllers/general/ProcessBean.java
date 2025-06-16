@@ -76,16 +76,6 @@ public class ProcessBean implements Serializable {
         return msgText;
     }
 
-    private boolean missingDisabled = true;
-
-    public boolean isMissingDisabled() {
-        return missingDisabled;
-    }
-
-    public void setMissingDisabled(boolean missingDisabled) {
-        this.missingDisabled = missingDisabled;
-    }
-
     private boolean editBnDisabled = false;
 
     public boolean isEditBnDisabled() {
@@ -192,7 +182,7 @@ public class ProcessBean implements Serializable {
                         RCenter.recordMessage(RC, "Data integrity check - <b>failed</b>");
                     }
                     if (sb.getDataType().equals("mass_table")) {
-                        missingDisabled = !RDataUtils.containMissing(RC);
+                        sb.setMissingDisabled(!RDataUtils.containMissing(RC));
 
                         String primInfo = RDataUtils.getPrimaryInfo(RC);
                         String factors = RDataUtils.getFactors(RC);
@@ -257,7 +247,7 @@ public class ProcessBean implements Serializable {
                         sb.setupDataSize(featureNum, sampleNum);
                         sb.settingRoc1Col(featureNum);
                         proceedBnDisabled = false;
-                        missingDisabled = !RDataUtils.containMissing(RC);
+                        sb.setMissingDisabled(!RDataUtils.containMissing(RC));
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
                     } else {
                         msgVec.add("Checking data content ...failed.");
@@ -296,9 +286,46 @@ public class ProcessBean implements Serializable {
         //System.out.println(msgText + "======msgText");
     }
 
-    public String imputeButton_action() {
+    private boolean imputeInit = false;
+
+    public void imputeButton_action() {
+        if (imputeInit) {
+            return;
+        }
         sb.setMultiGroup(RDataUtils.getGroupNumber(sb.getRConnection()) > 2);
-        return "Missing value";
+        missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection());
+        RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+        imputeInit = true;
+    }
+
+    private String missingMsg;
+
+    public String getMissingMsg() {
+        return missingMsg;
+    }
+
+    public void setMissingMsg(String missingMsg) {
+        this.missingMsg = missingMsg;
+    }
+
+    private boolean grpLod;
+
+    public boolean isGrpLod() {
+        return grpLod;
+    }
+
+    public void setGrpLod(boolean grpLod) {
+        this.grpLod = grpLod;
+    }
+    
+    private boolean grpMeasure;
+
+    public boolean isGrpMeasure() {
+        return grpMeasure;
+    }
+
+    public void setGrpMeasure(boolean grpMeasure) {
+        this.grpMeasure = grpMeasure;
     }
 
     public String skipButton_action_default() {
@@ -479,16 +506,6 @@ public class ProcessBean implements Serializable {
         this.rtThresh = rtThresh;
     }
 
-    private String msPeakText = "";
-
-    public String getMsPeakText() {
-        return msPeakText;
-    }
-
-    public void setMsPeakText(String msPeakText) {
-        this.msPeakText = msPeakText;
-    }
-
     private void setMSpeakProcTable() {
         String[] msgArray = RDataUtils.getPeaklistProcMessage(sb.getRConnection());
         String msg = "<table face=\"times\" size = \"3\">"
@@ -497,7 +514,7 @@ public class ProcessBean implements Serializable {
             msg = msg + "<tr><td align=\"left\">" + msgArray1 + "</td></tr>";
         }
         msg = msg + "</table>";
-        msPeakText = msg;
+        sb.setMsPeakText(msg);
     }
 
     public String msPeakAlignBn_action() {

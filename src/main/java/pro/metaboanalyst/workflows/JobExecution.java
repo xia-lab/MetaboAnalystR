@@ -114,28 +114,21 @@ public class JobExecution implements Serializable {
                 if (rs.next()) {
                     String status = rs.getString("status");
                     switch (status) {
-                        case "IN_PROGRESS":
-                            statusMsg = "Job is running...";
-                            break;
-                        case "COMPLETED":
+                        case "IN_PROGRESS" -> statusMsg = "Job is running...";
+                        case "COMPLETED" -> {
                             statusMsg = "<span style='color: green'>Job has finished!</span>";
                             QuartzDbUtils.updateJobStatus(jobId, "FINISHED");
                             stopStatusCheck = true;
                             String token = QuartzDbUtils.getTokenByJobId(jobId);
                             String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob");
                             DataUtils.doRedirect(url, ab);
-                            break;
-                        case "FAILED":
-                        case "ERROR":
-                            statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
-                            break;
-                        case "FINISHED":
+                        }
+                        case "FAILED", "ERROR" -> statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
+                        case "FINISHED" -> {
                             statusMsg = "<span style='color: green'>Job has finished!</span>";
                             stopStatusCheck = true;
-                            break;
-                        default:
-                            statusMsg = "Job status: " + status;
-                            break;
+                        }
+                        default -> statusMsg = "Job status: " + status;
                     }
                 } else {
                     // No entry in the table yet

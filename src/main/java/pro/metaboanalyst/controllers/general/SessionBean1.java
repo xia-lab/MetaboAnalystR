@@ -600,20 +600,20 @@ public class SessionBean1 implements Serializable {
         this.integChecked = false;
         this.dataNormed = false;
         imgMap.clear();
-        
+
         //this is called in data upload, need to keep this entry
         String uploadVal = null;
         boolean uploaded = false;
         if (naviTrack.keySet().contains("Upload")) {
             uploaded = true;
             uploadVal = naviTrack.get("Upload");
-            if(uploadVal.startsWith("/MetaboAnalyst")){
+            if (uploadVal.startsWith("/MetaboAnalyst")) {
                 uploadVal = uploadVal.substring("/MetaboAnalyst".length());
             }
         }
         naviTrack.clear();
         naviTrackAnalType.clear();
-        if(uploaded){
+        if (uploaded) {
             addNaviTrack("Upload", uploadVal);
         }
         //reset sessionbean of individual module
@@ -1779,4 +1779,23 @@ public class SessionBean1 implements Serializable {
         jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
     }
 
+    private boolean missingDisabled = true;
+
+    public boolean isMissingDisabled() {
+        return missingDisabled;
+    }
+
+    public void setMissingDisabled(boolean missingDisabled) {
+        this.missingDisabled = missingDisabled;
+    }
+
+    private String msPeakText = "";
+
+    public String getMsPeakText() {
+        return msPeakText;
+    }
+
+    public void setMsPeakText(String msPeakText) {
+        this.msPeakText = msPeakText;
+    }
 }

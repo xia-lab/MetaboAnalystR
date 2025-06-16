@@ -51,8 +51,8 @@
                                              />
                             <p:commandButton value="Missing Values" ajax="false" style="width:150px;" 
                                              onclick="PF('statusDialog').show()"
-                                             disabled="#{procBean.missingDisabled}"
-                                             action="#{procBean.imputeButton_action()}"/>
+                                             disabled="#{sessionBean1.missingDisabled}"
+                                             action="Missing value"/>
                             <p:commandButton value="Proceed" style="width:120px;"
                                              ajax="false"
                                              onclick="PF('statusDialog').show()"

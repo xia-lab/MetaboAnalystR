@@ -196,7 +196,7 @@
                                                      />
                                     <p:commandButton value="Missing Values" ajax="false" style="width:150px;" 
                                                      onclick="PF('statusDialog').show()"
-                                                     disabled="#{procBean.missingDisabled}"
+                                                     disabled="#{sessionBean1.missingDisabled}"
                                                      action="#{procBean.imputeButton_action()}"/>
                                 </h:panelGrid> 
                             </h:panelGrid>

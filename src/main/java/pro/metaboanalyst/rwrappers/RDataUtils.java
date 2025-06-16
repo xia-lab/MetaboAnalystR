@@ -1035,6 +1035,48 @@ public class RDataUtils {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public static String getMissingTestMsg(RConnection RC) {
+        try {
+            String rCommand = "GetMissingTestMsg(NA)";
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("GetMissingTestMsg", e);
+            return null;
+        }
+    }
+
+    /**
+     * Plot a lollipop chart summarising the percentage of non-missing values in
+     * every sample (wrapper for the R function `PlotMissingDistr`).
+     *
+     * @param sb active SessionBean1 (provides the RServe connection)
+     * @param imgName base file name (no extension) for the graphic
+     * @param format image format (e.g. "png", "tiff", "pdf", "svg")
+     * @param dpi dots-per-inch resolution
+     *
+     * @return 1 on success, 0 on failure
+     */
+    public static int plotMissingDistr(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // R call: let width/height default by passing NA
+            String rCommand = "PlotMissingDistr(NA, \"" + imgName + "\", \""
+                    + format + "\", " + dpi + ", width=NA)";
+
+            RCenter.recordRCommand(RC, rCommand);                 // log the call
+            sb.addGraphicsCMD("qc_miss", rCommand);       // track graphic
+
+            return RC.eval(rCommand).asInteger();                 // run & return
+        } catch (Exception e) {
+            LOGGER.error("PlotMissingDistr", e);
+        }
+        return 0; // failure
+    }
+
     public static void sanityCheckRawSpectra(RConnection RC) {
 
         try {
