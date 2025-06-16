@@ -11,54 +11,52 @@
     </ui:define>
     <ui:define name="content">
         <h:form>
-            <h:panelGrid styleClass="my-content-panel">
+            <h:panelGrid style="padding:30px 40px 20px 50px; font-size: 13px; line-height: 23px; width: 95%; ">
                 <h2>Missing value estimation:</h2>
                 <p>
                     Too many missing values will cause difficulties for downstream analysis. There are several different 
-                    methods for this purpose. The default method replaces all the missing values with a small values (the half of the 
-                    minimum positive values in the original data) assuming to be the detection limit. Click <b>next</b>
-                    if you want to use the default method. The assumption of this approach is that most missing values are caused 
-                    by low abundance metabolites (i.e. below the detection limit). 
+                    methods for this purpose. 
+                </p>
+                <p>
+                    <b>Univariate statistical methods</b>: Replacing missing values by LoD/mean/median/min. The default method LoD (limit of detection) will replace
+                    all the missing values with a small values (i.e. 1/5 of the minimum positive values of individual features) assuming to be the detection limit. 
+                    The assumption of this approach is that missing values are due to low abundance (i.e. below the detection limit).
+                    By default, LoD/mean/median/min are computed for individual features based on their non-missing data points. 
                 </p>
                 <p>   
-                    MetaboAnalyst also offers other methods, such as replace by mean/median, k-nearest neighbours based on similar features 
+                    <b>Multivariate statistical methods</b>: MetaboAnalyst also offers other advanced statistical methods, such as k-nearest neighbours based on similar features 
                     - KNN (feature-wise), k-nearest neighbours based on similar samples - KNN (sample-wise), probabilistic PCA (PPCA), 
                     Bayesian PCA (BPCA) method, singular value decomposition (SVD) method to impute the missing values 
                     (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref.</a>). Note for KNN, k is set to 10 (the default value). 
-                    Please choose the one that is the most appropriate for your data. 
+                    These advanced statistical methods are able to estimate missing values based on patterns of missing value distribution. 
                 </p>
-                
-                             <h:panelGrid id="mvPlotPane"
-                             style="width:95%; padding:20px;">
+                <h:panelGrid id="mvPlotPane" style="width:90%; padding:20px;; text-align: center" 
+                             rendered="#{not sessionBean1.missingDisabled}">
+                    <h3>
+                        Missing value distributions
+                    </h3>
                     <p>
-                        <b>Data-completeness plot:</b><br/>
-                        Each bar shows the percentage of observed&nbsp;(non-missing)
-                        values for an individual sample.
+                        <h:outputText value="#{procBean.missingMsg}" style="font-size: 14px; color:darkblue" escape="false"/>. 
+                        When missing value distributions are significantly different across groups, 
+                        It may be more appropriate to estimate LoD/mean/median/min values for individual groups.
                     </p>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss')}"
+                                   update=":myGraphPane"
+                                   style="margin-left: 70%"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customise the graphics output">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                    </p:commandLink>
 
-                    <!-- toolbar (same as before) -->
-                    <h:panelGrid columns="1"
-                                 style="text-align:right;
-                                 padding-left:600px; width:660px;">
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss')}"
-                                       update=":myGraphPane"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customise the graphics output">
-                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                        </p:commandLink>
-                    </h:panelGrid>
+                    <img onerror="this.style.display='none'"
+                         src="#{sessionBean1.getCurrentImageURL('qc_miss')}"
+                         alt="Missing-value lollipop plot"
+                         style="width:7in;"/>
 
-                    <!-- scrollable image container -->
-                    <p:scrollPanel mode="native"
-                                   style="width:660px; height:500px; overflow-y:auto;">
-                        <img onerror="this.style.display='none'"
-                             src="#{sessionBean1.getCurrentImageURL('qc_miss')}"
-                             alt="Missing-value lollipop plot"
-                             style="max-width:100%;"/>
-                    </p:scrollPanel>
                 </h:panelGrid>
-                
-                <h:panelGrid style="border: solid gray thin; line-height: 28px; padding: 20px 20px 20px 30px; width: 670px; margin-left: 30px; margin-bottom: 20px" class="surface-card shadow-1 p-4 text-800">
+
+                <h:panelGrid style="border: 1px dashed grey; padding: 20px 20px 20px 40px;
+                             background-color: #F9F9FB; width: 780px; margin-left: 5%">
                     <p:outputLabel value="Step 1. Remove features with too many missing values" style="font-size: 13px; font-weight: bold"/>
                     <h:panelGrid columns="4" style="padding-bottom: 12px">
                         <p:selectBooleanCheckbox value="#{procBean.removeMissing}" style="line-height: 18px"/> 
@@ -68,24 +66,36 @@
                     </h:panelGrid>
                     <p:outputLabel value="Step 2. Estimate the remaining missing values" style="font-size: 13px; font-weight: bold"/>
                     <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
-                        <f:selectItem itemLabel="Replace by a small value (half of the minimum positive value in the original data)" itemValue="min"/>                         
                         <f:selectItem itemLabel="Exclude variables with missing value" itemValue="exclude"/> 
+                        <f:selectItem itemLabel="Replace by a small value (half of the minimum positive value in the original data)" itemValue="min"/>                         
                         <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
                         <f:selectItem itemLabel="Impute" itemValue="impute"/> 
                     </p:selectOneRadio>
-                    <h:panelGrid columns="2">
+                    <h:panelGrid columns="2" cellpadding="8">
                         <p:radioButton for="rowRadio" itemIndex="0"/>
-                        <p:outputLabel value="Replace by LoDs (1/5 of the minimum positive value of each variable)"/>                        
-                        <p:radioButton for="rowRadio" itemIndex="1"/>
                         <p:outputLabel value="Exclude variables with missing values"/>
+                        <p:radioButton for="rowRadio" itemIndex="1"/>
+                        <h:panelGroup>
+                            <p:outputLabel value="Replace by LoDs (1/5 of the minimum positive value of each variable)"/> 
+                            <p:spacer style="width: 12px"/>
+                            <p:selectBooleanCheckbox value="#{procBean.grpLod}" 
+                                                     itemLabel="Use group-specific value"
+                                                     style="line-height: 18px"/> 
+                        </h:panelGroup>
                         <p:radioButton for="rowRadio" itemIndex="2"/>
                         <h:panelGroup>
                             <p:outputLabel value="Replace by column (feature) "/>  
-                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.replaceVarOpt}">
-                                <f:selectItem itemLabel="mean" itemValue="mean"/> 
-                                <f:selectItem itemLabel="median" itemValue="median"/> 
-                                <f:selectItem itemLabel="min" itemValue="colmin"/> 
-                            </p:selectOneMenu>
+                            <h:panelGroup>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.replaceVarOpt}">
+                                    <f:selectItem itemLabel="mean" itemValue="mean"/> 
+                                    <f:selectItem itemLabel="median" itemValue="median"/> 
+                                    <f:selectItem itemLabel="min" itemValue="colmin"/> 
+                                </p:selectOneMenu>
+                                <p:spacer style="width: 12px"/>
+                                <p:selectBooleanCheckbox value="#{procBean.grpMeasure}" 
+                                                         itemLabel="Use group-specific value"
+                                                         style="line-height: 18px"/> 
+                            </h:panelGroup>
                         </h:panelGroup>
                         <p:radioButton for="rowRadio" itemIndex="3"/>
                         <h:panelGroup>
@@ -100,7 +110,7 @@
                         </h:panelGroup>
                     </h:panelGrid>
                 </h:panelGrid>
-                <h:panelGrid style="width: 670px; text-align: center">
+                <h:panelGrid style="width: 670px; text-align: center; margin-left: 10%">
                     <p:commandButton value="Process" ajax="false" 
                                      icon="pi pi-caret-right"
                                      onclick="PF('statusDialog').show()" 

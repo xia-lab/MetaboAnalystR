@@ -26,6 +26,7 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -76,7 +77,7 @@ public class MultifacBean implements Serializable {
     private SelectItem[] analysisMetaOptsAnova;
     private String covStyleOpt = "default";
     private List<SampleBean> uniqueMetaNames;
-    private List<SelectItem> uniqueMetaList;
+    private List<String> uniqueMetaList;
     private int boxMetaVersionNum = 0;
     private String compDesign = "cov";
     private String selectedCondition;
@@ -196,7 +197,7 @@ public class MultifacBean implements Serializable {
             uniqueMetaList = new ArrayList();
             uniqueMetaNames = new ArrayList<>();
             for (int i = 0; i < samSize; i++) {
-                uniqueMetaList.add(new SelectItem(allMetas[i], allMetas[i]));
+                uniqueMetaList.add(allMetas[i]);
                 uniqueMetaNames.add(new SampleBean(allMetas[i], allMetas[i]));
             }
         }
@@ -538,14 +539,14 @@ public class MultifacBean implements Serializable {
         this.uniqueMetaNames = uniqueMetaNames;
     }
 
-    public List<SelectItem> getUniqueMetaList() {
+    public List<String> getUniqueMetaList() {
         if (uniqueMetaList == null) {
             prepUniqueMetaList("NA");
         }
         return uniqueMetaList;
     }
 
-    public void setUniqueMetaList(List<SelectItem> uniqueMetaList) {
+    public void setUniqueMetaList(List<String> uniqueMetaList) {
         this.uniqueMetaList = uniqueMetaList;
     }
 
@@ -704,12 +705,8 @@ public class MultifacBean implements Serializable {
 
     public void prepUniqueMetaList(String metacol) {
         String[] allMetas = RDataUtils.getMetaDataCol(sb.getRConnection(), metacol);
-
         uniqueMetaList = new ArrayList<>();
-
-        for (String grp : allMetas) {
-            uniqueMetaList.add(new SelectItem(grp, grp));
-        }
+        uniqueMetaList.addAll(Arrays.asList(allMetas));
     }
 
     public boolean isMultiMeta() {

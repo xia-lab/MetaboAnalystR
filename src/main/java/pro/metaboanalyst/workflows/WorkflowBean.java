@@ -1128,7 +1128,7 @@ public class WorkflowBean implements Serializable {
 
     public String getSelectedGrp1() {
         if (selectedGrp1 == null) {
-            selectedGrp1 = mf.getUniqueMetaList().get(0).getValue().toString();
+            selectedGrp1 = mf.getUniqueMetaList().get(0);
         }
         return selectedGrp1;
     }
@@ -1139,7 +1139,7 @@ public class WorkflowBean implements Serializable {
 
     public String getSelectedGrp2() {
         if (selectedGrp2 == null) {
-            selectedGrp2 = mf.getUniqueMetaList().get(1).getValue().toString();
+            selectedGrp2 = mf.getUniqueMetaList().get(1);
         }
         return selectedGrp2;
     }
