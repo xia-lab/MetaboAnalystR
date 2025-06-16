@@ -143,7 +143,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   msg<-c(msg, paste("Peaks of the same group were summed if they are from one sample. "));
   msg<-c(msg, paste("Peaks must appear in at least half of the samples in at least one group to be included."));
   
-  colnames(values) <- peakSet$sampnames;
+  smpl.nms <- colnames(values) <- peakSet$sampnames;
   
   if(peakSet$ncol==2){
     rownames(values) <- paste(round(groupmat[,paste("mz", "med", sep="")],5));
@@ -154,9 +154,16 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   
   #mSetObj$dataSet$orig <- t(values);
   qs::qsave(t(values), file="data_orig.qs");
-  mSetObj$msgSet$proc.msg <- msg
+  mSetObj$msgSet$proc.msg <- msg;
   mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
   mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);
+
+  # syn with other table input
+  url.smp.nms <- CleanNames(smpl.nms);
+  names(url.smp.nms) <- smpl.nms;
+  ord.inx <- order(mSetObj$dataSet$orig.cls);
+  mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
+  mSetObj$dataSet$url.smp.nms <- url.smp.nms[ord.inx];
   return(.set.mSet(mSetObj));
 }
 

@@ -13,7 +13,7 @@
 #'@export
 #'@import siggenes
 #'@import qs
-SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=72){
+SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=150){
 
   mSetObj <- .get.mSet(mSetObj);
   .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName, dpi);
@@ -27,7 +27,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
   return(.set.mSet(mSetObj));
 }
 
-.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=72){
+.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=150){
 
   if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
   imgName = paste(imgName, "dpi", dpi, ".png", sep="");
@@ -125,7 +125,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -172,7 +172,7 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'@export
 #'@import qs
 
-PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
     mSetObj <- .get.mSet(mSetObj);
     .prepare.sam.cmpd(mSetObj, imgName, format, dpi, width);
     .perform.computing();    
@@ -184,7 +184,7 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 }
 
  # note, this is now a microservice call and only used for other formats by users
-.prepare.sam.cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+.prepare.sam.cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -222,13 +222,13 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'@import qs
-EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 72){
+EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 150){
     .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig, dpi);
     .perform.computing();
     .save.ebam.init(mSetObj);
 }
 
-.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 72){
+.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi=150){
   mSetObj <- .get.mSet(mSetObj);
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
@@ -249,7 +249,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     ebam_a0 <- siggenes::find.a0(dat.in$data, dat.in$cls, var.equal=dat.in$isVarEq, gene.names=rownames(dat.in$data), rand=123);
     
     # plotting ebam A0
-    Cairo::Cairo(file = dat.in$imgA0, unit="in", dpi=72, width=8, height=6, type="png", bg="white");
+    Cairo::Cairo(file = dat.in$imgA0, unit="in", dpi=dpi, width=8, height=6, type="png", bg="white");
     plot(ebam_a0);
     dev.off();
     
@@ -310,12 +310,12 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'@import qs
 #'@export
 #'
-PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
     .prepare.ebam.cmpd(mSetObj, imgName, format, dpi, width);
     .perform.computing();
 }
  
-.prepare.ebam.cmpd <-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+.prepare.ebam.cmpd <-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   
