@@ -288,8 +288,8 @@ SanityCheckData <- function(mSetObj=NA){
     int.mat <- my.sync$data;
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-
-  qs::qsave(as.data.frame(int.mat), "preproc.qs");
+  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
+  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
 
@@ -367,7 +367,7 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
     mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
   }else{  
-    int.mat <- qs::qread("preproc.qs");
+    int.mat <- qs::qread("preproc.orig.qs");
     good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
     preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
     qs::qsave(preproc, "preproc.qs");
@@ -539,7 +539,7 @@ GetGroupNumber<-function(mSetObj=NA){
 #'
 IsSmallSmplSize<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(mSetObj$dataSet$small.smpl.size);
+  #print(mSetObj$dataSet$small.smpl.size);
   return(.set.mSet(mSetObj));
 }
 
@@ -761,7 +761,7 @@ PlotMissingDistr <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
 
   int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.qs")
+    qs::qread("preproc.orig.qs")
   } else if (!is.null(mSetObj$dataSet$orig)) {
     mSetObj$dataSet$orig
   } else {
@@ -824,52 +824,47 @@ PlotMissingDistr <- function(mSetObj = NA,
   Cairo::Cairo(file = img.full, width = width, height = height,
                dpi = dpi, units = "in", type = format)
 colour_aes <- scale_color_discrete()
-# --- p1: Lollipop Chart (Horizontal) ---
 p1 <- ggplot(df, aes(x = Sample, y = Percent, colour = Group)) +
   geom_segment(aes(xend = Sample, y = 0, yend = Percent), size = 0.8) +
   geom_point(size = 3) +
-  coord_flip() +
-  labs(x = NULL, y = "Missing Percentage", colour = groupCol) + # Ensure 'colour = groupCol' here
+  coord_flip() + # Keeps the lollipop horizontal
+  labs(x = NULL, y = "Missing Percentage", colour = groupCol) +
   ylim(0, 100) +
   theme_minimal(base_size = 14) +
-  theme(panel.grid.major.y = element_blank(),
+  theme(panel.grid.major.y = element_blank(), # Removes vertical grid lines (after flip)
         axis.title.x = element_text(margin = margin(t = 20, unit = "pt")),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(5.5, 5.5, 5.5, 5.5), "pt")
+        # --- REMOVED these lines to show sample names ---
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.margin = unit(c(5.5, 5.5, 5.5, 5.5), "pt") # Standard margin
   ) +
-  colour_aes # This scale handles the colors for the points/segments
+  colour_aes # Your original colour scale
 
-# --- p2: Boxplot (Horizontal) ---
+# --- p2: Boxplot (Horizontal - for top placement) ---
 p2 <- ggplot(df, aes(x = Group, y = Percent)) +
-  geom_boxplot(aes(fill = Group), # 'fill' is for box color
+  geom_boxplot(aes(fill = Group),
                outlier.shape = 21,
                outlier.size = 2) +
-  coord_flip() +
-  labs(x = NULL, y = "Missing Percentage", fill = groupCol) + # --- CRITICAL: Use 'fill = groupCol' here too ---
+  coord_flip() + # This makes its 'Percent' axis horizontal (same orientation as p1's Percent axis)
+  labs(x = NULL, y = "Missing Percentage", fill = "Group") +
   ylim(0, 100) +
   theme_minimal(base_size = 14) +
-  theme(panel.grid.major.y = element_blank(),
-        axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        plot.margin = unit(c(5.5, 5.5, 0, 5.5), "pt")
+  theme(panel.grid.major.y = element_blank(), # Adjust grid for flipped plot
+        # --- Crucial for Shared Axis ---
+        axis.title.x = element_blank(), # Remove x-axis title from top plot
+        axis.text.x = element_blank(),  # Remove x-axis labels from top plot
+        axis.ticks.x = element_blank(), # Remove x-axis ticks from top plot
+        plot.margin = unit(c(5.5, 5.5, 0, 5.5), "pt") # Reduce bottom margin of top plot to minimize gap
   ) +
-  # --- CRITICAL: Use a matching fill scale ---
-  # If 'colour_aes' was scale_color_discrete(), use scale_fill_discrete().
-  # If 'colour_aes' was scale_color_manual(values = my_colors), use scale_fill_manual(values = my_colors).
   scale_fill_discrete()
 
-# --- Combine with shared axes, adjusted heights, and COLLECTED LEGEND ---
+# --- Combine with shared axes and adjusted heights ---
 combined_plot <- p2 / p1 +
-  plot_layout(heights = c(1, 3),
-              axes = "collect",
-              axis_titles = "collect",
-              guides = "collect" # --- This is the key for collecting legends ---
+  plot_layout(heights = c(1, 3), # Top plot (p2) is 1 unit, Bottom plot (p1) is 3 units
+              axes = "collect",     # Collects axis limits and scales
+              axis_titles = "collect" # Collects axis titles (will appear only at the bottom)
               ) +
-  # --- Apply theme elements globally to all plots in the patchwork ---
-  plot_annotation(tag_levels = 'A') & theme(legend.position = "bottom") # Position the single collected legend
-  # The '&' operator applies a theme element to all subplots in the patchwork.
+  plot_annotation(tag_levels = 'A') # Optional: Adds (A) and (B) labels to subplots
 
 print(combined_plot)
   dev.off()
