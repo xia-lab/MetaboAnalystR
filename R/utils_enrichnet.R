@@ -1,11 +1,11 @@
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
+  save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
-  save.image("enrichnet.RData");
   # Get the appropriate result matrix based on analysis type
   if(anal.opt == "mum"){
     enr.mat <- mSetObj$mummi.resmat
     if(is.null(enr.mat)){
-      print("No mummichog results found!")
+      AddErrMsg("No mummichog results found!")
       return(0)
     }
     pvals <- enr.mat[,"Gamma"]
@@ -13,7 +13,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   } else if(anal.opt == "gsea"){
     enr.mat <- mSetObj$mummi.gsea.resmat 
     if(is.null(enr.mat)){
-      print("No GSEA results found!")
+      AddErrMsg("No GSEA results found!")
       return(0)
     }
     pvals <- enr.mat[,"P_val"]
@@ -21,16 +21,15 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   } else if(anal.opt == "integ"){
     enr.mat <- mSetObj$integ.resmat
     if(is.null(enr.mat)){
-      print("No integrated results found!")
+      AddErrMsg("No integrated results found!")
       return(0)
     }
     pvals <- enr.mat[,"Combined_Pvals"]
     hits <- enr.mat[,"Sig_Hits"] # or another appropriate column
   }else if (anal.opt == "pathora") {
     enr.mat <- mSetObj$analSet$ora.mat
-    print(head(enr.mat));
     if (is.null(enr.mat) || nrow(enr.mat) == 0) {
-      message("No ORA enrichment results found!"); return(0)
+      AddErrMsg("No ORA enrichment results found!"); return(0)
     }
     rownames(enr.mat) <- .id2name(rownames(enr.mat))
     
@@ -45,57 +44,57 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     } else if (!is.null(mSetObj$analSet$qea.res)) {
       enr.mat <- mSetObj$analSet$qea.res          # fallback (data-frame)
     } else {
-      message("No QEA results found!"); return(0)
+      AddErrMsg("No QEA results found!"); return(0)
     }
+    rownames(enr.mat) <- .id2name(rownames(enr.mat))
     
     ##  Column names vary slightly between GlobalTest / GlobalAncova output -----------
     p.col  <- grep("^(Raw p|P[_]?[vV]al|^p(.*)?value)$", colnames(enr.mat), ignore.case = TRUE, value = TRUE)[1]
     hitcol <- grep("^(Hits|Sig[_]?Hits|Hit|Overlap)$",      colnames(enr.mat), ignore.case = TRUE, value = TRUE)[1]
     
     if (is.na(p.col) || is.na(hitcol)) {
-      message("Unable to locate p-value or hit columns in QEA results!"); return(0)
+      AddErrMsg("Unable to locate p-value or hit columns in QEA results!"); return(0)
     }
-    rownames(enr.mat) <- .id2name(rownames(enr.mat))
     
     pvals <- enr.mat[, p.col]
     hits  <- enr.mat[, hitcol]
     
     
   }  else {
-    print("Unknown analysis type!")
+    AddErrMsg("Unknown analysis type!")
     return(0)
   }
   
   colnames(enr.mat) <- gsub("[ .]", "_", colnames(enr.mat))   # <-- NEW
   
-max.show   <- 20
-sig.cutoff <- 0.05
-
-sig.idx <- which(pvals <= sig.cutoff)
-n.sig   <- length(sig.idx)
-
-if (n.sig == 0) {
-  message("No significant pathways (p ≤ 0.05); using the top ",
-          max.show, " overall.")
-}
-
-## 1.  Start with all pathways ordered by p-value (smallest first)
-ord.all   <- order(pvals)                       # indices
-
-## 2.  Always keep the first `max.show` entries in that order
-keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
-
-## 3.  Subset all objects
-enr.mat   <- enr.mat[ keep.idx , , drop = FALSE ]
-pvals     <- pvals  [ keep.idx ]
-hits      <- hits   [ keep.idx ]
-
-## 4.  Ensure we still have at least two pathways
-if (nrow(enr.mat) < 2) {
-  message("Fewer than two pathways to display — aborting network build.")
-  return(0)
-}
-
+  max.show   <- 20
+  sig.cutoff <- 0.05
+  
+  sig.idx <- which(pvals <= sig.cutoff)
+  n.sig   <- length(sig.idx)
+  
+  if (n.sig == 0) {
+    message("No significant pathways (p ≤ 0.05); using the top ",
+            max.show, " overall.")
+  }
+  
+  ## 1.  Start with all pathways ordered by p-value (smallest first)
+  ord.all   <- order(pvals)                       # indices
+  
+  ## 2.  Always keep the first `max.show` entries in that order
+  keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+  
+  ## 3.  Subset all objects
+  enr.mat   <- enr.mat[ keep.idx , , drop = FALSE ]
+  pvals     <- pvals  [ keep.idx ]
+  hits      <- hits   [ keep.idx ]
+  
+  ## 4.  Ensure we still have at least two pathways
+  if (nrow(enr.mat) < 2) {
+    AddErrMsg("Fewer than two pathways to display — aborting network build.")
+    return(0)
+  }
+  
   require(igraph)
   require(reshape)
   
@@ -119,11 +118,9 @@ if (nrow(enr.mat) < 2) {
     });
     
   } else {
-    if (anal.opt == "mum") {
-      sig.cpds <- mSetObj$input_cpdlist
-    } else {
+
       sig.cpds <- mSetObj$total_matched_cpds
-    }
+    
     
     cmpd.db   <- .get.my.lib("compound_db.qs")
     kegg2name <- setNames(cmpd.db$name,  cmpd.db$kegg_id)   # "C00022" → "Pyruvate"
@@ -139,24 +136,17 @@ if (nrow(enr.mat) < 2) {
     ## -----------------------------------------------------------------
     ##  Build pathway → hit list (names or original IDs)
     ## -----------------------------------------------------------------
-    hits.query <- lapply(pathway.names, function(pw) {
-      
-      idx   <- which(mSetObj$pathways$name == pw)
-      allID <- mSetObj$pathways$cpds[[ idx[1] ]]        # KEGG IDs in pathway
-      hitID <- allID[ allID %in% sig.ids ]              # only significant IDs
-      
-      mapped <- kegg2name[ hitID ]                      # may be NA / "" / "NA"
-      
-      ## fallback for NA, empty string, or literal "NA"
-      needFallback <- is.na(mapped) | mapped == "" | mapped == "NA"
-      mapped[ needFallback ] <- hitID[ needFallback ]
-      
-      unname(mapped)                                   # plain character vector
-    })
-    names(hits.query) <- pathway.names
+
+      pathway.cpds <- setNames(
+          lapply(pathway.names, function(pw) {
+            idx   <- which(mSetObj$pathways$name == pw)          # row in master table
+            allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+            intersect(allID, sig.ids)                            # keep only sig IDs
+          }),
+          pathway.names
+      )
     
-    ## Use hit lists downstream
-    pathway.cpds <- hits.query
+
     
   }
   
@@ -178,11 +168,13 @@ if (nrow(enr.mat) < 2) {
   wd <- wd[!is.na(wd[,3]),]
   
   g <- graph_from_data_frame(wd[,-3], directed=F)
-
+  
+  E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
+  
   g <- delete_edges(g, E(g)[wd[,3] < 0.05])  # Remove weak connections
   
   if(vcount(g) == 0){
-    print("No connections above threshold!")
+    AddErrMsg("No connections above threshold!")
     return(0)
   }
   
@@ -205,7 +197,7 @@ if (nrow(enr.mat) < 2) {
   # Compute colors based on p-values
   normalized_pvalues <- -log10(vertex_pvals + min(vertex_pvals)/2)
   vertex_colors <- ComputeColorGradient(normalized_pvalues, "black", F)
-  vertex_colorsw <- ComputeColorGradient(normalized_pvalues, "white", F)
+  vertex_colorsw <- ComputeColorGradient(normalized_pvalues, "black", F)
   
   V(g)$color <- vertex_colors
   V(g)$colorw <- vertex_colorsw
@@ -226,10 +218,16 @@ if (nrow(enr.mat) < 2) {
   node.sizes <- V(g)$size
   node.cols <- V(g)$color
   node.colsw <- V(g)$colorw
-  
+  if(anal.opt %in% c("pathora", "pathqea")){
+    pw.ids <- unname(.name2id(node.nms));
+  }else{
+    pw.ids <- .mumname2id(node.nms);
+    
+  }
   for(i in 1:length(node.sizes)){
     nodes[[i]] <- list(
       id = node.nms[i],
+      pwId= pw.ids[i],
       label = node.nms[i],
       size = node.sizes[i],
       true_size = node.sizes[i], 
@@ -244,8 +242,21 @@ if (nrow(enr.mat) < 2) {
   }
   
   # Create edges
-  edge.mat <- as_edgelist(g)
-  edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2])
+  
+  e.df <- as_data_frame(g, what = "edges")  # gives from / to / weight
+  
+  scale01   <- function(x) (x - min(x)) / (max(x) - min(x) + 1e-9)
+  e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 5));
+  
+  edge.mat <- apply(
+    cbind(id     = seq_len(nrow(e.df)),
+          source = e.df$from,
+          target = e.df$to,
+          weight = e.df$weight,   # keep the raw value if you like
+          width  = e.df$width),   # **thickness for JS**
+    1, as.list)
+  
+  
   
   # Create bipartite graph (pathways to compounds)
   # Get all compounds from significant pathways
@@ -281,21 +292,30 @@ if (nrow(enr.mat) < 2) {
     colnames(b.mat) <- c("source", "target")
     bg <- graph.data.frame(b.mat, directed=F)
     
-    # Color nodes
-    V(bg)$color <- "#00FFFF"  # Default compound color
+    ## -----------------  COLOUR NODES  -----------------------------
+    V(bg)$color  <- "#00FFFF"          # default for compounds
     V(bg)$colorw <- "#668B8B"
     
-    # Color pathways
-    pathway.idx <- V(bg)$name %in% existing_vertices
-    V(bg)$color[pathway.idx] <- vertex_colors[V(bg)$name[pathway.idx]]
-    V(bg)$colorw[pathway.idx] <- vertex_colorsw[V(bg)$name[pathway.idx]]
+    ## indices of pathway nodes inside bg
+    pathway.idx  <- V(bg)$name %in% rownames(enr.mat)
+    
+    ## (A)  TOPOLOGY score for pathway nodes  – use degree() here
+    path.deg     <- degree(bg)[ pathway.idx ]
+    path.norm    <- my.normalize(path.deg)                       # 0–1
+    V(bg)$color [ pathway.idx ] <-
+      ComputeColorGradient(path.norm,  "black",  FALSE)
+    V(bg)$colorw[ pathway.idx ] <-
+      ComputeColorGradient(path.norm,  "black",  FALSE)
+    
     
     # Color significant compounds
-    #sig.cpd.idx <- V(bg)$name %in% sig.cpds
-    #if(sum(sig.cpd.idx) > 0){
-    #V(bg)$color[sig.cpd.idx] <- "#FF0000"  # Red for significant compounds
-    #V(bg)$colorw[sig.cpd.idx] <- "#8B0000"
-    #}
+    if(anal.opt == "mum"){
+      sig.cpd.idx <- V(bg)$name %in% sig.cpds
+      if(sum(sig.cpd.idx) > 0){
+        V(bg)$color[sig.cpd.idx] <- "#FF0000"  # Red for significant compounds
+        V(bg)$colorw[sig.cpd.idx] <- "#8B0000"
+      }
+    }
     
     # Set sizes
     node.dgr2 <- as.numeric(degree(bg))
@@ -338,7 +358,7 @@ if (nrow(enr.mat) < 2) {
   }
   
   # Convert matrices to lists for JSON
-  edge.mat <- apply(edge.mat, 1, as.list)
+  #edge.mat <- apply(edge.mat, 1, as.list)
   if(nrow(bedge.mat) > 0){
     bedge.mat <- apply(bedge.mat, 1, as.list)
   } else {
@@ -346,14 +366,21 @@ if (nrow(enr.mat) < 2) {
   }
   mum.version <- mSetObj$paramSet$version <- version
   
-  if(anal.opt %in% c("pathora", "pathqea")){
+  #if(anal.opt %in% c("pathora", "pathqea")){
     
     
     hits.query <- pathway.cpds;
     
-  }
+  #}
   
   enr.mat <- apply(enr.mat, 1, as.list)
+  print(paste("lib====", mSetObj$lib.organism));
+  
+  if(anal.opt %in% c("pathora", "pathqea")){
+    pwType <- mSetObj$pathwaylibtype; 
+  }else{
+    pwType <- mSetObj$lib.organism;
+  }
   
   netData <- list(
     nodes = nodes, 
@@ -366,6 +393,7 @@ if (nrow(enr.mat) < 2) {
     hits=hits.query, 
     genelist=NULL,
     analType = anal.opt, 
+    pwType=pwType,
     org="NA",
     backgroundColor = list("#f5f5f5", "#0066CC"),
     naviString = "EnrichNetwork"
@@ -414,5 +442,61 @@ overlap_ratio <- function(set1, set2, type="mixed"){
   ix  <- match(ids, current.kegglib$path.ids)    # numeric indices or NA
   out <- names(current.kegglib$path.ids)[ix]     # gives NA where not found
   out[is.na(out)] <- ids[is.na(out)]             # keep originals for misses
+  out
+}
+
+## Convert display names such as "Glycolysis or Gluconeogenesis"
+## to their internal KEGG IDs such as "hsa00010".
+## If a name is not found it is returned unchanged.
+.name2id <- function(names.vec) {
+  
+  ## lazy-load the KEGG pathway library if it is not yet in memory
+  if (!exists("current.kegglib")) {
+    current.kegglib <<- qs::qread("current.kegglib.qs")
+  }
+  
+  ids <- current.kegglib$path.ids        # named vector  Name → ID
+  ix  <- match(names.vec, names(ids))    # numeric indices (or NA)
+  out <- ids[ix]                         # character vector of IDs (or NA)
+  
+  ## keep the original entry whenever no match is found
+  out[ is.na(out) ] <- names.vec[ is.na(out) ]
+  
+  out
+}
+
+#' Convert internal pathway IDs → display names
+#'
+#' @param mSetObj  MetaboAnalyst object (or NA to use current)
+#' @param ids      Character vector of pathway IDs (e.g. "mfn1v10path215")
+#' @return         Character vector of display names (fallback to ID if missing)
+#' @export
+.mumid2name <- function(ids, mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  pid     <- mSetObj$pathways$id    # e.g. c("mfn1v10path215", ...)
+  pname   <- mSetObj$pathways$name  # e.g. c("Vitamin D3 ...", ...)
+  map     <- setNames(pname, pid)   # named lookup: ID → name
+  
+  out     <- map[ids]               # may produce NA for unmatched
+  out[is.na(out)] <- ids[is.na(out)]# restore original ID when no match
+  
+  out
+}
+
+#' Convert display pathway names → internal IDs
+#'
+#' @param mSetObj    MetaboAnalyst object (or NA to use current)
+#' @param names.vec  Character vector of display names
+#' @return           Character vector of pathway IDs (fallback to name if missing)
+#' @export
+.mumname2id <- function(names.vec, mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  pid     <- mSetObj$pathways$id
+  pname   <- mSetObj$pathways$name
+  map     <- setNames(pid, pname)   # named lookup: name → ID
+  
+  out     <- map[names.vec]         # may produce NA for unmatched
+  out[is.na(out)] <- names.vec[is.na(out)]  # restore original name when no match
+  
   out
 }
