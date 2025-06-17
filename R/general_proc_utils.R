@@ -390,15 +390,15 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
 #'@import qs
 #'@export
 #'
-ImputeMissingVar <- function(mSetObj=NA, method="min"){
+ImputeMissingVar <- function(mSetObj=NA, method="min", grpLod=F, grpMeasure=F){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.impute.missing")){ # public web on same user dir
       .load.scripts.on.demand("util_missing.Rc");    
     }
-    return(my.impute.missing(mSetObj, method));
+    return(my.impute.missing(mSetObj, method, grpLod, grpMeasure));
   }else{
-    return(my.impute.missing(mSetObj, method));
+    return(my.impute.missing(mSetObj, method, grpLod, grpMeasure));
   }
 }
 

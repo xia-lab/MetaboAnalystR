@@ -348,7 +348,7 @@ RangeNorm<-function(x){
 #'@export
 #'
 PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
-
+  save.image("normsum.RData");
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
