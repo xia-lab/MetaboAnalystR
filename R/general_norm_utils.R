@@ -347,7 +347,7 @@ RangeNorm<-function(x){
 #'McGill University, Canada
 #'@export
 #'
-PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -439,7 +439,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 
 #'Two plot summary plot: Sample View of before and after normalization
 #'@description For each plot, the top is a density plot and the bottom is a box plot.
-#'@usage PlotSampleNormSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotSampleNormSummary(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -451,7 +451,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'McGill University, Canada
 #'@export
 
-PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   

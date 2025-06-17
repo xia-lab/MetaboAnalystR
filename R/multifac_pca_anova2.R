@@ -307,7 +307,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 
 #'Plot Venn diagram of ANOVA results
 #'@description Plot Venn diagram of ANOVA results
-#'@usage PlotANOVA2(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotANOVA2(mSetObj, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -320,7 +320,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -564,7 +564,7 @@ GetAov2DnIDs <- function(mSetObj=NA){
   }
 }
 
-PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num, meta, metaShape){
+PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num, meta, metaShape){
   library(ggplot2)
   library(GGally)
   library(grid)

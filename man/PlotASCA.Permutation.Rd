@@ -4,7 +4,7 @@
 \alias{PlotASCA.Permutation}
 \title{Plot ASCA permutation}
 \usage{
-PlotASCA.Permutation(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+PlotASCA.Permutation(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

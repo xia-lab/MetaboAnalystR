@@ -403,7 +403,7 @@ CalculateSSP<-function(mSetObj=NA){
 #'used for the pie chart. By default this is set to "Set1".
 #'@import ggplot2
 
-PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=72, width=8,
+PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=default.dpi, width=8,
                                  maxClass = 15, colPal = "Set1"){
   
   mSetObj <- .get.mSet(mSetObj);

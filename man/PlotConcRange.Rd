@@ -4,7 +4,7 @@
 \alias{PlotConcRange}
 \title{Plot the compound concentration data compared to the reference concentration range}
 \usage{
-PlotConcRange(mSetObj, nm, format="png", dpi=72, width=NA)
+PlotConcRange(mSetObj, nm, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

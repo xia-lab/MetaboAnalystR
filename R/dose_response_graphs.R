@@ -17,7 +17,7 @@ GetFunctionalDetails <- function(data.sorted, gene.matches){
   ))
 }
 
-PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=72, format="png"){
+PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c, d, e, bmdl, bmd, bmdu, scale, dpi=default.dpi, format="png"){
   mSetObj <- .get.mSet(mSetObj)
   dataSet <- mSetObj$dataSet
   cls.type <- dataSet$cls.type
@@ -124,7 +124,7 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
 }
 
 
-PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
+PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=default.dpi, format="png"){
   mSetObj <- .get.mSet(mSetObj)
   dataSet <- mSetObj$dataSet
   cls.type <- dataSet$cls.type
@@ -175,9 +175,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
 
   # Output image
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep = "")
-  if(dpi == 72){
-    dpi = 96;
-  }
+
   Cairo::Cairo(file = imgNm, width = 8, height = 6, unit = "in", dpi = dpi, type = format, bg = "white")
   print(p)
   dev.off()
@@ -188,7 +186,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=72, format="png"){
 
 PlotDRHistogram <- function(mSetObj = NA,
                             imgNm,
-                            dpi    = 72,
+                            dpi    = default.dpi,
                             format = "png",
                             units  = "in",
                             scale  = "linear",

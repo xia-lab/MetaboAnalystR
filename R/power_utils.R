@@ -42,7 +42,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 
 #'Plot power statistics
 #'@description Create plot for power statistics
-#'@usage PlotPowerStat(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotPowerStat(mSetObj, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Specify the name to save the image as.
 #'@param format Specify the format of the image to save it as, either "png" or "pdf"
@@ -55,7 +55,7 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 #'@export
 #'@import lattice
 
-PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -157,7 +157,7 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png", dpi=72, width=NA){
+PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   

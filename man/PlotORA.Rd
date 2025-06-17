@@ -4,7 +4,7 @@
 \alias{PlotORA}
 \title{Plot over-representation analysis (ORA)}
 \usage{
-PlotORA(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
+PlotORA(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

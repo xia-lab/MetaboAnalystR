@@ -89,8 +89,9 @@ Reload.scripts.on.demand <- function(){
 #'@export
 #'@import methods
 
-InitDataObjects <- function(data.type, anal.type, paired=FALSE){
+InitDataObjects <- function(data.type, anal.type, paired=FALSE, default.dpi=default.dpi){
   rpath <<- "../../";
+  default.dpi <<- default.dpi;
   if(!.on.public.web){
     if(exists("mSet")){
       mSetObj <- .get.mSet(mSet);
@@ -802,7 +803,7 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=72, width=NA){
+PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=default.dpi, width=NA){
   #save.image("plot.RData");
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1204,7 +1205,7 @@ GetCurrentCmpdImgSize <- function(mSetObj=NA){
 # 
 
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
-  mSetObj <- .get.mSet(mSetObj);  
+  mSetObj <- .get.mSet(mSetObj); 
   if(mSetObj$dataSet$design.type == "regular"){
     cls.lbl <- mSetObj$dataSet$prenorm.cls;
     if(mSetObj$analSet$type=="roc"){

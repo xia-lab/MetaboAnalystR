@@ -4,7 +4,7 @@
 \alias{PlotTestAccuracy}
 \title{Plot classification performance using different features for Biomarker Tester}
 \usage{
-PlotTestAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
+PlotTestAccuracy(mSetObj=NA, imgName, format="png", dpi=default.dpi)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

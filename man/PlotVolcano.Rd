@@ -4,7 +4,7 @@
 \alias{PlotVolcano}
 \title{Create volcano plot}
 \usage{
-PlotVolcano(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA)
+PlotVolcano(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

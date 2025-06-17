@@ -632,7 +632,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     wd <- melt(w);
     wd <- wd[wd[,1] != wd[,2],];
     wd <- wd[!is.na(wd[,3]),];
-    g <- graph.data.frame(wd[,-3], directed=F);
+    g <- graph_from_data_frame(wd[,-3], directed=F);
     E(g)$width <- sqrt(wd[,3]*20);
     g <- delete.edges(g, E(g)[wd[,3] < overlap]); # change 
     V(g)$color <- hcl.colors(length(pvalue), net_palette);
@@ -2146,7 +2146,7 @@ setInclusionDataSets <- function(mSetObj=NA, datasVec){
   return(.set.mSet(mSetObj));
 }
 
-qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", dpi=72, width=NA, vertical = TRUE){
+qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", dpi=default.dpi, width=NA, vertical = TRUE){
 
   imgNm <- paste(imgNm1,"_",imgNM2, "_dpi", dpi, "_norm_box", ".", format, sep="");
   

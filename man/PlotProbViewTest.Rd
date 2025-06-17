@@ -4,7 +4,7 @@
 \alias{PlotProbViewTest}
 \title{Plot a summary view of the classification result of tester prediction}
 \usage{
-PlotProbViewTest(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred)
+PlotProbViewTest(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

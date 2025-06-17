@@ -290,7 +290,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   if(nrow(b.mat) > 0){
     colnames(b.mat) <- c("source", "target")
-    bg <- graph.data.frame(b.mat, directed=F)
+    bg <- graph_from_data_frame(b.mat, directed=F)
     
     ## -----------------  COLOUR NODES  -----------------------------
     V(bg)$color  <- "#00FFFF"          # default for compounds
@@ -318,7 +318,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     }
     
     # Set sizes
-    node.dgr2 <- as.numeric(degree(bg))
+    node.dgr2 <- as.numeric(igraph::degree(bg))
     V(bg)$size <- my.rescale(log(node.dgr2 + 1, base=10), 6, 20)
     
     # Layout

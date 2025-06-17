@@ -139,7 +139,7 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
+PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type="meta"){
 
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -204,7 +204,7 @@ PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type="meta"){
+PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type="meta"){
   
   mSetObj <- .get.mSet(mSetObj);
   vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
@@ -1021,7 +1021,7 @@ convertCovariate2Fun <- function(){
     return(1)
 }
 
-PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=72, interactive=F){
+PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png", dpi=default.dpi, interactive=F){
   mSetObj <- .get.mSet(mSetObj); 
   both.mat <- mSetObj$analSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]

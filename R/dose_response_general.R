@@ -1303,29 +1303,23 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   trans.pod <- c(rep(NA, length(pod)))
   names(trans.pod) <- pod.choices[(pod.choices %in% pod)];
 
-  # calculate transcriptomic pod from specified method
+  # calculate metabolomic pod from specified method
   if ("feat.20" %in% pod){
     
     if (length(bmds) < 20) {
-      
-      trans.pod["feat.20"] <- NA
-      
+      trans.pod["feat.20"] <- NA      
     } else {
-      
       # get 20 lowest BMDs
       bmd.sort <- sort(bmds)
       trans.pod["feat.20"] <- bmd.sort[20]
-      
     }
-    
   } 
 
   if ("feat.10th" %in% pod){
-    
     # POD = 10th percentile BMD from all significant probes
     trans.pod["feat.10th"] <- unname(quantile(bmds, 0.1))
-    
   } 
+
   if ("mode" %in% pod & length(bmds) > 1){
     
     # get density plot

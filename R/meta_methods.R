@@ -619,7 +619,7 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
   listres
 }
 
-PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=72){
+PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=default.dpi){
   dataSet <- qs::qread(dataName);
   if(.on.public.web){
     load_lattice()
@@ -628,7 +628,7 @@ PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=72){
   qc.pcaplot(dataSet$data, pcaName, format, dpi);
 }
 
-qc.boxplot <- function(dat, imgNm, format="png", dpi=150, width=NA){
+qc.boxplot <- function(dat, imgNm, format="png", dpi=default.dpi, width=NA){
 
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   require("lattice");
@@ -675,7 +675,7 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=150, width=NA){
   dev.off();
 }
 
-qc.pcaplot <- function(x, imgNm, format="png", dpi=72, width=NA){
+qc.pcaplot <- function(x, imgNm, format="png", dpi=default.dpi, width=NA){
   imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep="");
   pca <- prcomp(t(na.omit(x)));
   names <- colnames(x);
@@ -820,7 +820,7 @@ if(!exists('metastat.meta')){
 }
 
 
-PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = 72, format, interactive = FALSE) {
+PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = default.dpi, format, interactive = FALSE) {
 if(!exists('metastat.meta')){
   metastat.meta <<- qs::qread("metastat.meta.qs");
 }

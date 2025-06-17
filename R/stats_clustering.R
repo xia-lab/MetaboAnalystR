@@ -14,7 +14,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, smplDist, clstDist){
+PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, smplDist, clstDist){
   
   mSetObj <- .get.mSet(mSetObj);
   # set up data set
@@ -127,7 +127,7 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'@import ggplot2
 #'@export
 #'
-PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal = "default", facet=TRUE){
+PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, colpal = "default", facet=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -273,7 +273,7 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colpal="default", facet=FALSE){
+PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, colpal="default", facet=FALSE){
 
   if(.on.public.web){
     load_ggplot()
@@ -385,7 +385,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, colp
 PlotClustPCA <- function(mSetObj, 
                          imgName, 
                          format="png", 
-                         dpi=72, 
+                         dpi=default.dpi, 
                          width=NA, 
                          colpal="default", 
                          anal="km", 
@@ -493,7 +493,7 @@ PlotClustPCA <- function(mSetObj,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, dataOpt, scaleOpt, 
+PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, dataOpt, scaleOpt, 
                            smplDist, clstDist, palette,fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow,  method.nm, top.num,  rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T,viewOpt,download=F){
   #print(download)
   mSetObj <- .get.mSet(mSetObj);
@@ -567,7 +567,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@import qs
 #'@export
 #'
-PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette,  fzCol,fzRow,fzAnno,annoPer, unitCol,unitRow, rowV=T, 
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=T, maxFeature=2000){
@@ -816,7 +816,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72,
 #'@import qs
 #'@export
 #'
-PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette, fzCol,fzRow, viewOpt="detail", rowV=T, 
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){

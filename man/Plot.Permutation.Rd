@@ -4,7 +4,7 @@
 \alias{Plot.Permutation}
 \title{Plot results of permutation tests}
 \usage{
-Plot.Permutation(mSetObj=NA, imgName, format="png", dpi=72)
+Plot.Permutation(mSetObj=NA, imgName, format="png", dpi=default.dpi)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -4,7 +4,7 @@
 \alias{PlotASCAModel}
 \title{Plot score plots of each ASCA model for component 1 against time}
 \usage{
-PlotASCAModel(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE)
+PlotASCAModel(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, colorBW=FALSE)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

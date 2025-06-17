@@ -233,7 +233,7 @@ CreateGraph <- function(mSetObj=NA){
     overall.graph <-simplify(graph_from_data_frame(topedge.list, directed=FALSE, vertices=NULL), edge.attr.comb="first");
     seed.graph <<- seed.proteins;
   }else{
-    overall.graph <- simplify(graph.data.frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
+    overall.graph <- simplify(graph_from_data_frame(edge.list, directed=FALSE, vertices=node.list), remove.multiple=FALSE);
     # add node expression value
     #newIDs <- names(seed.expr);
     newIDs <- seed.graph;
@@ -267,7 +267,7 @@ CreateGraph <- function(mSetObj=NA){
 ###
 
 # Utility function to plot network for analysis report (CreateGraph)
-PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotNetwork <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
 
@@ -343,7 +343,7 @@ GetNodeNames <- function(){
 }
 
 GetNodeDegrees <- function(){
-  degree(overall.graph);
+  igraph::degree(overall.graph);
 }
 
 GetNodeBetweenness <- function(){
@@ -463,7 +463,7 @@ ExcludeNodes <- function(nodeids, filenm){
   current.net <- igraph::delete.vertices(current.net, nodes2rm);
 
   # need to remove all orphan nodes
-  bad.vs<-V(current.net)$name[degree(current.net) == 0];
+  bad.vs<-V(current.net)$name[igraph::degree(current.net) == 0];
   current.net <- igraph::delete.vertices(current.net, bad.vs);
 
   # return all those nodes that are removed
@@ -589,7 +589,7 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
     #subgraph <- induced.subgraph(g, path.inx);
     subgraph <- igraph::induced.subgraph(g, path.ids);
     in.degrees <- igraph::degree(subgraph);
-    #out.degrees <- degree(g, path.inx) - in.degrees;
+    #out.degrees <- igraph::degree(g, path.inx) - in.degrees;
     out.degrees <- igraph::degree(g, path.ids) - in.degrees;
     ppval <- wilcox.test(in.degrees, out.degrees)$p.value;
     ppval <- signif(ppval, 3);
@@ -953,7 +953,7 @@ GetMinConnectedGraphs <- function(mSetObj=NA, max.len = 200){
   paths.list <-list();
 
   # first trim overall.graph to remove no-seed nodes of degree 1
-  dgrs <- degree(overall.graph);
+  dgrs <- igraph::degree(overall.graph);
   keep.inx <- dgrs > 1 | (names(dgrs) %in% my.seeds);
   nodes2rm <- V(overall.graph)$name[!keep.inx];
   overall.graph <-  simplify(delete.vertices(overall.graph, nodes2rm));
@@ -1056,7 +1056,7 @@ FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
   mSetObj <- .get.mSet(mSetObj);
   all.nms <- V(overall.graph)$name;
   edge.mat <- get.edgelist(overall.graph);
-  dgrs <- degree(overall.graph);
+  dgrs <- igraph::degree(overall.graph);
   nodes2rm.dgr <- nodes2rm.btw <- NULL;
 
   if(nd.type == "gene"){

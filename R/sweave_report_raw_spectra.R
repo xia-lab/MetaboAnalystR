@@ -312,7 +312,7 @@ CreateTIC<- function(){
   
   cmdhist <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
-                paste("\\includegraphics[width=0.75\\textwidth]{TICS_72.png}", sep=""),
+                paste0("\\includegraphics[width=0.75\\textwidth]{TICS_", default.dpi, ".png}"),
                 "\\caption{Total Ion Chromatogram plot of the spectral processing.}",
                 "\\end{center}",
                 "\\end{figure}",
@@ -462,7 +462,7 @@ CreateBPI<- function(){
   
   cmdhist <- c( "\\begin{figure}[htp]",
                 "\\begin{center}",
-                paste("\\includegraphics[width=0.75\\textwidth]{BPIS_72.png}", sep=""),
+                paste0("\\includegraphics[width=0.75\\textwidth]{BPIS_", default.dpi, ".png}"),
                 "\\caption{Base Peak Ion plot of the spectral processing.}",
                 "\\end{center}",
                 "\\end{figure}",

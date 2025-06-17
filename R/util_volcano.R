@@ -7,7 +7,7 @@
 # if labelNum = -1 --> all sig labels
 # if labelNum = 0 --> no labels
 # else top labels #
-my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=72, width=NA, labelNum=5, interactive=F){
+my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=default.dpi, width=NA, labelNum=5, interactive=F){
   #save.image("volc.RData");
   mSetObj <- .get.mSet(mSetObj);
 

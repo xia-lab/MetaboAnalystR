@@ -4,7 +4,7 @@
 \alias{PlotANOVA2}
 \title{Plot Venn diagram of ANOVA results}
 \usage{
-PlotANOVA2(mSetObj, imgName, format="png", dpi=72, width=NA)
+PlotANOVA2(mSetObj, imgName, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

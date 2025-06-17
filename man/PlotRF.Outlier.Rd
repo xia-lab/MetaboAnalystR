@@ -4,7 +4,7 @@
 \alias{PlotRF.Outlier}
 \title{Plot Random Forest outliers}
 \usage{
-PlotRF.Outlier(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+PlotRF.Outlier(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

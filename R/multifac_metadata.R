@@ -568,7 +568,7 @@ mSetObj$analSet$combFacdf <- meta;
 #'License: GPL-3 License
 #'@export
 #'
-PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta,meta2, version, format="png", dpi=72, width=NA){
+PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta,meta2, version, format="png", dpi=default.dpi, width=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){

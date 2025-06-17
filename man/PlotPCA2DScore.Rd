@@ -5,7 +5,7 @@
 \title{Create 2D PCA score plot}
 \usage{
 PlotPCA2DScore(mSetObj=NA, imgName, format="png", 
-dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
+dpi=default.dpi, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

@@ -71,7 +71,7 @@ GetRandomNumbers <- function(){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -123,7 +123,7 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -156,7 +156,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 
 #'Plot Random Forest outliers
 #'@description Random Forest plot of outliers
-#'@usage PlotRF.Outlier(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotRF.Outlier(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -169,7 +169,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -271,7 +271,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -306,7 +306,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'Recursive Support Vector Machine (R-SVM) plot of important variables
 #'@description Plot recursive SVM variables of importance
 #'if too many, plot top 15
-#'@usage PlotRSVM.Cmpd(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotRSVM.Cmpd(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -319,7 +319,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, w
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   

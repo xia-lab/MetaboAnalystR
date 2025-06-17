@@ -262,7 +262,7 @@ GetMSMSDot_single <- function(mSetObj=NA, idx = 1){
 plotMirror <- function(mSetObj=NA, featureidx = 1,
                        precMZ, ppm, 
                        imageNM = "",
-                       dpi = 300, format = "png", width = 8, height = 8,
+                       dpi = default.dpi, format = "png", width = 8, height = 8,
                        cutoff_relative = 5){
   # Fetch mSetobj
   mSetObj <- .get.mSet(mSetObj);
@@ -1211,7 +1211,7 @@ GetNonIncludedPrecMZRTs <- function(mSetObj=NA){
 }
 
 
-PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = 72, format="png", width = 12, height = 8){
+PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = default.dpi, format="png", width = 12, height = 8){
   mSetObj <- .get.mSet(mSetObj);
 
   if(is.null(mSetObj[["dataSet"]][["msms_result"]])){
@@ -1482,7 +1482,7 @@ plotms2Mirror <- function(mSetObj=NA, feature, index){
 
     # need to set current ms indx
     mSet[["dataSet"]][["current_msms_idx"]] <<- featurelabel_idx
-    plotMirror(mSetObj, candidate_idx, mz, 5.0, paste0("dyn_mplot_", feature,"_", index, ".svg"), 72.0, "svg", 10, 6)
+    plotMirror(mSetObj, candidate_idx, mz, 5.0, paste0("dyn_mplot_", feature,"_", index, ".svg"), default.dpi, "svg", 10, 6)
 
 }
 

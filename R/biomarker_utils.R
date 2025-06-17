@@ -828,7 +828,7 @@ doLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
 #' @importFrom Cairo Cairo
 #'@export
 #'
-PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=72, show.conf=FALSE, sp.bin=0.01) {
+PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, show.conf=FALSE, sp.bin=0.01) {
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -952,7 +952,7 @@ GetCIs <- function(data, param=F){
 #'Perform Classical Univariate ROC
 #'@description Perform Classical Univariate ROC
 #'@usage Perform.UnivROC(mSetObj=NA, feat.nm, version, 
-#'format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
+#'format="png", dpi=default.dpi, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param feat.nm Input the name of the feature to perform univariate ROC analysis
 #'@param version image version mark, can be any character
@@ -976,7 +976,7 @@ GetCIs <- function(data, param=F){
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, 
                             version, format="png", 
-                            dpi=72, isAUC, isOpt, 
+                            dpi=default.dpi, isAUC, isOpt, 
                             optMethod, isPartial, measure, cutoff){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1081,7 +1081,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, isOpt, isQuery){
+PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=default.dpi, isOpt, isQuery){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1128,14 +1128,24 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   #mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
   Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
-  
+  par(oma=c(0,0,1,0));
+  par(mar=c(4,4,4,4)+.1);
   df <- data.frame(conc = x, class = y)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
   p <- p + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
-  p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"), axis.text = element_text(size=10))
+  p <- p + labs(title = feat.nm)
+  p <- p + theme(
+    # Titles and Labels
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5), # Centered, bold, 15pt font
+    axis.text = element_text(size = 10), # Axis tick labels size
+    legend.position = "none", # Hide legend as per original request
+
+    # Grid lines
+    panel.grid.major.y = element_blank(), # Remove major Y grid lines as per original request
+    plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm")
+  ) 
   p <- p + scale_fill_manual(values=col)
-  
   if(isOpt){
     opt.thresh <- mSetObj$analSet$opt.thresh
     p <- p + geom_hline(aes(yintercept=opt.thresh), colour="red")
@@ -1164,7 +1174,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
 #'This plot can be created for multivariate ROC curve analysis using SVM, PLS, and RandomForest.
 #'Please note that sometimes, not all samples will be tested, instead they will be plotted
 #'at the 0.5 neutral line. 
-#'@usage PlotProbView(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) 
+#'@usage PlotProbView(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) 
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1178,7 +1188,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
+PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) {
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1307,7 +1317,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'This plot can be created for multivariate ROC curve analysis using SVM, PLS, and RandomForest.
 #'Please note that sometimes, not all samples will be tested, instead they will be plotted
 #'at the 0.5 neutral line. 
-#'@usage PlotProbViewTest(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) 
+#'@usage PlotProbViewTest(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) 
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1321,7 +1331,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, sho
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, show, showPred) {
+PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) {
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1459,7 +1469,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
 #'Plot ROC
 #'@description Pred and auroc are lists containing predictions
 #'and labels from different cross-validations 
-#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, 
+#'@usage PlotROC(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, 
 #'avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
@@ -1481,7 +1491,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
+PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1588,7 +1598,7 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.meth
 #'@description Plot the ROC curve of the biomarker model created using a user-selected subset of features.
 #'Pred and auroc are lists containing predictions and labels from different cross-validations. 
 #'@usage PlotROCTest(mSetObj=NA, imgName, format="png", 
-#'dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+#'dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1608,7 +1618,7 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.meth
 #'License: GNU GPL (>= 2)
 #'@export 
 
-PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
+PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1770,7 +1780,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
 
 #'Plot classification performance using different features for Multi-Biomarker
 #'@description Plot of the accuracy of classification with an increasing number of features.
-#'@usage PlotAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
+#'@usage PlotAccuracy(mSetObj=NA, imgName, format="png", dpi=default.dpi)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1781,7 +1791,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, avg.me
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
+PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1822,7 +1832,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 
 #'Plot classification performance using different features for Biomarker Tester
 #'@description Plot of the accuracy of classification with an increasing number of features.
-#'@usage PlotTestAccuracy(mSetObj=NA, imgName, format="png", dpi=72)
+#'@usage PlotTestAccuracy(mSetObj=NA, imgName, format="png", dpi=default.dpi)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", of "pdf". 
@@ -1833,7 +1843,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
+PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
   
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
@@ -1871,7 +1881,7 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 
 #'Plot selected compounds by their percentage frequency
 #'@description Plot the important variables of single biomarker model ranked by order of importance
-#'@usage PlotImpBiomarkers(mSetObj=NA, imgName, format="png", dpi=72, 
+#'@usage PlotImpBiomarkers(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 #'mdl.inx, measure = "freq", feat.num = 15)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
@@ -1888,7 +1898,7 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=72){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                               mdl.inx, measure = "freq", feat.num = 15) {
   
   mSetObj <- .get.mSet(mSetObj);
@@ -2174,7 +2184,7 @@ PreparePermResult<-function(perm.vec){
 
 #'Plot results of permutation tests
 #'@description Plot results of permutation tests
-#'@usage Plot.Permutation(mSetObj=NA, imgName, format="png", dpi=72)
+#'@usage Plot.Permutation(mSetObj=NA, imgName, format="png", dpi=default.dpi)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format elect the image format, "png", of "pdf". 
@@ -2185,7 +2195,7 @@ PreparePermResult<-function(perm.vec){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72){
+Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -2616,7 +2626,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="png"){
+PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=default.dpi, format="png"){
   
   mSetObj <- .get.mSet(mSetObj);
   

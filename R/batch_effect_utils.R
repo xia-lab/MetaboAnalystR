@@ -639,7 +639,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=150, width=NA,method){
+PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, width=NA,method){
   
   #mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -747,7 +747,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=150, width=NA,m
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-plot.sample.trend <- function(mSetObj, imgName, format="png", dpi=150, width=NA,method){
+plot.sample.trend <- function(mSetObj, imgName, format="png", dpi=default.dpi, width=NA,method){
   
   #mSetObj <- .get.mSet(mSetObj)
   
@@ -797,7 +797,7 @@ plot.sample.trend <- function(mSetObj, imgName, format="png", dpi=150, width=NA,
 #'@param width width
 #'@param dpi dpi
 #'@export
-plot.sample.dist <- function(mSetObj=NA, imgName,format="png", width=NA, dpi=150){
+plot.sample.dist <- function(mSetObj=NA, imgName,format="png", width=NA, dpi=default.dpi){
   library(ggplot2)
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){

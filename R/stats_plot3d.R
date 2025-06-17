@@ -29,7 +29,7 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@usage PlotPCA3DScoreImg(mSetObj=NA, imgName, 
-#'format="png", dpi=72, width=NA, inx1, inx2, inx3, angl)
+#'format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl)
 #'@param mSetObj Input name of the created mSet Object.
 #'@param imgName Input a name for the plot.
 #'@param format Select the image format, "png", or "pdf". 
@@ -45,7 +45,7 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
 #'@importFrom plotly plot_ly add_markers layout
 
 PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png", 
-                              dpi=72, width=NA, inx1, inx2, inx3, angl){
+                              dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -126,7 +126,7 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png",
 #'License: GNU GPL (>= 2)
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
-PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
+PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -197,7 +197,7 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
 #'License: GNU GPL (>= 2)
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
-PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
+PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -269,7 +269,7 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 
-PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, inx3, angl){
+PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
   
   mSetObj <- .get.mSet(mSetObj);
   

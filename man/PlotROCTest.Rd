@@ -5,7 +5,7 @@
 \title{Plot ROC for the ROC Curve Based Model Creation and Evaluation module}
 \usage{
 PlotROCTest(mSetObj=NA, imgName, format="png", 
-dpi=72, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
+dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

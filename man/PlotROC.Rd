@@ -4,7 +4,7 @@
 \alias{PlotROC}
 \title{Plot ROC}
 \usage{
-PlotROC(mSetObj=NA, imgName, format="png", dpi=72, mdl.inx, 
+PlotROC(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, 
 avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0)
 }
 \arguments{

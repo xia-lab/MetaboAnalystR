@@ -262,7 +262,7 @@ PlotPathSummary<-function(mSetObj=NA,
                           show.grid, 
                           imgName, 
                           format="png", 
-                          dpi=72, 
+                          dpi=default.dpi, 
                           width=NA,
                           xlim = NA,
                           ylim = NA){
@@ -444,7 +444,7 @@ PlotPathSummary<-function(mSetObj=NA,
   
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
   
-  # convert to pixel positions, only for web interaction dpi=72
+  # convert to pixel positions, only for web interaction dpi=default.dpi
   #if(dpi == 72){
     width.px <- height.px <- w*100;
     mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, path.nms);
@@ -655,7 +655,7 @@ PlotPathSummaryGG <- function(mSetObj = NA,
                               show.grid = FALSE, 
                               imgName = "plot", 
                               format = "png", 
-                              dpi = 72, 
+                              dpi = default.dpi, 
                               width = NA, 
                               height = NA, 
                               xlim = NA, 

@@ -1,7 +1,7 @@
 #'View individual compounds related to a given metabolite set
 #'@description View individual compounds related to a given metabolite set
 #'Functions for various plots for enrichment analysis
-#'@usage PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=72, width=NA)
+#'@usage PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param setNM Input the name of the metabolite set 
 #'@param format Select the image format, "png", or "pdf". 
@@ -14,7 +14,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
+PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=default.dpi, width=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   # clean the name, some contains space and special characters, will
@@ -139,7 +139,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 
 #'Plot the compound concentration data compared to the reference concentration range
 #'@description Plot the compound concentration data compared to the reference concentration range
-#'@usage PlotConcRange(mSetObj, nm, format="png", dpi=72, width=NA)
+#'@usage PlotConcRange(mSetObj, nm, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nm of the input compound
 #'@param format Select the image format, "png", or "pdf". 
@@ -152,7 +152,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
+PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -216,7 +216,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
 
 #'Plot over-representation analysis (ORA)
 #'@description Plot over-representation analysis (ORA)
-#'@usage PlotORA(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
+#'@usage PlotORA(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param imgOpt "net" 
@@ -230,7 +230,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
+PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -268,7 +268,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
 
 #'Plot QEA overview
 #'@description Plot QEA overview
-#'@usage PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
+#'@usage PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param imgOpt "net" 
@@ -282,7 +282,7 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA){
+PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -369,7 +369,7 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=72, width=NA){
+PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -420,12 +420,12 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   p <- ggplot(df, 
               aes(x = logp, y = Name)) + 
     geom_point(aes(size = folds, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
-    theme_bw(base_size = 14.5) +
+    theme_bw(base_size = 14) +
     scale_colour_gradient(limits=c(0, maxp), low=my.cols[1], high = my.cols[length(my.cols)]) +
     ylab(NULL) + xlab("-log10 (p-value)") + 
     ggtitle("Overview of Enriched Metabolite Sets (Top 25)") +
-    theme(legend.text=element_text(size=14),
-          legend.title=element_text(size=15))
+    theme(legend.text=element_text(size=13),
+          legend.title=element_text(size=14))
   
   p$labels$colour <- "P-value"
   p$labels$size <- "Enrichment Ratio"
@@ -802,7 +802,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   wd <- melt(w);
   wd <- wd[wd[,1] != wd[,2],];
   wd <- wd[!is.na(wd[,3]),];
-  g <- graph.data.frame(wd[,-3], directed=F);
+  g <- graph_from_data_frame(wd[,-3], directed=F);
   E(g)$width <- sqrt(wd[,3]*20);
   g <- delete.edges(g, E(g)[wd[,3] < 0.25]);
   #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));

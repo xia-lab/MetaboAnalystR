@@ -5,7 +5,7 @@
 \title{Perform Classical Univariate ROC}
 \usage{
 Perform.UnivROC(mSetObj=NA, feat.nm, version, 
-format="png", dpi=72, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
+format="png", dpi=default.dpi, isAUC, isOpt, optMethod, isPartial, measure, cutoff)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

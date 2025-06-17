@@ -4,7 +4,7 @@
 \alias{PlotCmpdView}
 \title{Plot Compound View}
 \usage{
-PlotCmpdView(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA)
+PlotCmpdView(mSetObj=NA, cmpdNm, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

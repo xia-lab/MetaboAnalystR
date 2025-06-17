@@ -24,7 +24,7 @@
 #'@export
 #'
 PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm", 
-                         scaleOpt="row", format="png", dpi=72, 
+                         scaleOpt="row", format="png", dpi=default.dpi, 
                          width=NA, smplDist="pearson", 
                          clstDist="average", colorGradient="npj", 
                          fzCol, fzRow, fzAnno, annoPer, unitCol, unitRow,
@@ -283,7 +283,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
 #'
 
 PlotStaticHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
-                       scaleOpt="row", format="png", dpi=72, 
+                       scaleOpt="row", format="png", dpi=default.dpi, 
                        width=NA, smplDist="pearson", 
                        clstDist="average", colorGradient="bwm", fzCol,fzRow,
                        viewOpt="overview",rankingMethod="mean",
@@ -1249,7 +1249,7 @@ PCA.GENES<-function(X){
 
 #'Plot scree plots for each model in ASCA
 #'@description Plot scree plots for each model in ASCA
-#'@usage PlotASCAModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotASCAModelScree(mSetObj, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input name of the created mSet Object.
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1262,7 +1262,7 @@ PCA.GENES<-function(X){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1304,7 +1304,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 
 #'Plot score plots of each ASCA model for component 1 against time
 #'@description Plot score plots of each ASCA model for component 1 against time
-#'@usage PlotASCAModel(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE)
+#'@usage PlotASCAModel(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, colorBW=FALSE)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the ASCA score plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1319,7 +1319,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, colorBW=FALSE){
+PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, colorBW=FALSE){
   mSetObj <- .get.mSet(mSetObj);
   asca <- qs::qread("asca.qs");
   if(type == "a"){
@@ -1381,7 +1381,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 
 #'Plot ASCA interaction plots 
 #'@description Plot ASCA interaction plots 
-#'@usage PlotASCAInteraction(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA)
+#'@usage PlotASCAInteraction(mSetObj=NA, imgName, format="png", dpi=default.dpi, colorBW=FALSE, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1395,7 +1395,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, typ
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=72, colorBW=FALSE, width=NA){
+PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   asca <- qs::qread("asca.qs");
@@ -1595,7 +1595,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 
 #'Plot ASCA permutation
 #'@description Plot plsda classification performance using different components
-#'@usage PlotASCA.Permutation(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotASCA.Permutation(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -1608,7 +1608,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   asca <- qs::qread("asca.qs");
