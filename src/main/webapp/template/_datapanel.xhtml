@@ -129,7 +129,7 @@
                 <p:tab title ="Order (factor-level)" rendered="#{multifacBean.selectedMetaDataBean.param eq 'disc'}">
 
                     <h:panelGrid style="padding:10px 30px 10px 40px; font-size: 12px; width:480px;">
-                        <p:orderList value="#{multifacBean.uniqueMetaList}" var="meta" controlsLocation="left" itemLabel="#{meta}" itemValue="#{meta}">
+                        <p:orderList value="#{multifacBean.uniqueMetaStrings}" var="meta" controlsLocation="left" itemLabel="#{meta}" itemValue="#{meta}">
                             <f:facet name="caption">Available</f:facet>
 
                         </p:orderList>

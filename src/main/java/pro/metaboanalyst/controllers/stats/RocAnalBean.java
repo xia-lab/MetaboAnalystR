@@ -1225,8 +1225,12 @@ public class RocAnalBean implements Serializable {
 
     public void analysisMetaChangeListener() {
         grps = RDataUtils.getMetaDataCol(sb.getRConnection(), selMeta);
-        List<String> list = new ArrayList<>();
-        list.addAll(Arrays.asList(grps));
+        List<SelectItem> list = new ArrayList<>();
+
+        for (String grp : grps) {
+            list.add(new SelectItem(grp, grp));
+        }
+
         mfb.setUniqueMetaList(list);
     }
 
@@ -1248,7 +1252,7 @@ public class RocAnalBean implements Serializable {
 
     public String getFactor1() {
         if (factor1.equals("NA")) {
-            factor1 = mfb.getUniqueMetaList().get(0);
+            factor1 = mfb.getUniqueMetaList().get(0).getLabel();
         }
         return factor1;
     }
