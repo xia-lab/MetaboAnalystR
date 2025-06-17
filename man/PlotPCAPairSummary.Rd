@@ -4,7 +4,7 @@
 \alias{PlotPCAPairSummary}
 \title{Plot PCA pair summary, format image in png, tiff, pdf, ps, svg}
 \usage{
-PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num)
+PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

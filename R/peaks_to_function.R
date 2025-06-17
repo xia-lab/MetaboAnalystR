@@ -3234,7 +3234,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 #' License: GNU GPL (>= 2)
 #' @export
 
-PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default",
+PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = default.dpi, width = 9, labels = "default",
                             num_annot = 5, interactive=F){  
   #save.image("gsea.RData")
   mSetObj <- .get.mSet(mSetObj)
@@ -3354,7 +3354,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, wi
 #' License: GNU GPL (>= 2)
 #' @export
 #' @import scales
-PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = 72, width = 9, labels = "default", 
+PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = default.dpi, width = 9, labels = "default", 
                                labels.x = 5, labels.y = 5, scale.axis = TRUE, interactive=F){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -4395,7 +4395,7 @@ votep <-
   }
 
 
-PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = 72, width = 9, labels = "default",
+PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = default.dpi, width = 9, labels = "default",
                               num_annot = 5, interactive=F){  
   library(plotly);
   library(dplyr);

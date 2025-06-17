@@ -4,7 +4,7 @@
 \alias{PlotQEA.MetSet}
 \title{View individual compounds related to a given metabolite set}
 \usage{
-PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=72, width=NA)
+PlotQEA.MetSet(mSetObj=NA, setNM, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -1180,13 +1180,13 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     s_image[["plot_env"]][["js"]] <- NULL;
   
   qs::qsave(s_image, file = paste0("EIC_image_", featureOder,".qs"))
-  fileName = paste0("EIC_", title, "_group_", "72", ".", "png");
+  fileName = paste0("EIC_", title, "_group_", default.dpi, ".", "png");
   
   if (.on.public.web) {
     Cairo::Cairo(
       file = fileName,
       unit = "in",
-      dpi = 72,
+      dpi = default.dpi,
       width = 6,
       height = 6,
       type = "png",
@@ -1204,7 +1204,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
   return(fileName)
 }
 
-PlotXICUpdate <- function(featureNum, format = "png", dpi = 72, width = NA){
+PlotXICUpdate <- function(featureNum, format = "png", dpi = default.dpi, width = NA){
   if(is.na(width)){
     width <- 6;
   }
@@ -1999,7 +1999,7 @@ generateAsariPeakList <-  function(userPath) {
 #' @param width width
 #' @author Zhiqiang Pang
 #' @export
-plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = 72, width = NA){
+plotSingleTIC <- function(filename, imageNumber, format = "png", dpi = default.dpi, width = NA){
 
   if (is.na(width)) {
     widthm <- "default"
@@ -2126,7 +2126,7 @@ find_peaks <- function (x, m = 3){
 #' @param width width
 #' @author Zhiqiang Pang
 #' @export
-plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
+plotMSfeature <- function(FeatureNM, format = "png", dpi = default.dpi, width = NA){
 
   if (is.na(width)) {
     #width <- 6;
@@ -2147,7 +2147,7 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
     imgName <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = dpi, format = format, width = width)
     str <- imgName
   }else if(format == "svg2"){
-    imgName0 <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = 72, format = "png", width = NA)
+    imgName0 <- OptiLCMS::plotMSfeature(NULL, FeatureNM, dpi = default.dpi, format = "png", width = NA)
     format <- "svg";
     width <- 6;
     imgName <- paste0(title, ".", format);
@@ -2189,7 +2189,7 @@ plotMSfeature <- function(FeatureNM, format = "png", dpi = 72, width = NA){
 #' @param dpi dpi
 #' @param width width
 #' @export
-PlotXIC <- function(featureNum, format = "png", dpi = 72, width = NA){
+PlotXIC <- function(featureNum, format = "png", dpi = default.dpi, width = NA){
   if(is.na(width)){
     width <- 6;
   }
@@ -2388,7 +2388,7 @@ PerformPeakProfiling <- function(mSet, Params, plotSettings, ncore) {
 }
 
 
-PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = default.dpi, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
     width <- 9;
@@ -2405,7 +2405,7 @@ PlotSpectraRTadj <- function(imageNumber, format = "png", dpi = 72, width = NA) 
   return(imgName); 
 }
 
-PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = default.dpi, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
     width <- 9;
@@ -2422,7 +2422,7 @@ PlotSpectraBPIadj <- function(imageNumber, format = "png", dpi = 72, width = NA)
   return(imgName); 
 }
 
-PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = default.dpi, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
     width <- 8;
@@ -2440,7 +2440,7 @@ PlotSpectraInsensityStatics <- function(imageNumber, format = "png", dpi = 72, w
   return(imgName);  
 }
 
-plotTICs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+plotTICs <- function(imageNumber, format = "png", dpi = default.dpi, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
     width <- 9;
@@ -2457,7 +2457,7 @@ plotTICs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
   return(imgName);  
 }
 
-plotBPIs <- function(imageNumber, format = "png", dpi = 72, width = NA) {
+plotBPIs <- function(imageNumber, format = "png", dpi = default.dpi, width = NA) {
   if (is.na(width)) {
     widthm <- "default"
     width <- 9;
@@ -2812,13 +2812,13 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     plot.title=element_text(size=18, face="plain", color="black"))
   
   Cairo::Cairo(
-    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
+    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png"),
     unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
   print(p1)
   dev.off()
   
   # Save the interactive plot with ggplot
-  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png")
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
   save(p1, file = "p1.rda")
   # px <- plotly::ggplotly(p1);
   px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
@@ -3047,13 +3047,13 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     plot.title=element_text(size=18, face="plain", color="black"))
   
   Cairo::Cairo(
-    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png"),
+    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png"),
     unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
   print(p1)
   dev.off()
   
   # Save the interactive plot with ggplot
-  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_72.png")
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
   save(p1, file = "p1.rda")
   px <- plotly::ggplotly(p1);
   # px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));

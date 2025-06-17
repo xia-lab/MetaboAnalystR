@@ -294,7 +294,7 @@ GetMRMatColNames<-function(mSetObj=NA, type){
   }
 }
 
-PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = default.dpi, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   mr.res <- mSetObj$dataSet$mr_results
@@ -392,7 +392,7 @@ p <- ggplot(exposure_data, aes(x = beta.exposure, y = beta.outcome)) +
   return(p)
 }
 
-PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = default.dpi, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   mr.res_single <- mSetObj$dataSet$mr_res_single
@@ -474,7 +474,7 @@ p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
   return(p)
 }
 
-PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = default.dpi, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   mr.res_loo <- mSetObj$dataSet$mr_res_loo
@@ -553,7 +553,7 @@ p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
 
 }
 
-PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = 72, width = NA) {
+PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = default.dpi, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   mr.res_single <- mSetObj$dataSet$mr_res_single

@@ -57,7 +57,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 
 #'Plot fold change 
 #'@description Plot fold change analysis
-#'@usage PlotFC(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotFC(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -70,7 +70,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
+PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
   mSetObj <- .get.mSet(mSetObj);
   library(scales);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -328,7 +328,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 
 #'Plot t-test 
 #'@description Plot t-test
-#'@usage PlotTT(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotTT(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -341,7 +341,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, interactive=F){
+PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
   library(ggplot2)
   library(scales);
   mSetObj <- .get.mSet(mSetObj);
@@ -531,7 +531,7 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 #'Create volcano plot
 #'@description For labelling interesting points, it is defined by the following rules:
 #'need to be signficant (sig.inx) and or 2. top 5 p, or 2. top 5 left, or 3. top 5 right. 
-#'@usage PlotVolcano(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA)
+#'@usage PlotVolcano(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param plotLbl Logical, plot labels, 1 for yes and 0 for no.
@@ -547,7 +547,7 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 #'@export
 #'
 
-PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=72, width=NA, labelNum=5, interactive=F){
+PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=default.dpi, width=NA, labelNum=5, interactive=F){
 
     # make this lazy load
     if(!exists("my.plot.volcano")){ # public web on same user dir
@@ -800,7 +800,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
 
 #'Plot ANOVA 
 #'@description Plot ANOVA 
-#'@usage PlotANOVA(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+#'@usage PlotANOVA(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -813,7 +813,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=72, width=NA,interactive=F){
+PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, width=NA,interactive=F){
   library(plotly)
   library(ggplot2)
   mSetObj <- .get.mSet(mSetObj)
@@ -877,7 +877,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=72, width=NA,int
 
 #'Plot Compound View 
 #'@description Plots a bar-graph of selected compound over groups 
-#'@usage PlotCmpdView(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA)
+#'@usage PlotCmpdView(mSetObj=NA, cmpdNm, format="png", dpi=default.dpi, width=NA)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param cmpdNm Input a name for the compound 
 #'@param format Select the image format, "png", or "pdf". 
@@ -890,7 +890,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=72, width=NA,int
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=72, width=NA){
+PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   

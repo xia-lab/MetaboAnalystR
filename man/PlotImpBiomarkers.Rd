@@ -4,7 +4,7 @@
 \alias{PlotImpBiomarkers}
 \title{Plot selected compounds by their percentage frequency}
 \usage{
-PlotImpBiomarkers(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotImpBiomarkers(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 mdl.inx, measure = "freq", feat.num = 15)
 }
 \arguments{

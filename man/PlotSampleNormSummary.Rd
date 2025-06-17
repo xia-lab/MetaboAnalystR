@@ -4,7 +4,7 @@
 \alias{PlotSampleNormSummary}
 \title{Two plot summary plot: Sample View of before and after normalization}
 \usage{
-PlotSampleNormSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA)
+PlotSampleNormSummary(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -4,7 +4,7 @@
 \alias{PlotPCABiplot}
 \title{Create PCA Biplot, set xpd = T to plot outside margin}
 \usage{
-PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
+PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

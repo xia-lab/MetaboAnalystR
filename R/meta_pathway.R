@@ -2146,7 +2146,7 @@ setInclusionDataSets <- function(mSetObj=NA, datasVec){
   return(.set.mSet(mSetObj));
 }
 
-qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", dpi=72, width=NA, vertical = TRUE){
+qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", dpi=default.dpi, width=NA, vertical = TRUE){
 
   imgNm <- paste(imgNm1,"_",imgNM2, "_dpi", dpi, "_norm_box", ".", format, sep="");
   

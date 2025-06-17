@@ -103,7 +103,7 @@ my.namemap.api <- function(endpoint="/internal_mapcompounds"){
 }
 
 my.kegg.plot <- function(endpoint="/pathway_kegg_plot", 
-                         format = "png", width = 8, height = 8, dpi = 72){
+                         format = "png", width = 8, height = 8, dpi = default.dpi){
   
     call <- paste(api.base, endpoint, sep="");
     mSetObj <- .do.api.call(call);
@@ -122,7 +122,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
       pathName <- gsub("\\s","_", mSetObj$api$inmex.pathname);
       pathName <- gsub(",","", pathName);
       
-      dpi <- 72
+      dpi <- default.dpi
       
       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
       
@@ -136,7 +136,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
       
       imgName <- mSetObj$api$imgName;
       # pathway
-      if(!exists("dpi")){dpi <- 72;}
+      if(!exists("dpi")){dpi <- default.dpi;}
       if(!exists('width')){w <- h <- width <- height <- 8}
       if(is.null(dpi)){
         Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");

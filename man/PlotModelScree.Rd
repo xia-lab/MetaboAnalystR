@@ -4,7 +4,7 @@
 \alias{PlotASCAModelScree}
 \title{Plot scree plots for each model in ASCA}
 \usage{
-PlotASCAModelScree(mSetObj, imgName, format="png", dpi=72, width=NA)
+PlotASCAModelScree(mSetObj, imgName, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

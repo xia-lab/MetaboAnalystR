@@ -421,7 +421,7 @@ SetDoseType <- function(mSetObj=NA, type = "disc"){
 
 PlotDoseVolcano <- function(mSetObj = NA,
                             imgNm,
-                            dpi    = 72,
+                            dpi    = default.dpi,
                             format = "png") {
 
   mSetObj <- .get.mSet(mSetObj)

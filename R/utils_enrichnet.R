@@ -298,7 +298,7 @@ if (nrow(enr.mat) < 2) {
     #}
     
     # Set sizes
-    node.dgr2 <- as.numeric(degree(bg))
+    node.dgr2 <- as.numeric(igraph::degree(bg))
     V(bg)$size <- my.rescale(log(node.dgr2 + 1, base=10), 6, 20)
     
     # Layout

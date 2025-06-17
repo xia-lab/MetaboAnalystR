@@ -13,7 +13,7 @@
 #'@export
 #'@import siggenes
 #'@import qs
-SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=150){
+SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=default.dpi){
 
   mSetObj <- .get.mSet(mSetObj);
   .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName, dpi);
@@ -27,7 +27,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
   return(.set.mSet(mSetObj));
 }
 
-.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=150){
+.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=default.dpi){
 
   if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
   imgName = paste(imgName, "dpi", dpi, ".png", sep="");
@@ -222,13 +222,13 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'@import qs
-EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = 150){
+EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = default.dpi){
     .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig, dpi);
     .perform.computing();
     .save.ebam.init(mSetObj);
 }
 
-.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi=150){
+.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi=default.dpi){
   mSetObj <- .get.mSet(mSetObj);
   if(isPaired){
     cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 

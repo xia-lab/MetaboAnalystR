@@ -520,7 +520,7 @@ GetLimmaResTable<-function(fit.obj){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = 72){
+PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = default.dpi){
   if(!exists('metastat.meta')){
   metastat.meta <<- qs::qread("metastat.meta.qs");
 }

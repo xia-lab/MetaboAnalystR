@@ -749,7 +749,7 @@ GetMissingTestMsg <- function(mSetObj=NA){
 PlotMissingDistr <- function(mSetObj = NA,
                                 imgName  = "miss_lollipop",
                                 format   = "png",
-                                dpi      = 150,
+                                dpi      = default.dpi,
                                 width    = NA,
                                 groupCol = NULL) {
 

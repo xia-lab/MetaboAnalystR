@@ -612,7 +612,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   .set.mSet(mSetObj);
 }
 
-.plotIntegGlobalMergeP <- function(mSetObj = NA, imgName, format = "png", dpi = 72, width = 9, labels = "default", 
+.plotIntegGlobalMergeP <- function(mSetObj = NA, imgName, format = "png", dpi = default.dpi, width = 9, labels = "default", 
                                    labels.x = 5, labels.y = 5, scale.axis = TRUE) {
   mSetObj <- .get.mSet(mSetObj);
   ### Here is the ploting function below
@@ -1076,18 +1076,10 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 PlotInmexGraph <- function(mSetObj, pathName, 
                            g, width=NA, height=NA, 
                            bg.color=NULL, line.color=NULL, 
-                           format="png", dpi=NULL){
+                           format="png", dpi=default.dpi){
  
   if(is.null(line.color)){
     line.color <- "dimgray";
-  }
-
-  if(is.null(dpi) & format == "pdf"){
-    dpi <- 72;
-  }
-
-  if(is.null(dpi) & format == "svg"){
-    dpi <- 72;
   }
 
   if(!is.null(dpi)){

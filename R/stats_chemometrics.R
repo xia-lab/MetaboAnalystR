@@ -121,7 +121,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 
 #'Plot PCA pair summary, format image in png, tiff, pdf, ps, svg
 #'@description Rotate PCA analysis
-#'@usage PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num)
+#'@usage PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -135,7 +135,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 #'@param pc.num Numeric, input a number to indicate the number of principal components to display in the pairwise score plot.
 #'@export
 #'
-PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   mSetObj <- .get.mSet(mSetObj);
   pclabels <- paste("PC", 1:pc.num, "\n", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%");
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -157,10 +157,10 @@ PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param scree.num Numeric, input a number to indicate the number of principal components to display in the scree plot.
-#'@usage PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num)
+#'@usage PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, scree.num)
 #'@export
 #'
-PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num){
+PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, scree.num){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -205,7 +205,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'Create 2D PCA score plot
 #'@description Rotate PCA analysis
 #'@usage PlotPCA2DScore(mSetObj=NA, imgName, format="png", 
-#'dpi=72, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
+#'dpi=default.dpi, width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf". 
@@ -224,7 +224,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, sc
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, 
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                            width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0, cex.opt="na"){
 
   # add option to adjust label size. Should be global to remember previous state
@@ -504,7 +504,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
+#'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -516,7 +516,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@export
 #'
-PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
+PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -572,7 +572,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@usage PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2)
+#'@usage PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -584,7 +584,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, 
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@export
 #'
-PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
+PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
   print(topnum)
   mSetObj <- .get.mSet(mSetObj);
  
@@ -747,7 +747,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 #'@param pc.num Numeric, indicate the number of principal components
 #'@export
 
-PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -777,7 +777,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=72, width=
 #'@param grey.scale Numeric, use a grey scale (0) or not (1)
 #'@export
 #'
-PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
+PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1055,7 +1055,7 @@ UpdatePLS.Loading<- function(mSetObj=NA, plotType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2){
+PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
   # named vector
@@ -1187,7 +1187,7 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 
 ######### biplot for PLSDA
 ########################
-PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2,topnum=10){
+PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
 
   mSetObj <- .get.mSet(mSetObj);
   plsr <- mSetObj$analSet$plsr
@@ -1427,7 +1427,7 @@ checkCVperformed <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
+PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1591,7 +1591,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1646,7 +1646,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, wi
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1760,7 +1760,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
+PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
   cls <- mSetObj$dataSet$cls;
@@ -1906,7 +1906,7 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=72, width=NA){
+PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1980,7 +1980,7 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
 #' @export
 #'
 PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png", 
-                         dpi=72, width=NA, type="vip", 
+                         dpi=default.dpi, width=NA, type="vip", 
                          feat.nm="tscore", 
                          feat.num=15, color.BW=FALSE){
   
@@ -2047,7 +2047,7 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png",
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@export
 #'
-PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -2157,7 +2157,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -2318,7 +2318,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, pc.num){
+PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -2352,7 +2352,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=72, width=N
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
+PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
   
   mSetObj <- .get.mSet(mSetObj);
 
@@ -2618,7 +2618,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, inx, viewOpt="detail"){
+PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx, viewOpt="detail"){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -2667,7 +2667,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA,
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=72, width=NA){
+PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   

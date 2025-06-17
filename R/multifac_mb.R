@@ -93,7 +93,7 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=72, width=NA){
+PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];

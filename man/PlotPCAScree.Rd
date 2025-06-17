@@ -4,7 +4,7 @@
 \alias{PlotPCAScree}
 \title{Plot PCA scree plot}
 \usage{
-PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=72, width=NA, scree.num)
+PlotPCAScree(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, scree.num)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

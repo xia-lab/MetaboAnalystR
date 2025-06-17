@@ -4,7 +4,7 @@
 \alias{PlotQEA.Overview}
 \title{Plot QEA overview}
 \usage{
-PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=72, width=NA)
+PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

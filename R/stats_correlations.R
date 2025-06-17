@@ -84,7 +84,7 @@ Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dpi=72, width=NA){
+PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   cor.res <- mSetObj$analSet$corr$cor.mat;
@@ -158,7 +158,7 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@export
 #'@import gplots
 #'
-PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, 
+PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, target, cor.method, 
                           colors, fix.col, no.clst, fz, unit, corrCutoff=0){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -301,7 +301,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, t
 #'@export
 #'
 
-PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=72, width=NA, target, cor.method, colors, viewOpt, fix.col, no.clst, corrCutoff=0){
+PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, target, cor.method, colors, viewOpt, fix.col, no.clst, corrCutoff=0){
 
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
