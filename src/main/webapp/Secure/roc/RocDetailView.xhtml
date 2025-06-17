@@ -18,67 +18,63 @@
                     You can also query the ROC curve for a given cutoff value, sensitivity or specificity. The bottom table shows the performance details - sensitivities, specificities, their sum (sens. + spec.), 
                     as well as the positive and negative likelihood ratios (LR+ and LR-). 
                 </p>
-                <h:panelGrid columns="2" styleClass="panelColumns" style="width:100%; padding-bottom: 20px">
 
-                    <h:panelGrid id="parPane" style="margin-left: 20px; width:360px; padding: 10px;">
-                        <h3>Query ROC </h3>
-                        <h:panelGrid columns="2" style="padding-left: 40px; width: 100%; height: 100px">
-                            <h:outputLabel style="font-weight: bold" value="Cutoff:"/>
-                            <h:inputText style="width: 120px" value="#{rocAnalBean.cutoff}" readonly="#{not rocAnalBean.canEdit}"/>
-                            <h:outputLabel style="font-weight: bold" value="Sensitivity:" />
-                            <h:inputText style="width: 120px" value="#{rocAnalBean.sens}" readonly="#{not rocAnalBean.canEdit}"/>
-                            <h:outputLabel style="font-weight: bold" value="Specificity:"/>
-                            <h:inputText style="width: 120px" value="#{rocAnalBean.spec}" readonly="#{not rocAnalBean.canEdit}"/>
-                        </h:panelGrid>
-
-                        <h:panelGrid columns="2" style="width: 100%; text-align: center; padding-top: 20px">
-                            <p:commandButton value="Submit" 
-                                             onclick="PF('statusDialog').show()" 
-                                             oncomplete="PF('statusDialog').hide()" 
-                                             update=":summaryForm:imgPane :summaryForm:parPane  :hisTab:cmdPane" 
-                                             actionListener="#{rocAnalBean.threshBn_action()}"/>  
-                            <p:commandButton value="Reset" 
-                                             onclick="PF('statusDialog').show()" 
-                                             oncomplete="PF('statusDialog').hide()" 
-                                             update=":summaryForm:parPane  :hisTab:cmdPane" 
-                                             actionListener="#{rocAnalBean.resetBn_action()}"/>  
-                        </h:panelGrid>
+                <h:panelGrid columns="2" id="parPane" style="width:780px; vertical-align: middle">
+                    <h:panelGrid columns="2" style="padding-left: 40px; width: 100%; height: 100px">
+                        <h:outputLabel style="font-weight: bold" value="Cutoff:"/>
+                        <h:inputText style="width: 120px" value="#{rocAnalBean.cutoff}" readonly="#{not rocAnalBean.canEdit}"/>
+                        <h:outputLabel style="font-weight: bold" value="Sensitivity:" />
+                        <h:inputText style="width: 120px" value="#{rocAnalBean.sens}" readonly="#{not rocAnalBean.canEdit}"/>
+                        <h:outputLabel style="font-weight: bold" value="Specificity:"/>
+                        <h:inputText style="width: 120px" value="#{rocAnalBean.spec}" readonly="#{not rocAnalBean.canEdit}"/>
                     </h:panelGrid>
 
-                    <h:panelGrid id="imgPane" class="surface-card shadow-1 p-0 text-800">
-                        <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocDetailImg}" alt="rocImg"/>
-                        <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocBPDetailImg}" alt="rocBoxImg"/>
-                    </h:panelGrid>  
+                    <h:panelGrid columns="2" style="width: 360px; text-align: center; padding-left: 20px">
+                        <p:commandButton value="Submit" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         update=":summaryForm:imgPane :summaryForm:parPane  :hisTab:cmdPane" 
+                                         actionListener="#{rocAnalBean.threshBn_action()}"/>  
+                        <p:commandButton value="Reset" 
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()" 
+                                         update=":summaryForm:parPane  :hisTab:cmdPane" 
+                                         actionListener="#{rocAnalBean.resetBn_action()}"/>  
+                    </h:panelGrid>
                 </h:panelGrid>
 
-                <h:panelGrid style="font-size:10px; width: 100%">
-                    <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom" id="rocTable" 
-                                 class="surface-card shadow-1 p-0 text-800"
-                                 var="set" value="#{rocAnalBean.rocDetailsBeans}">
-                        <p:column headerText="Cut.Offs" sortBy="#{set.name}">  
-                            <h:outputText escape="false" value="#{set.name}"/>  
-                        </p:column> 
-                        <p:column headerText="Sensitivity" sortBy="#{set.val1}">  
-                            <h:outputText escape="false" value="#{set.val1}"/>  
-                        </p:column> 
-                        <p:column headerText="Specificity" sortBy="#{set.val2}">  
-                            <h:outputText escape="false" value="#{set.val2}"/>  
-                        </p:column> 
-                        <p:column headerText="Sens.+Spec." sortBy="#{set.val3}">  
-                            <h:outputText escape="false" value="#{set.val3}"/>  
-                        </p:column> 
-                        <p:column headerText="LR+" sortBy="#{set.val4}">  
-                            <h:outputText escape="false" value="#{set.val4}"/>  
-                        </p:column> 
-                        <p:column headerText="LR-" sortBy="#{set.val5}">  
-                            <h:outputText escape="false" value="#{set.val5}"/>  
-                        </p:column> 
-                    </p:dataTable>
-                    <h:panelGrid style="width:100%; text-align: right; font-size: 12px">
-                        <h:outputText escape="false" value="#{rocAnalBean.downloadTxt}"/>
-                    </h:panelGrid>
+                <h:panelGrid id="imgPane" class="surface-card shadow-1 p-0 text-800" style="width:95%; text-align: center; padding: 20px">
+                    <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocDetailImg}" alt="rocImg"/>
+                    <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocBPDetailImg}" alt="rocBoxImg"/>
+                </h:panelGrid>  
+
+                <p:dataTable style="font-size:10px; width: 100%" rows="20" rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom" id="rocTable" 
+                             class="surface-card shadow-1 p-0 text-800"
+                             var="set" value="#{rocAnalBean.rocDetailsBeans}">
+                    <p:column headerText="Cut.Offs" sortBy="#{set.name}">  
+                        <h:outputText escape="false" value="#{set.name}"/>  
+                    </p:column> 
+                    <p:column headerText="Sensitivity" sortBy="#{set.val1}">  
+                        <h:outputText escape="false" value="#{set.val1}"/>  
+                    </p:column> 
+                    <p:column headerText="Specificity" sortBy="#{set.val2}">  
+                        <h:outputText escape="false" value="#{set.val2}"/>  
+                    </p:column> 
+                    <p:column headerText="Sens.+Spec." sortBy="#{set.val3}">  
+                        <h:outputText escape="false" value="#{set.val3}"/>  
+                    </p:column> 
+                    <p:column headerText="LR+" sortBy="#{set.val4}">  
+                        <h:outputText escape="false" value="#{set.val4}"/>  
+                    </p:column> 
+                    <p:column headerText="LR-" sortBy="#{set.val5}">  
+                        <h:outputText escape="false" value="#{set.val5}"/>  
+                    </p:column> 
+                </p:dataTable>
+                <h:panelGrid style="width:100%; text-align: right; font-size: 12px">
+                    <h:outputText escape="false" value="#{rocAnalBean.downloadTxt}"/>
                 </h:panelGrid>
             </h:panelGrid>
+
         </h:form>
     </ui:define>
 </ui:composition>
