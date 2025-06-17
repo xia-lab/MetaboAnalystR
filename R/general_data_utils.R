@@ -1204,7 +1204,7 @@ GetCurrentCmpdImgSize <- function(mSetObj=NA){
 # 
 
 GetGroupNames <- function(mSetObj=NA, exp.fac=NA){
-  mSetObj <- .get.mSet(mSetObj);  
+  mSetObj <- .get.mSet(mSetObj); 
   if(mSetObj$dataSet$design.type == "regular"){
     cls.lbl <- mSetObj$dataSet$prenorm.cls;
     if(mSetObj$analSet$type=="roc"){

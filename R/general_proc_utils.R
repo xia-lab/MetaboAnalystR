@@ -801,11 +801,13 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   ## Cast according to type -----------
   if (grp.type == "cont") {
+    grp.num <- 0;
     grp.vec  <- as.numeric(grp.vec)
     colour_aes <- scale_colour_gradient(low = "#56B1F7", high = "#132B43")
   } else {                              # treat as discrete / factor
     grp.vec  <- factor(grp.vec)
-    colour_aes <- scale_colour_discrete()
+    colour_aes <- scale_colour_discrete();
+    grp.num <- length(levels(grp.vec));
   }
 
   ## -------- Assemble plotting frame -------------------------------------
@@ -816,7 +818,9 @@ PlotMissingDistr <- function(mSetObj = NA,
   )
 
   ## -------- Device size --------------------------------------------------
-  height  <- max(6, length(samp.nms) * 0.25) + 3.5
+  height.1  <- 3 + grp.num * 0.25;  
+  height.2  <- max(6, length(samp.nms) * 0.25);
+  height <- height.1 + height.2;  
   width <- 7
   img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
 
@@ -860,10 +864,9 @@ p2 <- ggplot(df, aes(x = Group, y = Percent)) +
 
 # --- Combine with shared axes and adjusted heights ---
 combined_plot <- p2 / p1 +
-  plot_layout(heights = c(1, 3), # Top plot (p2) is 1 unit, Bottom plot (p1) is 3 units
-              axes = "collect",     # Collects axis limits and scales
-              axis_titles = "collect" # Collects axis titles (will appear only at the bottom)
-              ) +
+  plot_layout(heights = c(height.1, height.2), 
+              axes = "collect",    
+              axis_titles = "collect") +
   plot_annotation(tag_levels = 'A') # Optional: Adds (A) and (B) labels to subplots
 
 print(combined_plot)

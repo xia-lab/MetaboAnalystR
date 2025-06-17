@@ -976,7 +976,7 @@ GetCIs <- function(data, param=F){
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, 
                             version, format="png", 
-                            dpi=72, isAUC, isOpt, 
+                            dpi=150, isAUC, isOpt, 
                             optMethod, isPartial, measure, cutoff){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1128,14 +1128,24 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=72, 
   #mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
   Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
-  
+  par(oma=c(0,0,1,0));
+  par(mar=c(4,4,4,4)+.1);
   df <- data.frame(conc = x, class = y)
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
   p <- p + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
-  p <- p + theme(text = element_text(size=15), plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm"), axis.text = element_text(size=10))
+  p <- p + labs(title = feat.nm)
+  p <- p + theme(
+    # Titles and Labels
+    plot.title = element_text(size = 13, face = "bold", hjust = 0.5), # Centered, bold, 15pt font
+    axis.text = element_text(size = 10), # Axis tick labels size
+    legend.position = "none", # Hide legend as per original request
+
+    # Grid lines
+    panel.grid.major.y = element_blank(), # Remove major Y grid lines as per original request
+    plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm")
+  ) 
   p <- p + scale_fill_manual(values=col)
-  
   if(isOpt){
     opt.thresh <- mSetObj$analSet$opt.thresh
     p <- p + geom_hline(aes(yintercept=opt.thresh), colour="red")
@@ -2616,7 +2626,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=72, format="png"){
+PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=150, format="png"){
   
   mSetObj <- .get.mSet(mSetObj);
   
