@@ -418,7 +418,6 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$comp.res <- topFeatures;
   return(dataSet);
 }
-
 .perform_williams_trend <- function(dataSet,
                                     robustTrend = FALSE,
                                     verbose     = TRUE)
@@ -426,59 +425,69 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   require(limma)
   require(multcomp)
   
-  ## ── 1. expression matrix & ordered dose factor ───────────────
+  ## ── 1. expression matrix & dose factor ──────────────────────
   expr <- if (length(dataSet$rmidx) > 0)
     dataSet$data.norm[, -dataSet$rmidx, drop = FALSE] else
       dataSet$data.norm
   
-  grp  <- if (length(dataSet$rmidx) > 0)
-    factor(dataSet$cls[-dataSet$rmidx],
-           levels  = unique(dataSet$cls[-dataSet$rmidx]),
-           ordered = TRUE) else
-             factor(dataSet$cls,
-                    levels  = unique(dataSet$cls),
-                    ordered = TRUE)
+  cls_vals <- if (length(dataSet$rmidx) > 0)
+    dataSet$cls[-dataSet$rmidx] else
+      dataSet$cls
   
+  ## attempt numeric sorting
+  unique_cls <- unique(cls_vals)
+  dose_order <- suppressWarnings(as.numeric(as.character(unique_cls)))
+  
+  if (all(!is.na(dose_order))) {
+    ord_levels <- unique_cls[order(dose_order)]
+  } else {
+    ord_levels <- sort(unique_cls)
+  }
+  
+  grp <- factor(cls_vals, levels = ord_levels, ordered = TRUE)
   grp <- droplevels(grp)
+  
   if (nlevels(grp) < 3)
     stop("Williams trend test requires ≥ 3 ordered doses.")
   
-  ## ── 2. design matrix (one column per dose, no intercept) ─────
+  ## ── 2. design matrix ────────────────────────────────────────
   design <- model.matrix(~0 + grp)
   colnames(design) <- levels(grp)
   
-  ## ── 3. Williams contrast matrix  (rows = doses, cols = C1…C8) ─
-  will.mat <- multcomp::contrMat(table(grp), "Williams")   # 8 × 9
-  will.mat <- t(will.mat)                                  # 9 × 8
-  rownames(will.mat) <- levels(grp)                        # match design
+  ## ── 3. Williams contrast matrix ─────────────────────────────
+  will.mat <- multcomp::contrMat(table(grp), "Williams")
+  will.mat <- t(will.mat)
+  rownames(will.mat) <- levels(grp)
   colnames(will.mat) <- paste0("C", seq_len(ncol(will.mat)))
   
-  ## sanity
   if (!identical(rownames(will.mat), colnames(design)))
     stop("Contrast rows and design columns do not match!")
   
   if (verbose) {
     cat("DEBUG ↴\n",
+        "Dose levels : ", paste(levels(grp), collapse = ", "), "\n",
         "design :", nrow(design), "×", ncol(design), "\n",
         "will   :", nrow(will.mat), "×", ncol(will.mat), "\n\n")
   }
   
-  ## ── 4. Fit model & apply Williams contrasts ──────────────────
+  ## ── 4. Fit model & apply Williams contrasts ─────────────────
   fit      <- limma::lmFit(expr, design)
   fit.will <- limma::eBayes(
     limma::contrasts.fit(fit, will.mat),
     trend  = robustTrend,
     robust = robustTrend)
   
-  ## ── 5. One-sided Williams p-value (min-t statistic) ──────────
-  t.mat <- fit.will$t                                   # genes × 8
-  flip  <- ifelse(will.mat[1, ] < 0, -1, 1)             # length-8 vector
-  t.mat <- sweep(t.mat, 2, flip, `*`)                   # column-wise sign flip
-  min.t <- apply(t.mat, 1, min)                         # min of 8 t’s
-  P.Value   <- pt(min.t, df = fit.will$df.total, lower.tail = FALSE)
+  ## ── 5. Two-sided Williams p-value ──────────────────────────
+  t.mat <- fit.will$t
+  flip  <- ifelse(will.mat[1, ] < 0, -1, 1)
+  t.mat <- sweep(t.mat, 2, flip, `*`)
+  min.t <- apply(t.mat, 1, function(x) min(x, na.rm = TRUE))
+
+  ## two-sided p-value: test for either increasing or decreasing trend
+  P.Value   <- 2 * pt(-abs(min.t), df = fit.will$df.total)
   adj.P.Val <- p.adjust(P.Value, "fdr")
   
-  ## ── 6. Pair-wise logFC: each dose vs control (first level) ───
+  ## ── 6. Pair-wise logFC ─────────────────────────────────────
   lev     <- levels(grp)
   control <- lev[1]
   pair.mat <- sapply(lev[-1], function(lv) {
@@ -490,9 +499,9 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   colnames(pair.mat) <- paste0("Dose_", lev[-1], ".Dose_", control)
   
   pair.fit   <- limma::contrasts.fit(fit, pair.mat)
-  pair.logFC <- pair.fit$coefficients                  # genes × (k-1)
+  pair.logFC <- pair.fit$coefficients
   
-  ## ── 7. Assemble results table ────────────────────────────────
+  ## ── 7. Assemble results ────────────────────────────────────
   topFeatures <- data.frame(
     pair.logFC,
     t         = min.t,
@@ -503,6 +512,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$comp.res <- topFeatures
   return(dataSet)
 }
+
 
 
 SetupDesignMatrix<-function(dataName="", deMethod){

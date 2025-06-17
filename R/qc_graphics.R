@@ -582,77 +582,70 @@ GetPcaOutliers <- function(){
 }
 
 PlotDataNcov5 <- function(fileName, imgName, dpi, format){
-  dataSet <- readDataset(fileName);
-  if(grepl("_norm", imgName)){
-    qc.ncov5(dataSet, dataSet$data.norm, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.ncov5(dataSet, data.anot, imgName, dpi, format, F);
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
+
+  ncov5_df <- dataSet$summary_df[, c("Sample", "HighCoverageGeneCount")]
+  
+  ## Compute outlier limits
+  Q1  <- quantile(ncov5_df$HighCoverageGeneCount, 0.25)
+  Q3  <- quantile(ncov5_df$HighCoverageGeneCount, 0.75)
+  IQRv <- IQR(ncov5_df$HighCoverageGeneCount)
+  lower <- Q1 - 3 * IQRv
+  upper <- Q3 + 3 * IQRv
+
+  ncov5_df$Status <- ifelse(ncov5_df$HighCoverageGeneCount < lower |
+                            ncov5_df$HighCoverageGeneCount > upper,
+                            "Outlier", "Normal")
+
+  qc.ncov5.plot(ncov5_df, imgName, lower, upper, dpi, format)
+  
+  return("NA")
 }
-qc.ncov5 <- function(dataSet, x,
-                     imgNm = "NCov5_plot",
-                     dpi   = 72,
-                     format = "png",
-                     interactive = FALSE) {
-  ## ── packages ───────────────────────────────────────
+
+qc.ncov5.plot <- function(ncov5_df,
+                          imgNm = "NCov5_plot",
+                          lower,
+                          upper,
+                          dpi = 72,
+                          format = "png",
+                          interactive = FALSE) {
   require(ggplot2)
   require(ggrepel)
   require(Cairo)
   
-  ## ── dpi check ──────────────────────────────────────
   dpi <- as.numeric(dpi)
   if (dpi <= 0) stop("DPI must be a positive number.")
+
+  g <- ggplot(ncov5_df, aes(x = "", y = HighCoverageGeneCount)) +
+    geom_boxplot(outlier.shape = NA, fill = "grey80") +
+    geom_jitter(aes(color = Status), width = 0.25, height = 0) +
+    geom_hline(yintercept = c(lower, upper),
+               linetype = "dashed", color = "blue") +
+    geom_text_repel(data = subset(ncov5_df, Status == "Outlier"),
+                    aes(label = Sample), nudge_x = 0.35, size = 3) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 11) +
+    labs(x = NULL,
+         y = "Genes with > 5 uniquely mapped reads") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank())
   
-  ## ── compute NCov5 per sample ───────────────────────
-  HighCoverageGeneCount <- colSums(x > 5)
-  
-  df <- data.frame(Sample = names(HighCoverageGeneCount),
-                   HighCoverageGeneCount = as.numeric(HighCoverageGeneCount),
-                   stringsAsFactors = FALSE)
-  df <- df[is.finite(df$HighCoverageGeneCount), ]
-  
-  ## ── outlier thresholds (± 3×IQR) ───────────────────
-  Q1  <- quantile(df$HighCoverageGeneCount, 0.25)
-  Q3  <- quantile(df$HighCoverageGeneCount, 0.75)
-  IQRv <- IQR(df$HighCoverageGeneCount)
-  lower <- Q1 - 3 * IQRv
-  upper <- Q3 + 3 * IQRv
-  
-  df$Status <- ifelse(df$HighCoverageGeneCount < lower |
-                        df$HighCoverageGeneCount > upper,
-                      "Outlier", "Normal")
-  
-  ## ── build box-plot ─────────────────────────────────
-  g <- ggplot(df, aes(x = "", y = HighCoverageGeneCount)) +
-        geom_boxplot(outlier.shape = NA, fill = "grey80") +
-        geom_jitter(aes(color = Status), width = 0.25, height = 0) +
-        geom_hline(yintercept = c(lower, upper),
-                   linetype = "dashed", color = "blue") +
-        geom_text_repel(data = subset(df, Status == "Outlier"),
-                        aes(label = Sample), nudge_x = 0.35, size = 3) +
-        scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
-                           name = "Sample status") +
-        theme_minimal(base_size = 11) +
-        labs(x = NULL,
-             y = "Genes with > 5 uniquely mapped reads") +
-        theme(axis.text.x  = element_blank(),
-              axis.ticks.x = element_blank())
-  
-  ## ── output ─────────────────────────────────────────
   width  <- 8
   height <- 6
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
   imgNm  <- paste0(fileNm, format)
-  
+
   if (interactive) {
     require(plotly)
     m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
     return(layout(plotly::ggplotly(g),
                   autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-    if (dpi == 72) dpi <- dpi * 1.34   # keep existing scaling rule
+    if (dpi == 72) dpi <- dpi * 1.34
     Cairo(file = imgNm, width = width, height = height,
           type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
@@ -663,50 +656,48 @@ qc.ncov5 <- function(dataSet, x,
 
 
 PlotDataNsig <- function(fileName, imgName, dpi, format){
-  dataSet <- readDataset(fileName);
-  if(grepl("_norm", imgName)){
-    qc.nsig(dataSet, dataSet$data.norm, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.nsig(dataSet, data.anot, imgName, dpi, format, F);
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
-}
-qc.nsig <- function(dataSet, x, imgNm = "NSig80_plot", dpi = 72,
-                    format = "png", interactive = FALSE) {
-  require("ggplot2")
-  require("Cairo")
-  require("ggrepel")      # for non-overlapping labels
-  
-  ## ensure dpi is positive ----
-  dpi <- as.numeric(dpi)
-  if (dpi <= 0) stop("DPI must be a positive number.")
-  
-  ## compute NSig80 per sample ----
-  NSig80 <- apply(x, 2, function(col)
-    sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
-  
-  df <- data.frame(Sample = names(NSig80),
-                   NSig80  = as.numeric(NSig80),
-                   stringsAsFactors = FALSE)
-  df <- df[is.finite(df$NSig80), ]
-  
-  ## identify outliers (± 3×IQR) ----
-  Q1  <- quantile(df$NSig80, 0.25)
-  Q3  <- quantile(df$NSig80, 0.75)
-  IQRv <- IQR(df$NSig80)
+
+  nsig_df <- dataSet$summary_df[, c("Sample", "NSig80")]
+
+
+  ## identify outliers (± 3×IQR)
+  Q1  <- quantile(nsig_df$NSig80, 0.25)
+  Q3  <- quantile(nsig_df$NSig80, 0.75)
+  IQRv <- IQR(nsig_df$NSig80)
   lower <- Q1 - 3 * IQRv
   upper <- Q3 + 3 * IQRv
-  
-  df$outlier <- ifelse(df$NSig80 < lower | df$NSig80 > upper,
-                       "Outlier", "Normal")
-  
-  ## build box-plot with outlier labels ----
-  g <- ggplot(df, aes(x = "", y = NSig80)) +
+
+  nsig_df$outlier <- ifelse(nsig_df$NSig80 < lower | nsig_df$NSig80 > upper,
+                            "Outlier", "Normal")
+
+  qc.nsig.plot(nsig_df, imgName, lower, upper, dpi, format)
+
+  return("NA")
+}
+
+qc.nsig.plot <- function(nsig_df,
+                         imgNm = "NSig80_plot",
+                         lower,
+                         upper,
+                         dpi = 72,
+                         format = "png",
+                         interactive = FALSE) {
+  require("ggplot2")
+  require("Cairo")
+  require("ggrepel")
+
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) stop("DPI must be a positive number.")
+
+  g <- ggplot(nsig_df, aes(x = "", y = NSig80)) +
     geom_boxplot(outlier.shape = NA, fill = "grey80") +
     geom_jitter(aes(color = outlier), width = 0.25, height = 0) +
     scale_color_manual(values = c("Normal" = "grey40", "Outlier" = "red")) +
-    geom_text_repel(data = subset(df, outlier == "Outlier"),
+    geom_text_repel(data = subset(nsig_df, outlier == "Outlier"),
                     aes(label = Sample), nudge_x = 0.35, size = 3) +
     geom_hline(yintercept = c(lower, upper), linetype = "dashed",
                color = "blue") +
@@ -716,20 +707,19 @@ qc.nsig <- function(dataSet, x, imgNm = "NSig80_plot", dpi = 72,
          color = "Sample Status") +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank())
-  
-  ## output ----
+
   width  <- 8
   height <- 6
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
   imgNm  <- paste0(fileNm, format)
-  
+
   if (interactive) {
     require("plotly")
     m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
     return(layout(plotly::ggplotly(g),
                   autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-    if (dpi == 72) dpi <- dpi * 1.34   # keep original scaling rule
+    if (dpi == 72) dpi <- dpi * 1.34
     Cairo(file = imgNm, width = width, height = height,
           type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
@@ -738,83 +728,65 @@ qc.nsig <- function(dataSet, x, imgNm = "NSig80_plot", dpi = 72,
   }
 }
 
+PlotDataDendrogram <- function(fileName, imgName, threshold, dpi, format){
+  dataSet <- readDataset(fileName)
 
-
-PlotDataDendrogram <- function(fileName, imgName,threshold, dpi, format){
-  dataSet <- readDataset(fileName);
-
-  if(grepl("_norm", imgName)){
-    qc.dendrogram(dataSet, dataSet$data.norm, threshold, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.dendrogram(dataSet, data.anot, threshold, imgName, dpi, format, F);
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
-}
-qc.dendrogram <- function(dataSet, x, threshold = 0.1,
-                          imgNm   = "Dendrogram_plot",
-                          dpi     = 72,
-                          format  = "png",
-                          interactive = FALSE) {
+  dendro_df <- dataSet$summary_df[, c("Sample", "Dendrogram_Distance")]
+  dendro_df$Status <- ifelse(dendro_df$Dendrogram_Distance > threshold, "Outlier", "Normal")
 
-  ## ── packages ───────────────────────────────────────
+  ## Decide label set
+  out_idx <- which(dendro_df$Status == "Outlier")
+  label_idx <- if (length(out_idx) <= 20) {
+    out_idx
+  } else {
+    out_idx[order(dendro_df$Dendrogram_Distance[out_idx], decreasing = TRUE)[1:20]]
+  }
+  dendro_df$LabelMe <- FALSE
+  dendro_df$LabelMe[label_idx] <- TRUE
+
+
+  qc.dendrogram.plot(dendro_df, threshold, imgName, dpi, format)
+
+  return("NA")
+}
+
+qc.dendrogram.plot <- function(dendro_df,
+                               threshold = 0.1,
+                               imgNm = "Dendrogram_plot",
+                               dpi = 72,
+                               format = "png",
+                               interactive = FALSE) {
   require(ggplot2)
   require(ggrepel)
   require(Cairo)
 
-  ## dpi sanity
   dpi <- as.numeric(dpi)
   if (dpi <= 0) stop("DPI must be positive.")
 
-  ## ── 1. distance summary per sample ─────────────────
-  spearman_corr <- cor(x, method = "spearman",
-                       use = "pairwise.complete.obs")
-  max_dist <- apply(as.matrix(as.dist(1 - spearman_corr)), 1, max)
+  set.seed(1)  # For reproducible jitter
+  dendro_df$xj <- jitter(rep(1, nrow(dendro_df)), amount = 0.25)
 
-  df <- data.frame(
-    Sample      = names(max_dist),
-    MaxDistance = as.numeric(max_dist),
-    Status      = ifelse(max_dist > threshold, "Outlier", "Normal"),
-    stringsAsFactors = FALSE
-  )
+  g <- ggplot(dendro_df, aes(x = xj, y = Dendrogram_Distance)) +
+    geom_boxplot(aes(x = 1), outlier.shape = NA,
+                 width = 0.4, fill = "grey80") +
+    geom_point(aes(color = Status), size = 2.2) +
+    geom_hline(yintercept = threshold, linetype = "dashed", color = "blue") +
+    geom_text_repel(data = dendro_df[dendro_df$LabelMe, ],
+                    aes(label = Sample),
+                    max.overlaps = Inf,
+                    box.padding = 0.35,
+                    segment.size = 0.2,
+                    size = 4.2) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 12) +
+    labs(x = NULL, y = "Max pair-wise distance (1 − Spearman ρ)") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
 
-  ## ── 2. decide which outliers get a label ───────────
-  out_idx <- which(df$Status == "Outlier")
-  label_idx <- if (length(out_idx) <= 20) {
-                 out_idx
-               } else {
-                 out_idx[order(df$MaxDistance[out_idx],
-                               decreasing = TRUE)[1:20]]
-               }
-  df$LabelMe <- FALSE
-  df$LabelMe[label_idx] <- TRUE
-
-  ## ── 3. fixed jitter so text aligns with dot ────────
-  set.seed(1)                       # reproducible jitter
-  df$xj <- jitter(rep(1, nrow(df)), amount = 0.25)
-
-  ## ── 4. build the plot ──────────────────────────────
-  g <- ggplot(df, aes(x = xj, y = MaxDistance)) +
-        geom_boxplot(aes(x = 1), outlier.shape = NA,
-                     width = 0.4, fill = "grey80") +
-        geom_point(aes(color = Status), size = 2.2) +
-        geom_hline(yintercept = threshold, linetype = "dashed",
-                   color = "blue") +
-        geom_text_repel(data = df[df$LabelMe, ],
-                        aes(label = Sample),
-                        max.overlaps = Inf,
-                        box.padding = 0.35,
-                        segment.size = 0.2,
-                        size = 4.2) +
-        scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
-                           name = "Sample status") +
-        theme_minimal(base_size = 12) +
-        labs(x = NULL,
-             y = "Max pair-wise distance (1 − Spearman ρ)") +
-        theme(axis.text.x  = element_blank(),
-              axis.ticks.x = element_blank())
-
-  ## ── 5. output file or interactive view ─────────────
   outFile <- paste0(imgNm, "dpi", dpi, ".", format)
 
   if (interactive) {
@@ -1067,66 +1039,47 @@ qc.pcaplot.json <- function(dataSet, x, imgNm) {
 }
 
 PlotDataGini <- function(fileName, imgName, threshold, dpi, format){
-  dataSet <- readDataset(fileName);
-  if(grepl("_norm", imgName)){
-    qc.gini(dataSet, dataSet$data.norm,0.95, imgName, dpi, format, F);
-  }else{
-    qc.gini(dataSet, dataSet$data.anot,0.95, imgName, dpi, format, F);
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
+  
+  # Select Gini data
+  gini_df <- dataSet$summary_df[, c("Sample", "Gini")]
+  gini_df$Status <- ifelse(gini_df$Gini > threshold, "Outlier", "Normal")
+  
+  ## Plot
+  qc.gini.plot(gini_df, imgName, threshold, dpi, format)
+  
+  return("NA")
 }
 
-qc.gini <- function(dataSet, x, threshold = 0.95,
-                    imgNm   = "Gini_plot",
-                    dpi     = 72,
-                    format  = "png",
-                    interactive = FALSE) {
-  ## ── packages ───────────────────────────────────────
+qc.gini.plot <- function(gini_df,
+                         imgNm   = "Gini_plot",
+                         threshold = 0.95,
+                         dpi     = 72,
+                         format  = "png",
+                         interactive = FALSE) {
   require(ggplot2)
   require(ggrepel)
   require(Cairo)
   
-  ## ── dpi check ──────────────────────────────────────
   dpi <- as.numeric(dpi)
   if (dpi <= 0) stop("DPI must be a positive number.")
   
-  ## ── helper: Gini coefficient ───────────────────────
-  if (!exists("calculate_gini", mode = "function")) {
-    calculate_gini <- function(v) {
-      v <- as.numeric(v); v <- v[v >= 0]
-      if (length(v) == 0 || sum(v) == 0) return(0)
-      v <- sort(v)
-      n <- length(v)
-      G <- 1 - (2 * sum((n:1) * v)) / (n * sum(v)) + 1 / n
-      return(G)
-    }
-  }
+  g <- ggplot(gini_df, aes(x = "", y = Gini)) +
+    geom_boxplot(outlier.shape = NA, fill = "grey80") +
+    geom_jitter(aes(color = Status), width = 0.25, height = 0) +
+    geom_hline(yintercept = threshold, linetype = "dashed", color = "blue") +
+    geom_text_repel(data = subset(gini_df, Status == "Outlier"),
+                    aes(label = Sample), nudge_x = 0.35, size = 3) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 11) +
+    labs(x = NULL, y = "Gini coefficient") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank())
   
-  ## ── compute Gini per sample ────────────────────────
-  gini_vals <- apply(x, 2, calculate_gini)
-  
-  df <- data.frame(Sample = names(gini_vals),
-                   Gini   = as.numeric(gini_vals),
-                   stringsAsFactors = FALSE)
-  df$Status <- ifelse(df$Gini > threshold, "Outlier", "Normal")
-  
-  ## ── build box-plot ─────────────────────────────────
-  g <- ggplot(df, aes(x = "", y = Gini)) +
-        geom_boxplot(outlier.shape = NA, fill = "grey80") +
-        geom_jitter(aes(color = Status), width = 0.25, height = 0) +
-        geom_hline(yintercept = threshold, linetype = "dashed",
-                   color = "blue") +
-        geom_text_repel(data = subset(df, Status == "Outlier"),
-                        aes(label = Sample), nudge_x = 0.35, size = 3) +
-        scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
-                           name = "Sample status") +
-        theme_minimal(base_size = 11) +
-        labs(x = NULL,
-             y = "Gini coefficient") +
-        theme(axis.text.x  = element_blank(),
-              axis.ticks.x = element_blank())
-  
-  ## ── output ─────────────────────────────────────────
   width  <- 8
   height <- 6
   fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
@@ -1138,7 +1091,7 @@ qc.gini <- function(dataSet, x, threshold = 0.95,
     return(layout(plotly::ggplotly(g),
                   autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-    if (dpi == 72) dpi <- dpi * 1.34   # keep original scaling rule
+    if (dpi == 72) dpi <- dpi * 1.34
     Cairo(file = imgNm, width = width, height = height,
           type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
@@ -1146,11 +1099,10 @@ qc.gini <- function(dataSet, x, threshold = 0.95,
     return("NA")
   }
 }
-
 SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
   save.image("summarize.RData");
   dataSet <- readDataset(fileName)
-  
+
   summary_df <- data.frame(Sample = character(), 
                            HighCoverageGeneCount = numeric(), 
                            NSig80 = numeric(), 
@@ -1161,60 +1113,78 @@ SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
                            Outlier_Gini = numeric(),
                            Outlier_Dendrogram = numeric(),
                            stringsAsFactors = FALSE)
-  
+
   if (grepl("norm", imgNameBase)) {
     data <- dataSet$data.norm
   } else {
     data <- .get.annotated.data();
   }
-  print("SummarizeQC");
 
-  print(head(data))
-  
+
   HighCoverageGeneCount <- colSums(data > 5)
   ncov5_df <- data.frame(Sample = names(HighCoverageGeneCount), 
                          HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), 
                          stringsAsFactors = FALSE)
-  
+
   NSig80 <- apply(data, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
   nsig_df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
-  
+
   gini_scores <- apply(data, 2, calculate_gini)
   gini_df <- data.frame(Sample = colnames(data), Gini = gini_scores, stringsAsFactors = FALSE)
-  
-  spearman_corr <- cor(data, method = "spearman", use = "pairwise.complete.obs")
-  distance_matrix <- as.dist(1 - spearman_corr)
-  max_distances <- apply(as.matrix(distance_matrix), 1, max)
+
+  ## Use Pearson correlation for dendrogram distance
+  pearson_corr <- cor(data, method = "pearson", use = "pairwise.complete.obs")
+  distance_matrix <- as.dist(1 - pearson_corr)
+  dist_mat <- as.matrix(distance_matrix)
+
+  group_info <- dataSet$meta.info[,1]
+  names(group_info) <- rownames(dataSet$meta.info)
+
+  max_distances <- sapply(colnames(data), function(sample) {
+    sample_group <- group_info[sample]
+    same_group_samples <- names(group_info)[group_info == sample_group]
+    same_group_samples <- same_group_samples[same_group_samples != sample]
+
+    if (length(same_group_samples) == 0) {
+      return(NA)
+    }
+
+    max(dist_mat[sample, same_group_samples], na.rm = TRUE)
+  })
 
   dendrogram_df <- data.frame(Sample = names(max_distances), 
                               Dendrogram_Distance = max_distances, 
                               stringsAsFactors = FALSE)
-  
-  # Identify outliers based on NSig80, Gini, and Dendrogram Distance
+
+  # Outlier calls
   Q1_nsig <- quantile(nsig_df$NSig80, 0.25)
   Q3_nsig <- quantile(nsig_df$NSig80, 0.75)
   IQR_nsig <- IQR(nsig_df$NSig80)
-  
+
   nsig_outliers <- as.numeric((nsig_df$NSig80 < (Q1_nsig - 3 * IQR_nsig)) | 
                               (nsig_df$NSig80 > (Q3_nsig + 3 * IQR_nsig)))
-  
+
   gini_outliers <- as.numeric(gini_df$Gini > 0.95)
-  
-  dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > 0.1)
-  
-  high_coverage_outliers <- as.numeric(ncov5_df$HighCoverageGeneCount < (quantile(ncov5_df$HighCoverageGeneCount, 0.25) - 3 * IQR(ncov5_df$HighCoverageGeneCount)) | 
-                                       ncov5_df$HighCoverageGeneCount > (quantile(ncov5_df$HighCoverageGeneCount, 0.75) + 3 * IQR(ncov5_df$HighCoverageGeneCount)))
-  
-  # Merge all metrics into a single dataframe
+
+  dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > threshold)
+
+  high_coverage_outliers <- as.numeric(
+    ncov5_df$HighCoverageGeneCount < (quantile(ncov5_df$HighCoverageGeneCount, 0.25) - 3 * IQR(ncov5_df$HighCoverageGeneCount)) | 
+    ncov5_df$HighCoverageGeneCount > (quantile(ncov5_df$HighCoverageGeneCount, 0.75) + 3 * IQR(ncov5_df$HighCoverageGeneCount))
+  )
+
+  # Combine
   summary_df <- merge(ncov5_df, nsig_df, by = "Sample")
   summary_df <- merge(summary_df, gini_df, by = "Sample")
   summary_df <- merge(summary_df, dendrogram_df, by = "Sample")
-  
+
   summary_df$Outlier_HighCoverageGeneCount <- high_coverage_outliers
   summary_df$Outlier_NSig80 <- nsig_outliers
   summary_df$Outlier_Gini <- gini_outliers
   summary_df$Outlier_Dendrogram <- dendrogram_outliers
-  dataSet$summary_df <- summary_df;
+
+  dataSet$summary_df <- summary_df
   RegisterData(dataSet)
+
   return(1)
 }
