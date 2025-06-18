@@ -600,8 +600,8 @@ PlotDataNcov5 <- function(fileName, imgName, dpi, format){
                             ncov5_df$HighCoverageGeneCount > upper,
                             "Outlier", "Normal")
 
-  qc.ncov5.plot(ncov5_df, imgName, lower, upper, dpi, format)
-  
+  qc.ncov5.plot(ncov5_df, imgName, lower, upper, dpi, format);
+  qc.ncov5plot.json(ncov5_df, imgName, lower, upper);
   return("NA")
 }
 
@@ -675,7 +675,7 @@ PlotDataNsig <- function(fileName, imgName, dpi, format){
                             "Outlier", "Normal")
 
   qc.nsig.plot(nsig_df, imgName, lower, upper, dpi, format)
-
+  qc.nsigplot.json(nsig_df, imgName, lower, upper); 
   return("NA")
 }
 
@@ -749,7 +749,7 @@ PlotDataDendrogram <- function(fileName, imgName, threshold, dpi, format){
 
 
   qc.dendrogram.plot(dendro_df, threshold, imgName, dpi, format)
-
+  qc.dendrogram.json(dendro_df, imgName);
   return("NA")
 }
 
@@ -783,7 +783,7 @@ qc.dendrogram.plot <- function(dendro_df,
     scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
                        name = "Sample status") +
     theme_minimal(base_size = 12) +
-    labs(x = NULL, y = "Max pair-wise distance (1 − Spearman ρ)") +
+    labs(x = NULL, y = "Max pair-wise distance (1 − Pearson ρ)") +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank())
 
@@ -1050,7 +1050,7 @@ PlotDataGini <- function(fileName, imgName, threshold, dpi, format){
   
   ## Plot
   qc.gini.plot(gini_df, imgName, threshold, dpi, format)
-  
+  qc.giniplot.json(gini_df, imgName);
   return("NA")
 }
 
@@ -1184,7 +1184,512 @@ SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
   summary_df$Outlier_Dendrogram <- dendrogram_outliers
 
   dataSet$summary_df <- summary_df
+  print(summary_df);
   RegisterData(dataSet)
 
   return(1)
+}
+
+# -------------------------------------------------------------------------
+#  qc.giniplot.json()
+#  ------------------------------------------------------------------------
+#  gini_df      data.frame with columns: Sample, Gini, Status
+#  imgNm        stem for the JSON file (".json" is appended automatically)
+#  threshold    horizontal dashed reference line
+#  jitter.w     half-width of horizontal jitter (0–0.5 recommended)
+# -------------------------------------------------------------------------
+qc.giniplot.json <- function(gini_df,
+                             imgNm     = "Gini_plot",
+                             threshold = 0.95,
+                             jitter.w  = 0.45) {
+
+  stopifnot(all(c("Sample", "Gini", "Status") %in% names(gini_df)))
+
+  ## 1 · Tukey fences & statistical-outlier flag -------------------------
+  stats      <- boxplot.stats(gini_df$Gini, coef = 1.5)$stats
+  q1         <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence   <- q1 - 1.5 * iqr
+  highFence  <- q3 + 1.5 * iqr
+  gini_df$stat_out <- with(gini_df, Gini < lowFence | Gini > highFence)
+
+  ## 2 · Semantic palette (Normal / Outlier) -----------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## 3 · Traces ----------------------------------------------------------
+  # 3a · Box built from in-fence values only
+  tr_box <- list(
+    x              = rep(0, sum(!gini_df$stat_out)),
+    y              = I(gini_df$Gini[!gini_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · Invisible all-points trace (for autoscale)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(gini_df), -jitter.w, jitter.w)),
+    y          = I(gini_df$Gini),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · Visible points (semantic colour, stat-outlines)
+  show_labels <- nrow(gini_df) <= 20
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(gini_df), -jitter.w, jitter.w)),
+    y    = I(gini_df$Gini),
+    type = "scatter",
+    mode = if (show_labels) "markers+text" else "markers",
+    text = if (show_labels) gini_df$Sample else "",
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", gini_df$Sample,
+      "<br>Gini: ", signif(gini_df$Gini, 3),
+      "<br>Status: ", gini_df$Status
+    ),
+    marker = list(
+      color = status_cols[gini_df$Status],
+      size  = 8,
+      line  = list(
+        color = ifelse(gini_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(gini_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## 4 · Layout ----------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Gini coefficient"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(list(
+      type  = "line",
+      xref  = "paper", x0 = 0, x1 = 1,
+      yref  = "y",     y0 = threshold, y1 = threshold,
+      line  = list(color = "#0026FF", dash = "dot")
+    )),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 60, r = 110, t = 20, b = 40)
+  )
+
+  ## 5 · Write JSON ------------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+
+  invisible("NA")
+}
+
+
+# -------------------------------------------------------------------------
+#  dendro_df   data.frame with columns:
+#              Sample, Dendrogram_Distance, Status (Normal / Outlier),
+#              LabelMe (TRUE/FALSE → label on plot)
+#  imgNm       stem for JSON file ("<imgNm>.json")
+#  threshold   horizontal dashed cut-off
+#  jitter.w    half-width for horizontal jitter of points
+# -------------------------------------------------------------------------
+qc.dendrogram.json <- function(dendro_df,
+                               imgNm     = "Dendrogram_plot",
+                               threshold = 0.10,
+                               jitter.w  = 0.45) {
+
+  stopifnot(all(c("Sample", "Dendrogram_Distance", "Status", "LabelMe") %in% names(dendro_df)))
+
+  ## ── 1 · Tukey fences and statistical-outlier flag -------------------
+  stats     <- boxplot.stats(dendro_df$Dendrogram_Distance, coef = 1.5)$stats
+  q1        <- stats[2];  q3 <- stats[4];  iqr <- q3 - q1
+  lowFence  <- q1 - 1.5 * iqr
+  highFence <- q3 + 1.5 * iqr
+  dendro_df$stat_out <- with(dendro_df,
+                             Dendrogram_Distance < lowFence |
+                             Dendrogram_Distance > highFence)
+
+  ## ── 2 · Semantic palette -------------------------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ── 3 · Traces ------------------------------------------------------
+  # 3a · Box from in-fence points
+  tr_box <- list(
+    x              = rep(0, sum(!dendro_df$stat_out)),
+    y              = I(dendro_df$Dendrogram_Distance[!dendro_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · Invisible all-points scatter (autoscale helper)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(dendro_df), -jitter.w, jitter.w)),
+    y          = I(dendro_df$Dendrogram_Distance),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · Visible points (semantic colouring, stat outlines)
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(dendro_df), -jitter.w, jitter.w)),
+    y    = I(dendro_df$Dendrogram_Distance),
+    type = "scatter",
+    mode = "markers+text",
+    text = ifelse(dendro_df$LabelMe, dendro_df$Sample, ""),
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", dendro_df$Sample,
+      "<br>Distance: ", signif(dendro_df$Dendrogram_Distance, 3),
+      "<br>Status: ", dendro_df$Status
+    ),
+    marker = list(
+      color = status_cols[dendro_df$Status],
+      size  = 8,
+      line  = list(
+        color = ifelse(dendro_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(dendro_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ── 4 · Layout ------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Max pair-wise distance (1 \u2212 Pearson \u03c1)"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(list(
+      type  = "line",
+      xref  = "paper", x0 = 0, x1 = 1,
+      yref  = "y",     y0 = threshold, y1 = threshold,
+      line  = list(color = "#0026FF", dash = "dot")
+    )),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 70, r = 110, t = 20, b = 40)
+  )
+
+  ## ── 5 · Write JSON ---------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+  invisible("NA")
+}
+
+qc.ncov5plot.json <- function(ncov5_df,
+                              imgNm    = "NCov5_plot",
+                              lower,
+                              upper,
+                              jitter.w = 0.45) {
+
+  stopifnot(all(c("Sample", "HighCoverageGeneCount", "Status") %in% names(ncov5_df)),
+            is.numeric(lower), length(lower) == 1,
+            is.numeric(upper), length(upper) == 1)
+
+  ## ── 1 · Tukey fences & statistical-outlier flag --------------------
+  stats      <- boxplot.stats(ncov5_df$HighCoverageGeneCount, coef = 1.5)$stats
+  q1         <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence   <- q1 - 1.5 * iqr
+  highFence  <- q3 + 1.5 * iqr
+  ncov5_df$stat_out <- with(ncov5_df,
+                             HighCoverageGeneCount < lowFence |
+                             HighCoverageGeneCount > highFence)
+
+  ## ── 2 · palettes ----------------------------------------------------
+  stat_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ── 3 · Traces ------------------------------------------------------
+  # 3a · box (only in-fence points)
+  tr_box <- list(
+    x              = rep(0, sum(!ncov5_df$stat_out)),
+    y              = I(ncov5_df$HighCoverageGeneCount[!ncov5_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · invisible all-points scatter (for autoscale)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(ncov5_df), -jitter.w, jitter.w)),
+    y          = I(ncov5_df$HighCoverageGeneCount),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · labelled points (semantic status colouring, stat-outlines)
+  # 3c · visible points (one trace for all samples)
+set.seed(2)
+points_trace <- list(
+  x    = I(runif(nrow(ncov5_df), -jitter.w, jitter.w)),
+  y    = I(ncov5_df$HighCoverageGeneCount),
+  type = "scatter",
+  mode = if (any(ncov5_df$stat_out)) "markers+text" else "markers",
+  text = ifelse(ncov5_df$stat_out, ncov5_df$Sample, ""),
+  textposition = "right",
+  name = "Samples",
+  hoverinfo = "text",
+  hovertext = paste0(
+    "Sample: ", ncov5_df$Sample,
+    "<br>Count: ", ncov5_df$HighCoverageGeneCount,
+    "<br>Status: ", ncov5_df$Status
+  ),
+  marker = list(
+    color = stat_cols[ncov5_df$Status],           # vector OK
+    size  = 8,
+    line  = list(
+      color = ifelse(ncov5_df$stat_out, "black", "rgba(0,0,0,0)"),
+      width = ifelse(ncov5_df$stat_out, 1, 0)
+    )
+  ),
+  showlegend = FALSE
+)
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ── 4 · Layout ------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Genes with > 5 uniquely mapped reads"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=lower, y1=lower,
+           line=list(color="#0026FF", dash="dot")),
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=upper, y1=upper,
+           line=list(color="#0026FF", dash="dot"))
+    ),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 70, r = 110, t = 20, b = 40)
+  )
+
+  ## ── 5 · Write JSON ---------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+
+  invisible("NA")
+}
+
+qc.nsigplot.json <- function(nsig_df,
+                             imgNm    = "NSig80_plot",
+                             lower,
+                             upper,
+                             jitter.w = 0.45) {
+
+  stopifnot(all(c("Sample", "NSig80", "outlier") %in% names(nsig_df)))
+
+  ## ------------------------------------------------------------------
+  ## 1 · Compute Tukey fences and flag statistical outliers
+  ## ------------------------------------------------------------------
+  stats       <- boxplot.stats(nsig_df$NSig80, coef = 1.5)$stats
+  q1          <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence    <- q1 - 1.5 * iqr
+  highFence   <- q3 + 1.5 * iqr
+  nsig_df$stat_out <- with(nsig_df, NSig80 < lowFence | NSig80 > highFence)
+
+  ## ------------------------------------------------------------------
+  ## 2 · Palette for semantic status (Normal / Outlier)
+  ## ------------------------------------------------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ------------------------------------------------------------------
+  ## 3 · Plotly traces
+  ## ------------------------------------------------------------------
+  # 3a ─ Box: only in-fence points
+  tr_box <- list(
+    x              = rep(0, sum(!nsig_df$stat_out)),
+    y              = I(nsig_df$NSig80[!nsig_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b ─ Invisible “all” trace for autoscaling
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(nsig_df), -jitter.w, jitter.w)),
+    y          = I(nsig_df$NSig80),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c ─ Points (semantic status colouring, stat-outliers outlined)
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(nsig_df), -jitter.w, jitter.w)),
+    y    = I(nsig_df$NSig80),
+    type = "scatter",
+    mode = "markers+text",
+    text = ifelse(nsig_df$stat_out, nsig_df$Sample, ""),
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", nsig_df$Sample,
+      "<br>NSig80: ", nsig_df$NSig80,
+      "<br>Status: ", nsig_df$outlier
+    ),
+    marker = list(
+      color = status_cols[nsig_df$outlier],
+      size  = 8,
+      line  = list(
+        color = ifelse(nsig_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(nsig_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ------------------------------------------------------------------
+  ## 4 · Layout (unchanged)
+  ## ------------------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF", paper_bgcolor = "#FFFFFF",
+    xaxis = list(title="", range=c(-jitter.w-0.1, jitter.w+0.1),
+                 zeroline=FALSE, showticklabels=FALSE,
+                 showline=TRUE, linecolor="#000"),
+    yaxis = list(title=list(text="NSig80 (genes reaching 80% of signal)"),
+                 zeroline=FALSE, ticks="outside", showline=TRUE,
+                 linecolor="#000", showgrid=TRUE,
+                 gridcolor="rgba(200,200,200,0.4)"),
+    shapes = list(
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=lower, y1=lower,
+           line=list(color="#0026FF", dash="dot")),
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=upper, y1=upper,
+           line=list(color="#0026FF", dash="dot"))
+    ),
+    legend = list(title=list(text="Sample Status"),
+                  orientation="v", x=1.02, y=1,
+                  xanchor="left", yanchor="top"),
+    margin = list(l=70, r=110, t=20, b=40)
+  )
+
+  ## ------------------------------------------------------------------
+  ## 5 · Write JSON
+  ## ------------------------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
 }
