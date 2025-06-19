@@ -254,7 +254,7 @@ GetExpressResultMatrix <-function(dataName="", inxt){
             inx <- match("AveExpr", colnames(dataSet$comp.res))
         } else if(dataSet$de.method=="wtt"){
             inx <- match("t", colnames(dataSet$comp.res))
-  } else {
+       } else {
             inx <- match("logCPM", colnames(dataSet$comp.res))
         }
         res <- dataSet$comp.res;

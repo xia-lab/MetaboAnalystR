@@ -450,11 +450,9 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   if (nlevels(grp) < 3)
     stop("Williams trend test requires ≥ 3 ordered doses.")
   
-  ## ── 2. design matrix ────────────────────────────────────────
   design <- model.matrix(~0 + grp)
   colnames(design) <- levels(grp)
   
-  ## ── 3. Williams contrast matrix ─────────────────────────────
   will.mat <- multcomp::contrMat(table(grp), "Williams")
   will.mat <- t(will.mat)
   rownames(will.mat) <- levels(grp)
@@ -470,24 +468,20 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
         "will   :", nrow(will.mat), "×", ncol(will.mat), "\n\n")
   }
   
-  ## ── 4. Fit model & apply Williams contrasts ─────────────────
   fit      <- limma::lmFit(expr, design)
   fit.will <- limma::eBayes(
     limma::contrasts.fit(fit, will.mat),
     trend  = robustTrend,
     robust = robustTrend)
   
-  ## ── 5. Two-sided Williams p-value ──────────────────────────
   t.mat <- fit.will$t
   flip  <- ifelse(will.mat[1, ] < 0, -1, 1)
   t.mat <- sweep(t.mat, 2, flip, `*`)
   min.t <- apply(t.mat, 1, function(x) min(x, na.rm = TRUE))
 
-  ## two-sided p-value: test for either increasing or decreasing trend
   P.Value   <- 2 * pt(-abs(min.t), df = fit.will$df.total)
   adj.P.Val <- p.adjust(P.Value, "fdr")
   
-  ## ── 6. Pair-wise logFC ─────────────────────────────────────
   lev     <- levels(grp)
   control <- lev[1]
   pair.mat <- sapply(lev[-1], function(lv) {
@@ -496,7 +490,7 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     v[control] <- -1
     v
   })
-  colnames(pair.mat) <- paste0("Dose_", lev[-1], ".Dose_", control)
+  colnames(pair.mat) <- paste0("Dose_", control , ".Dose_", lev[-1])
   
   pair.fit   <- limma::contrasts.fit(fit, pair.mat)
   pair.logFC <- pair.fit$coefficients

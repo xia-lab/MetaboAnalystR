@@ -6,7 +6,7 @@
 ## Guangyan Zhou, guangyan.zhou@mail.mcgill.ca
 ###################################################
 # given a gene id, plot its expression profile as violin plot
-PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolcano", format="png", dpi=72){
+PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolcano", format="png", dpi=72, fc = T){
 
   require(see)
   require(ggplot2)
@@ -30,57 +30,61 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
     if(type== "volcano"){
       cmpdNm <- "";
     }    
-    if(length(dataSet$sec.cls)==1){
-      if(dataSet$comp.type == "custom"){
-        Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
-        grp.nms <- dataSet$grp.nms;
-        if(dataSet$cont.inx[dataSet$analysisVar] |  any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))){
-          grp.nms <- gsub(paste0(dataSet$analysisVar,"_"),"",grp.nms)
-        } 
-        inx <- dataSet$cls %in% grp.nms;
-        cls <- dataSet$cls[inx]
-        dat <- data.norm[,inx];
-      }else{
-        Cairo(file = imgName, width=5, height=5, type=format, bg="white", dpi=dpi,unit="in");
-        dat <- data.norm
-        meta <- dataSet$meta.info[rownames(dataSet$meta.info) %in% colnames(dat),,drop=F]
-        cls <- droplevels(meta[match(rownames(meta),colnames(dat)),dataSet$analysisVar])
-      }
-      
-      col <- unique(GetColorSchema(cls));   
+    if (length(dataSet$sec.cls) == 1) {
 
-      df.norm <- data.frame(value=unlist(dat[which(rownames(dat) == gene.id),]), name = cls);
-
-      if(dataSet$disc.inx[dataSet$analysisVar]){
-        p.norm <- ggplot2::ggplot(df.norm, aes(x = name, y = value, fill = name)) +
-          geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) + 
-          geom_jitter(height = 0, width = 0.05, show.legend = FALSE) +
-          theme(legend.position = "none") +  xlab(dataSet$analysisVar) +
-          stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE) +
-          ggtitle(cmpdNm) + 
-          theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), panel.grid.minor = element_blank(), panel.grid.major = element_blank()) +
-          theme_bw()
-        
-        # dose often breaks because so many groups, also makes more sense with a gradient
-        if(paramSet$oneDataAnalType == "dose"){
-          pal <- colorRampPalette(c("#2196F3", "#DE690D"))
-          col.pal <- pal(length(levels(cls)))
-          p.norm <- p.norm + scale_fill_manual(values = col.pal) + 
-            scale_color_manual(values = col.pal) +
-            theme(axis.text.x = element_text(angle = 45, hjust = 1))
-        } else {
-          p.norm <- p.norm + scale_fill_okabeito() + scale_color_okabeito()
+      # Collect classes & expression ---------------------------------------
+      if (dataSet$comp.type == "custom") {
+        grp.nms <- dataSet$grp.nms
+        if (dataSet$cont.inx[dataSet$analysisVar] ||
+            any(grepl("(^[0-9]+).*", as.character(dataSet$cls)))) {
+          grp.nms <- sub(paste0(dataSet$analysisVar, "_"), "", grp.nms)
         }
-      }else{
-        df.norm$name <- as.numeric(df.norm$name )
-        p.norm <- ggplot2::ggplot(df.norm, aes(x=name, y=value))+
-          geom_point(size=2) + theme_bw()  + geom_smooth(method=lm,se=T)+
-          xlab(dataSet$analysisVar) +
-          theme(axis.text.x = element_text(angle=90, hjust=1)) + guides(size="none")+
-          ggtitle(cmpdNm) + theme(plot.title = element_text(size = 11, hjust=0.5, face = "bold")) +
-          theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+ theme_bw()
+        keep <- dataSet$cls %in% grp.nms
+        cls  <- droplevels(dataSet$cls[keep])
+        expr <- unlist(data.norm[gene.id, keep])
+      } else {
+        expr <- unlist(data.norm[gene.id, ])
+        meta <- dataSet$meta.info[
+                  rownames(dataSet$meta.info) %in% colnames(data.norm),
+                  , drop = FALSE]
+        cls  <- droplevels(
+                  meta[match(rownames(meta), colnames(data.norm)),
+                       dataSet$analysisVar])
       }
-      myplot <- p.norm + theme(axis.title.x = element_blank(), plot.title = element_text(size = 11, hjust=0.5), plot.margin = margin(t=0.35, r=0.25, b=0.15, l=0.25, "cm"), axis.text = element_text(size=10))
+
+      # Optional fold-change ------------------------------------------------
+      is.disc <- dataSet$disc.inx[dataSet$analysisVar]
+      if (is.disc && fc) {
+        baseline <- levels(cls)[1]                                     # control level
+        baseAvg  <- mean(expr[cls == baseline], na.rm = TRUE)          # log2 mean
+
+        expr    <- expr - baseAvg
+        ylabStr <- "log₂ fold change (vs. baseline)"
+      } else {
+        ylabStr  <- "Expression"
+      }
+
+      # Build plot ----------------------------------------------------------
+      df <- data.frame(value = expr, name = cls)
+
+      p <- ggplot(df, aes(x = name, y = value, fill = name)) +
+             geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) +
+             geom_jitter(width = 0.05, height = 0, show.legend = FALSE)       +
+             stat_summary(fun = mean, colour = "yellow", geom = "point",
+                          shape = 18, size = 3, show.legend = FALSE)          +
+             scale_fill_okabeito() + scale_color_okabeito()                   +
+             theme_bw(base_size = 10) +
+             theme(axis.title.x   = element_blank(),
+                   legend.position = "none",
+                   panel.grid      = element_blank(),
+                   plot.title      = element_text(size = 11, hjust = 0.5))    +
+             ylab(ylabStr) +
+             ggtitle(cmpdNm)
+
+      # Save ----------------------------------------------------------------
+      Cairo(file = imgName, width = 5, height = 5, unit = "in",
+            dpi  = dpi, bg   = "white", type = format)
+      print(p); dev.off()
     }else{
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls

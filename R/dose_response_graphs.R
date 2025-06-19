@@ -260,10 +260,10 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
       breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
       labelMap <- c("0", sort(unique(labels[labels != 0])))
       p <- p + scale_x_continuous(trans='log10', breaks = breaks, labels = labelMap)
-    }
+  }
   }
   
-  imgName <- paste("Gene_", gene.id, "_", model.nm, ".png", sep="");
+  imgName <- paste("Gene_", gene.symbol, "_", model.nm, "_", scale,".png", sep="");
   Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
@@ -369,123 +369,113 @@ PlotDRFilterSummary <- function(imgNm, dpi = 72, format = "png") {
 }
 
 
+PlotDRHistogram <- function(imgNm,
+                            dpi,
+                            format,
+                            units,
+                            scale,
+                            width = NA) {
 
-PlotDRHistogramNew <- function(imgNm, dpi, format, units, scale, width=NA) {
-  #save.image("dr.RData");
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
-  
+  ## ── 1 · Load data ───────────────────────────────────────────────────────
+  paramSet <- readSet(paramSet, "paramSet")
+  dataSet  <- readDataset(paramSet$dataName)
+
   require(ggplot2)
   require(Cairo)
-  
-  # compute P.O.D.s
-  s.pods   <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
-  # get sorted breakpoints
-  pod_vals <- sort(s.pods)
-  pod_min  <- pod_vals[1]
-  pod_max  <- pod_vals[length(pod_vals)]
-  
-  # add buffer zone to middle region
-  range_val <- pod_max - pod_min
-  buffer    <- range_val * 0.2  # 20% expansion
-  band_min  <- pod_min - buffer
-  band_max  <- pod_max + buffer
-  
-  # filter passed features
-  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res
-  bmd.hist <- bmd.hist[bmd.hist$all.pass, ]
-  
-  # transform BMD values
+
+  ## ── 2 · Compute tPOD / mPOD values ──────────────────────────────────────
+  s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
+
+  ## ── 3 · Filter features that passed all BMD criteria ────────────────────
+  bmd.hist <- subset(dataSet$bmdcalc.obj$bmdcalc.res, all.pass)
   bmd.vals <- bmd.hist$bmd
+
+  ## ── 4 · Optional log-transformation of BMDs and PODs ────────────────────
   if (scale == "log10") {
-    bmd.vals <- log10(bmd.vals);        xTitle <- "log10(Feature-level BMD)"
+    bmd.vals <- log10(bmd.vals)
     s.pods   <- log10(s.pods)
+    xTitle   <- "log10(Feature-level BMD)"
   } else if (scale == "log2") {
-    bmd.vals <- log2(bmd.vals);         xTitle <- "log2(Feature-level BMD)"
+    bmd.vals <- log2(bmd.vals)
     s.pods   <- log2(s.pods)
+    xTitle   <- "log2(Feature-level BMD)"
   } else {
     xTitle <- "Feature-level BMD"
   }
+
   bmd.df <- data.frame(bmd = bmd.vals)
-  
-  baseSize <- 11 * 1.3
-  
-  # define shaded bands with expanded middle band
-  bands <- data.frame(
-    xmin = c(-Inf,   band_min,  band_max),
-    xmax = c(band_min,  band_max,  Inf),
-    ymin = c(-Inf,      -Inf,     -Inf),
-    ymax = c( Inf,      Inf,      Inf),
-    fill = c("F2DEDE#DFF0D8", "#FFD580", "#DFF0D8")  # pale green, yellow, red
+
+  ## ── 5 · Colour palette & legend labels (copied from liked style) ────────
+  pod.cols <- c(
+    gene20         = "#D62728",
+    percentile10th = "#2CA02C",
+    mode           = "#FF7F0E"
   )
-  
+
+  legend.labels <- c(
+    paste0("20th feature: ",    ifelse(is.finite(s.pods["feat.20"]),    signif(s.pods["feat.20"], 2), "NA")),
+    paste0("Max 1st peak: ",    ifelse(is.finite(s.pods["mode"]),       signif(s.pods["mode"],     2), "NA")),
+    paste0("10th percentile: ", ifelse(is.finite(s.pods["feat.10th"]),  signif(s.pods["feat.10th"],2), "NA"))
+  )
+
+  ## ── 6 · Build the histogram (styling cloned) ────────────────────────────
   p <- ggplot(bmd.df, aes(x = bmd)) +
-    geom_rect(
-      data = bands,
-      aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax, fill = fill),
-      inherit.aes = FALSE,
-      alpha = 0.6
-    ) +
-    scale_fill_identity() +
-    geom_histogram(aes(y = ..density..),
+    geom_histogram(aes(y = after_stat(count)),
                    bins   = 30,
                    fill   = "lightblue",
-                   color  = "lightgrey",
-                   alpha  = 0.8) +
-    geom_vline(aes(xintercept = s.pods["feat.20"],      colour = "gene20"), size = 1) +
-    geom_vline(aes(xintercept = s.pods["mode"],         colour = "mode"),   size = 1) +
-    geom_vline(aes(xintercept = s.pods["feat.10th"],   colour = "percentile10th"), size = 1) +
+                   colour = "black",
+                   alpha  = 0.85) +
+    {if (is.finite(s.pods["feat.20"]))
+        geom_vline(aes(xintercept = s.pods["feat.20"], colour = "gene20"), size = 1)} +
+    {if (is.finite(s.pods["mode"]))
+        geom_vline(aes(xintercept = s.pods["mode"], colour = "mode"), size = 1)} +
+    {if (is.finite(s.pods["feat.10th"]))
+        geom_vline(aes(xintercept = s.pods["feat.10th"], colour = "percentile10th"), size = 1)} +
     scale_color_manual(
-      name   = "tPOD",
-      values = c(gene20 = "#A7414A", percentile10th = "#6A8A82", mode = "#CC9B31"),
-      labels = c(
-        paste0("20th feature: ", signif(s.pods["feat.20"],   2)),
-        paste0("Max 1st peak: ",    signif(s.pods["mode"],    2)),
-        paste0("10th percentile: ", signif(s.pods["feat.10th"], 2))
-      )
+      name   = "mPOD",
+      values = pod.cols,
+      labels = legend.labels
     ) +
-    guides(colour = guide_legend(override.aes = list(size = 2, linetype = 1))) +
-    theme_bw(base_size = baseSize) +
-    theme(
-      panel.background     = element_rect(fill = "transparent", color = NA),
-      plot.background      = element_rect(fill = "transparent", color = NA),
-      axis.text            = element_text(size = rel(1)),
-      axis.title           = element_text(size = rel(1)),
-      legend.text          = element_text(size = rel(1)),
-      legend.title         = element_text(size = rel(1)),
-      axis.text.x          = element_text(face = "bold"),
-      legend.position      = c(.95, .95),
-      legend.justification = c("right", "top"),
-      legend.box.just      = "right"
-    ) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.14))) +
+    theme_bw(base_size = 11 * 1.3) +
     xlab(xTitle) +
-    ylab("Density")
-  
-  # set width/height
-  if (is.na(width) || width == 0) {
-    w <- 12; h <- 9
+    ylab("Count") +
+    theme(
+      axis.text.x       = element_text(face = "bold"),
+      legend.position   = "right",
+      legend.direction  = "vertical",
+      legend.box.margin = margin(t = 6, l = 8),
+      plot.margin       = margin(t = 10, r = 8, b = 5, l = 8),
+      legend.title      = element_text(size = rel(1)),
+      legend.text       = element_text(size = rel(0.9))
+    )
+
+  ## ── 7 · Figure size (same logic) ────────────────────────────────────────
+  if (is.na(width) || width <= 0) {
+    w <- 10;               # default width (inches)
+    h <- 7;            # 3:1.75 aspect from original
   } else {
-    w <- width; h <- width * 0.75
+    w <- width
+    h <- width * 0.75
   }
-  
+
   imgFile <- paste0(imgNm, "dpi", dpi, ".", format)
-  
-  # write with transparent background
-  Cairo(
-    file   = imgFile,
-    width  = w,
-    height = h,
-    unit   = "in",
-    dpi    = dpi,
-    type   = format,
-    bg     = "transparent"
-  )
+
+  ## ── 8 · Render & save ───────────────────────────────────────────────────
+  Cairo(file   = imgFile,
+        width  = w,
+        height = h,
+        unit   = "in",
+        dpi    = dpi,
+        type   = format,
+        bg     = "white")          # solid white background (matches style)
   print(p)
   dev.off()
-  
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRHistogram <- imgNm;
-  saveSet(imgSet);
+
+  ## ── 9 · Register in imgSet & return mSetObj (unchanged) ────────────────
+  imgSet <- readSet(imgSet, "imgSet")
+  imgSet$PlotDRHistogram <- imgNm
+  saveSet(imgSet)
 }
 
 
@@ -570,7 +560,7 @@ PlotPWHeatmap <- function(pathway, pwcount, units){
 ###################
 ###################
 
-PlotDRHistogram <- function(imgNm, dpi, format, units, scale){
+PlotDRHistogramOld <- function(imgNm, dpi, format, units, scale){
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
 
