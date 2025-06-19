@@ -293,8 +293,10 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     bg <- graph_from_data_frame(b.mat, directed=F)
     
     ## -----------------  COLOUR NODES  -----------------------------
-    V(bg)$color  <- "#00FFFF"          # default for compounds
-    V(bg)$colorw <- "#668B8B"
+    #V(bg)$color  <- "#00FFFF"          # default for compounds
+    V(bg)$color  <- "#6CD0D0"          # default for compounds
+
+    V(bg)$colorw <- "#6CD0D0"
     
     ## indices of pathway nodes inside bg
     pathway.idx  <- V(bg)$name %in% rownames(enr.mat)
@@ -312,8 +314,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     if(anal.opt == "mum"){
       sig.cpd.idx <- V(bg)$name %in% sig.cpds
       if(sum(sig.cpd.idx) > 0){
-        V(bg)$color[sig.cpd.idx] <- "#FF0000"  # Red for significant compounds
-        V(bg)$colorw[sig.cpd.idx] <- "#8B0000"
+        #V(bg)$color[sig.cpd.idx] <- "#FF0000"  # Red for significant compounds
+V(bg)$color[sig.cpd.idx] <- "#D22B2B"
+        V(bg)$colorw[sig.cpd.idx] <- "#D22B2B"
       }
     }
     
