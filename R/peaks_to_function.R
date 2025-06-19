@@ -1197,7 +1197,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   cleaned.pathways$cpds <- mummichog.lib$pathways$cpds[min.inx]
   cleaned.pathways$id <- mummichog.lib$pathways$id[min.inx]
   cleaned.pathways$name <- mummichog.lib$pathways$name[min.inx]
-  
+
   mSetObj$pathways <- cleaned.pathways;
   
   if(metaAnalysis & metaLevel %in% c("cpd", "ec")){
@@ -1226,7 +1226,6 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
       new_pathways$cpds <- cleaned.pathways$cpds[!null.inx]
       new_pathways$name <- cleaned.pathways$name[!null.inx]
       new_pathways$emp_cpds <- cleaned.pathways$emp_cpds[!null.inx]
-      
       mSetObj$pathways <- new_pathways;
     }
   }

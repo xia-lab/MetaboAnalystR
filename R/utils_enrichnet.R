@@ -378,6 +378,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   if(anal.opt %in% c("pathora", "pathqea")){
     pwType <- mSetObj$pathwaylibtype; 
+    sig.cpds = "";
   }else{
     pwType <- mSetObj$lib.organism;
   }
@@ -389,6 +390,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     bedges = bedge.mat, 
     enr=unname(enr.mat), 
     id=names(enr.mat), 
+    sigCmpds= sig.cpds,
     sizes=NULL,
     hits=hits.query, 
     genelist=NULL,
@@ -491,12 +493,24 @@ overlap_ratio <- function(set1, set2, type="mixed"){
 #' @export
 .mumname2id <- function(names.vec, mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
-  pid     <- mSetObj$pathways$id
-  pname   <- mSetObj$pathways$name
-  map     <- setNames(pid, pname)   # named lookup: name → ID
-  
-  out     <- map[names.vec]         # may produce NA for unmatched
-  out[is.na(out)] <- names.vec[is.na(out)]  # restore original name when no match
-  
+
+  # sanity: do we have both id & name vectors?
+  if (is.null(mSetObj$pathways) ||
+      is.null(mSetObj$pathways$id) ||
+      is.null(mSetObj$pathways$name) ||
+      length(mSetObj$pathways$id) == 0) {
+    warning("No pathway mapping found; returning input unchanged.")
+    return(names.vec)
+  }
+
+  pid   <- mSetObj$pathways$id
+  pname <- mSetObj$pathways$name
+
+  # build lookup and map
+  map <- setNames(pid, pname)
+  out <- map[names.vec]
+
+  # if a name wasn't found, keep the original
+  out[is.na(out)] <- names.vec[is.na(out)]
   out
 }

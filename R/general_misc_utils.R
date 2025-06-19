@@ -1487,7 +1487,10 @@ GetColorGradient <- function(background, center){
     if(center){
       return(c(colorRampPalette(c("#31A231", "#5BC85B", "#90EE90", "#C1FFC1"))(50), colorRampPalette(c("#FF9DA6", "#FF7783", "#E32636", "#BD0313"))(50)));
     }else{
-      return(colorRampPalette(rev(heat.colors(9)))(100));
+      return(colorRampPalette(c("#FFA500",  # orange
+                          "#FF4500",  # orange-red
+                          "#B22222"   # fire-brick red
+                          ))(100));
     }
   }else{ # white background
     if(center){
@@ -1503,4 +1506,21 @@ GetColorGradient <- function(background, center){
 scale_vec_colours = function(x, col = rainbow(10), breaks = NA){
   breaks <- sort(unique(breaks));
   return(col[as.numeric(cut(x, breaks = breaks, include.lowest = T))])
+}
+
+# new range [a, b]
+rescale2NewRange <- function(qvec, a, b){
+  q.min <- min(qvec);
+  q.max <- max(qvec);
+  if(length(qvec) < 50){
+    a <- a*2;
+  }
+  if(q.max == q.min){
+    new.vec <- rep(8, length(qvec));
+  }else{
+    coef.a <- (b-a)/(q.max-q.min);
+    const.b <- b - coef.a*q.max;
+    new.vec <- coef.a*qvec + const.b;
+  }
+  return(new.vec);
 }
