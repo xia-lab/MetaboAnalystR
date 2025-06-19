@@ -59,7 +59,7 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
         baseAvg  <- mean(expr[cls == baseline], na.rm = TRUE)          # log2 mean
 
         expr    <- expr - baseAvg
-        ylabStr <- "log₂ fold change (vs. baseline)"
+        ylabStr <- "Relative expression (vs. baseline mean)"
       } else {
         ylabStr  <- "Expression"
       }

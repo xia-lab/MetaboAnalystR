@@ -1,120 +1,108 @@
-BuildFastCoexpNet <- function(dataName,
-                              power = NULL,
-                              cor_func = c("pearson", "bicor", "spearman"),
-                              network_type = c("signed", "signed_hybrid", "unsigned"),
-                              deepSplit = 2,
-                              minModuleSize = 30,
-                              mergeCutHeight = 0.25,
-                              maxBlockSize = 5000,
-                              n_threads = 8,
-                              auto_power = TRUE,
-                              enrichFDR = NULL,   # skip enrichment by default for speed
-                              imgName = "coexp_dendro",
-                              dpi = 72,
-                              format = "png") {
-  ## Save session for debugging
-  save.image("fast_coexp.RData")
-  
-  ## Load dataset
+my.build.cemi.net <- function(dataName,
+                              filter      = TRUE,
+                              varCutOff   = 0,
+                              min_ngen    = 30,
+                              cor_method  = c("pearson", "spearman"),
+                              imgName     = "cem_dendro",
+                              dpi         = 72,
+                              format      = "png",
+                              verbose     = TRUE) {
+
+  save.image("cemitool.RData")                  # snapshot
+
+  ## 1 · load dataset -------------------------------------------------
   dataSet  <- readDataset(dataName)
-  datExpr  <- as.matrix(dataSet$data.norm)
-  stopifnot(is.numeric(datExpr))
-  
-  ## Packages & threads
+  expr_mat <- as.data.frame(dataSet$data.norm)              # genes × samples
+  annot_df <- data.frame(SampleName = rownames(dataSet$meta.info),
+                         Class      = dataSet$meta.info[,1],
+                         stringsAsFactors = FALSE)
+
+  ## 2 · packages -----------------------------------------------------
   suppressPackageStartupMessages({
+    library(CEMiTool)
     library(WGCNA)
-    library(fastcluster)
+    library(dendextend)
     library(Cairo)
     library(jsonlite)
-    if (!is.null(enrichFDR)) if (requireNamespace("GWENA", quietly = TRUE)) library(GWENA)
   })
-  enableWGCNAThreads(nThreads = n_threads)
-  
-  cor_func  <- match.arg(cor_func)
-  network_type <- match.arg(network_type)
-  
-  cor_fnc  <- if (cor_func == "bicor") "bicor" else "cor"
-  cor_opts <- if (cor_func == "spearman") list(method = "spearman") else list()
-  cor_type <- if (cor_func == "bicor") "bicor" else "pearson"
-  
-  ## Pick power if requested
-  if (isTRUE(auto_power) || is.null(power)) {
-    sft <- suppressWarnings(
-      pickSoftThreshold(
-        datExpr,
-        powerVector = 1:20,
-        corFnc = cor_fnc,
-        corOptions = cor_opts,
-        networkType = network_type,
-        verbose = 0
-      )
-    )
-    idx <- which(sft$fitIndices[, "SFT.R.sq"] >= 0.85)[1]  # slightly relaxed threshold for speed
-    if (is.na(idx)) idx <- which.max(sft$fitIndices[, "SFT.R.sq"])
-    power <- sft$fitIndices[idx, "Power"]
-  }
-  
-  message("[FastCoexp] Using power = ", power)
-  
-  ## Build network
-  net <- blockwiseModules(
-    datExpr,
-    power = power,
-    networkType = network_type,
-    deepSplit = deepSplit,
-    minModuleSize = minModuleSize,
-    mergeCutHeight = mergeCutHeight,
-    maxBlockSize = maxBlockSize,
-    corType = cor_type,
-    corFnc = cor_fnc,
-    corOptions = cor_opts,
-    hclustMethod = "average",  # fastcluster used internally
-    saveTOMs = FALSE,
-    verbose = 0
-  )
-  
-  ## Eigengenes and kME
-  ME <- net$MEs <- moduleEigengenes(datExpr, net$colors)$eigengenes
-  net$kME <- signedKME(datExpr, ME, outputColumnName = "kME")
-  
-  ## Enrichment (optional, skip for speed)
-  if (!is.null(enrichFDR) && requireNamespace("GWENA", quietly = TRUE)) {
-    net$enrichment <- tryCatch(
-      GWENA::module_enrich(
-        colours = net$colors,
-        organism = "hsapiens",
-        fdr = enrichFDR,
-        verbose = FALSE
-      ),
-      error = function(e) NULL
-    )
-  }
-  
-  ## Save JSON summary
-  summaryJSON <- list(
-    module = names(table(net$colors)),
-    size = as.integer(table(net$colors)),
-    eigengeneVar = apply(ME, 2, var)
-  )
-  jsonNm <- paste0(imgName, ".json")
-  write_json(summaryJSON, jsonNm, pretty = TRUE)
-  
-  ## Plot dendrogram
-  dendroNm <- paste0(imgName, "dpi", dpi, ".", format)
-  Cairo(file = dendroNm, width = 1000, height = 600, dpi = dpi, bg = "white", type = format)
-  plotDendroAndColors(
-    net$dendrograms[[1]],
-    net$colors[net$blockGenes[[1]]],
-    "Module colors",
-    dendroLabels = FALSE,
-    hang = 0.03,
-    addGuide = TRUE,
-    guideHang = 0.05
-  )
+
+  ## 3 · run CEMiTool -------------------------------------------------
+  cem <- cemitool(expr       = expr_mat,
+                  annot      = annot_df,
+                  filter     = filter,
+                  min_ngen   = min_ngen,
+                  cor_method = match.arg(cor_method),
+                  plot       = TRUE,
+                  verbose    = verbose)
+
+  ## 4 · expression + modules ----------------------------------------
+  expr_raw <- attr(cem, "expression")
+  mod_tbl  <- attr(cem, "module")
+
+  common_genes <- intersect(rownames(expr_raw), mod_tbl$genes)
+  expr_raw     <- expr_raw[common_genes, , drop = FALSE]
+  gene2mod     <- mod_tbl$modules[match(common_genes, mod_tbl$genes)]
+  names(gene2mod) <- common_genes
+
+  ## 5 · eigengenes ---------------------------------------------------
+  MEs <- moduleEigengenes(t(expr_raw), colors = gene2mod,
+                          impute = TRUE)$eigengenes        # samples × modules
+
+## --------------------------------------------------------------
+## 6 · Pick WHAT to cluster
+## --------------------------------------------------------------
+
+wantSampleTree <- TRUE   # <--  set to FALSE to go back to module tree
+
+if (wantSampleTree) {
+  ## ---- sample-wise dendrogram ---------------------------------
+  #   • expr_raw : genes × samples
+  #   • distance : 1 − sample-sample Pearson r
+  dist_mat <- as.dist(1 - cor(expr_raw, method = "pearson"))
+  hc       <- hclust(dist_mat, method = "average")
+
+  # colours in the bar = sample classes
+  leafIDs  <- hc$labels                       # sample IDs
+  classes  <- dataSet$meta.info[leafIDs, 1]   # group factor
+  palette  <- setNames(rainbow(length(unique(classes))), unique(classes))
+  colorVec <- palette[classes]
+
+  # PNG
+  img_file <- paste0(imgName, "_SAMPLE_dendro_dpi", dpi, ".", format)
+  Cairo(img_file, width = 1000, height = 600, dpi = dpi, bg = "white", type = format)
+  plotDendroWithColors(hc,
+                       leafColors = colorVec,
+                       groupLabel = "Sample class",
+                       showLabels = FALSE)
   dev.off()
-  
-  ## Return summary + net object
-  return(list(net = net, summary = summaryJSON, dendroFile = dendroNm, jsonFile = jsonNm))
+
+} else {
+  ## ---- module-wise dendrogram (original) ----------------------
+  dist_mat <- as.dist(1 - cor(MEs, method = "pearson"))
+  hc       <- hclust(dist_mat, method = "average")
+
+  leafIDs  <- hc$labels                       # module IDs
+  palette  <- setNames(rainbow(length(leafIDs)), leafIDs)
+  img_file <- paste0(imgName, "_MODULE_dendro_dpi", dpi, ".", format)
+  Cairo(img_file, width = 1000, height = 600, dpi = dpi, bg = "white", type = format)
+  plotDendroWithColors(hc,
+                       leafColors = leafIDs,
+                       palette    = palette,
+                       groupLabel = "CEMi modules",
+                       showLabels = FALSE)
+  dev.off()
+}
+
+  ## 7 · JSON summary -------------------------------------------------
+  summaryJSON <- list(module       = colnames(MEs),
+                      eigengeneVar = apply(MEs, 2, var))
+  write_json(summaryJSON, paste0(imgName, ".json"), pretty = TRUE)
+
+  invisible(list(cem  = cem,
+                 MEs  = MEs,
+                 dend = hc,
+                 img  = img_file,
+                 json = paste0(imgName, ".json")))
 }
 
 
