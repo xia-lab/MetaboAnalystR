@@ -204,9 +204,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   # Set node sizes based on hits
   if (all(vertex_hits == vertex_hits[1])){
-    V(g)$size <- rep(16, length(vertex_hits))
+    V(g)$size <- rep(12, length(vertex_hits))
   } else {
-    V(g)$size <- my.rescale(log(vertex_hits + 1, base=10), 8, 32)
+    V(g)$size <- my.rescale(log(vertex_hits + 1, base=10), 8, 24)
   }
   
   # Layout
@@ -246,8 +246,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   e.df <- as_data_frame(g, what = "edges")  # gives from / to / weight
   
   scale01   <- function(x) (x - min(x)) / (max(x) - min(x) + 1e-9)
-  e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 5));
-  
+  #e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 0));
+  e.df$width <- 0.5;
+
   edge.mat <- apply(
     cbind(id     = seq_len(nrow(e.df)),
           source = e.df$from,
@@ -255,7 +256,6 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
           weight = e.df$weight,   # keep the raw value if you like
           width  = e.df$width),   # **thickness for JS**
     1, as.list)
-  
   
   
   # Create bipartite graph (pathways to compounds)
