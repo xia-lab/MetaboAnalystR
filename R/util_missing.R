@@ -125,6 +125,7 @@ my.impute.missing <- function(mSetObj = NA,
 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
+  print(msg);
   mSetObj$msgSet$replace.msg <- msg
 
   return(.set.mSet(mSetObj))

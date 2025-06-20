@@ -376,6 +376,12 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
   return(.set.mSet(mSetObj));
 }
 
+fetchReplaceMsg <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  res <- paste(mSetObj$msgSet$replace.msg, collapse = ";")
+  return(res)
+}
+
 #'Data processing: Replace missing variables
 #'@description Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.
 #'@usage ImputeMissingVar(mSetObj, method)
