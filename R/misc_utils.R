@@ -1204,12 +1204,8 @@ return(performed)
 
 BuildCEMiNet <- function(dataName,
                          filter      = TRUE,
-                         varCutOff   = 0,
                          min_ngen    = 30,
-                         cor_method  = c("pearson", "spearman"),
-                         imgName     = "cem_dendro",
-                         dpi         = 72,
-                         format      = "png",
+                         cor_method  = "pearson",
                          verbose     = TRUE) {
 
   ## If a compiled helper exists, load it; otherwise fall back to R version
@@ -1224,12 +1220,8 @@ BuildCEMiNet <- function(dataName,
   my.build.cemi.net(
     dataName   = dataName,
     filter     = filter,
-    varCutOff  = varCutOff,
     min_ngen   = min_ngen,
-    cor_method = match.arg(cor_method),
-    imgName    = imgName,
-    dpi        = dpi,
-    format     = format,
+    cor_method = cor_method,
     verbose    = verbose
   )
 }

@@ -1,12 +1,8 @@
 my.build.cemi.net <- function(dataName,
                               filter      = TRUE,
-                              varCutOff   = 0,
                               min_ngen    = 30,
-                              cor_method  = c("pearson", "spearman"),
-                              imgName     = "cem_dendro",
-                              dpi         = 72,
-                              format      = "png",
-                              verbose     = TRUE) {
+                              cor_method  = "pearson", ##c("pearson", "spearman"),
+                              verbose     = F) {
 
   save.image("cemitool.RData")                  # snapshot
 
@@ -21,9 +17,6 @@ my.build.cemi.net <- function(dataName,
   suppressPackageStartupMessages({
     library(CEMiTool)
     library(WGCNA)
-    library(dendextend)
-    library(Cairo)
-    library(jsonlite)
   })
 
   ## 3 · run CEMiTool -------------------------------------------------
@@ -32,8 +25,7 @@ my.build.cemi.net <- function(dataName,
                   filter     = filter,
                   min_ngen   = min_ngen,
                   cor_method = match.arg(cor_method),
-                  plot       = TRUE,
-                  verbose    = verbose)
+                  plot       = TRUE)
 
   ## 4 · expression + modules ----------------------------------------
   expr_raw <- attr(cem, "expression")
@@ -48,122 +40,112 @@ my.build.cemi.net <- function(dataName,
   MEs <- moduleEigengenes(t(expr_raw), colors = gene2mod,
                           impute = TRUE)$eigengenes        # samples × modules
 
-## --------------------------------------------------------------
-## 6 · Pick WHAT to cluster
-## --------------------------------------------------------------
-
-wantSampleTree <- TRUE   # <--  set to FALSE to go back to module tree
-
-if (wantSampleTree) {
-  ## ---- sample-wise dendrogram ---------------------------------
-  #   • expr_raw : genes × samples
-  #   • distance : 1 − sample-sample Pearson r
-  dist_mat <- as.dist(1 - cor(expr_raw, method = "pearson"))
-  hc       <- hclust(dist_mat, method = "average")
-
-  # colours in the bar = sample classes
-  leafIDs  <- hc$labels                       # sample IDs
-  classes  <- dataSet$meta.info[leafIDs, 1]   # group factor
-  palette  <- setNames(rainbow(length(unique(classes))), unique(classes))
-  colorVec <- palette[classes]
-
-  # PNG
-  img_file <- paste0(imgName, "_SAMPLE_dendro_dpi", dpi, ".", format)
-  Cairo(img_file, width = 1000, height = 600, dpi = dpi, bg = "white", type = format)
-  plotDendroWithColors(hc,
-                       leafColors = colorVec,
-                       groupLabel = "Sample class",
-                       showLabels = FALSE)
-  dev.off()
-
-} else {
-  ## ---- module-wise dendrogram (original) ----------------------
-  dist_mat <- as.dist(1 - cor(MEs, method = "pearson"))
-  hc       <- hclust(dist_mat, method = "average")
-
-  leafIDs  <- hc$labels                       # module IDs
-  palette  <- setNames(rainbow(length(leafIDs)), leafIDs)
-  img_file <- paste0(imgName, "_MODULE_dendro_dpi", dpi, ".", format)
-  Cairo(img_file, width = 1000, height = 600, dpi = dpi, bg = "white", type = format)
-  plotDendroWithColors(hc,
-                       leafColors = leafIDs,
-                       palette    = palette,
-                       groupLabel = "CEMi modules",
-                       showLabels = FALSE)
-  dev.off()
-}
+  qs::qsave(cem, "cem.qs");
 
   ## 7 · JSON summary -------------------------------------------------
-  summaryJSON <- list(module       = colnames(MEs),
-                      eigengeneVar = apply(MEs, 2, var))
-  write_json(summaryJSON, paste0(imgName, ".json"), pretty = TRUE)
+  #summaryJSON <- list(module       = colnames(MEs),
+  #                    eigengeneVar = apply(MEs, 2, var))
+  #write_json(summaryJSON, paste0(imgName, ".json"), pretty = TRUE)
 
-  invisible(list(cem  = cem,
-                 MEs  = MEs,
-                 dend = hc,
-                 img  = img_file,
-                 json = paste0(imgName, ".json")))
+  #invisible(list(cem  = cem,
+  #               MEs  = MEs,
+  #               dend = hc,
+  #               img  = img_file,
+  #               json = paste0(imgName, ".json")))
+  return(1)
 }
 
-
-plotDendroWithColors <- function(hc,
-                                 leafColors,
-                                 palette     = NULL,
-                                 groupLabel  = "Colours",
-                                 showLabels  = FALSE) {
+PlotCEMiDendro <- function(mode      = "sample",   # "sample" | "module"
+                           metaClass = "NA",
+                           imgName   = "cem_dendro",
+                           dpi       = 72,
+                           format    = "png") {
   
-  # Convert to hclust if a dendrogram
-  if (inherits(hc, "dendrogram"))
-    hc <- as.hclust(hc)
+  library(Cairo); library(WGCNA)
   
-  leaves <- hc$labels
-  nLeaf  <- length(leaves)
+  cem <- qs::qread("cem.qs")
+  if (!inherits(cem, "CEMiTool"))
+    stop("'cem.qs' does not contain a valid CEMiTool object.")
   
-  ## --- build colour vector ---------------------------------------
-  if (length(leafColors) == 1L && is.numeric(leafColors)) {
-    # treat as k = number of clusters
-    k          <- leafColors
-    clusters   <- cutree(hc, k = k)
-    leafColors <- clusters
-    palette    <- setNames(rainbow(k), sort(unique(clusters)))
+  mode <- match.arg(mode, c("module", "sample"))
+  expr <- attr(cem, "expression")       # genes × samples
+  mod  <- attr(cem, "module")
+  
+  # ── helper: plot + diagnostics + legend ─────────────────────────
+  plotDendroColoured <- function(hc, colNamed, label, file, legendPal) {
+    
+    leaves <- labels(as.dendrogram(hc))
+    cat("\n--- DEBUG -----------------------------------\n")
+    cat("First 6 leaves         :", head(leaves), "\n")
+    cat("Leaf count             :", length(leaves), "\n")
+    cat("Colour vector length   :", length(colNamed), "\n")
+    cat("Names match?           :", all(leaves %in% names(colNamed)), "\n")
+    cat("----------------------------------------------\n")
+    
+    if (!all(leaves %in% names(colNamed)))
+      stop("Colour vector missing leaves:\n  ",
+           paste(setdiff(leaves, names(colNamed)), collapse = ", "))
+    
+    colMat <- matrix(colNamed[leaves], nrow = length(leaves), ncol = 1,
+                     dimnames = list(leaves, NULL))
+    
+    if (dpi == 72) dpi <- 96
+    Cairo(file, width = 1000, height = 600, dpi = dpi,
+          bg = "white", type = format)
+    
+    oldMar <- par("mar"); par(mar = oldMar + c(0, 0, 0, 4))  # add right margin
+    
+    plotDendroAndColors(
+      dendro       = hc,
+      colors       = colMat,
+      groupLabels  = label,
+      dendroLabels = FALSE,
+      addGuide     = TRUE,
+      guideHang    = 0.05,
+      main         = paste("CEMiTool", label, "dendrogram"),
+      ylab         = "1 − Pearson correlation")
+    
+    ## ---------- legend overlay -----------------------------------
+    par(fig = c(0, 1, 0, 1), new = TRUE, mar = c(0, 0, 0, 0), xpd = NA)
+    plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "")
+    legend("topright",
+           legend = names(legendPal),
+           fill   = legendPal,
+           border = NA,
+           cex    = 0.8,
+           bty    = "n")
+    
+    par(oldMar)    # restore margins
+    dev.off()
   }
   
-  if (!is.null(names(leafColors))) {
-    # named vector – reorder to match leaf order
-    if (!all(leaves %in% names(leafColors))) {
-      stop("Missing colours for: ",
-           paste(setdiff(leaves, names(leafColors)), collapse = ", "))
-    }
-    col_vec <- leafColors[leaves]
-  } else {
-    if (length(leafColors) != nLeaf)
-      stop("Colour vector length (", length(leafColors),
-           ") ≠ number of leaves (", nLeaf, ").")
-    col_vec <- leafColors
+  # ── MODULE dendrogram ───────────────────────────────────────────
+  if (mode == "module") {
+    ME  <- moduleEigengenes(t(expr[mod$genes, ]),
+                            colors = mod$modules)$eigengenes
+    hc  <- hclust(as.dist(1 - cor(ME)), method = "average")
+    
+    ids   <- colnames(ME)
+    pal   <- setNames(rainbow(length(ids)), ids)
+    idVec <- setNames(ids, ids)                     # names = leaves
+    
+    file <- sprintf("%s_module_dendro_dpi%d.%s", imgName, dpi, format)
+    plotDendroColoured(hc, idVec, "modules", file, pal)
+    return(1)
   }
   
-  # Translate IDs via palette if necessary
-  if (!is.null(palette) && !all(col_vec %in% grDevices::colours())) {
-    if (!all(col_vec %in% names(palette)))
-      stop("Palette lacks entries for: ",
-           paste(setdiff(col_vec, names(palette)), collapse = ", "))
-    col_vec <- palette[col_vec]
-  }
+  # ── SAMPLE dendrogram ───────────────────────────────────────────
+  if (is.na(metaClass) || metaClass == "NA") metaClass <- 1
+  sa       <- cem@sample_annotation
+  classes  <- sa[[metaClass]]
+  names(classes) <- sa$SampleName
   
-  ## --- final sanity check ----------------------------------------
-  if (length(col_vec) != nLeaf)
-    stop("Internal error: colour vector still not length ", nLeaf)
+  hc <- hclust(as.dist(1 - cor(expr)), method = "average")
   
-  ## --- plot -------------------------------------------------------
-  suppressPackageStartupMessages(library(WGCNA))
-  plotDendroAndColors(
-    dendro       = hc,
-    colors       = matrix(col_vec, ncol = 1, dimnames = list(labels(hc), NULL)),
-    groupLabels  = "CEMi modules",
-    dendroLabels = names(col_vec),
-    addGuide     = TRUE,
-    guideHang    = 0.05,
-    main         = "Module-eigengene dendrogram",
-    ylab         = "1 − Pearson correlation"
-  )
+  pal      <- setNames(rainbow(length(unique(classes))), unique(classes))
+  colNamed <- setNames(pal[classes], names(classes))       # names = sample IDs
+  
+  file <- sprintf("%sdpi%d.%s", imgName, dpi, format)
+  plotDendroColoured(hc, colNamed, "sample class", file, pal)
+  1
 }

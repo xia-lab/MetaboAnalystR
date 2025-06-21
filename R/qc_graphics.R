@@ -1184,8 +1184,7 @@ SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
   summary_df$Outlier_Dendrogram <- dendrogram_outliers
 
   dataSet$summary_df <- summary_df
-  print(summary_df);
-  RegisterData(dataSet)
+   RegisterData(dataSet)
 
   return(1)
 }

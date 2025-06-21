@@ -398,7 +398,6 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     fit <- glmFit(y, design)
     
     coef_name <- colnames(design)[grep("^group", colnames(design))]  # Find group coefficient
-    print(colnames(design))
     if (length(coef_name) == 0) {
       stop("Error: Could not find the group coefficient in the design matrix.")
     }
