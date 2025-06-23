@@ -1,5 +1,5 @@
 my.impute.missing <- function(mSetObj = NA,
-                              method      = "min",
+                              method      = "lod",
                               grpLod      = FALSE,
                               grpMeasure  = FALSE) {
 
@@ -33,23 +33,18 @@ my.impute.missing <- function(mSetObj = NA,
 
   ## ----------------------- imputation ----------------------- ##
   if (method == "exclude") {
-
     good.inx <- apply(is.na(int.mat), 2, sum) == 0
     new.mat  <- int.mat[, good.inx, drop = FALSE]
     msg <- c(msg, "Variables with missing values were excluded.")
 
-  } else if (method == "min") {
+  } else if (method == "lod") {
     ## LoD replacement (1/5 of min positive value)
     if (grpLod) {
       new.mat <- ReplaceMissingByLoD.grp(int.mat, grp)
-      msg <- c(msg,
-               "Missing variables were replaced by group-specific LoDs ",
-               "(1/5 of the group-specific min positive value).")
+      msg <- c(msg, "Missing variables were replaced by group-specific LoDs (1/5 of the min positive values in its specific group for each feature).")
     } else {
       new.mat <- ReplaceMissingByLoD(int.mat)
-      msg <- c(msg,
-               "Missing variables were replaced by LoDs ",
-               "(1/5 of the global min positive value).")
+      msg <- c(msg, "Missing variables were replaced by LoDs (1/5 of the min positive value for each feature).")
     }
 
   } else if (method == "colmin") {

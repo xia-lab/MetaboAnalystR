@@ -372,13 +372,14 @@ RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
     preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
     qs::qsave(preproc, "preproc.qs");
   }
-  mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent."));
+  #mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent"));
+  mSetObj$msgSet$replace.msg <- c(paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent"));
   return(.set.mSet(mSetObj));
 }
 
 fetchReplaceMsg <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  res <- paste(mSetObj$msgSet$replace.msg, collapse = ";")
+  res <- paste(mSetObj$msgSet$replace.msg, collapse = ". ")
   return(res)
 }
 
@@ -396,7 +397,7 @@ fetchReplaceMsg <- function(mSetObj=NA){
 #'@import qs
 #'@export
 #'
-ImputeMissingVar <- function(mSetObj=NA, method="min", grpLod=F, grpMeasure=F){
+ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.impute.missing")){ # public web on same user dir

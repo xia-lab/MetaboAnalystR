@@ -46,14 +46,14 @@ getFeatureNum <- function(mSetObj=NA){
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
 
-  # call this to make sure always restart from the same footing, and taking care of prefiltering steps
-  # before it was called externally. This simplifies as internal private function
-
-  .prepare.prenorm.data(mSetObj);
+  if(!.on.public.web){
+    # call this to make sure always restart from the same footing, and taking care of prefiltering steps
+    # only required to run local R package, as web will be called from interface during bean init
+    .prepare.prenorm.data(mSetObj);
+  }
 
   mSetObj <- .get.mSet(mSetObj);
   
-  # PreparePrenormData() called already
   data <- qs::qread("prenorm.qs");
 
   cls <- mSetObj$dataSet$prenorm.cls;
@@ -601,7 +601,8 @@ save(mSetObj, file = "mSetObj__UpdateData.rda")
 
 
 PreparePrenormData <- function(mSetObj=NA){
-    # nothing to do. The function is internal only
+    print("save data - prenorm ....");
+    .prepare.prenorm.data(mSetObj);
 }
 
 .prepare.prenorm.data <- function(mSetObj=NA){
