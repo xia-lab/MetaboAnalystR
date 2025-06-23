@@ -311,7 +311,7 @@ PlotCEMiTreatmentHeatmap <- function(factorName,
     if(dpi == 72){
         dpi <- 96;
     }
-    width_px  <- max(50 + 40 * ncol(corMat), 8d * dpi)
+    width_px  <- max(50 + 40 * ncol(corMat), 8 * dpi)
     height_px <- max(50 + 20 * nrow(corMat), 6 * dpi)
     width_in  <- width_px  / dpi
     height_in <- height_px / dpi
