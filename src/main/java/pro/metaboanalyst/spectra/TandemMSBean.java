@@ -452,6 +452,7 @@ public class TandemMSBean implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public ListDataModel<MS2FeatureBean> getMS2FeatureBean() {
         return FeatureModel;
     }
@@ -536,12 +537,11 @@ public class TandemMSBean implements Serializable {
         this.summarize_res_plot = summarize_res_plot;
     }
 
+    @JsonIgnore
     public StreamedContent getImage() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
         String filename = context.getExternalContext().getRequestParameterMap().get("filename");
-
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
-
         StreamedContent FileImage = null;
         try {
             FileImage = DataUtils.getStreamedImage(filepath, filename);
@@ -554,6 +554,7 @@ public class TandemMSBean implements Serializable {
         this.image = image;
     }
 
+    @JsonIgnore
     public StreamedContent getSingleMirrorImage() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -563,6 +564,7 @@ public class TandemMSBean implements Serializable {
         return singleMirrorImage;
     }
 
+    @JsonIgnore
     public StreamedContent getRefSpecTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -572,6 +574,7 @@ public class TandemMSBean implements Serializable {
         return refSpecTxt;
     }
 
+    @JsonIgnore
     public StreamedContent getCmpdInfoTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -613,6 +616,7 @@ public class TandemMSBean implements Serializable {
         this.prec_idx = prec_idx;
     }
 
+    @JsonIgnore
     public UploadedFile getDataFile() {
         return dataFile;
     }
@@ -731,6 +735,7 @@ public class TandemMSBean implements Serializable {
         this.sanityMsg = sanityMsg;
     }
 
+    @JsonIgnore
     public ListDataModel<MS2FeatureBean> getMS2FeatureBatchBean() {
         return FeatureModelbatch;
     }
@@ -950,6 +955,7 @@ public class TandemMSBean implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public DualListModel<String> getPrecIncluItems() {
         return precIncluItems;
     }
@@ -998,6 +1004,7 @@ public class TandemMSBean implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public String getPieModel() {
         return pieModel;
     }
@@ -1175,7 +1182,7 @@ public class TandemMSBean implements Serializable {
                 msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName);
 
         // create job bash
-        RSpectraUtils.createSLURMBash(sb.getRConnection(), "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName);
+        RSpectraUtils.createSLURMBash(sb.getRConnection(), "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName + "/ExecuteRawSpec.sh");
 
         // submit job to SLURM
         String JobSubmission = "sbatch /data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName + "/ExecuteRawSpec.sh";
@@ -1319,6 +1326,7 @@ public class TandemMSBean implements Serializable {
         return s.toString();
     }
 
+    @JsonIgnore
     public StreamedContent getTextOutputFile() throws IOException {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/metaboanalyst_ms2_proc.txt");
     }

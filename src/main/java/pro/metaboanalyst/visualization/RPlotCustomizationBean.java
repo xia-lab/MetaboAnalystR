@@ -26,7 +26,6 @@ public class RPlotCustomizationBean implements Serializable {
 
     @Inject
     private RPlotCustomizationAgent aiCustomizer;
-    
 
     private String plotType = "";
     private String prompt;
@@ -100,7 +99,7 @@ public class RPlotCustomizationBean implements Serializable {
                 sb.addMessage("error", "No R command found for source: " + source);
                 return;
             }
-            
+
             // Get the AI response
             String response = aiCustomizer.customizePlot(source, plotType, prompt);
             aiResponse = response;
@@ -111,7 +110,13 @@ public class RPlotCustomizationBean implements Serializable {
 
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
-        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png" + "?t=" + System.currentTimeMillis();
+        System.out.println(plotSource + "========plotSource");
+        if (sb.getImageSource().equals("volcano")) {
+            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png" + "?t=" + System.currentTimeMillis();
+        } else {
+            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
+
+        }
     }
 
     public static final Map<String, String> GRAPHICS_CMD_TO_R_FUNC = Map.ofEntries(

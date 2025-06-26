@@ -77,7 +77,26 @@
                         src="../viewer/_path_viewer_v1.8.html?userID=#{sessionBean1.currentUser.name}" 
                         style="border-width: 0px; height: 560px; width: 1200px"></iframe>
             </h:panelGrid>
+            <h:form>
+                <h:panelGrid style="text-align: center; padding:20px; width: 100%">
+                    <h:panelGrid columns="7" style="padding-left: 10%">
+                        <p:selectBooleanCheckbox value ="#{pathBean.showGrid}" style="line-height: 18px"/>
+                        <h:outputLabel style="font-weight: bold" value="Show gridline"/>
+                        <p:commandLink onclick="PF('plotparam').show()" value="More options" style="padding-left: 2px; padding-right: 2px"/>
+                        <p:spacer style="width:40px"/>
+                        <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
 
+                        <p:spacer style="width:200px"/>
+                        <p:commandButton value="Enrichment Network" 
+                                         ajax="false" 
+                                         icon="pi pi-caret-right"
+                                         style="width: 180px;"
+                                         onclick="PF('statusDialog').show()" 
+                                         oncomplete="PF('statusDialog').hide()"                              
+                                         action="#{pathBean.proceed2EnrichNet()}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
             <hr class="style-one"/>
             <h:form id="resTblForm" style="padding:10px 20px 10px 40px;">
                 <p>

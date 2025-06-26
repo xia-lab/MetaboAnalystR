@@ -8,8 +8,13 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.CDI;
@@ -50,6 +55,7 @@ import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.context.Flash;
 import jakarta.faces.event.PhaseId;
+import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -59,6 +65,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -79,6 +86,15 @@ import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.HeatMap2Bean;
 import pro.metaboanalyst.lts.MailService;
+/* ------------- Jackson core ------------------------------- */
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.enterprise.inject.spi.AnnotatedField;
+
+/* ------------- Java reflection + collections -------------- */
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
 
 /**
  *
@@ -1526,23 +1542,51 @@ public class DataUtils {
     }
 
     public static String convertObjToJson(Object obj) {
-        // Creating Object of ObjectMapper define in Jakson Api
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-        String jsonStr = null;
+
+        ObjectMapper mapper = new ObjectMapper()
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.DEFAULT);
+
+        /* ---- custom filter: drop “getter-only” props ---------------- */
+        mapper.setSerializerFactory(
+                mapper.getSerializerFactory()
+                        .withSerializerModifier(new BeanSerializerModifier() {
+
+                            @Override
+                            public List<BeanPropertyWriter> changeProperties(
+                                    SerializationConfig cfg,
+                                    BeanDescription beanDesc,
+                                    List<BeanPropertyWriter> props) {
+
+                                // collect every declared field name in this class hierarchy
+                                Set<String> fieldNames = new HashSet<>();
+                                Class<?> c = beanDesc.getBeanClass();
+                                while (c != null && c != Object.class) {
+                                    for (Field f : c.getDeclaredFields()) {
+                                        fieldNames.add(f.getName());
+                                    }
+                                    c = c.getSuperclass();
+                                }
+
+                                // keep property if it came from a FIELD
+                                // or the getter’s name matches a real field
+                                return props.stream()
+                                        .filter(p -> p.getMember() instanceof AnnotatedField // came from a field
+                                        || fieldNames.contains(p.getName())) // getter backed by field
+                                        .toList();
+                            }
+                        }));
+
         try {
-            // get Oraganisation object as a json string
-            jsonStr = objectMapper.writeValueAsString(obj);
-            jsonStr = jsonStr.replace(":null", ":\"\"");
-            //jsonStr = DataUtils.escape(jsonStr);
+            String json = mapper.writeValueAsString(obj);
+            // replace literal nulls with empty quotes if you still need that rule
+            return json.replace(":null", ":\"\"");
         } catch (JsonProcessingException ex) {
             LOGGER.error("convertObjToJson", ex);
+            return null;
         }
-
-        return jsonStr;
     }
 
     public static void convertJsonToObj(Object bean, String jsonString, String type) throws JsonProcessingException {

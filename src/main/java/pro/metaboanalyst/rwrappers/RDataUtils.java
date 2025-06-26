@@ -44,7 +44,7 @@ public class RDataUtils {
      * */
     public static boolean initDataObjects(RConnection RC, String dataType, String analType, boolean isPaired) {
         try {
-            String rCommand = "InitDataObjects(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ")";
+            String rCommand = "InitDataObjects(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ", 150)";
             RC.voidEval(rCommand);
             RCenter.recordRCommand(RC, rCommand);
             return true;
@@ -59,7 +59,7 @@ public class RDataUtils {
             String analType = "multi";
             RC.assign("moduleNms.vec", analTypeArr);
 
-            String rCommand = "InitDataObjectsMulti(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ")";
+            String rCommand = "InitDataObjectsMulti(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ", 150)";
             RC.voidEval(rCommand);
             RCenter.recordRCommand(RC, rCommand);
             return true;
@@ -3242,5 +3242,16 @@ public class RDataUtils {
         }
         return;
 
+    }
+    
+    public static int prepareEnrichNet(RConnection RC, String netNm, String overlapType, String type) {
+        try {
+            String rCommand = "PrepareEnrichNet(NA, \"" + netNm + "\", \"" + overlapType + "\", \"" + type + "\")";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();  // return is not boolean; we assume successful execution means true
+        } catch (Exception e) {
+            LOGGER.error("prepareEnrichNet", e);
+        }
+        return 0;
     }
 }

@@ -106,6 +106,7 @@ public class MsetBean implements Serializable {
         this.libOpt = libOpt;
     }
 
+    @JsonIgnore
     public UploadedFile getMsetLibFile() {
         return msetLibFile;
     }
@@ -253,6 +254,7 @@ public class MsetBean implements Serializable {
         }
     }
 
+    @JsonIgnore
     public OraBean[] getOraBeans() {
         if (oraBeans == null) {
             populateOraBean();
@@ -313,6 +315,7 @@ public class MsetBean implements Serializable {
         return chemLibs.contains(msetOpt);
     }
 
+    @JsonIgnore
     public QeaBean[] getQeaBeans() {
         if (qeaBeans == null) {
             populateQeaBean();
@@ -338,11 +341,13 @@ public class MsetBean implements Serializable {
         this.msetNm = msetNm;
     }
 
+    @JsonIgnore
     public String getMsetImgPath() {
         String imgNm = REnrichUtils.plotQeaMset(sb, msetNm, "png", 150);
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + imgNm;
     }
 
+    @JsonIgnore
     public MetSetBean[] getCurrentMsetLib() {
         System.out.println(msetNm + "=====getCurrentMsetLib");
         String[] details = REnrichUtils.getHTMLMetSet(sb.getRConnection(), msetNm);
@@ -359,11 +364,13 @@ public class MsetBean implements Serializable {
         this.imgOpt = imgOpt;
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getSifFile() {
         REnrichUtils.prepareSifDownload(sb);
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/metaboanalyst_enrich_sif.zip");
     }
 
+    @JsonIgnore
     public String getBarModel() {
         if (barModel == null) {
             //System.out.println(sb.getAnalType() + "====analtype");
@@ -432,6 +439,7 @@ public class MsetBean implements Serializable {
                 ).toJson();
     }
 
+    @JsonIgnore
     public String getPieModel() {
         if (pieModel == null) {
             preparePieChart(sb.getRConnection());

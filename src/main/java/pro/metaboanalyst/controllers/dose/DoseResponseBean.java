@@ -1167,6 +1167,7 @@ public class DoseResponseBean implements Serializable {
         }
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getResTableFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/curvefit_detailed_table.csv");
     }
@@ -1176,6 +1177,7 @@ public class DoseResponseBean implements Serializable {
         contineousDoes = !primaryType.equals("disc");
     }
 
+    @JsonIgnore
     public SelectItem[] getReferenceGroupFromAnalysisMetaOpts() {
         String[] grpNames = RDataUtils.getUniqueMetaNames(sb.getRConnection(), analysisMeta);
         referenceGroupFromAnalysisMetaOpts = new SelectItem[grpNames.length];
@@ -1214,8 +1216,8 @@ public class DoseResponseBean implements Serializable {
         }
     }
 
+    @JsonIgnore
     public boolean isMultiMeta() {
-
         String[] metaDataGroups = RDataUtils.getMetaDataGroups(sb.getRConnection());
         return metaDataGroups.length > 1;
     }

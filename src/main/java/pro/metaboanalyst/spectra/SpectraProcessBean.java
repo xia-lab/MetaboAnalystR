@@ -147,8 +147,10 @@ public class SpectraProcessBean implements Serializable {
         this.subidx_exp_current = subidx_exp_current;
     }
 
+    @JsonIgnore
     private String exposome_details = null;
 
+    @JsonIgnore
     public String getExposome_details() {
         if ((subidx_exp != subidx_exp_current) || (resNum_exp != resNum_exp_current)) {
             exposome_details = get_specific_exposome_details(resNum_exp, subidx_exp + 1, current_ft_label, sb.getRConnection());
@@ -1651,6 +1653,7 @@ public class SpectraProcessBean implements Serializable {
 
     private boolean isms2 = !"ms1".equals(ms2DataOpt);
 
+    @JsonIgnore
     public boolean isIsms2() {
         return !"ms1".equals(ms2DataOpt);
     }
@@ -1659,6 +1662,7 @@ public class SpectraProcessBean implements Serializable {
         this.isms2 = isms2;
     }
 
+    @JsonIgnore
     public boolean isIsms2DIA() {
         return "swath".equals(ms2DataOpt);
     }
@@ -1673,8 +1677,10 @@ public class SpectraProcessBean implements Serializable {
         this.mirrorplot_jsonNM = mirrorplot_jsonNM;
     }
 
+    @JsonIgnore
     private String jsonDir;
 
+    @JsonIgnore
     public String getJsonDir() {
         String image_json_name = mirrorplot_jsonNM;
         if (!jsonHashMap.isEmpty()) {
@@ -1756,6 +1762,7 @@ public class SpectraProcessBean implements Serializable {
         this.fromGoogleDrive = fromGoogleDrive;
     }
 
+    @JsonIgnore
     public String getCentroidColName() {
         if (fromGoogleDrive) {
             return "Size Accept";

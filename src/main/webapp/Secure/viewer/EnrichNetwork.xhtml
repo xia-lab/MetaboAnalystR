@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="#{sessionBean1.templatePath}">
+        <ui:define name="header"/>
+
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('EnrichNetwork', '/Secure/viewer/EnrichNetwork.xhtml')}"></f:event>    
+    </ui:define>
+    <ui:define name="leftpaneout"/>
+        <ui:define name="toptrack">
+        <h:form id="traceForm">
+            <p:breadCrumb id="traceNavi" model="#{ctl.simpleMenuModel}"/>
+        </h:form>
+    </ui:define>
+    <ui:define name="content"> 
+        <iframe id="iframeId" style="position: absolute; width:100%; height:100%; padding: 0" frameborder="0"
+                src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_enrnet_viewer_1.1.html"/>
+        <ui:include src="/template/_feature_dialog.xhtml" />
+    </ui:define>
+</ui:composition>
+
+
+

@@ -36,6 +36,7 @@ import pro.metaboanalyst.spectra.SpectraUploadBean;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.RList;
 import org.rosuda.REngine.Rserve.RConnection;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  *
@@ -830,6 +831,7 @@ public class ProjectBean implements Serializable {
         this.projectTable = projectTable;
     }
 
+    @JsonIgnore
     public String getProjectRelativeDir() {
         //set relative dir
         String relativeDir = ab.getProjectsHome() + File.separator + getCurrentProject().getFolder();

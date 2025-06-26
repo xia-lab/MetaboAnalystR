@@ -5,20 +5,32 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.regex.Pattern;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.llm.GoogleAIClient;
-import pro.metaboanalyst.rwrappers.UniVarTests;
 import pro.metaboanalyst.rwrappers.RCenter;
 
+/**
+ * Dynamically rewrites &amp; executes R plotting functions through an LLM.
+ * <p>
+ * New features:
+ * <ul>
+ *   <li>Accepts an <strong>optional list of helper functions</strong> that are
+ *       appended to the LLM prompt so the model has full context.</li>
+ *   <li>Strips <code>```r</code> fences, handles multi-function responses
+ *       and ensures <em>every</em> top-level assignment is renamed with the
+ *       <code>AI</code> suffix.</li>
+ * </ul>
+ */
 @Named
 @SessionScoped
 public class RPlotCustomizationAgent implements Serializable {
@@ -26,21 +38,25 @@ public class RPlotCustomizationAgent implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = Logger.getLogger(RPlotCustomizationAgent.class.getName());
 
-    private static final String SYSTEM_PROMPT = "You are an expert in R programming and data visualization. "
-            + "Update the R plotting function below according to the user's request while preserving core analytical logic. "
-            + "Return ONLY the modified R code or a concise status message when no change is required.";
+    private static final String SYSTEM_PROMPT =
+            "You are an expert in R programming and data visualization. "
+          + "Update the R plotting function below according to the user's request "
+          + "while preserving core analytical logic. "
+          + "Return ONLY the modified R code or a concise status message when no change is required.";
 
     @Inject
-    private ApplicationBean1 appBean;
+    private transient ApplicationBean1 appBean;
 
     @Inject
-    private SessionBean1 sb;
+    private transient SessionBean1 sb;
 
-    
     private transient GoogleAIClient aiClient;
     private static String RSCRIPT_DIR;
     private final List<ChatMessage> chatHistory = new ArrayList<>();
 
+    /*───────────────────────────────────────────────────────────────────────────
+     *  LIFE-CYCLE
+     *─────────────────────────────────────────────────────────────────────────*/
     @PostConstruct
     private void init() {
         if (appBean == null) {
@@ -48,94 +64,135 @@ public class RPlotCustomizationAgent implements Serializable {
             return;
         }
         RSCRIPT_DIR = appBean.getRscriptsHomePath() + "/XiaLabPro/R/plotting";
-        
-        // Initialize the AI client
         try {
             aiClient = new GoogleAIClient();
         } catch (Exception e) {
-            LOG.severe("Failed to initialize GoogleAIClient: " + e.getMessage());
+            LOG.severe("Failed to initialise GoogleAIClient: " + e.getMessage());
         }
     }
 
+    /*───────────────────────────────────────────────────────────────────────────
+     *  PUBLIC API
+     *─────────────────────────────────────────────────────────────────────────*/
+
+    /** Back-compat wrapper: call with no helpers. */
     public String customizePlot(String key, String functionName, String userRequest) {
+        return customizePlot(key, functionName, Collections.emptyList(), userRequest);
+    }
+
+    /**
+     * Generate a customised plot by rewriting the specified R function
+     * (plus any helper routines) via the LLM, then evaluating the result.
+     *
+     * @param key          graphics-map key (used to replay the command)
+     * @param functionName name of the main R routine to edit
+     * @param helpers      extra R functions that the main routine relies on
+     * @param userRequest  natural-language instructions from the UI
+     * @return the modified R code (with <code>AI</code> suffixes) or an error
+     *         message suitable for display
+     */
+    public String customizePlot(String key,
+                                String functionName,
+                                List<String> helpers,
+                                String userRequest) {
+
+        /*── sanity checks ───────────────────────────────────────────────────*/
         if (RSCRIPT_DIR == null) {
             return err("R script directory not initialised");
         }
-
         if (aiClient == null) {
-            return err("AI client not initialized");
+            return err("AI client not initialised");
         }
 
-        // Resolve alias if needed and ensure function is loaded in R
-        String resolvedFuncName = functionName;
+        /*── 0. resolve aliases for the MAIN routine (lazy load if needed) ──*/
+        String resolvedMain = functionName;
         if (FUNCTION_MAPPINGS.containsKey(functionName)) {
-            FunctionMapping mapping = FUNCTION_MAPPINGS.get(functionName);
-            resolvedFuncName = mapping.rFuncName;
+            FunctionMapping m = FUNCTION_MAPPINGS.get(functionName);
+            resolvedMain = m.rFuncName;
             try {
-                String lazyLoader = ".load.scripts.on.demand('" + mapping.rScriptFile + "')";
-                RConnection RC = sb.getRConnection();
-                RC.eval("if (!exists('" + resolvedFuncName + "')) " + lazyLoader);
+                String lazyLoader = ".load.scripts.on.demand('" + m.rScriptFile + "')";
+                RConnection rc = sb.getRConnection();
+                rc.eval("if (!exists('" + resolvedMain + "')) " + lazyLoader);
             } catch (Exception ex) {
                 LOG.log(Level.WARNING, "Lazy loading failed", ex);
             }
         }
 
-        // Fetch R function code
-        String original = readFunctionCode(resolvedFuncName).orElse(null);
-        if (original == null) {
-            return err("Function '" + resolvedFuncName + "' not found");
+        /*── 1. pull source code for main routine ───────────────────────────*/
+        String originalMain = readFunctionCode(resolvedMain).orElse(null);
+        if (originalMain == null) {
+            return err("Function '" + resolvedMain + "' not found");
         }
 
-        // Assemble chat prompt
-        StringBuilder historyBuilder = new StringBuilder();
-        for (ChatMessage msg : chatHistory) {
-            historyBuilder.append("[").append(msg.role).append("]\n")
-                    .append(msg.content).append("\n\n");
+        /*── 2. pull helper sources (if any) ────────────────────────────────*/
+        StringBuilder helperBlocks = new StringBuilder();
+        for (String helper : helpers) {
+            String resolvedHelper =
+                    FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null))
+                                     .rFuncName;
+            readFunctionCode(resolvedHelper).ifPresent(code -> {
+                helperBlocks.append("\n\n# Helper: ").append(resolvedHelper)
+                            .append("\n").append(code);
+            });
         }
 
-        String prompt = historyBuilder.toString()
-                + SYSTEM_PROMPT + "\n\nHere is the original R function:\n\n"
-                + original + "\n\nUser request: " + userRequest;
+        /*── 3. assemble prompt incl. chat history ─────────────────────────*/
+        StringBuilder history = new StringBuilder();
+        for (ChatMessage m : chatHistory) {
+            history.append('[').append(m.role).append("]\n")
+                   .append(m.content).append("\n\n");
+        }
+
+        String prompt = history
+                + SYSTEM_PROMPT
+                + "\n\nHere is the original R code the app is running:\n\n"
+                + originalMain
+                + helperBlocks
+                + "\n\nUser request:\n" + userRequest;
 
         chatHistory.add(new ChatMessage("user", userRequest));
-        String modifiedRFunction = aiClient.generateText(prompt);
-        chatHistory.add(new ChatMessage("model", modifiedRFunction));
 
-        // Remove code fences and rename function
-        modifiedRFunction = modifiedRFunction
-                .replaceAll("^```[a-zA-Z]*\\s*", "")
-                .replaceAll("\\s*```$", "");
+        /*── 4. call the model ──────────────────────────────────────────────*/
+        String llmOut = aiClient.generateText(prompt);
+        chatHistory.add(new ChatMessage("model", llmOut));
 
-        String aiFuncName = functionName + "AI";
+        /*── 5. sanitise: strip fences, rename assignments, enforce suffix ─*/
+        llmOut = llmOut.replaceAll("(?s)```[rR]?\\s*", "")
+                       .replaceAll("(?s)```\\s*$", "");
 
-        // Case 1: Try to rename existing assignment
-        String pattern = "\\b" + functionName + "\\s*<-\\s*function";
-        if (modifiedRFunction.matches("(?s).*" + pattern + ".*")) {
-            modifiedRFunction = modifiedRFunction.replaceFirst(pattern, aiFuncName + " <- function");
-        } else if (modifiedRFunction.trim().startsWith("function")) {
-            // Case 2: AI returned anonymous function, we prepend assignment
-            modifiedRFunction = aiFuncName + " <- " + modifiedRFunction;
+        final String aiSuffix = "AI";
+        final String aiMain   = functionName + aiSuffix;
+
+        // rename every *top-level* assignment with the original main name
+        llmOut = llmOut.replaceAll(
+                "(?m)^\\s*"
+              + Pattern.quote(functionName)
+              + "\\s*<-\\s*function",
+                aiMain + " <- function");
+
+        // if still anonymous (no "<- function" anywhere) prepend assignment
+        if (!llmOut.matches("(?s).*<-\\s*function.*")) {
+            llmOut = aiMain + " <- " + llmOut.trim();
         }
 
-        // Evaluate modified function in R
+        /*── 6. evaluate the code in R ──────────────────────────────────────*/
         try {
-            System.out.println(modifiedRFunction);
-            sb.getRConnection().eval(modifiedRFunction);
+            sb.getRConnection().eval(llmOut);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "R evaluation failed", ex);
+            return err("R evaluation failed: " + ex.getMessage());
         }
 
-        String origRCommand = sb.getGraphicsMap().get(key);
-        executeAICustomizedPlot(origRCommand);
+        /*── 7. replay the graphics command using the AI version ───────────*/
+        String origCmd = sb.getGraphicsMap().get(key);
+        executeAICustomizedPlot(origCmd, aiSuffix);
 
-        return modifiedRFunction;
+        return llmOut;  // for logging / debugging
     }
 
-    private static final Map<String, FunctionMapping> FUNCTION_MAPPINGS = Map.of(
-            "PlotVolcano", new FunctionMapping("my.plot.volcano", "util_volcano.Rc"),
-            "plotVennDiagram", new FunctionMapping("my.plot.venn", "util_venn.Rc"),
-            "Plot3D", new FunctionMapping("my.plot.scatter3d", "util_3dscatter.Rc")
-    );
+    /*───────────────────────────────────────────────────────────────────────────
+     *  INTERNAL HELPERS
+     *─────────────────────────────────────────────────────────────────────────*/
 
     private Optional<String> readFunctionCode(String rFuncName) {
         try {
@@ -148,51 +205,33 @@ public class RPlotCustomizationAgent implements Serializable {
         }
     }
 
-    private static String err(String msg) {
-        return "Error: " + msg;
-    }
-
-    private static class ChatMessage {
-
-        private final String role;
-        private final String content;
-
-        public ChatMessage(String role, String content) {
-            this.role = role;
-            this.content = content;
+    private void executeAICustomizedPlot(String originalCmd, String aiSuffix) {
+        if (originalCmd == null || originalCmd.isBlank()) {
+            LOG.warning("No graphics command found for key");
+            return;
         }
-
-        public String getRole() {
-            return role;
-        }
-
-        public String getContent() {
-            return content;
-        }
-    }
-
-    private static class FunctionMapping {
-
-        final String rFuncName;
-        final String rScriptFile;
-
-        FunctionMapping(String rFuncName, String rScriptFile) {
-            this.rFuncName = rFuncName;
-            this.rScriptFile = rScriptFile;
-        }
-    }
-
-    public void executeAICustomizedPlot(String rCommand) {
         try {
-            // Add AI suffix to the R function name
-            String modifiedRCommand = rCommand.replaceFirst("(\\w+)\\(", "$1AI(");
-
-            // Get R connection and execute the modified command
-            RConnection RC = sb.getRConnection();
-            RCenter.recordRCommand(RC, modifiedRCommand);
-            RC.voidEval(modifiedRCommand);
+            String modified = originalCmd.replaceFirst("(\\w+)\\(", "$1" + aiSuffix + "(");
+            RConnection rc = sb.getRConnection();
+            RCenter.recordRCommand(rc, modified);
+            rc.voidEval(modified);
         } catch (Exception e) {
             LOG.severe("Error in executeAICustomizedPlot: " + e.getMessage());
         }
     }
+
+    private static String err(String msg) { return "Error: " + msg; }
+
+    /*───────────────────────────────────────────────────────────────────────────
+     *  SUPPORT CLASSES
+     *─────────────────────────────────────────────────────────────────────────*/
+    private record ChatMessage(String role, String content) {}
+
+    private static final Map<String, FunctionMapping> FUNCTION_MAPPINGS = Map.of(
+            "PlotVolcano",     new FunctionMapping("my.plot.volcano",   "util_volcano.Rc"),
+            "plotVennDiagram", new FunctionMapping("my.plot.venn",      "util_venn.Rc"),
+            "Plot3D",          new FunctionMapping("my.plot.scatter3d", "util_3dscatter.Rc")
+    );
+
+    private record FunctionMapping(String rFuncName, String rScriptFile) {}
 }

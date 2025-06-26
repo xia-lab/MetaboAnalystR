@@ -181,6 +181,7 @@ public class RocAnalBean implements Serializable {
         rocMdlDD = 0;
     }
 
+    @JsonIgnore
     public int getBestModelIndex() {
         return RocUtils.getBestModelInx(sb.getRConnection());
     }
@@ -294,7 +295,8 @@ public class RocAnalBean implements Serializable {
     public void setLvNum(int lvlNum) {
         this.lvNum = lvlNum;
     }
-
+    
+    @JsonIgnore
     public String getNewSampleNames() {
         return RDataUtils.getNewSampleNames(sb.getRConnection());
     }
@@ -318,7 +320,8 @@ public class RocAnalBean implements Serializable {
     public void setFeatRankOpt(String featRankOpt) {
         this.featRankOpt = featRankOpt;
     }
-
+    
+    @JsonIgnore
     public String getClsMethodLabel() {
         if (featRankOpt.equals("svm")) {
             return "SVM";
@@ -335,6 +338,7 @@ public class RocAnalBean implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public String getFeatRankLabel() {
         if (featRankOpt.equals("svm")) {
             return "SVM built-in";
@@ -714,11 +718,13 @@ public class RocAnalBean implements Serializable {
     public void updateProbView() {
         RocUtils.plotProbView(sb, sb.getNewImage("cls_prob"), "png", 150, rocMdlDD, showMisCls ? 1 : 0, 0);
     }
-
+    
+    @JsonIgnore
     public String getConfMat() {
         return (RocUtils.getConfusionMatrix(sb.getRConnection()));
     }
-
+    
+    @JsonIgnore
     public String getTestConfMat() {
         if (showPredCls) {
             return (RocUtils.getConfusionMatrixTest(sb.getRConnection()));
@@ -726,7 +732,8 @@ public class RocAnalBean implements Serializable {
             return (RocUtils.getConfusionMatrix(sb.getRConnection()));
         }
     }
-
+    
+    @JsonIgnore
     public String getAccuText() {
         return RocUtils.getAccuSummary(sb.getRConnection());
     }
@@ -775,11 +782,13 @@ public class RocAnalBean implements Serializable {
         showCI = false;
         count++;
     }
-
+    
+    @JsonIgnore
     public String getRocUnivImg() {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + univROCImg;
     }
-
+    
+    @JsonIgnore
     public String getRocUnivBPImg() {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + univROCBoxPlot;
     }
@@ -939,7 +948,8 @@ public class RocAnalBean implements Serializable {
     public void setSmplPredBeans(ArrayList<NameBean> smplPredBeans) {
         this.smplPredBeans = smplPredBeans;
     }
-
+    
+    @JsonIgnore
     public String getLRConvergence() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRConvergence(sb.getRConnection()));
@@ -947,7 +957,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLREquation() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLREquation(sb.getRConnection()));
@@ -955,7 +966,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLRmodelTable() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRmodelTable(sb.getRConnection()));
@@ -963,7 +975,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLRperformTable() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRperformanceTable(sb.getRConnection()));
@@ -971,7 +984,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLRclsLabel() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRclsLabel(sb.getRConnection()));
@@ -979,7 +993,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLRclsLabelNew() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRclsLabelNew(sb.getRConnection()));
@@ -987,7 +1002,8 @@ public class RocAnalBean implements Serializable {
             return (null);
         }
     }
-
+    
+    @JsonIgnore
     public String getLRthreshold() {
         if (clsMethodOpt.equals("lr")) {
             return (RocUtils.getLRthreshold(sb.getRConnection()));
@@ -1134,14 +1150,17 @@ public class RocAnalBean implements Serializable {
         canEdit = true;
     }
 
+    @JsonIgnore
     public String getProbDownloadLink() {
         return "<a href = \"/MetaboAnalyst/resources/users/" + sb.getCurrentUser().getName() + "/roc_pred_prob.csv\"><b>" + "Details" + "</b></a>";
     }
-
+    
+    @JsonIgnore
     public String getProbDownloadLink2() {
         return "<a href = \"/MetaboAnalyst/resources/users/" + sb.getCurrentUser().getName() + "/roc_pred_prob1.csv\"><b>" + "Details" + "</b></a>";
     }
 
+    @JsonIgnore
     public String getRocDetailImg() {
         //System.out.println("univROCImg======" + univROCImg);
         if (rocDetailImg == null) {
@@ -1152,6 +1171,7 @@ public class RocAnalBean implements Serializable {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + rocDetailImg;
     }
 
+    @JsonIgnore
     public String getRocBPDetailImg() {
         if (rocDetailBp == null) {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + univROCBoxPlot;
@@ -1160,7 +1180,8 @@ public class RocAnalBean implements Serializable {
     }
 
     private int featureNum = -1;
-
+    
+    @JsonIgnore
     public boolean isFeatureRatioOptOut() {
         if (featureNum == -1) {
             featureNum = RDataUtils.getFeatureNum(sb.getRConnection());
@@ -1211,7 +1232,8 @@ public class RocAnalBean implements Serializable {
     public void setSelMeta(String selMeta) {
         this.selMeta = selMeta;
     }
-
+    
+    @JsonIgnore
     public String getFactor1() {
         if (factor1.equals("NA")) {
             factor1 = mfb.getUniqueMetaList().get(0).getValue().toString();
@@ -1222,7 +1244,8 @@ public class RocAnalBean implements Serializable {
     public void setFactor1(String factor1) {
         this.factor1 = factor1;
     }
-
+    
+    @JsonIgnore
     public String getFactor2() {
         if (factor2.equals("NA")) {
             factor2 = "all";

@@ -56,6 +56,8 @@ public class AjaxCallServlet extends HttpServlet {
     ApplicationBean1 ab;
     @Inject
     SessionBean1 sb;
+    @Inject
+    MummiAnalBean ma;
 
     private static final Logger LOGGER = LogManager.getLogger(AjaxCallServlet.class);
 
@@ -75,7 +77,25 @@ public class AjaxCallServlet extends HttpServlet {
         String res = "";
         String prefix = "/MetaboAnalyst"; //
 
-        if (funcName.equalsIgnoreCase("redraw")) {
+        if (funcName.equalsIgnoreCase("getjobinfo")) {
+            String dir = sb.getCurrentUser().getRelativeDir();
+            String org = sb.getOrg();
+            res = "/MetaboAnalyst" + dir + "||" + org;
+            String viewMode = request.getParameter("viewmode");
+            if (sb.getAnalType().startsWith("path")) {
+                res = res + "||" + sb.getAnalType() + "||" + sb.getAnalType() + "||" + "kegg" + "||" + true + "||" + sb.getEnrNetName();
+
+            } else {
+                switch (viewMode) {
+                    case "enrnet":
+                        res = res + "||" + ma.getAlgOptSingle() + "||" + sb.getAnalType() + "||" + "kegg" + "||" + true + "||" + sb.getEnrNetName();
+                        sb.setEnrNetSavedInit(false);
+
+                        break;
+                }
+            }
+
+        } else if (funcName.equalsIgnoreCase("redraw")) {
             //String analType = (String) request.getParameter("analType");
             double zoomPercent = Double.parseDouble(request.getParameter("zoompc"));
             double panXPercent = Double.parseDouble(request.getParameter("panXpc"));
@@ -390,6 +410,9 @@ public class AjaxCallServlet extends HttpServlet {
                 case "network", "gene_metabolites", "metabo_phenotypes", "metabo_metabolites", "global", "dspc" -> {
                     fileName = "networkanalyst_" + nm + ".json";
                     outputName = "report_" + nm + ".json";
+                }
+                case "enrichNet" -> { //enrichment network in mum and path
+                    fileName = sb.getEnrNetName();
                 }
                 case "enrichment_network" -> {
                     fileName = "msea_network.json";

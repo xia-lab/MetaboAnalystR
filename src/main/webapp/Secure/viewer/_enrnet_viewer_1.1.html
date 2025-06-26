@@ -1,0 +1,425 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/easyui.light.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/iframe_style_1.02.css"/>   
+        <link rel="stylesheet" type="text/css" href="../../resources/css/spectrum.min.css"/>  
+        <script type="text/javascript" src="../../resources/jscripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.snapshot.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.layout.forceAtlas2.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.common.utils.min.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.renderers.svg.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.edges.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.labels.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/sigma/sigma.svg.nodes.def.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/spectrum_attr.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/partialSave.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/changedpi.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/network_utils_v3.2.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/list_enrich_net_1.1.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/list_enrich_report.js"></script>
+        <script type="text/javascript" src="../../resources/jscripts/xialabpro/pro_utils.js"></script>
+
+
+    </head>
+    <style>
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .column {
+            float: left;
+            width: 50%;
+        }
+
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+    </style>
+    <body class="easyui-layout">  
+        <div id="spinner">
+            <h2 style="position:absolute; left:50%; top:50%;margin:-75px 0 0 -135px;">
+                Processing..... please wait ....
+            </h2>
+        </div>
+        <div id="loader">
+        </div>
+        <div data-options="region:'north'" class='north-menubar' style="height: 40px; padding-top: 4px">
+            <div id="options">
+                <label for="networkOpt">Network</label>
+                <select id="networkOpt">
+                    <option value="global">Global EnrichNet</option>              
+                </select> &nbsp;
+                <label for="backgroundOpt">Background:</label>
+                <select id="backgroundOpt"> 
+                    <option value="#222222">Black</option>   
+                    <option value="#ffffff">White</option>
+
+                    <option value="blueLight">Blue-gradient</option>
+                    <option value="purpleDark">Purple-gradient</option> 
+                    <option value="greenDark">Green-gradient</option>                   
+                    <option value="custom">Custom</option>
+                </select> &nbsp;
+                <label for="viewOpt">View:</label>
+                <select id="viewOpt">
+                    <option value="enr">Gene-set network</option>                    
+                    <option value="bi">Bipartite network</option>
+                </select> &nbsp;  
+                <label for="layoutOpt">Layout:</label>
+                <select id="layoutOpt">
+                    <option value="na">-- Specify --</option>
+                    <option value="Default">Auto Layout</option> 
+                    <option value="ForceAtlas">Force Atlas</option>                   
+                    <option value="FrR">Fruchterman-Reingold</option>             
+                    <option value="gopt">Graphopt Layout</option>                    
+                    <option value="lgl">Large Graph Layout</option>
+                    <option value="random">Random Layout</option> 
+                    <option value="noverlap">Reduce Overlap</option>   
+                </select> &nbsp;
+                <label for="nodeStyleOpt">Node:</label>
+                <select id="nodeStyleOpt">
+                    <option value="na">- Specify -</option>
+                    <option value="label">Label</option>                         
+                    <option value="size">Size</option>
+                </select> &nbsp;
+                <label for="edgeStyleOpt">Edge:</label>
+                <select id="edgeStyleOpt">
+                    <option value="na">- Specify -</option>
+                    <option value="opacity">Opacity</option>
+                    <option value="thickness">Thickness</option> 
+                    <option value="color">Color</option>  
+                </select> &nbsp;
+                <label for="selectOpt">Scope:</label>
+                <select id="selectOpt">
+                    <option value="single">Single node</option>  
+                    <option value="neighbour">Node-neighbours</option>
+                    <!--<option value="highlight">Highlighted</option>-->
+
+                </select> &nbsp;
+                <label for="exportOpt">Download:</label>
+                <select id="exportOpt">
+                    <option value="na">-- Specify --</option>
+                    <option value="png">PNG Image</option>
+                    <option value="svg">SVG Format</option>
+                    <option value="tbl">Result Table</option>
+                    <!--
+                    <option value="share">Sharable Link</option>
+                    -->
+                </select> 
+                <a href="#" class="easyui-tooltip" data-options="
+                   content: $('<div></div>'),
+                   position: 'bottom',
+                   onUpdate: function(cc){
+                   cc.panel({
+                   width: 400,
+                   height: 'auto',
+                   border: false,
+                   href: './tooltip/_help_enrnetworkview.html'
+                   }); }">
+                    <img src="../../resources/images/ui-help.png" alt="Help Info"/>
+                </a>
+                <a href="#" id="reportBn" class="easyui-linkbutton" style="margin-left: 20px">Update Report</a>
+
+            </div>
+
+        </div> 
+
+        <div data-options="region:'west', split:true" style="width:350px;">
+            <div class="easyui-layout" data-options="fit:true">
+                <div data-options="region:'center', title: 'Result Table', border:false" >
+                    <table id="dg2" class="easyui-datagrid"
+                           toolbar="#tb1"
+                           data-options="border:false,singleSelect:true,checkOnSelect:false,selectOnCheck:false,fit:true,fitColumns:true">
+                    </table>
+                    <div id="tb1" style="width: 100%; padding-left: 10px">
+                        <a href="#" class="easyui-linkbutton" plain="true" iconCls="icon-cut" onclick="extractNetwork()">Extract</a>
+                        <label> selected functions</label>
+                    </div>
+                </div>
+                <div data-options="region:'south',split:true,title:'Current selection (node double click)', border:false, collapsible:false" style="height:180px;">
+                    <ul id="stats">
+
+                    </ul>
+                </div>
+            </div> 
+        </div>
+
+        <div id="networkspace" data-options="region:'center', split: false, collapsible:false" oncontextmenu="return false;">
+            <div id="network-parent" class="sigma-parent">
+                <div class="sigma-container" id="networkview">
+                    <canvas id="sigma_edges_1" class="sigma_edges_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_nodes_1" class="sigma_nodes_canvas"  style="position: absolute;"></canvas>
+                    <canvas id="sigma_labels_1" class="sigma_labels_canvas" style="position: absolute;"></canvas>
+                    <canvas id="sigma_hover_1" class="sigma_hover_canvas" style="position: absolute;"></canvas>
+                    <div id="sigma_monitor_1" class="sigma_monitor_div"  style="position: absolute;"></div>
+                    <canvas id="sigma_mouse_1" class="sigma_mouse_canvas"  style="position: absolute;"></canvas>
+                </div>
+                <div class="control-panel" style="height: 450px; width: 36px; padding-left: 4px; background: rgba(211,211,211,0.5)">
+                    <table border="0px">
+                        <tr> <td style="height:28px;"> 
+                                <a href="#" id="colorBn" class="easyui-tooltip" style="position: absolute; top: 0;left: 0;"
+                                   data-options="position: 'right', content: $('<span>Set highlight color for next selection</span>')">
+                                    <input type='text' id="custom" style="width:30px"/>
+                                </a>
+                            </td></tr>
+                        <tr> <td style="height:25px; padding-left: 5px;">
+                                <a href="#" id="resetBn" class="easyui-tooltip"
+                                   data-options="position: 'right', content: $('<div>Reset to default view</div>')">
+                                    <img style="width: 22px; height:21px" border="0" src="../../resources/images/reset.png" alt="Reset"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="autofitBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Auto fit</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/fit.png" alt="Autofit"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomInBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Zoom in</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomin.png" alt="Zoom in"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="zoomOutBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Zoom out</div>')">
+                                    <img style="width: 22px; height:20px" border="0" src="../../resources/images/zoomout.png" alt="Zoom out"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveUpBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move up</div>')">
+                                    <img style="width: 20px; height:20px" border="0" src="../../resources/images/arrow_up.png" alt="Up"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveDownBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move down</div>')">
+                                    <img style="width: 20px; height:22px" border="0" src="../../resources/images/arrow_down.png" alt="Down"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveLeftBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move left</div>')">
+                                    <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_left.png" alt="Left"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="moveRightBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Move right</div>')">
+                                    <img style="width: 21px; height:20px" border="0" src="../../resources/images/arrow_right.png" alt="Right"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="highlightBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Highlight mode: click a node to highlight using currently selected color</div>')">
+                                    <img style="width: 21px; height:20px" border="0" src="../../resources/images/highlight.png" alt="Right"/></a></td></tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="extractBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Extract current highlighted modules</div>')">
+                                    <img style="width:21px; height:16px" border="0" src="../../resources/images/extract.png" alt="Extract"/></a></td>
+                        </tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="lassoBn" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Manually select and drag multiple nodes</div>')">
+                                    <img style="width:22px; height:22px" border="0" src="../../resources/images/lasso.png" alt="Batch selection"/></a></td>
+                        </tr>
+                        <tr> <td style="height:30px; padding-left: 5px;"><a href="#" id="noverlapIc" class="easyui-tooltip"
+                                                                            data-options="position: 'right', content: $('<div>Reduce node overlap on current selected nodes or the whole network</div>')">
+                                    <img style="width:22px; height:16px" border="0" src="../../resources/images/expand.png" alt="Reduce overlap"/></a></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="pngdialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:360px;height:180px;padding:5px">  
+            <div align="left" style="width: 320px; padding-left: 20px">
+                <p>
+                    <b style="color: red">Use with caution</b> - for large networks, scaling to 3X can freeze your browse! 
+                </p>
+
+                <label for="pngRes">Scaling factor:</label>
+                <select id="pngRes">   
+                    <option value="1">1X</option>
+                    <option value="2">2X</option>
+                    <option value="3">3X</option>
+                </select>
+            </div>
+            <div align="center" style="width: 280px; padding-top: 10px">
+                <a href="#" onclick="exportingPng();" class="easyui-linkbutton">Save</a> &nbsp;&nbsp;
+                <a href="#" class="easyui-linkbutton" onclick="$('#pngdialog').dialog('close')">Cancel</a>
+            </div>
+        </div>  
+        <div id="filedialog" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:120px;padding:5px">  
+            <ul id="fileLnk" style="padding: 10px; margin: 0">
+
+            </ul>
+        </div>
+        <div id="download" class="easyui-dialog" title="Download Dialog" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:300px;height:120px;padding:20px; font-size: 13px">  
+            <div id="download-content"></div>
+        </div>
+        <div id="sharelinkdlg" class="easyui-dialog" title="Sharable Link" data-options="iconCls:'icon-save',resizable:true, closed:true, modal:true" style="width:400px;height:220px;padding:5px">  
+            <ul id="shareLink" style="padding: 10px; margin: 0">
+
+            </ul>
+            <div align="center" style="width: 280px; padding-top: 10px">
+                <a href="#" onclick="copyShareLink();" class="easyui-linkbutton">Copy to clipboard</a> &nbsp;&nbsp;
+                <a href="#" class="easyui-linkbutton" onclick="$('#sharelinkdlg').dialog('close')">Cancel</a>
+            </div>
+        </div>
+
+        <div id="bgcolordlg" class="easyui-dialog" title="Background Color" 
+             data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:350px;padding:10px">
+            <label>Type: </label>
+            <select id="bgColType">
+                <option value="plain">Plain</option>
+                <option value="gradient_dark">Gradient (dark)</option>
+                <option value="gradient_light">Gradient (light)</option>
+            </select>
+            <input type='text' id="customBgg" style="width:30px"/>
+        </div>
+        <div id="gallerydlg" class="easyui-dialog" title="Exporting image to gallery" 
+             data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:350px;padding:10px">
+            <br />
+            <label for="galleryDescription">Enter a short description (optional):</label>  
+            <input id="galleryDescription" style="width: 200px"></input>  
+            <div align="center" style="width: 200px; padding-top: 10px" columns="2">
+                <div align="right" style="padding-top: 10px; padding-right:20px;display:inline-block">
+                    <a id="galBn" onclick="exportToGallery('enrnet');" href="#" class="easyui-linkbutton">Save</a> 
+                </div>
+                <div align="left" style="padding-top: 10px; padding-left:20px; display:inline-block">
+                    <a href="#" class="easyui-linkbutton" onclick="$('#gallerydlg').dialog('close')">Cancel</a> 
+                </div>
+            </div>
+        </div>
+        <div id="nodelabeldlg" class="easyui-dialog" title="Node Label Customization" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:360px;height:380px;padding:10px">
+            <div id="tt2" class="easyui-tabs" data-options="border:false">
+                <div title="Label Size" style="padding:20px;"> 
+                    <div style="margin-bottom:10px; padding-top: 25px">
+                        <label>Size</label>
+                        <input id="labelSliderOpa" type="range" min="9" max="20" value="11" step="1" style="width:40%;" onchange="updateTextInputLabelSize(this.value);"/>
+                        <input type="text" id="textInputLabelSize" value="11" style="width:30px;"/>
+                    </div>
+                    <div style="margin-bottom:10px; padding-left: 80px">
+                        <a href="#" class="easyui-linkbutton" id="nodeLabelSizeBn">Submit</a>
+                    </div>
+                </div>
+
+
+                <div title="Display" style="padding:20px;"> 
+                    <div style="width:280px;">
+                        <label>Label display option: </label>
+                        <select id="labelOpt">
+                            <option value="default">Default</option>
+                            <option value="add">Label selected nodes</option>  
+                            <option value="remove">Unlabel selected nodes</option>
+                            <option value="removeall">Unlabel all nodes</option> 
+                        </select> &nbsp;&nbsp;&nbsp;&nbsp;<br/><br/>
+                        <div style="margin-bottom:10px; padding-left: 80px">
+                            <a href="#" class="easyui-linkbutton" id="nodeLabelBn">Submit</a>
+                        </div>
+                    </div> 
+                </div>
+                <div title="Label Color" style="padding:20px;"> 
+                    <input type='text' id="customLabel" style="width:30px"/>
+                </div>
+            </div>
+        </div>
+
+        <div id="nodecoldlg" class="easyui-dialog" title="Node Color" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:400px;height:320px;padding:10px; overflow: hidden">
+            <div title="Node Color" style="padding:0px 4px 30px 10px;"> 
+                <p>
+                    The color scheme will be applied globally
+                </p>
+
+                <div style="padding:0px 20px 20px 20px;">
+                    <label style="width:100%; display: block">Sequential</label>
+                    <div id="ramps0">
+                    </div>
+                    <hr style="visibility: hidden;" />
+                    <label style="width:100%; display: block">Diverging</label>
+                    <div id="ramps1">
+                    </div>
+                </div>
+            </div>
+            <div align="center" style="width: 320px; height: 70px">
+                <a href="#" class="easyui-linkbutton" style="bottom:10px" onclick="updateColor(); $('#nodecoldlg').dialog('close');">Submit</a> 
+            </div>
+        </div>
+
+        <div id="nodesizedlg" class="easyui-dialog" title="Node Size" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  
+             style="width:400px;height:230px;padding:10px">
+            <div title="Node" style="padding:8px 4px 4px 10px;"> 
+
+                <div style="margin-bottom:10px">
+                    <label>Node scope: </label>
+                    <select id="sizeScope">
+                        <option value="all">All</option>
+                        <option value="gene">Feature</option>
+                        <option value="set">Set</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:10px">
+                    <label>Node size: </label>
+                    <select id="sizeOpt1">
+                        <option value='increase'>Increase ++ </option>
+                        <option value='decrease'>Decrease -- </option>
+                    </select>
+                </div>
+                <div style="margin-bottom:10px; padding-left: 80px">
+                    <a href="#" class="easyui-linkbutton" onclick="updateNodeSize1()">Submit</a>
+                </div>
+                <label>Tip: You can keep clicking on a node to increase its size</label>
+            </div>
+        </div>
+
+        <div id="edgeopacitydlg" class="easyui-dialog" title="Edge Opacity" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  style="width:360px;height:300px;padding:10px">
+            <div title="Edge Opacity" style="padding:10px 20px 10px 20px;">          
+                <div style="margin-bottom:10px; padding-top: 25px">
+                    <label>Opacity</label>
+                    <input id="edgeSliderOpa" type="range" min="0.1" max="1" value="0.5" step="0.1" style="width:40%;" onchange="updateTextInputOpa(this.value);"/>
+                    <input type="text" id="textInputOpa" value="0.5" style="width:30px;"/>
+                </div>
+                <div align="center" style="width: 240px; padding-top: 10px; padding-bottom: 20px">
+                    <a id="updateOpacity" href="#" class="easyui-linkbutton">Submit</a>
+                </div>
+                <label>Tip: consider reducing opacity value for larger networks to improve viewing experience</label>
+            </div>
+        </div>
+
+        <div id="edgecoldlg" class="easyui-dialog" title="Edge Color" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  style="width:360px;height:200px;padding:10px">
+            <div title="Edge Color" style="padding:10px 20px 10px 20px;">          
+                <div style="margin-bottom:10px; padding-top: 10px">
+                    <!--
+                    <div style="display:inline-block; padding-right:5px">
+                        <p>Based on node color (default):</p>
+                    </div> 
+                    <a href="#" onclick="$('#edgecoldlg').dialog('close');setEdgeColorAsNode();" class="easyui-linkbutton">Submit</a>
+                    -->
+                    <div style="display:inline-block; padding-right:5px">
+                        <p>Pick a specific color:</p>
+                    </div>
+                    <input type='text' id="customEdge" style="width:30px"/>
+                </div>
+            </div>
+        </div>
+        <div id="edgethicknessdlg" class="easyui-dialog" title="Edge Thickness" data-options="iconCls:'icon-close',resizable:true, closed:true, modal:true"  style="width:360px;height:300px;padding:10px">
+            <div title="Edge Thickness" style="padding:10px 20px 10px 20px;">          
+                <div style="margin-bottom:10px; padding-top: 25px">
+                    <label>Thickness</label>
+                    <input id="edgeSliderThickness" type="range" min="0.2" max="4" value="0.2" step="0.1" style="width:40%;" onchange="updateTextInputThickness(this.value);"/>
+                    <input type="text" id="textInputThickness" value="0.2" style="width:30px;"/>
+                </div>
+                <div align="center" style="width: 240px; padding-top: 10px; padding-bottom: 20px">
+                    <a id="updateThickness" href="#" class="easyui-linkbutton" onclick="updateThickness()">Submit</a>
+                </div>
+                <label>Tip: Also consider reducing edge opacity value for larger networks to improve viewing experience</label>
+            </div>
+        </div>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function () {
+                updateTheme();
+                initThemeSwitch();
+                showSigmaNetwork();
+            }, false);
+            $(window).bind('resize', function () {
+                setTimeout(resizeNetwork(), 300);
+            });
+
+
+        </script>
+    </body>  
+</html>

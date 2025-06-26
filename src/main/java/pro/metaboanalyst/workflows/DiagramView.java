@@ -206,6 +206,7 @@ public class DiagramView implements Serializable {
         return executionMap;
     }
 
+    @JsonIgnore
     public Map<String, List<String>> getDependencyMap() {
         return dependencyMap;
     }
@@ -214,6 +215,7 @@ public class DiagramView implements Serializable {
         this.dependencyMap = dependencyMap;
     }
 
+    @JsonIgnore
     public Map<String, List<String>> getProcDependencyMap() {
         return procDependencyMap;
     }
@@ -254,6 +256,7 @@ public class DiagramView implements Serializable {
         this.thirdLevelNodes = thirdLevelNodes;
     }
 
+    @JsonIgnore
     public List<Element> getAllElements() {
         return allElements;
     }
@@ -282,6 +285,7 @@ public class DiagramView implements Serializable {
         this.input = input;
     }
 
+    @JsonIgnore
     public String getDependencyMapJson() {
         Gson gson = new Gson();
         JsonObject json = new JsonObject();
@@ -800,6 +804,7 @@ public class DiagramView implements Serializable {
         return null; // Return null if no element with the specified title is found
     }
 
+    @JsonIgnore
     public DiagramModel getModel() {
         return model;
     }
@@ -2380,14 +2385,17 @@ public class DiagramView implements Serializable {
         }
     }
 
+    @JsonIgnore
     public boolean isNodeSelected(String nodeId) {
         return selectionMap.getOrDefault(nodeId, false);
     }
 
+    @JsonIgnore
     public boolean isNodeExecuted(String nodeId) {
         return executionMap.getOrDefault(nodeId, false);
     }
 
+    @JsonIgnore
     public boolean isNodeFailed(String nodeId) {
         return successExecutionMap.getOrDefault(nodeId, true);
     }

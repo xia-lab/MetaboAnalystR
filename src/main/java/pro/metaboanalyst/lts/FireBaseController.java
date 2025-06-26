@@ -304,7 +304,7 @@ public class FireBaseController implements Serializable {
 
         return false;
     }
-
+@Inject  StateSaver stateSaver;
     public void writeDoc(String folderName, String type) throws InterruptedException, ExecutionException, JsonProcessingException {
 
         long idNum = 0;
@@ -312,8 +312,8 @@ public class FireBaseController implements Serializable {
         sb.setShareToken(token);
 
         String uid = fub.getEmail();
-
-        saveState();
+System.out.println("Saver injected? " + (stateSaver != null));
+        stateSaver.saveState();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
         if (fireDocName == null || fireDocName.isEmpty()) {
@@ -434,9 +434,10 @@ public class FireBaseController implements Serializable {
         }
         // Save state based on data type
         for (String module : modules) {
-
             // Determine the analysis type
             String analTypePrefix = module.length() >= 4 ? module.substring(0, 4) : module;
+            System.out.println("analTypePrefix===" + module);
+            System.out.println("naviType===" + sb.getNaviType());
 
             switch (analTypePrefix) {
                 case "raw" -> {

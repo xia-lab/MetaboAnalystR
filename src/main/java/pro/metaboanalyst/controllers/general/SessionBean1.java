@@ -7,6 +7,7 @@ package pro.metaboanalyst.controllers.general;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
 import pro.metaboanalyst.controllers.mnet.MnetResBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.models.ColorBean;
@@ -95,6 +96,7 @@ public class SessionBean1 implements Serializable {
     @Inject
     private JavaRecord jrd;
 
+    
     //****************user defined methods**************
     //USED TO BE FINAL, REMOVED FINAL AND ADDED SETTER FUNCTION FOR DESERIALIZATION FROM JSON
     //OTHERWISE, CAN NOT RESTORE STATE.
@@ -203,7 +205,18 @@ public class SessionBean1 implements Serializable {
     private int maxtopNum;
     private String visMode = "static"; //4 mode: ppi, chem, tf, drug
     private String uploadType = "table";
+    private boolean enrNetSavedInit = false;
 
+    public boolean isEnrNetSavedInit() {
+        return enrNetSavedInit;
+    }
+
+    public void setEnrNetSavedInit(boolean enrNetSavedInit) {
+        this.enrNetSavedInit = enrNetSavedInit;
+    }
+
+    
+    
     public void setNoticeSize(int noticeSize) {
         this.noticeSize = noticeSize;
     }
@@ -508,7 +521,6 @@ public class SessionBean1 implements Serializable {
     //0 logout only
     public void doLogout(int returnHome) {
         if (registeredLogin) {
-
             Faces.addResponseCookie("user", fub.getEmail(), "/", 3600);
             fb.getUserMap().put(fub.getEmail(), fub);
         }
@@ -684,7 +696,8 @@ public class SessionBean1 implements Serializable {
 //        PrimeFaces.current().executeScript("sendMsg("+ pageName +")");
         NaviUtils.getSelectedNode(naviTree, pageName);
     }
-
+    
+    @JsonIgnore
     public String getCurrentImage(String key) {
         if (!imgMap.containsKey(key)) {
             //  System.out.println("=========== called here!! " + key );
@@ -692,7 +705,8 @@ public class SessionBean1 implements Serializable {
         }
         return key + "_" + imgMap.get(key) + "_";
     }
-
+    
+    @JsonIgnore
     public String getNewImage(String key) {
         if (!imgMap.containsKey(key)) {
             imgMap.put(key, 0);
@@ -722,6 +736,7 @@ public class SessionBean1 implements Serializable {
      * @return the image at the specified URL
      */
     //@return path to image
+    @JsonIgnore
     public String getCurrentImageURL(String name) {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
@@ -732,6 +747,7 @@ public class SessionBean1 implements Serializable {
      * @param name: file name
      * @return the URL
      */
+    @JsonIgnore
     public String getJsonDir(String name) {
         if (reloadReportImage && reportJsonMap.containsKey(name)) {
             return currentUser.getRelativeDir() + "/" + reportJsonMap.get(name);
@@ -739,11 +755,13 @@ public class SessionBean1 implements Serializable {
             return currentUser.getRelativeDir() + "/" + getCurrentImage(name) + ".json";
         }
     }
-
+    
+    @JsonIgnore
     public String getUserDir() {
         return "/MetaboAnalyst/" + currentUser.getRelativeDir();
     }
-
+    
+    @JsonIgnore
     public String getRawUserDir() {
         String guestName = getCurrentUser().getName();
         return "/MetaboAnalyst/resources/users/" + guestName;
@@ -1256,6 +1274,7 @@ public class SessionBean1 implements Serializable {
         this.colorBeanLists = colorBeanLists;
     }
 
+        @JsonIgnore
     public SelectItem[] getMetaInfo() {
         if (metaInfo == null) {
             setupMetaInfo();
@@ -1308,6 +1327,7 @@ public class SessionBean1 implements Serializable {
         this.heatmapType = heatmapType;
     }
 
+        @JsonIgnore
     public List<SampleBean> getSampleBeans() {
         if (sampleBeans == null) {
             sampleBeans = RDataUtils.createOrigSampleBeans(RC, "Class", false);
@@ -1343,6 +1363,7 @@ public class SessionBean1 implements Serializable {
         this.partialLinkValide = partialLinkValide;
     }
 
+        @JsonIgnore
     public String getPartialLinkCheckingRes() {
         if (partialLinkValide) {
             return "OK. Your job link is valid! Retrieving your job. <br/>Please wait .....";
@@ -1485,6 +1506,7 @@ public class SessionBean1 implements Serializable {
         this.grpNmOpts = grpNmOpts;
     }
 
+        @JsonIgnore
     public SelectItem[] getGrpNmOpts() {
         if (grpNmOpts == null) {
             setupGrpNmOpts();
@@ -1709,6 +1731,7 @@ public class SessionBean1 implements Serializable {
         return false;
     }
 
+        @JsonIgnore
     public String getTemplatePath() {
         if (isWorkflowMode()) {
             return "/template/_template_workflow.xhtml";
@@ -1761,5 +1784,25 @@ public class SessionBean1 implements Serializable {
     public void recordRCommandFunctionInfo(String rCmd, String functionName) {
         jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
     }
+    
+    @Inject
+    private MummiAnalBean ma;
+    private String enrNetName = "";
+
+    public String getEnrNetName() {
+        if (getAnalType().startsWith("path")) {
+            enrNetName = "enrichNet_" + analType + ".json";
+        } else {//mummichogg methods: mum, gsea,integ
+            enrNetName = "enrichNet_" + ma.getAlgOptSingle() + ".json";
+        }
+        return enrNetName;
+    }
+
+    public void setEnrNetName(String enrNetName) {
+
+        this.enrNetName = enrNetName;
+    }
+    
+    
 
 }
