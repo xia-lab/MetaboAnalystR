@@ -67,7 +67,7 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       # Build plot ----------------------------------------------------------
       df <- data.frame(value = expr, name = cls)
 
-      p <- ggplot(df, aes(x = name, y = value, fill = name)) +
+      myplot <- ggplot(df, aes(x = name, y = value, fill = name)) +
              geom_violin(trim = FALSE, aes(color = name), show.legend = FALSE) +
              geom_jitter(width = 0.05, height = 0, show.legend = FALSE)       +
              stat_summary(fun = mean, colour = "yellow", geom = "point",
@@ -84,7 +84,8 @@ PlotSelectedGene <-function(dataName="",imageName="", gene.id="", type="notvolca
       # Save ----------------------------------------------------------------
       Cairo(file = imgName, width = 5, height = 5, unit = "in",
             dpi  = dpi, bg   = "white", type = format)
-      print(p); dev.off()
+      print(myplot); dev.off()
+      return;
     }else{
       out.fac <- dataSet$sec.cls
       in.fac <- dataSet$fst.cls

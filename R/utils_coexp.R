@@ -83,7 +83,7 @@ PlotCEMiDendro <- function(mode      = c("sample", "module"),
       dendroLabels = FALSE,
       addGuide     = TRUE,
       guideHang    = 0.05,
-      main         = paste("CEMiTool", label, "dendrogram"),
+      main         = paste("Module dendrogram"),
       ylab         = "1 − Pearson correlation")
 
     ## legend
@@ -142,110 +142,6 @@ PlotCEMiDendro <- function(mode      = c("sample", "module"),
   file <- sprintf("%sdpi%d.%s", imgName, dpi, format)
   plotDendroColoured(hc, colNamed, "sample class", file, pal)
   return(1)
-}
-
-
-# ================================================================
-# GenerateCEMTOMHeatmapJSON
-# ----------------------------------------------------------------
-# fileName   : qs-saved CEMiTool object (default "cem.qs")
-# jsonFile   : output JSON for Plotly (default "tom_heatmap.json")
-# threshClip : clip TOM values above this (improves contrast)
-# digits     : decimals in tooltip
-# ----------------------------------------------------------------
-# return     : 1 = success, 0 = failure
-# ================================================================
-GenerateCEMTOMHeatmapJSON <- function(jsonFile   = "tom_heatmap.json",
-                                      threshClip = 1) {
-save.image("hm.RData");
-  digits <- 3;
-  tryCatch({
-
-    library(CEMiTool)
-    library(WGCNA)
-    library(plotly)
-    library(jsonlite)
-    library(RColorBrewer)
-
-    ## ── 1 · read cem ------------------------------------------------
-    cem <- qs::qread("cem.qs")
-
-    ## ── 2 · ensure adjacency matrix --------------------------------
-    if (is.null(cem@adjacency)) {
-      beta <- if (!is.null(cem@parameters$beta)) {
-                as.numeric(cem@parameters$beta)
-              } else {
-                get_cemitool_r2_beta(cem)[2]
-              }
-      cem <- get_adj(cem, beta = beta)
-    }
-    adj <- adj_data(cem)
-
-    ## ── 3 · compute TOM -------------------------------------------
-    tom <- TOMsimilarity(adj)
-    rownames(tom) <- colnames(tom) <- rownames(adj)
-
-    ## ── 4 · module colours ----------------------------------------
-    modVec <- cem@module$modules
-    names(modVec) <- cem@module$genes
-
-    # colour palette
-    uniqMods  <- sort(unique(modVec))
-    palette   <- if (length(uniqMods) <= 12)
-                   brewer.pal(max(3, length(uniqMods)), "Set3")
-                 else rainbow(length(uniqMods))
-    modCols   <- setNames(palette[seq_along(uniqMods)], uniqMods)
-    modColors <- modCols[modVec]
-
-    ## reorder rows/cols by module + gene name for nicer blocks
-    ord       <- order(modVec, names(modVec))
-    tom       <- tom[ord, ord]
-    modColors <- modColors[ord]
-
-    ## ── 5 · build Plotly heat-map ---------------------------------
-    tomClip <- pmin(tom, threshClip)
-
-    plt <- subplot(
-      # colour strip (1 row heat-map)
-      plot_ly(
-        y          = 1,
-        x          = seq_along(modColors),
-        type       = "heatmap",
-        z          = matrix(1, nrow = 1, ncol = length(modColors)),
-        showscale  = FALSE,
-        colorscale = list(list(0,"white"), list(1,"white")),
-        hoverinfo  = "skip",
-        marker     = list(color = modColors)
-      ),
-      # main TOM heat-map
-      plot_ly(
-        x             = colnames(tomClip),
-        y             = rownames(tomClip),
-        z             = tomClip,
-        type          = "heatmap",
-        colorscale    = "Viridis",
-        zmin          = 0,
-        zmax          = threshClip,
-        hovertemplate = paste0(
-          "<b>%{x}</b> vs <b>%{y}</b>",
-          "<br>TOM = %{z:.", digits, "f}<extra></extra>")
-      ),
-      nrows   = 2,
-      heights = c(0.02, 0.98),
-      shareX  = TRUE,
-      titleY  = FALSE
-    )
-
-    ## ── 6 · dump to JSON ------------------------------------------
-    write_json(plotly_json(plt, jsonedit = FALSE, digits = digits),
-               path       = jsonFile,
-               auto_unbox = TRUE)
-
-    return(1)   # success
-  }, error = function(e) {
-    message("GenerateCEMTOMHeatmapJSON: ", e$message)
-    return(0)   # failure
-  })
 }
 
 # =======================================================================

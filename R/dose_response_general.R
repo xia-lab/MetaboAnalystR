@@ -2,6 +2,8 @@
 ### import, check and optionnally normalize omics data
 PrepareDataForDoseResponse <- function()
 {
+
+  save.image("dose.RData");
   paramSet <- readSet(paramSet, "paramSet");
   dataSet <- readDataset(paramSet$dataName);
   dataSet$comp.res <- dataSet$comp.res[order(rownames(dataSet$comp.res)), ]

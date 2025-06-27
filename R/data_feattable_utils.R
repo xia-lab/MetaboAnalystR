@@ -46,17 +46,18 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   # for two-class, only one column, multiple columns can be involved
   # for > comparisons - in this case, use the largest logFC among all comparisons
   # further filter by logFC
-  if (dataSet$de.method=="deseq2"){
-    hit.inx <- which(colnames(resTable) == "baseMean"); 
-    dataSet$comp.res <- dataSet$comp.res.list[[inx]];
-    resTable <- dataSet$comp.res;
-  } else if (dataSet$de.method=="limma"){
-    hit.inx <- which(colnames(resTable) == "AveExpr");
-  } else if(dataSet$de.method=="wtt"){
-    hit.inx <- which(colnames(resTable) == "t");
-  } else {
-    hit.inx <- which(colnames(resTable) == "logCPM");
-  }
+    if (dataSet$de.method == "deseq2") {
+      ## use a local copy so the master table’s row order stays unchanged
+      resTable <- dataSet$comp.res.list[[inx]]
+      hit.inx  <- which(colnames(resTable) == "baseMean")
+    } else if (dataSet$de.method == "limma") {
+      hit.inx <- which(colnames(resTable) == "AveExpr")
+    } else if (dataSet$de.method == "wtt") {
+      hit.inx <- which(colnames(resTable) == "t")
+    } else {
+      hit.inx <- which(colnames(resTable) == "logCPM")
+    }
+
   
   resTable <- resTable[!is.na(resTable[,1]),]
   orig.resTable <- resTable;
@@ -113,16 +114,17 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     meta.info <- dataSet$meta.info[hit.inx,];
   }
   qs::qsave(data, file="data.stat.qs");
-  dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
-  dataSet$comp.res <- dataSet$comp.res[which(!rownames(dataSet$comp.res) %in% rownames(resTable)),]
-  dataSet$comp.res <- rbind(resTable, dataSet$comp.res);
+dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val), ]
+dataSet$comp.res <- dataSet$comp.res[
+                      !(rownames(dataSet$comp.res) %in% rownames(resTable)), ]
+dataSet$comp.res <- rbind(resTable, dataSet$comp.res)
   
   
   dataSet$sig.mat <- resTable;
   
   if (dataSet$annotated){ # annotated to entrez
     anot.id <- rownames(dataSet$comp.res);
-    gene.anot <- doEntrezIDAnot(anot.id, paramSet$data.org, paramSet$data.idType);
+    gene.anot <- doEntrezIDAnot(anot.id, paramSet$data.org, paramSet$data.idType)
     fast.write(cbind(EntrezID=anot.id, signif (dataSet$comp.res,5), Symbols = gene.anot$symbol,  Name=gene.anot$name), row.names=F, file=filename);
   } else if (file.exists("annotation.qs")){ # annotation information available
     anot.id <- qs::qread("annotation.qs");
@@ -239,7 +241,5 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   dataSet$comp.res.filename <- filename;
   res <- RegisterData(dataSet);
   saveSet(paramSet, "paramSet");
-  if(res == 1){
-    return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
-  }
+  return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
 }

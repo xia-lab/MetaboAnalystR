@@ -450,17 +450,6 @@ doEntrezIDAnot <- function(entrez.vec,
                            data.org   = "NA",
                            data.idType = "NA") {
 
-  ## ── 1 · short-circuits ----------------------------------------------------
-  if (data.idType == "symbol") {
-    # Vector already contains symbols → fabricate a minimal annotation frame
-    return(data.frame(
-      gene_id = entrez.vec,
-      symbol  = entrez.vec,
-      name    = rep("NA", length(entrez.vec)),
-      stringsAsFactors = FALSE
-    ))
-  }
-
   if (data.org == "NA" && data.idType == "NA") {
     paramSet  <- readSet(paramSet, "paramSet")
     data.org  <- paramSet$data.org
