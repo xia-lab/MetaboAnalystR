@@ -245,23 +245,46 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
     p <- p + geom_smooth(method = "lm", formula = y ~ powerfun(e,b,x,c), n = 1000)
   }
 
-  if(scale == "log2"){
-    if(model.nm %in% c("Exp3", "Exp5")){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
-      labelMap <- c("0", sort(unique(labels[labels != 0])))
-      p <- p + scale_x_continuous(trans='log2', breaks = breaks, labels = labelMap)
-    }
-  } else if(scale == "log10"){
-    if(model.nm %in% c("Exp3", "Exp5")){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
-      labelMap <- c("0", sort(unique(labels[labels != 0])))
-      p <- p + scale_x_continuous(trans='log10', breaks = breaks, labels = labelMap)
+  ## ── x-axis scaling ─────────────────────────────────────────────────────────
+if (scale == "log2") {
+
+  if (model.nm %in% c("Exp3", "Exp5")) {
+
+    p <- p + scale_x_continuous(trans = scales::pseudo_log_trans(base = 2))
+
+  } else {
+
+    ## powers of 2 between the smallest >0 dose and the max dose
+    rng     <- range(exposure[exposure > 0], na.rm = TRUE)
+    breaks  <- 2^seq(floor(log2(rng[1])), ceiling(log2(rng[2])), by = 1)
+    breaks  <- c(dataSet$zero.log, breaks)
+    labelMap <- c("0", format(breaks[-1], scientific = FALSE))
+
+    p <- p + scale_x_continuous(trans = "log2",
+                                breaks = breaks,
+                                labels = labelMap)
   }
+
+} else if (scale == "log10") {
+
+  if (model.nm %in% c("Exp3", "Exp5")) {
+
+    p <- p + scale_x_continuous(trans = scales::pseudo_log_trans(base = 10))
+
+  } else {
+
+    ## powers of 10 between the smallest >0 dose and the max dose
+    rng     <- range(exposure[exposure > 0], na.rm = TRUE)
+    breaks  <- 10^seq(floor(log10(rng[1])), ceiling(log10(rng[2])), by = 1)
+    breaks  <- c(dataSet$zero.log, breaks)
+    labelMap <- c("0", format(breaks[-1], scientific = FALSE))
+
+    p <- p + scale_x_continuous(trans = "log10",
+                                breaks = breaks,
+                                labels = labelMap)
   }
+}
+
   
   imgName <- paste("Gene_", gene.symbol, "_", model.nm, "_", scale,".png", sep="");
   Cairo(file = imgName, width=280, height=320, type="png", bg="white");
