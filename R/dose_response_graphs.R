@@ -108,7 +108,7 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
   # Save the plot
   feat.id <- CleanNames(feat.id)
   imgName <- paste("Metabolite_", feat.id, "_", model.nm, ".", format, sep = "")
-  Cairo::Cairo(file = imgName, width = 5.25, height = 6, type = format, unit = "in", dpi = dpi, bg = "white")
+  Cairo::Cairo(file = imgName, width = 5, height = 5.25, type = format, unit = "in", dpi = dpi, bg = "white")
   print(p)
   dev.off()
 

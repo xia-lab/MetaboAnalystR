@@ -1222,14 +1222,26 @@ GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
 .get.ttest.res <- function(data, inx1, inx2, paired=FALSE, equal.var=TRUE, nonpar=F){
   
   print("Performing regular t-tests ....");
-  univ.test <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+  univ.test.par <- function(x){t.test(x[inx1], x[inx2], paired = paired, var.equal = equal.var)};
+  univ.test.nonpar <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
+
   if(nonpar){
-    univ.test <- function(x){wilcox.test(x[inx1], x[inx2], paired = paired)};
+    univ.test <- univ.test.nonpar;
+  }else{
+    univ.test <- univ.test.par;
   }
+
   my.fun <- function(x) {
     tmp <- try(univ.test(x));
     if(class(tmp) == "try-error") {
-      return(c(NA, NA));
+      # try non-par for robust estimation, applicable when each group contain same values (all 0 vs all 1)
+      if(!nonpar){ 
+        tmp <- try(univ.test.nonpar(x));
+        if(class(tmp) == "try-error") {  
+            return(c(NA, NA));
+        }
+        return(c(tmp$statistic, tmp$p.value));
+      }
     }else{
       return(c(tmp$statistic, tmp$p.value));
     }
