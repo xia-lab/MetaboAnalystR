@@ -1,5 +1,5 @@
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
-  save.image("enrich.RData");
+  #save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
   # Get the appropriate result matrix based on analysis type
   if(anal.opt == "mum"){
