@@ -275,13 +275,9 @@ GetExpressResultMatrix <- function(dataName = "", inxt) {
     dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ]
 
     RegisterData(dataSet)
-    qs::qsave(res, "express.de.res.qs")
+    qs::qsave(dataSet$comp.res, "express.de.res.qs")
 
-    ## max 1000 sig for display
-    if (nrow(res) > 1000) {
-        res <- res[1:1000, ]
-    }
-    return(signif(as.matrix(res), 5))
+    return(head(signif(as.matrix(dataSet$comp.res), 5),1000))
 }
 
 
