@@ -259,8 +259,9 @@ SetupIndListData <- function(mSetObj=NA, mirs, inputType, idType, tissue, popula
 
 # "ID", "Accession","Gene", "PMID"
 GetResCol <- function(netType, colInx){
-
+  print(c(netType,colInx))
   mSetObj <- .get.mSet(mSetObj);
+  saveRDS(mSetObj,"/Users/lzy/Documents/OmicsAnalystR/mSetObj.rds")
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
   res <- dataSet[netType][[1]][, colInx];

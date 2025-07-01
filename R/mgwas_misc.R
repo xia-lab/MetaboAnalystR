@@ -307,3 +307,4 @@ ld_clump_local_custom <- function (dat, clump_kb, clump_r2, clump_p, bfile, plin
   return(subset(dat, dat[["rsid"]] %in% res[["SNP"]]))
 }
 
+
