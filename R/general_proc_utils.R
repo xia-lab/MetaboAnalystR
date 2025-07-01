@@ -891,4 +891,163 @@ print(combined_plot)
 }
 
 
+#' @title Missing Value Heatmap
+#' @description
+#'   Generates a heatmap showing the locations of missing values across samples (rows) and features (columns).
+#'   Useful for identifying patterns of group-specific or sample-level missingness.
+#'
+#' @usage
+#'   PlotMissingHeatmap(mSetObj = NA,
+#'                      imgName  = "miss_heatmap",
+#'                      format   = "png",
+#'                      dpi      = 150)
+#'
+#' @param mSetObj  MetaboAnalyst object.
+#' @param imgName  Base output name (no extension).
+#' @param format   Image format: "png", "tiff", "pdf", or "svg". Default "png".
+#' @param dpi      Device resolution (dpi). Default 150.
+#'
+#' @export
+#'
+PlotMissingHeatmap <- function(mSetObj = NA,
+                               imgName  = "miss_heatmap",
+                               format   = "png",
+                               dpi      = 150) {
+  
+  require("ggplot2")
+  require("qs")
+  require("Cairo")
+  
+  mSetObj <- .get.mSet(mSetObj)
 
+  int.mat <- if (file.exists("preproc.orig.qs")) {
+    qs::qread("preproc.orig.qs")
+  } else {
+    AddErrMsg("No processed data found for missing value heatmap!")
+    return(0)
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  nSamples  <- nrow(int.mat)
+  nFeatures <- ncol(int.mat)
+
+  msg <- NULL
+  if (nSamples > 50) {
+    int.mat <- int.mat[1:50, , drop = FALSE]
+    msg <- sprintf("Only the first 50 samples are shown (out of %d).", nSamples)
+  }
+
+  hide_feat_labels <- nFeatures > 100
+
+  # Order features by missingness count (descending)
+  miss.counts <- colSums(is.na(int.mat))
+  feature.order <- names(sort(miss.counts, decreasing = TRUE))
+
+  # Convert to missing indicator matrix and long format
+  miss.mat <- is.na(int.mat)
+  df <- as.data.frame(as.table(miss.mat))
+  colnames(df) <- c("Sample", "Feature", "Missing")
+  df$Missing <- ifelse(df$Missing, "Missing", "Present")
+
+  # Apply factor levels for ordered plotting
+  df$Feature <- factor(df$Feature, levels = feature.order)
+  df$Sample <- factor(df$Sample, levels = rownames(int.mat))  # preserve original order
+
+  # Heatmap plot
+  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
+
+  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
+    geom_tile(color = "grey90") +
+    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
+    theme_minimal(base_size = 13) +
+    theme(
+      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
+      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
+      legend.position = "top",
+      panel.grid = element_blank()
+    )
+
+  print(p)
+  dev.off()
+
+  # Book-keeping
+  mSetObj$imgSet$miss.heatmap <- img.full
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi),
+    msg
+  )
+
+  return(.set.mSet(mSetObj))
+}
+
+
+#' @title Export Missing Value Heatmap to JSON for Plotly.js (v3)
+#' @description
+#'   Prepares a JSON file with the missingness matrix (0 = present, 1 = missing) formatted for Plotly.js v3 heatmap.
+#'
+#' @usage
+#'   ExportMissingHeatmapJSON(mSetObj = NA,
+#'                            fileName = "missing_heatmap.json")
+#'
+#' @param mSetObj   MetaboAnalyst object.
+#' @param fileName  Output JSON file name.
+#'
+#' @export
+ExportMissingHeatmapJSON <- function(mSetObj = NA,
+                                     fileName = "missing_heatmap.json") {
+  require("qs")
+  require("rjson")
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  int.mat <- if (file.exists("preproc.qs")) {
+    qs::qread("preproc.orig.qs")
+  } else {
+    AddErrMsg("No processed data found for JSON heatmap export!")
+    return(0)
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  # Limit to first 50 samples
+  if (nrow(int.mat) > 50) {
+    int.mat <- int.mat[1:50, , drop = FALSE]
+  }
+
+  # Compute missing indicator
+  miss.mat <- 1 * is.na(int.mat)
+
+  # Order features (columns) by missing count (descending)
+  miss.counts <- colSums(miss.mat)
+  ord.idx <- order(miss.counts, decreasing = TRUE)
+  miss.mat <- miss.mat[, ord.idx]
+  feature.names <- colnames(miss.mat)
+
+  # Convert to list of rows
+  z <- unname(split(miss.mat, row(miss.mat)))
+
+  # Construct JSON object for Plotly.js v2
+  out.list <- list(
+    z = z,
+    x = feature.names,
+    y = rownames(miss.mat),
+    type = "heatmap",
+    colorscale = list(list(0, "white"), list(1, "red")),
+    showscale = FALSE,
+    hoverinfo = "x+y+z"
+  )
+
+  # Write JSON
+  json.out <- rjson::toJSON(out.list)
+  write(json.out, file = paste0(fileName, ".json"))
+
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing value heatmap exported to JSON (%s).", fileName)
+  )
+
+  return(.set.mSet(mSetObj))
+}

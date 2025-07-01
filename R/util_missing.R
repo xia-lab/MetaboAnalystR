@@ -111,11 +111,46 @@ my.impute.missing <- function(mSetObj = NA,
     } else if (method == "svdImpute") {
       new.mat <- pcaMethods::pca(int.mat, nPcs = 5, method = "svdImpute",
                                  center = TRUE)@completeObs
-    }
-    msg <- c(msg,
-             paste("Missing variables were imputed using",
-                   toupper(gsub("_", "-", method))))
+    } else if (method == "missForest") {
+  require("missForest")
+  set.seed(123)
+
+  ## ---- run imputation ----
+  result  <- missForest::missForest(as.data.frame(int.mat), verbose = TRUE)
+  new.mat <- as.matrix(result$ximp)
+
+  iters <- result$iterations
+  oob   <- result$OOBerror                     # scalar or named vector
+  delta <- if (length(result$errorTrace) > 1)  # change in OOB error
+              tail(diff(result$errorTrace), 1) else NA_real_
+  if (length(oob) == 1) {
+    oob_msg <- paste0("OOB NRMSE = ", signif(oob, 4))
+  } else {
+    oob_msg <- paste0("OOB NRMSE = ", signif(oob["NRMSE"], 4),
+                      "; OOB PFC = ", signif(oob["PFC"], 4))
   }
+
+  miss_msg <- 
+    paste0(
+      "Missing values were imputed with missForest (",
+      iters, ifelse(iters == 1, " iteration, ", " iterations, "),
+      oob_msg, ")."
+    )
+  
+
+  oob_def <- paste(
+    "OOB NRMSE = Out-of-Bag Normalized Root-Mean-Squared Error"
+  )
+
+  msg <- c(msg, miss_msg, oob_def)
+}
+    if(method !="missForest"){
+        msg <- c(msg,
+                 paste("Missing variables were imputed using",
+                       toupper(gsub("_", "-", method))))
+    
+     }
+}
 
 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
