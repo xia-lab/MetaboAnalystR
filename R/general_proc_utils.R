@@ -300,14 +300,17 @@ SanityCheckData <- function(mSetObj=NA){
 }
 
 .test.missing.sig <- function(int.mat, cls){
-       na.mat         <- is.na(int.mat);
-       grp.sizes      <- table(cls);                      
-       feats          <- ncol(int.mat);                    
-       miss.by.grp    <- sapply(levels(cls), function(g)
-                       sum(na.mat[cls == g, , drop = FALSE]));
-       miss.per.smp <- rowSums(na.mat);                   
-       kw.res      <-  kruskal.test(miss.per.smp ~ cls);
-       return(kw.res$p.value);
+  # Exclude samples with "QC" in the group label
+  keep.inx <- !grepl("^qc$", cls, ignore.case = TRUE)
+  
+  int.mat <- int.mat[keep.inx, , drop = FALSE]
+  cls <- cls[keep.inx]
+  
+  na.mat <- is.na(int.mat)
+  miss.per.smp <- rowSums(na.mat)
+  kw.res <- kruskal.test(miss.per.smp ~ cls)
+  
+  return(kw.res$p.value)
 }
 
 #'Replace missing or zero values
