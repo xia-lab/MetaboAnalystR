@@ -2709,9 +2709,16 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=def
 ##############################################
 ##############################################
 
-GetPCAStats<-function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$analSet$pca$permanova.res$stat.info);
+GetPCAStats <- function(mSetObj) {
+  mSetObj <- .get.mSet(mSetObj)
+  stat.info <- mSetObj$analSet$pca$permanova.res$stat.info
+
+  qc.msg <- GetPCAQCRSDMsg(mSetObj)
+  if (nzchar(qc.msg)) {
+    stat.info <- paste(stat.info, qc.msg, sep = "<br />")
+  }
+
+  return(stat.info)
 }
 
 GetPCAPermANOVA<-function(mSetObj){
@@ -3059,4 +3066,33 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
     stat.info.vec = stat.info.vec,
     pair.res = pair.res
   )
+}
+GetPCAQCRSDMsg <- function(mSetObj, top.n = 3) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$analSet$pca$x)) {
+    return("")
+  }
+
+  sample.names <- rownames(mSetObj$analSet$pca$x)
+  qc.inx <- grep("qc", sample.names, ignore.case = TRUE)
+
+  if (length(qc.inx) == 0) {
+    return("")  # No QCs
+  }
+
+  pc.scores <- mSetObj$analSet$pca$x[qc.inx, 1:min(top.n, ncol(mSetObj$analSet$pca$x))]
+  rsd.values <- apply(pc.scores, 2, function(pc) {
+    m <- mean(pc, na.rm = TRUE)
+    s <- sd(pc, na.rm = TRUE)
+    if (m == 0) return(NA)
+    100 * s / abs(m)
+  })
+
+  formatted <- paste0(
+    "[QC %RSD] ", 
+    paste0("PC", seq_along(rsd.values), ": ", signif(rsd.values, 4), "%", collapse = "; ")
+  )
+
+  return(formatted)
 }
