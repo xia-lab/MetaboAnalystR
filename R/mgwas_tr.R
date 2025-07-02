@@ -204,7 +204,6 @@ clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_
   }
   d <- data.frame(rsid = dat$SNP, pval = dat[[pval_column]], 
                   id = dat$id.exposure)
-  saveRDS(d,"/Users/lzy/Documents/OmicsAnalystR/d.rds")
   ########## use a local LD reference panel, faster
   out <- ieugwasr::ld_clump(d, clump_kb = clump_kb, clump_r2 = clump_r2, 
                             clump_p = clump_p1, pop = pop,
@@ -306,18 +305,15 @@ CreateGraph <- function(mSetObj=NA, net.type){
     dups <- duplicated(nd.ids); #note using unique will lose the names attribute
     node.anot <<- nd.ids[!dups];
     colnames(my.edges) = c("from", "to");
-    saveRDS(res,"/Users/lzy/Documents/OmicsAnalystR/res.rds")
-print(query.type)
+ print(query.type)
  
 
     my.edges <- as.data.frame(res[, c(1,3,5)]); # name1, name2, and predicate
-    mir.graph <-simplify( graph_from_data_frame(my.edges, directed=FALSE, vertices=NULL), edge.attr.comb="first");
+    mir.graph <-simplify( graph_from_data_frame(my.edges, directed=TRUE, vertices=NULL), edge.attr.comb="first");
     
-   saveRDS(mir.graph,"/Users/lzy/Documents/OmicsAnalystR/mir.graph.rds")
-
+ 
   substats <- DecomposeGraph(mir.graph, 2);
   print(c(substats,"substats"))
-  saveRDS(mSetObj,"/Users/lzy/Documents/OmicsAnalystR/mSetObj.rds")
   if(!is.null(substats)){
     mir.graph <<- mir.graph;
     mir.query <- nrow(mSetObj$dataSet$mir.mapped);
@@ -431,10 +427,7 @@ GetNetStats <- function(){
 }
 
 GetQueryNum <-function(){
-  if(net.type=="metabo_phenotypes"){
-    return(as.numeric(net.stats$Query))
-  }
-  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj); 
   return(mSetObj$dataSet$query.nums)
 }
 
@@ -549,7 +542,7 @@ convertIgraph2JSON <- function(g, filenm){
   }else{
   edge.sizes <- rep("0.5", nrow(edge.mat));
   }
-  
+ 
   if(!is.null(edge.pmids)){
     edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2], pmids=edge.pmids, p_values=edge.p_values, 
                       n_pmids=edge.n_pmids, esize=edge.sizes, etype=edge.type);
@@ -866,4 +859,32 @@ PerformLayOut <- function(g, layers, algo, focus=""){
 
 GetNetsNameString <- function(){
   paste(rownames(net.stats), collapse="||");
+}
+
+UpdateNetworkLayout <- function(algo, filenm, focus){
+  # get layers
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$mir.res;
+  my.nodes <- res[, c(1, 2)];
+  
+  m <- as.matrix(my.nodes);
+  layers = ceiling(match(V(current.mirnet)$name, m)/nrow(m));
+  
+  pos.xy <- PerformLayOut(current.mirnet, layers, algo, focus);
+  nms <- V(current.mirnet)$name;
+  nodes <- vector(mode="list");
+  for(i in 1:length(nms)){
+    nodes[[i]] <- list(
+      id=nms[i],
+      x=pos.xy[i,1],
+      y=pos.xy[i,2]
+    );
+  }
+  # now only save the node pos to json
+  library(RJSONIO);
+  netData <- list(nodes=nodes);
+  sink(filenm);
+  cat(toJSON(netData));
+  sink();
+  return(filenm);
 }
