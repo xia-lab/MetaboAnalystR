@@ -3067,7 +3067,8 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
     pair.res = pair.res
   )
 }
-GetPCAQCRSDMsg <- function(mSetObj, top.n = 3) {
+
+GetPCAQCRSDMsg <- function(mSetObj, top.n = 3, tol = 1e-5) {
   mSetObj <- .get.mSet(mSetObj)
 
   if (is.null(mSetObj$analSet$pca$x)) {
@@ -3082,11 +3083,15 @@ GetPCAQCRSDMsg <- function(mSetObj, top.n = 3) {
   }
 
   pc.scores <- mSetObj$analSet$pca$x[qc.inx, 1:min(top.n, ncol(mSetObj$analSet$pca$x))]
+
   rsd.values <- apply(pc.scores, 2, function(pc) {
     m <- mean(pc, na.rm = TRUE)
     s <- sd(pc, na.rm = TRUE)
-    if (m == 0) return(NA)
-    100 * s / abs(m)
+    if (is.na(m) || abs(m) < tol) {
+      return(NA)
+    } else {
+      return(100 * s / abs(m))
+    }
   })
 
   formatted <- paste0(
