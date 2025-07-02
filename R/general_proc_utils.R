@@ -230,7 +230,7 @@ SanityCheckData <- function(mSetObj=NA){
   }else{
     msg<-c(msg,"All data values are numeric.");
   }
-  
+
   int.mat <- num.mat;
   rownames(int.mat) <- rowNms;
   colnames(int.mat)<- colNms;
@@ -254,9 +254,18 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
 
+  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
+  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
+
   if(naCount == 0){
+  qc.msg <- CheckQCRSD(mSetObj)
+  msg    <- c(msg, qc.msg)
+  
     msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
   }else{  
+  qc.msg <- CheckQCRSD(mSetObj)
+  msg    <- c(msg, qc.msg)
+  
     msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         miss.msg <- "";
@@ -288,9 +297,8 @@ SanityCheckData <- function(mSetObj=NA){
     int.mat <- my.sync$data;
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
-  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
+
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
 
   if(!.on.public.web){
@@ -1053,4 +1061,69 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   )
 
   return(.set.mSet(mSetObj))
+}
+
+#' Check QC %RSD with pmp::filter_peaks_by_rsd
+#'
+#' Uses the Peak-Matrix-Processing (pmp) package to calculate the
+#' relative standard deviation (%RSD) of each feature across QC
+#' injections and returns a concise QA message.
+#'
+#' @param mSetObj MetaboAnalystR object (default NA → pull from session)
+#' @param thr     RSD threshold (%) for the “pass-rate” statistic
+#' @return        Character string summarising QC precision
+CheckQCRSD <- function(mSetObj, thr = 25) {
+
+  require("pmp")
+
+  cls    <- tolower(as.character(mSetObj$dataSet$orig.cls))
+  qc.inx <- cls == "qc"
+
+  # ── exit early if no QC ────────────────────────────────────────────────
+  if (sum(qc.inx) == 0) {
+    msg <- ""
+    mSetObj$msgSet$qc.rsd.msg <- msg
+    return(msg)
+  }
+
+  # ── read the numeric matrix you produced during preprocessing ─────────
+  if (!file.exists("preproc.qs")) {
+    msg <- "Could not locate 'preproc.qs'; %RSD calculation skipped."
+    mSetObj$msgSet$qc.rsd.msg <- msg
+    return(msg)
+  }
+  raw.mat <- qs::qread("preproc.qs")
+
+  # ── compute %RSD with pmp ──────────────────────────────────────────────
+  rsd_out  <- pmp::filter_peaks_by_rsd(df           = raw.mat,
+                                       max_rsd      = thr,
+                                       classes      = cls,
+                                       qc_label     = "qc",
+                                       remove_peaks = FALSE)
+  rsd_vals <- attr(rsd_out, "flags")[ , "rsd_QC"]
+
+  med.rsd   <- median(rsd_vals, na.rm = TRUE)
+  prop.pass <- round(100 * mean(rsd_vals < thr, na.rm = TRUE), 1)
+  n.qc      <- sum(qc.inx)
+
+  base.msg <- sprintf(
+    "QC samples (n = %d): median RSD = %.1f%%; %.1f%% of features < %d%%.",
+    n.qc, med.rsd, prop.pass, thr
+  )
+
+  if (prop.pass < 80) {
+    msg <- paste0(
+      base.msg,
+      " <font color='orange'>Warning: pass-rate < 80%.</font>"
+    )
+  } else {
+    msg <- base.msg
+  }
+
+  # ── stash results ─────────────────────────────────────────────────────
+  mSetObj$dataSet$qc.rsd    <- rsd_vals
+  mSetObj$msgSet$qc.rsd.msg <- msg
+  invisible(.set.mSet(mSetObj))
+
+  return(msg)
 }
