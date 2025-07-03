@@ -1111,14 +1111,8 @@ CheckQCRSD <- function(mSetObj, thr = 25) {
     n.qc, med.rsd, prop.pass, thr
   )
 
-  if (prop.pass < 80) {
-    msg <- paste0(
-      base.msg,
-      " <font color='orange'>Warning: pass-rate < 80%.</font>"
-    )
-  } else {
     msg <- base.msg
-  }
+  
 
   # ── stash results ─────────────────────────────────────────────────────
   mSetObj$dataSet$qc.rsd    <- rsd_vals
