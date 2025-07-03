@@ -51,35 +51,74 @@ QueryLiteratureMelodiPresto <- function(exposure, outcome) {
     mSetObj$dataSet$mr2lit <- res; # for table display
     # 4 types of edges
     #exposure -> s1 subject
-    edge1 <- data.frame(Name1=(res$Exposure), ID1=(paste(res$Exposure,"exposure", sep="_")), Name2=res$Exposure_Subject, ID2=paste(res$Exposure_Subject, "e_subject", sep="_"), Predicate=rep("", nrow(res)), stringsAsFactors = FALSE);
+    edge1 <- data.frame(Name1=(res$Exposure), ID1=(paste(res$Exposure,"exposure", sep="_")), Name2=res$Exposure_Subject, ID2=paste(res$Exposure_Subject, "e_subject", sep="_"), Predicate=rep("", nrow(res)),  pmid=res$Exposure_PMIDs, stringsAsFactors = FALSE);
     exp.ids <<- edge1[,"ID1"];
     expsbj.ids <<- edge1[,"ID2"];
     #s2 object -> outcome
-    edge2 <- data.frame(Name1=res$Outcome_Object, ID1=paste(res$Outcome_Object, "o_object", sep="_"), Name2=res$Outcome, ID2=paste(res$Outcome,"outcome",sep="_"), Predicate=rep("", nrow(res)), stringsAsFactors = FALSE);
+    edge2 <- data.frame(Name1=res$Outcome_Object, ID1=paste(res$Outcome_Object, "o_object", sep="_"), Name2=res$Outcome, ID2=paste(res$Outcome,"outcome",sep="_"), Predicate=rep("", nrow(res)),pmid=res$Outcome_PMIDs, stringsAsFactors = FALSE);
     outobj.ids <<- edge2[,"ID1"]
     out.ids <<- edge2[,"ID2"];
     #s1 subject - s1 predicate -> s1 object
-    edge3 <- data.frame(Name1=res$Exposure_Subject, ID1=paste(res$Exposure_Subject,"e_subject", sep="_"), Name2=res$Overlap, ID2=paste(res$Overlap,"overlap",sep="_"), Predicate=res$Exposure_Predicate, stringsAsFactors = FALSE);
+    edge3 <- data.frame(Name1=res$Exposure_Subject, ID1=paste(res$Exposure_Subject,"e_subject", sep="_"), Name2=res$Overlap, ID2=paste(res$Overlap,"overlap",sep="_"), Predicate=res$Exposure_Predicate, pmid=res$Exposure_PMIDs, stringsAsFactors = FALSE);
     expsbj.ids <<- edge3[,"ID1"];
     overlap.ids <<- edge3[,"ID2"];
     # s2 subject - s2 predicate -> s2 object
-    edge4 <- data.frame(Name1=res$Overlap, ID1=paste(res$Overlap, "overlap", sep="_"), Name2=res$Outcome_Object, ID2=paste(res$Outcome_Object, "o_object", sep="_"), Predicate=res$Outcome_Predicate, stringsAsFactors = FALSE);
+    edge4 <- data.frame(Name1=res$Overlap, ID1=paste(res$Overlap, "overlap", sep="_"), Name2=res$Outcome_Object, ID2=paste(res$Outcome_Object, "o_object", sep="_"), Predicate=res$Outcome_Predicate,pmid=res$Outcome_PMIDs, stringsAsFactors = FALSE);
     outobj.ids <<- edge4[,"ID2"]
     edges.all <- list(mir.resu, edge1, edge2, edge3, edge4);
     #edges.all <- list(mir.resu, edge3, edge4);
     mir.resu <- do.call("rbind", edges.all);
-    
-    mSetObj$dataSet$tableStats <- data.frame(Query=2,Mapped=length(unique(c(overlap.ids, expsbj.ids, outobj.ids))),stringsAsFactors = FALSE);
-    #seedsu <<- c(seedsu, exp.ids, out.ids);
-    seedsu <<- c(seedsu, exposure, outcome);
-    mirtableu <<- c(mirtableu, "mr2lit");
-    net.info <<- .set.net.names("mr2lit");
-    mSetObj$dataSet$mir.res <- mir.resu;
-    mSetObj$dataSet$mirtarget <- mirtargetu;
-    mSetObj$dataSet$mirtable <- unique(mirtableu);
-    seeds <- rbind(unique(res[,1]), unique(res[,11]));
-    rownames(seeds) <- seeds[,1];
-    mSetObj$dataSet$mir.mapped <- seeds;
+   
+
+my.edges <- as.data.frame(mir.resu[, c(1,3,5,6)])
+colnames(my.edges)[1:4] <- c("from", "to", "predicate", "pmid")
+
+# Create the graph with edge attributes
+mir.graph <- simplify(
+  graph_from_data_frame(
+    my.edges,
+    directed = TRUE,
+    vertices = NULL
+  ),
+  edge.attr.comb = "first"  # keep first value for duplicated edges
+)
+
+from = unique(res$Exposure)
+to= unique(res$Outcome)
+paths <- get.all.shortest.paths(mir.graph, from, to)$res;
+
+if(length(paths) == 0){
+return(0)
+  return (paste("No connection between the two nodes!"));
+}
+
+
+path_info <- lapply(paths, function(path) {
+  nodes <- names(path)  # vertex names
+  # Get edges along the path as pairs (i to i+1)
+  edge_ids <- sapply(seq_along(nodes)[-length(nodes)], function(i) {
+    get.edge.ids(mir.graph, vp = c(nodes[i], nodes[i+1]), directed = TRUE)
+  })
+  # Get all pmids from those edges
+  pmids <- E(mir.graph)$pmid[edge_ids]
+  # Collapse edge list into path string
+  path_str <- paste(nodes, collapse = " → ")
+  # Collapse pmids (optionally unique or sorted)
+  pmid_str <- paste(unique(unlist(strsplit(pmids, " "))), collapse = ", ")
+  
+  data.frame(
+    path = path_str,
+    pmids = pmid_str,
+    stringsAsFactors = FALSE
+  )
+})
+
+# Combine all into one data frame
+path_df <- do.call(rbind, path_info)
+
+
+mSetObj$dataSet$path <- path_df
+
     .set.mSet(mSetObj);
     if(.on.public.web){
       return(1);
@@ -140,41 +179,6 @@ QueryLiteratureMelodiPresto <- function(exposure, outcome) {
 }
 
 
-query_melodipresto <- function(route, params = NULL,
-                             mode = c("raw", "table"),
-                             method = c("GET", "POST"),
-                             retry_times = 3,
-                             retry_pause_min = 1) {
-  #route<<-route;
-  #params<<-params;
-  #print(mode);
-  #print(method);
-  #retry_times<<-retry_times;
-  #retry_pause_min<<-retry_pause_min;
-  #save.image("query_melodipresto.RData")
-  mode <- match.arg(mode)
-  method <- match.arg(method)
-  if (method == "GET") {
-    method_func <- api_get_request
-  } else if (method == "POST") {
-    method_func <- api_post_request
-  }
-  res <- api_request(
-    route = route, params = params, mode = mode, method = method_func,
-    retry_times = retry_times, retry_pause_min = retry_pause_min
-  )
-if(length(res[["data"]])==0){
-  return(NULL)
-}
-
-  l <- list();
-  library(magrittr)
-  for (i in 1:length(res$data)){
-    l[[i]] <- res$data[[i]] %>% 
-      tibble::as_tibble()
-  }
-  df <- do.call("rbind", l);
-}
 
 clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_p1 = 1, 
                                  clump_p2 = 1, pop = "EUR") 
@@ -305,15 +309,11 @@ CreateGraph <- function(mSetObj=NA, net.type){
     dups <- duplicated(nd.ids); #note using unique will lose the names attribute
     node.anot <<- nd.ids[!dups];
     colnames(my.edges) = c("from", "to");
- print(query.type)
  
-
     my.edges <- as.data.frame(res[, c(1,3,5)]); # name1, name2, and predicate
     mir.graph <-simplify( graph_from_data_frame(my.edges, directed=TRUE, vertices=NULL), edge.attr.comb="first");
-    
+   substats <- DecomposeGraph(mir.graph, 2);
  
-  substats <- DecomposeGraph(mir.graph, 2);
-  print(c(substats,"substats"))
   if(!is.null(substats)){
     mir.graph <<- mir.graph;
     mir.query <- nrow(mSetObj$dataSet$mir.mapped);
@@ -542,7 +542,7 @@ convertIgraph2JSON <- function(g, filenm){
   }else{
   edge.sizes <- rep("0.5", nrow(edge.mat));
   }
- 
+
   if(!is.null(edge.pmids)){
     edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2], pmids=edge.pmids, p_values=edge.p_values, 
                       n_pmids=edge.n_pmids, esize=edge.sizes, etype=edge.type);
@@ -887,4 +887,30 @@ UpdateNetworkLayout <- function(algo, filenm, focus){
   cat(toJSON(netData));
   sink();
   return(filenm);
+}
+
+GetShortestPaths <- function(from, to){
+  
+  paths <- get.all.shortest.paths(current.mirnet, from, to)$res;
+  if(length(paths) == 0){
+    return (paste("No connection between the two nodes!"));
+  }
+  
+  path.vec <- vector(mode="character", length=length(paths));
+  for(i in 1:length(paths)){
+    path.inx <- paths[[i]];
+    path.ids <- V(current.mirnet)$name[path.inx];
+    #path.sybls <- V(current.mirnet)$Label[path.inx];
+    path.sybls <- path.ids;
+    pids <- paste(path.ids, collapse="->");
+    psbls <- paste(path.sybls, collapse="->");
+    path.vec[i] <- paste(c(pids, psbls), collapse=";")
+  }
+  
+  if(length(path.vec) > 50){
+    path.vec <- path.vec[1:50];
+  }
+  
+  all.paths <- paste(path.vec, collapse="||");
+  return(all.paths);
 }

@@ -694,3 +694,216 @@ mr_modified <- function (dat,
   return(mr_tab)
 }
 
+
+QueryLiteratureMelodiPresto <- function(exposure, outcome) {
+ mir.resu <<- data.frame();
+ 
+  mSetObj <- .get.mSet(mSetObj);
+  endpoint <- "/overlap/"
+  params <- list(
+    x = exposure,
+    y = outcome
+  )
+ 
+  lit_df <- query_melodipresto(route = endpoint, params = params, mode = "raw", method = "POST")
+
+  if(is.null(lit_df)){
+
+mSetObj$dataSet$path <- data.frame();
+
+    .set.mSet(mSetObj);
+    return(0);
+  }
+  hit.num <- nrow(lit_df);
+  if (hit.num == 0) {
+    current.msg <<- "No hits found in the literarure evidence database.";
+    print(current.msg);
+    return(0);
+  } else{
+    # Q1 term    set_x
+    # Q1 subject    subject_name_x
+    # Q1 predicate   predicate_x
+    # Q1 object    object_name_x **********
+    # Q1 pval       pval_x
+    # Q1 pmid       pmids_x
+    # Q2 subject    subject_name_y **********
+    # Q2 predicate    predicate_y
+    # Q2 object    object_name_y
+    # Q2 pval    pval_y
+    # Q2 pmid    pmids_y
+    # Q2 term    set_y
+    #An overlap is taken to be cases where the object of a triple from the set of ‘x’ queries overlaps with a subject from the set of ‘y’ queries    
+    res <- as.data.frame(lit_df[ , c("set_x","subject_name_x", "predicate_x", "pval_x","pmids_x" , "object_name_x", "predicate_y","object_name_y","pval_y","pmids_y","set_y")]);
+    res$pval_x <- signif(res$pval_x, digits = 5);
+    res$pval_y <- signif(res$pval_y, digits = 5);
+
+    colnames(res) <- c("Exposure","Exposure_Subject","Exposure_Predicate", "Exposure_Pval","Exposure_PMIDs",  "Overlap", "Outcome_Predicate", "Outcome_Object", "Outcome_Pval", "Outcome_PMIDs","Outcome");
+    fast.write.csv(res, file="mr_lit_evidence.csv", row.names=FALSE);
+    res <- res[order(res$Outcome_Pval),];
+    mSetObj$dataSet$mr2lit <- res; # for table display
+    # 4 types of edges
+    #exposure -> s1 subject
+    edge1 <- data.frame(Name1=(res$Exposure), ID1=(paste(res$Exposure,"exposure", sep="_")), Name2=res$Exposure_Subject, ID2=paste(res$Exposure_Subject, "e_subject", sep="_"), Predicate=rep("", nrow(res)),  pmid=res$Exposure_PMIDs, stringsAsFactors = FALSE);
+    exp.ids <<- edge1[,"ID1"];
+    expsbj.ids <<- edge1[,"ID2"];
+    #s2 object -> outcome
+    edge2 <- data.frame(Name1=res$Outcome_Object, ID1=paste(res$Outcome_Object, "o_object", sep="_"), Name2=res$Outcome, ID2=paste(res$Outcome,"outcome",sep="_"), Predicate=rep("", nrow(res)),pmid=res$Outcome_PMIDs, stringsAsFactors = FALSE);
+    outobj.ids <<- edge2[,"ID1"]
+    out.ids <<- edge2[,"ID2"];
+    #s1 subject - s1 predicate -> s1 object
+    edge3 <- data.frame(Name1=res$Exposure_Subject, ID1=paste(res$Exposure_Subject,"e_subject", sep="_"), Name2=res$Overlap, ID2=paste(res$Overlap,"overlap",sep="_"), Predicate=res$Exposure_Predicate, pmid=res$Exposure_PMIDs, stringsAsFactors = FALSE);
+    expsbj.ids <<- edge3[,"ID1"];
+    overlap.ids <<- edge3[,"ID2"];
+    # s2 subject - s2 predicate -> s2 object
+    edge4 <- data.frame(Name1=res$Overlap, ID1=paste(res$Overlap, "overlap", sep="_"), Name2=res$Outcome_Object, ID2=paste(res$Outcome_Object, "o_object", sep="_"), Predicate=res$Outcome_Predicate,pmid=res$Outcome_PMIDs, stringsAsFactors = FALSE);
+    outobj.ids <<- edge4[,"ID2"]
+    edges.all <- list(mir.resu, edge1, edge2, edge3, edge4);
+    #edges.all <- list(mir.resu, edge3, edge4);
+    mir.resu <- do.call("rbind", edges.all);
+   
+
+my.edges <- as.data.frame(mir.resu[, c(1,3,5,6)])
+colnames(my.edges)[1:4] <- c("from", "to", "predicate", "pmid")
+library(igraph)
+# Create the graph with edge attributes
+mir.graph <- simplify(
+  graph_from_data_frame(
+    my.edges,
+    directed = TRUE,
+    vertices = NULL
+  ),
+  edge.attr.comb = "first"  # keep first value for duplicated edges
+)
+
+from = unique(res$Exposure)
+to= unique(res$Outcome)
+paths <- get.all.shortest.paths(mir.graph, from, to)$res;
+
+if(length(paths) == 0){
+mSetObj$dataSet$path <- data.frame();
+
+    .set.mSet(mSetObj);
+return(0) 
+}
+
+
+path_info <- lapply(paths, function(path) {
+  nodes <- names(path)  # vertex names
+  # Get edges along the path as pairs (i to i+1)
+  edge_ids <- sapply(seq_along(nodes)[-length(nodes)], function(i) {
+    get.edge.ids(mir.graph, vp = c(nodes[i], nodes[i+1]), directed = TRUE)
+  })
+  # Get all pmids from those edges
+  pmids <- E(mir.graph)$pmid[edge_ids]
+  # Collapse edge list into path string
+  path_str <- paste(nodes, collapse = " → ")
+  # Collapse pmids (optionally unique or sorted)
+  pmid_str <- paste(unique(unlist(strsplit(pmids, " "))), collapse = ", ")
+  
+  data.frame(
+    path = path_str,
+    pmids = pmid_str,
+    stringsAsFactors = FALSE
+  )
+})
+
+# Combine all into one data frame
+path_df <- do.call(rbind, path_info)
+
+
+mSetObj$dataSet$path <- path_df
+
+    .set.mSet(mSetObj);
+    if(.on.public.web){
+      return(1);
+    }else{
+      return(current.msg);
+    }
+  }
+}
+
+
+
+query_melodipresto <- function(route, params = NULL,
+                             mode = c("raw", "table"),
+                             method = c("GET", "POST"),
+                             retry_times = 3,
+                             retry_pause_min = 1) {
+  #route<<-route;
+  #params<<-params;
+  #print(mode);
+  #print(method);
+  #retry_times<<-retry_times;
+  #retry_pause_min<<-retry_pause_min;
+  #save.image("query_melodipresto.RData")
+  mode <- match.arg(mode)
+  method <- match.arg(method)
+  if (method == "GET") {
+    method_func <- api_get_request
+  } else if (method == "POST") {
+    method_func <- api_post_request
+  }
+  res <- api_request(
+    route = route, params = params, mode = mode, method = method_func,
+    retry_times = retry_times, retry_pause_min = retry_pause_min
+  )
+if(length(res[["data"]])==0){
+  return(NULL)
+}
+
+  l <- list();
+  library(magrittr)
+  for (i in 1:length(res$data)){
+    l[[i]] <- res$data[[i]] %>% 
+      tibble::as_tibble()
+  }
+  df <- do.call("rbind", l);
+}
+
+
+
+api_post_request <- function(route, params,
+                             retry_times, retry_pause_min) {
+  #route<<-route;
+  #params<<-params;
+  #retry_times<<-retry_times;
+  #retry_pause_min<<-retry_pause_min;
+  #save.image("api_post_request.RData")
+  #api_url <- "https://api.epigraphdb.org";
+  api_url <- "https://melodi-presto.mrcieu.ac.uk/api"
+  url <- glue::glue("{api_url}{route}");
+  library(magrittr) # for pipe operation %>% 
+  # Are the requests for CI usage
+  epigraphdb.ci = Sys.getenv(x = "CI", unset = c(CI = "false")) %>%
+    as.logical()
+  is_ci <- getOption("epigraphdb.ci") %>%
+    as.character() %>%
+    tolower()
+  config <- httr::add_headers(.headers = c("client-type" = "R", "ci" = is_ci))
+  # body <- jsonlite::toJSON(params, auto_unbox = TRUE) # this is for epigraphdb query
+  body <- jsonlite::toJSON(params);
+  response <- httr::RETRY(
+    "POST",
+    url = url, body = body, config = config,
+    times = retry_times, pause_min = retry_pause_min
+  )
+  stop_for_status(response, context = list(params = params, url = url))
+  response
+}
+
+api_request <- function(route, params,
+                        mode = c("table", "raw"),
+                        method = method,
+                        retry_times, retry_pause_min) {
+ 
+  mode <- match.arg(mode)
+  response <- do.call(method, args = list(
+    route = route, params = params,
+    retry_times = retry_times, retry_pause_min = retry_pause_min
+  ))
+  if (mode == "table") {
+    return(flatten_response(response))
+  }
+  library(magrittr) # for pipe operation %>% 
+  response %>% httr::content(as = "parsed", encoding = "utf-8") 
+}
