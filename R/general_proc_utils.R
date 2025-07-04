@@ -1075,8 +1075,20 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 CheckQCRSD <- function(mSetObj, thr = 25) {
 
   require("pmp")
+raw_cls <- if (!is.null(mSetObj$dataSet$cls) &&
+               length(mSetObj$dataSet$cls) &&
+               !all(is.na(mSetObj$dataSet$cls))) {
+  mSetObj$dataSet$cls
+} else {
+  mSetObj$dataSet$meta.info[, 1]
+}
 
-  cls    <- tolower(as.character(mSetObj$dataSet$orig.cls))
+## clean up: replace NA for QC rows, make lower-case
+cls <- tolower(
+         replace(as.character(raw_cls),
+                 is.na(raw_cls), "qc")   # or any explicit tag you prefer
+       )
+
   qc.inx <- cls == "qc"
 
   # ── exit early if no QC ────────────────────────────────────────────────
