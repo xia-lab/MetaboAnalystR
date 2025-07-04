@@ -1072,64 +1072,173 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 #' @param mSetObj MetaboAnalystR object (default NA → pull from session)
 #' @param thr     RSD threshold (%) for the “pass-rate” statistic
 #' @return        Character string summarising QC precision
-CheckQCRSD <- function(mSetObj, thr = 25) {
 
-  require("pmp")
-raw_cls <- if (!is.null(mSetObj$dataSet$cls) &&
+  CheckQCRSD <- function(mSetObj, thr = 30) {
+    
+    requireNamespace("pmp")
+    
+    ## ── 1. class vector (Sample vs QC) ──────────────────────────────────────
+    cls <- if (!is.null(mSetObj$dataSet$cls) &&
                length(mSetObj$dataSet$cls) &&
                !all(is.na(mSetObj$dataSet$cls))) {
-  mSetObj$dataSet$cls
-} else {
-  mSetObj$dataSet$meta.info[, 1]
-}
+      mSetObj$dataSet$cls
+    } else {
+      mSetObj$dataSet$meta.info[, 1]
+    }
+    
+    cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
+    qc.inx <- cls == "qc"
+    n.qc   <- sum(qc.inx)
+    
+    if (n.qc == 0) {                                 # no QC injections
+      mSetObj$msgSet$qc.rsd.msg <- ""
+      return("")
+    }
+    
+    ## ── 2. load pre-processed intensity matrix ──────────────────────────────
+    if (!file.exists("preproc.qs")) {
+      msg <- "Could not locate 'preproc.qs'; %RSD calculation skipped."
+      mSetObj$msgSet$qc.rsd.msg <- msg
+      return(msg)
+    }
+    raw.mat <- t(qs::qread("preproc.qs"))             # rows = features, cols = samples
+    
+    ## ── 3. QC %RSD with pmp (rsd_QC column) ─────────────────────────────────
+    rsd_out <- pmp::filter_peaks_by_rsd(
+      df           = raw.mat,
+      max_rsd      = thr,     # only used for flag column
+      classes      = cls,
+      qc_label     = "qc",
+      remove_peaks = FALSE)
+    
+    rsd_vals <- attr(rsd_out, "flags")[ , "rsd_QC"]  # one %RSD per feature
+    
+    ## ── 4. text summary & hyperlink ─────────────────────────────────────────
+    med.rsd   <- median(rsd_vals, na.rm = TRUE)
+    prop.pass <- round(mean(rsd_vals < thr, na.rm = TRUE) * 100, 1)
+    
+    base.msg <- sprintf(
+      "QC samples (n = %d): median RSD = %.1f%%; %.1f%% of features &lt; %d%%. ",
+      n.qc, med.rsd, prop.pass, thr
+    )
+    link <- "<a href='#' onclick=\"rcViewRsd();return false;\">View RSD plot</a>"
+    msg  <- paste0(base.msg, link)
+    
+    mSetObj$dataSet$qc.rsd    <- rsd_vals     # raw QC %RSD vector
+    mSetObj$msgSet$qc.rsd.msg <- msg
+    invisible(.set.mSet(mSetObj))
+    
+    msg
+  }
 
-## clean up: replace NA for QC rows, make lower-case
-cls <- tolower(
-         replace(as.character(raw_cls),
-                 is.na(raw_cls), "qc")   # or any explicit tag you prefer
-       )
+#───────────────────────────────────────────────────────────────────────────────
+#  PlotRSDViolin  ─  QC-centred RSD% violin plot (pmp vignette style)
+#───────────────────────────────────────────────────────────────────────────────
+#  mSetObj     : MetaboAnalyst object or NA to fetch the active one
+#  imgName     : base filename (without dpi / extension)
+#  format      : "png", "pdf", …
+#  dpi         : raster resolution
+#  width       : plot width in inches
+#  thr         : reference RSD% threshold (dashed line); default 30 %
+#  showSamples : also plot biological samples (default FALSE)
+#
+PlotRSDViolin <- function(mSetObj = NA,
+                          imgName,
+                          format = "png",
+                          dpi    = default.dpi,
+                          width  = NA,
+                          thr    = 30) {
 
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (!file.exists("preproc.qs"))
+    stop("Cannot find 'preproc.qs'.")
+
+  raw <- t(qs::qread("preproc.qs"))      # rows = features, cols = samples
+
+  ## ── class vector --------------------------------------------------------
+  cls <- if (!is.null(mSetObj$dataSet$cls) &&
+             length(mSetObj$dataSet$cls) &&
+             !all(is.na(mSetObj$dataSet$cls))) {
+           mSetObj$dataSet$cls
+         } else {
+           mSetObj$dataSet$meta.info[, 1]
+         }
+
+  cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
   qc.inx <- cls == "qc"
+  hasQC  <- any(qc.inx)
 
-  # ── exit early if no QC ────────────────────────────────────────────────
-  if (sum(qc.inx) == 0) {
-    msg <- ""
-    mSetObj$msgSet$qc.rsd.msg <- msg
-    return(msg)
+
+  ## ── RSD vectors ---------------------------------------------------------
+  rsd_smp <- apply(raw[ , !qc.inx, drop = FALSE], 1, rsd_fun)
+rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
+
+
+
+  if (hasQC) {
+rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
+rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
+    plt_df  <- data.frame(
+      Class = factor(c(rep("Sample", length(rsd_smp)),
+                       rep("QC",     length(rsd_qc))),
+                     levels = c("Sample", "QC")),
+      RSD   = c(rsd_smp, rsd_qc)
+    )
+    palette <- c(Sample = "#f8766d", QC = "#00c0c7")
+
+    ## QC summary stats
+    mSetObj$analSet$rsd.stats <- c(
+      n          = length(rsd_qc),
+      median     = median(rsd_qc),
+      q25        = quantile(rsd_qc, 0.25),
+      q75        = quantile(rsd_qc, 0.75),
+      pct_lt_thr = mean(rsd_qc < thr) * 100
+    )
+
+  } else {
+    plt_df  <- data.frame(Class = factor(rep("Sample", length(rsd_smp)),
+                                         levels = "Sample"),
+                          RSD   = rsd_smp)
+    palette <- c(Sample = "#f8766d")
+    mSetObj$analSet$rsd.stats <- NULL        # nothing QC-specific to save
   }
 
-  # ── read the numeric matrix you produced during preprocessing ─────────
-  if (!file.exists("preproc.qs")) {
-    msg <- "Could not locate 'preproc.qs'; %RSD calculation skipped."
-    mSetObj$msgSet$qc.rsd.msg <- msg
-    return(msg)
-  }
-  raw.mat <- qs::qread("preproc.qs")
+  ## ── graphics bookkeeping ------------------------------------------------
+  imgName <- sprintf("%sdpi%d.%s", imgName, dpi, format)
+  w <- if (is.na(width)) 6 else if (width == 0) 6 else width
+  h <- w * 6 / 8
+  mSetObj$imgSet$rsd.violin <- imgName
 
-  # ── compute %RSD with pmp ──────────────────────────────────────────────
-  rsd_out  <- pmp::filter_peaks_by_rsd(df           = raw.mat,
-                                       max_rsd      = thr,
-                                       classes      = cls,
-                                       qc_label     = "qc",
-                                       remove_peaks = FALSE)
-  rsd_vals <- attr(rsd_out, "flags")[ , "rsd_QC"]
+  ## ── draw ---------------------------------------------------------------
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
 
-  med.rsd   <- median(rsd_vals, na.rm = TRUE)
-  prop.pass <- round(100 * mean(rsd_vals < thr, na.rm = TRUE), 1)
-  n.qc      <- sum(qc.inx)
-
-  base.msg <- sprintf(
-    "QC samples (n = %d): median RSD = %.1f%%; %.1f%% of features < %d%%.",
-    n.qc, med.rsd, prop.pass, thr
-  )
-
-    msg <- base.msg
-  
-
-  # ── stash results ─────────────────────────────────────────────────────
-  mSetObj$dataSet$qc.rsd    <- rsd_vals
-  mSetObj$msgSet$qc.rsd.msg <- msg
+  library(ggplot2)
+  p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
+    geom_violin(trim = FALSE, colour = "black", size = 0.4) +
+    geom_boxplot(width = .1, outlier.shape = NA, fill = "white") +
+    geom_hline(yintercept = thr, linetype = "dashed",
+               colour = "grey40", linewidth = 0.4) +   # reference line only
+    scale_fill_manual(values = palette, guide = "none") +
+    labs(y = "RSD (%)", x = NULL) +
+    theme_minimal(base_size = 12)
+  print(p);
+  dev.off()
   invisible(.set.mSet(mSetObj))
-
-  return(msg)
 }
+
+## — add this helper just above the main function (or inside it) ------------
+rm_outliers <- function(vec) {
+  q  <- stats::quantile(vec, c(.25, .75), na.rm = TRUE)
+  iqr <- q[2] - q[1]
+  lo  <- q[1] - 1.5 * iqr        # lower fence
+  hi  <- q[2] + 1.5 * iqr        # upper fence
+  vec[vec >= lo & vec <= hi]     # keep values inside the fences
+}
+
+  rsd_fun <- function(x) {
+    mu <- mean(x, na.rm = TRUE)
+    if (is.na(mu) || mu == 0) return(NA_real_)
+    100 * stats::sd(x, na.rm = TRUE) / abs(mu)
+  }
