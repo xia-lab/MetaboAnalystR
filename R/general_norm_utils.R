@@ -568,6 +568,14 @@ UpdateData <- function(mSetObj=NA, order.group = FALSE){
     cls <- ordered(cls, levels = grp.nm.vec);
   }
 
+## --------- clear QC/BLANK placeholder notice if none remain --------------
+qc.left    <- any(grepl("^\\s*QC",    rownames(data), ignore.case = TRUE))
+blank.left <- any(grepl("^\\s*BLANK", rownames(data), ignore.case = TRUE))
+
+if (!(qc.left || blank.left)) {
+  mSetObj$msgSet$qc.replace.msg <- NULL    # no placeholders left
+}
+
   AddMsg("Successfully updated the data!");
 
   # now set to 

@@ -69,9 +69,9 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
     str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
   
-  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")  
   str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
   
   # sink command for running
   sink("ExecuteRawSpec.sh");
