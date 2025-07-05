@@ -30,44 +30,79 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
 
   ## ---------- QC-aware handling of missing rows ----------
   if (!all(nm.hits)) {
-    missing.nms <- data.smpl.nms[!nm.hits]
-    qc.nms      <- missing.nms[grepl("^QC", missing.nms, ignore.case = TRUE)]
+  missing.nms <- data.smpl.nms[!nm.hits]
 
-    if (length(qc.nms) != length(missing.nms)) {
-      perct <- round(length(missing.nms) / length(data.smpl.nms) * 100, 3)
-      AddErrMsg(sprintf(
-        "A total of %d (%.3f%%) sample names are not present in the metadata file!",
-        length(missing.nms), perct))
-      AddErrMsg(paste0("Missing sample names: ", paste(missing.nms, collapse = "; ")))
-      return(0)
-    }
+  qc.nms    <- missing.nms[grepl("^QC",    missing.nms, ignore.case = TRUE)]
+  blank.nms <- missing.nms[grepl("^BLANK", missing.nms, ignore.case = TRUE)]
 
-  ## ----- placeholder rows, preserving column order ----------
-meta.cols   <- metadata[, -1, drop = FALSE]   # all metadata columns except sample name
-first.col   <- colnames(meta.cols)[1]         # primary metadata column
+  other.missing <- setdiff(missing.nms, c(qc.nms, blank.nms))
 
-qc.placeholders <- as.data.frame(
-  lapply(colnames(meta.cols), function(col) {
-    if (col == first.col) {
-      rep("QC", length(qc.nms))  # keep "QC" only in the first metadata column
-    } else {
-      rep(NA,  length(qc.nms))   # NA for every other metadata column
-    }
-  }),
-  stringsAsFactors = FALSE
-)
-colnames(qc.placeholders) <- colnames(meta.cols)
-
-fake.rows <- data.frame(
-  setNames(list(qc.nms), sample.col),  # sample‐name column (header preserved)
-  qc.placeholders,
-  stringsAsFactors = FALSE
-)
-
-metadata <- rbind(metadata, fake.rows)  # now safe: column names match
-smpl.nms <- CleanNames(metadata[[1]])   # refresh sample-name vector
-
+  ## -- Any non-QC / non-BLANK names missing? → stop -----------------------
+  if (length(other.missing) > 0) {
+    perct <- round(length(missing.nms) / length(data.smpl.nms) * 100, 3)
+    AddErrMsg(
+      paste0("A total of ", length(missing.nms), " (", perct,
+             "%) sample names are not present in the metadata file!"))
+    AddErrMsg(paste0("Missing sample names: ",
+                     paste(other.missing, collapse = "; ")))
+    return(0)
   }
+
+  ## ---------- helper to build placeholder rows --------------------------
+  make_placeholders <- function(sample.vec) {
+    if (length(sample.vec) == 0) return(NULL)
+
+    meta.cols   <- metadata[, -1, drop = FALSE]
+
+    # Detect column types once
+    is.cont.col <- sapply(meta.cols, function(x)
+      all(!is.na(suppressWarnings(as.numeric(as.character(x))))))
+
+    # Build per-column replacement
+    repl <- as.data.frame(
+      lapply(seq_along(is.cont.col), function(i) {
+        if (is.cont.col[i]) 0                     # numeric zero for cont
+        else if (identical(sample.vec, qc.nms)) "QC"   # disc flag
+        else "BLANK"
+      }),
+      stringsAsFactors = FALSE
+    )
+    colnames(repl) <- colnames(meta.cols)
+
+    data.frame(setNames(list(sample.vec), sample.col), repl,
+               stringsAsFactors = FALSE)
+  }
+
+  fake.rows <- rbind(make_placeholders(qc.nms),
+                     make_placeholders(blank.nms))
+
+  metadata <- rbind(metadata, fake.rows)
+  smpl.nms <- CleanNames(metadata[[1]])  # refresh after appending
+
+  ## ---------- user notices ----------------------------------------------
+  note.vec <- character()
+
+  if (length(qc.nms) > 0) {
+    note.vec <- c(note.vec,
+      paste0(length(qc.nms), " QC sample row",
+             ifelse(length(qc.nms) == 1, "", "s"),
+             " were appended to the metadata (\"QC\" for discrete columns, 0 for continuous)."))
+  }
+  if (length(blank.nms) > 0) {
+    note.vec <- c(note.vec,
+      paste0(length(blank.nms), " blank sample row",
+             ifelse(length(blank.nms) == 1, "", "s"),
+             " were appended to the metadata (\"BLANK\" for discrete columns, 0 for continuous)."))
+  }
+  if (length(note.vec) > 0) {
+    note.vec <- c(
+      note.vec,
+      "These rows let QC / blank injections pass sanity checks but ",
+      "<b>should be removed</b> once data processing is complete—exclude them before statistical or multivariate analyses."
+    )
+    mSetObj$msgSet$qc.replace.msg <- paste(note.vec, collapse = " ")
+  }
+}
 
   ## ---------- initialise meta.types ----------
   meta.cols <- metadata[ , -1, drop = FALSE]
@@ -90,7 +125,6 @@ smpl.nms <- CleanNames(metadata[[1]])   # refresh sample-name vector
     # ... keep your existing time-series validation code here ...
   }
 
-  ## ---------- book-keeping ----------
   rownames(meta.cols) <- smpl.nms
   mSetObj$dataSet$meta.info <- mSetObj$dataSet$orig.meta.info <- meta.cols
   mSetObj$dataSet$types.cls.lbl <- sapply(meta.cols, class)
@@ -281,6 +315,9 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
     msg <- c(msg, paste0( "<b>",paste0(colnames(meta.info)[check.inx], collapse=", "),"</b>", " meta-data factors have missing values."));
   }
 
+  if(!is.null(mSetObj$msgSet$qc.replace.msg)){
+    msg <- c(msg,mSetObj$msgSet$qc.replace.msg);
+  }
   cls.vec <- vector()
   lowrep.vec <- vector()
   toolow.vec <- vector();
@@ -352,6 +389,16 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
     mSetObj$msgSet$metacheck.msg <- msg;
   }
   return(.set.mSet(mSetObj));
+}
+
+ContainsMetaPlaceholder <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(!is.null(mSetObj$msgSet$qc.replace.msg)){
+    return(1);
+  }else{
+    return(0);
+  }
 }
 
 

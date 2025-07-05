@@ -498,6 +498,28 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
   
   msg <- c(msg, "The uploaded file is in comma separated values (.csv) format.");
 
+min.n.qc    <- 3   # lowest acceptable for %RSD
+min.n.blank <- 2   # one before + one after
+
+n.qc    <- sum(grepl("^\\s*qc\\s*$",    cls.lbl, ignore.case = TRUE))
+n.blank <- sum(grepl("^\\s*blank\\s*$", cls.lbl, ignore.case = TRUE))
+
+if (isTRUE(mSetObj$dataSet$containsQC) && n.qc < min.n.qc) {
+  AddErrMsg(sprintf(
+    "Only %d QC samples were detected; at least %d are required to compute QC statistics.",
+    n.qc, min.n.qc))
+  return(0)
+}
+
+
+if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
+  AddErrMsg(sprintf(
+    "Only %d blank samples were detected; at least %d (start + end) are required to assess carry-over.",
+    n.blank, min.n.blank))
+  return(0)
+}
+
+
   # try to remove empty line if present
   # identified if no sample names provided
   
@@ -1546,4 +1568,12 @@ PrintCurrentCls <- function(mSetObj=NA){
    mSetObj <- .get.mSet(mSet);
 print("Current class info ....");
 print(mSetObj$dataSet$cls);
+}
+
+SetBlankQcBool <- function(mSetObj=NA, containsQC=F, containsBlank=F){
+  
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$containsQC <- containsQC;
+  mSetObj$dataSet$containsBlank <- containsBlank;
+  return(.set.mSet(mSetObj));
 }
