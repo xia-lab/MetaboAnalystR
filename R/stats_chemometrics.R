@@ -2709,9 +2709,11 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=def
 ##############################################
 ##############################################
 
-GetPCAStats<-function(mSetObj){
-  mSetObj <- .get.mSet(mSetObj);
-  return(mSetObj$analSet$pca$permanova.res$stat.info);
+GetPCAStats <- function(mSetObj) {
+  mSetObj <- .get.mSet(mSetObj)
+  stat.info <- mSetObj$analSet$pca$permanova.res$stat.info
+
+  return(stat.info)
 }
 
 GetPCAPermANOVA<-function(mSetObj){

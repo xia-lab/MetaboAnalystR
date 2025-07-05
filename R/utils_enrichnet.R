@@ -1,5 +1,5 @@
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
-  save.image("enrich.RData");
+  #save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
   # Get the appropriate result matrix based on analysis type
   if(anal.opt == "mum"){
@@ -118,9 +118,11 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     });
     
   } else {
-
+    if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
+      sig.cpds <- mSetObj$total_matched_ecpds
+    }else{
       sig.cpds <- mSetObj$total_matched_cpds
-    
+    }
     
     cmpd.db   <- .get.my.lib("compound_db.qs")
     kegg2name <- setNames(cmpd.db$name,  cmpd.db$kegg_id)   # "C00022" → "Pyruvate"
@@ -136,18 +138,16 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ## -----------------------------------------------------------------
     ##  Build pathway → hit list (names or original IDs)
     ## -----------------------------------------------------------------
-
-      pathway.cpds <- setNames(
-          lapply(pathway.names, function(pw) {
-            idx   <- which(mSetObj$pathways$name == pw)          # row in master table
-            allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
-            intersect(allID, sig.ids)                            # keep only sig IDs
-          }),
-          pathway.names
-      )
     
+    pathway.cpds <- setNames(
+      lapply(pathway.names, function(pw) {
+        idx   <- which(mSetObj$pathways$name == pw)          # row in master table
+        allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+        intersect(allID, sig.ids)                            # keep only sig IDs
+      }),
+      pathway.names
+    )
 
-    
   }
   
   # Calculate overlap matrix
@@ -222,7 +222,6 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     pw.ids <- unname(.name2id(node.nms));
   }else{
     pw.ids <- .mumname2id(node.nms);
-    
   }
   for(i in 1:length(node.sizes)){
     nodes[[i]] <- list(
@@ -248,7 +247,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   scale01   <- function(x) (x - min(x)) / (max(x) - min(x) + 1e-9)
   #e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 0));
   e.df$width <- 0.5;
-
+  
   edge.mat <- apply(
     cbind(id     = seq_len(nrow(e.df)),
           source = e.df$from,
@@ -265,8 +264,10 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   # Get significant compounds based on analysis type
   if(anal.opt == "mum"){
     if(!is.null(mSetObj$input_cpdlist)){
-      sig.cpds <- mSetObj$input_cpdlist
-    } else {
+      sig.cpds <- mSetObj$input_cpdlist;
+    } else if(!is.null(mSetObj$input_ecpdlist)){
+      sig.cpds <- mSetObj$input_ecpdlist;
+    }else {
       sig.cpds <- character(0)
     }
   }else if (anal.opt == "pathora") {
@@ -295,7 +296,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ## -----------------  COLOUR NODES  -----------------------------
     #V(bg)$color  <- "#00FFFF"          # default for compounds
     V(bg)$color  <- "#6CD0D0"          # default for compounds
-
+    
     V(bg)$colorw <- "#6CD0D0"
     
     ## indices of pathway nodes inside bg
@@ -315,7 +316,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
       sig.cpd.idx <- V(bg)$name %in% sig.cpds
       if(sum(sig.cpd.idx) > 0){
         #V(bg)$color[sig.cpd.idx] <- "#FF0000"  # Red for significant compounds
-V(bg)$color[sig.cpd.idx] <- "#D22B2B"
+        V(bg)$color[sig.cpd.idx] <- "#D22B2B"
         V(bg)$colorw[sig.cpd.idx] <- "#D22B2B"
       }
     }
@@ -370,10 +371,10 @@ V(bg)$color[sig.cpd.idx] <- "#D22B2B"
   mum.version <- mSetObj$paramSet$version <- version
   
   #if(anal.opt %in% c("pathora", "pathqea")){
-    
-    
-    hits.query <- pathway.cpds;
-    
+  
+  
+  hits.query <- pathway.cpds;
+  
   #}
   
   enr.mat <- apply(enr.mat, 1, as.list)
@@ -496,7 +497,7 @@ overlap_ratio <- function(set1, set2, type="mixed"){
 #' @export
 .mumname2id <- function(names.vec, mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
-
+  
   # sanity: do we have both id & name vectors?
   if (is.null(mSetObj$pathways) ||
       is.null(mSetObj$pathways$id) ||
@@ -505,14 +506,14 @@ overlap_ratio <- function(set1, set2, type="mixed"){
     warning("No pathway mapping found; returning input unchanged.")
     return(names.vec)
   }
-
+  
   pid   <- mSetObj$pathways$id
   pname <- mSetObj$pathways$name
-
+  
   # build lookup and map
   map <- setNames(pid, pname)
   out <- map[names.vec]
-
+  
   # if a name wasn't found, keep the original
   out[is.na(out)] <- names.vec[is.na(out)]
   out

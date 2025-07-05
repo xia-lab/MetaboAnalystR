@@ -59,27 +59,32 @@ my.json.scatter <- function(filenm, containsLoading=F){
   print("legendData:")
   print(legendData)
   
-  if ("facB" %in% names(res)) {
-    meta.vec2 <- res$facB
-    shape <- vector()
-    meta.vec2 <- as.factor(meta.vec2)
-    meta.vec.num <- as.integer(meta.vec2)
-    shape.s <- c("circle", "triangle", "square", "diamond")[1:length(levels(meta.vec2))]
-    
-    for (i in 1:length(meta.vec.num)) {
-      shape[i] <- shape.s[meta.vec.num[i]]
-    }
-    
-    # Build legendData2 based on shape information
-    legendData2 <- list(
-      label = levels(meta.vec2),
-      shape = levels(as.factor(shape))
-    )
-    
-    # Debug: Print legendData2
-    print("legendData2:")
-    print(legendData2)
-  }
+if ("facB" %in% names(res)) {
+
+  ## factor B values, in original order
+  meta.vec2 <- as.factor(res$facB)           # keep factor to preserve level order
+  lvlB      <- levels(meta.vec2)             # unique levels, in displayed order
+
+  ## pick a shape palette (extend if needed)
+  shape.palette <- c("circle", "triangle", "square", "diamond",
+                     "cross", "star", "hexagon", "asterisk")
+
+  shape.map <- setNames(shape.palette[seq_along(lvlB)], lvlB)  # level → glyph map
+
+  ## assign point shapes using the mapping
+  shape <- unname(shape.map[meta.vec2])
+
+  ## legend – matching order and length
+  legendData2 <- list(
+    label = names(shape.map),     # same level order
+    shape = unname(shape.map)     # corresponding glyphs
+  )
+
+  ## Debug
+  print("legendData2:")
+  print(legendData2)
+}
+
   
   nodeSize = 18;
   

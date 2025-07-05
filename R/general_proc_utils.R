@@ -230,7 +230,7 @@ SanityCheckData <- function(mSetObj=NA){
   }else{
     msg<-c(msg,"All data values are numeric.");
   }
-  
+
   int.mat <- num.mat;
   rownames(int.mat) <- rowNms;
   colnames(int.mat)<- colNms;
@@ -254,9 +254,18 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
 
+  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
+  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
+
   if(naCount == 0){
+  qc.msg <- CheckQCRSD(mSetObj)
+  msg    <- c(msg, qc.msg)
+  
     msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
   }else{  
+  qc.msg <- CheckQCRSD(mSetObj)
+  msg    <- c(msg, qc.msg)
+  
     msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         miss.msg <- "";
@@ -288,9 +297,8 @@ SanityCheckData <- function(mSetObj=NA){
     int.mat <- my.sync$data;
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
-  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
+
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
 
   if(!.on.public.web){
@@ -300,14 +308,17 @@ SanityCheckData <- function(mSetObj=NA){
 }
 
 .test.missing.sig <- function(int.mat, cls){
-       na.mat         <- is.na(int.mat);
-       grp.sizes      <- table(cls);                      
-       feats          <- ncol(int.mat);                    
-       miss.by.grp    <- sapply(levels(cls), function(g)
-                       sum(na.mat[cls == g, , drop = FALSE]));
-       miss.per.smp <- rowSums(na.mat);                   
-       kw.res      <-  kruskal.test(miss.per.smp ~ cls);
-       return(kw.res$p.value);
+  # Exclude samples with "QC" in the group label
+  keep.inx <- !grepl("^qc$", cls, ignore.case = TRUE)
+  
+  int.mat <- int.mat[keep.inx, , drop = FALSE]
+  cls <- cls[keep.inx]
+  
+  na.mat <- is.na(int.mat)
+  miss.per.smp <- rowSums(na.mat)
+  kw.res <- kruskal.test(miss.per.smp ~ cls)
+  
+  return(kw.res$p.value)
 }
 
 #'Replace missing or zero values
@@ -891,4 +902,343 @@ print(combined_plot)
 }
 
 
+#' @title Missing Value Heatmap
+#' @description
+#'   Generates a heatmap showing the locations of missing values across samples (rows) and features (columns).
+#'   Useful for identifying patterns of group-specific or sample-level missingness.
+#'
+#' @usage
+#'   PlotMissingHeatmap(mSetObj = NA,
+#'                      imgName  = "miss_heatmap",
+#'                      format   = "png",
+#'                      dpi      = 150)
+#'
+#' @param mSetObj  MetaboAnalyst object.
+#' @param imgName  Base output name (no extension).
+#' @param format   Image format: "png", "tiff", "pdf", or "svg". Default "png".
+#' @param dpi      Device resolution (dpi). Default 150.
+#'
+#' @export
+#'
+PlotMissingHeatmap <- function(mSetObj = NA,
+                               imgName  = "miss_heatmap",
+                               format   = "png",
+                               dpi      = 150) {
+  
+  require("ggplot2")
+  require("qs")
+  require("Cairo")
+  
+  mSetObj <- .get.mSet(mSetObj)
 
+  int.mat <- if (file.exists("preproc.orig.qs")) {
+    qs::qread("preproc.orig.qs")
+  } else {
+    AddErrMsg("No processed data found for missing value heatmap!")
+    return(0)
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  nSamples  <- nrow(int.mat)
+  nFeatures <- ncol(int.mat)
+
+  msg <- NULL
+  if (nSamples > 50) {
+    int.mat <- int.mat[1:50, , drop = FALSE]
+    msg <- sprintf("Only the first 50 samples are shown (out of %d).", nSamples)
+  }
+
+  hide_feat_labels <- nFeatures > 100
+
+  # Order features by missingness count (descending)
+  miss.counts <- colSums(is.na(int.mat))
+  feature.order <- names(sort(miss.counts, decreasing = TRUE))
+
+  # Convert to missing indicator matrix and long format
+  miss.mat <- is.na(int.mat)
+  df <- as.data.frame(as.table(miss.mat))
+  colnames(df) <- c("Sample", "Feature", "Missing")
+  df$Missing <- ifelse(df$Missing, "Missing", "Present")
+
+  # Apply factor levels for ordered plotting
+  df$Feature <- factor(df$Feature, levels = feature.order)
+  df$Sample <- factor(df$Sample, levels = rownames(int.mat))  # preserve original order
+
+  # Heatmap plot
+  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
+
+  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
+    geom_tile(color = "grey90") +
+    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
+    theme_minimal(base_size = 13) +
+    theme(
+      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
+      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
+      legend.position = "top",
+      panel.grid = element_blank()
+    )
+
+  print(p)
+  dev.off()
+
+  # Book-keeping
+  mSetObj$imgSet$miss.heatmap <- img.full
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi),
+    msg
+  )
+
+  return(.set.mSet(mSetObj))
+}
+
+
+#' @title Export Missing Value Heatmap to JSON for Plotly.js (v3)
+#' @description
+#'   Prepares a JSON file with the missingness matrix (0 = present, 1 = missing) formatted for Plotly.js v3 heatmap.
+#'
+#' @usage
+#'   ExportMissingHeatmapJSON(mSetObj = NA,
+#'                            fileName = "missing_heatmap.json")
+#'
+#' @param mSetObj   MetaboAnalyst object.
+#' @param fileName  Output JSON file name.
+#'
+#' @export
+ExportMissingHeatmapJSON <- function(mSetObj = NA,
+                                     fileName = "missing_heatmap.json") {
+  require("qs")
+  require("rjson")
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  int.mat <- if (file.exists("preproc.qs")) {
+    qs::qread("preproc.orig.qs")
+  } else {
+    AddErrMsg("No processed data found for JSON heatmap export!")
+    return(0)
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  # Limit to first 50 samples
+  if (nrow(int.mat) > 50) {
+    int.mat <- int.mat[1:50, , drop = FALSE]
+  }
+
+  # Compute missing indicator
+  miss.mat <- 1 * is.na(int.mat)
+
+  # Order features (columns) by missing count (descending)
+  miss.counts <- colSums(miss.mat)
+  ord.idx <- order(miss.counts, decreasing = TRUE)
+  miss.mat <- miss.mat[, ord.idx]
+  feature.names <- colnames(miss.mat)
+
+  # Convert to list of rows
+  z <- unname(split(miss.mat, row(miss.mat)))
+
+  # Construct JSON object for Plotly.js v2
+  out.list <- list(
+    z = z,
+    x = feature.names,
+    y = rownames(miss.mat),
+    type = "heatmap",
+    colorscale = list(list(0, "white"), list(1, "red")),
+    showscale = FALSE,
+    hoverinfo = "x+y+z"
+  )
+
+  # Write JSON
+  json.out <- rjson::toJSON(out.list)
+  write(json.out, file = paste0(fileName, ".json"))
+
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing value heatmap exported to JSON (%s).", fileName)
+  )
+
+  return(.set.mSet(mSetObj))
+}
+
+#' Check QC %RSD with pmp::filter_peaks_by_rsd
+#'
+#' Uses the Peak-Matrix-Processing (pmp) package to calculate the
+#' relative standard deviation (%RSD) of each feature across QC
+#' injections and returns a concise QA message.
+#'
+#' @param mSetObj MetaboAnalystR object (default NA → pull from session)
+#' @param thr     RSD threshold (%) for the “pass-rate” statistic
+#' @return        Character string summarising QC precision
+
+  CheckQCRSD <- function(mSetObj, thr = 30) {
+    
+    requireNamespace("pmp")
+    
+    ## ── 1. class vector (Sample vs QC) ──────────────────────────────────────
+    cls <- if (!is.null(mSetObj$dataSet$cls) &&
+               length(mSetObj$dataSet$cls) &&
+               !all(is.na(mSetObj$dataSet$cls))) {
+      mSetObj$dataSet$cls
+    } else {
+      mSetObj$dataSet$meta.info[, 1]
+    }
+    
+    cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
+    qc.inx <- cls == "qc"
+    n.qc   <- sum(qc.inx)
+    
+    if (n.qc == 0) {                                 # no QC injections
+      mSetObj$msgSet$qc.rsd.msg <- ""
+      return("")
+    }
+    
+    ## ── 2. load pre-processed intensity matrix ──────────────────────────────
+    if (!file.exists("preproc.qs")) {
+      msg <- "Could not locate 'preproc.qs'; %RSD calculation skipped."
+      mSetObj$msgSet$qc.rsd.msg <- msg
+      return(msg)
+    }
+    raw.mat <- t(qs::qread("preproc.qs"))             # rows = features, cols = samples
+    
+    ## ── 3. QC %RSD with pmp (rsd_QC column) ─────────────────────────────────
+    rsd_out <- pmp::filter_peaks_by_rsd(
+      df           = raw.mat,
+      max_rsd      = thr,     # only used for flag column
+      classes      = cls,
+      qc_label     = "qc",
+      remove_peaks = FALSE)
+    
+    rsd_vals <- attr(rsd_out, "flags")[ , "rsd_QC"]  # one %RSD per feature
+    
+    ## ── 4. text summary & hyperlink ─────────────────────────────────────────
+    med.rsd   <- median(rsd_vals, na.rm = TRUE)
+    prop.pass <- round(mean(rsd_vals < thr, na.rm = TRUE) * 100, 1)
+    
+    base.msg <- sprintf(
+      "QC samples (n = %d): median RSD = %.1f%%; %.1f%% of features &lt; %d%%. ",
+      n.qc, med.rsd, prop.pass, thr
+    )
+    link <- "<a href='#' onclick=\"rcViewRsd();return false;\">View RSD plot</a>"
+    msg  <- paste0(base.msg, link)
+    
+    mSetObj$dataSet$qc.rsd    <- rsd_vals     # raw QC %RSD vector
+    mSetObj$msgSet$qc.rsd.msg <- msg
+    invisible(.set.mSet(mSetObj))
+    
+    msg
+  }
+
+#───────────────────────────────────────────────────────────────────────────────
+#  PlotRSDViolin  ─  QC-centred RSD% violin plot (pmp vignette style)
+#───────────────────────────────────────────────────────────────────────────────
+#  mSetObj     : MetaboAnalyst object or NA to fetch the active one
+#  imgName     : base filename (without dpi / extension)
+#  format      : "png", "pdf", …
+#  dpi         : raster resolution
+#  width       : plot width in inches
+#  thr         : reference RSD% threshold (dashed line); default 30 %
+#  showSamples : also plot biological samples (default FALSE)
+#
+PlotRSDViolin <- function(mSetObj = NA,
+                          imgName,
+                          format = "png",
+                          dpi    = default.dpi,
+                          width  = NA,
+                          thr    = 30) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (!file.exists("preproc.qs"))
+    stop("Cannot find 'preproc.qs'.")
+
+  raw <- t(qs::qread("preproc.qs"))      # rows = features, cols = samples
+
+  ## ── class vector --------------------------------------------------------
+  cls <- if (!is.null(mSetObj$dataSet$cls) &&
+             length(mSetObj$dataSet$cls) &&
+             !all(is.na(mSetObj$dataSet$cls))) {
+           mSetObj$dataSet$cls
+         } else {
+           mSetObj$dataSet$meta.info[, 1]
+         }
+
+  cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
+  qc.inx <- cls == "qc"
+  hasQC  <- any(qc.inx)
+
+
+  ## ── RSD vectors ---------------------------------------------------------
+  rsd_smp <- apply(raw[ , !qc.inx, drop = FALSE], 1, rsd_fun)
+rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
+
+
+
+  if (hasQC) {
+rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
+rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
+    plt_df  <- data.frame(
+      Class = factor(c(rep("Sample", length(rsd_smp)),
+                       rep("QC",     length(rsd_qc))),
+                     levels = c("Sample", "QC")),
+      RSD   = c(rsd_smp, rsd_qc)
+    )
+    palette <- c(Sample = "#f8766d", QC = "#00c0c7")
+
+    ## QC summary stats
+    mSetObj$analSet$rsd.stats <- c(
+      n          = length(rsd_qc),
+      median     = median(rsd_qc),
+      q25        = quantile(rsd_qc, 0.25),
+      q75        = quantile(rsd_qc, 0.75),
+      pct_lt_thr = mean(rsd_qc < thr) * 100
+    )
+
+  } else {
+    plt_df  <- data.frame(Class = factor(rep("Sample", length(rsd_smp)),
+                                         levels = "Sample"),
+                          RSD   = rsd_smp)
+    palette <- c(Sample = "#f8766d")
+    mSetObj$analSet$rsd.stats <- NULL        # nothing QC-specific to save
+  }
+
+  ## ── graphics bookkeeping ------------------------------------------------
+  imgName <- sprintf("%sdpi%d.%s", imgName, dpi, format)
+  w <- if (is.na(width)) 6 else if (width == 0) 6 else width
+  h <- w * 6 / 8
+  mSetObj$imgSet$rsd.violin <- imgName
+
+  ## ── draw ---------------------------------------------------------------
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
+
+  library(ggplot2)
+  p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
+    geom_violin(trim = FALSE, colour = "black", size = 0.4) +
+    geom_boxplot(width = .1, outlier.shape = NA, fill = "white") +
+    geom_hline(yintercept = thr, linetype = "dashed",
+               colour = "grey40", linewidth = 0.4) +   # reference line only
+    scale_fill_manual(values = palette, guide = "none") +
+    labs(y = "RSD (%)", x = NULL) +
+    theme_minimal(base_size = 12)
+  print(p);
+  dev.off()
+  invisible(.set.mSet(mSetObj))
+}
+
+## — add this helper just above the main function (or inside it) ------------
+rm_outliers <- function(vec) {
+  q  <- stats::quantile(vec, c(.25, .75), na.rm = TRUE)
+  iqr <- q[2] - q[1]
+  lo  <- q[1] - 1.5 * iqr        # lower fence
+  hi  <- q[2] + 1.5 * iqr        # upper fence
+  vec[vec >= lo & vec <= hi]     # keep values inside the fences
+}
+
+  rsd_fun <- function(x) {
+    mu <- mean(x, na.rm = TRUE)
+    if (is.na(mu) || mu == 0) return(NA_real_)
+    100 * stats::sd(x, na.rm = TRUE) / abs(mu)
+  }

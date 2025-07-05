@@ -373,27 +373,35 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
   tt_data$p_log_rescaled <- rescale(tt_data$p_log)  # Rescale p_log for sizing
   # Create a copy of p_log to use for coloring significant points
   tt_data$color_value <- ifelse(tt_data$Status == "Significant", tt_data$p_log, NA)
-  
+  if (all(is.na(tt_data$color_value))) {
+     tt_data$color_value <- 1;
+     low.fill <- high.fill <- "darkgrey";
+   }else{
+     low.fill <- "yellow";
+     high.fill <- "red";
+   }
   # Now create the ggplot
   if(adjust.method == "fdr"){
-  p <- ggplot(tt_data, aes(x=seq, y=fdr_log, label=label, FDR=FDR, P.Value=P.Value)) +
+  # plot based on raw p for gradient, even cutoff is based on fdr # cannot plot cutoff line
+  # p <- ggplot(tt_data, aes(x=seq, y=p_log, label=label, FDR=FDR, P.Value=P.Value)) +
+    p <- ggplot(tt_data, aes(x=seq, y=fdr_log, label=label, FDR=FDR, P.Value=P.Value)) +
     theme_bw() +
-    geom_point(aes( size = p_log, color =color_value, fill=color_value) , shape = 21, stroke = 0.5) +
+    geom_point(aes(size = p_log, color =color_value, fill=color_value), shape = 21, stroke = 0.5) +
     scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
-    scale_fill_gradient(low = "yellow", high = "red", na.value = "darkgrey", guide = "colourbar", name="-Log(FDR.p)") +
+    scale_fill_gradient(low = low.fill, high = high.fill, na.value = "darkgrey", guide = "colourbar", name="-log(FDR.p)") +
     scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
     labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(FDR.p)") +
-    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "grey", size=0.5) # Add horizontal line at p-value threshold
+    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "blue", size=0.5) # Add horizontal line at p-value threshold
 
   }else{
   p <- ggplot(tt_data, aes(x=seq, y=p_log, label=label, FDR=FDR, P.Value=P.Value)) +
     theme_bw() +
-    geom_point(aes( size = p_log, color =color_value, fill=color_value) , shape = 21, stroke = 0.5) +
+    geom_point(aes(size = p_log, color =color_value, fill=color_value), shape = 21, stroke = 0.5) +
     scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
-    scale_fill_gradient(low = "yellow", high = "red", na.value = "darkgrey", guide = "colourbar", name="-Log(raw.p)") +
+    scale_fill_gradient(low = low.fill, high = high.fill, na.value = "darkgrey", guide = "colourbar", name="-log(raw.p)") +
     scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
     labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
-    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "grey", size=0.5) # Add horizontal line at p-value threshold
+    geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "blue", size=0.5) # Add horizontal line at p-value threshold
   }
   
   if (interactive) {

@@ -259,7 +259,6 @@ SetupIndListData <- function(mSetObj=NA, mirs, inputType, idType, tissue, popula
 
 # "ID", "Accession","Gene", "PMID"
 GetResCol <- function(netType, colInx){
-
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
@@ -271,7 +270,6 @@ GetResCol <- function(netType, colInx){
 
 # "ID", "Accession","Gene", "PMID"
 GetResColByName <- function(netType, name){
-   print(c(netType, name))
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
@@ -312,7 +310,7 @@ RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
   if(!exists("entries.vec")){
     return(0);
   }
-  print(entries.vec);
+ 
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
   inx <- which(rownames(dataSet$exposure) %in% entries.vec);
@@ -508,3 +506,27 @@ SetMRMethod <- function(){
 }
 
 
+
+
+GetPathRowNames <- function(netType){
+  mSetObj <- .get.mSet(mSetObj);
+  path <- mSetObj$dataSet$path;
+ if(nrow(path)==0){
+   return()
+  }else{
+  return(1:nrow(path))
+}
+}
+
+ 
+GetPathCol <- function(colInx){
+ 
+  mSetObj <- .get.mSet(mSetObj);
+  path <- mSetObj$dataSet$path;
+  if(nrow(path)==0){
+   return()
+  }else{
+    return(path[,colInx]);
+   }
+ 
+}
