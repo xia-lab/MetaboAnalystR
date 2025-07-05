@@ -274,10 +274,19 @@ GetExpressResultMatrix <- function(dataName = "", inxt) {
     dataSet$comp.res <- rbind(dataSet$sig.mat, dataSet$comp.res)
     dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ]
 
-    RegisterData(dataSet)
-    qs::qsave(dataSet$comp.res, "express.de.res.qs")
+    ## --- now extract the column(s) for the return value -------
+    if (dataSet$de.method == "deseq2") {
+      res <- dataSet$comp.res.list[[inxt]]
+    } else {
+      res <- dataSet$comp.res[ , c(inxt, (inx+1):ncol(dataSet$comp.res)), drop = FALSE]
+      res <- res[order(res$adj.P.Val), ]
+      colnames(res)[1] <- colnames(dataSet$comp.res)[inxt]
+    }
 
-    return(head(signif(as.matrix(dataSet$comp.res), 5),1000))
+    RegisterData(dataSet)
+    qs::qsave(res, "express.de.res.qs")
+
+    return(head(signif(as.matrix(res), 5),1000))
 }
 
 
