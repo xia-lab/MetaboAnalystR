@@ -420,6 +420,17 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   }
 }
 
+CheckContainsBlank <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  
+  cls <- mSetObj$dataSet$proc.cls;
+  if("BLANK" %in% cls){
+    return(1)
+  } else {
+    return(0)
+  }  
+}
+
 
 #'Methods for non-specific filtering of variables
 #'@description This is a function that filters the dataset, dependent on the user-specified method
@@ -439,12 +450,14 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
 #'@param int.cutoff int.cutoff value, numeric
 #'@param var.cutoff var.cutoff value
 #'@param int.filter int.filter value
+#'@param blank.subtraction blank.subtraction boolean value
+#'@param blank.threshold blank.threshold value
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 
-FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0){
+FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, blank.subtraction=F, blank.threshold=10){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -491,6 +504,23 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     }
   }
 
+  if(blank.subtraction){
+    #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
+    if("BLANK" %in% cls){
+        idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
+        idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
+        idx2keep_all <- idx2keep & idx2keep_exist
+        ft_nms2keep <- names(which(idx2keep_all))
+        cols2keep <- vapply(colnames(int.mat), function(x){x %in% ft_nms2keep}, logical(1L))
+        int.mat <- int.mat[,cols2keep]
+        rows2keep <- which(cls != "BLANK")
+        int.mat <- int.mat[rows2keep,]        
+        cls <- cls[cls != "BLANK"]
+        cls <- droplevels(cls, "BLANK")
+        mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
+    }
+  }
+
   # no explicit user choice, will apply default empirical filtering based on variance
   if(is.null(var.cutoff)){ 
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
@@ -525,6 +555,128 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
  
   return(.set.mSet(mSetObj));
 }
+
+blankfeatureSubtraction <- function(cls, threshold){
+  # need to evaluate raw data table without replace min
+  idx_blank <- which(as.character(cls)=="BLANK")
+  preproc <- qs::qread("preproc.qs");
+  
+  res <- apply(preproc, 2, function(x){
+    vec1 <- x[idx_blank]
+    vec2 <- x[-idx_blank]
+    return(mean(vec1, na.rm = T)/mean(vec2, na.rm = T))
+  })
+  
+  ## Estimating the threshold for filtering
+  sort_res <- sort(res, decreasing = T)
+  infectPoint <- bede(x= c(1:length(sort_res)), 
+                      y = sort_res, 1)$iplast
+  if(!is.nan(infectPoint)){
+    blk_thresh <- round(sort_res[ceiling(infectPoint)],1)/5
+  } else {
+    blk_thresh <- round(sort_res[length(sort_res)*0.2]) # Keep top 20% FC (sample/blank) peaks
+  }
+  if(!is.numeric(blk_thresh)){
+    message("No threshold can be evaluted for blank substraction, will use the threshold provided by user!")
+    blk_thresh <- threshold;
+  } else {
+    message(paste0("Threshold for blank filtration has been estimated as ", blk_thresh, "..."))
+  }
+  
+  InclusionVec <- apply(preproc, 2, function(x){
+    blkinto <- mean(x[idx_blank], na.rm = T)
+    smlinto <- mean(x[-idx_blank], na.rm = T)
+    if(is.nan(smlinto)){
+      return(FALSE)
+    } else if (is.nan(blkinto)) {
+      return(TRUE)
+    } else if(smlinto/blkinto > blk_thresh){
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  })
+  
+  return(InclusionVec)
+}
+
+
+ede <- function (x, y, index) 
+{
+  n = length(x)
+  if (index == 1) {
+    y = -y
+  }
+  ifelse(n >= 4, {
+    LF = y - lin2(x[1], y[1], x[n], y[n], x)
+    jf1 = which.min(LF)
+    xf1 = x[jf1]
+    jf2 = which.max(LF)
+    xf2 = x[jf2]
+    ifelse(jf2 < jf1, {
+      xfx <- NaN
+    }, {
+      xfx <- 0.5 * (xf1 + xf2)
+    })
+  }, {
+    jf1 = NaN
+    jf2 = NaN
+    xfx = NaN
+  })
+  out = matrix(c(jf1, jf2, xfx), nrow = 1, ncol = 3, byrow = TRUE)
+  rownames(out) = "EDE"
+  colnames(out) = c("j1", "j2", "chi")
+  return(out)
+}
+
+lin2 <- function (x1, y1, x2, y2, x) 
+{
+  y1 + (y2 - y1) * (x - x1)/(x2 - x1)
+}
+
+bede <- function (x, y, index) 
+{
+  EDE <- c()
+  BEDE <- c()
+  a <- c(x[1])
+  b <- c(x[length(x)])
+  nped <- c(length(x))
+  x2 <- x
+  y2 <- y
+  B = ede(x, y, index)
+  EDE <- c(EDE, B[1, 3])
+  BEDE <- c(BEDE, B[1, 3])
+  iplast = B[1, 3]
+  j <- 0
+  while (!(is.nan(B[1, 3]))) {
+    ifelse(B[1, 2] >= B[1, 1] + 3, {
+      j <- j + 1
+      x2 <- x2[B[1, 1]:B[1, 2]]
+      y2 <- y2[B[1, 1]:B[1, 2]]
+      B <- ede(x2, y2, index)
+      ifelse(!(is.nan(B[1, 3])), {
+        a = c(a, x2[B[1, 1]])
+        b = c(b, x2[B[1, 2]])
+        nped <- c(nped, length(x2))
+        EDE <- c(EDE, B[1, 3])
+        BEDE <- c(BEDE, B[1, 3])
+        iplast = B[1, 3]
+      }, {
+        break
+      })
+    }, {
+      break
+    })
+  }
+  iters = as.data.frame(cbind(nped, a, b, BEDE))
+  colnames(iters) = c("n", "a", "b", "EDE")
+  rownames(iters) = 1:length(nped)
+  out = list()
+  out[["iplast"]] = iplast
+  out[["iters"]] = iters
+  return(out)
+}
+
 
 ##############################################
 ##############################################
