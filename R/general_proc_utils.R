@@ -310,7 +310,7 @@ if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
   }else{  
 
   
-    msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+   #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         miss.msg <- "";
         kw.p <- .test.missing.sig(int.mat, cls);
@@ -324,9 +324,9 @@ if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
         mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
         msg<-c(msg,  miss.msg);
     }
-    msg<-c(msg,
-         "Click the <b>Proceed</b> button if you accept the default practice;",
-         "Or click the <b>Missing Values</b> button to use other methods.");
+    #msg<-c(msg,
+    #     "Click the <b>Proceed</b> button if you accept the default practice;",
+    #     "Or click the <b>Missing Values</b> button to use other methods.");
   }
   
 
@@ -458,17 +458,34 @@ RemoveMissingPercent <- function(mSetObj = NA,
   rule.txt <- ifelse(grpWise, "(group-wise rule)", "(overall rule)")
   msg      <- sprintf("%d variables were removed for threshold %.2f%% %s",
                       rm.cnt, 100 * percent, rule.txt)
-  mSetObj$msgSet$replace.msg <- c(msg)
-
+  mSetObj$msgSet$miss.filter.msg <- c(msg)
+  
   return(.set.mSet(mSetObj))
 }
 
-fetchReplaceMsg <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  res <- paste(mSetObj$msgSet$replace.msg, collapse = ". ")
-  return(res)
+fetchMissFilterMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  msgs <- mSetObj$msgSet$miss.filter.msg
+
+  if (length(msgs) == 0 || all(nchar(trimws(msgs)) == 0)) {
+    return("")                    # nothing to report
+  }
+
+  paste(msgs, collapse = ". ")
 }
 
+fetchReplaceMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  msgs <- mSetObj$msgSet$replace.msg
+
+  if (length(msgs) == 0 || all(nchar(trimws(msgs)) == 0)) {
+    return("")                    # nothing to report
+  }
+
+  paste(msgs, collapse = ". ")
+}
 #'Data processing: Replace missing variables
 #'@description Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.
 #'@usage ImputeMissingVar(mSetObj, method)
