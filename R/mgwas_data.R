@@ -90,8 +90,11 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     merged_table <- merged_table[, new_order]
 
     mSetObj$dataSet$mir.res <- mir.resu;
-    mSetObj$dataSet$exposure <- merged_table;
+    mSetObj$dataSet$exposure <- mSetObj$dataSet$tableView.orig  <- mSetObj$dataSet$tableView <- merged_table;
     mSetObj$dataSet$exposure.orig <- merged_table;
+   # mSetObj$dataSet$tableView.orig$exposure  <- mSetObj$dataSet$tableView$exposure <- merged_table[["Common Name"]]
+   # mSetObj$dataSet$tableView.orig$id.exposure  <- mSetObj$dataSet$tableView$id.exposure <- merged_table[["HMDB"]]
+    mSetObj$dataSet$tableView.orig$mr_keep  <- mSetObj$dataSet$tableView$mr_keep <-  TRUE
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
@@ -273,9 +276,20 @@ GetResColByName <- function(netType, name){
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
-
+ 
   df <-dataSet[netType][[1]];
+  if(netType=="tableView" & name=="exposure"){
+   colInx <- which(colnames(df) == "Common Name" | colnames(df) == "exposure" );
+   }else if(netType=="tableView"  & name=="HMDB"){
+    colInx <- which(colnames(df) == "HMDB" | colnames(df) == "id.exposure" );
+   }else if(netType=="tableView"  & name=="P-value"){
+    colInx <- which(colnames(df) == "P-value" | colnames(df) == "pval.exposure" );
+   }else{
+
   colInx <- which(colnames(df) == name);
+   }
+  
+
   res <- df[, colInx];
 
   hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
@@ -305,23 +319,18 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
 
 
 RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
-  # mir.id<<-mir.id;
-  # save.image("RemoveEntry.RData")
-  if(!exists("entries.vec")){
-    return(0);
-  }
- 
+  
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$exposure) %in% entries.vec);
+  inx <- which(rownames(dataSet$tableView.proc) %in% entries.vec);
   if(length(inx) > 0){
     if(is.null(mSetObj$dataSet$exposure.orig)){
-        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
+        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$tableView.proc;
     }
-    mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
-    if(!is.null(mSetObj$dataSet$harmonized.dat)){
-        inx <- which(rownames(mSetObj$dataSet$harmonized.dat) %in% rownames(mSetObj$dataSet$exposure));
-        mSetObj$dataSet$harmonized.dat <- mSetObj$dataSet$harmonized.dat[inx,];
+    mSetObj$dataSet$tableView.proc <- dataSet$tableView.proc[-inx,];
+    if(!is.null(mSetObj$dataSet$tableView.proc)){
+        inx <- which(rownames(mSetObj$dataSet$tableView.proc) %in% rownames(mSetObj$dataSet$tableView));
+        mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView.proc[inx,];
     }
   }
 
@@ -357,11 +366,20 @@ GetResRowNames <- function(netType){
   #  resTable <- mSetObj$dataSet$mir.res;
   #}
 
-  if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
+ if(is.null(resTable)){
+
+resTable <- mSetObj$dataSet$tableView
+}
+
+ if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
     resTable <- resTable[1:1000, ];
     current.msg <<- "Due to computational constraints, only the top 1000 rows will be displayed.";
   }
   rownames(resTable);
+
+ 
+        
+ 
 }
 
 
@@ -530,3 +548,34 @@ GetPathCol <- function(colInx){
    }
  
 }
+
+
+GetSumCol <- function(type, exp) {
+  mSetObj <- .get.mSet(mSetObj)
+  tab <- mSetObj$dataSet$tableView
+
+  if (exp != "") {
+    tab <- tab[tab$metabolites == exp, ]
+  }
+
+  if (type == "rw" || type == "exps") {
+    if ("Common Name" %in% colnames(tab)) {
+      tab <- unique(tab[, "Common Name"])
+    } else {
+      tab <- unique(tab[, "exposure"])
+    }
+
+    if (type == "rw") {
+     print(1:length(tab))
+      return(1:length(tab))
+    } else {
+      print(tab)
+      return(tab)
+    }
+
+  } else if (type == "num") {
+    return(nrow(tab))
+  }
+}
+
+
