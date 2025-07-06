@@ -374,8 +374,8 @@ ReplaceMin <- function(mSetObj=NA){
   mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- NULL;
   
   # replace zero and missing values using Detection Limit for each variable 
-  preproc <- qs::qread("preproc.qs");
-  int.mat <- ReplaceMissingByLoD(preproc);  
+  int.mat <- qs::qread("preproc.qs");
+  #int.mat <- ReplaceMissingByLoD(preproc);  
   
   # note, this is last step of processing, also save to proc
   #mSetObj$dataSet$proc <- as.data.frame(int.mat);
