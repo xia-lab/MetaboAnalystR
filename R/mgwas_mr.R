@@ -22,10 +22,14 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       if(.on.public.web & (opengwas_jwt_key == "")){
         opengwas_jwt_key <- "" #readOpenGWASKey();
       }
-      exposure.dat <- mSetObj$dataSet$exposure;
+      if(!exists("tableView.proc",mSetObj$dataSet)){
+          mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView
+
+       }
+      exposure.dat <- mSetObj$dataSet$tableView.proc;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
       colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
-      exposure.snp <- mSetObj$dataSet$exposure$SNP;
+      exposure.snp <- mSetObj$dataSet$tableView.proc$SNP;
       outcome.id <- mSetObj$dataSet$outcome$id;
 
       # do LD clumping
@@ -77,11 +81,12 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
-      mSetObj$dataSet$harmonized.dat <- dat;
+
+      mSetObj$dataSet$harmonized.dat <-  mSetObj$dataSet$tableView <- dat;
      .set.mSet(mSetObj)
         
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
-      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$exposure)-nrow(dat)));
+      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView.proc)-nrow(dat)));
 }
 
 readOpenGWASKey <- function(){
@@ -906,4 +911,93 @@ api_request <- function(route, params,
   }
   library(magrittr) # for pipe operation %>% 
   response %>% httr::content(as = "parsed", encoding = "utf-8") 
+}
+
+
+UpdateSNPEntries <- function(col.id, method, value, action, expnm="") {
+  #save.image("updateentries.RData");
+ print(c(col.id, method, value, action, expnm))
+  mSetObj <- .get.mSet(mSetObj)
+
+   tab <- mSetObj$dataSet$tableView
+   nms <- rownames(tab)
+   if(!exists("tableView.proc",mSetObj$dataSet)){
+ 
+     tableView.proc <- tab
+  }else{
+tableView.proc <-  mSetObj$dataSet$tableView.proc
+
+ }
+
+
+    if("exposure" %in% colnames(tab)){
+     ifExp = tab$exposure==expnm;
+    }else{
+     ifExp = tab[["Common Name"]]==expnm;
+   }
+print(ifExp)
+
+  colm <- tab[[col.id]]
+print(colm)
+if(method == "contain"){
+  hits <- grepl(value, colm, ignore.case = TRUE) & ifExp;
+}else if(method == "match"){
+  hits <- tolower(colm) %in% tolower(value)  & ifExp;
+}else{ # at least
+  if(is.numericable(value)){
+    
+    col.val <- as.numeric(colm);  
+    hits <- (col.val > as.numeric(value))  & ifExp;
+  }else{
+    return("NA");
+  }
+  
+  }
+
+if(action == "keep"){
+  hits = !hits & ifExp;
+}else{
+  hits = hits & ifExp;
+}
+print(hits)
+print(paste(sum(hits)));
+if(sum(hits) > 0){
+   tab <- tab[!hits,]
+   row.ids <- rownames(tab);
+   mSetObj$dataSet$tableView <- tab
+   nms<-nms[!nms %in% rownames(tab)]
+  tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
+  mSetObj$dataSet$tableView.proc <- tableView.proc
+  .set.mSet(mSetObj);
+   return(which(hits));
+}else{
+  return("NA");
+}
+
+}
+
+
+is.numericable <- function(x) {
+  !is.na(suppressWarnings(as.numeric(x)))
+}
+
+
+ResetSNPEntries  <- function(expnm="") {
+  
+  mSetObj <- .get.mSet(mSetObj)
+  tabreset <- mSetObj$dataSet$tableView.orig
+  tab <- mSetObj$dataSet$tableView
+  
+  if("exposure" %in% colnames(tab)){
+    ifExp = tab$exposure==expnm;
+  }else{
+    ifExp = tab[["Common Name"]]==expnm;
+  }
+  print(ifExp)
+  
+  rm = ! rownames(tabreset) %in% rownames(tab) & !ifExp
+  tab = tabreset[!rm,]
+  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.proc <- tab
+  return(.set.mSet(mSetObj));
+  
 }

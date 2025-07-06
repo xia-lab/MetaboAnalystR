@@ -254,17 +254,62 @@ SanityCheckData <- function(mSetObj=NA){
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
 
+
+
+  if(is.null(mSetObj$dataSet$meta.info)){
+    mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
+    colnames(mSetObj$dataSet$meta.info) = "Class";
+  }
+  
+  # make sure the meta.info is synchronized with data
+  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
+    my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
+    int.mat <- my.sync$data;
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$meta.info[,1];
+  }
+
+  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
+
   qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
   qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
 
-  if(naCount == 0){
+
+min.n.qc    <- 3   # lowest acceptable for %RSD
+min.n.blank <- 2   # one before + one after
+
+n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
+n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
+
+print("isFALSE(mSetObj$dataSet$containsQC) ");
+print(isFALSE(mSetObj$dataSet$containsQC) );
+if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
+  msg <- c(msg,
+           paste0(
+             "<font color=\"orange\">",
+             n.qc, " QC sample", ifelse(n.qc == 1, "", "s"),
+             " detected even though the ‘Incl. QC samples’ option was left unticked. ",
+             "They will be treated as QC samples automatically.</font>"
+           ))
+}
+
+if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
+  msg <- c(msg,
+           paste0(
+"<font color=\"orange\">",
+             n.blank, " blank injection", ifelse(n.blank == 1, "", "s"),
+             " detected but the ‘Incl. Blank samples’ option was not selected.</font>"
+           ))
+}
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
+
+  if(naCount == 0){
+
     msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
   }else{  
-  qc.msg <- CheckQCRSD(mSetObj)
-  msg    <- c(msg, qc.msg)
+
   
     msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
@@ -283,19 +328,6 @@ SanityCheckData <- function(mSetObj=NA){
     msg<-c(msg,
          "Click the <b>Proceed</b> button if you accept the default practice;",
          "Or click the <b>Missing Values</b> button to use other methods.");
-  }
-  mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
-
-  if(is.null(mSetObj$dataSet$meta.info)){
-    mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
-    colnames(mSetObj$dataSet$meta.info) = "Class";
-  }
-  
-  # make sure the meta.info is synchronized with data
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-    my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
-    int.mat <- my.sync$data;
-    mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
   
 
@@ -1227,47 +1259,54 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 
   CheckQCRSD <- function(mSetObj, thr = 30) {
     
-    requireNamespace("pmp")
-    
-    ## ── 1. class vector (Sample vs QC) ──────────────────────────────────────
-    cls <- if (!is.null(mSetObj$dataSet$cls) &&
-               length(mSetObj$dataSet$cls) &&
-               !all(is.na(mSetObj$dataSet$cls))) {
-      mSetObj$dataSet$cls
-    } else {
-      mSetObj$dataSet$meta.info[, 1]
-    }
+meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
+           ncol(mSetObj$dataSet$meta.info) >= 1          &&       
+           length(mSetObj$dataSet$meta.info[, 1]) > 0    &&       
+           !all(is.na(mSetObj$dataSet$meta.info[, 1]))            
+
+cls.ok  <- !is.null(mSetObj$dataSet$cls) &&
+           length(mSetObj$dataSet$cls)    > 0 &&
+           !all(is.na(mSetObj$dataSet$cls))
+
+cls <- if (meta.ok) {
+          mSetObj$dataSet$meta.info[, 1]
+       } else if (cls.ok) {
+          mSetObj$dataSet$cls
+       } else {
+          return("");              # handle rare case where neither source is usable
+       }
     
     cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
+    print(cls);
     qc.inx <- cls == "qc"
     n.qc   <- sum(qc.inx)
     
-    if (n.qc == 0) {                                 # no QC injections
+    if (n.qc == 0) {                              # no QC injections
       mSetObj$msgSet$qc.rsd.msg <- ""
       return("")
     }
     
-    ## ── 2. load pre-processed intensity matrix ──────────────────────────────
+    ## ── 2. load matrix (features × samples) ----------------------------------
     if (!file.exists("preproc.qs")) {
       msg <- "Could not locate 'preproc.qs'; %RSD calculation skipped."
       mSetObj$msgSet$qc.rsd.msg <- msg
       return(msg)
     }
-    raw.mat <- t(qs::qread("preproc.qs"))             # rows = features, cols = samples
+    raw <- t(qs::qread("preproc.qs"))                # rows = ?  cols = ?
     
-    ## ── 3. QC %RSD with pmp (rsd_QC column) ─────────────────────────────────
-    rsd_out <- pmp::filter_peaks_by_rsd(
-      df           = raw.mat,
-      max_rsd      = thr,     # only used for flag column
-      classes      = cls,
-      qc_label     = "qc",
-      remove_peaks = FALSE)
+    ## make sure rows = features, cols = samples
+    if (ncol(raw) != length(cls)) raw <- t(raw)
     
-    rsd_vals <- attr(rsd_out, "flags")[ , "rsd_QC"]  # one %RSD per feature
+    ## ── 3. vignette-style RSD% ----------------------------------------------
+    FUN <- function(x) stats::sd(x, na.rm = TRUE) /
+      mean(x, na.rm = TRUE) * 100
     
-    ## ── 4. text summary & hyperlink ─────────────────────────────────────────
-    med.rsd   <- median(rsd_vals, na.rm = TRUE)
-    prop.pass <- round(mean(rsd_vals < thr, na.rm = TRUE) * 100, 1)
+    rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, FUN)
+    rsd_smp <- apply(raw[ , !qc.inx, drop = FALSE], 1, FUN)  # not used in msg
+    
+    ## ── 4. summary numbers for QC -------------------------------------------
+    med.rsd   <- median(rsd_qc, na.rm = TRUE)
+    prop.pass <- round(mean(rsd_qc < thr, na.rm = TRUE) * 100, 1)
     
     base.msg <- sprintf(
       "QC samples (n = %d): median RSD = %.1f%%; %.1f%% of features &lt; %d%%. ",
@@ -1276,12 +1315,13 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
     link <- "<a href='#' onclick=\"rcViewRsd();return false;\">View RSD plot</a>"
     msg  <- paste0(base.msg, link)
     
-    mSetObj$dataSet$qc.rsd    <- rsd_vals     # raw QC %RSD vector
+    mSetObj$dataSet$qc.rsd    <- rsd_qc          # vector (length = n features)
     mSetObj$msgSet$qc.rsd.msg <- msg
     invisible(.set.mSet(mSetObj))
     
     msg
   }
+  
 
 #───────────────────────────────────────────────────────────────────────────────
 #  PlotRSDViolin  ─  QC-centred RSD% violin plot (pmp vignette style)
