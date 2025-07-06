@@ -281,8 +281,7 @@ min.n.blank <- 2   # one before + one after
 n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
 n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
 
-print("isFALSE(mSetObj$dataSet$containsQC) ");
-print(isFALSE(mSetObj$dataSet$containsQC) );
+
 if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
   msg <- c(msg,
            paste0(
@@ -311,7 +310,7 @@ if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
   }else{  
 
   
-    msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+   #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         miss.msg <- "";
         kw.p <- .test.missing.sig(int.mat, cls);
@@ -325,9 +324,9 @@ if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
         mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
         msg<-c(msg,  miss.msg);
     }
-    msg<-c(msg,
-         "Click the <b>Proceed</b> button if you accept the default practice;",
-         "Or click the <b>Missing Values</b> button to use other methods.");
+    #msg<-c(msg,
+    #     "Click the <b>Proceed</b> button if you accept the default practice;",
+    #     "Or click the <b>Missing Values</b> button to use other methods.");
   }
   
 
@@ -402,30 +401,91 @@ ReplaceMin <- function(mSetObj=NA){
 #'@import qs
 #'@export
 #'
-RemoveMissingPercent <- function(mSetObj=NA, percent=perct){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  if(!.on.public.web & !is.null(mSetObj$dataSet$norm)){    
-    int.mat <- mSetObj$dataSet$norm;
-    good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-    mSetObj$dataSet$norm <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
-  }else{  
-    int.mat <- qs::qread("preproc.orig.qs");
-    good.inx <- apply(is.na(int.mat), 2, sum)/nrow(int.mat)<percent;
-    preproc <- as.data.frame(int.mat[,good.inx, drop=FALSE]);
-    qs::qsave(preproc, "preproc.qs");
+RemoveMissingPercent <- function(mSetObj = NA,
+                                 percent  = 0.20,   # e.g. 0.20 = 20 %
+                                 grpWise  = FALSE) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  ## 1 · Choose the working matrix --------------------------------------
+  if (!.on.public.web && !is.null(mSetObj$dataSet$norm)) {
+    int.mat   <- mSetObj$dataSet$norm          # already-normalised
+    writeBack <- TRUE
+  } else {
+    int.mat   <- qs::qread("preproc.orig.qs")  # raw pre-processing copy
+    writeBack <- FALSE
   }
-  #mSetObj$msgSet$replace.msg <- c(mSetObj$msgSet$replace.msg, paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent"));
-  mSetObj$msgSet$replace.msg <- c(paste(sum(!good.inx), "variables were removed for threshold", round(100*percent, 2), "percent"));
-  return(.set.mSet(mSetObj));
+
+  ## 2 · Determine “good” variables -------------------------------------
+  if (!grpWise) {
+    ## —— global rule (original behaviour) ————————————————
+    good.inx <- colMeans(is.na(int.mat)) < percent
+
+  } else {
+    ## —— group-wise rule (modified 80 %) ————————————————
+    ##     Keep a feature if *at least one* group is below threshold.
+    ##     Remove feature only when EVERY group exceeds threshold.
+
+    ## 2·1  Get group vector (first column of meta.info, or cls)
+    if (!is.null(mSetObj$dataSet$meta.info) &&
+        ncol(mSetObj$dataSet$meta.info) >= 1) {
+      grp <- as.character(mSetObj$dataSet$meta.info[, 1])
+    } else {
+      grp <- as.character(mSetObj$dataSet$cls)
+    }
+    stopifnot(length(grp) == nrow(int.mat))
+
+    ## 2·2  % missing per feature *within each group*
+    na.mat     <- is.na(int.mat)                       # logical matrix
+    miss.grps  <- t(vapply(split(as.data.frame(na.mat), grp),
+                           function(x) colMeans(as.matrix(x)),
+                           numeric(ncol(int.mat))))    # g × p matrix
+
+    ## 2·3  Keep if ANY group passes the threshold
+    good.inx <- apply(miss.grps, 2, function(x) any(x < percent))
+  }
+
+  ## 3 · Save filtered matrix back --------------------------------------
+  rm.cnt <- sum(!good.inx)            # variables removed
+
+  if (writeBack) {
+    mSetObj$dataSet$norm <- as.data.frame(int.mat[, good.inx, drop = FALSE])
+  } else {
+    qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
+  }
+
+  ## 4 · Log a concise message ------------------------------------------
+  rule.txt <- ifelse(grpWise, "(group-wise rule)", "(overall rule)")
+  msg      <- sprintf("%d variables were removed for threshold %.2f%% %s",
+                      rm.cnt, 100 * percent, rule.txt)
+  mSetObj$msgSet$miss.filter.msg <- c(msg)
+  
+  return(.set.mSet(mSetObj))
 }
 
-fetchReplaceMsg <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  res <- paste(mSetObj$msgSet$replace.msg, collapse = ". ")
-  return(res)
+fetchMissFilterMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  msgs <- mSetObj$msgSet$miss.filter.msg
+
+  if (length(msgs) == 0 || all(nchar(trimws(msgs)) == 0)) {
+    return("")                    # nothing to report
+  }
+
+  paste(msgs, collapse = ". ")
 }
 
+fetchReplaceMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  msgs <- mSetObj$msgSet$replace.msg
+
+  if (length(msgs) == 0 || all(nchar(trimws(msgs)) == 0)) {
+    return("")                    # nothing to report
+  }
+
+  paste(msgs, collapse = ". ")
+}
 #'Data processing: Replace missing variables
 #'@description Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.
 #'@usage ImputeMissingVar(mSetObj, method)
