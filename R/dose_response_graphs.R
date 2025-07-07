@@ -455,7 +455,7 @@ PlotDRHistogram <- function(imgNm,
     {if (is.finite(s.pods["feat.10th"]))
         geom_vline(aes(xintercept = s.pods["feat.10th"], colour = "percentile10th"), size = 1)} +
     scale_color_manual(
-      name   = "mPOD",
+      name   = "tPOD",
       values = pod.cols,
       labels = legend.labels
     ) +
