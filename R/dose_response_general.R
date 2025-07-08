@@ -1250,7 +1250,7 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     # finalize names & order
     rownames(res) <- as.character(res$item)
     colnames(res) <- c("feature.id","mod.name", num.cols, "AIC.model","item.ind")
-    res <- res[order(res$bmd), ]
+    res <- res[order(res$AIC.model), ]
     
     # save back to mSetObj
     dataSet$html.resTable <- res
