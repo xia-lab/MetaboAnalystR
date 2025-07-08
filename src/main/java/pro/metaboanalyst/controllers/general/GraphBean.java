@@ -99,10 +99,13 @@ public class GraphBean implements Serializable {
 
         String key = sb.getImageSource();
         String imgName;
-        String mydpi = "150";
+        //String mydpi = "150";
+        String mydpi;
         String formatOpt = sb.getFormatOpt();
         if (formatOpt.equals("png") || formatOpt.equals("tiff")) {
             mydpi = sb.getDpiOpt() + "";
+        }else{
+            mydpi = "72"; //somehow, this value affect PDF and SVG, 72 works well
         }
         //System.out.println(key + "==========key");
         //String rcmd1 = sb.getGraphicsMap().get(key);

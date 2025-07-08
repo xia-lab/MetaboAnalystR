@@ -5,6 +5,7 @@
 package pro.metaboanalyst.controllers.general;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,11 @@ public class NormBean implements Serializable {
     private String refGrp = null;
     private String refVar = null;
 
-
+    @PostConstruct
+    public void preparePrenormData() {
+        RDataUtils.initPrenormData(sb.getRConnection());
+    }
+    
     public String getRefVar() {
         return refVar;
     }

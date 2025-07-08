@@ -69,7 +69,7 @@
                     <p:outputLabel value="Step 2. Estimate the remaining missing values" style="font-size: 13px; font-weight: bold"/>
                     <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
                         <f:selectItem itemLabel="Exclude variables with missing value" itemValue="exclude"/> 
-                        <f:selectItem itemLabel="Replace by a small value (half of the minimum positive value in the original data)" itemValue="min"/>                         
+                        <f:selectItem itemLabel="Replace by a small value (half of the minimum positive value in the original data)" itemValue="lod"/>                         
                         <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
                         <f:selectItem itemLabel="Impute" itemValue="impute"/> 
                     </p:selectOneRadio>

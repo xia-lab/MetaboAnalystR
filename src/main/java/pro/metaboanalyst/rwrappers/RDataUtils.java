@@ -44,7 +44,7 @@ public class RDataUtils {
      * */
     public static boolean initDataObjects(RConnection RC, String dataType, String analType, boolean isPaired) {
         try {
-            String rCommand = "InitDataObjects(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ")";
+            String rCommand = "InitDataObjects(\"" + dataType + "\", \"" + analType + "\", " + (isPaired ? "TRUE" : "FALSE") + ", 150)";
             RC.voidEval(rCommand);
             RCenter.recordRCommand(RC, rCommand);
             return true;
@@ -1254,7 +1254,16 @@ public class RDataUtils {
     }
     //---------------Methods for access Data information-------------
     //get data information
-
+    public static void initPrenormData(RConnection RC) {
+        try {
+            String rCommand = "PreparePrenormData(NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            RC.voidEval(rCommand);
+        } catch (Exception e) {
+            LOGGER.error("initPrenormData", e);
+        }
+    }
+    
     public static void setPeakFormat(RConnection RC, String type) {
         try {
             String rCommand = "SetPeakFormat(NA, \"" + type + "\")";

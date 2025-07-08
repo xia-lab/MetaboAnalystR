@@ -549,7 +549,7 @@ public class ProcessBean implements Serializable {
         this.missingPercent = missingPercent;
     }
 
-    private String missingImputeOpt = "min";
+    private String missingImputeOpt = "lod";
 
     public String getMissingImputeOpt() {
         return missingImputeOpt;
