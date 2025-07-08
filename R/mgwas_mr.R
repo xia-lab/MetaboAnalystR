@@ -63,7 +63,6 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         # use precomputed local database query
         outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
       }
-
       last_msg <- captured_messages[length(captured_messages)];
       print(last_msg);
       
@@ -998,6 +997,7 @@ ResetSNPEntries  <- function(expnm="") {
   rm = ! rownames(tabreset) %in% rownames(tab) & !ifExp
   tab = tabreset[!rm,]
   mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.proc <- tab
+  mSetObj$dataSet$harmonized.dat <- NULL
   return(.set.mSet(mSetObj));
   
 }

@@ -279,7 +279,7 @@ GetResColByName <- function(netType, name){
   df <-dataSet[netType][[1]];
 
   if(netType=="tableView" & exists("harmonized.dat", mSetObj$dataSet)){
-  df <-dataSet["harmonized.dat"][[1]];
+     df <-dataSet["harmonized.dat"][[1]];
      colInx <- which(colnames(df) == name);
   
    }
