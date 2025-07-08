@@ -17,7 +17,7 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
-  save.image("san.RData");
+  #save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig.qs")){  
     orig.data <- qs::qread("data_orig.qs");
