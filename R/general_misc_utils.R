@@ -1410,7 +1410,7 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
 
     if(anal.type == "mummichog"){
         max.allow <- 7500;
-    }else if(anal.type == "power" || anal.type == "mf"){
+    }else if(anal.type == "power"){
         max.allow <- 2500;
     }else{
         max.allow <- 5000;
