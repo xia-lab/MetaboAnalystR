@@ -17,6 +17,7 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
+  save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig.qs")){  
     orig.data <- qs::qread("data_orig.qs");
@@ -26,167 +27,167 @@ SanityCheckData <- function(mSetObj=NA){
   msg <- NULL;
   cls <- mSetObj$dataSet$orig.cls;
   mSetObj$dataSet$small.smpl.size <- 0;
-
+  
   # check class info only for one factor data
   # For "mf", there is a dedicated page/step "SanityCheckMeta" for this
-
+  
   if(mSetObj$dataSet$cls.type == "disc"){
-
-     # added mSetObj$dataSet$pair.checked to allow edit group function names not overwritten by original files
-      if(mSetObj$dataSet$paired & !(mSetObj$dataSet$pair.checked)){ 
-        msg<-c(msg,"Samples are paired.");
-        # need to first set up pair information if not csv file
-        if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" | mSetObj$dataSet$type=="pktable-ma")){
-          pairs <- ReadPairFile();
-          # check if they are of the right length
-          if(length(pairs)!=length(mSetObj$dataSet$url.smp.nms)){
-            AddErrMsg("Error: the total paired names are not equal to sample names.");
+    
+    # added mSetObj$dataSet$pair.checked to allow edit group function names not overwritten by original files
+    if(mSetObj$dataSet$paired & !(mSetObj$dataSet$pair.checked)){ 
+      msg<-c(msg,"Samples are paired.");
+      # need to first set up pair information if not csv file
+      if(!(mSetObj$dataSet$type=="conc" | mSetObj$dataSet$type=="specbin" | mSetObj$dataSet$type=="pktable" | mSetObj$dataSet$type=="pktable-ma")){
+        pairs <- ReadPairFile();
+        # check if they are of the right length
+        if(length(pairs)!=length(mSetObj$dataSet$url.smp.nms)){
+          AddErrMsg("Error: the total paired names are not equal to sample names.");
+          return(0);
+        }else{
+          # matching the names of the files
+          inx<-match(rownames(orig.data), names(pairs));
+          #check if all matched exactly
+          if(sum(is.na(inx))>0){
+            AddErrMsg("Error: some paired names not match the sample names.");
             return(0);
           }else{
-            # matching the names of the files
-            inx<-match(rownames(orig.data), names(pairs));
-            #check if all matched exactly
-            if(sum(is.na(inx))>0){
-              AddErrMsg("Error: some paired names not match the sample names.");
-              return(0);
-            }else{
-              mSetObj$dataSet$pairs <- pairs[inx];
-            }
+            mSetObj$dataSet$pairs <- pairs[inx];
           }
-        }
-        
-        pairs <- mSetObj$dataSet$pairs;
-        
-        # check if QC samples are present
-        qc.hits <- tolower(as.character(cls)) %in% "qc";
-        if(sum(qc.hits) > 0){
-          AddErrMsg("<font color='red'>Error: QC samples not supported in paired analysis mode.</font>");
-          AddErrMsg("You can perform QC filtering using regular two-group labels.");
-          AddErrMsg("Then re-upload your data (without QC samples) for paired analysis.");
-          return(0);
-        }else{
-          pairs <- as.numeric(pairs);
-        }  
-  
-        label <- as.numeric(pairs);
-        cls <- as.factor(ifelse(label>0,1,0));
-        mSetObj$dataSet$pairs <- label;       
-        lev <- unique(pairs);
-        uni.cl <- length(lev);
-        uni.cl.abs <- uni.cl/2;             
-        sorted.pairs <- sort(pairs,index=TRUE);
-        
-        if(!all(sorted.pairs$x==c(-uni.cl.abs:-1,1:uni.cl.abs))){
-          AddErrMsg("There are some problems in paired sample labels! ");
-          if(uni.cl.abs != round(uni.cl.abs)){
-            duplicates <- pairs[duplicated(pairs)]
-            dup.msg <- paste0("Duplicated labels:", duplicates)
-            AddErrMsg(paste("The total samples must be of even number!", dup.msg));
-          }else{
-            AddErrMsg(paste("And class labels between ",-uni.cl.abs,
-                            " and 1, and between 1 and ",uni.cl.abs,".",sep=""));
-          }
-          return(0);
-        } 
- 
-          msg <- c(msg,"The labels of paired samples passed sanity check.");
-          msg <- c(msg, paste("A total of", uni.cl.abs, "pairs were detected."));
-          # make sure paired samples are sorted 1:n/2 and -1:-n/2
-          
-          x<-sorted.pairs$ix[(uni.cl.abs+1):uni.cl]
-          y<-sorted.pairs$ix[uni.cl.abs:1]
-          index<-as.vector(cbind(x,y));
-          cls<-cls[index];
-          pairs <- pairs[index];
-          orig.data<- orig.data[index,];
-
-          mSetObj$dataSet$pairs <- pairs;
-          mSetObj$dataSet$orig.cls <- cls;
-
-          #add sync for paired names
-          mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
-
-          mSetObj$dataSet$pair.checked <- TRUE;
-          #qs::qsave(orig.data, file="data_orig.qs");
-        
-      } else {
-        
-        # check for class labels at least two replicates per class but QC and BLANK
-        
-        cls.lbl <- mSetObj$dataSet$orig.cls;
-        qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
-        if(sum(qb.inx) > 0){
-          cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
-        } else {
-          cls.Clean <- cls.lbl;
-        }
-        # allow it pass to sanity check and correct there
-        if(anal.type != "network" & anal.type != "mf" & anal.type != "dose"){ # add exception for DSPC correlation network 
-          if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
-            AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
-            AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
-            if(length(levels(cls.Clean)) > 10){
-                AddErrMsg("<font color='red'>It seems the number of groups is big. Make sure to specify the correct format (i.e. samples in <b>columns</b> or <b>rows</b>) in the Data Upload page</font>");
-                return(-2);
-            }else{
-                AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
-                return(-1);
-            }
-          }
-        } else if(anal.type == "mf"){
-          if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
-            msg <- c(msg, paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
-            msg <- c(msg, "The primary factor is highly possible a continuous variable.")
-          }
-        }
-        
-        if("NMDR_id" %in% names(mSetObj$dataSet)){
-          msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "was successfully downloaded from the Metabolomics Workbench!"))
-        }
-        if(!mSetObj$dataSet$paired){
-            msg <- c(msg,"Samples are not paired.");
-        }else{
-            msg <- c(msg,"Samples are paired.");
         }
       }
       
-      # checking if too many groups but a few samples in each group
+      pairs <- mSetObj$dataSet$pairs;
+      
+      # check if QC samples are present
+      qc.hits <- tolower(as.character(cls)) %in% "qc";
+      if(sum(qc.hits) > 0){
+        AddErrMsg("<font color='red'>Error: QC samples not supported in paired analysis mode.</font>");
+        AddErrMsg("You can perform QC filtering using regular two-group labels.");
+        AddErrMsg("Then re-upload your data (without QC samples) for paired analysis.");
+        return(0);
+      }else{
+        pairs <- as.numeric(pairs);
+      }  
+      
+      label <- as.numeric(pairs);
+      cls <- as.factor(ifelse(label>0,1,0));
+      mSetObj$dataSet$pairs <- label;       
+      lev <- unique(pairs);
+      uni.cl <- length(lev);
+      uni.cl.abs <- uni.cl/2;             
+      sorted.pairs <- sort(pairs,index=TRUE);
+      
+      if(!all(sorted.pairs$x==c(-uni.cl.abs:-1,1:uni.cl.abs))){
+        AddErrMsg("There are some problems in paired sample labels! ");
+        if(uni.cl.abs != round(uni.cl.abs)){
+          duplicates <- pairs[duplicated(pairs)]
+          dup.msg <- paste0("Duplicated labels:", duplicates)
+          AddErrMsg(paste("The total samples must be of even number!", dup.msg));
+        }else{
+          AddErrMsg(paste("And class labels between ",-uni.cl.abs,
+                          " and 1, and between 1 and ",uni.cl.abs,".",sep=""));
+        }
+        return(0);
+      } 
+      
+      msg <- c(msg,"The labels of paired samples passed sanity check.");
+      msg <- c(msg, paste("A total of", uni.cl.abs, "pairs were detected."));
+      # make sure paired samples are sorted 1:n/2 and -1:-n/2
+      
+      x<-sorted.pairs$ix[(uni.cl.abs+1):uni.cl]
+      y<-sorted.pairs$ix[uni.cl.abs:1]
+      index<-as.vector(cbind(x,y));
+      cls<-cls[index];
+      pairs <- pairs[index];
+      orig.data<- orig.data[index,];
+      
+      mSetObj$dataSet$pairs <- pairs;
+      mSetObj$dataSet$orig.cls <- cls;
+      
+      #add sync for paired names
+      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
+      
+      mSetObj$dataSet$pair.checked <- TRUE;
+      #qs::qsave(orig.data, file="data_orig.qs");
+      
+    } else {
+      
+      # check for class labels at least two replicates per class but QC and BLANK
+      
       cls.lbl <- mSetObj$dataSet$orig.cls;
-      # need to exclude QC or blank
       qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
       if(sum(qb.inx) > 0){
-        cls.lbl <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+        cls.Clean <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+      } else {
+        cls.Clean <- cls.lbl;
       }
-      min.grp.size <- min(table(cls.lbl));
-      cls.num <- length(levels(cls.lbl));
-      if((cls.num/min.grp.size > 3) & (anal.type != "mf")){
-        mSetObj$dataSet$small.smpl.size <- 1;
-        msg <- c(msg, "<font color='red'>Too many groups with very small number of replicates!</font>");
-        msg <- c(msg, "<font color='red'>Only a subset of methods will be available for analysis!</font>");
+      # allow it pass to sanity check and correct there
+      if(anal.type != "network" & anal.type != "mf" & anal.type != "dose"){ # add exception for DSPC correlation network 
+        if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
+          AddErrMsg(paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
+          AddErrMsg("<font color='red'>At least <b>two</b> groups and <b>three replicates</b> per group are required for analysis</font>!");
+          if(length(levels(cls.Clean)) > 10){
+            AddErrMsg("<font color='red'>It seems the number of groups is big. Make sure to specify the correct format (i.e. samples in <b>columns</b> or <b>rows</b>) in the Data Upload page</font>");
+            return(-2);
+          }else{
+            AddErrMsg("You can click the <b>Edit Groups</b> button below to see the group labels for each sample and make corrections.");
+            return(-1);
+          }
+        }
+      } else if(anal.type == "mf"){
+        if(min(table(cls.Clean)) < 3 | length(levels(cls.Clean)) < 2){
+          msg <- c(msg, paste ("A total of", length(levels(cls.Clean)), "groups found with", length(cls.Clean), "samples."));
+          msg <- c(msg, "The primary factor is highly possible a continuous variable.")
+        }
       }
-      
- 
-      msg <- c(msg, paste(cls.num, "groups were detected in samples."));
-     
       
       if("NMDR_id" %in% names(mSetObj$dataSet)){
-        msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "group labels:", paste0(unique(cls.lbl), collapse = ", ")))
+        msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "was successfully downloaded from the Metabolomics Workbench!"))
       }
-      
-      mSetObj$dataSet$cls.num <- cls.num;
-      mSetObj$dataSet$min.grp.size <- min.grp.size;
+      if(!mSetObj$dataSet$paired){
+        msg <- c(msg,"Samples are not paired.");
+      }else{
+        msg <- c(msg,"Samples are paired.");
+      }
+    }
+    
+    # checking if too many groups but a few samples in each group
+    cls.lbl <- mSetObj$dataSet$orig.cls;
+    # need to exclude QC or blank
+    qb.inx <- tolower(cls.lbl) %in% c("qc", "blank");
+    if(sum(qb.inx) > 0){
+      cls.lbl <- as.factor(as.character(cls.lbl[!qb.inx])); # make sure drop level
+    }
+    min.grp.size <- min(table(cls.lbl));
+    cls.num <- length(levels(cls.lbl));
+    if((cls.num/min.grp.size > 3) & (anal.type != "mf")){
+      mSetObj$dataSet$small.smpl.size <- 1;
+      msg <- c(msg, "<font color='red'>Too many groups with very small number of replicates!</font>");
+      msg <- c(msg, "<font color='red'>Only a subset of methods will be available for analysis!</font>");
+    }
+    
+    
+    msg <- c(msg, paste(cls.num, "groups were detected in samples."));
+    
+    
+    if("NMDR_id" %in% names(mSetObj$dataSet)){
+      msg <- c(msg, paste("Study", mSetObj$dataSet$NMDR_id, "group labels:", paste0(unique(cls.lbl), collapse = ", ")))
+    }
+    
+    mSetObj$dataSet$cls.num <- cls.num;
+    mSetObj$dataSet$min.grp.size <- min.grp.size;
     
     
     ord.inx <- order(mSetObj$dataSet$orig.cls);
     mSetObj$dataSet$orig.cls <- cls[ord.inx];
     mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
     if(!is.null(mSetObj$dataSet$meta.info)){
-        mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
+      mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
     }
     orig.data <- orig.data[ord.inx, , drop=FALSE];
     qs::qsave(orig.data, file="data_orig.qs");
     if(mSetObj$dataSet$paired){
-        mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
+      mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
     }
     
   }
@@ -230,7 +231,7 @@ SanityCheckData <- function(mSetObj=NA){
   }else{
     msg<-c(msg,"All data values are numeric.");
   }
-
+  
   int.mat <- num.mat;
   rownames(int.mat) <- rowNms;
   colnames(int.mat)<- colNms;
@@ -253,11 +254,9 @@ SanityCheckData <- function(mSetObj=NA){
   mSetObj$dataSet$missingCount <- naCount;
   
   msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
-
-
-
+  
   if(is.null(mSetObj$dataSet$meta.info)){
-    mSetObj$dataSet$meta.info <- data.frame(mSetObj$dataSet$cls);
+    mSetObj$dataSet$meta.info <- data.frame(cls);
     colnames(mSetObj$dataSet$meta.info) = "Class";
   }
   
@@ -268,70 +267,70 @@ SanityCheckData <- function(mSetObj=NA){
     mSetObj$dataSet$meta.info <- my.sync$metadata;
     mSetObj$dataSet$orig.cls <- mSetObj$dataSet$meta.info[,1];
   }
-
+  
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
-
+  
   qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
   qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
-
-
-min.n.qc    <- 3   # lowest acceptable for %RSD
-min.n.blank <- 2   # one before + one after
-
-n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
-n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
-
-
-if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
-  msg <- c(msg,
-           paste0(
-             "<font color=\"orange\">",
-             n.qc, " QC sample", ifelse(n.qc == 1, "", "s"),
-             " detected even though the ‘Incl. QC samples’ option was left unticked. ",
-             "They will be treated as QC samples automatically.</font>"
-           ))
-}
-
-if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
-  msg <- c(msg,
-           paste0(
-"<font color=\"orange\">",
-             n.blank, " blank injection", ifelse(n.blank == 1, "", "s"),
-             " detected but the ‘Incl. Blank samples’ option was not selected.</font>"
-           ))
-}
+  
+  
+  min.n.qc    <- 3   # lowest acceptable for %RSD
+  min.n.blank <- 2   # one before + one after
+  
+  n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
+  n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
+  
+  
+  if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
+    msg <- c(msg,
+             paste0(
+               "<font color=\"orange\">",
+               n.qc, " QC sample", ifelse(n.qc == 1, "", "s"),
+               " detected even though the ‘Incl. QC samples’ option was left unticked. ",
+               "They will be treated as QC samples automatically.</font>"
+             ))
+  }
+  
+  if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
+    msg <- c(msg,
+             paste0(
+               "<font color=\"orange\">",
+               n.blank, " blank injection", ifelse(n.blank == 1, "", "s"),
+               " detected but the ‘Incl. Blank samples’ option was not selected.</font>"
+             ))
+  }
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
-
+  
   if(naCount == 0){
-
+    
     msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
   }else{  
-
-  
-   #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+    
+    
+    #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
-        miss.msg <- "";
-        kw.p <- .test.missing.sig(int.mat, cls);
-
-        if(kw.p <= 0.05){
-            miss.msg <- "<font color='red'>Missing-value patterns differ significantly between groups.</font>";
-        }else{
-            miss.msg <- "No significant differences were detected in missing-value patterns across different groups.";
-        }
-        mSetObj$dataSet$missTest <- kw.p;
-        mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
-        msg<-c(msg,  miss.msg);
+      miss.msg <- "";
+      kw.p <- .test.missing.sig(int.mat, cls);
+      
+      if(kw.p <= 0.05){
+        miss.msg <- "<font color='red'>Missing-value patterns differ significantly between groups.</font>";
+      }else{
+        miss.msg <- "No significant differences were detected in missing-value patterns across different groups.";
+      }
+      mSetObj$dataSet$missTest <- kw.p;
+      mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+      msg<-c(msg,  miss.msg);
     }
     #msg<-c(msg,
     #     "Click the <b>Proceed</b> button if you accept the default practice;",
     #     "Or click the <b>Missing Values</b> button to use other methods.");
   }
   
-
+  
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$read.msg, msg);
-
+  
   if(!.on.public.web){
     print(c("Successfully passed sanity check!", msg))
   }
