@@ -229,8 +229,8 @@ public class RPlotCustomizationAgent implements Serializable {
 
     private static final Map<String, FunctionMapping> FUNCTION_MAPPINGS = Map.of(
             "PlotVolcano",     new FunctionMapping("my.plot.volcano",   "util_volcano.Rc"),
-            "plotVennDiagram", new FunctionMapping("my.plot.venn",      "util_venn.Rc"),
-            "Plot3D",          new FunctionMapping("my.plot.scatter3d", "util_3dscatter.Rc")
+            "plotVennDiagram", new FunctionMapping("my.plot.venn",      "util_venndiagram.Rc"),
+            "Plot3D",          new FunctionMapping("my.plot.scatter3d", "util_scatter3d.Rc")
     );
 
     private record FunctionMapping(String rFuncName, String rScriptFile) {}

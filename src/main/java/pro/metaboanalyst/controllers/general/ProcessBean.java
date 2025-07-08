@@ -634,9 +634,9 @@ public class ProcessBean implements Serializable {
         //control for large data on public server
         if (!sb.isPrivileged()) {
             if (featureNum > 2500 & sb.getAnalType().equals("power")) {
-                sb.setFilterMin(defaultFilterCutoff);
+                sb.setFilterMin(0);
             } else if (featureNum > 5000) { // mandatory
-                sb.setFilterMin(defaultFilterCutoff);
+                sb.setFilterMin(0);
             } else {
                 sb.setFilterMin(0);
             }

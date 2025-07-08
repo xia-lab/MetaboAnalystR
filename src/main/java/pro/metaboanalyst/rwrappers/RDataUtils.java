@@ -3243,7 +3243,7 @@ public class RDataUtils {
         return;
 
     }
-    
+
     public static int prepareEnrichNet(RConnection RC, String netNm, String overlapType, String type) {
         try {
             String rCommand = "PrepareEnrichNet(NA, \"" + netNm + "\", \"" + overlapType + "\", \"" + type + "\")";
@@ -3253,5 +3253,15 @@ public class RDataUtils {
             LOGGER.error("prepareEnrichNet", e);
         }
         return 0;
+    }
+
+    public static void initPrenormData(RConnection RC) {
+        try {
+            String rCommand = "PreparePrenormData(NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            RC.voidEval(rCommand);
+        } catch (Exception e) {
+            LOGGER.error("initPrenormData", e);
+        }
     }
 }
