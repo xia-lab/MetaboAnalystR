@@ -617,11 +617,12 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
-  if(var.cutoff > 0){ 
+  # called regardless user option to enforce feature number cap
+  #if(var.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
      int.mat <- filt.res$data;
      msg <- c(msg, filt.res$msg);
-  }
+  #}
 
   if(int.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
