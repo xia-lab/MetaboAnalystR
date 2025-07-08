@@ -26,7 +26,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
           mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView
 
        }
-      exposure.dat <- mSetObj$dataSet$tableView.proc;
+      exposure.dat <- mSetObj$dataSet$tableView;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
       colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
       exposure.snp <- mSetObj$dataSet$tableView.proc$SNP;
@@ -76,17 +76,15 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
             return(-2);
       }
       mSetObj$dataSet$outcome.dat <- outcome.dat;
-
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
-
-      mSetObj$dataSet$harmonized.dat <-  mSetObj$dataSet$tableView <- dat;
+      mSetObj$dataSet$harmonized.dat <- dat;
      .set.mSet(mSetObj)
         
       save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
-      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView.proc)-nrow(dat)));
+      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
 }
 
 readOpenGWASKey <- function(){
@@ -165,7 +163,8 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  dat <- mSetObj$dataSet$harmonized.dat
+  dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$ifCheck,]
+ 
   #save.image("MR.RData");
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
@@ -210,6 +209,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj$dataSet$mr_res_single <- res_single;
   res_loo <- TwoSampleMR::mr_leaveoneout(dat);
   mSetObj$dataSet$mr_res_loo <- res_loo;
+
   #print(head(merge2))
   .set.mSet(mSetObj);
   if(.on.public.web){
@@ -965,9 +965,9 @@ if(sum(hits) > 0){
    tab <- tab[!hits,]
    row.ids <- rownames(tab);
    mSetObj$dataSet$tableView <- tab
-   nms<-nms[!nms %in% rownames(tab)]
-  tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
-  mSetObj$dataSet$tableView.proc <- tableView.proc
+   #nms<-nms[!nms %in% rownames(tab)]
+   # tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
+   # mSetObj$dataSet$tableView.proc <- tableView.proc
   .set.mSet(mSetObj);
    return(which(hits));
 }else{
