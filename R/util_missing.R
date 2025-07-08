@@ -2,10 +2,10 @@ my.impute.missing <- function(mSetObj = NA,
                               method      = "lod",
                               grpLod      = FALSE,
                               grpMeasure  = FALSE) {
-  save.image("miss.RData");
+  #save.image("miss.RData");
   mSetObj <- .get.mSet(mSetObj)
 
-  int.mat <- qs::qread("preproc.qs")          # samples × variables
+  int.mat <- mSetObj$dataSet$filt;          # samples × variables
   new.mat <- NULL
   msg     <- mSetObj$msgSet$replace.msg
 
@@ -168,7 +168,7 @@ my.impute.missing <- function(mSetObj = NA,
 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
-  print(msg);
+  mSetObj$dataSet$filt <-as.data.frame(new.mat); 
   mSetObj$msgSet$replace.msg <- msg
 
   return(.set.mSet(mSetObj))

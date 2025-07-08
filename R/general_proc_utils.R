@@ -382,7 +382,7 @@ ReplaceMin <- function(mSetObj=NA){
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
   qs::qsave(as.data.frame(int.mat), file="data_proc.qs");
 
-  mSetObj$msgSet$replace.msg <- paste("Zero or missing values were replaced by 1/5 of the min positive value for each variable.");
+  #mSetObj$msgSet$replace.msg <- paste("Zero or missing values were replaced by 1/5 of the min positive value for each variable.");
   invisible(gc()); # suppress gc output
 
   return(.set.mSet(mSetObj));
@@ -1009,17 +1009,17 @@ GetMissingTestMsg <- function(mSetObj=NA){
 #' @export
 #'
 PlotMissingDistr <- function(mSetObj = NA,
-                                imgName  = "miss_lollipop",
-                                format   = "png",
-                                dpi      = default.dpi,
-                                width    = NA,
-                                groupCol = NULL) {
+                             imgName  = "miss_box",
+                             format   = "png",
+                             dpi      = default.dpi,
+                             width    = NA,
+                             groupCol = NULL) {
 
   require("ggplot2")
   require("qs")
   require("Cairo")
-  require("patchwork")
-  ## -------- Retrieve data & completeness --------------------------------
+
+  ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
   int.mat <- if (file.exists("preproc.qs")) {
@@ -1027,123 +1027,91 @@ PlotMissingDistr <- function(mSetObj = NA,
   } else if (!is.null(mSetObj$dataSet$orig)) {
     mSetObj$dataSet$orig
   } else {
-    AddErrMsg("No processed data found for lollipop plot!")
+    AddErrMsg("No processed data found for missing-value plot!")
     return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  #pct.complete <- 100 * rowMeans(!is.na(int.mat))
   pct.missing <- 100 * rowMeans(is.na(int.mat))
-  samp.nms     <- rownames(int.mat)
 
-  ## -------- Resolve group vector & type ---------------------------------
+  ## -------- Resolve group vector --------------------------------------
   has.meta <- !is.null(mSetObj$dataSet$meta.info)
-
   if (has.meta) {
-    meta.df <- mSetObj$dataSet$meta.info
-
+    meta.df  <- mSetObj$dataSet$meta.info
     if (is.null(groupCol)) groupCol <- colnames(meta.df)[1]
     if (!groupCol %in% colnames(meta.df)) {
-      AddErrMsg(sprintf("Column '%s' not in meta.info – using first column.", groupCol))
+      AddErrMsg(sprintf("Column ‘%s’ not in meta.info – using first column.",
+                        groupCol))
       groupCol <- colnames(meta.df)[1]
     }
-
     grp.vec  <- meta.df[[groupCol]]
-    col.idx  <- which(colnames(meta.df) == groupCol)
+    col.idx  <- match(groupCol, colnames(meta.df))
     grp.type <- if (!is.null(mSetObj$dataSet$meta.types)) {
       mSetObj$dataSet$meta.types[col.idx]
     } else "disc"
-
-  } else {                               # fall back to class labels
+  } else {
     grp.vec  <- mSetObj$dataSet$cls
     groupCol <- "Class"
     grp.type <- "disc"
   }
 
-  ## Cast according to type -----------
+  ## -------- Cast by type & colour scale -------------------------------
   if (grp.type == "cont") {
-    grp.num <- 0;
-    grp.vec  <- as.numeric(grp.vec)
-    colour_aes <- scale_colour_gradient(low = "#56B1F7", high = "#132B43")
-  } else {                              # treat as discrete / factor
-    grp.vec  <- factor(grp.vec)
-    colour_aes <- scale_colour_discrete();
-    grp.num <- length(levels(grp.vec));
+    grp.vec    <- as.numeric(grp.vec)
+    grp.num    <- 0
+    fill_scale <- scale_fill_gradient(low = "#56B1F7", high = "#132B43")
+  } else {
+    grp.vec    <- factor(grp.vec)
+    grp.num    <- length(levels(grp.vec))
+    fill_scale <- scale_fill_discrete()
   }
 
-  ## -------- Assemble plotting frame -------------------------------------
-  df <- data.frame(
-    Sample  = factor(samp.nms, levels = samp.nms),
-    Percent = pct.missing,
-    Group   = grp.vec
-  )
+  ## -------- Data frame for plotting -----------------------------------
+  df <- data.frame(Group = grp.vec, Percent = pct.missing)
 
-  ## -------- Device size --------------------------------------------------
-  height.1  <- 3 + grp.num * 0.25;  
-  height.2  <- max(6, length(samp.nms) * 0.25);
-  height <- height.1 + height.2;  
-  width <- 7
-  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  ## -------- Device size -----------------------------------------------
+  height <- 3 + grp.num * 0.25           # simple heuristic
 
-  ## -------- Plot & save --------------------------------------------------
-  Cairo::Cairo(file = img.full, width = width, height = height,
-               dpi = dpi, units = "in", type = format)
-colour_aes <- scale_color_discrete()
-p1 <- ggplot(df, aes(x = Sample, y = Percent, colour = Group)) +
-  geom_segment(aes(xend = Sample, y = 0, yend = Percent), size = 0.8) +
-  geom_point(size = 3) +
-  coord_flip() + # Keeps the lollipop horizontal
-  labs(x = NULL, y = "Missing Percentage", colour = groupCol) +
-  ylim(0, 100) +
-  theme_minimal(base_size = 14) +
-  theme(panel.grid.major.y = element_blank(), # Removes vertical grid lines (after flip)
-        axis.title.x = element_text(margin = margin(t = 20, unit = "pt")),
-        # --- REMOVED these lines to show sample names ---
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.margin = unit(c(5.5, 5.5, 5.5, 5.5), "pt") # Standard margin
-  ) +
-  colour_aes # Your original colour scale
+  ## choose width if user passed NA or non-positive
+  if (is.na(width) || !is.numeric(width) || width <= 0) {
+    width <- 7                           # fallback default
+  }
 
-# --- p2: Boxplot (Horizontal - for top placement) ---
-p2 <- ggplot(df, aes(x = Group, y = Percent)) +
-  geom_boxplot(aes(fill = Group),
-               outlier.shape = 21,
-               outlier.size = 2) +
-  coord_flip() + # This makes its 'Percent' axis horizontal (same orientation as p1's Percent axis)
-  labs(x = NULL, y = "Missing Percentage", fill = "Group") +
-  ylim(0, 100) +
-  theme_minimal(base_size = 14) +
-  theme(panel.grid.major.y = element_blank(), # Adjust grid for flipped plot
-        # --- Crucial for Shared Axis ---
-        axis.title.x = element_blank(), # Remove x-axis title from top plot
-        axis.text.x = element_blank(),  # Remove x-axis labels from top plot
-        axis.ticks.x = element_blank(), # Remove x-axis ticks from top plot
-        plot.margin = unit(c(5.5, 5.5, 0, 5.5), "pt") # Reduce bottom margin of top plot to minimize gap
-  ) +
-  scale_fill_discrete()
+  img.full <- paste0(imgName, "dpi", dpi, ".", format)
 
-# --- Combine with shared axes and adjusted heights ---
-combined_plot <- p2 / p1 +
-  plot_layout(heights = c(height.1, height.2), 
-              axes = "collect",    
-              axis_titles = "collect") +
-  plot_annotation(tag_levels = 'A') # Optional: Adds (A) and (B) labels to subplots
+  ## -------- Plot & save ------------------------------------------------
+  Cairo::Cairo(file   = img.full,
+               width  = width,
+               height = height,
+               dpi    = dpi,
+               units  = "in",
+               type   = format)
 
-print(combined_plot)
+  p <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
+       geom_boxplot(outlier.shape = 21, outlier.size = 2) +
+       coord_flip() +
+       labs(x = NULL, y = "Missing Percentage", fill = groupCol) +
+       ylim(0, 100) +
+       theme_minimal(base_size = 14) +
+       theme(panel.grid.major.y = element_blank(),
+             plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       fill_scale
+
+  print(p)
   dev.off()
 
-  ## -------- Book-keeping -------------------------------------------------
-  mSetObj$imgSet$miss.lollipop <- img.full
+  ## -------- Book-keeping ----------------------------------------------
+  mSetObj$imgSet$miss.box <- img.full
   mSetObj$msgSet$plot.msg <- c(
     mSetObj$msgSet$plot.msg,
-    sprintf("Lollipop plot saved (%s, %.1f × %.1f in, %d dpi) – coloured by '%s' (%s).",
+    sprintf("Missing-value boxplot saved (%s, %.1f × %.1f in, %d dpi) – coloured by ‘%s’ (%s).",
             format, width, height, dpi, groupCol, grp.type)
   )
 
   return(.set.mSet(mSetObj))
 }
+
 
 
 #' @title Missing Value Heatmap
