@@ -212,6 +212,7 @@ public class RPlotCustomizationAgent implements Serializable {
         }
         try {
             String modified = originalCmd.replaceFirst("(\\w+)\\(", "$1" + aiSuffix + "(");
+            System.out.println(modified);
             RConnection rc = sb.getRConnection();
             RCenter.recordRCommand(rc, modified);
             rc.voidEval(modified);

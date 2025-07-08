@@ -112,7 +112,7 @@ public class RPlotCustomizationBean implements Serializable {
         String plotSource = sb.getImageSource();
         System.out.println(plotSource + "========plotSource");
         if (sb.getImageSource().equals("volcano")) {
-            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png" + "?t=" + System.currentTimeMillis();
+            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
         } else {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
 
