@@ -576,6 +576,21 @@ if (!(qc.left || blank.left)) {
   mSetObj$msgSet$qc.replace.msg <- NULL    # no placeholders left
 }
 
+keep.smp  <- rownames(data)     # samples left after all edits
+keep.feat <- colnames(data)     # features left after all edits
+
+if (file.exists("preproc.qs")) {
+  preproc <- qs::qread("preproc.qs")
+
+  # safety check: make sure dimensions are compatible
+  common.smp  <- intersect(keep.smp,  rownames(preproc))
+  common.feat <- intersect(keep.feat, colnames(preproc))
+
+  preproc <- preproc[common.smp, common.feat, drop = FALSE]
+
+  qs::qsave(preproc, "preproc.qs")           # overwrite on disk
+}
+
   AddMsg("Successfully updated the data!");
 
   # now set to 

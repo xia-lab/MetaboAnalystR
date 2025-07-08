@@ -2,10 +2,10 @@ my.impute.missing <- function(mSetObj = NA,
                               method      = "lod",
                               grpLod      = FALSE,
                               grpMeasure  = FALSE) {
-
+  #save.image("miss.RData");
   mSetObj <- .get.mSet(mSetObj)
 
-  int.mat <- qs::qread("preproc.qs")          # samples × variables
+  int.mat <- mSetObj$dataSet$filt;          # samples × variables
   new.mat <- NULL
   msg     <- mSetObj$msgSet$replace.msg
 
@@ -31,7 +31,6 @@ my.impute.missing <- function(mSetObj = NA,
     out
   }
 
-  ## ----------------------- imputation ----------------------- ##
   if (method == "exclude") {
     good.inx <- apply(is.na(int.mat), 2, sum) == 0
     new.mat  <- int.mat[, good.inx, drop = FALSE]
@@ -47,7 +46,21 @@ my.impute.missing <- function(mSetObj = NA,
       msg <- c(msg, "Missing variables were replaced by LoDs (1/5 of the min positive value for each feature).")
     }
 
-  } else if (method == "colmin") {
+  }else if (tolower(method) == "qrilc") {
+      require("imputeLCMD")  # Quantile-Regression Imputation of Left-Censored data
+
+        qr.res  <- imputeLCMD::impute.QRILC(t(int.mat))
+
+        ## make sure it’s a numeric matrix before transposing back
+        imp.mat <- qr.res[[1]]
+        if (is.data.frame(imp.mat))
+          imp.mat <- as.matrix(imp.mat)
+
+        new.mat <- t(imp.mat)          # samples × variables
+
+      msg  <- c(msg, paste0("Missing values were imputed with QRILC "))
+
+    } else if (method == "colmin") {
     ## Half-min replacement
     colmin_fun <- function(m) {
       apply(m, 2, function(x) { if (anyNA(x)) x[is.na(x)] <- min(x, na.rm = TRUE) / 2; x })
@@ -155,7 +168,7 @@ my.impute.missing <- function(mSetObj = NA,
 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
-  print(msg);
+  mSetObj$dataSet$filt <-as.data.frame(new.mat); 
   mSetObj$msgSet$replace.msg <- msg
 
   return(.set.mSet(mSetObj))

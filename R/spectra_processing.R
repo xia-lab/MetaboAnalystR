@@ -1407,6 +1407,62 @@ getCOVIDRawData <- function(homedir) {
   }
 }
 
+getExposomeRawData <- function(homedir) {
+  print("Downloading raw covid Data.... ")
+  datalink <- "https://www.dropbox.com/scl/fi/p5j72mzihpqazehbkcxkt/exposome_data.zip";
+  desfile <- paste0(homedir,"/swath_data_file.zip");
+  markerfile <- paste0(homedir, "/upload/Worker/Sample010.mzML");
+  download.file(datalink, 
+                destfile = desfile, 
+                method = "wget", quiet = TRUE);
+  unzip(zipfile = desfile, exdir = paste0(homedir, "/upload"))
+  
+  # do some verification here
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  } 
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    download.file(datalink, 
+                  destfile = desfile, 
+                  method = "libcurl", quiet = TRUE);
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    cmd <- paste0("wget -P ", homedir, " https://www.dropbox.com/scl/fi/p5j72mzihpqazehbkcxkt/exposome_data.zip")
+    try(system(cmd),silent = TRUE)
+    try(unzip(zipfile = desfile, exdir = paste0(homedir, "/upload")),silent = TRUE)
+  }
+  if(file.exists(markerfile)) {
+    print("Downloading done! ")
+    return(1)
+  } else {
+    print("Downloading failed, please contact Zhiqiang Pang! ")
+    return(0)
+  }
+}
+
 ################## ------------- Shell function here below ------------- ######################
 
 #' InitializePlan

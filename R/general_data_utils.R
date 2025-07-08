@@ -1297,7 +1297,6 @@ GetExampleDataPath<-function(naviString){
 
 GetFactors <-function(mSetObj=NA, metadata){
   mSetObj <- .get.mSet(mSetObj);  
- print(ncol(mSetObj$dataSet$meta.info))
   return(as.character(ncol(mSetObj$dataSet$meta.info)))
 }
 
