@@ -33,9 +33,10 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
         print(current.msg);
         return(0);
     } 
+  
 
     res <- mir.dic[ , c("metabolite_orig","hmdb","kegg","snp_orig", "chr", "pos_hg19","note", "name","ratio_single","beta","p_value","metabolite_id","ea","nea","pmid",
-                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid")];
+                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid","sample")];
   
     res <- .parse_snp2met_exposure(res); # remove NA
     # update col names
@@ -46,7 +47,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   res = as.data.frame(res)
  
     colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
-                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid");
+                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid","sample");
     fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  
 
     display.res <- res;
@@ -115,7 +116,7 @@ QueryOutcome <- function(itemVec){
     itemVec.id <- trimws(itemVec);
 
     ieugwas.db <- .get.my.lib("ieugwas_202210.qs");
-    ieugwas.res <- ieugwas.db[ieugwas.db$id == itemVec.id,];
+     ieugwas.res <- ieugwas.db[ieugwas.db$id == itemVec.id,];
     hit.num <- nrow(ieugwas.res);
     if (hit.num == 0) {
         current.msg <<- "No hits found in the database. Please make sure to select an outcome from the drop-down list.";

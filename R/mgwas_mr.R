@@ -4,7 +4,7 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, opengwas_jwt_key = ""){
+PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, steigerOpt,opengwas_jwt_key = ""){
       mSetObj <- .get.mSet(mSetObj);
       #record
       mSetObj$dataSet$snp_filter_params <- list(
@@ -27,11 +27,14 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
        }
       exposure.dat <- mSetObj$dataSet$tableView;
-      exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
-      colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
+      exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid","sample")]
+      colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid","samplesize.exposure")
       exposure.snp <- mSetObj$dataSet$tableView.proc$SNP;
       outcome.id <- mSetObj$dataSet$outcome$id;
-
+    if(is.na(mSetObj[["dataSet"]][["outcome"]][["sample_size"]]) & steigerOpt =="use_steiger"){
+        AddErrMsg(paste0("Steiger filtering failed due to missing of outcome sample size. Please choose another outcome dataset or skip steiger filtering"))
+             return(-2);
+    }
       # do LD clumping
       if(ldclumpOpt!="no_ldclump"){
         exposure.dat <- clump_data_local_ld(exposure.dat);
@@ -74,9 +77,20 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
             AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
             return(-2);
       }
+      
+   
+
       mSetObj$dataSet$outcome.dat <- outcome.dat;
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+         
+      if(steigerOpt=="use_steiger"){
+       dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
+       dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
+      dat <- TwoSampleMR::steiger_filtering(dat)
+       dat<-dat[dat$steiger_dir,]
+       dat$steiger_pval <- signif(dat$steiger_pval, digits = 4)
+       }
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
       mSetObj$dataSet$harmonized.dat <- dat;
