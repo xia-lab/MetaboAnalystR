@@ -929,29 +929,21 @@ api_request <- function(route, params,
 
 UpdateSNPEntries <- function(col.id, method, value, action, expnm="") {
   #save.image("updateentries.RData");
- print(c(col.id, method, value, action, expnm))
+ 
   mSetObj <- .get.mSet(mSetObj)
 
    tab <- mSetObj$dataSet$tableView
    nms <- rownames(tab)
-   if(!exists("tableView.proc",mSetObj$dataSet)){
- 
-     tableView.proc <- tab
-  }else{
-tableView.proc <-  mSetObj$dataSet$tableView.proc
-
- }
-
-
+   
     if("exposure" %in% colnames(tab)){
      ifExp = tab$exposure==expnm;
     }else{
      ifExp = tab[["Common Name"]]==expnm;
    }
-print(ifExp)
+ 
 
   colm <- tab[[col.id]]
-print(colm)
+ 
 if(method == "contain"){
   hits <- grepl(value, colm, ignore.case = TRUE) & ifExp;
 }else if(method == "match"){
@@ -973,14 +965,20 @@ if(action == "keep"){
   hits = hits & ifExp;
 }
 print(hits)
-print(paste(sum(hits)));
 if(sum(hits) > 0){
    tab <- tab[!hits,]
    row.ids <- rownames(tab);
    mSetObj$dataSet$tableView <- tab
+  if(exists("harmonized.dat",mSetObj$dataSet)){
+ 
+     harmonized.dat <- mSetObj$dataSet$harmonized.dat
+     mSetObj$dataSet$harmonized.dat <- harmonized.dat[rownames(harmonized.dat) %in% rownames(tab),]
+
+  } 
    #nms<-nms[!nms %in% rownames(tab)]
    # tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
    # mSetObj$dataSet$tableView.proc <- tableView.proc
+
   .set.mSet(mSetObj);
    return(which(hits));
 }else{
@@ -998,19 +996,7 @@ is.numericable <- function(x) {
 ResetSNPEntries  <- function(expnm="") {
   
   mSetObj <- .get.mSet(mSetObj)
-  tabreset <- mSetObj$dataSet$tableView.orig
-  tab <- mSetObj$dataSet$tableView
-  
-  if("exposure" %in% colnames(tab)){
-    ifExp = tab$exposure==expnm;
-  }else{
-    ifExp = tab[["Common Name"]]==expnm;
-  }
-  print(ifExp)
-  
-  rm = ! rownames(tabreset) %in% rownames(tab) & !ifExp
-  tab = tabreset[!rm,]
-  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.proc <- tab
+  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.orig 
   mSetObj$dataSet$harmonized.dat <- NULL
   return(.set.mSet(mSetObj));
   

@@ -95,7 +95,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     mSetObj$dataSet$exposure.orig <- merged_table;
    # mSetObj$dataSet$tableView.orig$exposure  <- mSetObj$dataSet$tableView$exposure <- merged_table[["Common Name"]]
    # mSetObj$dataSet$tableView.orig$id.exposure  <- mSetObj$dataSet$tableView$id.exposure <- merged_table[["HMDB"]]
-    mSetObj$dataSet$tableView.orig$mr_keep  <- mSetObj$dataSet$tableView$ifCheck <-  TRUE
+    mSetObj$dataSet$tableView.orig$ifCheck  <- mSetObj$dataSet$tableView$ifCheck <-  TRUE
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
@@ -278,7 +278,6 @@ GetResColByName <- function(netType, name){
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
   df <-dataSet[netType][[1]];
-
   if(netType=="tableView" & exists("harmonized.dat", mSetObj$dataSet)){
      df <-dataSet["harmonized.dat"][[1]];
      colInx <- which(colnames(df) == name);
@@ -289,7 +288,7 @@ GetResColByName <- function(netType, name){
       name="ifCheck"
      }
 
-
+ 
  if(netType=="tableView" & name=="exposure"){
     colInx <- which(colnames(df) == "Common Name" | colnames(df) == "exposure" );
   
@@ -575,7 +574,7 @@ GetPathCol <- function(colInx){
 
 
 GetSumCol <- function(type, exp) {
-   print(c(type, exp))
+   #print(c(type, exp))
   mSetObj <- .get.mSet(mSetObj)
   tab <- mSetObj$dataSet$tableView
  
@@ -610,7 +609,7 @@ if ("Common Name" %in% colnames(tab)) {
     }
 
   }else if (type == "num") {
-  print(nrow(tab))
+ 
     return(nrow(tab))
   }
 }
