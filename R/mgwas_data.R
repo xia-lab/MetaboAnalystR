@@ -579,9 +579,8 @@ GetSumCol <- function(type, exp) {
   tab <- mSetObj$dataSet$tableView
  
    if(exists("harmonized.dat",mSetObj$dataSet)){
-        harmonized.dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$mr_keep,];
+      harmonized.dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$mr_keep,];
       tab <- tab[rownames(tab) %in% rownames(harmonized.dat),]
-      
    }
 
   if (exp != "") {
