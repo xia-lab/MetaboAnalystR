@@ -47,20 +47,29 @@ my.impute.missing <- function(mSetObj = NA,
     }
 
   }else if (tolower(method) == "qrilc") {
-      require("imputeLCMD")  # Quantile-Regression Imputation of Left-Censored data
+  require("imputeLCMD")  # Quantile-Regression Imputation of Left-Censored data
 
-        qr.res  <- imputeLCMD::impute.QRILC(t(int.mat))
+  ## ---- 1 · log transform -------------------------------------------------
+  # Offset = half of the smallest non-zero value in the entire matrix
+  min.pos <- min(int.mat[int.mat > 0], na.rm = TRUE)
+  offset  <- 0.5 * min.pos
+  log.base <- 2  # keep log2 unless you have a specific preference
 
-        ## make sure it’s a numeric matrix before transposing back
-        imp.mat <- qr.res[[1]]
-        if (is.data.frame(imp.mat))
-          imp.mat <- as.matrix(imp.mat)
+  log.mat <- log(int.mat + offset, base = log.base)   # samples × variables
 
-        new.mat <- t(imp.mat)          # samples × variables
+  ## ---- 2 · QRILC on log data --------------------------------------------
+  qr.res  <- imputeLCMD::impute.QRILC(t(log.mat))     # expects vars × samples
 
-      msg  <- c(msg, paste0("Missing values were imputed with QRILC "))
+  imp.mat <- qr.res[[1]]
+  if (is.data.frame(imp.mat))
+    imp.mat <- as.matrix(imp.mat)
 
-    } else if (method == "colmin") {
+  ## ---- 3 · back-transform to raw scale -----------------------------------
+  log.imp <- t(imp.mat)                              # samples × variables (log scale)
+  new.mat <- (log.base ^ log.imp) - offset           # back to original intensity scale
+
+  msg <- c(msg,"Missing values were imputed with QRILC")
+} else if (method == "colmin") {
     ## Half-min replacement
     colmin_fun <- function(m) {
       apply(m, 2, function(x) { if (anyNA(x)) x[is.na(x)] <- min(x, na.rm = TRUE) / 2; x })
