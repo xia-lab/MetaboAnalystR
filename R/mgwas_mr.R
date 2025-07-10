@@ -15,8 +15,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       pldSNPs=pldSNPs,
       mafThresh=mafThresh,
       harmonizeOpt=harmonizeOpt)
-      
-      res1 <- 0;
+       res1 <- 0;
 
       err.vec <<- "";
       if(.on.public.web & (opengwas_jwt_key == "")){
@@ -35,6 +34,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         AddErrMsg(paste0("Steiger filtering failed due to missing of outcome sample size. Please choose another outcome dataset or skip steiger filtering"))
              return(-2);
     }
+    
       # do LD clumping
       if(ldclumpOpt!="no_ldclump"){
         exposure.dat <- clump_data_local_ld(exposure.dat);
@@ -45,8 +45,9 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         AddMsg(paste0("No LD clumping performed."));
       }
       # mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$dat;
-      mSetObj$dataSet$exposure.ldp <- exposure.dat;
 
+     exposure.dat$row <- rownames(exposure.dat)
+      mSetObj$dataSet$exposure.ldp <- exposure.dat;
       # now obtain summary statistics for all available outcomes
       if(ldProxyOpt == "no_proxy"){
          ldProxies <- F;
@@ -83,7 +84,8 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       mSetObj$dataSet$outcome.dat <- outcome.dat;
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
-         
+      dat <- dat[!duplicated(dat$row),]
+      rownames(dat) <- dat$row
       if(steigerOpt=="use_steiger"){
        dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
        dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
@@ -93,10 +95,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        }
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
-      mSetObj$dataSet$harmonized.dat <- dat;
-     .set.mSet(mSetObj)
+       mSetObj$dataSet$harmonized.dat <- dat;
+       print(rownames(dat))
+      .set.mSet(mSetObj)
         
-      save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
+      #save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
       return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
 }
 
