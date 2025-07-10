@@ -635,18 +635,27 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(is.null(msg)){
      msg <- "No data filtering was performed."
   }
-
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
+  total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
+  mSetObj$msgSet$filter.total.msg <- total.msg;
 
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
       # make sure metadata are in sync with data
       my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
       mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
- 
+
+  qs::qsave(int.mat, "data.filt.qs");
   return(.set.mSet(mSetObj));
 }
+
+GetFilterTotalMsg <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$msgSet$filter.total.msg);
+}
+
+
 
 blankfeatureSubtraction <- function(cls, threshold){
   # need to evaluate raw data table without replace min
@@ -953,6 +962,29 @@ GetMissingTestMsg <- function(mSetObj=NA){
     return(msg);
 }
 
+GetMissNumMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  ## read filtered intensity matrix
+  int.mat <- qs::qread("data.filt.qs")
+
+  ## count NAs
+  totalCount <- length(int.mat)           # nrow * ncol
+  naCount    <- sum(is.na(int.mat))
+
+  if (naCount == 0) {
+    msg <- "After filtering, no missing values were detected."   
+  } else {
+    naPercent <- round(100 * naCount / totalCount, 1)
+    msg <- paste0(
+      "After filtering step, there are ",
+      naCount, " missing values (", naPercent, "% of the data)."
+    )
+  }
+
+  return(msg)
+}
+
 #' Plot Non-Missing Value Lollipop (inch dimensions)
 #'
 #' @description
@@ -1022,13 +1054,11 @@ PlotMissingDistr <- function(mSetObj = NA,
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else if (!is.null(mSetObj$dataSet$orig)) {
-    mSetObj$dataSet$orig
-  } else {
-    AddErrMsg("No processed data found for missing-value plot!")
-    return(0)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
+
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1142,12 +1172,11 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   require("Cairo")
   
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.orig.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for missing value heatmap!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1225,12 +1254,11 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", fileName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for JSON heatmap export!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
