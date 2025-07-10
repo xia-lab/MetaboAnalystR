@@ -155,6 +155,10 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       min.val <- min(abs(data[data!=0]))/10;
       data<-apply(data, 2, LogNorm, min.val);
       transnm<-"Log10 Normalization";
+    }else if(transNorm=='Log2Norm'){
+      min.val <- min(abs(data[data!=0]))/10;
+      data<-apply(data, 2, Log2Norm, min.val);
+      transnm<-"Log2 Normalization";
     }else if(transNorm=='SrNorm'){
       min.val <- min(abs(data[data!=0]))/10;
       data<-apply(data, 2, SquareRootNorm, min.val);
@@ -302,6 +306,10 @@ QuantileNormalize <- function(data){
 # generalize log, tolerant to 0 and negative values
 LogNorm<-function(x, min.val){
   log10((x + sqrt(x^2 + min.val^2))/2)
+}
+
+Log2Norm<-function(x, min.val){
+  log2((x + sqrt(x^2 + min.val^2))/2)
 }
 
 # square root, tolerant to negative values
