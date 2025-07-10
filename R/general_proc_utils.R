@@ -1049,21 +1049,22 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   require("ggplot2")
   require("qs")
-  require("Cairo")
+  require("Cairo");
+  library(patchwork);
 
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
-  if(grepl("_filt", imgName)){
+  if(file.exists("data.filt.qs")){
     int.mat <- qs::qread("data.filt.qs");
   }else{
-  int.mat <- qs::qread("preproc.orig.qs")
-
+    int.mat <- qs::qread("preproc.orig.qs");
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  pct.missing <- 100 * rowMeans(is.na(int.mat))
+  pct.missing <- 100 * rowMeans(is.na(int.mat));
+  smpl.avg <- rowMeans(int.mat, na.rm = TRUE);
 
   ## -------- Resolve group vector --------------------------------------
   has.meta <- !is.null(mSetObj$dataSet$meta.info)
@@ -1099,6 +1100,7 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   ## -------- Data frame for plotting -----------------------------------
   df <- data.frame(Group = grp.vec, Percent = pct.missing)
+  df2 <- data.frame(Group = grp.vec, Average = smpl.avg);
 
   ## -------- Device size -----------------------------------------------
   height <- 3 + grp.num * 0.25           # simple heuristic
@@ -1118,17 +1120,32 @@ PlotMissingDistr <- function(mSetObj = NA,
                units  = "in",
                type   = format)
 
-  p <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
+  p1 <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
        geom_boxplot(outlier.shape = 21, outlier.size = 2) +
        coord_flip() +
-       labs(x = NULL, y = "Missing Percentage", fill = groupCol) +
+       labs(x = NULL, y = NULL, title = "Missing Percentage", fill = groupCol) +
        ylim(0, 100) +
-       theme_minimal(base_size = 14) +
-       theme(panel.grid.major.y = element_blank(),
-             plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
        fill_scale
 
-  print(p)
+  p2 <- ggplot(df2, aes(x = Group, y = Average, fill = Group)) +
+       geom_boxplot(outlier.shape = 21, outlier.size = 2) +
+       coord_flip() +
+       labs(x = NULL, y = NULL, title = "Average Abundance", fill = groupCol) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       fill_scale
+
+combined_plot_stacked <- p1 / p2;
+final_combined_plot <- combined_plot_stacked +
+  plot_annotation(
+    #title = "Comparison of Group Characteristics" # Optional: an even higher-level title
+  ) & theme(plot.title = element_text(hjust = 0.5)) # Center the overall title
+
+print(final_combined_plot)
   dev.off()
 
   ## -------- Book-keeping ----------------------------------------------
