@@ -598,7 +598,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(blank.subtraction){
     #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
     if("BLANK" %in% cls){
-        idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
+        idx2keep <- blankfeatureFiltering(cls, blank.threshold);
         idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
         idx2keep_all <- idx2keep & idx2keep_exist
         ft_nms2keep <- names(which(idx2keep_all))
@@ -657,7 +657,7 @@ GetFilterTotalMsg <-function(mSetObj=NA){
 
 
 
-blankfeatureSubtraction <- function(cls, threshold){
+blankfeatureFiltering <- function(cls, threshold){
   # need to evaluate raw data table without replace min
   idx_blank <- which(as.character(cls)=="BLANK")
   preproc <- qs::qread("preproc.qs");
