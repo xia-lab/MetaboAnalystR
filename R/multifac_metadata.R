@@ -97,8 +97,13 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   if (length(note.vec) > 0) {
     note.vec <- c(
       note.vec,
-      "These rows let QC / blank injections pass sanity checks but ",
-      "<b>should be removed</b> once data processing is complete—exclude them before statistical or multivariate analyses."
+    paste0("<br />",
+    "<span style=\"color:orange;\">",
+    "Reminder – QC samples are useful for QC checks and data filtering. ",
+    "Delete all <code>QC</code>",
+    "samples using the <b>Data&nbsp;Editor</b> before performing downstream analyses.",
+    "</span>"
+    )
     )
     mSetObj$msgSet$qc.replace.msg <- paste(note.vec, collapse = " ")
   }

@@ -34,6 +34,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         AddErrMsg(paste0("Steiger filtering failed due to missing of outcome sample size. Please choose another outcome dataset or skip steiger filtering"))
              return(-2);
     }
+    
       # do LD clumping
       if(ldclumpOpt!="no_ldclump"){
         exposure.dat <- clump_data_local_ld(exposure.dat);
@@ -47,7 +48,6 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
 
      exposure.dat$row <- rownames(exposure.dat)
       mSetObj$dataSet$exposure.ldp <- exposure.dat;
-
       # now obtain summary statistics for all available outcomes
       if(ldProxyOpt == "no_proxy"){
          ldProxies <- F;
@@ -84,6 +84,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       mSetObj$dataSet$outcome.dat <- outcome.dat;
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+      dat <- dat[!duplicated(dat$row),]
       rownames(dat) <- dat$row
       if(steigerOpt=="use_steiger"){
        dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
