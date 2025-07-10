@@ -169,7 +169,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
     }else if(transNorm=='VsnNorm'){
-      data <- limma::normalizeVSN(data);
+      data <- t(limma::normalizeVSN(t(data)));
       transnm<-"Variance Stabilizing Normalization";
     }else{
       transnm<-"N/A";
