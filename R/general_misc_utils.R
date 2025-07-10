@@ -1413,7 +1413,7 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
     }else if(anal.type == "power"){
         max.allow <- 2500;
     }else{
-        max.allow <- 10000;
+        max.allow <- 5000;
     }
     return(max.allow);
 }
