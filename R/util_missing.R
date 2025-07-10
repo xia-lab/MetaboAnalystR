@@ -245,8 +245,8 @@ checkMissingBudget <- function(mat,
     msg.vec <<- c(
       msg.vec,
       sprintf(
-        "Too many missing values for missForest imputation: limit is %d NA cells and/or %d columns containing NAs.",
-        maxNAcells, maxNAcols
+        "Too many missing values for missForest imputation: limit is %d NA values.",
+        maxNAcells
       )
     )
 
