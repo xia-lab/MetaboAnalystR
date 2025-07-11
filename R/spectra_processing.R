@@ -321,6 +321,9 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                   topN = 10L, ncores = 4L)";
   str <- paste0(str, ";\n", cmd_export)
 
+  cmd_metabolome <- "mSet <- OptiLCMS:::PerformMetabolomeClassify(mSet, path_repo =\'/home/glassfish/projects/metabolome_lib/complete_metabolome_taxonomies_lib.qs\')"
+  str <- paste0(str, ";\n", cmd_metabolome)
+
   if(param_list$omics_type == "exposomics"){
     cmd_exposome <- "mSet <- OptiLCMS:::PerformExpsomeClassify(mSet, path_repo =\'/home/glassfish/projects/exposome_lib/complte_exposome_categories_lib.qs\')"
     str <- paste0(str, ";\n", cmd_exposome)
@@ -3228,3 +3231,103 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
 }
 
 
+extratExposomeClassName <- function(group){
+    res <- qs::qread("exposome_classification_summary.qs");
+
+    if(group == "All"){
+        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L)) 
+        res_nms <- unique(res$Categories)
+    } else {
+        res_num <- res$Number[res$Group == group]
+        res_nms <- res$Categories[res$Group == group]
+    }
+    
+    res_idx <- order(res_num, decreasing = TRUE)
+    res_nmsx <- res_nms[res_idx]
+    
+    return(res_nmsx)
+}
+
+extratExposomeClassNumber <- function(group){
+    res <- qs::qread("exposome_classification_summary.qs");
+    if(group == "All"){
+        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L))        
+    } else {
+        res_num <- res$Number[res$Group == group]
+    }
+    
+    res_idx <- order(res_num, decreasing = TRUE)
+    res_numx <- res_num[res_idx]
+    return(res_numx)
+}
+
+
+generateCols <- function(number=NULL){
+  pie.cols <- "ff6347,ffff00,ee82ee,f4a460,2e8b57,4682b4,9acd32,ffe4c4,8a2be2,a52a2a,deb887,5f9ea0,7fff00,d2691e,ff7f50,7fffd4,6495ed,fff8dc,dc143c,00ffff,00ff7f,00008b,b8860b,a9a9a9,006400,bdb76b,556b2f,9932cc,e9967a,8fbc8f,483d8b,2f4f4f,00ced1,9400d3,ff1493,00bfff,696969,1e90ff,b22222,fffaf0,228b22,ff00ff,dcdcdc,f8f8ff,ffd700,daa520,808080,008000,adff2f,f0fff0,ff69b4,cd5c5c,4b0082,fffff0,f0e68c,e6e6fa,fff0f5,7cfc00,fffacd,add8e6,f08080,e0ffff,fafad2,d3d3d3,90ee90,ffb6c1,ffa07a,20b2aa,87cefa,778899,b0c4de,ffffe0,00ff00,32cd32,faf0e6,800000,66cdaa,0000cd,ba55d3,9370d8,3cb371,7b68ee,00fa9a,48d1cc,c71585,191970,f5fffa,ffe4e1,ffe4b5,ffdead,fdf5e6,6b8e23,ffa500,ff4500,da70d6,eee8aa,98fb98,afeeee,d87093,ffefd5,ffdab9,cd853f,ffc0cb,dda0dd,b0e0e6,ff0000,bc8f8f,4169e1,8b4513,fa8072,fff5ee,a0522d,c0c0c0,87ceeb,6a5acd,708090,fffafa,d2b48c,008080,d8bfd8,40e0d0,f5deb3,ffffff,f5f5f5";
+  pie.cols <- strsplit(pie.cols,",")[[1]];
+  names(pie.cols) <- paste("nm", 1:length(pie.cols), sep="");
+  return(paste("#", pie.cols[1:number], sep=""));
+}
+
+extratMetabolomeClassName <- function(group, level, merge_ratio=0){
+    metabolome_cls <- qs::qread("metabolome_classification_summary.qs")
+    if(group == "All"){
+        metabolome_df <- do.call(rbind, metabolome_cls)
+    } else {
+        metabolome_df <- metabolome_cls[[group]]
+    }
+    
+    idx <- which(colnames(metabolome_df) == level)
+    idx <- which(colnames(metabolome_df) == level)
+    metabolome_tb<-table(metabolome_df[,idx])
+    nms0 <- names(metabolome_tb)
+    nums0 <- as.data.frame(metabolome_tb)$Freq
+    nms1 <- nms0[!is.na(nms0)]    
+    nums1 <- nums0[!is.na(nms0)]
+    if(merge_ratio == 0){
+      num_all <- nums1
+      names_all <- nms1
+    } else {
+      sum_nums <- sum(nums1)
+      idx2merge <- which(nums1/sum_nums<merge_ratio)
+      idxNot2merge <- which(nums1/sum_nums>=merge_ratio)
+      num_others <- sum(nums1[idx2merge])
+      num_all <- c(nums1[idxNot2merge], num_others)
+      names_all <- c(nms1[idxNot2merge], "Others")
+    }
+    idx_order <- order(num_all, decreasing = TRUE)
+    return(names_all[idx_order])
+}
+
+extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
+    metabolome_cls <- qs::qread("metabolome_classification_summary.qs")
+    if(group == "All"){
+        metabolome_df <- do.call(rbind, metabolome_cls)
+    } else {
+        metabolome_df <- metabolome_cls[[group]]
+    }
+
+    idx <- which(colnames(metabolome_df) == level)
+    idx <- which(colnames(metabolome_df) == level)
+    metabolome_tb<-table(metabolome_df[,idx])
+    nms0 <- names(metabolome_tb)
+    nums0 <- as.data.frame(metabolome_tb)$Freq
+    nms1 <- nms0[!is.na(nms0)]    
+    nums1 <- nums0[!is.na(nms0)]
+    if(merge_ratio == 0){
+      num_all <- nums1
+      names_all <- nms1
+
+    } else {
+      sum_nums <- sum(nums1)
+
+      idx2merge <- which(nums1/sum_nums<merge_ratio)
+      idxNot2merge <- which(nums1/sum_nums>=merge_ratio)
+      num_others <- sum(nums1[idx2merge])
+      num_all <- c(nums1[idxNot2merge], num_others)
+      names_all <- c(nms1[idxNot2merge], "Others")
+    }
+
+    idx_order <- order(num_all, decreasing = TRUE)
+    return(num_all[idx_order])
+}
