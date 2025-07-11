@@ -19,10 +19,9 @@ public class NaviUtils {
 
     private static final List<String> parentNodes = Arrays.asList(new String[]{
         "Processing", "Statistics", "Enrichment", "Pathway", "Multi-factors", "ID Conversion",
-        "Batch Effect", "ROC Analysis", "Integrative Analysis", "Power Analysis", "Dose Response", 
+        "Batch Effect", "ROC Analysis", "Integrative Analysis", "Power Analysis", "Dose Response",
         "Multivariate", "Univariate", "Tester", "View result", "Merging Replicates"
     });
-
 
     public static TreeNode createNaviTree(String type) {
 
@@ -47,8 +46,8 @@ public class NaviUtils {
                 addMetaAnalNodes(naviTree);
             } else if (type.equalsIgnoreCase("metaPath")) {
                 addMetaPathNodes(naviTree);
-            //} else if (type.equalsIgnoreCase("pathora") || type.startsWith("pathway-ora")) {
-            //    addPathNodes(naviTree);
+                //} else if (type.equalsIgnoreCase("pathora") || type.startsWith("pathway-ora")) {
+                //    addPathNodes(naviTree);
             } else if (type.equalsIgnoreCase("pathinteg")) {
                 addPathIntegNodes(naviTree);
             } else if (type.equalsIgnoreCase("tandemms")) {
@@ -105,9 +104,9 @@ public class NaviUtils {
             case "time" -> {
                 listInput = true;
                 TreeNode nodep211 = new DefaultTreeNode("Data check", processNode);
-                TreeNode nodep5 = new DefaultTreeNode("Missing value", processNode);
                 TreeNode nodep212 = new DefaultTreeNode("Metadata check", processNode);
                 TreeNode nodep6 = new DefaultTreeNode("Data filter", processNode);
+                TreeNode nodep5 = new DefaultTreeNode("Missing value", processNode);
                 TreeNode nodep7 = new DefaultTreeNode("Data editor", processNode);
                 TreeNode normNode = new DefaultTreeNode("Normalization", parent);
             }
@@ -121,8 +120,8 @@ public class NaviUtils {
         }
         //pathway-ora
         if (!listInput) {
+            TreeNode nodep6 = new DefaultTreeNode("Data filter", processNode);            
             TreeNode nodep5 = new DefaultTreeNode("Missing value", processNode);
-            TreeNode nodep6 = new DefaultTreeNode("Data filter", processNode);
             TreeNode nodep7 = new DefaultTreeNode("Data editor", processNode);
             TreeNode normNode = new DefaultTreeNode("Normalization", parent);
         }
@@ -287,7 +286,7 @@ public class NaviUtils {
         node_p1.setSelectable(false);
         TreeNode node_p10 = new DefaultTreeNode("Classical ROC", node_p1);
         TreeNode node_p11 = new DefaultTreeNode("ROC detail", node_p1);
-        
+
         TreeNode node_p2 = new DefaultTreeNode("Multivariate", rocNode);
         node_p2.setSelectable(false);
         TreeNode node_p3 = new DefaultTreeNode("Set parameter", node_p2);
@@ -352,15 +351,14 @@ public class NaviUtils {
         return null;
     }
 
-
     public static void selectNode(TreeNode myNode) {
         myNode.setSelected(true);
-        
+
         String nm = myNode.getData().toString();
         if (parentNodes.contains(nm)) {
             myNode.setExpanded(true);
         }
-        
+
         String parentNm = myNode.getParent().getData().toString();
         if (parentNodes.contains(parentNm)) {
             myNode.getParent().setExpanded(true);

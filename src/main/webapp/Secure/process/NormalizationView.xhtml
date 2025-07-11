@@ -43,8 +43,10 @@
                 <p:selectOneRadio id="transRadio" value="#{normBean.transNormOpt}" layout="custom">  
                     <f:selectItem itemValue="NULL" itemLabel="None"/>
                     <f:selectItem itemValue="LogNorm" itemLabel="Log(10) transformation"/>
+                    <f:selectItem itemValue="Log2Norm" itemLabel="Log(2) transformation"/>
                     <f:selectItem itemValue="SrNorm" itemLabel="Square root transformation"/>
                     <f:selectItem itemValue="CrNorm" itemLabel="Cube root transformation"/>
+                    <f:selectItem itemValue="VsnNorm" itemLabel="Variance stabilizing normalization"/>
                 </p:selectOneRadio>
                 <p:selectOneRadio id="scaleRadio" value="#{normBean.scaleNormOpt}" layout="custom">  
                     <f:selectItem itemValue="NULL" itemLabel="None"/>
@@ -138,15 +140,29 @@
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Log transformation"/>
                             <h:outputLabel value=" (base 10)"/>
                         </h:panelGroup>
+
                         <p:radioButton for="transRadio" itemIndex="2"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Log transformation"/>
+                            <h:outputLabel value=" (base 2)"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="transRadio" itemIndex="3"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Square root transformation"/>
                             <h:outputLabel value=" (square root of data values)"/>
                         </h:panelGroup>
-                        <p:radioButton for="transRadio" itemIndex="3"/>
+
+                        <p:radioButton for="transRadio" itemIndex="4"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Cube root transformation"/>
                             <h:outputLabel value=" (cube root of data values)"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="transRadio" itemIndex="5"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Variance stabilizing normalization"/>
+                            <h:outputLabel value=" (data-adaptive transformation)"/>
                         </h:panelGroup>
                     </h:panelGrid>
                     <h:outputText value="Data scaling" style="font-size:13px; font-weight:bold"/>
@@ -230,8 +246,8 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                             <img style="width:9in;"
-                                src="#{sessionBean1.getCurrentImageURL('norm')}" 
-                                alt="Normalization"/>
+                                 src="#{sessionBean1.getCurrentImageURL('norm')}" 
+                                 alt="Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                     <p:tab title ="Sample View">
@@ -244,7 +260,7 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                             <img style="width:9in;"
-                                src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
+                                 src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                 </p:tabView>
