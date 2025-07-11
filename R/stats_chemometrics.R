@@ -230,7 +230,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'
 PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                            width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0, cex.opt="na"){
-  save.image("pca2.RData");
+  #save.image("pca2.RData");
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
     pca.cex <<- 1.0;

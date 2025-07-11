@@ -15,7 +15,7 @@
         print(paste("loading library:", lib.path));
         return(qs::qread(lib.path));
     }
-
+print(c("lib.path",lib.path))
     lib.download <- FALSE;
     if(!file.exists(filenm)){
       lib.download <- TRUE;

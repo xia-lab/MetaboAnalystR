@@ -17,7 +17,7 @@
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
-  save.image("san.RData");
+  #save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig.qs")){  
     orig.data <- qs::qread("data_orig.qs");
@@ -598,7 +598,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(blank.subtraction){
     #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
     if("BLANK" %in% cls){
-        idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
+        idx2keep <- blankfeatureFiltering(cls, blank.threshold);
         idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
         idx2keep_all <- idx2keep & idx2keep_exist
         ft_nms2keep <- names(which(idx2keep_all))
@@ -617,11 +617,12 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
 
-  if(var.cutoff > 0){ 
+  # called regardless user option to enforce feature number cap
+  #if(var.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
      int.mat <- filt.res$data;
      msg <- c(msg, filt.res$msg);
-  }
+  #}
 
   if(int.cutoff > 0){ 
      filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
@@ -634,20 +635,29 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(is.null(msg)){
      msg <- "No data filtering was performed."
   }
-
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
+  total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
+  mSetObj$msgSet$filter.total.msg <- total.msg;
 
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
       # make sure metadata are in sync with data
       my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
       mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
- 
+
+  qs::qsave(int.mat, "data.filt.qs");
   return(.set.mSet(mSetObj));
 }
 
-blankfeatureSubtraction <- function(cls, threshold){
+GetFilterTotalMsg <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$msgSet$filter.total.msg);
+}
+
+
+
+blankfeatureFiltering <- function(cls, threshold){
   # need to evaluate raw data table without replace min
   idx_blank <- which(as.character(cls)=="BLANK")
   preproc <- qs::qread("preproc.qs");
@@ -952,6 +962,29 @@ GetMissingTestMsg <- function(mSetObj=NA){
     return(msg);
 }
 
+GetMissNumMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  ## read filtered intensity matrix
+  int.mat <- qs::qread("data.filt.qs")
+
+  ## count NAs
+  totalCount <- length(int.mat)           # nrow * ncol
+  naCount    <- sum(is.na(int.mat))
+
+  if (naCount == 0) {
+    msg <- "After filtering, no missing values were detected."   
+  } else {
+    naPercent <- round(100 * naCount / totalCount, 1)
+    msg <- paste0(
+      "After filtering step, there are ",
+      naCount, " missing values (", naPercent, "% of the data)."
+    )
+  }
+
+  return(msg)
+}
+
 #' Plot Non-Missing Value Lollipop (inch dimensions)
 #'
 #' @description
@@ -1016,23 +1049,22 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   require("ggplot2")
   require("qs")
-  require("Cairo")
+  require("Cairo");
+  library(patchwork);
 
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else if (!is.null(mSetObj$dataSet$orig)) {
-    mSetObj$dataSet$orig
-  } else {
-    AddErrMsg("No processed data found for missing-value plot!")
-    return(0)
+  if(file.exists("data.filt.qs")){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+    int.mat <- qs::qread("preproc.orig.qs");
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  pct.missing <- 100 * rowMeans(is.na(int.mat))
+  pct.missing <- 100 * rowMeans(is.na(int.mat));
+  smpl.avg <- rowMeans(int.mat, na.rm = TRUE);
 
   ## -------- Resolve group vector --------------------------------------
   has.meta <- !is.null(mSetObj$dataSet$meta.info)
@@ -1068,6 +1100,7 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   ## -------- Data frame for plotting -----------------------------------
   df <- data.frame(Group = grp.vec, Percent = pct.missing)
+  df2 <- data.frame(Group = grp.vec, Average = smpl.avg);
 
   ## -------- Device size -----------------------------------------------
   height <- 3 + grp.num * 0.25           # simple heuristic
@@ -1087,17 +1120,32 @@ PlotMissingDistr <- function(mSetObj = NA,
                units  = "in",
                type   = format)
 
-  p <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
+  p1 <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
        geom_boxplot(outlier.shape = 21, outlier.size = 2) +
        coord_flip() +
-       labs(x = NULL, y = "Missing Percentage", fill = groupCol) +
+       labs(x = NULL, y = NULL, title = "Missing Percentage", fill = groupCol) +
        ylim(0, 100) +
-       theme_minimal(base_size = 14) +
-       theme(panel.grid.major.y = element_blank(),
-             plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
        fill_scale
 
-  print(p)
+  p2 <- ggplot(df2, aes(x = Group, y = Average, fill = Group)) +
+       geom_boxplot(outlier.shape = 21, outlier.size = 2) +
+       coord_flip() +
+       labs(x = NULL, y = NULL, title = "Average Abundance", fill = groupCol) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       fill_scale
+
+combined_plot_stacked <- p1 / p2;
+final_combined_plot <- combined_plot_stacked +
+  plot_annotation(
+    #title = "Comparison of Group Characteristics" # Optional: an even higher-level title
+  ) & theme(plot.title = element_text(hjust = 0.5)) # Center the overall title
+
+print(final_combined_plot)
   dev.off()
 
   ## -------- Book-keeping ----------------------------------------------
@@ -1141,12 +1189,11 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   require("Cairo")
   
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.orig.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for missing value heatmap!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1224,12 +1271,11 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", fileName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for JSON heatmap export!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))

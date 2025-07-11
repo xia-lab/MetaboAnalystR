@@ -4,7 +4,7 @@
 ## Author: Jeff Xia, jeff.xia@mcgill.ca
 ###################################################
 
-PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, opengwas_jwt_key = ""){
+PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, steigerOpt,opengwas_jwt_key = ""){
       mSetObj <- .get.mSet(mSetObj);
       #record
       mSetObj$dataSet$snp_filter_params <- list(
@@ -15,8 +15,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       pldSNPs=pldSNPs,
       mafThresh=mafThresh,
       harmonizeOpt=harmonizeOpt)
-      
-      res1 <- 0;
+       res1 <- 0;
 
       err.vec <<- "";
       if(.on.public.web & (opengwas_jwt_key == "")){
@@ -26,12 +25,16 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
           mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView
 
        }
-      exposure.dat <- mSetObj$dataSet$tableView.proc;
-      exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")]
-      colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid")
+      exposure.dat <- mSetObj$dataSet$tableView;
+      exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid","sample")]
+      colnames(exposure.dat) <- c("pval.exposure","chr.exposure","se.exposure","beta.exposure","pos.exposure","id.exposure","SNP","effect_allele.exposure","other_allele.exposure","eaf.exposure","exposure", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid","samplesize.exposure")
       exposure.snp <- mSetObj$dataSet$tableView.proc$SNP;
       outcome.id <- mSetObj$dataSet$outcome$id;
-
+    if(is.na(mSetObj[["dataSet"]][["outcome"]][["sample_size"]]) & steigerOpt =="use_steiger"){
+        AddErrMsg(paste0("Steiger filtering failed due to missing of outcome sample size. Please choose another outcome dataset or skip steiger filtering"))
+             return(-2);
+    }
+    
       # do LD clumping
       if(ldclumpOpt!="no_ldclump"){
         exposure.dat <- clump_data_local_ld(exposure.dat);
@@ -42,8 +45,9 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         AddMsg(paste0("No LD clumping performed."));
       }
       # mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$dat;
-      mSetObj$dataSet$exposure.ldp <- exposure.dat;
 
+     exposure.dat$row <- rownames(exposure.dat)
+      mSetObj$dataSet$exposure.ldp <- exposure.dat;
       # now obtain summary statistics for all available outcomes
       if(ldProxyOpt == "no_proxy"){
          ldProxies <- F;
@@ -63,7 +67,6 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         # use precomputed local database query
         outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
       }
-
       last_msg <- captured_messages[length(captured_messages)];
       print(last_msg);
       
@@ -75,18 +78,29 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
             AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
             return(-2);
       }
-      mSetObj$dataSet$outcome.dat <- outcome.dat;
+      
+   
 
+      mSetObj$dataSet$outcome.dat <- outcome.dat;
       # do harmonization  
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
+      dat <- dat[!duplicated(dat$row),]
+      rownames(dat) <- dat$row
+      if(steigerOpt=="use_steiger"){
+       dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
+       dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
+      dat <- TwoSampleMR::steiger_filtering(dat)
+       dat<-dat[dat$steiger_dir,]
+       dat$steiger_pval <- signif(dat$steiger_pval, digits = 4)
+       }
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
-
-      mSetObj$dataSet$harmonized.dat <-  mSetObj$dataSet$tableView <- dat;
-     .set.mSet(mSetObj)
+       mSetObj$dataSet$harmonized.dat <- dat;
+       print(rownames(dat))
+      .set.mSet(mSetObj)
         
-      save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
-      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView.proc)-nrow(dat)));
+      #save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
+      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
 }
 
 readOpenGWASKey <- function(){
@@ -165,7 +179,8 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
 
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  dat <- mSetObj$dataSet$harmonized.dat
+  dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$ifCheck,]
+ 
   #save.image("MR.RData");
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
@@ -210,6 +225,7 @@ PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj$dataSet$mr_res_single <- res_single;
   res_loo <- TwoSampleMR::mr_leaveoneout(dat);
   mSetObj$dataSet$mr_res_loo <- res_loo;
+
   #print(head(merge2))
   .set.mSet(mSetObj);
   if(.on.public.web){
@@ -916,29 +932,21 @@ api_request <- function(route, params,
 
 UpdateSNPEntries <- function(col.id, method, value, action, expnm="") {
   #save.image("updateentries.RData");
- print(c(col.id, method, value, action, expnm))
+ 
   mSetObj <- .get.mSet(mSetObj)
 
    tab <- mSetObj$dataSet$tableView
    nms <- rownames(tab)
-   if(!exists("tableView.proc",mSetObj$dataSet)){
- 
-     tableView.proc <- tab
-  }else{
-tableView.proc <-  mSetObj$dataSet$tableView.proc
-
- }
-
-
+   
     if("exposure" %in% colnames(tab)){
      ifExp = tab$exposure==expnm;
     }else{
      ifExp = tab[["Common Name"]]==expnm;
    }
-print(ifExp)
+ 
 
   colm <- tab[[col.id]]
-print(colm)
+ 
 if(method == "contain"){
   hits <- grepl(value, colm, ignore.case = TRUE) & ifExp;
 }else if(method == "match"){
@@ -960,14 +968,20 @@ if(action == "keep"){
   hits = hits & ifExp;
 }
 print(hits)
-print(paste(sum(hits)));
 if(sum(hits) > 0){
    tab <- tab[!hits,]
    row.ids <- rownames(tab);
    mSetObj$dataSet$tableView <- tab
-   nms<-nms[!nms %in% rownames(tab)]
-  tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
-  mSetObj$dataSet$tableView.proc <- tableView.proc
+  if(exists("harmonized.dat",mSetObj$dataSet)){
+ 
+     harmonized.dat <- mSetObj$dataSet$harmonized.dat
+     mSetObj$dataSet$harmonized.dat <- harmonized.dat[rownames(harmonized.dat) %in% rownames(tab),]
+
+  } 
+   #nms<-nms[!nms %in% rownames(tab)]
+   # tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
+   # mSetObj$dataSet$tableView.proc <- tableView.proc
+
   .set.mSet(mSetObj);
    return(which(hits));
 }else{
@@ -985,19 +999,8 @@ is.numericable <- function(x) {
 ResetSNPEntries  <- function(expnm="") {
   
   mSetObj <- .get.mSet(mSetObj)
-  tabreset <- mSetObj$dataSet$tableView.orig
-  tab <- mSetObj$dataSet$tableView
-  
-  if("exposure" %in% colnames(tab)){
-    ifExp = tab$exposure==expnm;
-  }else{
-    ifExp = tab[["Common Name"]]==expnm;
-  }
-  print(ifExp)
-  
-  rm = ! rownames(tabreset) %in% rownames(tab) & !ifExp
-  tab = tabreset[!rm,]
-  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.proc <- tab
+  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.orig 
+  mSetObj$dataSet$harmonized.dat <- NULL
   return(.set.mSet(mSetObj));
   
 }

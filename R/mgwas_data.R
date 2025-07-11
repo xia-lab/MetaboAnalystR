@@ -33,9 +33,10 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
         print(current.msg);
         return(0);
     } 
+  
 
     res <- mir.dic[ , c("metabolite_orig","hmdb","kegg","snp_orig", "chr", "pos_hg19","note", "name","ratio_single","beta","p_value","metabolite_id","ea","nea","pmid",
-                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid")];
+                      "most_severe_consequence", "eaf","link","se", "pop_code", "biofluid","sample")];
   
     res <- .parse_snp2met_exposure(res); # remove NA
     # update col names
@@ -46,7 +47,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
   res = as.data.frame(res)
  
     colnames(res) <- c("Metabolite","HMDB","KEGG","SNP", "Chr", "BP","Note","Common Name", "Single or Ratio","Beta", "P-value", "MetID", "A1", "A2", "PMID",
-                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid");
+                     "Consequence", "EAF","URL", "SE", "pop_code", "biofluid","sample");
     fast.write.csv(res, file="mr_exposure_data.csv", row.names=FALSE);  
 
     display.res <- res;
@@ -94,7 +95,7 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     mSetObj$dataSet$exposure.orig <- merged_table;
    # mSetObj$dataSet$tableView.orig$exposure  <- mSetObj$dataSet$tableView$exposure <- merged_table[["Common Name"]]
    # mSetObj$dataSet$tableView.orig$id.exposure  <- mSetObj$dataSet$tableView$id.exposure <- merged_table[["HMDB"]]
-    mSetObj$dataSet$tableView.orig$mr_keep  <- mSetObj$dataSet$tableView$mr_keep <-  TRUE
+    mSetObj$dataSet$tableView.orig$ifCheck  <- mSetObj$dataSet$tableView$ifCheck <-  TRUE
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
@@ -115,7 +116,7 @@ QueryOutcome <- function(itemVec){
     itemVec.id <- trimws(itemVec);
 
     ieugwas.db <- .get.my.lib("ieugwas_202210.qs");
-    ieugwas.res <- ieugwas.db[ieugwas.db$id == itemVec.id,];
+     ieugwas.res <- ieugwas.db[ieugwas.db$id == itemVec.id,];
     hit.num <- nrow(ieugwas.res);
     if (hit.num == 0) {
         current.msg <<- "No hits found in the database. Please make sure to select an outcome from the drop-down list.";
@@ -276,21 +277,35 @@ GetResColByName <- function(netType, name){
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
- 
   df <-dataSet[netType][[1]];
-  if(netType=="tableView" & name=="exposure"){
-   colInx <- which(colnames(df) == "Common Name" | colnames(df) == "exposure" );
+  if(netType=="tableView" & exists("harmonized.dat", mSetObj$dataSet)){
+     df <-dataSet["harmonized.dat"][[1]];
+     colInx <- which(colnames(df) == name);
+  
+   }
+
+   if(name=="mr_keep" & !exists("harmonized.dat", mSetObj$dataSet)){
+      name="ifCheck"
+     }
+
+ 
+ if(netType=="tableView" & name=="exposure"){
+    colInx <- which(colnames(df) == "Common Name" | colnames(df) == "exposure" );
+  
    }else if(netType=="tableView"  & name=="HMDB"){
     colInx <- which(colnames(df) == "HMDB" | colnames(df) == "id.exposure" );
+   
    }else if(netType=="tableView"  & name=="P-value"){
     colInx <- which(colnames(df) == "P-value" | colnames(df) == "pval.exposure" );
-   }else{
-
-  colInx <- which(colnames(df) == name);
-   }
   
+ 
+   }else{
+colInx <- which(colnames(df) == name)
+
+  }
 
   res <- df[, colInx];
+ 
 
   hit.inx <- is.na(res) | res == ""; # note, must use | for element-wise operation
   res[hit.inx] <- "N/A";
@@ -302,39 +317,36 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$exposure) == mir.id);
+  if(exists("harmonized.dat",dataSet)){
+   inx <- which(rownames(harmonized.dat) == mir.id);
   if(length(inx) > 0){
-    if(is.null(mSetObj$dataSet$exposure.orig)){
-        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$exposure;
-    }
-    mSetObj$dataSet$exposure <- dataSet$exposure[-inx,];
-    if(!is.null(mSetObj$dataSet$harmonized.dat)){
-        inx <- which(rownames(mSetObj$dataSet$harmonized.dat) %in% rownames(mSetObj$dataSet$exposure));
-        mSetObj$dataSet$harmonized.dat <- mSetObj$dataSet$harmonized.dat[inx,];
-    }
+    mSetObj$dataSet$harmonized.dat$ifCheck <- FALSE;
   }
-
+  }else{
+    inx <- which(rownames(dataSet$tableView) == mir.id);
+   if(length(inx) > 0){
+    mSetObj$dataSet$tableView <- dataSet$tableView[-inx,];
+  }
+  }
   return(.set.mSet(mSetObj));
 }
 
 
 RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
-  
-  mSetObj <- .get.mSet(mSetObj);
-  dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$tableView.proc) %in% entries.vec);
-  if(length(inx) > 0){
-    if(is.null(mSetObj$dataSet$exposure.orig)){
-        mSetObj$dataSet$exposure.orig <- mSetObj$dataSet$tableView.proc;
-    }
-    mSetObj$dataSet$tableView.proc <- dataSet$tableView.proc[-inx,];
-    if(!is.null(mSetObj$dataSet$tableView.proc)){
-        inx <- which(rownames(mSetObj$dataSet$tableView.proc) %in% rownames(mSetObj$dataSet$tableView));
-        mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView.proc[inx,];
-    }
+  # mir.id<<-mir.id;
+  # save.image("RemoveEntry.RData")
+  if(!exists("entries.vec")){
+    return(0);
   }
+  print(c(entries.vec,"entries.vec"));
 
-  return(.set.mSet(mSetObj));
+  mSetObj <- .get.mSet(mSetObj);
+ 
+  dat <- mSetObj$dataSet$harmonized.dat;
+   mSetObj$dataSet$harmonized.dat <- dat[dat$mr_keep,]
+ .set.mSet(mSetObj)
+
+  return(nrow(mSetObj$dataSet$exposure)-nrow(mSetObj$dataSet$harmonized.dat));
 }
 
 
@@ -344,10 +356,18 @@ AddEntryExposure <- function(mSetObj=NA, mir.id) {
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  inx <- which(rownames(dataSet$exposure.orig) == mir.id);
-  if(length(inx) > 0){
-    mSetObj$dataSet$exposure <- rbind(dataSet$exposure, dataSet$exposure.orig[inx,]);
+  if(exists("harmonized.dat",mSetObj$dataSet)){
+   inx <- which(rownames(harmonized.dat) == mir.id);
+if(length(inx) > 0){
+    mSetObj$dataSet$harmonized.dat$ifCheck <- TRUE;
   }
+  }else{
+    inx <- which(rownames(dataSet$tableView.proc) == mir.id);
+   if(length(inx) > 0){
+    mSetObj$dataSet$tableView <- rbind(dataSet$tableView, dataSet$tableView.proc[inx,]);
+  }
+  }
+ 
   return(.set.mSet(mSetObj));
 }
 
@@ -366,10 +386,15 @@ GetResRowNames <- function(netType){
   #  resTable <- mSetObj$dataSet$mir.res;
   #}
 
- if(is.null(resTable)){
+ if(is.null(resTable) & netType=="tableView" ){
+     resTable <- mSetObj$dataSet$tableView
 
-resTable <- mSetObj$dataSet$tableView
 }
+
+if(exists("harmonized.dat", mSetObj$dataSet)){
+     resTable <- mSetObj$dataSet$harmonized.dat
+  }
+
 
  if(nrow(resTable) > 1000 & netType != "phe_mr_sig"){
     resTable <- resTable[1:1000, ];
@@ -377,8 +402,6 @@ resTable <- mSetObj$dataSet$tableView
   }
   rownames(resTable);
 
- 
-        
  
 }
 
@@ -551,11 +574,22 @@ GetPathCol <- function(colInx){
 
 
 GetSumCol <- function(type, exp) {
+   #print(c(type, exp))
   mSetObj <- .get.mSet(mSetObj)
   tab <- mSetObj$dataSet$tableView
+ 
+   if(exists("harmonized.dat",mSetObj$dataSet)){
+      harmonized.dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$mr_keep,];
+      tab <- tab[rownames(tab) %in% rownames(harmonized.dat),]
+   }
 
   if (exp != "") {
-    tab <- tab[tab$metabolites == exp, ]
+if ("Common Name" %in% colnames(tab)) {
+    tab <- tab[tab[["Common Name"]] == exp, ]
+    } else {
+     tab <- tab[tab$exposure == exp, ]
+    }
+
   }
 
   if (type == "rw" || type == "exps") {
@@ -573,7 +607,8 @@ GetSumCol <- function(type, exp) {
       return(tab)
     }
 
-  } else if (type == "num") {
+  }else if (type == "num") {
+ 
     return(nrow(tab))
   }
 }

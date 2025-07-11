@@ -97,11 +97,29 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   if (length(note.vec) > 0) {
     note.vec <- c(
       note.vec,
-      "These rows let QC / blank injections pass sanity checks but ",
-      "<b>should be removed</b> once data processing is complete—exclude them before statistical or multivariate analyses."
+    paste0("<br />",
+    "<span style=\"color:orange;\">",
+    "Reminder – QC samples are useful for QC checks and data filtering. ",
+    "Delete all <code>QC</code>",
+    "samples using the <b>Data&nbsp;Editor</b> before performing downstream analyses.",
+    "</span>"
+    )
     )
     mSetObj$msgSet$qc.replace.msg <- paste(note.vec, collapse = " ")
   }
+}
+
+## ---------- QC / Blank flag columns ------------------------------------
+qc.flag    <- grepl("^QC",        smpl.nms,      ignore.case = TRUE)
+blank.flag <- grepl("^BL(ANK)?",  smpl.nms,      ignore.case = TRUE)
+
+if (any(qc.flag)) {                             # add only if QC present
+  metadata$QC <- factor(ifelse(qc.flag, "Yes", "No"),
+                        levels = c("Yes", "No"))
+}
+if (any(blank.flag)) {                          # add only if blanks present
+  metadata$Blank <- factor(ifelse(blank.flag, "Yes", "No"),
+                           levels = c("Yes", "No"))
 }
 
   ## ---------- initialise meta.types ----------
@@ -276,6 +294,27 @@ UpdateMetaData <- function(mSetObj=NA){
 
 RemoveSelectedMeta <- function(mSetObj=NA, meta){
   mSetObj <- .get.mSet(mSetObj);
+
+  if (meta %in% c("QC", "Blank") &&
+      meta %in% colnames(mSetObj$dataSet$meta.info)) {
+
+    ## samples flagged "Yes" (case-insensitive) in this column
+    drop.smpl <- rownames(mSetObj$dataSet$meta.info)[
+      tolower(mSetObj$dataSet$meta.info[[meta]]) %in% c("yes", "qc", "blank")
+    ]
+
+    if (length(drop.smpl) > 0) {
+      ## set the global vectors used by UpdateData()
+      feature.nm.vec <<- character(0)   # no feature deletions
+      smpl.nm.vec    <<- drop.smpl      # ← rows to delete
+      grp.nm.vec     <<- ""             # no group filtering
+
+      ## UpdateData handles all matrices, class vectors, metadata rows, etc.
+      mSetObj <- UpdateData(mSetObj, order.group = FALSE)
+    }
+  }
+
+
   inx <- which(colnames(mSetObj$dataSet$meta.info) == meta);
   mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[, -inx];
   inx1 <- which(names(mSetObj$dataSet$meta.types) == meta);
