@@ -407,8 +407,8 @@ RemoveMissingPercent <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
 
   ## 1 · Choose the working matrix --------------------------------------
-  if (!.on.public.web && !is.null(mSetObj$dataSet$norm)) {
-    int.mat   <- mSetObj$dataSet$norm          # already-normalised
+  if (!.on.public.web && !is.null(mSetObj$dataSet$proc)) {
+    int.mat   <- mSetObj$dataSet$proc          # already-normalised
     writeBack <- TRUE
   } else {
     int.mat   <- qs::qread("preproc.orig.qs")  # raw pre-processing copy
@@ -447,11 +447,9 @@ RemoveMissingPercent <- function(mSetObj = NA,
   ## 3 · Save filtered matrix back --------------------------------------
   rm.cnt <- sum(!good.inx)            # variables removed
 
-  if (writeBack) {
-    mSetObj$dataSet$norm <- as.data.frame(int.mat[, good.inx, drop = FALSE])
-  } else {
+    mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
     qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
-  }
+  
 
   ## 4 · Log a concise message ------------------------------------------
   rule.txt <- ifelse(grpWise, "(group-wise rule)", "(overall rule)")
@@ -459,6 +457,9 @@ RemoveMissingPercent <- function(mSetObj = NA,
                       rm.cnt, 100 * percent, rule.txt)
   mSetObj$msgSet$miss.filter.msg <- c(msg)
   
+    print("dim(mSetObj$dataSet$proc)")
+    print(mSetObj$dataSet$proc);
+
   return(.set.mSet(mSetObj))
 }
 
@@ -549,16 +550,17 @@ CheckContainsBlank <- function(mSetObj=NA){
 #'@export
 
 FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, blank.subtraction=F, blank.threshold=10){
-
   mSetObj <- .get.mSet(mSetObj);
   
   #Reset to default
   mSetObj$dataSet$filt <- NULL;
-  
+
   if(is.null(mSetObj$dataSet$proc)){
     int.mat <- as.matrix(qs::qread("data_proc.qs"));
   }else{
     int.mat <- as.matrix(mSetObj$dataSet$proc);
+    print("dim(mSetObj$dataSet$proc)")
+    print(mSetObj$dataSet$proc);
   }
   cls <- mSetObj$dataSet$proc.cls;
   
@@ -566,86 +568,122 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   mSetObj$dataSet$filt.cls <- cls;
   
   msg <- NULL;
-  if(qc.filter == "T"){
-    rsd <- rsd/100;
-    # need to check if QC exists
-    qc.hits <- tolower(as.character(cls)) %in% "qc";
-    if(sum(qc.hits) > 1){ # require at least 2 QC for RSD
-      qc.mat <- int.mat[qc.hits,];
-      sds <- apply(qc.mat, 2, sd, na.rm=T);
-      mns <- apply(qc.mat, 2, mean, na.rm=T);
-      rsd.vals <- abs(sds/mns);  
-      gd.inx <- rsd.vals < rsd;
+  if (qc.filter == "T") {
+    rsd <- rsd / 100
+    
+    ## ── 1 · determine QC samples by class label or by name prefix ----
+    qc.cls.hits <- tolower(as.character(cls)) == "qc"
+    if (any(qc.cls.hits)) {
+      qc.hits <- qc.cls.hits
+    } else {
+      qc.hits <- grepl("^qc", rownames(int.mat), ignore.case = TRUE)
+    }
+    
+    ## ── 2 · require at least two QC samples ----------------------------
+    if (sum(qc.hits) > 1) {
+      qc.mat   <- int.mat[qc.hits, , drop = FALSE]
+      sds      <- apply(qc.mat,   2, sd,   na.rm = TRUE)
+      mns      <- apply(qc.mat,   2, mean, na.rm = TRUE)
+      rsd.vals <- abs(sds / mns)
+    keep <- rsd.vals < rsd    
+    print("keeep====");
+    print(sum(is.na(keep)))     
+    print(sum(!is.finite(rsd.vals)))     
 
-      # save a copy for user 
-      fast.write.csv(cbind(RSD=rsd, t(int.mat)), file="data_prefilter_qc_rsd.csv");
-
-      int.mat <- int.mat[,gd.inx];
-      if(mSetObj$analSet$type %in% c("mummichog")){
-        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are excluded from downstream functional analysis.");
-      }else{
-        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are still kept. You can remove them later.");
+    keep[ is.na(keep) ]      <- FALSE    
+    keep[ !is.finite(rsd.vals) ] <- FALSE
+      
+      ## save a copy for the user
+      fast.write.csv(
+        cbind(RSD = rsd, t(int.mat)),
+        file = "data_prefilter_qc_rsd.csv"
+      )
+      
+      ## prune features
+      int.mat <- int.mat[, keep, drop = FALSE]
+      
+      ## set the user message
+      if (mSetObj$analSet$type %in% "mummichog") {
+        msg <- paste0(
+          "Removed <b>", sum(!keep, na.rm=T),
+          "</b> features based on QC RSD values. ",
+          "QC samples are excluded from downstream functional analysis."
+        )
+      } else {
+        msg <- paste0(
+          "Removed <b>", sum(!keep,na.rm=T),
+          "</b> features based on QC RSD values. ",
+          "QC samples are still kept. You can remove them later."
+        )
       }
-    }else if(sum(qc.hits) > 0){
-      AddErrMsg("RSD requires at least 2 QC samples, and only non-QC based filtering can be applied.");
-      return(0);
-    }else{
-      AddErrMsg("No QC Samples (with class label: QC) found.  Please use non-QC based filtering.");
-      return(0);
+      
+      ## ── 3 · too few QC → fall back or error -----------------------------
+    } else if (sum(qc.hits) > 0) {
+      AddErrMsg(
+        "RSD filtering requires at least 2 QC samples; only non-QC filtering can be applied."
+      )
+      return(0)
+      
+    } else {
+      AddErrMsg(
+        "No QC samples found (by class label or name prefix ‘QC’). ",
+        "Please use non-QC based filtering."
+      )
+      return(0)
     }
   }
-
+  
   if(blank.subtraction){
     #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
     if("BLANK" %in% cls){
-        idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
-        idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
-        idx2keep_all <- idx2keep & idx2keep_exist
-        ft_nms2keep <- names(which(idx2keep_all))
-        cols2keep <- vapply(colnames(int.mat), function(x){x %in% ft_nms2keep}, logical(1L))
-        int.mat <- int.mat[,cols2keep]
-        rows2keep <- which(cls != "BLANK")
-        int.mat <- int.mat[rows2keep,]        
-        cls <- cls[cls != "BLANK"]
-        cls <- droplevels(cls, "BLANK")
-        mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
+      idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
+      idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
+      idx2keep_all <- idx2keep & idx2keep_exist
+      ft_nms2keep <- names(which(idx2keep_all))
+      cols2keep <- vapply(colnames(int.mat), function(x){x %in% ft_nms2keep}, logical(1L))
+      int.mat <- int.mat[,cols2keep]
+      rows2keep <- which(cls != "BLANK")
+      int.mat <- int.mat[rows2keep,]        
+      cls <- cls[cls != "BLANK"]
+      cls <- droplevels(cls, "BLANK")
+      mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
     }
   }
-
+  
   # no explicit user choice, will apply default empirical filtering based on variance
   if(is.null(var.cutoff)){ 
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
-
+  
   # called regardless user option to enforce feature number cap
   #if(var.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
-     int.mat <- filt.res$data;
-     msg <- c(msg, filt.res$msg);
+  filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
+  int.mat <- filt.res$data;
+  msg <- c(msg, filt.res$msg);
   #}
-
+  
   if(int.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
-     int.mat <- filt.res$data;
-     msg <- c(msg, filt.res$msg);
+    filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
+    int.mat <- filt.res$data;
+    msg <- c(msg, filt.res$msg);
   }
-
+  
   mSetObj$dataSet$filt <- int.mat;
-
+  
   if(is.null(msg)){
-     msg <- "No data filtering was performed."
+    msg <- "No data filtering was performed."
   }
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
   total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
   mSetObj$msgSet$filter.total.msg <- total.msg;
-
+  
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      # make sure metadata are in sync with data
-      my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
-      mSetObj$dataSet$meta.info <- my.sync$metadata;
+    # make sure metadata are in sync with data
+    my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
-
+  
   qs::qsave(int.mat, "data.filt.qs");
   return(.set.mSet(mSetObj));
 }
@@ -966,6 +1004,9 @@ GetMissNumMsg <- function(mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
 
   ## read filtered intensity matrix
+  if(!file.exists("data.filt.qs")){
+    return("NA");
+  }
   int.mat <- qs::qread("data.filt.qs")
 
   ## count NAs
@@ -1434,16 +1475,13 @@ PlotRSDViolin <- function(mSetObj = NA,
   qc.inx <- cls == "qc"
   hasQC  <- any(qc.inx)
 
-
   ## ── RSD vectors ---------------------------------------------------------
   rsd_smp <- apply(raw[ , !qc.inx, drop = FALSE], 1, rsd_fun)
-rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
-
-
+  rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
 
   if (hasQC) {
-rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
-rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
+    rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
+    rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
     plt_df  <- data.frame(
       Class = factor(c(rep("Sample", length(rsd_smp)),
                        rep("QC",     length(rsd_qc))),
@@ -1466,7 +1504,7 @@ rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
                                          levels = "Sample"),
                           RSD   = rsd_smp)
     palette <- c(Sample = "#f8766d")
-    mSetObj$analSet$rsd.stats <- NULL        # nothing QC-specific to save
+    mSetObj$analSet$rsd.stats <- NULL
   }
 
   ## ── graphics bookkeeping ------------------------------------------------
@@ -1480,15 +1518,35 @@ rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
                width = w, height = h, type = format, bg = "white")
 
   library(ggplot2)
-  p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
-    geom_violin(trim = FALSE, colour = "black", size = 0.4) +
-    geom_boxplot(width = .1, outlier.shape = NA, fill = "white") +
-    geom_hline(yintercept = thr, linetype = "dashed",
-               colour = "grey40", linewidth = 0.4) +   # reference line only
-    scale_fill_manual(values = palette, guide = "none") +
-    labs(y = "RSD (%)", x = NULL) +
-    theme_minimal(base_size = 12)
-  print(p);
+## ── sample counts for axis labels ---------------------------------------
+n.qc     <- sum(qc.inx)          # number of QC columns
+n.sample <- sum(!qc.inx)         # number of non-QC (biological) columns
+
+if (hasQC) {
+  x.labs <- c(Sample = sprintf("Sample (n = %d)", n.sample),
+              QC     = sprintf("QC (n = %d)",     n.qc))
+} else {
+  x.labs <- c(Sample = sprintf("Sample (n = %d)", n.sample))
+}
+
+p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
+  geom_violin(trim = FALSE, colour = "grey30", size = 0.4) +
+  geom_boxplot(width = 0.10, outlier.shape = NA, fill = "white", linewidth = 0.25) +
+  geom_hline(yintercept = thr, linetype = "dashed",
+             colour = "grey45", linewidth = 0.35) +
+  scale_fill_manual(values = palette, guide = "none") +
+  scale_x_discrete(labels = x.labs) +                          # ← NEW
+  scale_y_continuous(breaks = pretty(plt_df$RSD, n = 8),
+                     limits = c(0, NA)) +
+  labs(y = "RSD (%)", x = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x  = element_text(size = 11),
+    axis.text.y  = element_text(size = 11),
+    panel.grid.y = element_blank()
+  )
+
+  print(p)
   dev.off()
   invisible(.set.mSet(mSetObj))
 }

@@ -68,7 +68,10 @@ my.impute.missing <- function(mSetObj = NA,
     ## ---- 3 · back-transform to raw scale -----------------------------------
     log.imp <- t(imp.mat)                              # samples × variables (log scale)
     new.mat <- (log.base ^ log.imp) - offset           # back to original intensity scale
-    
+
+    rownames(new.mat) <- rownames(int.mat)
+    colnames(new.mat) <- colnames(int.mat)
+
     msg <- c(msg,"Missing values were imputed with QRILC")
   } else if (method == "colmin") {
     ## Half-min replacement
@@ -186,7 +189,7 @@ my.impute.missing <- function(mSetObj = NA,
     }
   }
   
-  
+
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
   mSetObj$dataSet$filt <-as.data.frame(new.mat); 

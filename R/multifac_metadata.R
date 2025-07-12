@@ -99,7 +99,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
       note.vec,
     paste0("<br />",
     "<span style=\"color:orange;\">",
-    "Reminder – QC samples are useful for QC checks and data filtering. ",
+    "Reminder: QC samples are useful for QC checks, data filtering and normalization. ",
     "Delete all <code>QC</code>",
     "samples using the <b>Data&nbsp;Editor</b> before performing downstream analyses.",
     "</span>"
@@ -293,6 +293,7 @@ UpdateMetaData <- function(mSetObj=NA){
 }
 
 RemoveSelectedMeta <- function(mSetObj=NA, meta){
+  save.image("rem.RData");
   mSetObj <- .get.mSet(mSetObj);
 
   if (meta %in% c("QC", "Blank") &&
@@ -304,13 +305,14 @@ RemoveSelectedMeta <- function(mSetObj=NA, meta){
     ]
 
     if (length(drop.smpl) > 0) {
-      ## set the global vectors used by UpdateData()
-      feature.nm.vec <<- character(0)   # no feature deletions
-      smpl.nm.vec    <<- drop.smpl      # ← rows to delete
-      grp.nm.vec     <<- ""             # no group filtering
+      feature.nm.vec <<- character(0)   
+      smpl.nm.vec    <<- drop.smpl
+      grp.nm.vec     <<- ""            
 
       ## UpdateData handles all matrices, class vectors, metadata rows, etc.
-      mSetObj <- UpdateData(mSetObj, order.group = FALSE)
+      .set.mSet(mSetObj)
+      UpdateData(mSetObj, order.group = FALSE)
+      mSetObj <- .get.mSet(mSetObj);
     }
   }
 
