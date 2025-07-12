@@ -424,37 +424,29 @@ iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
   pca3d$loadings$cols <- colset;
 
 if (pca3d$score$metadata_type[metaCol] != "disc") {
-  vals <- metadata[, metaCol]
+ ## continuous metadata  →  rank-based gradient ---------------------------
+vals <- metadata[, metaCol]
 
-  # Avoid log(0) or negative values
-  if (any(vals <= 0, na.rm = TRUE)) {
-    offset <- abs(min(vals, na.rm = TRUE)) + 1e-6
-    vals <- vals + offset
-  }
+# Handle missing values up front
+na.inx <- is.na(vals)
 
-  # Apply log10 transformation
-  vals.log <- log10(vals)
+# Rank the values (1 = smallest, N = largest); ties get the average rank
+rnk <- rank(vals, ties.method = "average", na.last = "keep")
 
-  # Trim outliers using 2nd to 98th percentiles
-  q_low <- quantile(vals.log, 0.02, na.rm = TRUE)
-  q_high <- quantile(vals.log, 0.98, na.rm = TRUE)
+# Convert to 0–1 scale; NA stays NA
+vals.norm <- (rnk - 1) / (max(rnk, na.rm = TRUE) - 1)
 
-  # Clamp extreme values
-  vals.trimmed <- pmin(pmax(vals.log, q_low), q_high)
+# Optional: centralise NA as mid-grey instead of dropping them
+vals.norm[na.inx] <- 0.5
 
-  # Normalize within the trimmed range
-  vals.norm <- (vals.trimmed - q_low) / (q_high - q_low)
-  vals.norm[is.na(vals.norm)] <- 0.5  # fallback for missing values
+# Map to a perceptually uniform gradient (viridis works well)
+col.vec <- viridis::viridis(100)[floor(vals.norm * 99) + 1]
 
-  # Map to color gradient
-  col.fun <- colorRampPalette(c("blue", "red"))
-  col.vec <- col.fun(100)[floor(vals.norm * 99) + 1]
-
-  # Set for use in JSON export
-  pca3d$score$colors <- my.col2rgb(col.vec)
-  pca3d$score$color_legend_vals <- vals.log
-  pca3d$score$color_legend_trimmed <- c(q_low, q_high)
-  pca3d$score$color_legend_type <- "gradient"
+# Store for JSON export
+pca3d$score$colors              <- my.col2rgb(col.vec)
+pca3d$score$color_legend_vals   <- vals
+pca3d$score$color_legend_type   <- "gradient"
+pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
 } else {
   cols <- unique(GetColorSchema(pca3d$score$facA)); 
   pca3d$score$colors <- my.col2rgb(cols);
