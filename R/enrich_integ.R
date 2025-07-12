@@ -457,11 +457,9 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     }else if(enrich == "fisher"){
         res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     }else{
-        print("Not defined enrichment method!");
-        print(enrich);
+        print(paste("Undefined enrichment method:", enrich));
     }
 
-    
     res.mat[,4][res.mat[,4] == 0] <- min(res.mat[,4][res.mat[,4] != 0])/5;
     res.mat[,5] <- -log10(res.mat[,4]);
     res.mat[,6] <- p.adjust(res.mat[,4], "holm");

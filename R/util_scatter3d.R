@@ -56,8 +56,8 @@ my.json.scatter <- function(filenm, containsLoading=F){
   legendData <- list(label=levels(metadf),color=col.s, type = res$color_legend_type)
   #for IPCA in multifactor
 
-  print("legendData:")
-  print(legendData)
+  # print("legendData:")
+  # print(legendData)
   
 if ("facB" %in% names(res)) {
 
@@ -81,8 +81,8 @@ if ("facB" %in% names(res)) {
   )
 
   ## Debug
-  print("legendData2:")
-  print(legendData2)
+  # print("legendData2:")
+  # print(legendData2)
 }
 
   

@@ -15,7 +15,7 @@ QueryLiteratureMelodiPresto <- function(exposure, outcome) {
     x = exposure,
     y = outcome
   )
-  print(params)
+  # print(params)
 
   lit_df <- query_melodipresto(route = endpoint, params = params, mode = "raw", method = "POST")
 
@@ -24,7 +24,7 @@ QueryLiteratureMelodiPresto <- function(exposure, outcome) {
   }
   hit.num <- nrow(lit_df);
   if (hit.num == 0) {
-    current.msg <<- "No hits found in the literarure evidence database.";
+    current.msg <<- "No hits found in the literature evidence database.";
     print(current.msg);
     return(0);
   } else{
@@ -442,7 +442,7 @@ GetSeedsColumn <- function(){
   mSetObj <- .get.mSet(mSetObj);
   tbls = unique(mSetObj$dataSet$mirtable);
   vec = vector();
-print(tbls)
+  # print(tbls)
   for( i in 1:length(tbls)){
     nms = strsplit(tbls[i], "2")[[1]];
     orignms = nms;

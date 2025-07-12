@@ -293,7 +293,7 @@ UpdateMetaData <- function(mSetObj=NA){
 }
 
 RemoveSelectedMeta <- function(mSetObj=NA, meta){
-  save.image("rem.RData");
+  # save.image("rem.RData");
   mSetObj <- .get.mSet(mSetObj);
 
   if (meta %in% c("QC", "Blank") &&
@@ -554,7 +554,7 @@ GetUniqueMetaNames <-function(mSetObj=NA, metadata){
 
 
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
-print(c("SetSelectedMetaInfo",meta0,meta1))
+  # print(c("SetSelectedMetaInfo",meta0,meta1))
   mSetObj <- .get.mSet(mSetObj);
   meta.info <- mSetObj$dataSet$meta.info
   if(meta0 == "NA"){

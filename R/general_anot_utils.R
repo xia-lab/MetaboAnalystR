@@ -177,7 +177,8 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
       }
     }
   } else {
-    print(paste("Unknown compound ID type:", q.type));save(qvec, file = "qvec__checking.rda");save(cmpd.db, file = "cmpd.db__checking.rda")
+    print(paste("Unknown compound ID type:", q.type));
+    #save(qvec, file = "qvec__checking.rda");save(cmpd.db, file = "cmpd.db__checking.rda")
     # guess a mix of kegg and hmdb ids
 
     n <- 5 # Number of digits for V3 of HMDB

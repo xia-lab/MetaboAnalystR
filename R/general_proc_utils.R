@@ -457,8 +457,8 @@ RemoveMissingPercent <- function(mSetObj = NA,
                       rm.cnt, 100 * percent, rule.txt)
   mSetObj$msgSet$miss.filter.msg <- c(msg)
   
-    print("dim(mSetObj$dataSet$proc)")
-    print(mSetObj$dataSet$proc);
+   #print("dim(mSetObj$dataSet$proc)")
+   #print(mSetObj$dataSet$proc);
 
   return(.set.mSet(mSetObj))
 }
@@ -559,8 +559,8 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     int.mat <- as.matrix(qs::qread("data_proc.qs"));
   }else{
     int.mat <- as.matrix(mSetObj$dataSet$proc);
-    print("dim(mSetObj$dataSet$proc)")
-    print(mSetObj$dataSet$proc);
+    #print("dim(mSetObj$dataSet$proc)")
+    #print(mSetObj$dataSet$proc);
   }
   cls <- mSetObj$dataSet$proc.cls;
   
@@ -585,13 +585,9 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       sds      <- apply(qc.mat,   2, sd,   na.rm = TRUE)
       mns      <- apply(qc.mat,   2, mean, na.rm = TRUE)
       rsd.vals <- abs(sds / mns)
-    keep <- rsd.vals < rsd    
-    print("keeep====");
-    print(sum(is.na(keep)))     
-    print(sum(!is.finite(rsd.vals)))     
-
-    keep[ is.na(keep) ]      <- FALSE    
-    keep[ !is.finite(rsd.vals) ] <- FALSE
+    keep <- rsd.vals < rsd;     
+    keep[is.na(keep)] <- FALSE    
+    keep[!is.finite(rsd.vals)] <- FALSE;
       
       ## save a copy for the user
       fast.write.csv(
@@ -1180,14 +1176,12 @@ PlotMissingDistr <- function(mSetObj = NA,
        #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
        fill_scale
 
-combined_plot_stacked <- p1 / p2;
-final_combined_plot <- combined_plot_stacked +
-  plot_annotation(
-    #title = "Comparison of Group Characteristics" # Optional: an even higher-level title
-  ) & theme(plot.title = element_text(hjust = 0.5)) # Center the overall title
+    combined_plot_stacked <- p1 / p2;
+    final_combined_plot <- combined_plot_stacked +
+    plot_annotation() & theme(plot.title = element_text(hjust = 0.5)) # Center the overall title
 
-print(final_combined_plot)
-  dev.off()
+    print(final_combined_plot)
+    dev.off()
 
   ## -------- Book-keeping ----------------------------------------------
   mSetObj$imgSet$miss.box <- img.full
@@ -1371,18 +1365,18 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 #' @param thr     RSD threshold (%) for the “pass-rate” statistic
 #' @return        Character string summarising QC precision
 
-  CheckQCRSD <- function(mSetObj, thr = 30) {
+CheckQCRSD <- function(mSetObj, thr = 30) {
     
-meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
+    meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
            ncol(mSetObj$dataSet$meta.info) >= 1          &&       
            length(mSetObj$dataSet$meta.info[, 1]) > 0    &&       
            !all(is.na(mSetObj$dataSet$meta.info[, 1]))            
 
-cls.ok  <- !is.null(mSetObj$dataSet$cls) &&
+    cls.ok  <- !is.null(mSetObj$dataSet$cls) &&
            length(mSetObj$dataSet$cls)    > 0 &&
            !all(is.na(mSetObj$dataSet$cls))
 
-cls <- if (meta.ok) {
+    cls <- if (meta.ok) {
           mSetObj$dataSet$meta.info[, 1]
        } else if (cls.ok) {
           mSetObj$dataSet$cls
@@ -1391,7 +1385,7 @@ cls <- if (meta.ok) {
        }
     
     cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
-    print(cls);
+    #print(cls);
     qc.inx <- cls == "qc"
     n.qc   <- sum(qc.inx)
     

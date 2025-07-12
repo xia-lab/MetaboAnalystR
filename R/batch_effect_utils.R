@@ -3153,7 +3153,6 @@ eig_norm2 = function(rv) {
   
   if(n.u.treatment == 1) { # got 1 treatment group
     for (ii in 1:nrow(pres)) {
-      #if(ii%%250 == 0) { print(paste('Processing peptide ',ii))  }
       pep = pres[ii, ] 
       pos = !is.na(pep)
       peptemp = as.matrix(pep[pos]) # take only the observed values
@@ -3166,8 +3165,6 @@ eig_norm2 = function(rv) {
     
   } else { # got 2+ treatment groups
     for (ii in 1:nrow(pres)) {
-      if(ii %% 100 == 0) { #print(paste('Processing peptide ',ii))  
-      }
       pep = pres[ii, ] 
       pos = !is.na(pep)
       peptemp = as.matrix(pep[pos]) # take only the observed values, may not be needed in R? but this works

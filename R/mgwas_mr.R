@@ -967,7 +967,7 @@ if(action == "keep"){
 }else{
   hits = hits & ifExp;
 }
-print(hits)
+#print(hits)
 if(sum(hits) > 0){
    tab <- tab[!hits,]
    row.ids <- rownames(tab);

@@ -222,8 +222,7 @@ if(!exists('metastat.meta')){
     rm(dataSet, res.all);
     gc();
   } 
-   print(head(metastat.ind));
-   print("metastat.ind===");
+
   metastat.ind <<- metastat.ind;
   qs::qsave(metastat.ind, "metastat.ind.qs");
 
@@ -537,8 +536,8 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   }else{
     meta.mat <- cbind(pval.mat, meta.mat);
   }
-  print(head(meta.mat));
-  print("getting metares");
+  # print(head(meta.mat));
+  # print("getting metares");
   meta.mat <- signif(as.matrix(meta.mat), 5);
   colnames(meta.mat) <- colnms;
   mSetObj$analSet$meta.mat <- meta.mat;
@@ -879,8 +878,6 @@ ToggleMetaRes <- function(mSetObj=NA, type) {
     }else{
       meta.mat <<- mSetObj$analSet$merge.mat
     }
-    print(head(meta.mat));
-    print("metamat====");
     mSetObj <- SetupMetaStats(mSetObj, mSetObj$dataSet$pvalcutoff);
     .set.mSet(mSetObj)
 }

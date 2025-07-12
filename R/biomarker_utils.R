@@ -159,7 +159,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
     names(imp.vec) <- colnames(x.in);
     return(imp.vec);
   }else{
-    print("Not supported!");
+    print(paste("Not supported method:", method));
     return(NULL);
   }
 }
