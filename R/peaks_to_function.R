@@ -354,7 +354,49 @@ Convert2Mummichog <- function(mSetObj=NA,
     pvals <- cbind(mz.pval, as.numeric(fdr));
     colnames(pvals) <- c("m.z", "p.value");
 
-  } else {
+  }else if (test == "cov") {
+
+  cov.res <- mSetObj$analSet$cov                     # limma-style table
+  if (is.null(cov.res)) {
+    AddErrMsg("Covariate-adjusted statistics were not calculated!") ; return(0)
+  }
+
+  ## ------------------------------------------------------------------
+  ##  1.  Parse row-names:  "mz__rt"  →  m/z   +   retention time
+  ## ------------------------------------------------------------------
+  feat_nm <- rownames(cov.res)
+  has_rt  <- grepl("__", feat_nm, fixed = TRUE)
+
+  if (any(has_rt)) {                                 # split once, vectorised
+    parts   <- strsplit(feat_nm[has_rt], "__", fixed = TRUE)
+    mz.vec  <- feat_nm                               # default: unchanged
+    rt.vec  <- rep(NA_real_, length(feat_nm))
+
+    mz.vec[has_rt] <- vapply(parts, `[`, 1L,
+                             FUN.VALUE = character(1))
+    rt.vec[has_rt] <- as.numeric(vapply(parts, `[`, 2L,
+                             FUN.VALUE = character(1)))
+
+    ## save RTs so the universal rt-block later can attach them
+    mSetObj$dataSet$ret_time <- rt.vec
+    mSetObj$paramSet$mumRT   <- TRUE                 # flag that RT is present
+    feat_nm <- mz.vec                                # use clean m/z names below
+  }
+
+  ## ------------------------------------------------------------------
+  ##  2.  Build p-value / t-score tables (keep order by p-value)
+  ## ------------------------------------------------------------------
+  cov.pv           <- setNames(cov.res$P.Value, feat_nm)
+  cov.pv           <- sort(cov.pv)
+  fdr              <- p.adjust(cov.pv, "fdr")
+
+  pvals            <- cbind(names(cov.pv), as.numeric(fdr))
+  colnames(pvals)  <- c("m.z", "p.value")
+
+  tvec             <- setNames(cov.res$t, feat_nm)[ names(cov.pv) ]
+  tscores          <- cbind(names(tvec), as.numeric(tvec))
+  colnames(tscores) <- c("m.z", "t.score")
+} else {
       AddErrMsg("Unknown method!")
       return(0);
   }
@@ -387,8 +429,14 @@ Convert2Mummichog <- function(mSetObj=NA,
     }else if(test == "aov"){
       mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(pvals, camera))
       complete.inx <- complete.cases(mummi_new[,c("p.value", "r.t")])
-    }
-    
+   }else if (test == "cov") {
+      ## merge p-values  +  t-scores  +  CAMERA RT table
+      mummi_new  <- Reduce(function(x, y) merge(x, y, by = "m.z", all = TRUE),
+                           list(pvals, tscores, camera))
+      ## keep rows that have p-value, t-score, and RT
+      complete.inx <- complete.cases(mummi_new[ , c("p.value", "t.score", "r.t")])
+      mummi_new    <- mummi_new[complete.inx, ]
+  }
     mummi_new <- mummi_new[complete.inx,]
     
   } else {
@@ -404,7 +452,9 @@ Convert2Mummichog <- function(mSetObj=NA,
       mummi_new <- fcs;
     }else if(test=="aov"){
       mummi_new <- pvals;
-    }
+    } else if (test == "cov") {
+      mummi_new <- merge(pvals, tscores)
+  }
 
     if(rt){ # taking retention time information from feature name itself
       feat_info <- mummi_new[,1]
@@ -492,7 +542,7 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
-  
+  save.image("mum.RData");
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$check.msg <- NULL;
   if(mSetObj$dataSet$mum.type == "table"){
@@ -3919,6 +3969,20 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib,
   }else{
     return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
   }
+}
+    
+ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", testmeth="cov", mode=NA){
+    is.rt <- mSetObj$paramSet$mumRT;
+    mSetObj <- .get.mSet();
+    .on.public.web <<- F;
+    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode);
+    SetPeakFormat(mSetObj, "mpt")
+    filename <- paste0("mummichog_input_", Sys.Date(), ".txt");
+    
+    mSetObj<-Read.PeakListData(mSetObj, filename);
+    mSetObj<-SanityCheckMummichogData(mSetObj);
+    .on.public.web <<- T;
+    return(.set.mSet(mSetObj));
 }
 
 #' PreparePeakTable4PSEA

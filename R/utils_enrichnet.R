@@ -1,5 +1,8 @@
+
+
+
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
-  #save.image("enrich.RData");
+  save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
   # Get the appropriate result matrix based on analysis type
   if(anal.opt == "mum"){
@@ -138,16 +141,23 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ## -----------------------------------------------------------------
     ##  Build pathway → hit list (names or original IDs)
     ## -----------------------------------------------------------------
-    
+
+      
     pathway.cpds <- setNames(
       lapply(pathway.names, function(pw) {
         idx   <- which(mSetObj$pathways$name == pw)          # row in master table
-        allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+        if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
+          
+        allID <- unlist(mSetObj$pathways$emp_cpds[[ idx[1] ]])   # all IDs in pathway
+        }else{
+          allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+          
+        }
         intersect(allID, sig.ids)                            # keep only sig IDs
       }),
       pathway.names
     )
-
+    
   }
   
   # Calculate overlap matrix

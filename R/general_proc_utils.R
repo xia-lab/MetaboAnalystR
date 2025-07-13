@@ -321,6 +321,7 @@ SanityCheckData <- function(mSetObj=NA){
       }
       mSetObj$dataSet$missTest <- kw.p;
       mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+      miss.msg <- c(miss.msg, mSetObj$msgSet$miss.msg);
       msg<-c(msg,  miss.msg);
     }
     #msg<-c(msg,
@@ -991,9 +992,24 @@ GetMetaDataCol <- function(mSetObj=NA, colnm){
     return(cls[cls!="NA"]);
 }
 
-GetMissingTestMsg <- function(mSetObj=NA){
+GetMissingTestMsg <- function(mSetObj=NA, type){
     mSetObj <- .get.mSet(mSetObj);
-    msg <- mSetObj$msgSet$miss.msg;
+    msg <- "";
+    cls <-mSetObj$dataSet$cls
+    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
+        if(type == "filt"){
+          int.mat <- qs::qread("data.filt.qs");
+        }else{
+          int.mat <- qs::qread("preproc.orig.qs");
+        }
+
+      miss.msg <- "";
+      kw.p <- .test.missing.sig(int.mat, cls);
+      
+      mSetObj$dataSet$missTest <- kw.p;
+      mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+      msg <- mSetObj$msgSet$miss.msg
+    }
     if(is.null(msg)){
         return("NA");
     }
@@ -1096,7 +1112,7 @@ PlotMissingDistr <- function(mSetObj = NA,
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
-  if(file.exists("data.filt.qs")){
+  if(grepl("_filt", imgName)){
     int.mat <- qs::qread("data.filt.qs");
   }else{
     int.mat <- qs::qread("preproc.orig.qs");
