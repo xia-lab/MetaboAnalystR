@@ -98,8 +98,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        mSetObj$dataSet$harmonized.dat <- dat;
        print(rownames(dat))
       .set.mSet(mSetObj)
-        
-      #save(mSetObj, file = "PerformSnpFiltering_mSetObj.rda")
+  
       return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
 }
 
@@ -180,8 +179,7 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
 PerformMRAnalysis <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$ifCheck,]
- 
-  #save.image("MR.RData");
+     
   #4. perform mr
   method.type <- mSetObj$dataSet$methodType;
   #mr.res <- TwoSampleMR::mr(dat, method_list = method.type);
@@ -1003,4 +1001,15 @@ ResetSNPEntries  <- function(expnm="") {
   mSetObj$dataSet$harmonized.dat <- NULL
   return(.set.mSet(mSetObj));
   
+}
+
+CheckSNPs <- function(){
+   mSetObj <- .get.mSet(mSetObj)
+   dat <- mSetObj$dataSet$harmonized.dat
+   if(any(dat$ifCheck)){
+    return(1)
+  }else{
+    return(0)
+  }
+
 }
