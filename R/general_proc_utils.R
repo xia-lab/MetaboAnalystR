@@ -273,32 +273,69 @@ SanityCheckData <- function(mSetObj=NA){
   qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
   qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
-  
-  min.n.qc    <- 3   # lowest acceptable for %RSD
-  min.n.blank <- 2   # one before + one after
-  
-  n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
-  n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
-  
-  
-  if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
+  ## ------------------------------------------------------------------
+##  QC / blank-sample consistency checks with minimum thresholds
+## ------------------------------------------------------------------
+
+min.n.qc    <- 3   # lowest acceptable for %RSD filtering
+min.n.blank <- 2   # need one before + one after
+
+# Current sample counts
+n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
+n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
+
+## ---------------------  QC samples  --------------------------------
+if (n.qc == 0) {
+  mSetObj$dataSet$containsQC <- FALSE
+
+} else if (n.qc < min.n.qc) {
+  # Too few QC samples → skip QC-based filtering
+  msg <- c(msg,
+           sprintf(
+             "<font color=\"orange\">Only %d QC sample%s found (≥ %d required). ",
+             n.qc, ifelse(n.qc == 1, "", "s"), min.n.qc),
+           "QC-based %RSD filtering will be skipped.</font>"
+           )
+  mSetObj$dataSet$containsQC <- FALSE
+
+} else {                        # n.qc ≥ min.n.qc
+  if (isFALSE(mSetObj$dataSet$containsQC)) {
     msg <- c(msg,
-             paste0(
-               "<font color=\"orange\">",
-               n.qc, " QC sample", ifelse(n.qc == 1, "", "s"),
-               " detected even though the ‘Incl. QC samples’ option was left unticked. ",
-               "They will be treated as QC samples automatically.</font>"
-             ))
+             sprintf(
+               "<font color=\"orange\">%d QC sample%s detected even though the ‘Incl. QC samples’ option was left unticked. ",
+               n.qc, ifelse(n.qc == 1, "", "s")),
+             "They will be treated as QC samples automatically.</font>"
+             )
   }
-  
-  if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
+  mSetObj$dataSet$containsQC <- TRUE
+}
+
+## ---------------------  Blank injections  -------------------------
+if (n.blank == 0) {
+  mSetObj$dataSet$containsBlank <- FALSE
+
+} else if (n.blank < min.n.blank) {
+  msg <- c(msg,
+           sprintf(
+             "<font color=\"orange\">Only %d blank injection%s found (≥ %d required). ",
+             n.blank, ifelse(n.blank == 1, "", "s"), min.n.blank),
+           "Blank-based background correction will be skipped.</font>"
+           )
+  mSetObj$dataSet$containsBlank <- FALSE
+
+} else {                        # n.blank ≥ min.n.blank
+  if (isFALSE(mSetObj$dataSet$containsBlank)) {
     msg <- c(msg,
-             paste0(
-               "<font color=\"orange\">",
-               n.blank, " blank injection", ifelse(n.blank == 1, "", "s"),
-               " detected but the ‘Incl. Blank samples’ option was not selected.</font>"
-             ))
+             sprintf(
+               "<font color=\"orange\">%d blank injection%s detected but the ‘Incl. Blank samples’ option was not selected. ",
+               n.blank, ifelse(n.blank == 1, "", "s")),
+             "They will be treated as blanks automatically.</font>"
+             )
   }
+  mSetObj$dataSet$containsBlank <- TRUE
+}
+
+  
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
@@ -1575,3 +1612,30 @@ rm_outliers <- function(vec) {
     if (is.na(mu) || mu == 0) return(NA_real_)
     100 * stats::sd(x, na.rm = TRUE) / abs(mu)
   }
+## ---------------------------------------------------------------
+##  1 = QC samples present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsQC <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsQC)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsQC)))
+}
+
+## ---------------------------------------------------------------
+##  1 = blank injections present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsBlank <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsBlank)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
+}
