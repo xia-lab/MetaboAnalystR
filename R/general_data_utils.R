@@ -1571,11 +1571,6 @@ Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="ro
     return(.set.mSet(mSetObj));
 }
 
-PrintCurrentCls <- function(mSetObj=NA){
-   mSetObj <- .get.mSet(mSet);
-print("Current class info ....");
-print(mSetObj$dataSet$cls);
-}
 
 SetBlankQcBool <- function(mSetObj=NA, containsQC=F, containsBlank=F){
   

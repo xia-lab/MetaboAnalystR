@@ -165,7 +165,7 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   main <- xlab <- ylab <- NULL;
   data <- mSetObj$dataSet$norm;
   corrCutoff <- as.numeric(corrCutoff)
-  print(c(fz,unit))
+  #print(c(fz,unit))
   if(target == 'row'){
     data <- t(data);
   }
@@ -468,7 +468,7 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.d
   }
   
   dev.off();
-  print("corretation static==============================");
+  # print("corretation static==============================");
 
   if(!no.clst){ # when no clustering, tree_row is NA
     new.ord <- res$tree_row$order;

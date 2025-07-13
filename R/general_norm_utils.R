@@ -616,15 +616,15 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
       if (is.factor(x)) droplevels(x[ , drop = TRUE]) else x)
 
     mSetObj$dataSet$meta.info <- meta
-    print("dim(meta)");
-    print(dim(meta));
+    #print("dim(meta)");
+    #print(dim(meta));
   }
 
   mSetObj$dataSet$edit     <- data
   mSetObj$dataSet$edit.cls <- cls
   AddMsg("Successfully updated the data & metadata!")
 
-  save(mSetObj, file = "mSetObj__UpdateData.rda")
+  # save(mSetObj, file = "mSetObj__UpdateData.rda")
 
   if (.on.public.web) {
     .set.mSet(mSetObj)

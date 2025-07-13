@@ -589,7 +589,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@export
 #'
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
-  print(topnum)
+  # print(topnum)
   mSetObj <- .get.mSet(mSetObj);
  
   choices <- c(inx1, inx2);

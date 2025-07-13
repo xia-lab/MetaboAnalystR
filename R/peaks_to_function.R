@@ -1153,7 +1153,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
  
   if(.on.public.web){
     mum.url <- paste(rpath ,"libs/mummichog/", filenm, sep="");
-    print(paste("Adding mummichog library:", mum.url));
+    # print(paste("Adding mummichog library:", mum.url));
     mummichog.lib <- try(qs::qread(mum.url), silent = TRUE)
     if(class(mummichog.lib) == "try-error"){
         AddErrMsg("The database you have selected is not matched/found!")
@@ -1292,7 +1292,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
                                 cpd.treen){
 
   ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
-  print(paste0("compoundLib"));
+  #print(paste0("compoundLib"));
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   pos_inx <- mSetObj$dataSet$pos_inx;
   ref_mzlistp <- ref_mzlist[pos_inx];

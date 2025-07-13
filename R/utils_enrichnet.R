@@ -388,7 +388,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   #}
   
   enr.mat <- apply(enr.mat, 1, as.list)
-  print(paste("lib====", mSetObj$lib.organism));
+  # print(paste("lib====", mSetObj$lib.organism));
   
   if(anal.opt %in% c("pathora", "pathqea")){
     pwType <- mSetObj$pathwaylibtype; 
