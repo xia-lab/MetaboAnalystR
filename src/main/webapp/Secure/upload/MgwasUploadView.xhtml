@@ -53,46 +53,19 @@
             </p>
 
             <h3 style="margin-top:20px">
-                1. Select a metabolite of interest (exposure):
+                1. Select a metabolite (exposure) of interest:
             </h3>
-            <p>
-                Due to its complex and computing intensive nature, MR analysis is typically performed with <u>one metabolite/exposure at a time</u>, to make sure that 
-                each step is performed properly as well as to avoid performance issue (max 5). 
-            </p>
-
             <h:form id="form1">
-                <!--
-                <h:panelGrid columns="2">
-                    <b>Population: </b> 
-                    <p:selectOneMenu id="popOpt" value="#{mgwasLoadBean.selectedPopulation}">  
-                        <f:selectItem itemLabel="All" itemValue="all"/>
-                        <f:selectItem itemLabel="African" itemValue="afr"/>
-                        <f:selectItem itemLabel="American (1)" itemValue="amr"/>
-                        <f:selectItem itemLabel="Amish (1)" itemValue="amr"/>
-                        <f:selectItem itemLabel="European (50)" itemValue="eur"/>
-                        <f:selectItem itemLabel="East Asian (1)" itemValue="eas"/>
-                        <f:selectItem itemLabel="South Asian (1)" itemValue="sas"/>
-                        <f:selectItem itemLabel="Hispanic (1)" itemValue="hsp"/>
-                        <f:selectItem itemLabel="Middle East (1)" itemValue="mde"/>
-                        <f:selectItem itemLabel="Mixed Study (6)" itemValue="mix"/>
-                    </p:selectOneMenu> 
-                </h:panelGrid>
-                -->
+                <p:selectOneListbox id="metaboliteSelect"
+                                    value="#{mgwasLoadBean.myCmpd}"
+                                    filter="true"
+                                    filterMatchMode="contains" 
+                                    style="width:540px; margin-left: 20px"
+                                    scrollHeight="360">
 
-                <p:pickList id="instantPickList" value="#{mgwasLoadBean.metDualList}" var="met"
-                            itemLabel="#{met}" itemValue="#{met}" 
-                            transferOnCheckboxClick="true"
-                            showCheckbox="true" showTargetControls="false" 
-                            showSourceFilter="true" 
-                            showTargetFilter="true" 
-                            responsive="true"
-                            filterMatchMode="contains" 
-                            sourceFilterPlaceholder="Filter available metabolites"
-                            targetFilterPlaceholder="Filter selected metabolites"
-                            style="width:800px"
-                            />
-
-
+                    <f:selectItems value="#{mgwasLoadBean.metCompleteList}" />
+                </p:selectOneListbox> 
+                
                 <h3 style="margin-top:30px">
                     2. Specify an outcome of interest:
                 </h3>

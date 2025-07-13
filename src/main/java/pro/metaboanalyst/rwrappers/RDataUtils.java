@@ -1252,6 +1252,7 @@ public class RDataUtils {
             LOGGER.error("plotSampleNormSummaryGraph", e);
         }
     }
+
     //---------------Methods for access Data information-------------
     //get data information
     public static void initPrenormData(RConnection RC) {
@@ -1263,7 +1264,7 @@ public class RDataUtils {
             LOGGER.error("initPrenormData", e);
         }
     }
-    
+
     public static void setPeakFormat(RConnection RC, String type) {
         try {
             String rCommand = "SetPeakFormat(NA, \"" + type + "\")";
@@ -2528,6 +2529,16 @@ public class RDataUtils {
         }
 
         return res;
+    }
+
+    public static int removeEntry(RConnection RC, String rowID) {
+        try {
+            String rCommand = "RemoveEntry(NA, \"" + rowID + "\");";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger());
+        } catch (Exception e) {
+        }
+        return 0;
     }
 
     public static int setDataTypeOfMeta(RConnection RC) {

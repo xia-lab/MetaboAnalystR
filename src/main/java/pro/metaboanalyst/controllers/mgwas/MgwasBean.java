@@ -12,6 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.model.SelectItem;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -23,6 +26,8 @@ import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.DefaultStreamedContent;
 import org.rosuda.REngine.Rserve.RConnection;
 import jakarta.inject.Inject;
+import java.util.Iterator;
+import java.util.stream.Collectors;
 import org.primefaces.PrimeFaces;
 
 /**
@@ -44,6 +49,8 @@ public class MgwasBean implements Serializable {
 
     private String ldclumpOpt = "no_ldclump";
     private String ldProxyOpt = "no_proxy";
+    private boolean performClump = true;
+    private boolean performProxy = false;
 
     private String harmonizeOpt = "2";
     private boolean pleiotropyOpt = false;
@@ -52,7 +59,8 @@ public class MgwasBean implements Serializable {
     private boolean pldSNPs = true;
     private double ldThresh = 0.8;
     private double mafThresh = 0.3;
-
+    private boolean useSteiger = false;
+    private String steigerOpt = "no_steiger";
     private boolean mrWaldRatio = true;
     private boolean mrTwoSampleMl = false;
     private boolean mrEggerRegression = true;
@@ -71,6 +79,37 @@ public class MgwasBean implements Serializable {
     private boolean mrRaps = false;
     private boolean mrSign = false;
     private boolean mrUwr = false;
+    private String filterCol = "pval";
+    private String filterOpt = "min";
+    private String filterActOpt = "remove";
+    private String filterValue = "";
+    private boolean filtPerformed = false;
+    private String displayExposure;
+    private String displayOutcome;
+
+    public boolean isFiltPerformed() {
+        return filtPerformed;
+    }
+
+    public void setFiltPerformed(boolean filtPerformed) {
+        this.filtPerformed = filtPerformed;
+    }
+
+    public String getDisplayExposure() {
+        return displayExposure;
+    }
+
+    public void setDisplayExposure(String displayExposure) {
+        this.displayExposure = displayExposure;
+    }
+
+    public String getDisplayOutcome() {
+        return displayOutcome;
+    }
+
+    public void setDisplayOutcome(String displayOutcome) {
+        this.displayOutcome = displayOutcome;
+    }
 
     public String getLdProxyOpt() {
         return ldProxyOpt;
@@ -88,6 +127,19 @@ public class MgwasBean implements Serializable {
         this.clumped = clumped;
     }
 
+    public boolean isUseSteiger() {
+        return useSteiger;
+    }
+
+    public void setUseSteiger(boolean useSteiger) {
+        this.useSteiger = useSteiger;
+        if (useSteiger) {
+            steigerOpt = "use_steiger";
+        } else {
+            steigerOpt = "no_steiger";
+        }
+    }
+
     public boolean isProxied() {
         return proxied;
     }
@@ -102,6 +154,30 @@ public class MgwasBean implements Serializable {
 
     public void setHarmonized(boolean harmonized) {
         this.harmonized = harmonized;
+    }
+
+    public boolean isPerformClump() {
+        return performClump;
+    }
+
+    public void setPerformClump(boolean performClump) {
+        this.performClump = performClump;
+    }
+
+    public boolean isPerformProxy() {
+        return performProxy;
+    }
+
+    public void setPerformProxy(boolean performProxy) {
+        this.performProxy = performProxy;
+    }
+
+    public String getSteigerOpt() {
+        return steigerOpt;
+    }
+
+    public void setSteigerOpt(String steigerOpt) {
+        this.steigerOpt = steigerOpt;
     }
 
     private ArrayList<HashMap> resTable = null;
@@ -314,6 +390,39 @@ public class MgwasBean implements Serializable {
         this.methodOpts = methodOpts;
     }
 
+    public String getFilterCol() {
+        return filterCol;
+    }
+
+    public void setFilterCol(String filterCol) {
+        this.filterCol = filterCol;
+    }
+
+    public String getFilterOpt() {
+        return filterOpt;
+    }
+
+    public void setFilterOpt(String filterOpt) {
+        this.filterOpt = filterOpt;
+    }
+
+    public String getFilterActOpt() {
+        return filterActOpt;
+    }
+
+    public void setFilterActOpt(String filterActOpt) {
+        this.filterActOpt = filterActOpt;
+    }
+
+    public String getFilterValue() {
+        return filterValue;
+    }
+
+    public void setFilterValue(String filterValue) {
+        this.filterValue = filterValue;
+    }
+
+
     /*
     public void performLDClumping() {
         int res = MgwasUtils.performLDClumping(sb.getRConnection(), ldclumpOpt);
@@ -486,12 +595,12 @@ public class MgwasBean implements Serializable {
 
                 int res2 = MgwasUtils.removeEntries(sb.getRConnection(), entriesArray);
                 if (res2 == 1) {
-                    sb.addMessage("Info", "Harmonization succeded! " + res + " SNP(s) had been removed! " + rm_num_pleiotropy + " SNPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
+                    sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed! " + rm_num_pleiotropy + " SNPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
                 } else {
                     sb.addMessage("Error", "Unable to exclude " + Arrays.toString(entriesArray) + " from downstream analysis!");
                 }
             } else {
-                sb.addMessage("Info", "Harmonization succeded! " + res + " SNP(s) had been removed!");
+                sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed!");
             }
         } else if (res == -2) { // failed at proxy
             String err = RDataUtils.getErrMsg(sb.getRConnection());
@@ -971,4 +1080,244 @@ public class MgwasBean implements Serializable {
         this.pleiotropyOpt = pleiotropyOpt;
     }
 
+    public void searchLiterature() {
+        int res = MgwasUtils.performLiteratureSearch(sb.getRConnection(), getDisplayExposure(), getDisplayOutcome());
+
+        res = setupLitEvidenceTable();
+        if (res == 0) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No hits found in the literarure evidence database."));
+
+        }
+
+    }
+
+    //delete both entry in both Java and R
+    public void deleteLitEntry(String rowID) {
+        Iterator<HashMap> it = reslitTable.iterator();
+        while (it.hasNext()) {
+            if (it.next().get("rowID").equals(rowID)) {
+                it.remove();
+                break;
+            }
+        }
+        RDataUtils.removeEntry(sb.getRConnection(), rowID);
+    }
+
+    private ArrayList<HashMap> reslitTable = null;
+
+    public ArrayList<HashMap> getReslitTable() {
+        return reslitTable;
+    }
+
+    public void setReslitTable(ArrayList<HashMap> reslitTable) {
+        this.reslitTable = reslitTable;
+    }
+
+    private String pmIDs;
+
+    public String getPmIDs() {
+        return pmIDs;
+    }
+
+    public void setPmIDs(String pmIDs) {
+        this.pmIDs = pmIDs;
+    }
+
+    private int edgeNum = 0;
+
+    public int getEdgeNum() {
+        return edgeNum;
+    }
+
+    public void setEdgeNum(int edgeNum) {
+        this.edgeNum = edgeNum;
+    }
+
+    public int setupLitEvidenceTable() {
+        RConnection RC = sb.getRConnection();
+
+        ArrayList<HashMap> resTable = new ArrayList();
+        String[] rowNms = MgwasUtils.getPathRowNames(RC);
+        if (rowNms == null) {
+            return 0;
+        }
+        //"Exposure","Exposure_Subject","Exposure_Predicate", "Exposure_Pval","Exposure_PMIDs",  "Overlap", "Outcome_Predicate", "Outcome_Object", "Outcome_Pval", "Outcome_PMIDs","Outcome"
+        String[] col1 = MgwasUtils.getPathCol(RC, 1); // 
+        String[] col2 = MgwasUtils.getPathCol(RC, 2); // 
+
+        int rowNum = rowNms.length;
+        if (rowNum == 0) {
+            return 0;
+        }
+
+        setEdgeNum(rowNms.length);
+        String rowID;
+        HashMap mb;
+        for (int i = 0; i < rowNum; i++) {
+            rowID = rowNms[i];
+            mb = new HashMap<>();
+            mb.put("rowID", rowID);
+            mb.put("col1", col1[i]);
+            // col 5 for pmid
+            String[] res = col2[i].split(",\\s*");
+            //System.out.println("metaboanalyst.controllers.mgwas.MgwasBean.setupLitEvidenceTable()"+res);
+            String url = "<a href=\"http://www.ncbi.nlm.nih.gov/pubmed/" + res[0] + "\" target=\"_blank\">" + res[0] + "</a>";
+            for (int m = 1; m < res.length; m++) {
+                url = url + ", " + "<a href=\"http://www.ncbi.nlm.nih.gov/pubmed/" + res[m] + "\" target=\"_blank\">" + res[m] + "</a>";
+            }
+            // System.out.println("metaboanalyst.controllers.mgwas.MgwasBean.setupLitEvidenceTable()"+url);
+            mb.put("col2", url);
+
+            resTable.add(mb);
+        }
+        setReslitTable(resTable);
+        return 1;
+    }
+
+    private ArrayList<HashMap> sumTable = null;
+
+    public ArrayList<HashMap> getSumTable() {
+        return sumTable;
+    }
+
+    public void setSumTable(ArrayList<HashMap> sumTable) {
+        this.sumTable = sumTable;
+    }
+
+    public void setupSumTable() {
+        RConnection RC = sb.getRConnection();
+        sumTable = new ArrayList();
+
+        String[] rowNms = MgwasUtils.getSumCol(RC, "rw", "");
+        String[] exps = MgwasUtils.getSumCol(RC, "exps", "");
+        //"Metabolite", "SNP ID", "Chr", "Position", "A1", "A2", "Beta","SE", "P-value", "PMID"
+        //String[] col1 = MgwasUtils.getResColByName(RC, netType, metNm); // metabolite name
+        int rowNum = rowNms.length;
+        //System.out.println("============.mgwas.MgwasBean.setupSumTable()"+rowNum);
+        groupCounts = new HashMap<>();
+        HashMap sumb;
+
+        for (int i = 0; i < rowNum; i++) {
+            sumb = new HashMap<>();
+            String[] counts = MgwasUtils.getSumCol(RC, "num", exps[i]);
+            sumb.put("rowID", rowNms[i]);
+            sumb.put("col1", exps[i]);
+            sumb.put("col2", counts[0]);
+            sumTable.add(sumb);
+
+        }
+    }
+
+    //only one exposure
+    public ArrayList<HashMap> doSNPViewing() {
+        setupTable("tableView");
+        filteredResTable = resTable;
+        return filteredResTable;
+    }
+
+    private String selectedGroupKey; // set by UI (e.g. dropdown or URL param)
+
+    public String getSelectedGroupKey() {
+        return selectedGroupKey;
+    }
+
+    public void setSelectedGroupKey(String selectedGroupKey) {
+        this.selectedGroupKey = selectedGroupKey;
+    }
+
+    private ArrayList<HashMap> filteredResTable = null;
+
+    public ArrayList<HashMap> getFilteredResTable() {
+        return filteredResTable;
+    }
+
+    public void setFilteredResTable(ArrayList<HashMap> filteredResTable) {
+        this.filteredResTable = filteredResTable;
+    }
+
+    public ArrayList<HashMap> filteredResTable() {
+        ArrayList<HashMap> filtered = resTable.stream()
+                .filter(row -> {
+                    Object key = row.get("group");
+                    String normRow = key == null ? "" : key.toString().trim();
+                    String normSelected = selectedGroupKey == null ? "" : selectedGroupKey.trim();
+                    boolean match = normSelected.equals(normRow);
+                    if (!match) {
+                        System.out.println("🚫 no match: [" + normSelected + "] vs [" + normRow + "]");
+                    }
+                    return match;
+                })
+                .map(row -> (HashMap) row)
+                .collect(Collectors.toCollection(ArrayList::new)); // explicitly collect to ArrayList
+
+        return filtered;
+    }
+
+    private SelectItem[] filterItem;
+
+    public void setFilterItem(SelectItem[] filterItem) {
+        this.filterItem = filterItem;
+    }
+
+    public SelectItem[] getFilterItem() {
+
+        filterItem = new SelectItem[5];
+        filterItem[0] = new SelectItem("pval", "P-value");
+        filterItem[1] = new SelectItem("Biofluid", "Biofluid");
+        filterItem[2] = new SelectItem("Population", "Population");
+        filterItem[3] = new SelectItem("Study", "Study");
+
+        return filterItem;
+    }
+
+    public void updateEntries() {
+        System.out.println("metaboanalyst.controllers.mgwas.MgwasBean.updateEntries()=====================");
+        RConnection RC = sb.getRConnection();
+
+        if (filterOpt.equals("min")) {
+            try {
+                Double.valueOf(filterValue);
+            } catch (NumberFormatException e) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "Please enter a numeric!"));
+                return;
+            }
+        }
+        String[] rowIDs;
+
+        rowIDs = MgwasUtils.updateSNPEntries(RC, filterCol, filterOpt, filterValue, filterActOpt, selectedGroupKey);
+
+        if (rowIDs[0].equals("NA")) {
+            if (filterOpt.equals("min")) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN, "Warining", "No node was removed based on the cutoff"));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No node names match your input."));
+            }
+        } else {
+            setupTable("tableView");
+            filteredResTable = resTable;
+            setupSumTable();
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_INFO, "OK", "A total of " + rowIDs.length
+                            + " SNP have been removed."));
+        }
+    }
+
+    public void resetSNPTable() {
+        setFiltPerformed(false);
+        RConnection RC = sb.getRConnection();
+        int res = MgwasUtils.resetSNPEntries(RC, selectedGroupKey);
+        if (res == 1) {
+            setupTable("tableView");
+            filteredResTable = resTable;
+            setupSumTable();
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", ""));
+        }
+
+    }
 }

@@ -24,169 +24,55 @@
         <h:panelGrid style="padding: 30px 20px 20px 50px; font-size:13px; line-height: 23px; width: 95%">
             <h2>SNP Filtering &amp; Harmonization</h2>
             <p>
-                To properly conduct two-sample MR analysis, the instrumental variables (IV) should be <b>independent</b> (i.e. not correlated with each other), showing <b>strong effect</b> 
-                (i.e. significant p-values), and <b>no horizontal pleiotropy</b> (i.e. affect the outcome only through the metabolite). 
-                The step provides following procedures to facilitate proper MR analysis: 
-                <ul>
-                    <li>
-                        Acquisition of independent IVs by performing linkage disequilibrium (LD) clumping. 
-                    </li>
-                    <li>
-                        In cases where the SNP query is absent in the outcome GWAS, a proxy SNP in LD with the input SNP, utilizing the 1000 
-                        Genomes Project (phase 3). 
-                    </li>
-                    <li>    
-                        Harmonizing exposure and outcome data to make sure that the effects of the SNPs on exposure and 
-                        outcome are associated with the same allele. You should also review the table below to perform 
-                        further harmonization based on other metadata (such as population, study info, etc)
-                    </li>
-                    <li>
-                        To control horizontal pleiotropy, you can choose to exclude SNPs that are associated with multiple metabolites. It is advised to exclude them because causal analysis's assumption is on SNP associated with single SNP.
-                    </li>
-                </ul>
+                The candidate SNPs are shown below. 
+                You can <b>scroll down</b> to apply different filtering and harmonization methods. 
+                or manually exclude SNPs based on other metadata (such as population etc).
             </p>
-
-            <!--
-            Three common options are available. The links below are answers to some related questions. 
-            <ul>
-                <li>
-                    <a href="https://omicsforum.ca/t/what-is-ld-clumping/1041" target="_blank">
-                        What is LD clumping?
-                    </a>
-                </li>
-                <li>
-                    <a href="https://omicsforum.ca/t/what-is-allele-harmonization/1043" target="_blank">
-                        What is allele harmonization?
-                    </a>
-                </li>
-                <li>
-                    <a href="https://omicsforum.ca/t/what-is-palindromic-snp/1042" target="_blank">
-                        What is palindromic SNP?
-                    </a>
-                </li>
-                <li>
-                    <a href="https://omicsforum.ca/t/what-are-the-differences-between-the-mr-analysis-methods/1045" target="_blank">
-                        What are the differences between the MR analysis methods?
-                    </a>
-                </li>
-            </ul>
-            The statistical methods for pre-processing and MR analysis are based on the <b>TwoSampleMR</b> and <b>MRInstruments</b> R packages. 
-            -->
-
             <h:form id="form">
-                <p:selectOneRadio id="ldProxies" columns="1" value="#{mgwasBean.ldProxyOpt}" layout="custom">
-                    <f:selectItem itemLabel="Do not use proxies" itemValue="no_proxy"/>
-                    <f:selectItem itemLabel="Use proxies and allow palindrome SNPs" itemValue="use_proxy"/>
-                    <p:ajax event="change" update="form:ldClump"/>
-                </p:selectOneRadio>  
-
-                <p:panelGrid columns="2" id="navipane" layout="tabular" style="width:100%">  
-                    <h:panelGroup layout="block" style="width:480px">
-                        <b>1. LD Clumping</b><br/>
-                        Acquisition of independent IVs by performing linkage disequilibrium (LD) clumping. 
-                    </h:panelGroup>
-                    <h:panelGroup layout="block" style="width:540px">
-                        <p:selectOneRadio id="ldClump" layout="pageDirection" columns="1" value="#{mgwasBean.ldclumpOpt}">  
-                            <f:selectItem itemLabel="Do not check for LD between SNPs" itemValue="no_ldclump" />
-                            <f:selectItem itemLabel="Use clumping to prune SNPs for LD" itemValue="use_ldclump"/>
-                            <p:ajax event="change" update="form:ldClump"/>
-                        </p:selectOneRadio>
-                    </h:panelGroup>
-
-                    <h:panelGroup layout="block" style="width:480px">
-                        <b>2. LD Proxies</b><br/>
-                        If a SNP query is absent in the outcome GWAS, search for a proxy SNP in LD with the input SNP. 
-                    </h:panelGroup>
-
-                    <h:panelGrid columns="2" styleClass="radio-link-grid">
-                        <p:radioButton for="ldProxies" itemIndex="0"/>
-                        <p:outputLabel value="Do not use proxies"/>
-
-                        <p:radioButton for="ldProxies" itemIndex="1"/>
-                        <h:panelGroup layout="block">
-                            <p:outputLabel value="Use proxies and allow palindrome SNPs"/>
-                            <font style="color:grey; font-size: 11px">(Min LD R<sup>2</sup>: 0.8, and max MAF: 0.3 for palindromic SNPS)</font>
-                        </h:panelGroup>
+                <h:panelGrid columns="2" style="width:100%;">
+                    <h:panelGrid columns="5" class="surface-card shadow-1 p-4 text-800">
+                        <h:outputText escape="false" value="Exposure:"/>
+                        <h:outputText escape="false" style="font-weight: bold" value="#{mgwasLoadBean.myCmpd}"/>
+                        <p:spacer style="width:30px"/>
+                        <h:outputText escape="false" value="Outcome:"/>
+                        <h:outputText escape="false" style="font-weight: bold" value="#{mgwasLoadBean.outcome}"/>
                     </h:panelGrid>
 
-                    <h:panelGroup layout="block" style="width:480px">
-                        <b>3. Allele Harmonization</b> <br/>
-                        To make sure that the effects of the SNPs on exposure and 
-                        outcome are associated with the same allele. 
-                    </h:panelGroup>                   
-                    <h:panelGroup>
-                        <p:selectOneRadio id="harmonize" columns="1" value="#{mgwasBean.harmonizeOpt}" layout="pageDirection">  
-                            <f:selectItem itemLabel="Assume all alleles are presented on the forward strand" itemValue="1" />
-                            <f:selectItem itemLabel="Try to infer the forward strand alleles using allele frequency information" itemValue="2" />
-                            <f:selectItem itemLabel="Correct the strand for non-palindromic SNPs, but drop all palindromic SNPs" itemValue="3" />
-                            <p:ajax event="change" update="form"/>
-                        </p:selectOneRadio>
-                    </h:panelGroup>
+                    <p:outputPanel style="width:100%; text-align: right;">   
+                        <p:commandButton value="Advanced Filter" onclick="PF('filterDialog').show()"
+                                         style="margin-right: 30px"
+                                         icon="pi pi-cog"/>
+                        <p:commandButton value="Reset" update=":form"
+                                         actionListener="#{ mgwasBean.resetSNPTable()}"
+                                         icon="pi pi-undo"/>
 
-                    <h:panelGroup layout="block" style="width:480px">
-                        <b>4. Horizontal Pleiotropy</b>  <br/>
-                        To exclude SNPs that are associated with multiple metabolites
-                    </h:panelGroup>                   
-                    <h:panelGroup>
-                        <p:selectOneRadio id="pleio" columns="1" value="#{mgwasBean.pleiotropyOpt}" layout="pageDirection">  
-                            <f:selectItem itemLabel="Include SNPs associated with multiple metabolites" itemValue="true" />
-                            <f:selectItem itemLabel="Exclude SNPs associated with multiple metabolites" itemValue="false" />
-                            <p:ajax event="change" update="form"/>
-                        </p:selectOneRadio>
-                    </h:panelGroup>
+                    </p:outputPanel>
+                </h:panelGrid>  
 
-                </p:panelGrid>
-                <h:panelGrid style="width:90%; padding: 20px; text-align: center;">
-                    <p:commandButton value="Submit"
-                                     style="width:140px"
-                                     update="form"
-                                     onclick="PF('statusDialog').show();"
-                                     oncomplete="PF('statusDialog').hide()"
-                                     actionListener="#{mgwasBean.performSnpFiltering()}"
-                                     />
-                </h:panelGrid>
-
-                <hr class="style-one"/>
-
-                <p:dataTable id="resultTable1"
-                             class="surface-card shadow-1 p-0 text-800"
+                <p:dataTable id="resultTable"  paginator="true" paginatorPosition="bottom" rows="10" 
                              resizableColumns="true" emptyMessage="No metabolite(s) have been selected!"
                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                             style="font-size: 10px; width: 100%; padding-top:20px" var="rb" value="#{mgwasBean.resTable}" rowKey="#{rb.get('rowID')}">  
+                             style="font-size: 10px; width: 100%; padding-top:10px" var="rb" value="#{mgwasBean.doSNPViewing()}" rowKey="#{rb.get('rowID')}">  
 
-                    <p:headerRow field="col1"
-                                 expandable="true"
-                                 expanded="#{rb.get('expanded')}">
-
-                        <p:column colspan="8">
-                            <!-- Custom content for the header row, can be adjusted as needed -->
-                            <h:outputText escape="false" value="#{rb.get('col1')} (#{mgwasBean.getGroupCount(rb.get('col1'))})"/>
-                        </p:column>
-                    </p:headerRow>
-                    <p:column headerText="#{ mgwasTableBean.getColHeader(1)}" sortBy="#{rb.get('col2')}" 
+                    <p:column headerText="SNP ID" sortBy="#{rb.get('col2')}" 
                               width="6">
                         <h:outputText escape="false" value="#{rb.get('col2')}" />
-                    </p:column>
-                    <p:column headerText="Associated Metabolites" sortBy="#{rb.get('col11')}" 
-                              width="40">
-                        <h:outputText escape="false" value="#{rb.get('col11')}"/>   
                     </p:column>
                     <p:column headerText="Nearest Gene" sortBy="#{rb.get('col12')}" 
                               width="40">
                         <h:outputText escape="false" value="#{rb.get('col12')}"/>   
                     </p:column>
-
-                    <p:column headerText="P-value" sortBy="#{rb.get('pval')}" width="40"                             
-                              >
+                    <p:column rendered="#{mgwasBean.filtPerformed}" headerText="Pval (outcome)" sortBy="" width="40">
+                        <h:outputText escape="false" value="#{rb.get('pvaloutcome')}"/>   
+                    </p:column>
+                    <p:column headerText="Exposure" sortBy="#{rb.get('col11')}" 
+                              width="40">
+                        <h:outputText escape="false" value="#{rb.get('col11')}"/>   
+                    </p:column>
+                    <p:column headerText="Pval (exposure)" sortBy="#{rb.get('pval')}" width="40">
                         <h:outputText escape="false" value="#{rb.get('pval')}"/>   
                     </p:column>
 
-                    <!--
-                    <p:column headerText="P-value Outcome" sortBy="#{rb.get('pvaloutcome')}" rendered="#{ mgwasResBean.tableType eq 'harmonized.dat' }" width="40"                             
-                              >
-                        <h:outputText escape="false" value="#{rb.get('pvaloutcome')}"/>   
-                    </p:column>
-                    -->
                     <p:column headerText="Biofluid" sortBy="#{rb.get('biofluid')}" 
                               width="40">
                         <h:outputText escape="false" value="#{rb.get('biofluid')}"/>   
@@ -201,17 +87,109 @@
                               width="40">
                         <h:outputText escape="false" value="#{rb.get('study')}"/>   
                     </p:column>
-                    <!--
-                    <p:column headerText="#{ mgwasTableBean.getColHeader(9)}" sortBy="#{rb.get('col10')}" 
+                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Steiger direction" sortBy="#{rb.get('dir')}" 
                               width="40">
-                        <h:outputText escape="false" value="#{rb.get('col10')}"/>   
-                        </p:column> -->
+                        <h:outputText escape="false" value="#{rb.get('dir')}"/>   
+                    </p:column>
+
+
+                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Steiger direction" sortBy="#{rb.get('dir')}" 
+                              width="40">
+                        <h:outputText escape="false" value="#{rb.get('dir')}"/>   
+                    </p:column>
+
+
+                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Pval (steiger)" sortBy="#{rb.get('stn')}" 
+                              width="40">
+                        <h:outputText escape="false" value="#{rb.get('pvalsteiger')}"/>   
+                    </p:column>
+
+
                     <p:column headerText="Include" width="5">
                         <p:selectBooleanCheckbox value="#{rb['selected']}">
                             <p:ajax listener="#{mgwasBean.handleSelect(rb)}"/>
                         </p:selectBooleanCheckbox>
                     </p:column>
                 </p:dataTable>
+
+                <p:spacer/>
+                <h3>Available Methods</h3>
+                <p>
+                    To properly conduct two-sample MR analysis, the instrumental variables (IV) should have <b>strong effect</b>, <b>independent</b> (i.e. not correlated with each other), 
+                    and <b>no horizontal pleiotropy</b> (i.e. affect the outcome only through the metabolite). 
+                    The following procedures are provided to facilitate proper MR analysis: 
+                </p>
+
+
+                <p:panelGrid columns="2" id="navipane" layout="tabular" style="width:100%">  
+                    <h:panelGroup layout="block" style="width:480px">
+                        <b>1. LD-based harmonization </b><br/>
+                        Acquisition of independent IVs by performing linkage disequilibrium (LD) clumping.  
+                        If a SNP query is absent in the outcome GWAS, search for a proxy SNP in LD with the input SNP.
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"   style="width:540px">
+                        <p:selectBooleanCheckbox id="useClump"
+                                                 value="#{mgwasBean.performClump}"
+                                                 itemLabel="Use clumping to prune SNPs for LD">
+                            <p:ajax event="change" update="form"/>
+                        </p:selectBooleanCheckbox>
+
+                        <br/>
+                        <p:selectBooleanCheckbox id="useProxy"
+                                                 value="#{mgwasBean.performProxy}"
+                                                 itemLabel="Using proxy SNPs when a direct SNP query is absent">
+                            <p:ajax event="change" update="form"/>
+                        </p:selectBooleanCheckbox>
+
+
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block" style="width:480px">
+                        <b>2. Allele Harmonization</b> <br/>
+                        To make sure that the effects of the SNPs on exposure and 
+                        outcome are associated with the same allele. 
+                    </h:panelGroup>                   
+                    <h:panelGroup>
+                        <p:selectOneRadio id="harmonize" layout="pageDirection" value="#{mgwasBean.harmonizeOpt}">  
+                            <f:selectItem itemLabel="Assume all alleles are presented on the forward strand" itemValue="1" />
+                            <f:selectItem itemLabel="Try to infer the forward strand alleles using allele frequency information" itemValue="2" />
+                            <f:selectItem itemLabel="Correct the strand for non-palindromic SNPs, but drop all palindromic SNPs" itemValue="3" />
+                            <p:ajax event="change" update="form"/>
+                        </p:selectOneRadio>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block" style="width:480px">
+                        <b>3. Remove Pleiotropic SNPs</b>  <br/>
+                        To exclude SNPs that are associated with multiple metabolites
+                    </h:panelGroup>                   
+                    <h:panelGroup>
+                        <p:selectOneRadio id="pleio" layout="pageDirection" value="#{mgwasBean.pleiotropyOpt}">  
+                            <f:selectItem itemLabel="Include SNPs associated with multiple metabolites" itemValue="true" />
+                            <f:selectItem itemLabel="Exclude SNPs associated with multiple metabolites" itemValue="false" />
+                            <p:ajax event="change" update="form"/>
+                        </p:selectOneRadio>
+                    </h:panelGroup>
+
+
+                    <h:panelGroup layout="block" style="width:480px">
+                        <b>4. Steiger filtering (reverse causality check)</b><br/>
+                        To remove SNPs that are more strongly associated with the outcome than the exposure.
+                    </h:panelGroup>
+                    <p:selectBooleanCheckbox id="steiger"
+                                             value="#{mgwasBean.useSteiger}"
+                                             itemLabel="Use steiger filtering"/>
+                </p:panelGrid>
+                <h:panelGrid style="width:90%; padding: 20px; text-align: center;">
+                    <p:commandButton value="Update"
+                                     style="width:140px"
+                                     update=":form"
+                                     onclick="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     actionListener="#{mgwasBean.performSnpFiltering()}"
+                                     />
+
+                </h:panelGrid>
+
 
                 <h:panelGrid columns="2" style="padding: 30px 20px 20px 20px; width:90%; text-align: center;">
                     <p:commandButton value="Previous"
@@ -228,7 +206,6 @@
                                      action="MR method"
                                      /> 
                 </h:panelGrid>
-
             </h:form>
 
             <p:dialog widgetVar="proxyDialog" dynamic="true" modal="true" appendTo="@(body)" header="LD Proxy Settings" 
@@ -261,7 +238,46 @@
                     </h:panelGrid> 
                 </h:form>
             </p:dialog>
+            <p:dialog widgetVar="filterDialog" dynamic="true" modal="false" appendTo="@(body)" 
+                      header="Data Filter Dialog" hideEffect="explode" resizable="true"> 
+                <h:panelGrid style="width:380px; padding: 10px">
+                    <h:form id="filterForm">
+                        <h:panelGrid columns="2" >
+                            <p:outputLabel style="font-weight: bold" value="Target Column: "/>  
+                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mgwasBean.filterCol}">
+                                <f:selectItem itemLabel="Pval (exposure)" itemValue="P-value" />
+                                <f:selectItem itemLabel="Pval (outcome)" itemValue="harmonized.dat" />
+                                <f:selectItem itemLabel="Biofluid" itemValue="biofluid" />
+                                <f:selectItem itemLabel="Population" itemValue="pop" />
+                                <f:selectItem itemLabel="Study" itemValue="study" />
+                            </p:selectOneMenu>  
 
+                            <p:outputLabel style="font-weight: bold" value="Value Criterion:"/> 
+                            <h:panelGrid>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mgwasBean.filterOpt}">
+                                    <f:selectItem itemLabel="(Numerics) At least" itemValue="min" />
+                                    <f:selectItem itemLabel="(Character) Matching" itemValue="match" /> 
+                                    <f:selectItem itemLabel="(Character) Containing" itemValue="contain" />
+                                </p:selectOneMenu> 
+                                <p:inputText style="width:160px" value="#{mgwasBean.filterValue}"/>
+                            </h:panelGrid>
+
+                            <p:outputLabel style="font-weight: bold" value="Action"/> 
+                            <p:selectOneRadio value="#{mgwasBean.filterActOpt}">
+                                <f:selectItem itemLabel="Remove" itemValue="remove" /> 
+                                <f:selectItem itemLabel="Keep" itemValue="keep" />
+                            </p:selectOneRadio> 
+                        </h:panelGrid>
+                        <h:panelGrid style="width:100%; text-align: center">
+                            <p:commandButton value="Submit" icon="pi pi-caret-right"
+                                             update=":form"
+                                             actionListener="#{mgwasBean.updateEntries}"
+                                             oncomplete="PF('filterDialog').hide()"
+                                             />
+                        </h:panelGrid>
+                    </h:form>
+                </h:panelGrid> 
+            </p:dialog>
             <p:dialog widgetVar="keyDialog" dynamic="true" modal="true" appendTo="@(body)" header="OpenGWAS API Token" 
                       hideEffect="explode" resizable="true"> 
                 <h:form>
