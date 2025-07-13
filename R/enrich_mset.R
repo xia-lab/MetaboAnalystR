@@ -450,7 +450,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   
   if(class(ref.vec) == "try-error") {
     libCheck.msg <-c(libCheck.msg, "Data format error - fail to read in the data!");
-    print(libCheck.msg);
+    # print(libCheck.msg);
     AddErrMsg(libCheck.msg);
     return(0);
   }
@@ -469,7 +469,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
   # test percentage
   if(unmatched.perc > 0.5){
     libCheck.msg <-c(libCheck.msg, "Over half of your uploaded IDs cannot be matched to our database! Please make sure they are KEGG IDs!");
-    print(libCheck.msg);
+    # print(libCheck.msg);
     AddErrMsg(libCheck.msg);
     return(0);
   }
@@ -524,7 +524,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
   # test percentage
   if(unmatched.perc > 0.5){
     libCheck.msg <-c(libCheck.msg, "Over half of your uploaded IDs cannot be matched to our database! Please make sure they are valid HMDB names!");
-    print(libCheck.msg);
+    # print(libCheck.msg);
     AddErrMsg(libCheck.msg);
     return(0);
   }

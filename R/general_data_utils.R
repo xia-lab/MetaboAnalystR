@@ -971,13 +971,21 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
             legend.position = "none"
         );
     }
+
+    if (meta == "NA") {
+      xlab <- colnames(mSetObj$dataSet$meta.info)[1]
+    } else {
+      xlab <- meta
+    }
     
     ## Arrange and save both panels
     gridExtra::grid.arrange(
       p.orig, p.norm,
       ncol = 2,
       top  = grid::textGrob(paste(cmpdNm),
-                            gp = grid::gpar(fontsize = 14, fontface = "bold"))
+                            gp = grid::gpar(fontsize = 14, fontface = "bold")),
+  bottom = grid::textGrob(xlab, gp = grid::gpar(fontsize = 13))
+
     )
     
     dev.off()
@@ -1563,11 +1571,6 @@ Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="ro
     return(.set.mSet(mSetObj));
 }
 
-PrintCurrentCls <- function(mSetObj=NA){
-   mSetObj <- .get.mSet(mSet);
-print("Current class info ....");
-print(mSetObj$dataSet$cls);
-}
 
 SetBlankQcBool <- function(mSetObj=NA, containsQC=F, containsBlank=F){
   

@@ -458,7 +458,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
 #' @noRd
 #' @author Guangyan Zhou, Zhiqiang Pang
 SetRawFileNames <- function(filenms){
-  print(filenms)
+  # print(filenms)
   rawfilenms.vec <<- filenms
   return(1);
 }
@@ -473,7 +473,7 @@ ReadRawMeta<-function(fileName){
   }else if(grepl(".csv", fileName, fixed=T)){
     tbl = read.csv(fileName,header=TRUE, stringsAsFactors = F);
   }else{
-    print("wrongfiletype")
+    print("Incorrect file type!")
   }
   
   rawFileNms <-as.vector(tbl[,1])
@@ -1458,7 +1458,7 @@ getExposomeRawData <- function(homedir) {
     print("Downloading done! ")
     return(1)
   } else {
-    print("Downloading failed, please contact Zhiqiang Pang! ")
+    print("Downloading failed!")
     return(0)
   }
 }

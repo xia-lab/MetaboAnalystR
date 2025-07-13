@@ -273,32 +273,69 @@ SanityCheckData <- function(mSetObj=NA){
   qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
   qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
-  
-  min.n.qc    <- 3   # lowest acceptable for %RSD
-  min.n.blank <- 2   # one before + one after
-  
-  n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
-  n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
-  
-  
-  if (isFALSE(mSetObj$dataSet$containsQC) && n.qc > 0) {
+  ## ------------------------------------------------------------------
+##  QC / blank-sample consistency checks with minimum thresholds
+## ------------------------------------------------------------------
+
+min.n.qc    <- 3   # lowest acceptable for %RSD filtering
+min.n.blank <- 2   # need one before + one after
+
+# Current sample counts
+n.qc    <- sum(grepl("^\\s*qc\\s*$",    mSetObj$dataSet$cls, ignore.case = TRUE))
+n.blank <- sum(grepl("^\\s*blank\\s*$", mSetObj$dataSet$cls, ignore.case = TRUE))
+
+## ---------------------  QC samples  --------------------------------
+if (n.qc == 0) {
+  mSetObj$dataSet$containsQC <- FALSE
+
+} else if (n.qc < min.n.qc) {
+  # Too few QC samples → skip QC-based filtering
+  msg <- c(msg,
+           sprintf(
+             "<font color=\"orange\">Only %d QC sample%s found (≥ %d required). ",
+             n.qc, ifelse(n.qc == 1, "", "s"), min.n.qc),
+           "QC-based %RSD filtering will be skipped.</font>"
+           )
+  mSetObj$dataSet$containsQC <- FALSE
+
+} else {                        # n.qc ≥ min.n.qc
+  if (isFALSE(mSetObj$dataSet$containsQC)) {
     msg <- c(msg,
-             paste0(
-               "<font color=\"orange\">",
-               n.qc, " QC sample", ifelse(n.qc == 1, "", "s"),
-               " detected even though the ‘Incl. QC samples’ option was left unticked. ",
-               "They will be treated as QC samples automatically.</font>"
-             ))
+             sprintf(
+               "<font color=\"orange\">%d QC sample%s detected even though the ‘Incl. QC samples’ option was left unticked. ",
+               n.qc, ifelse(n.qc == 1, "", "s")),
+             "They will be treated as QC samples automatically.</font>"
+             )
   }
-  
-  if (isFALSE(mSetObj$dataSet$containsBlank) && n.blank > 0) {
+  mSetObj$dataSet$containsQC <- TRUE
+}
+
+## ---------------------  Blank injections  -------------------------
+if (n.blank == 0) {
+  mSetObj$dataSet$containsBlank <- FALSE
+
+} else if (n.blank < min.n.blank) {
+  msg <- c(msg,
+           sprintf(
+             "<font color=\"orange\">Only %d blank injection%s found (≥ %d required). ",
+             n.blank, ifelse(n.blank == 1, "", "s"), min.n.blank),
+           "Blank-based background correction will be skipped.</font>"
+           )
+  mSetObj$dataSet$containsBlank <- FALSE
+
+} else {                        # n.blank ≥ min.n.blank
+  if (isFALSE(mSetObj$dataSet$containsBlank)) {
     msg <- c(msg,
-             paste0(
-               "<font color=\"orange\">",
-               n.blank, " blank injection", ifelse(n.blank == 1, "", "s"),
-               " detected but the ‘Incl. Blank samples’ option was not selected.</font>"
-             ))
+             sprintf(
+               "<font color=\"orange\">%d blank injection%s detected but the ‘Incl. Blank samples’ option was not selected. ",
+               n.blank, ifelse(n.blank == 1, "", "s")),
+             "They will be treated as blanks automatically.</font>"
+             )
   }
+  mSetObj$dataSet$containsBlank <- TRUE
+}
+
+  
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
@@ -321,6 +358,7 @@ SanityCheckData <- function(mSetObj=NA){
       }
       mSetObj$dataSet$missTest <- kw.p;
       mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+      miss.msg <- c(miss.msg, mSetObj$msgSet$miss.msg);
       msg<-c(msg,  miss.msg);
     }
     #msg<-c(msg,
@@ -407,8 +445,8 @@ RemoveMissingPercent <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
 
   ## 1 · Choose the working matrix --------------------------------------
-  if (!.on.public.web && !is.null(mSetObj$dataSet$norm)) {
-    int.mat   <- mSetObj$dataSet$norm          # already-normalised
+  if (!.on.public.web && !is.null(mSetObj$dataSet$proc)) {
+    int.mat   <- mSetObj$dataSet$proc          # already-normalised
     writeBack <- TRUE
   } else {
     int.mat   <- qs::qread("preproc.orig.qs")  # raw pre-processing copy
@@ -447,11 +485,9 @@ RemoveMissingPercent <- function(mSetObj = NA,
   ## 3 · Save filtered matrix back --------------------------------------
   rm.cnt <- sum(!good.inx)            # variables removed
 
-  if (writeBack) {
-    mSetObj$dataSet$norm <- as.data.frame(int.mat[, good.inx, drop = FALSE])
-  } else {
+    mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
     qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
-  }
+  
 
   ## 4 · Log a concise message ------------------------------------------
   rule.txt <- ifelse(grpWise, "(group-wise rule)", "(overall rule)")
@@ -459,6 +495,9 @@ RemoveMissingPercent <- function(mSetObj = NA,
                       rm.cnt, 100 * percent, rule.txt)
   mSetObj$msgSet$miss.filter.msg <- c(msg)
   
+   #print("dim(mSetObj$dataSet$proc)")
+   #print(mSetObj$dataSet$proc);
+
   return(.set.mSet(mSetObj))
 }
 
@@ -549,16 +588,17 @@ CheckContainsBlank <- function(mSetObj=NA){
 #'@export
 
 FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, blank.subtraction=F, blank.threshold=10){
-
   mSetObj <- .get.mSet(mSetObj);
   
   #Reset to default
   mSetObj$dataSet$filt <- NULL;
-  
+
   if(is.null(mSetObj$dataSet$proc)){
     int.mat <- as.matrix(qs::qread("data_proc.qs"));
   }else{
     int.mat <- as.matrix(mSetObj$dataSet$proc);
+    #print("dim(mSetObj$dataSet$proc)")
+    #print(mSetObj$dataSet$proc);
   }
   cls <- mSetObj$dataSet$proc.cls;
   
@@ -566,39 +606,71 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   mSetObj$dataSet$filt.cls <- cls;
   
   msg <- NULL;
-  if(qc.filter == "T"){
-    rsd <- rsd/100;
-    # need to check if QC exists
-    qc.hits <- tolower(as.character(cls)) %in% "qc";
-    if(sum(qc.hits) > 1){ # require at least 2 QC for RSD
-      qc.mat <- int.mat[qc.hits,];
-      sds <- apply(qc.mat, 2, sd, na.rm=T);
-      mns <- apply(qc.mat, 2, mean, na.rm=T);
-      rsd.vals <- abs(sds/mns);  
-      gd.inx <- rsd.vals < rsd;
-
-      # save a copy for user 
-      fast.write.csv(cbind(RSD=rsd, t(int.mat)), file="data_prefilter_qc_rsd.csv");
-
-      int.mat <- int.mat[,gd.inx];
-      if(mSetObj$analSet$type %in% c("mummichog")){
-        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are excluded from downstream functional analysis.");
-      }else{
-        msg <- paste("Removed <b>", sum(!gd.inx), "</b> features based on QC RSD values. QC samples are still kept. You can remove them later.");
+  if (qc.filter == "T") {
+    rsd <- rsd / 100
+    
+    ## ── 1 · determine QC samples by class label or by name prefix ----
+    qc.cls.hits <- tolower(as.character(cls)) == "qc"
+    if (any(qc.cls.hits)) {
+      qc.hits <- qc.cls.hits
+    } else {
+      qc.hits <- grepl("^qc", rownames(int.mat), ignore.case = TRUE)
+    }
+    
+    ## ── 2 · require at least two QC samples ----------------------------
+    if (sum(qc.hits) > 1) {
+      qc.mat   <- int.mat[qc.hits, , drop = FALSE]
+      sds      <- apply(qc.mat,   2, sd,   na.rm = TRUE)
+      mns      <- apply(qc.mat,   2, mean, na.rm = TRUE)
+      rsd.vals <- abs(sds / mns)
+    keep <- rsd.vals < rsd;     
+    keep[is.na(keep)] <- FALSE    
+    keep[!is.finite(rsd.vals)] <- FALSE;
+      
+      ## save a copy for the user
+      fast.write.csv(
+        cbind(RSD = rsd, t(int.mat)),
+        file = "data_prefilter_qc_rsd.csv"
+      )
+      
+      ## prune features
+      int.mat <- int.mat[, keep, drop = FALSE]
+      
+      ## set the user message
+      if (mSetObj$analSet$type %in% "mummichog") {
+        msg <- paste0(
+          "Removed <b>", sum(!keep, na.rm=T),
+          "</b> features based on QC RSD values. ",
+          "QC samples are excluded from downstream functional analysis."
+        )
+      } else {
+        msg <- paste0(
+          "Removed <b>", sum(!keep,na.rm=T),
+          "</b> features based on QC RSD values. ",
+          "QC samples are still kept. You can remove them later."
+        )
       }
-    }else if(sum(qc.hits) > 0){
-      AddErrMsg("RSD requires at least 2 QC samples, and only non-QC based filtering can be applied.");
-      return(0);
-    }else{
-      AddErrMsg("No QC Samples (with class label: QC) found.  Please use non-QC based filtering.");
-      return(0);
+      
+      ## ── 3 · too few QC → fall back or error -----------------------------
+    } else if (sum(qc.hits) > 0) {
+      AddErrMsg(
+        "RSD filtering requires at least 2 QC samples; only non-QC filtering can be applied."
+      )
+      return(0)
+      
+    } else {
+      AddErrMsg(
+        "No QC samples found (by class label or name prefix ‘QC’). ",
+        "Please use non-QC based filtering."
+      )
+      return(0)
     }
   }
-
+  
   if(blank.subtraction){
     #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
     if("BLANK" %in% cls){
-        idx2keep <- blankfeatureSubtraction(cls, blank.threshold);
+        idx2keep <- blankfeatureFiltering(cls, blank.threshold);
         idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
         idx2keep_all <- idx2keep & idx2keep_exist
         ft_nms2keep <- names(which(idx2keep_all))
@@ -611,44 +683,53 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
         mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
     }
   }
-
+  
   # no explicit user choice, will apply default empirical filtering based on variance
   if(is.null(var.cutoff)){ 
     var.cutoff <- .computeEmpiricalFilterCutoff(ncol(int.mat), mSetObj$analSet$type);
   }
-
+  
   # called regardless user option to enforce feature number cap
   #if(var.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
-     int.mat <- filt.res$data;
-     msg <- c(msg, filt.res$msg);
+  filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
+  int.mat <- filt.res$data;
+  msg <- c(msg, filt.res$msg);
   #}
-
+  
   if(int.cutoff > 0){ 
-     filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
-     int.mat <- filt.res$data;
-     msg <- c(msg, filt.res$msg);
+    filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
+    int.mat <- filt.res$data;
+    msg <- c(msg, filt.res$msg);
   }
-
+  
   mSetObj$dataSet$filt <- int.mat;
-
+  
   if(is.null(msg)){
-     msg <- "No data filtering was performed."
+    msg <- "No data filtering was performed."
   }
-
   AddMsg(msg);
   mSetObj$msgSet$filter.msg <- msg;
-
+  total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
+  mSetObj$msgSet$filter.total.msg <- total.msg;
+  
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      # make sure metadata are in sync with data
-      my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
-      mSetObj$dataSet$meta.info <- my.sync$metadata;
+    # make sure metadata are in sync with data
+    my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
+    mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
- 
+  
+  qs::qsave(int.mat, "data.filt.qs");
   return(.set.mSet(mSetObj));
 }
 
-blankfeatureSubtraction <- function(cls, threshold){
+GetFilterTotalMsg <-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$msgSet$filter.total.msg);
+}
+
+
+
+blankfeatureFiltering <- function(cls, threshold){
   # need to evaluate raw data table without replace min
   idx_blank <- which(as.character(cls)=="BLANK")
   preproc <- qs::qread("preproc.qs");
@@ -944,13 +1025,54 @@ GetMetaDataCol <- function(mSetObj=NA, colnm){
     return(cls[cls!="NA"]);
 }
 
-GetMissingTestMsg <- function(mSetObj=NA){
+GetMissingTestMsg <- function(mSetObj=NA, type){
     mSetObj <- .get.mSet(mSetObj);
-    msg <- mSetObj$msgSet$miss.msg;
+    msg <- "";
+    cls <-mSetObj$dataSet$cls
+    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
+        if(type == "filt"){
+          int.mat <- qs::qread("data.filt.qs");
+        }else{
+          int.mat <- qs::qread("preproc.orig.qs");
+        }
+
+      miss.msg <- "";
+      kw.p <- .test.missing.sig(int.mat, cls);
+      
+      mSetObj$dataSet$missTest <- kw.p;
+      mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
+      msg <- mSetObj$msgSet$miss.msg
+    }
     if(is.null(msg)){
         return("NA");
     }
     return(msg);
+}
+
+GetMissNumMsg <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  ## read filtered intensity matrix
+  if(!file.exists("data.filt.qs")){
+    return("NA");
+  }
+  int.mat <- qs::qread("data.filt.qs")
+
+  ## count NAs
+  totalCount <- length(int.mat)           # nrow * ncol
+  naCount    <- sum(is.na(int.mat))
+
+  if (naCount == 0) {
+    msg <- "After filtering, no missing values were detected."   
+  } else {
+    naPercent <- round(100 * naCount / totalCount, 1)
+    msg <- paste0(
+      "After filtering step, there are ",
+      naCount, " missing values (", naPercent, "% of the data)."
+    )
+  }
+
+  return(msg)
 }
 
 #' Plot Non-Missing Value Lollipop (inch dimensions)
@@ -1017,23 +1139,22 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   require("ggplot2")
   require("qs")
-  require("Cairo")
+  require("Cairo");
+  library(patchwork);
 
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else if (!is.null(mSetObj$dataSet$orig)) {
-    mSetObj$dataSet$orig
-  } else {
-    AddErrMsg("No processed data found for missing-value plot!")
-    return(0)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+    int.mat <- qs::qread("preproc.orig.qs");
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  pct.missing <- 100 * rowMeans(is.na(int.mat))
+  pct.missing <- 100 * rowMeans(is.na(int.mat));
+  smpl.avg <- rowMeans(int.mat, na.rm = TRUE);
 
   ## -------- Resolve group vector --------------------------------------
   has.meta <- !is.null(mSetObj$dataSet$meta.info)
@@ -1069,6 +1190,7 @@ PlotMissingDistr <- function(mSetObj = NA,
 
   ## -------- Data frame for plotting -----------------------------------
   df <- data.frame(Group = grp.vec, Percent = pct.missing)
+  df2 <- data.frame(Group = grp.vec, Average = smpl.avg);
 
   ## -------- Device size -----------------------------------------------
   height <- 3 + grp.num * 0.25           # simple heuristic
@@ -1088,18 +1210,31 @@ PlotMissingDistr <- function(mSetObj = NA,
                units  = "in",
                type   = format)
 
-  p <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
+  p1 <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
        geom_boxplot(outlier.shape = 21, outlier.size = 2) +
        coord_flip() +
-       labs(x = NULL, y = "Missing Percentage", fill = groupCol) +
+       labs(x = NULL, y = NULL, title = "Missing Percentage", fill = groupCol) +
        ylim(0, 100) +
-       theme_minimal(base_size = 14) +
-       theme(panel.grid.major.y = element_blank(),
-             plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
        fill_scale
 
-  print(p)
-  dev.off()
+  p2 <- ggplot(df2, aes(x = Group, y = Average, fill = Group)) +
+       geom_boxplot(outlier.shape = 21, outlier.size = 2) +
+       coord_flip() +
+       labs(x = NULL, y = NULL, title = "Average Abundance", fill = groupCol) +
+       #theme_minimal(base_size = 13) +
+       #theme(panel.grid.major.y = element_blank(),
+       #      plot.margin = margin(5.5, 5.5, 5.5, 5.5, "pt")) +
+       fill_scale
+
+    combined_plot_stacked <- p1 / p2;
+    final_combined_plot <- combined_plot_stacked +
+    plot_annotation() & theme(plot.title = element_text(hjust = 0.5)) # Center the overall title
+
+    print(final_combined_plot)
+    dev.off()
 
   ## -------- Book-keeping ----------------------------------------------
   mSetObj$imgSet$miss.box <- img.full
@@ -1142,12 +1277,11 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   require("Cairo")
   
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.orig.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for missing value heatmap!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1225,12 +1359,11 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", fileName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+  int.mat <- qs::qread("preproc.orig.qs")
 
-  int.mat <- if (file.exists("preproc.qs")) {
-    qs::qread("preproc.orig.qs")
-  } else {
-    AddErrMsg("No processed data found for JSON heatmap export!")
-    return(0)
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1285,18 +1418,18 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 #' @param thr     RSD threshold (%) for the “pass-rate” statistic
 #' @return        Character string summarising QC precision
 
-  CheckQCRSD <- function(mSetObj, thr = 30) {
+CheckQCRSD <- function(mSetObj, thr = 30) {
     
-meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
+    meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
            ncol(mSetObj$dataSet$meta.info) >= 1          &&       
            length(mSetObj$dataSet$meta.info[, 1]) > 0    &&       
            !all(is.na(mSetObj$dataSet$meta.info[, 1]))            
 
-cls.ok  <- !is.null(mSetObj$dataSet$cls) &&
+    cls.ok  <- !is.null(mSetObj$dataSet$cls) &&
            length(mSetObj$dataSet$cls)    > 0 &&
            !all(is.na(mSetObj$dataSet$cls))
 
-cls <- if (meta.ok) {
+    cls <- if (meta.ok) {
           mSetObj$dataSet$meta.info[, 1]
        } else if (cls.ok) {
           mSetObj$dataSet$cls
@@ -1305,7 +1438,7 @@ cls <- if (meta.ok) {
        }
     
     cls    <- tolower(replace(as.character(cls), is.na(cls), "qc"))
-    print(cls);
+    #print(cls);
     qc.inx <- cls == "qc"
     n.qc   <- sum(qc.inx)
     
@@ -1389,16 +1522,13 @@ PlotRSDViolin <- function(mSetObj = NA,
   qc.inx <- cls == "qc"
   hasQC  <- any(qc.inx)
 
-
   ## ── RSD vectors ---------------------------------------------------------
   rsd_smp <- apply(raw[ , !qc.inx, drop = FALSE], 1, rsd_fun)
-rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
-
-
+  rsd_smp <- rm_outliers(rsd_smp[is.finite(rsd_smp)])
 
   if (hasQC) {
-rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
-rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
+    rsd_qc  <- apply(raw[ ,  qc.inx, drop = FALSE], 1, rsd_fun)
+    rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
     plt_df  <- data.frame(
       Class = factor(c(rep("Sample", length(rsd_smp)),
                        rep("QC",     length(rsd_qc))),
@@ -1421,7 +1551,7 @@ rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
                                          levels = "Sample"),
                           RSD   = rsd_smp)
     palette <- c(Sample = "#f8766d")
-    mSetObj$analSet$rsd.stats <- NULL        # nothing QC-specific to save
+    mSetObj$analSet$rsd.stats <- NULL
   }
 
   ## ── graphics bookkeeping ------------------------------------------------
@@ -1435,15 +1565,35 @@ rsd_qc  <- rm_outliers(rsd_qc[is.finite(rsd_qc)])
                width = w, height = h, type = format, bg = "white")
 
   library(ggplot2)
-  p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
-    geom_violin(trim = FALSE, colour = "black", size = 0.4) +
-    geom_boxplot(width = .1, outlier.shape = NA, fill = "white") +
-    geom_hline(yintercept = thr, linetype = "dashed",
-               colour = "grey40", linewidth = 0.4) +   # reference line only
-    scale_fill_manual(values = palette, guide = "none") +
-    labs(y = "RSD (%)", x = NULL) +
-    theme_minimal(base_size = 12)
-  print(p);
+## ── sample counts for axis labels ---------------------------------------
+n.qc     <- sum(qc.inx)          # number of QC columns
+n.sample <- sum(!qc.inx)         # number of non-QC (biological) columns
+
+if (hasQC) {
+  x.labs <- c(Sample = sprintf("Sample (n = %d)", n.sample),
+              QC     = sprintf("QC (n = %d)",     n.qc))
+} else {
+  x.labs <- c(Sample = sprintf("Sample (n = %d)", n.sample))
+}
+
+p <- ggplot(plt_df, aes(Class, RSD, fill = Class)) +
+  geom_violin(trim = FALSE, colour = "grey30", size = 0.4) +
+  geom_boxplot(width = 0.10, outlier.shape = NA, fill = "white", linewidth = 0.25) +
+  geom_hline(yintercept = thr, linetype = "dashed",
+             colour = "grey45", linewidth = 0.35) +
+  scale_fill_manual(values = palette, guide = "none") +
+  scale_x_discrete(labels = x.labs) +                          # ← NEW
+  scale_y_continuous(breaks = pretty(plt_df$RSD, n = 8),
+                     limits = c(0, NA)) +
+  labs(y = "RSD (%)", x = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x  = element_text(size = 11),
+    axis.text.y  = element_text(size = 11),
+    panel.grid.y = element_blank()
+  )
+
+  print(p)
   dev.off()
   invisible(.set.mSet(mSetObj))
 }
@@ -1462,3 +1612,30 @@ rm_outliers <- function(vec) {
     if (is.na(mu) || mu == 0) return(NA_real_)
     100 * stats::sd(x, na.rm = TRUE) / abs(mu)
   }
+## ---------------------------------------------------------------
+##  1 = QC samples present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsQC <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsQC)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsQC)))
+}
+
+## ---------------------------------------------------------------
+##  1 = blank injections present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsBlank <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsBlank)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
+}

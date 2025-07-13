@@ -168,6 +168,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       norm.data[data<0] <- - norm.data[data<0];
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
+    }else if(transNorm=='VsnNorm'){
+      data <- t(limma::normalizeVSN(t(data)));
+      transnm<-"Variance Stabilizing Normalization";
     }else{
       transnm<-"N/A";
     }
@@ -197,6 +200,16 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # need to do some sanity check, for log there may be Inf values introduced
   data <- CleanData(data, T, F);
   
+  ## drop features whose column-names are NA or literal "NA" ─────
+  badCol <- is.na(colnames(data)) | tolower(colnames(data)) == "na"
+  if (any(badCol)) {
+    data <- data[ , !badCol, drop = FALSE]
+    colNames <- colnames(data)           # refresh vector
+    msg      <- paste0("Removed ", sum(badCol),
+                       " feature(s) whose name is NA after normalization.")
+    mSetObj$msgSet$norm.nafeat.msg <- msg
+  }
+
   if(ratio){
     mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F);
 
@@ -530,94 +543,98 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
-UpdateData <- function(mSetObj=NA, order.group = FALSE){
-  mSetObj <- .get.mSet(mSetObj);
+UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 
-  #Reset to default
-  mSetObj$dataSet$edit <- NULL; 
+  mSetObj <- .get.mSet(mSetObj)              # fetch current object
+  mSetObj$dataSet$edit <- NULL               # reset edit slot
 
-  if(is.null(mSetObj$dataSet$filt)){
-    data <- qs::qread("data_proc.qs");
-    cls <- mSetObj$dataSet$proc.cls;
-  }else{
-    data <- mSetObj$dataSet$filt;
-    cls <- mSetObj$dataSet$filt.cls;
+  ## ------------------------------------------------------------------
+  ## 0)  choose the working abundance table + class vector
+  ## ------------------------------------------------------------------
+  if (is.null(mSetObj$dataSet$filt)) {
+    data <- qs::qread("data_proc.qs")
+    cls  <- mSetObj$dataSet$proc.cls
+  } else {
+    data <- mSetObj$dataSet$filt
+    cls  <- mSetObj$dataSet$filt.cls
   }
 
-  # update feature 
-  feat.hit.inx <- colnames(data) %in% feature.nm.vec;
-  data <- CleanDataMatrix(data[,!feat.hit.inx,drop=FALSE]);
-  #AddMsg("Successfully updated the feature items!");
+  print(sum(is.na(colnames(data))))
+  print("missing rownames");
 
-  # update samples
-  smpl.hit.inx <- rownames(data) %in% smpl.nm.vec;
-  data <- CleanDataMatrix(data[!smpl.hit.inx,,drop=FALSE]);
-  cls <- as.factor(as.character(cls[!smpl.hit.inx]));
+  feat.hit.inx <- colnames(data) %in% feature.nm.vec        # feature.nm.vec: to delete
+  data <- CleanDataMatrix(data[, !feat.hit.inx, drop = FALSE])
 
-  #AddMsg("Successfully updated the sample items!");
-  
-  # update groups (note these are to retain, not exclude)
-  if(length(grp.nm.vec) ==1){
-    if(grp.nm.vec != ""){
-      grp.hit.inx <- cls %in% grp.nm.vec;
-      data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
-      cls <- droplevels(factor(cls[grp.hit.inx])); 
+
+  smpl.hit.inx <- rownames(data) %in% smpl.nm.vec           # smpl.nm.vec: to delete
+  data <- CleanDataMatrix(data[!smpl.hit.inx, , drop = FALSE])
+  cls  <- as.factor(as.character(cls[!smpl.hit.inx]))
+
+  if (length(grp.nm.vec) == 1) {
+    if (grp.nm.vec != "") {
+      grp.hit.inx <- cls %in% grp.nm.vec
+      data <- CleanDataMatrix(data[grp.hit.inx, , drop = FALSE])
+      cls  <- droplevels(factor(cls[grp.hit.inx]))
     }
   } else {
-    grp.hit.inx <- cls %in% grp.nm.vec;
-    data <- CleanDataMatrix(data[grp.hit.inx,,drop=FALSE]);
-    cls <- droplevels(factor(cls[grp.hit.inx])); 
+    grp.hit.inx <- cls %in% grp.nm.vec
+    data <- CleanDataMatrix(data[grp.hit.inx, , drop = FALSE])
+    cls  <- droplevels(factor(cls[grp.hit.inx]))
   }
 
-  # we need to allow users to add order information
-  # if not order, use alphabetic order. See this post
-  # https://omicsforum.ca/t/pca-miscolored-and-groups-mislabed/2217
-  if(order.group){  
-    cls <- ordered(cls, levels = grp.nm.vec);
+  if (order.group) {
+    cls <- ordered(cls, levels = grp.nm.vec)
   }
 
-## --------- clear QC/BLANK placeholder notice if none remain --------------
-qc.left    <- any(grepl("^\\s*QC",    rownames(data), ignore.case = TRUE))
-blank.left <- any(grepl("^\\s*BLANK", rownames(data), ignore.case = TRUE))
+  qc.left    <- any(grepl("^\\s*QC",    rownames(data), ignore.case = TRUE))
+  blank.left <- any(grepl("^\\s*BLANK", rownames(data), ignore.case = TRUE))
+  if (!(qc.left || blank.left)) {
+    mSetObj$msgSet$qc.replace.msg <- NULL
+  }
 
-if (!(qc.left || blank.left)) {
-  mSetObj$msgSet$qc.replace.msg <- NULL    # no placeholders left
+
+  keep.smp  <- rownames(data)
+  keep.feat <- colnames(data)
+
+  if (file.exists("preproc.qs")) {
+    preproc <- qs::qread("preproc.qs")
+    preproc <- preproc[intersect(keep.smp,  rownames(preproc)),
+                       intersect(keep.feat, colnames(preproc)),
+                       drop = FALSE]
+    qs::qsave(preproc, "preproc.qs")
+  }
+
+  if (!is.null(mSetObj$dataSet$meta.info)) {
+    meta <- mSetObj$dataSet$meta.info
+
+    ## keep only surviving rows, preserve order exactly as in data
+    meta <- meta[intersect(rownames(meta), keep.smp), , drop = FALSE]
+    meta <- meta[match(keep.smp, rownames(meta)), , drop = FALSE]
+
+    ## re-drop unused factor levels
+    meta[] <- lapply(meta, function(x)
+      if (is.factor(x)) droplevels(x[ , drop = TRUE]) else x)
+
+    mSetObj$dataSet$meta.info <- meta
+    #print("dim(meta)");
+    #print(dim(meta));
+  }
+
+  mSetObj$dataSet$edit     <- data
+  mSetObj$dataSet$edit.cls <- cls
+  AddMsg("Successfully updated the data & metadata!")
+
+  # save(mSetObj, file = "mSetObj__UpdateData.rda")
+
+  if (.on.public.web) {
+    .set.mSet(mSetObj)
+    return(length(levels(mSetObj$dataSet$edit.cls)))
+  } else {
+    return(.set.mSet(mSetObj))
+  }
 }
 
-keep.smp  <- rownames(data)     # samples left after all edits
-keep.feat <- colnames(data)     # features left after all edits
 
-if (file.exists("preproc.qs")) {
-  preproc <- qs::qread("preproc.qs")
-
-  # safety check: make sure dimensions are compatible
-  common.smp  <- intersect(keep.smp,  rownames(preproc))
-  common.feat <- intersect(keep.feat, colnames(preproc))
-
-  preproc <- preproc[common.smp, common.feat, drop = FALSE]
-
-  qs::qsave(preproc, "preproc.qs")           # overwrite on disk
-}
-
-  AddMsg("Successfully updated the data!");
-
-  # now set to 
-  mSetObj$dataSet$edit <- data;
-  mSetObj$dataSet$edit.cls <- cls; 
-
-  # make sure metadata are in sync with data
-  if(substring(mSetObj$dataSet$format,4,5)=="mf"){
-      my.sync <- .sync.data.metadata(data, mSetObj$dataSet$meta.info);
-      mSetObj$dataSet$meta.info <- my.sync$metadata;
-  }
-save(mSetObj, file = "mSetObj__UpdateData.rda")
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(length(levels(mSetObj$dataSet$edit.cls)));
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-}
 
 # should always init (new or overwrite previous prenorm object)
 # note in right order that dataSet$edit will always performed using dataSet$filt (if it exists)

@@ -424,37 +424,29 @@ iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
   pca3d$loadings$cols <- colset;
 
 if (pca3d$score$metadata_type[metaCol] != "disc") {
-  vals <- metadata[, metaCol]
+ ## continuous metadata  →  rank-based gradient ---------------------------
+vals <- metadata[, metaCol]
 
-  # Avoid log(0) or negative values
-  if (any(vals <= 0, na.rm = TRUE)) {
-    offset <- abs(min(vals, na.rm = TRUE)) + 1e-6
-    vals <- vals + offset
-  }
+# Handle missing values up front
+na.inx <- is.na(vals)
 
-  # Apply log10 transformation
-  vals.log <- log10(vals)
+# Rank the values (1 = smallest, N = largest); ties get the average rank
+rnk <- rank(vals, ties.method = "average", na.last = "keep")
 
-  # Trim outliers using 2nd to 98th percentiles
-  q_low <- quantile(vals.log, 0.02, na.rm = TRUE)
-  q_high <- quantile(vals.log, 0.98, na.rm = TRUE)
+# Convert to 0–1 scale; NA stays NA
+vals.norm <- (rnk - 1) / (max(rnk, na.rm = TRUE) - 1)
 
-  # Clamp extreme values
-  vals.trimmed <- pmin(pmax(vals.log, q_low), q_high)
+# Optional: centralise NA as mid-grey instead of dropping them
+vals.norm[na.inx] <- 0.5
 
-  # Normalize within the trimmed range
-  vals.norm <- (vals.trimmed - q_low) / (q_high - q_low)
-  vals.norm[is.na(vals.norm)] <- 0.5  # fallback for missing values
+# Map to a perceptually uniform gradient (viridis works well)
+col.vec <- viridis::viridis(100)[floor(vals.norm * 99) + 1]
 
-  # Map to color gradient
-  col.fun <- colorRampPalette(c("blue", "red"))
-  col.vec <- col.fun(100)[floor(vals.norm * 99) + 1]
-
-  # Set for use in JSON export
-  pca3d$score$colors <- my.col2rgb(col.vec)
-  pca3d$score$color_legend_vals <- vals.log
-  pca3d$score$color_legend_trimmed <- c(q_low, q_high)
-  pca3d$score$color_legend_type <- "gradient"
+# Store for JSON export
+pca3d$score$colors              <- my.col2rgb(col.vec)
+pca3d$score$color_legend_vals   <- vals
+pca3d$score$color_legend_type   <- "gradient"
+pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
 } else {
   cols <- unique(GetColorSchema(pca3d$score$facA)); 
   pca3d$score$colors <- my.col2rgb(cols);
@@ -564,128 +556,220 @@ GetAov2DnIDs <- function(mSetObj=NA){
   }
 }
 
-PlotPCAPairSummaryMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num, meta, metaShape){
+PlotPCAPairSummaryMeta <- function(mSetObj = NA,
+                                   imgName,
+                                   format = "png",
+                                   dpi    = default.dpi,
+                                   width  = NA,
+                                   pc.num,
+                                   meta,
+                                   metaShape) {
+  
   library(ggplot2)
   library(GGally)
   library(grid)
-  # get initial objects/variables
-  mSetObj <- .get.mSet(mSetObj);
-  pclabels <- paste0("PC", 1:pc.num, " (", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%)");
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 10;
-  }else if(width == 0){
-    w <- 9;
-  }else{
-    w <- width;
-  }
-  h <- w - 1;
   
-  # draw plot
-  if(format=="pdf"){
-  pdf(imgName,width = w,height = h,onefile =F)
-   }else{
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
- }
-  data <- as.data.frame(mSetObj$analSet$pca$x[,1:pc.num])
-  meta.info <- mSetObj$dataSet$meta.info
-  meta.info <- meta.info[match(rownames(data), rownames(meta.info)),]
+  ## ── bookkeeping -------------------------------------------------------
+  mSetObj  <- .get.mSet(mSetObj)
+  pclabels <- paste0("PC", 1:pc.num, " (",
+                     round(100 * mSetObj$analSet$pca$variance[1:pc.num], 1),
+                     "%)")
+  imgName  <- paste0(imgName, "dpi", dpi, ".", format)
+  w        <- ifelse(is.na(width) || width == 0, 10, width)
+  h        <- w - 1
+  mSetObj$imgSet$pca.pair <- imgName
   
-  mSetObj$imgSet$pca.pair <- imgName;
-
-  if(meta %in% colnames(meta.info)){
-    inx <- which(colnames(meta.info) == meta)
-    cls <- meta.info[, inx];
-    cls.type <- mSetObj$dataSet$meta.types[inx]
-    cls2 <- meta.info[, metaShape];
-    cls.type2 <- mSetObj$dataSet$meta.types[metaShape]
-  }else{
-    cls <- mSetObj$dataSet$cls
-    cls.type <- mSetObj$dataSet$cls.type
-    cls2 <- meta.info[,2]
-    cls.type2 <- mSetObj$dataSet$meta.types[2]
+  if (format == "pdf") {
+    pdf(imgName, width = w, height = h, onefile = FALSE)
+  } else {
+    Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+                 width = w, height = h, type = format, bg = "white")
   }
   
-  if (cls.type == "disc"){ ## code to execute if primary class is discrete
+  ## ── data --------------------------------------------------------------
+  data      <- as.data.frame(mSetObj$analSet$pca$x[, 1:pc.num])
+  meta.info <- mSetObj$dataSet$meta.info[
+    match(rownames(data), rownames(mSetObj$dataSet$meta.info)), ]
+  
+  if (meta %in% colnames(meta.info)) {
+    inx       <- which(colnames(meta.info) == meta)
+    cls       <- meta.info[[inx]]
+    cls.type  <- mSetObj$dataSet$meta.types[[inx]]
+    cls2      <- meta.info[[metaShape]]
+    cls.type2 <- mSetObj$dataSet$meta.types[[metaShape]]
+  } else {
+    cls       <- mSetObj$dataSet$cls
+    cls.type  <- mSetObj$dataSet$cls.type
+    cls2      <- meta.info[[2]]
+    cls.type2 <- mSetObj$dataSet$meta.types[[2]]
+  }
+  
+  ## ── PERMANOVA p-values for *all* PC pairs -----------------------------
+  pc.mat   <- as.matrix(data)
+  pval.mat <- matrix(NA_real_, pc.num, pc.num)
+  if(cls.type == "disc"){
+  for (i in 1:(pc.num - 1)){
+    for (j in (i + 1):pc.num){
+      pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j], cls)
+    }
+  }
+  }else{
+  for (i in 1:(pc.num - 1)){
+    for (j in (i + 1):pc.num){
+      pval.mat[i, j] <- ComputeMultiVarTest(pc.mat[, i], pc.mat[, j], cls)
+    }
+  }
+  }
+  
+  ## helper: overlay 2-D density + p-value in upper-triangle cells
+  upper_density_with_p <- function(p.mat) {
+    function(data, mapping, ...) {
+      var_x <- sub("^~", "", deparse(mapping$x))
+      var_y <- sub("^~", "", deparse(mapping$y))
+      i     <- match(var_y, colnames(data))
+      j     <- match(var_x, colnames(data))
+      ptxt  <- if (!is.na(p.mat[i, j]))
+        sprintf("p = %.3g", p.mat[i, j]) else ""
+      
+      GGally::ggally_density(data, mapping,
+                             alpha = 0.45, colour = NA) +
+        annotate("text", x = 0.5, y = 0.5, label = ptxt,
+                 size = 4.5, fontface = "bold") +
+        theme_bw()
+    }
+  }
+  
+  ## ── plotting ----------------------------------------------------------
+  if (cls.type == "disc") {
     
-    uniq.cols <- unique(GetColorSchema(cls));
+    uniq.cols <- unique(GetColorSchema(cls))
     
-    if (cls.type2 == "disc"){
-      pch.vec <- as.numeric(cls2)
+    if (cls.type2 == "disc") {
+      pch.vec   <- as.numeric(cls2)
       uniq.pchs <- unique(pch.vec)
       
-      p <- ggpairs(data, 
-                   lower = list(continuous = wrap("points", shape = pch.vec)), 
-                   upper = list(continuous = wrap("density")),
-                   diag = list(continuous = wrap("densityDiag", alpha = 0.5, color = NA)),
-                   columnLabels = pclabels, mapping = aes(color = cls))
+      p <- ggpairs(
+        data,
+        lower = list(continuous = wrap("points", shape = pch.vec)),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
+        diag  = list(continuous = wrap("densityDiag", alpha = 0.5,
+                                       color = NA)),
+        columnLabels = pclabels,
+        mapping = aes(color = cls)
+      )
       
-      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
-                        aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
-        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
-        scale_color_manual(values = uniq.cols) + scale_shape_manual(values = uniq.pchs) + guides(col = guide_legend(nrow = 2))
+      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)),
+                        aes(x = cls, y = cls2, color = cls, shape = cls2)) +
+        theme_bw() +
+        geom_point(size = 6) +
+        theme(legend.position = "bottom",
+              legend.title    = element_blank(),
+              legend.text     = element_text(size = 11)) +
+        scale_color_manual(values = uniq.cols) +
+        scale_shape_manual(values = uniq.pchs) +
+        guides(col = guide_legend(nrow = 2))
       
-    } else {
-      pch.vec <- as.numeric(cls)
-      p <- ggpairs(data, 
-                   lower = list(continuous = wrap("points")), 
-                   upper = list(continuous = wrap("density")),
-                   diag = list(continuous = wrap("densityDiag", alpha = 0.5, color = NA)),
-                   columnLabels = pclabels, mapping = aes(color = cls))
+    } else {  # shape is continuous or not used
+      p <- ggpairs(
+        data,
+        lower = list(continuous = wrap("points")),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
+        diag  = list(continuous = wrap("densityDiag", alpha = 0.5,
+                                       color = NA)),
+        columnLabels = pclabels,
+        mapping = aes(color = cls)
+      )
       
-      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)), 
-                        aes(x=cls, y=cls2, color=cls)) + 
-        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
-        scale_color_manual(values = uniq.cols) + guides(col = guide_legend(nrow = 2))
+      auxplot <- ggplot(data.frame(cls = cls, cls2 = as.factor(cls2)),
+                        aes(x = cls, y = cls2, color = cls)) +
+        theme_bw() +
+        geom_point(size = 6) +
+        theme(legend.position = "bottom",
+              legend.title    = element_blank(),
+              legend.text     = element_text(size = 11)) +
+        scale_color_manual(values = uniq.cols) +
+        guides(col = guide_legend(nrow = 2))
     }
     
-    # change theme
-    p <- p + theme_bw() + scale_color_manual(values = uniq.cols) + scale_fill_manual(values = uniq.cols) + 
-      theme(plot.margin = unit(c(0.25, 0.25, 0.6, 0.25), "in"))
+    p <- p + theme_bw() +
+      scale_color_manual(values = uniq.cols) +
+      scale_fill_manual(values = uniq.cols) +
+      theme(plot.margin = unit(c(.25, .25, .6, .25), "in"))
+    
     mylegend <- grab_legend(auxplot)
     
-  } else { ## code to excute if primary class is continuous
+  } else {  # ---- continuous colour
     
-    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20));
-    num.cls <- as.numeric(as.character(cls));
-    cols <- colors[as.numeric(cut(num.cls,breaks = 20))];
+    blues   <- rev(colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20))
+    num.val <- as.numeric(as.character(cls))
+    cols    <- blues[ as.numeric(cut(num.val, breaks = 20)) ]
     
-    if (cls.type2 == "disc"){
-      pch.vec <- as.numeric(cls2)
+    if (cls.type2 == "disc") {
+      pch.vec   <- as.numeric(cls2)
       uniq.pchs <- unique(pch.vec)
       
-      p <- ggpairs(data, lower = list(continuous = wrap("points", shape = pch.vec, color = cols)), 
-                   upper = list(continuous = wrap("density", color = "#505050")),
-                   diag = list(continuous = wrap("densityDiag", fill = "#505050", color = NA)),
-                   columnLabels = pclabels)
+      p <- ggpairs(
+        data,
+        lower = list(continuous = wrap("points",
+                                       shape = pch.vec, color = cols)),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
+        diag  = list(continuous = wrap("densityDiag", fill = "#505050",
+                                       color = NA)),
+        columnLabels = pclabels
+      )
       
-      auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
-                        aes(x=cls, y=cls2, color=cls, shape=cls2)) + 
-        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + 
-        scale_shape_manual(values = uniq.pchs) + guides(col = guide_legend(nrow = 2))
+      auxplot <- ggplot(data.frame(cls = num.val, cls2 = as.factor(cls2)),
+                        aes(x = cls, y = cls2, color = cls, shape = cls2)) +
+        theme_bw() +
+        geom_point(size = 6) +
+        theme(legend.position = "bottom",
+              legend.title    = element_blank(),
+              legend.text     = element_text(size = 11)) +
+        scale_shape_manual(values = uniq.pchs) +
+        guides(col = guide_legend(nrow = 2))
+      
     } else {
-      p <- ggpairs(data, lower = list(continuous = wrap("points", color = cols)), 
-                   upper = list(continuous = wrap("density", color = "#505050")),
-                   diag = list(continuous = wrap("densityDiag", fill = "#505050", color = NA)),
-                   columnLabels = pclabels)
+      p <- ggpairs(
+        data,
+        lower = list(continuous = wrap("points", color = cols)),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
+        diag  = list(continuous = wrap("densityDiag", fill = "#505050",
+                                       color = NA)),
+        columnLabels = pclabels
+      )
       
-      auxplot <- ggplot(data.frame(cls = num.cls, cls2 = as.factor(cls2)), 
-                        aes(x=cls, y=cls2, color=cls)) + 
-        theme_bw() + geom_point(size = 6) + theme(legend.position = "bottom", legend.title = element_blank(), legend.text=element_text(size=11)) + guides(col = guide_legend(nrow = 2))
+      auxplot <- ggplot(data.frame(cls = num.val, cls2 = as.factor(cls2)),
+                        aes(x = cls, y = cls2, color = cls)) +
+        theme_bw() +
+        geom_point(size = 6) +
+        theme(legend.position = "bottom",
+              legend.title    = element_blank(),
+              legend.text     = element_text(size = 11)) +
+        guides(col = guide_legend(nrow = 2))
     }
     
-    p <- p + theme_bw() + theme(plot.margin = unit(c(0.25, 0.25, 0.8, 0.25), "in"))
-    mylegend <- grab_legend(auxplot)
+    p <- p + theme_bw() +
+      theme(plot.margin = unit(c(.25, .25, .8, .25), "in"))
     
+    mylegend <- grab_legend(auxplot)
   }
-
-  grid.newpage()
-  grid.draw(p)
-  vp = viewport(x=5, y=0.3, width=.35, height=.3, default.units = "in") ## control legend position
-  pushViewport(vp)
-  grid.draw(mylegend)
-  upViewport()
-  dev.off()
   
-  return(.set.mSet(mSetObj));
+  ## ── draw & close ------------------------------------------------------
+  grid.newpage(); grid.draw(p)
+  pushViewport(viewport(x = 5, y = 0.3, width = .35, height = .3,
+                        default.units = "in"))
+  grid.draw(mylegend); upViewport(); dev.off()
+  
+  invisible(.set.mSet(mSetObj))
+}
+
+
+
+make_diag_panel <- function(label) {        # returns a function for ggpairs
+  function(data, mapping, ...) {
+    ggplot() +
+      annotate("text", x = 0.5, y = 0.5, label = label,
+               size = 3.5, fontface = "bold") +
+      theme_void()
+  }
 }

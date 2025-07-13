@@ -36,7 +36,7 @@ PrepareDataForDoseResponse <- function(mSetObj=NA){
   data.mean <- as.matrix(t(s));
   
   mSetObj$dataSet$itemselect <- structure(list(dose = dose, item = item, design = design, data.mean = data.mean), class="omicdata");
-  print("PrepareDataForDoseResponse === OK");
+  # print("PrepareDataForDoseResponse === OK");
   return(.set.mSet(mSetObj));
 } 
 
@@ -147,8 +147,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
 
   mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
-  #saveRDS(mSetObj, "msetobj.rds");
-  print("PrepareSigDRItems === OK");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -1250,7 +1249,7 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     # finalize names & order
     rownames(res) <- as.character(res$item)
     colnames(res) <- c("feature.id","mod.name", num.cols, "AIC.model","item.ind")
-    res <- res[order(res$AIC.model), ]
+    res <- res[order(res$bmd), ]
     
     # save back to mSetObj
     dataSet$html.resTable <- res

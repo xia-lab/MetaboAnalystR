@@ -589,7 +589,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@export
 #'
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
-  print(topnum)
+  # print(topnum)
   mSetObj <- .get.mSet(mSetObj);
  
   choices <- c(inx1, inx2);
@@ -3060,4 +3060,47 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
     stat.info.vec = stat.info.vec,
     pair.res = pair.res
   )
+}
+
+ComputePERMANOVAstat <- function(pc1, pc2, cls, numPermutations = 999) {
+  # Combine PC1 and PC2 scores into a matrix
+  pc.mat <- cbind(pc1, pc2)
+  
+  # Calculate PERMANOVA significance
+  res <- .calculateDistSig(pc.mat, cls)
+  
+  # Extract the main results
+  resTab <- res[[1]][1, ]
+  
+  return(signif(resTab$Pr, 5))
+}
+
+ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
+  pc.mat <- cbind(pc1, pc2)
+  distM  <- dist(pc.mat)                     # Euclidean distance
+  
+    ## ------------------------------------------------  dbRDA
+    if (!requireNamespace("vegan", quietly = TRUE))
+      stop("Package 'vegan' is required for dbRDA (install.packages(\"vegan\")).")
+    
+    # capscale ~ cls — distance-based RDA
+    dbrda.mod <- vegan::capscale(distM ~ cls)
+    dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = numPermutations)
+    
+    Fval <- dbrda.an$F[1]
+    R2   <- dbrda.mod$CCA$tot.chi / dbrda.mod$tot.chi
+    pval <- dbrda.an$`Pr(>F)`[1]
+    
+    stat.info.vec <- c(`F-value` = signif(Fval, 5),
+                       `R-squared` = signif(R2, 5),
+                       `p-value`   = signif(pval, 5))
+    
+    res <- list(
+      method        = "dbRDA",
+      stat.info     = sprintf("[dbRDA] F = %.3g; R² = %.3g; p = %.3g",
+                              stat.info_vec[1], stat.info_vec[2], stat.info_vec[3]),
+      stat.info_vec = stat.info_vec,
+      pair.res      = NULL     # dbRDA has no pairwise table
+    )
+    return(signif(pval, 5));
 }

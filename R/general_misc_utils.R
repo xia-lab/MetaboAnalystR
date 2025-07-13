@@ -1330,7 +1330,7 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg = ""){
 
     nm <- NULL;
-    
+
 
     # first compute rank based on filter selected
     if (filter == "rsd"){
@@ -1358,8 +1358,8 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
     }else{ # iqr
       filter.val <- apply(int.mat, 2, IQR, na.rm=T);
       nm <- "Interquantile Range";
-    }
-    
+  }
+
     # get the rank of the filtered variables
     rk <- rank(-filter.val, ties.method='random');
 
@@ -1373,8 +1373,8 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
         if(sum(remain) > max.allow){
             remain <- rk <= max.allow;
             msg <- paste(msg, paste("Further reduced to <b>", max.allow, "</b> features based on <b>", nm, "</b>"));   
-        }
     }
+  }
     # save a copy for user 
     fast.write.csv(cbind(filter=filter.val, t(int.mat)), file=paste0("data_prefilter_", filter, ".csv"));
 
@@ -1408,12 +1408,12 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
 # general default control for datasize 
 .get.max.allow <- function(anal.type){
 
-    if(anal.type == "mummichog"){
-        max.allow <- 7500;
+    if(anal.type == "mummichog" || anal.type == "dose" ){
+        max.allow <- 10000;
     }else if(anal.type == "power"){
         max.allow <- 2500;
     }else{
-        max.allow <- 5000;
+        max.allow <- 10000;
     }
     return(max.allow);
 }
