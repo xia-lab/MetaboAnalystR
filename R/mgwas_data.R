@@ -336,9 +336,6 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
 RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
-  if(!exists("entries.vec")){
-    return(0);
-  }
 
   mSetObj <- .get.mSet(mSetObj);
   dat <- mSetObj$dataSet$harmonized.dat;
