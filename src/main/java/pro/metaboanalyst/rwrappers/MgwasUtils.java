@@ -373,4 +373,16 @@ public class MgwasUtils {
         }
         return 0;
     }
+    
+    
+      public static int checkSNPs(RConnection RC) {
+        try {
+            String rCommand = "CheckSNPs()";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return 0;
+    }
 }

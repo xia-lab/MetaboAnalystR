@@ -596,6 +596,8 @@ public class MgwasBean implements Serializable {
                 int res2 = MgwasUtils.removeEntries(sb.getRConnection(), entriesArray);
                 if (res2 == 1) {
                     sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed! " + rm_num_pleiotropy + " SNPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
+                } else if (res2 == 0) {
+                    sb.addMessage("Info", "Harmonization succeded! No SNP has been removed." + rm_num_pleiotropy + " NPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
                 } else {
                     sb.addMessage("Error", "Unable to exclude " + Arrays.toString(entriesArray) + " from downstream analysis!");
                 }
@@ -851,7 +853,11 @@ public class MgwasBean implements Serializable {
         String symbolNm = "genes";
         String entrezNm = "gene_id";
         String pvalNm = "P-value";
+        String pvalOut = "pval.exposure";
         String[] keepInx = null;
+        String[] ifCheck = null;
+        String[] pvaloutcome = null;
+        String[] pvalStn = null;
         switch (netType) {
             case "exposure" -> {
                 snpNm = "SNP";
@@ -864,12 +870,23 @@ public class MgwasBean implements Serializable {
                 metNm = "exposure";
                 keepInx = MgwasUtils.getResColByName(RC, netType, "mr_keep");
                 pvalNm = "pval.exposure";
+                pvalOut = "pval.exposure";
             }
             case "outcome.dat" -> {
                 snpNm = "SNP";
                 hmdbIdNm = "id.exposure";
                 metNm = "exposure";
                 keepInx = MgwasUtils.getResColByName(RC, netType, "mr_keep.outcome");
+                 if (filtPerformed) {
+                    pvalOut = "pval.exposure";
+                }
+            }
+            case "tableView" -> {
+                snpNm = "SNP";
+                hmdbIdNm = "HMDB";
+                metNm = "exposure";
+                keepInx = MgwasUtils.getResColByName(RC, netType, "mr_keep");
+                ifCheck = MgwasUtils.getResColByName(RC, netType, "ifCheck");
             }
             default -> {
                 snpNm = "SNP";
@@ -892,11 +909,17 @@ public class MgwasBean implements Serializable {
         String[] pmid = MgwasUtils.getResColByName(RC, netType, "PMID"); // p
         String[] pop = MgwasUtils.getResColByName(RC, netType, "pop_code"); // p
         String[] biofluid = MgwasUtils.getResColByName(RC, netType, "biofluid"); // p
-        String[] pvaloutcome = pval;
-        if (netType.equals("harmonized.dat")) {
-            pvaloutcome = MgwasUtils.getResColByName(RC, netType, pvalNm); // p
+       
+        if (filtPerformed) {
+
+            pvaloutcome = MgwasUtils.getResColByName(RC, netType, pvalOut); // p
+            if ("use_steiger".equals(steigerOpt)) {
+
+                pvalStn = MgwasUtils.getResColByName(RC, netType, "steiger_pval");
+            }
 
         }
+
 
         int rowNum = rowNms.length;
         //sb.setEdgeNum(rowNms.length);
@@ -907,13 +930,13 @@ public class MgwasBean implements Serializable {
         groupCounts = new HashMap<>();
 
         for (int i = 0; i < rowNum; i++) {
-
             rowID = rowNms[i];
             mb = new HashMap<>();
 
-            if (netType.equals("harmonized.dat") || netType.equals("outcome.dat")) {
+            if (netType.equals("harmonized.dat") || netType.equals("outcome.dat") || netType.equals("tableView")) {
+                //  System.out.println("==============.MgwasBean.setupTable()"+keepInx[i]);
                 if (keepInx[i].equals("FALSE") & !pleiotropyOpt) {
-                    // rm_num_pleiotropy++;
+                    //rm_num_pleiotropy++;
                     continue;
                 } else if (keepInx[i].equals("FALSE")) {
                     mb.put("selected", false);
@@ -923,8 +946,13 @@ public class MgwasBean implements Serializable {
                     mb.put("expanded", false);
                 }
             }
+            if (ifCheck != null) {
+                mb.put("selected", ifCheck[i]);
+
+            }
 
             mb.put("rowID", rowID);
+            mb.put("group", col8[i]);
             // if HMDB ID is NA, then not link to HMDB; otherwise link to HMDB
             if ("NA".equals(col2[i])) {
                 mb.put("col1", col8[i]);
@@ -934,10 +962,14 @@ public class MgwasBean implements Serializable {
             mb.put("col2", "<a href=\"http://www.ncbi.nlm.nih.gov/snp/" + snp[i] + "\" target=\"_blank\">" + snp[i] + "</a>");
 
             mb.put("pval", pval[i]); // p
-            if (netType.equals("harmonized.dat")) {
+            if (filtPerformed) {
                 mb.put("pvaloutcome", pvaloutcome[i]); // p
-
+                if ("use_steiger".equals(steigerOpt)) {
+                    mb.put("pvalsteiger", pvalStn[i]); // p
+                    mb.put("dir", "TRUE"); // p
+                }
             }
+
             mb.put("study", "<a style=\"font-weight:normal\" href=\"" + url[i] + "\" target=\"_blank\">" + pmid[i] + "</a>");
             mb.put("col11", processCommaDelimitedString(metabolites[i], snp[i])); // associated metabolites
             mb.put("col12", "<a href=\"https://www.ncbi.nlm.nih.gov/gene/" + entrez[i] + "\" target=\"_blank\">" + symbol[i] + "</a>"); // associated genes
@@ -945,15 +977,13 @@ public class MgwasBean implements Serializable {
             mb.put("biofluid", makeReadable(biofluid[i])); // p
 
             mb.put("rsid", snp[i]); // chr
-
             resTable.add(mb);
-            String groupKey = mb.get("col1") + ""; // Replace with your grouping field
 
+            String groupKey = mb.get("col1") + ""; // Replace with your grouping field
             // If this is the first group key, set expanded to true
             groupCounts.put(groupKey, groupCounts.getOrDefault(groupKey, 0) + 1);
 
         }
-
         // Set the expanded property for the last group
     }
 
@@ -1022,8 +1052,16 @@ public class MgwasBean implements Serializable {
 
     //delete entry in R
     public void handleSelect(HashMap<String, Object> map) {
-        Boolean selected = (Boolean) map.get("selected");
-        if (selected) {
+        Object val = map.get("selected");
+        boolean selected = false;
+
+        if (val instanceof Boolean) {
+            selected = (Boolean) val;
+        } else if (val instanceof String) {
+            selected = Boolean.parseBoolean((String) val);
+        }
+        System.out.println("=========.MgwasBean.handleSelect()" + selected);
+        if (!selected) {
             int res = MgwasUtils.addEntry(sb.getRConnection(), (String) map.get("rowID"));
             if (res == 1) {
                 sb.addMessage("Info", "Included " + map.get("rsid") + " from downstream analysis!");
@@ -1317,6 +1355,23 @@ public class MgwasBean implements Serializable {
         } else {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", ""));
+        }
+
+    }
+
+    public String checkSNP() {
+        RConnection RC = sb.getRConnection();
+        int res = MgwasUtils.checkSNPs(RC);
+
+        if (res == 1) {
+            return ("MR method");
+
+        } else {
+
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", "No SNP has been selected for the analysis. Please check at least one SNP for furthur analysis."));
+
+            return null;
         }
 
     }
