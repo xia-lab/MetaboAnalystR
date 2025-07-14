@@ -606,7 +606,7 @@ public class MgwasBean implements Serializable {
                 String[] entriesArray = snpRowIdsToRemove.toArray(new String[0]); // The argument specifies the type of the array
 
                 int res2 = MgwasUtils.removeEntries(sb.getRConnection(), entriesArray);
-                if (res2 == 1) {
+                if (res2 > 0) {
                     sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed! " + rm_num_pleiotropy + " SNPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
                 } else if (res2 == 0) {
                     sb.addMessage("Info", "Harmonization succeded! No SNP has been removed." + rm_num_pleiotropy + " NPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
@@ -658,7 +658,7 @@ public class MgwasBean implements Serializable {
             MgwasUtils.plotLeaveOneOut(sb, exposure, imgName3, "png", 150);
             MgwasUtils.plotFunnel(sb, exposure, imgName4, "png", 150);
         }
-
+        searchLiterature();
         return "MgwasResultView";
     }
 

@@ -229,6 +229,15 @@
                         </p:tabView>
                     </p:tab>
                 </p:accordionPanel>
+                <p:dialog widgetVar="pmidDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                          hideEffect="explode" resizable="true"> 
+                    <h:panelGrid id="detailView" style="width:540px; font-size: 13px; padding: 10px">
+                        <h:outputText escape="false" value="PMIDs: #{mgwasBean.pmIDs}"/>
+                        <h:panelGrid style="width:100%; text-align: center">
+                            <p:commandButton value="OK" onclick="PF('pmidDialog').hide()"/>
+                        </h:panelGrid>
+                    </h:panelGrid> 
+                </p:dialog>
             </h:form>
         </h:panelGrid>
     </ui:define>
