@@ -438,7 +438,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@import qs
 #'@export
 #'
-RemoveMissingPercent <- function(mSetObj = NA,
+RemoveMissingByPercent <- function(mSetObj = NA,
                                  percent  = 0.20,   # e.g. 0.20 = 20 %
                                  grpWise  = FALSE) {
 
