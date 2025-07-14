@@ -145,13 +145,10 @@ public class MgwasUtils {
         return 0;
     }
 
-    public static int performSnpFiltering(RConnection RC, String ldclumpOpt,
-            String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs,
-            double mafThresh, String harmonizeOpt, String current_key) {
+ 
+    public static int performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt,String steigerOpt, String current_key) {
         try {
-            String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \""
-                    + ldProxies + "\", " + ldThresh + ", \"" + pldSNPs + "\", " + mafThresh + ", \"" + harmonizeOpt
-                    + "\", \"" + current_key + "\")";
+            String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \"" + ldProxies + "\", \"" + ldThresh + "\", \"" + pldSNPs + "\", \"" + mafThresh + "\", \"" + harmonizeOpt + "\", \"" + steigerOpt + "\", \"" + current_key + "\")";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {

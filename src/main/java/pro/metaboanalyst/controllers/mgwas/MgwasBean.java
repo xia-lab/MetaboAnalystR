@@ -554,6 +554,18 @@ public class MgwasBean implements Serializable {
     private int rm_num_pleiotropy = 0;
 
     public void performSnpFiltering() {
+        if (performClump) {
+            ldclumpOpt = "use_ldclump";
+        } else {
+            ldclumpOpt = "no_ldclump";
+        }
+
+        if (performProxy) {
+            ldProxyOpt = "use_proxy";
+        } else {
+            ldProxyOpt = "no_proxy";
+        }
+
         int res;
         rm_num_pleiotropy = 0;
         if (ldProxyOpt.equals("use_proxy") & ((ldThresh != 0.8) | (mafThresh != 0.3))) {
@@ -565,12 +577,12 @@ public class MgwasBean implements Serializable {
                     sb.addMessage("Error", "The key are have uploaded is empty!");
                     return;
                 }
-                res = MgwasUtils.performSnpFiltering(sb.getRConnection(), ldclumpOpt, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, current_key);
-            }
+                res = MgwasUtils.performSnpFiltering(sb.getRConnection(), ldclumpOpt, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, steigerOpt, current_key);
+           }
 
         } else {
-            res = MgwasUtils.performSnpFiltering(sb.getRConnection(), ldclumpOpt, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, current_key);
-        }
+            res = MgwasUtils.performSnpFiltering(sb.getRConnection(), ldclumpOpt, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, steigerOpt, current_key);
+      }
 
         if (res > -1) {
             if (res >= 0) {
