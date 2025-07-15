@@ -551,13 +551,8 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
   ## ------------------------------------------------------------------
   ## 0)  choose the working abundance table + class vector
   ## ------------------------------------------------------------------
-  if (is.null(mSetObj$dataSet$filt)) {
     data <- qs::qread("data_proc.qs")
     cls  <- mSetObj$dataSet$proc.cls
-  } else {
-    data <- mSetObj$dataSet$filt
-    cls  <- mSetObj$dataSet$filt.cls
-  }
 
   print(sum(is.na(colnames(data))))
   print("missing rownames");
@@ -620,7 +615,8 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
     #print(dim(meta));
   }
 
-  mSetObj$dataSet$edit     <- data
+  #mSetObj$dataSet$edit     <- data
+  qs::qsave(data,"data.edit.qs");
   mSetObj$dataSet$edit.cls <- cls
   AddMsg("Successfully updated the data & metadata!")
 
@@ -654,22 +650,12 @@ PreparePrenormData <- function(mSetObj=NA){
 }
 
 .prepare.prenorm.data <- function(mSetObj=NA){
-  
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!is.null(mSetObj$dataSet$edit)){
-    mydata <- mSetObj$dataSet$edit;
-    if(!is.null(mSetObj$dataSet$filt)){
-      # some features could be removed
-      hit.inx <- colnames(mydata) %in% colnames(mSetObj$dataSet$filt);
-      mydata <- mydata[,hit.inx, drop=FALSE];
-    }
-    prenorm <- mydata;
+  if(file.exists("data.edit.qs")){
+    mydata <- qs::qread("data.edit.qs");;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-  }else if(!is.null(mSetObj$dataSet$filt)){
-    prenorm <- mSetObj$dataSet$filt;
-    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-  }else{
+  }else {
     prenorm <- qs::qread("data_proc.qs");
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
   }
