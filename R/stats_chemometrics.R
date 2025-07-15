@@ -3094,13 +3094,6 @@ ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
     stat.info.vec <- c(`F-value` = signif(Fval, 5),
                        `R-squared` = signif(R2, 5),
                        `p-value`   = signif(pval, 5))
-    
-    res <- list(
-      method        = "dbRDA",
-      stat.info     = sprintf("[dbRDA] F = %.3g; R² = %.3g; p = %.3g",
-                              stat.info_vec[1], stat.info_vec[2], stat.info_vec[3]),
-      stat.info_vec = stat.info_vec,
-      pair.res      = NULL     # dbRDA has no pairwise table
-    )
+
     return(signif(pval, 5));
 }

@@ -374,7 +374,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'
-iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
+iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape, colorGradient="heat"){
   mSetObj <- .get.mSet(mSetObj);
   
   metadata <- mSetObj$dataSet$meta.info
@@ -439,11 +439,35 @@ vals.norm <- (rnk - 1) / (max(rnk, na.rm = TRUE) - 1)
 # Optional: centralise NA as mid-grey instead of dropping them
 vals.norm[na.inx] <- 0.5
 
-# Map to a perceptually uniform gradient (viridis works well)
-col.vec <- viridis::viridis(100)[floor(vals.norm * 99) + 1]
+n_cols <- length(unique(rnk[!is.na(rnk)]))
 
-# Store for JSON export
-pca3d$score$colors              <- my.col2rgb(col.vec)
+# Map to a perceptually uniform gradient (viridis works well)
+if (colorGradient == "gbr") {
+    colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(n_cols)
+  } else if (colorGradient == "heat") {
+pal_fun <- grDevices::colorRampPalette(c("#FFFF00", "#FC8D25", "#9B0000"))   # or choose your own stops
+colors  <- pal_fun(n_cols)
+  } else if (colorGradient == "topo") {
+    colors <- grDevices::topo.colors(100)
+  } else if (colorGradient == "gray") {
+    colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256)
+  } else if (colorGradient == "byr") {
+    colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256))
+  } else if (colorGradient == "viridis") {
+    colors <- rev(viridis::viridis(10))
+  } else if (colorGradient == "plasma") {
+    colors <- rev(viridis::plasma(10))
+  } else if (colorGradient == "npj") {
+    colors <- c("#00A087FF", "white", "#E64B35FF")
+  } else if (colorGradient == "aaas") {
+    colors <- c("#4DBBD5FF", "white", "#E64B35FF")
+  } else if (colorGradient == "d3") {
+    colors <- c("#2CA02CFF", "white", "#FF7F0EFF")
+  } else {
+    colors <- c("#0571b0", "#92c5de", "white", "#f4a582", "#ca0020")
+  }
+
+pca3d$score$colors              <- my.col2rgb(colors)
 pca3d$score$color_legend_vals   <- vals
 pca3d$score$color_legend_type   <- "gradient"
 pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
