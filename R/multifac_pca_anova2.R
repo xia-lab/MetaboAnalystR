@@ -646,23 +646,28 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
   }
   
   ## helper: overlay 2-D density + p-value in upper-triangle cells
-  upper_density_with_p <- function(p.mat) {
-    function(data, mapping, ...) {
-      var_x <- sub("^~", "", deparse(mapping$x))
-      var_y <- sub("^~", "", deparse(mapping$y))
-      i     <- match(var_y, colnames(data))
-      j     <- match(var_x, colnames(data))
-      ptxt  <- if (!is.na(p.mat[i, j]))
-        sprintf("p = %.3g", p.mat[i, j]) else ""
-      
-      GGally::ggally_density(data, mapping,
-                             alpha = 0.45, colour = NA) +
-        annotate("text", x = 0.5, y = 0.5, label = ptxt,
-                 size = 4.5, fontface = "bold") +
-        theme_bw()
-    }
+upper_density_with_p <- function(p.mat){
+  function(data, mapping, ...) {
+    ## which PCs are on the axes?
+    var_x <- sub("^~", "", deparse(mapping$x))
+    var_y <- sub("^~", "", deparse(mapping$y))
+
+    ## look-up p-value
+    i <- match(var_y, colnames(data))
+    j <- match(var_x, colnames(data))
+    ptxt <- if (!is.na(p.mat[i, j])) sprintf("p = %.3g", p.mat[i, j]) else ""
+
+    ## mid-points of the current panel
+    xmid <- mean(range(data[[var_x]], na.rm = TRUE))
+    ymid <- mean(range(data[[var_y]], na.rm = TRUE))
+
+    GGally::ggally_density(data, mapping, alpha = 0.45, colour = NA) +
+      annotate("text", x = xmid, y = ymid, label = ptxt,
+               size = 4.5, fontface = "bold") +
+      theme_bw()
   }
-  
+}
+
   ## ── plotting ----------------------------------------------------------
   if (cls.type == "disc") {
     
