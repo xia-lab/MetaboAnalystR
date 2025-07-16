@@ -253,7 +253,7 @@ SanityCheckData <- function(mSetObj=NA){
   #  print(naCount)
   mSetObj$dataSet$missingCount <- naCount;
   
-  msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
+  # msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   
   if(is.null(mSetObj$dataSet$meta.info)){
     mSetObj$dataSet$meta.info <- data.frame(cls);
@@ -335,18 +335,13 @@ if (n.blank == 0) {
   mSetObj$dataSet$containsBlank <- TRUE
 }
 
-  
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
-  
   if(naCount == 0){
-    
-    msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
+    msg<-c(msg, "No missing values were detected. Click the <b>Proceed</b> button to the next step.");
   }else{  
-    
-    
-    #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+    msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
       miss.msg <- "";
       kw.p <- .test.missing.sig(int.mat, cls);
@@ -361,9 +356,6 @@ if (n.blank == 0) {
       miss.msg <- c(miss.msg, mSetObj$msgSet$miss.msg);
       msg<-c(msg,  miss.msg);
     }
-    #msg<-c(msg,
-    #     "Click the <b>Proceed</b> button if you accept the default practice;",
-    #     "Or click the <b>Missing Values</b> button to use other methods.");
   }
   
   
