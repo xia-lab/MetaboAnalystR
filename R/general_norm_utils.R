@@ -200,6 +200,16 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # need to do some sanity check, for log there may be Inf values introduced
   data <- CleanData(data, T, F);
   
+  ## drop features whose column-names are NA or literal "NA" ─────
+  badCol <- is.na(colnames(data)) | tolower(colnames(data)) == "na"
+  if (any(badCol)) {
+    data <- data[ , !badCol, drop = FALSE]
+    colNames <- colnames(data)           # refresh vector
+    msg      <- paste0("Removed ", sum(badCol),
+                       " feature(s) whose name is NA after normalization.")
+    mSetObj$msgSet$norm.nafeat.msg <- msg
+  }
+
   if(ratio){
     mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F);
 
@@ -535,19 +545,17 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
 UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 
-  mSetObj <- .get.mSet(mSetObj)
+  mSetObj <- .get.mSet(mSetObj)              # fetch current object
+  mSetObj$dataSet$edit <- NULL               # reset edit slot
 
-
-  mSetObj$dataSet$edit <- NULL
-
-  if (is.null(mSetObj$dataSet$filt)) {
+  ## ------------------------------------------------------------------
+  ## 0)  choose the working abundance table + class vector
+  ## ------------------------------------------------------------------
     data <- qs::qread("data_proc.qs")
     cls  <- mSetObj$dataSet$proc.cls
-  } else {
-    data <- mSetObj$dataSet$filt
-    cls  <- mSetObj$dataSet$filt.cls
-  }
 
+  print(sum(is.na(colnames(data))))
+  print("missing rownames");
 
   feat.hit.inx <- colnames(data) %in% feature.nm.vec        # feature.nm.vec: to delete
   data <- CleanDataMatrix(data[, !feat.hit.inx, drop = FALSE])
@@ -603,13 +611,16 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
       if (is.factor(x)) droplevels(x[ , drop = TRUE]) else x)
 
     mSetObj$dataSet$meta.info <- meta
+    #print("dim(meta)");
+    #print(dim(meta));
   }
 
-  mSetObj$dataSet$edit     <- data
+  #mSetObj$dataSet$edit     <- data
+  qs::qsave(data,"data.edit.qs");
   mSetObj$dataSet$edit.cls <- cls
   AddMsg("Successfully updated the data & metadata!")
 
-  save(mSetObj, file = "mSetObj__UpdateData.rda")
+  # save(mSetObj, file = "mSetObj__UpdateData.rda")
 
   if (.on.public.web) {
     .set.mSet(mSetObj)
@@ -618,6 +629,7 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
     return(.set.mSet(mSetObj))
   }
 }
+
 
 
 # should always init (new or overwrite previous prenorm object)
@@ -638,22 +650,12 @@ PreparePrenormData <- function(mSetObj=NA){
 }
 
 .prepare.prenorm.data <- function(mSetObj=NA){
-  
   mSetObj <- .get.mSet(mSetObj);
   
-  if(!is.null(mSetObj$dataSet$edit)){
-    mydata <- mSetObj$dataSet$edit;
-    if(!is.null(mSetObj$dataSet$filt)){
-      # some features could be removed
-      hit.inx <- colnames(mydata) %in% colnames(mSetObj$dataSet$filt);
-      mydata <- mydata[,hit.inx, drop=FALSE];
-    }
-    prenorm <- mydata;
+  if(file.exists("data.edit.qs")){
+    mydata <- qs::qread("data.edit.qs");;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-  }else if(!is.null(mSetObj$dataSet$filt)){
-    prenorm <- mSetObj$dataSet$filt;
-    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$filt.cls;
-  }else{
+  }else {
     prenorm <- qs::qread("data_proc.qs");
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
   }

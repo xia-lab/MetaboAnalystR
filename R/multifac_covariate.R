@@ -527,8 +527,7 @@ CovariateScatter.Anal <- function(mSetObj,
     
     # recent update: enable blocking factor for continuous primary metadata
     if (block == "NA") {
-      print(head(design));
-      
+      # print(head(design));
       fit <- lmFit(feature_table, design)
     } else {
       block.vec <- covariates[,block];

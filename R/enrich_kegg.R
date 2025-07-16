@@ -611,7 +611,7 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     # Store universe for enrichment analysis
     names(pathways$cpds) <- pathways$name
     current.cmpd.set <<- pathways$cpds;
-    print("this current.cmpd.set ")
+    # print("this current.cmpd.set ")
     # Read pathway names and ids in the target pathway map (e.g. ko01100)
     
     if(.on.public.web){

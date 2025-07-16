@@ -1,5 +1,8 @@
+
+
+
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
-  #save.image("enrich.RData");
+  save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
   # Get the appropriate result matrix based on analysis type
   if(anal.opt == "mum"){
@@ -138,16 +141,23 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ## -----------------------------------------------------------------
     ##  Build pathway → hit list (names or original IDs)
     ## -----------------------------------------------------------------
-    
+
+      
     pathway.cpds <- setNames(
       lapply(pathway.names, function(pw) {
         idx   <- which(mSetObj$pathways$name == pw)          # row in master table
-        allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+        if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
+          
+        allID <- unlist(mSetObj$pathways$emp_cpds[[ idx[1] ]])   # all IDs in pathway
+        }else{
+          allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
+          
+        }
         intersect(allID, sig.ids)                            # keep only sig IDs
       }),
       pathway.names
     )
-
+    
   }
   
   # Calculate overlap matrix
@@ -171,7 +181,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
   
-  g <- delete_edges(g, E(g)[wd[,3] < 0.05])  # Remove weak connections
+  g <- delete_edges(g, E(g)[wd[,3] < 0.01])  # Remove weak connections
   
   if(vcount(g) == 0){
     AddErrMsg("No connections above threshold!")
@@ -378,7 +388,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   #}
   
   enr.mat <- apply(enr.mat, 1, as.list)
-  print(paste("lib====", mSetObj$lib.organism));
+  # print(paste("lib====", mSetObj$lib.organism));
   
   if(anal.opt %in% c("pathora", "pathqea")){
     pwType <- mSetObj$pathwaylibtype; 

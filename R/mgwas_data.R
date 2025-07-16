@@ -318,9 +318,10 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
   if(exists("harmonized.dat",dataSet)){
+  harmonized.dat <- mSetObj$dataSet$harmonized.dat
    inx <- which(rownames(harmonized.dat) == mir.id);
   if(length(inx) > 0){
-    mSetObj$dataSet$harmonized.dat$ifCheck <- FALSE;
+    mSetObj$dataSet$harmonized.dat$ifCheck[inx] <- FALSE;
   }
   }else{
     inx <- which(rownames(dataSet$tableView) == mir.id);
@@ -335,17 +336,11 @@ RemoveEntryExposure <- function(mSetObj=NA, mir.id) {
 RemoveEntriesExposure <- function(mSetObj=NA, mir.id) {
   # mir.id<<-mir.id;
   # save.image("RemoveEntry.RData")
-  if(!exists("entries.vec")){
-    return(0);
-  }
-  print(c(entries.vec,"entries.vec"));
 
   mSetObj <- .get.mSet(mSetObj);
- 
   dat <- mSetObj$dataSet$harmonized.dat;
-   mSetObj$dataSet$harmonized.dat <- dat[dat$mr_keep,]
- .set.mSet(mSetObj)
-
+  mSetObj$dataSet$harmonized.dat <- dat[dat$mr_keep,]
+  .set.mSet(mSetObj);
   return(nrow(mSetObj$dataSet$exposure)-nrow(mSetObj$dataSet$harmonized.dat));
 }
 
@@ -356,10 +351,13 @@ AddEntryExposure <- function(mSetObj=NA, mir.id) {
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
+  print(c(mir.id,"mir.id"))
+ 
   if(exists("harmonized.dat",mSetObj$dataSet)){
+  harmonized.dat <- mSetObj$dataSet$harmonized.dat
    inx <- which(rownames(harmonized.dat) == mir.id);
 if(length(inx) > 0){
-    mSetObj$dataSet$harmonized.dat$ifCheck <- TRUE;
+    mSetObj$dataSet$harmonized.dat$ifCheck[inx] <- TRUE;
   }
   }else{
     inx <- which(rownames(dataSet$tableView.proc) == mir.id);
@@ -367,7 +365,7 @@ if(length(inx) > 0){
     mSetObj$dataSet$tableView <- rbind(dataSet$tableView, dataSet$tableView.proc[inx,]);
   }
   }
- 
+  
   return(.set.mSet(mSetObj));
 }
 
@@ -576,20 +574,18 @@ GetPathCol <- function(colInx){
 GetSumCol <- function(type, exp) {
    #print(c(type, exp))
   mSetObj <- .get.mSet(mSetObj)
-  tab <- mSetObj$dataSet$tableView
- 
+  tab <- mSetObj$dataSet$tableView;
    if(exists("harmonized.dat",mSetObj$dataSet)){
       harmonized.dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$mr_keep,];
       tab <- tab[rownames(tab) %in% rownames(harmonized.dat),]
    }
 
   if (exp != "") {
-if ("Common Name" %in% colnames(tab)) {
-    tab <- tab[tab[["Common Name"]] == exp, ]
+    if ("Common Name" %in% colnames(tab)) {
+        tab <- tab[tab[["Common Name"]] == exp, ]
     } else {
-     tab <- tab[tab$exposure == exp, ]
+        tab <- tab[tab$exposure == exp, ]
     }
-
   }
 
   if (type == "rw" || type == "exps") {
@@ -600,15 +596,14 @@ if ("Common Name" %in% colnames(tab)) {
     }
 
     if (type == "rw") {
-     print(1:length(tab))
+     # print(1:length(tab))
       return(1:length(tab))
     } else {
-      print(tab)
+     # print(tab)
       return(tab)
     }
 
   }else if (type == "num") {
- 
     return(nrow(tab))
   }
 }

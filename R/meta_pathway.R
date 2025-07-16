@@ -877,7 +877,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     .set.mSet(mSetObj);
     return(filename);
   } else {
-    print(filename)
+    # print(filename)
     return(.set.mSet(mSetObj));
   }
   
