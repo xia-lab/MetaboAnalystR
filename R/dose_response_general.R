@@ -639,7 +639,8 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     require(drc)
     sig.tbl <- mSetObj[["dataSet"]][["limma_dose_sig_res"]];
     sig.tbl <- sig.tbl[ order(sig.tbl$P.Value), , drop = FALSE ]
-    ft_names <- rownames(sig.tbl[1:1000, ])
+    ft_names <- rownames(head(sig.tbl, 1000))
+
     dt <- mSetObj[["dataSet"]][["norm"]]
     #print(rownames(dt));
     dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
