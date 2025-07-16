@@ -181,7 +181,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
   
-  g <- delete_edges(g, E(g)[wd[,3] < 0.05])  # Remove weak connections
+  g <- delete_edges(g, E(g)[wd[,3] < 0.01])  # Remove weak connections
   
   if(vcount(g) == 0){
     AddErrMsg("No connections above threshold!")

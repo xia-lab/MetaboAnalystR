@@ -374,7 +374,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'
-iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape){
+iPCA.Anal <- function(mSetObj=NA, fileNm, metaCol, metaShape, colorGradient="heat"){
   mSetObj <- .get.mSet(mSetObj);
   
   metadata <- mSetObj$dataSet$meta.info
@@ -439,11 +439,35 @@ vals.norm <- (rnk - 1) / (max(rnk, na.rm = TRUE) - 1)
 # Optional: centralise NA as mid-grey instead of dropping them
 vals.norm[na.inx] <- 0.5
 
-# Map to a perceptually uniform gradient (viridis works well)
-col.vec <- viridis::viridis(100)[floor(vals.norm * 99) + 1]
+n_cols <- length(unique(rnk[!is.na(rnk)]))
 
-# Store for JSON export
-pca3d$score$colors              <- my.col2rgb(col.vec)
+# Map to a perceptually uniform gradient (viridis works well)
+if (colorGradient == "gbr") {
+    colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(n_cols)
+  } else if (colorGradient == "heat") {
+pal_fun <- grDevices::colorRampPalette(c("#FFFF00", "#FC8D25", "#9B0000"))   # or choose your own stops
+colors  <- pal_fun(n_cols)
+  } else if (colorGradient == "topo") {
+    colors <- grDevices::topo.colors(100)
+  } else if (colorGradient == "gray") {
+    colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256)
+  } else if (colorGradient == "byr") {
+    colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256))
+  } else if (colorGradient == "viridis") {
+    colors <- rev(viridis::viridis(10))
+  } else if (colorGradient == "plasma") {
+    colors <- rev(viridis::plasma(10))
+  } else if (colorGradient == "npj") {
+    colors <- c("#00A087FF", "white", "#E64B35FF")
+  } else if (colorGradient == "aaas") {
+    colors <- c("#4DBBD5FF", "white", "#E64B35FF")
+  } else if (colorGradient == "d3") {
+    colors <- c("#2CA02CFF", "white", "#FF7F0EFF")
+  } else {
+    colors <- c("#0571b0", "#92c5de", "white", "#f4a582", "#ca0020")
+  }
+
+pca3d$score$colors              <- my.col2rgb(colors)
 pca3d$score$color_legend_vals   <- vals
 pca3d$score$color_legend_type   <- "gradient"
 pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
@@ -622,23 +646,28 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
   }
   
   ## helper: overlay 2-D density + p-value in upper-triangle cells
-  upper_density_with_p <- function(p.mat) {
-    function(data, mapping, ...) {
-      var_x <- sub("^~", "", deparse(mapping$x))
-      var_y <- sub("^~", "", deparse(mapping$y))
-      i     <- match(var_y, colnames(data))
-      j     <- match(var_x, colnames(data))
-      ptxt  <- if (!is.na(p.mat[i, j]))
-        sprintf("p = %.3g", p.mat[i, j]) else ""
-      
-      GGally::ggally_density(data, mapping,
-                             alpha = 0.45, colour = NA) +
-        annotate("text", x = 0.5, y = 0.5, label = ptxt,
-                 size = 4.5, fontface = "bold") +
-        theme_bw()
-    }
+upper_density_with_p <- function(p.mat){
+  function(data, mapping, ...) {
+    ## which PCs are on the axes?
+    var_x <- sub("^~", "", deparse(mapping$x))
+    var_y <- sub("^~", "", deparse(mapping$y))
+
+    ## look-up p-value
+    i <- match(var_y, colnames(data))
+    j <- match(var_x, colnames(data))
+    ptxt <- if (!is.na(p.mat[i, j])) sprintf("p = %.3g", p.mat[i, j]) else ""
+
+    ## mid-points of the current panel
+    xmid <- mean(range(data[[var_x]], na.rm = TRUE))
+    ymid <- mean(range(data[[var_y]], na.rm = TRUE))
+
+    GGally::ggally_density(data, mapping, alpha = 0.45, colour = NA) +
+      annotate("text", x = xmid, y = ymid, label = ptxt,
+               size = 4.5, fontface = "bold") +
+      theme_bw()
   }
-  
+}
+
   ## ── plotting ----------------------------------------------------------
   if (cls.type == "disc") {
     
@@ -712,8 +741,8 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
         data,
         lower = list(continuous = wrap("points",
                                        shape = pch.vec, color = cols)),
-        upper = list(continuous = upper_density_with_p(pval.mat)),
-        diag  = list(continuous = wrap("densityDiag", fill = "#505050",
+        upper = list(continuous = wrap("density", color = "#003366")),
+        diag  = list(continuous = wrap("densityDiag", fill = "#003366",
                                        color = NA)),
         columnLabels = pclabels
       )
@@ -732,8 +761,8 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
       p <- ggpairs(
         data,
         lower = list(continuous = wrap("points", color = cols)),
-        upper = list(continuous = upper_density_with_p(pval.mat)),
-        diag  = list(continuous = wrap("densityDiag", fill = "#505050",
+        upper = list(continuous = wrap("density", color = "#003366")),
+        diag  = list(continuous = wrap("densityDiag", fill = "#003366",
                                        color = NA)),
         columnLabels = pclabels
       )
@@ -772,4 +801,70 @@ make_diag_panel <- function(label) {        # returns a function for ggpairs
                size = 3.5, fontface = "bold") +
       theme_void()
   }
+}
+
+ComputeDbRDAPval <- function(mSetObj = NA, metaCol, distMethod = "euclidean", numPermutations = 999) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  # ── Validate input ───────────────────────────────────────────────────────
+  if (is.null(mSetObj$dataSet$norm)) {
+    AddErrMsg("Normalized data not found!")
+  mSetObj$msgSet$dbRDA.msg <- "NA";
+
+return(mSetObj)
+  }
+
+  metadata <- mSetObj$dataSet$meta.info
+  meta.types <- mSetObj$dataSet$meta.types
+
+  if (!(metaCol %in% colnames(metadata))) {
+    AddErrMsg(paste0("Metadata column '", metaCol, "' not found!"))
+  mSetObj$msgSet$dbRDA.msg <- "NA";
+
+return(mSetObj) 
+ }
+
+  if (meta.types[metaCol] != "cont") {
+    AddErrMsg(paste0("dbRDA is only applicable for continuous metadata. Column '", metaCol, "' is not continuous."))
+  mSetObj$msgSet$dbRDA.msg <- "NA";
+
+return(mSetObj)
+  }
+
+  # ── Data prep ────────────────────────────────────────────────────────────
+  meta.vec <- metadata[[metaCol]]
+  data.mat <- mSetObj$dataSet$norm
+
+  # Match sample rows
+  if (!all(rownames(data.mat) == rownames(metadata))) {
+    ord <- match(rownames(data.mat), rownames(metadata))
+    metadata <- metadata[ord, , drop = FALSE]
+    meta.vec <- metadata[[metaCol]]
+  }
+
+  # ── Run dbRDA ────────────────────────────────────────────────────────────
+  require(vegan)
+
+  dist.mat <- vegdist(data.mat, method = distMethod)
+  dbRDA.res <- capscale(dist.mat ~ meta.vec)
+
+  # ── Permutation test ─────────────────────────────────────────────────────
+  aov.res <- anova.cca(dbRDA.res, permutations = numPermutations)
+
+  stat.msg <- paste0(
+    "[dbRDA] F-value: ",     signif(aov.res$F[1], 5),
+    "; R-squared: ",         signif(summary(dbRDA.res)$constr.chi / summary(dbRDA.res)$tot.chi, 5),
+    "; p-value (based on ",  numPermutations, " permutations): ",
+                             signif(aov.res$`Pr(>F)`[1], 5)
+  )
+
+  mSetObj$msgSet$dbRDA.msg <- stat.msg
+  return(mSetObj)
+}
+
+GetDbrdaMessage <- function(mSetObj = NA, metaCol){
+  mSetObj <- .get.mSet(mSetObj)
+  mSetObj <- ComputeDbRDAPval(mSetObj, metaCol)
+
+  return(mSetObj$msgSet$dbRDA.msg);
 }

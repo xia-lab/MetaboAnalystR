@@ -49,7 +49,7 @@ my.impute.missing <- function(mSetObj = NA,
     
   }else if (tolower(method) == "qrilc") {
     require("imputeLCMD")  # Quantile-Regression Imputation of Left-Censored data
-    
+    set.seed(12345)
     ## ---- 1 · log transform -------------------------------------------------
     # Offset = half of the smallest non-zero value in the entire matrix
     min.pos <- min(int.mat[int.mat > 0], na.rm = TRUE)
@@ -192,7 +192,7 @@ my.impute.missing <- function(mSetObj = NA,
 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
-  mSetObj$dataSet$filt <-as.data.frame(new.mat); 
+  mSetObj$dataSet$filt <- NULL;
   mSetObj$msgSet$replace.msg <- msg
   
   return(.set.mSet(mSetObj))

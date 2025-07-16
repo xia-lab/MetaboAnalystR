@@ -253,7 +253,7 @@ SanityCheckData <- function(mSetObj=NA){
   #  print(naCount)
   mSetObj$dataSet$missingCount <- naCount;
   
-  msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
+  # msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
   
   if(is.null(mSetObj$dataSet$meta.info)){
     mSetObj$dataSet$meta.info <- data.frame(cls);
@@ -335,18 +335,13 @@ if (n.blank == 0) {
   mSetObj$dataSet$containsBlank <- TRUE
 }
 
-  
   qc.msg <- CheckQCRSD(mSetObj)
   msg    <- c(msg, qc.msg)
   
-  
   if(naCount == 0){
-    
-    msg<-c(msg, "Click the <b>Proceed</b> button to the next step.");
+    msg<-c(msg, "No missing values were detected. Click the <b>Proceed</b> button to the next step.");
   }else{  
-    
-    
-    #msg<-c(msg, "<u>By default, missing values will be replaced by 1/5 of min positive values of their corresponding variables</u>");
+    msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
       miss.msg <- "";
       kw.p <- .test.missing.sig(int.mat, cls);
@@ -361,9 +356,6 @@ if (n.blank == 0) {
       miss.msg <- c(miss.msg, mSetObj$msgSet$miss.msg);
       msg<-c(msg,  miss.msg);
     }
-    #msg<-c(msg,
-    #     "Click the <b>Proceed</b> button if you accept the default practice;",
-    #     "Or click the <b>Missing Values</b> button to use other methods.");
   }
   
   
@@ -438,7 +430,7 @@ ReplaceMin <- function(mSetObj=NA){
 #'@import qs
 #'@export
 #'
-RemoveMissingPercent <- function(mSetObj = NA,
+RemoveMissingByPercent <- function(mSetObj = NA,
                                  percent  = 0.20,   # e.g. 0.20 = 20 %
                                  grpWise  = FALSE) {
 
@@ -485,7 +477,7 @@ RemoveMissingPercent <- function(mSetObj = NA,
   ## 3 · Save filtered matrix back --------------------------------------
   rm.cnt <- sum(!good.inx)            # variables removed
 
-    mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
+    #mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
     qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
   
 
@@ -593,12 +585,11 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   #Reset to default
   mSetObj$dataSet$filt <- NULL;
 
-  if(is.null(mSetObj$dataSet$proc)){
-    int.mat <- as.matrix(qs::qread("data_proc.qs"));
+  if(file.exists("preproc.qs")){
+    int.mat <- as.matrix(qs::qread("preproc.qs"));
   }else{
-    int.mat <- as.matrix(mSetObj$dataSet$proc);
-    #print("dim(mSetObj$dataSet$proc)")
-    #print(mSetObj$dataSet$proc);
+    int.mat <- as.matrix(qs::qread("data_proc.qs"));
+
   }
   cls <- mSetObj$dataSet$proc.cls;
   
@@ -702,7 +693,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     msg <- c(msg, filt.res$msg);
   }
   
-  mSetObj$dataSet$filt <- int.mat;
+  #mSetObj$dataSet$filt <- int.mat;
   
   if(is.null(msg)){
     msg <- "No data filtering was performed."
@@ -714,7 +705,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     # make sure metadata are in sync with data
-    my.sync <- .sync.data.metadata(mSetObj$dataSet$filt, mSetObj$dataSet$meta.info);
+    my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
   
@@ -911,9 +902,9 @@ UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
     mSetObj$dataSet$proc.feat.num <- ncol(proc.data);
     qs::qsave(proc.data, file="data_proc.qs");
 
-    if(!is.null(mSetObj$dataSet[["filt"]])){
-      mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
-    }
+    #if(!is.null(mSetObj$dataSet[["filt"]])){
+    ##  mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
+    #}
   }
   
   if(!is.null(mSetObj$dataSet[["norm"]])){
@@ -1638,4 +1629,10 @@ GetContainsBlank <- function(mSetObj = NA) {
     return(0L)
   }
   return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
+}
+
+GetFiltFeatureNumber<- function() {
+
+  mat <- qs::qread("data.filt.qs");
+  return(ncol(mat))
 }

@@ -98,10 +98,9 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
     note.vec <- c(
       note.vec,
     paste0("<br />",
-    "<span style=\"color:orange;\">",
+    "<span style=\"color:darkorange;\">",
     "Reminder: QC samples are useful for QC checks, data filtering and normalization. ",
-    "Delete all <code>QC</code>",
-    "samples using the <b>Data&nbsp;Editor</b> before performing downstream analyses.",
+    "Delete all QC samples using the <b>Data&nbsp;Editor</b> before performing downstream analyses.",
     "</span>"
     )
     )

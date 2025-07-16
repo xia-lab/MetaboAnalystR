@@ -137,13 +137,30 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   if(sum(res$all.pass) == 0){
     return(0);
   }
-  # select only data that passes all filters
-  data.select <- data[res$all.pass, ]
-  data.mean <- data.mean[res$all.pass, ]
-  item <- item[res$all.pass]
 
-  #print(nrow(data.select));
-  #print("data.select======");
+## ---------------- Keep ≤ 1 000 most-significant features ----------------
+sel.idx <- which(res$all.pass)                 # rows that passed all filters
+
+if (length(sel.idx) == 0) {
+  return(0)
+}
+
+## rank the passing rows by raw p-value (ascending)
+sel.idx <- sel.idx[ order(res$P.Value[sel.idx]) ]
+
+## truncate to the top 1 000, if necessary
+if (length(sel.idx) > 1000) {
+  sel.idx <- sel.idx[1:1000]
+}
+
+## subset the data objects
+data.select <- data      [sel.idx, , drop = FALSE]
+data.mean   <- data.mean [sel.idx, , drop = FALSE]
+item        <- item      [sel.idx]
+res         <- res       [sel.idx,  ]
+
+  print(nrow(data.select));
+  print("data.select======");
 
   mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  
@@ -620,8 +637,10 @@ PerformContDRFit <- function(mSetObj=NA, ncpus=1){
     mSetObj <- .get.mSet(mSetObj);
     require(dplyr)
     require(drc)
-    
-    ft_names <- rownames(mSetObj[["dataSet"]][["limma_dose_sig_res"]])
+    sig.tbl <- mSetObj[["dataSet"]][["limma_dose_sig_res"]];
+    sig.tbl <- sig.tbl[ order(sig.tbl$P.Value), , drop = FALSE ]
+    ft_names <- rownames(head(sig.tbl, 1000))
+
     dt <- mSetObj[["dataSet"]][["norm"]]
     #print(rownames(dt));
     dose_vec <- as.numeric(as.character(mSetObj[["dataSet"]][["cls"]]))
