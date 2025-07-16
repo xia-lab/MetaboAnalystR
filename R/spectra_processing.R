@@ -337,7 +337,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_annotation <- "dtx <- FormatMSnAnnotation(mSet, 5L, F)";
   str <- paste0(str, ";\n", cmd_annotation);
   str <- paste0(str, ";\n", "mSet@MSnResults[[\'ResTable\']] <- dtx");
-  
+
   cmd_write <- "write.csv(dtx, file = \'compound_msn_results.csv\', row.names = F, col.names = F)";
   str <- paste0(str, ";\n", cmd_write)
   cmd_write <- "write.table(dtx, file = \'compound_msn_results.tsv\', row.names = F, quote = FALSE, sep = \'\\t\')";
@@ -579,7 +579,7 @@ getSpectraInclusion <- function(){
 #' @description update Spectra 3D PCA, mainly json file
 #' @noRd
 #' @author Zhiqiang Pang
-updateSpectra3DPCA <- function(featureNM = 100){
+updateSpectra3DPCA <- function(featureNM = 100, msopt = "false"){
   load("mSet.rda");
   #.feature_values <- OptiLCMS:::.feature_values;
   
@@ -725,6 +725,17 @@ updateSpectra3DPCA <- function(featureNM = 100){
                                    "@", 
                                    round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
     
+  }
+save(selectRow_idx, file = 'selectRow_idx.rda')
+  if(msopt=="true"){
+    if(file.exists("compound_msn_results_index.qs")){
+        dt_ms2 <- qs::qread("compound_msn_results_index.qs")
+        dt_ms2$peak_idx_vals -> peak_idx_ms2
+        vec_idx <- selectRow_idx
+        vec_idx <- vec_idx[!c(vec_idx %in% peak_idx_ms2)]
+        vec_idx <- vapply(selectRow_idx, function(x){x %in% vec_idx}, logical(1L))
+        cols[vec_idx] <- "rgba(220,220,220,0.05)"
+    }
   }
 
   pca3d$loading$cols <- cols;
@@ -2775,11 +2786,12 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
     if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
       peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
-      peak_mtx <- do.call(rbind, peak_list)
-      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
-      peak_mtx <- peak_mtx[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+      peak_mtx_complete <- do.call(rbind, peak_list)
+      colnames(peak_mtx_complete) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+      peak_mtx <- peak_mtx_complete[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
     } else {
-      peak_mtx <- mSet_raw@MSnData[["peak_mtx"]][mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+      peak_mtx_complete <- mSet_raw@MSnData[["peak_mtx"]]
+      peak_mtx <- peak_mtx_complete[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
     }
     
     DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
@@ -2792,9 +2804,23 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     })
     mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
     mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+    mSetObj[["analSet"]][["peak_mtx_complete"]] <- peak_mtx_complete
   } else {
     mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
     mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+  }
+
+  if(is.null(mSetObj[["analSet"]][["peak_mtx"]])){
+    mSet_raw <- qs::qread("msn_mset_result.qs")    
+    if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
+      peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
+      peak_mtx <- do.call(rbind, peak_list)
+      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+      peak_mtx <- peak_mtx[mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    } else {
+      peak_mtx <- mSet_raw@MSnData[["peak_mtx"]][mSet_raw@MSnResults[["Concensus_spec"]][[1]]+1,]
+    }
+    mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
   }
   
   #save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2678.rda")
@@ -2976,8 +3002,12 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   mSetObj <- .get.mSet(mSetObj);
   MirrorPlotting <- OptiLCMS:::MirrorPlotting;
   parse_ms2peaks <- OptiLCMS:::parse_ms2peaks;
+  save(mSetObj, MirrorPlotting,  parse_ms2peaks,peak_idx, sub_idx, interactive, ppm, file = "PerformMirrorPlotting_input.rda" )
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
-    stop("Your mSet object does not contain MS2 analysis results!")
+    #stop("Your mSet object does not contain MS2 analysis results!")
+    mSet_raw <- qs::qread("msn_mset_result.qs")
+    mSet_raw@MSnResults -> mSetObj[["analSet"]][["ms2res"]] -> MSnResults;
+    mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData
   } else {
     mSetObj[["analSet"]][["ms2res"]] -> MSnResults
     mSetObj[["analSet"]][["ms2data"]] -> MSnData
@@ -3007,10 +3037,10 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     mSetObj[["analSet"]][["ms2res"]] <- MSnResults;
     if(is.list(MSnData[["peak_mtx"]])){
       peak_list <- lapply(MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
-      peak_mtx <- do.call(rbind, peak_list)
-      colnames(peak_mtx) <- c("mzmin", "mzmax", "rtmin", "rtmax")
+      peak_mtx_complete <- do.call(rbind, peak_list)
+      colnames(peak_mtx_complete) <- c("mzmin", "mzmax", "rtmin", "rtmax")
     } else {
-      peak_mtx <- MSnData[["peak_mtx"]]
+      peak_mtx_complete <- MSnData[["peak_mtx"]]
     }
     
     DBAnnoteRes <- lapply(mSetObj[["analSet"]][["ms2res"]][["DBAnnoteRes"]], function(x){
@@ -3022,10 +3052,10 @@ PerformMirrorPlotting <- function(mSetObj=NA,
       }
     })
     mSetObj[["analSet"]][["DBAnnoteRes"]] <- DBAnnoteRes
-    mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
+    mSetObj[["analSet"]][["peak_mtx_complete"]] <- peak_mtx_complete
   } else {
     mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
-    mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
+    mSetObj[["analSet"]][["peak_mtx_complete"]] -> peak_mtx_complete
   }
   
   # fl <- gsub("mz|sec|min", "", featurelabel)
@@ -3033,8 +3063,8 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   # mz <- as.double(fl[1])
   # rt <- as.double(fl[2])
   peak_mtx <- as.data.frame(peak_mtx)
-  mz <- mean(as.numeric(peak_mtx[peak_idx, c(1:2)]))
-  rt <- mean(as.numeric(peak_mtx[peak_idx, c(3:4)]))
+  mz <- mean(as.numeric(peak_mtx_complete[peak_idx, c(1:2)]))
+  rt <- mean(as.numeric(peak_mtx_complete[peak_idx, c(3:4)]))
   mz <- round(mz, 4)
   rt <- round(rt, 2)
   
@@ -3173,7 +3203,23 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     save(px, file = "px.rda")
     print(px)
   }
+  saveRDS(px, file = paste0(gsub(".png|.svg|.pdf", "", imageNM), ".rds"))
+  imageNM <- paste0("mirror_plotting_", peak_idx, "_", sub_idx,"_", dpi, ".png")
   
+  jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
+  sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
+  cat(jsonlist);
+  sink();
+  
+  if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
+    mSetObj[["imgSet"]][["msmsmirror"]] <- df
+  } else {
+    mSetObj[["imgSet"]][["msmsmirror"]] -> df0
+    df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
+    mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
+  }
+
   return(.set.mSet(mSetObj));
 }
 
@@ -3330,4 +3376,59 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 
     idx_order <- order(num_all, decreasing = TRUE)
     return(num_all[idx_order])
+}
+
+checkMS2annotationExists <- function(feature_idx){
+    res_dt <- qs::qread("compound_msn_results_index.qs")
+    if(feature_idx %in% res_dt[,1]){
+        rowidx <- which(feature_idx == res_dt[,1])[1]
+        colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
+            return(which(x == colnames(res_dt)))
+        }, integer(1L))
+        res_vec_cpmd <- res_dt[rowidx, colidx]        
+        return(length(!is.na(res_vec_cpmd)))
+    }
+    return(0)
+}
+
+extractSimScores <- function(feature_idx, topN){
+    res_dt <- qs::qread("compound_msn_results_index.qs")
+    rowidx <- which(feature_idx == res_dt[,1])[1]
+    colidx <- vapply(c("Score_1", "Score_2","Score_3","Score_4","Score_5"), function(x){
+            return(which(x == colnames(res_dt)))
+    }, integer(1L))
+    res_vec <- res_dt[rowidx, colidx[1:topN]]
+    return(as.double(res_vec))
+}
+
+
+extractformulaNMs <- function(feature_idx, topN){
+    res_dt <- qs::qread("compound_msn_results_index.qs")
+    rowidx <- which(feature_idx == res_dt[,1])[1]
+    colidx <- vapply(c("Formula_1", "Formula_2","Formula_3","Formula_4","Formula_5"), function(x){
+            return(which(x == colnames(res_dt)))
+    }, integer(1L))
+    res_vec <- res_dt[rowidx, colidx[1:topN]]
+    return(as.character(res_vec))
+}
+
+
+extractcompoundNMs <- function(feature_idx, topN){
+    res_dt <- qs::qread("compound_msn_results_index.qs")
+    rowidx <- which(feature_idx == res_dt[,1])[1]
+    colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
+            return(which(x == colnames(res_dt)))
+    }, integer(1L))
+    res_vec <- res_dt[rowidx, colidx[1:topN]]
+    return(as.character(res_vec))
+}
+
+extractInchikeys <- function(feature_idx, topN){
+    res_dt <- qs::qread("compound_msn_results_index.qs")
+    rowidx <- which(feature_idx == res_dt[,1])[1]
+    colidx <- vapply(c("InchiKey_1", "InchiKey_2","InchiKey_3","InchiKey_4","InchiKey_5"), function(x){
+            return(which(x == colnames(res_dt)))
+    }, integer(1L))
+    res_vec <- res_dt[rowidx, colidx[1:topN]]
+    return(as.character(res_vec))
 }
