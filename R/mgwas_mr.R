@@ -465,7 +465,9 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = de
   
   exposure_data <- singlesnp_results[singlesnp_results$exposure == exposure, ]
   exposure_data <- exposure_data[order(exposure_data$b), ] # Order by beta.exposure
-
+ 
+exposure_data$SNP <- gsub("\\(", "\n(",exposure_data$SNP)
+  
 p <- ggplot(exposure_data, aes(y = SNP, x = b)) +
   geom_vline(xintercept = ifelse(exponentiate, 1, 0), linetype = "dotted") +
   geom_errorbarh(aes(xmin = lo, xmax = up, size = as.factor(tot), colour = as.factor(tot)), height = 0) +
