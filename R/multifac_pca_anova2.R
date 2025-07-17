@@ -631,19 +631,13 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
   ## ── PERMANOVA p-values for *all* PC pairs -----------------------------
   pc.mat   <- as.matrix(data)
   pval.mat <- matrix(NA_real_, pc.num, pc.num)
-  if(cls.type == "disc"){
   for (i in 1:(pc.num - 1)){
     for (j in (i + 1):pc.num){
-      pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j], cls)
+      pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j], cls, cls.type)
     }
   }
-  }else{
-  for (i in 1:(pc.num - 1)){
-    for (j in (i + 1):pc.num){
-      pval.mat[i, j] <- ComputeMultiVarTest(pc.mat[, i], pc.mat[, j], cls)
-    }
-  }
-  }
+
+  
   
   ## helper: overlay 2-D density + p-value in upper-triangle cells
 upper_density_with_p <- function(p.mat){
@@ -741,7 +735,7 @@ upper_density_with_p <- function(p.mat){
         data,
         lower = list(continuous = wrap("points",
                                        shape = pch.vec, color = cols)),
-        upper = list(continuous = wrap("density", color = "#003366")),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
         diag  = list(continuous = wrap("densityDiag", fill = "#003366",
                                        color = NA)),
         columnLabels = pclabels
@@ -761,7 +755,7 @@ upper_density_with_p <- function(p.mat){
       p <- ggpairs(
         data,
         lower = list(continuous = wrap("points", color = cols)),
-        upper = list(continuous = wrap("density", color = "#003366")),
+        upper = list(continuous = upper_density_with_p(pval.mat)),
         diag  = list(continuous = wrap("densityDiag", fill = "#003366",
                                        color = NA)),
         columnLabels = pclabels
@@ -801,70 +795,4 @@ make_diag_panel <- function(label) {        # returns a function for ggpairs
                size = 3.5, fontface = "bold") +
       theme_void()
   }
-}
-
-ComputeDbRDAPval <- function(mSetObj = NA, metaCol, distMethod = "euclidean", numPermutations = 999) {
-  mSetObj <- .get.mSet(mSetObj)
-
-  # ── Validate input ───────────────────────────────────────────────────────
-  if (is.null(mSetObj$dataSet$norm)) {
-    AddErrMsg("Normalized data not found!")
-  mSetObj$msgSet$dbRDA.msg <- "NA";
-
-return(mSetObj)
-  }
-
-  metadata <- mSetObj$dataSet$meta.info
-  meta.types <- mSetObj$dataSet$meta.types
-
-  if (!(metaCol %in% colnames(metadata))) {
-    AddErrMsg(paste0("Metadata column '", metaCol, "' not found!"))
-  mSetObj$msgSet$dbRDA.msg <- "NA";
-
-return(mSetObj) 
- }
-
-  if (meta.types[metaCol] != "cont") {
-    AddErrMsg(paste0("dbRDA is only applicable for continuous metadata. Column '", metaCol, "' is not continuous."))
-  mSetObj$msgSet$dbRDA.msg <- "NA";
-
-return(mSetObj)
-  }
-
-  # ── Data prep ────────────────────────────────────────────────────────────
-  meta.vec <- metadata[[metaCol]]
-  data.mat <- mSetObj$dataSet$norm
-
-  # Match sample rows
-  if (!all(rownames(data.mat) == rownames(metadata))) {
-    ord <- match(rownames(data.mat), rownames(metadata))
-    metadata <- metadata[ord, , drop = FALSE]
-    meta.vec <- metadata[[metaCol]]
-  }
-
-  # ── Run dbRDA ────────────────────────────────────────────────────────────
-  require(vegan)
-
-  dist.mat <- vegdist(data.mat, method = distMethod)
-  dbRDA.res <- capscale(dist.mat ~ meta.vec)
-
-  # ── Permutation test ─────────────────────────────────────────────────────
-  aov.res <- anova.cca(dbRDA.res, permutations = numPermutations)
-
-  stat.msg <- paste0(
-    "[dbRDA] F-value: ",     signif(aov.res$F[1], 5),
-    "; R-squared: ",         signif(summary(dbRDA.res)$constr.chi / summary(dbRDA.res)$tot.chi, 5),
-    "; p-value (based on ",  numPermutations, " permutations): ",
-                             signif(aov.res$`Pr(>F)`[1], 5)
-  )
-
-  mSetObj$msgSet$dbRDA.msg <- stat.msg
-  return(mSetObj)
-}
-
-GetDbrdaMessage <- function(mSetObj = NA, metaCol){
-  mSetObj <- .get.mSet(mSetObj)
-  mSetObj <- ComputeDbRDAPval(mSetObj, metaCol)
-
-  return(mSetObj$msgSet$dbRDA.msg);
 }
