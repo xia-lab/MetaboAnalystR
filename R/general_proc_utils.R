@@ -273,7 +273,7 @@ SanityCheckData <- function(mSetObj=NA){
   qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
   qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
   
-  ## ------------------------------------------------------------------
+## ------------------------------------------------------------------
 ##  QC / blank-sample consistency checks with minimum thresholds
 ## ------------------------------------------------------------------
 

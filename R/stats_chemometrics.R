@@ -39,14 +39,14 @@ PCA.Anal <- function(mSetObj=NA){
 
   data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
-  if (cls.type == "cont") {                  # ── continuous predictor ──
+  if (cls.type == "cont") {                  
     if (!is.numeric(grp))
       stop("'grp' must be numeric when cls.type = \"cont\"")
 
-    res      <- vegan::adonis2(data.dist ~ grp)   # regression-style test
-    pair.res <- NULL                              # no pairwise contrasts
+    res      <- vegan::adonis2(data.dist ~ grp)   
+    pair.res <- NULL                              
 
-  } else {                                       # ── original behaviour ──
+  } else {                                      
     grp      <- as.factor(grp)
     res      <- vegan::adonis2(data.dist ~ grp)
 
@@ -3041,12 +3041,12 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   dev.off();
 }
 
-ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999, cls.type = "disc") {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
   
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls)
+  res <- .calculateDistSig(pc.mat, cls, cls.type)
   
   # Extract the main results
   resTab <- res[[1]][1, ]

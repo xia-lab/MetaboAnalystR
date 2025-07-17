@@ -2064,60 +2064,119 @@ PlotStaticMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="b
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
+PlotMetaCorrHeatmap <- function(mSetObj      = NA,
+                                cor.opt      = "pearson",
+                                imgName,
+                                format       = "png",
+                                dpi          = 96,
+                                width        = NA,
+                                cor.method   = "univariate",
+                                colorGradient= "default",
+                                interactive  = FALSE) {
 
-PlotMetaCorrHeatmap <- function(mSetObj=NA, cor.opt="pearson", imgName, format="png", dpi=96, width=NA){
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  mSetObj <- .get.mSet(mSetObj);
-  metaData <- mSetObj$dataSet$meta.info;
-  meta.num <- ncol(metaData)
+  ## ── 1 · load objects & metadata ------------------------------------
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  dpi     <- as.numeric(dpi)
 
-  if(is.na(width)){
-    w <- 10
-    h <- 7.5
-    if(meta.num > 10){
-        w <- 16
-        h <- 12
-    }
-  }else if(width == 0){
-    w <- 8;
-    h <- 6;
-  }else{
-    w <- width;
-    h <- width * 0.75;
+  mSetObj <- .get.mSet(mSetObj)
+  metaData <- mSetObj$dataSet$meta.info
+  if (is.null(metaData) || ncol(metaData) < 2)
+    stop("Metadata frame is missing or has <2 variables.")
+
+  ## Optional: discrete/continuous typing ------------------------------
+  meta.types <- mSetObj$dataSet$meta.types
+  if (is.null(meta.types))
+    meta.types <- rep("cont", ncol(metaData))
+
+  disc.inx <- which(meta.types == "disc")
+  cont.inx <- which(meta.types == "cont")
+
+  metaData[metaData == "NA"] <- NA
+  if (length(disc.inx))
+    metaData[disc.inx] <- lapply(metaData[disc.inx], \(x) as.integer(x))
+  if (length(cont.inx))
+    metaData[cont.inx] <- lapply(metaData[cont.inx], \(x) as.numeric(as.character(x)))
+
+  ## ── 2 · correlation matrix -----------------------------------------
+  if (tolower(cor.method) == "partial") {
+    if (!requireNamespace("ppcor", quietly = TRUE))
+      stop("Package 'ppcor' is required for partial correlations.")
+    pc <- ppcor::pcor(metaData, method = cor.opt)
+    cormat <- pc$estimate
+    rownames(cormat) <- colnames(cormat) <- colnames(metaData)
+  } else {                                  # "univariate"
+    cormat <- cor(metaData, method = cor.opt, use = "pairwise.complete.obs")
   }
+  cormat  <- round(cormat, 3)
 
-  textSize = 4;
+  ## Upper triangle only
+  get_upper_tri <- function(mat) { mat[lower.tri(mat)] <- NA; mat }
+  melted <- reshape2::melt(get_upper_tri(cormat), na.rm = TRUE)
+  melted$value <- signif(melted$value, 3)
 
-  library(reshape2)
-  library(ggplot2)
-  library(scales);
+  ## ── 3 · figure size heuristics -------------------------------------
+  meta.num <- ncol(metaData)
+  if (is.na(width)) {
+    if      (meta.num > 25) { width <- 24; textSize <- 3.5 }
+    else if (meta.num > 10) { width <- 16; textSize <- 4   }
+    else                    { width <- 10; textSize <- 4   }
+  }
+  height <- width * 0.75
 
-  met <- sapply(metaData, function(x) as.integer(x));
-  cormat <- round(cor(met, method=cor.opt),3);
-  upper_tri <- get_upper_tri(cormat);
-  melted_cormat <- melt(upper_tri, na.rm = TRUE);
+  ## ── 4 · colour scales ----------------------------------------------
+  colour_scale <- switch(tolower(colorGradient),
+    gbr     = scale_fill_gradient2(low = "green", mid = "black", high = "red",
+                                   midpoint = 0, limits = c(-1, 1), name = "Correlation"),
+    heat    = scale_fill_gradientn(colours = heat.colors(10)),
+    topo    = scale_fill_gradientn(colours = topo.colors(10)),
+    gray    = scale_fill_gradientn(colours = c("grey90", "grey10")),
+    byr     = scale_fill_gradientn(colours = rev(RColorBrewer::brewer.pal(10, "RdYlBu"))),
+    viridis = scale_fill_viridis_c(option = "viridis"),
+    plasma  = scale_fill_viridis_c(option = "plasma"),
+    npj     = scale_fill_gradient2(low = "#00A087FF", mid = "white", high = "#E64B35FF",
+                                   midpoint = 0, limits = c(-1, 1), name = "Correlation"),
+    aaas    = scale_fill_gradient2(low = "#4DBBD5FF", mid = "white", high = "#E64B35FF",
+                                   midpoint = 0, limits = c(-1, 1), name = "Correlation"),
+    d3      = scale_fill_gradient2(low = "#2CA02CFF", mid = "white", high = "#FF7F0EFF",
+                                   midpoint = 0, limits = c(-1, 1), name = "Correlation"),
+              scale_fill_gradient2(low = "blue", mid = "white", high = "red",
+                                   midpoint = 0, limits = c(-1, 1), name = "Correlation")
+  )
 
-  ggheatmap <- ggplot2::ggplot(data = melted_cormat, aes(Var2, Var1, fill = value)) +
-    geom_tile(color = "white")+ scale_y_discrete("Var1", position="right") +
-    scale_fill_gradient2(low = muted("blue"), mid="white", high = muted("red"), midpoint = 0,
-                        limit = c(-1,1), space = "Lab", name="Correlation") + theme_minimal()+ 
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
-          axis.title.x = element_blank(), axis.title.y = element_blank(),axis.text.y = element_blank(), axis.text.y.right = element_text(),
-          legend.direction = "vertical", legend.position="left")+ coord_fixed();
-  
-  ggheatmap <- ggheatmap + geom_text(aes(Var2, Var1, label = value), color = "black", size = textSize);
-  
-  mSetObj$imgSet$meta.corhm <- imgName;
+  ## ── 5 · build ggplot ------------------------------------------------
+  load_ggplot()      # helper in your code base – loads ggplot2 & themes
+  library(scales)
 
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  print(ggheatmap);
-  dev.off();
-  if(.on.public.web){
-    .set.mSet(mSetObj)  
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }  
+  p <- ggplot(melted, aes(Var2, Var1, fill = value)) +
+         geom_tile(colour = "white") +
+         scale_y_discrete(position = "right") +
+         colour_scale +
+         theme_minimal() +
+         theme(axis.text.x  = element_text(angle = 45, vjust = 1, hjust = 1),
+               axis.title.x = element_blank(),
+               axis.title.y = element_blank(),
+               axis.text.y  = element_blank(),
+               axis.text.y.right = element_text(),
+               legend.direction = "vertical",
+               legend.position  = "left") +
+         coord_fixed() +
+         geom_text(aes(label = value), size = textSize, colour = "black")
+
+  ## ── 6 · output: Plotly or static -----------------------------------
+  if (interactive) {
+    library(plotly)
+    margin <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(ggplotly(p), autosize = FALSE,
+                  width = 800, height = 600, margin = margin))
+  } else {
+    mSetObj$imgSet$meta.corhm <- imgName  # keep old slot name
+    .set.mSet(mSetObj)                    # persist path before plotting
+    Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+                 width = width, height = height, type = format, bg = "white")
+    print(p)
+    dev.off()
+    if (.on.public.web) return(1) else return(.set.mSet(mSetObj))
+  }
 }
 
 # Get lower triangle of the correlation matrix
@@ -2144,3 +2203,4 @@ scale_rows = function(x){
   s = apply(x, 1, sd, na.rm = T)
   return((x - m) / s)
 }
+
