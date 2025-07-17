@@ -122,126 +122,165 @@ RF.AnalMeta <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1, selectedM
   return(.set.mSet(mSetObj));
 }
 
+## ───────────────────────────────────────────────────────────────────────
+## 1 · Random-Forest analysis (classification *or* regression)
+## ───────────────────────────────────────────────────────────────────────
+RF.AnalMeta <- function(mSetObj = NA,
+                        treeNum = 500,
+                        tryNum  = 7,
+                        randomOn = 1,
+                        selectedMeta) {
 
-#'Plot Random Forest 
-#'@description Random Forest plot 
-#'@usage PlotRF.ClassifyMeta(mSetObj, imgName, format, dpi, width, type)
-#'@param mSetObj Input name of the created mSet Object
-#'@param imgName Input a name for the plot
-#'@param format Select the image format, "png", or "pdf".
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
-#'@param type plotting type, default is "meta".
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-PlotRF.ClassifyMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type="meta"){
-
-  mSetObj <- .get.mSet(mSetObj);
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj  <- .get.mSet(mSetObj)
+  metaType <- mSetObj$dataSet$meta.types[selectedMeta]
   
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 8;
-  }else{
-    w <- width;
+  meta.info <- mSetObj$dataSet$meta.info
+  y         <- meta.info[[selectedMeta]]        # response
+  
+  ## -------- predictor matrix (keep row order in sync) -----------------
+  X <- mSetObj$dataSet$norm
+  X <- X[match(rownames(meta.info), rownames(X)), ]
+  
+  ## -------- random-seed handling (unchanged) --------------------------
+  if (is.null(mSetObj$dataSet$random.seeds)) {
+    mSetObj$dataSet$random.seeds <- GetRandomNumbers()
+    mSetObj$dataSet$cur.inx <- 0
+    mSetObj$dataSet$rn.seed <- mSetObj$dataSet$random.seeds[1]
   }
-  h <- w*5/8;
-  
-  if(type == "meta"){
-    cls.init <- mSetObj$dataSet$cls.rf
-
-    if(mSetObj$dataSet$types.cls.lbl[mSetObj$dataSet$cls.rf.nm] == "integer"){
-      cls <- as.factor(as.numeric(levels(cls.init))[cls.init]);
-    }else{
-      cls <- cls.init;
-    }
-  }else{
-    cls.init <- mSetObj$dataSet$cls
-    if(mSetObj$dataSet$types.cls.lbl=="integer"){
-      cls <- as.factor(as.numeric(levels(cls.init))[cls.init]);
-    }else{
-      cls <- cls.init;
-    }
+  if (randomOn == -1) {
+    rn.sd <- 123456
+    randomness <- "constant (123456)"
+  } else if (randomOn == 0) {
+    rn.sd <- mSetObj$dataSet$rn.seed
+    randomness <- "fix current seed"
+  } else {
+    cur.inx <- mSetObj$dataSet$cur.inx + 1
+    rn.sd <- mSetObj$dataSet$random.seeds[cur.inx]
+    mSetObj$dataSet$cur.inx <- cur.inx
+    randomness <- "random"
   }
-
-  mSetObj$imgSet$rf.cls <- imgName;
+  set.seed(rn.sd)
+  mSetObj$dataSet$rn.seed <- rn.sd
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  #par(mfrow=c(2,1));
-  par(mar=c(4,4,3,2));
-  cols <- rainbow(length(levels(cls.init))+1);
-  plot(mSetObj$analSet$rf, main="Random Forest classification", col=cols);
-  
-  legend("topright", legend = c("Overall", levels(cls)), lty=2, lwd=1, col=cols);
-  
-  #PlotConfusion(analSet$rf$confusion);
-  
-  dev.off();
-  return(.set.mSet(mSetObj));
-  
-}
-
-
-#'Plot Random Forest variable importance
-#'@description Random Forest plot of variable importance ranked by MeanDecreaseAccuracy 
-#'@usage PlotRF.VIPMeta(mSetObj=NA, imgName, format, dpi, width, type)
-#'@param mSetObj Input name of the created mSet Object
-#'@param imgName Input a name for the plot
-#'@param format Select the image format, "png", or "pdf".
-#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
-#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
-#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
-#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.
-#'@param type type of image
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-PlotRF.VIPMeta <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type="meta"){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 8;
-  }else if(width == 0){
-    w <- 7;
+  ## -------- build the forest -----------------------------------------
+  if (metaType == "disc") {
+    y <- as.factor(y)
+    rf_out <- randomForest::randomForest(x = X,
+                                         y = y,
+                                         ntree = treeNum,
+                                         mtry  = tryNum,
+                                         importance = TRUE,
+                                         proximity = TRUE)
+  } else {                          # continuous → regression
+    mtry <- floor(ncol(X) / 3)
     
-  }else{
-    w <- width;    
+    y <- as.numeric(as.character(y))
+    rf_out <- randomForest::randomForest(x = X,
+                                         y = y,
+                                         ntree = treeNum,
+                                         mtry  = tryNum,
+                                         importance = TRUE)   # proximity not used
   }
-  h <- w*7/8;
-  mSetObj$imgSet$rf.imp <- imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  PlotImpVarMeta(mSetObj, vip.score, "MeanDecreaseAccuracy", type="meta");
-  dev.off();
+  ## -------- variable importance table --------------------------------
+  impmat <- rf_out$importance
+  mdAcc  <- if (metaType == "disc") "MeanDecreaseAccuracy" else "%IncMSE"
+  sigmat <- impmat[, mdAcc, drop = FALSE]
+  sigmat <- sigmat[order(sigmat[, 1], decreasing = TRUE), , drop = FALSE]
+  sigmat <- signif(sigmat, 5)
+  fast.write.csv(sigmat, file = "randomforests_sigfeatures.csv")
   
-  return(.set.mSet(mSetObj));
+  ## -------- store & return -------------------------------------------
+  mSetObj$analSet$rf         <- rf_out
+  mSetObj$analSet$rf.random  <- randomness
+  mSetObj$analSet$rf.sigmat  <- sigmat
+  mSetObj$analSet$meta.vec.rf <- selectedMeta        # keep the name
+  mSetObj$dataSet$cls.rf      <- y                   # factor or numeric
+  mSetObj$dataSet$cls.rf.nm   <- selectedMeta
+  mSetObj$dataSet$norm.meta   <- X
+  
+  .set.mSet(mSetObj)
 }
 
+## ───────────────────────────────────────────────────────────────────────
+## 2 · RF model diagnostic plot (auto class / regression)
+## ───────────────────────────────────────────────────────────────────────
+PlotRF.ClassifyMeta <- function(mSetObj = NA,
+                                imgName,
+                                format = "png",
+                                dpi    = default.dpi,
+                                width  = NA,
+                                type   = "meta") {
+  
+  mSetObj <- .get.mSet(mSetObj)
+  rf_mod  <- mSetObj$analSet$rf
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  
+  w <- ifelse(is.na(width), 9, ifelse(width == 0, 8, width))
+  h <- w * 5 / 8
+  mSetObj$imgSet$rf.cls <- imgName
+  
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
+  par(mar = c(4, 4, 3, 2))
+  
+  if (rf_mod$type == "classification") {
+    cols <- rainbow(ncol(rf_mod$err.rate))
+    plot(rf_mod, main = "Random Forest model (classification)", col = cols)
+    legend("topright",
+           legend = colnames(rf_mod$err.rate),
+           lty = 1,
+           col = cols,
+           bty = "n")
+    
+  } else {                 # regression – plot OOB MSE
+    par(mfrow = c(1, 2))
+    par(mar = c(4, 4, 3, 1))          # adjust margins
+    plot(rf_mod, main = "OOB error (MSE)")
+    plot(rf_mod$y, rf_mod$predicted,
+         xlab = "Observed", ylab = "OOB-Predicted",
+         pch = 16, asp = 1); abline(0, 1, lty = 2)
+    r2 <- cor(rf_mod$y, rf_mod$predicted, use = "complete.obs")^2
+    legend("topleft", legend = sprintf("R² = %.3f", r2),
+           bty = "n", xpd = NA)
+  }
+  
+  dev.off()
+  .set.mSet(mSetObj)
+}
 
-#'Plot PLS important variables,
-#'@description Plot PLS important variables, BHan: added bgcolor parameter for B/W color
-#'@param mSetObj Input name of the created mSet Object
-#'@param imp.vec Input the vector of important variables
-#'@param xlbl Input the x-label
-#'@param feat.num Numeric, set the feature numbers, default is set to 15
-#'@param color.BW Use black-white for plot (T) or colors (F)
-#'@param type type, default is "type"
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-#'@export
-#'
-PlotImpVarMeta <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta"){
+## ───────────────────────────────────────────────────────────────────────
+## 3 · Variable-importance plot (unchanged logic)
+## ───────────────────────────────────────────────────────────────────────
+PlotRF.VIPMeta <- function(mSetObj = NA,
+                           imgName,
+                           format = "png",
+                           dpi    = default.dpi,
+                           width  = NA,
+                           type   = "meta") {
+  
+  mSetObj <- .get.mSet(mSetObj)
+  vip.score <- rev(sort(mSetObj$analSet$rf$importance[, 1]))  # IncMSE or MDA
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  
+  w <- ifelse(is.na(width), 8, ifelse(width == 0, 7, width))
+  h <- w * 7 / 8
+  mSetObj$imgSet$rf.imp <- imgName
+  
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
+  if(mSetObj$analSet$rf$type == "regression"){
+  PlotImpVarCont(mSetObj, vip.score, colnames(mSetObj$analSet$rf$importance)[1],
+                 type = "meta")
+  }else{
+  PlotImpVarDisc(mSetObj, vip.score, colnames(mSetObj$analSet$rf$importance)[1],
+                 type = "meta")
+  }
+  dev.off()
+  .set.mSet(mSetObj)
+}
+
+PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta"){
   mSetObj <- .get.mSet(mSetObj);
   if(type == "meta"){
     norm.data <- mSetObj$dataSet$norm.meta
@@ -363,6 +402,119 @@ PlotImpVarMeta <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
   
   par(op);
 }
+
+
+
+#'Plot PLS important variables,
+#'@description Plot PLS important variables, BHan: added bgcolor parameter for B/W color
+#'@param mSetObj Input name of the created mSet Object
+#'@param imp.vec Input the vector of important variables
+#'@param xlbl Input the x-label
+#'@param feat.num Numeric, set the feature numbers, default is set to 15
+#'@param color.BW Use black-white for plot (T) or colors (F)
+#'@param type type, default is "type"
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotImpVarCont <- function(mSetObj  = NA,
+                           imp.vec  ,
+                           xlbl     ,
+                           feat.num = 15,
+                           nBins    = 3,
+                           color.BW = FALSE,
+                           type     = "meta") {
+  
+  mSetObj <- .get.mSet(mSetObj)
+  rf_mod  <- mSetObj$analSet$rf
+  
+  ## ── top N features ------------------------------------------------
+  feat.num <- max(1, min(feat.num, length(imp.vec)))
+  imp.top  <- sort(rev(sort(imp.vec))[1:feat.num])
+  full.nms <- names(imp.top)
+  short.nms<- substr(full.nms, 1, 14)
+  names(imp.top) <- NULL
+  
+  ## ── fetch data and response ---------------------------------------
+  if (type == "meta") {
+    norm.data <- mSetObj$dataSet$norm.meta
+    y         <- as.numeric(mSetObj$dataSet$cls.rf)
+  } else {
+    norm.data <- mSetObj$dataSet$norm
+    y         <- as.numeric(mSetObj$dataSet$cls)
+  }
+  
+  ## ── check feature presence ----------------------------------------
+  valid.nms <- full.nms[full.nms %in% colnames(norm.data)]
+  if (length(valid.nms) == 0) {
+    warning("None of the importance-ranked features are in normalized data.")
+    return(invisible(.set.mSet(mSetObj)))
+  }
+  full.nms <- valid.nms
+  feat.num <- length(full.nms)
+  short.nms <- substr(full.nms, 1, 14)
+  
+  ## ── bin y into groups using quantiles -----------------------------
+  bins <- cut(
+    y,
+    breaks = quantile(y, probs = seq(0, 1, length.out = nBins + 1), na.rm = TRUE),
+    include.lowest = TRUE,
+    labels = paste0("Bin", seq_len(nBins))
+  )
+  
+  ## ── compute trimmed means in each bin -----------------------------
+  trimmed.means <- by(
+    norm.data[, full.nms, drop = FALSE],
+    bins,
+    function(x) apply(x, 2, mean, trim = 0.1)
+  )
+  mat <- do.call(rbind, trimmed.means)
+  if (is.null(dim(mat)) || any(dim(mat) == 0)) {
+    warning("Failed to compute trimmed means.")
+    return(invisible(.set.mSet(mSetObj)))
+  }
+  
+  ## ── build heatmap coloring matrix ---------------------------------
+  palName <- if (color.BW) "Greys" else "Blues"
+  binCols <- colorRampPalette(RColorBrewer::brewer.pal(10, palName))(nBins)
+  rankMat <- t(apply(mat, 2, rank))
+  
+  op <- par(mar = c(5, 7, 3, 3))  # remove extra right space
+  
+  ## ── gradient color for main dots ----------------------------------
+  colfunc <- colorRampPalette(RColorBrewer::brewer.pal(9, "YlOrRd"))
+  clr.vec <- colfunc(length(imp.top))
+  ord     <- order(imp.top)
+  cols.ordered <- clr.vec
+  cols.ordered[ord] <- clr.vec
+  
+  ## ── draw importance dot chart -------------------------------------
+dotchart(imp.top,
+         pch = 21,
+         xlab = xlbl,
+         cex  = 1.3,               # keep axis label size normal
+         bg   = "white")         # dummy fill, we will override below
+
+## overlay larger colored points (30% larger)
+points(x = imp.top,
+       y = seq_along(imp.top),
+       pch = 21,
+       bg  = cols.ordered,
+       cex = 1.6)  # this is the increased dot size
+
+  mtext(side = 2,
+        at    = seq_len(feat.num),
+        text  = short.nms,
+        las   = 2,
+        line  = 1)
+  
+  par(op)
+  invisible(.set.mSet(mSetObj))
+}
+
+
+
 
 ##############################################
 ##############################################
@@ -1166,4 +1318,85 @@ GetMultiRFSigRowNames <- function(mSetObj=NA){
 GetMultiRFSigColNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   colnames(mSetObj$analSet$rf.sigmat.mf);
+}
+
+PlotRF.OutlierMeta <- function(mSetObj = NA,
+                               imgName,
+                               format = "png",
+                               dpi    = default.dpi,
+                               width  = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  rf_mod  <- mSetObj$analSet$rf
+  isClass <- !is.null(rf_mod$type) && rf_mod$type == "classification"
+if(isClass){
+PlotRF.Outlier(mSetObj,
+                               imgName,
+                               format ,
+                               dpi   ,
+                               width)
+}else{
+PlotRF.OutlierCont(mSetObj,
+                               imgName,
+                               format ,
+                               dpi   ,
+                               width)
+}
+return(1)
+}
+
+PlotRF.OutlierCont <- function(mSetObj = NA,
+                               imgName,
+                               format = "png",
+                               dpi    = default.dpi,
+                               width  = NA) {
+
+  ## ── fetch mSetObj & model -------------------------------
+  mSetObj <- .get.mSet(mSetObj)
+  rf_mod  <- mSetObj$analSet$rf
+
+  ## ── compute |standardized OOB residual| -----------------
+  zres     <- (rf_mod$y - rf_mod$predicted) / sd(rf_mod$y - rf_mod$predicted)
+  dist.res <- abs(zres)
+  names(dist.res) <- rownames(mSetObj$dataSet$norm)
+  ylab.txt <- "|Standardized OOB residual|"
+
+  ## ── color bars by continuous metadata -------------------
+  metaVals <- mSetObj$dataSet$cls.rf
+  rng      <- range(metaVals, na.rm = TRUE)
+  rampCols <- colorRampPalette(c("lightblue","blue"))(100)
+  brks     <- seq(rng[1], rng[2], length.out = 101)
+  idx      <- findInterval(metaVals, brks, rightmost.closed = TRUE)
+  cols     <- rampCols[idx]
+
+  ## ── open device & draw single panel ---------------------
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  w <- ifelse(is.na(width), 9, ifelse(width == 0, 8, width))
+  h <- w * 7/9
+  mSetObj$imgSet$rf.outlier <- imgName
+
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
+
+  # leave a bit of right margin for padding (no legend)
+  par(mar = c(8, 5, 4, 2))
+
+  bp <- barplot(dist.res,
+                border    = "black",
+                col       = cols,
+                las       = 2,       # rotate sample names 90°
+                cex.names = 0.6,
+                ylab      = ylab.txt,
+                main      = "Outlier scores")
+
+  # label the top 5 most extreme
+  topN <- head(order(dist.res, decreasing = TRUE), 5)
+  text(x    = bp[topN],
+       y    = dist.res[topN],
+       labels = names(dist.res)[topN],
+       pos   = 3,
+       cex   = 0.7,
+       xpd   = TRUE)
+
+  dev.off()
+  invisible(.set.mSet(mSetObj))
 }
