@@ -653,7 +653,7 @@ PreparePrenormData <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   if(file.exists("data.edit.qs")){
-    mydata <- qs::qread("data.edit.qs");;
+    prenorm <- qs::qread("data.edit.qs");;
     mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
   }else {
     prenorm <- qs::qread("data_proc.qs");
