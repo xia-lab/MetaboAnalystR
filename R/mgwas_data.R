@@ -91,11 +91,11 @@ QueryExposure <- function(mSetObj=NA, itemsStr){
     merged_table <- merged_table[, new_order]
 
     mSetObj$dataSet$mir.res <- mir.resu;
-    mSetObj$dataSet$exposure <- mSetObj$dataSet$tableView.orig  <- mSetObj$dataSet$tableView <- merged_table;
+    mSetObj$dataSet$exposure <- mSetObj$dataSet$tableView <- merged_table;
     mSetObj$dataSet$exposure.orig <- merged_table;
    # mSetObj$dataSet$tableView.orig$exposure  <- mSetObj$dataSet$tableView$exposure <- merged_table[["Common Name"]]
    # mSetObj$dataSet$tableView.orig$id.exposure  <- mSetObj$dataSet$tableView$id.exposure <- merged_table[["HMDB"]]
-    mSetObj$dataSet$tableView.orig$ifCheck  <- mSetObj$dataSet$tableView$ifCheck <-  TRUE
+    mSetObj$dataSet$tableView$ifCheck <-  TRUE
     #mSetObj$dataSet$mirtarget <- mirtargetu;
     mSetObj$dataSet$mirtable <- unique(mirtableu);
 
@@ -274,11 +274,12 @@ GetResCol <- function(netType, colInx){
 
 # "ID", "Accession","Gene", "PMID"
 GetResColByName <- function(netType, name){
+ 
   mSetObj <- .get.mSet(mSetObj);
   analSet <- mSetObj$analSet$type;
   dataSet <- mSetObj$dataSet;
   df <-dataSet[netType][[1]];
-  if(netType=="tableView" & exists("harmonized.dat", mSetObj$dataSet)){
+   if(netType=="tableView" & exists("harmonized.dat", mSetObj$dataSet)){
      df <-dataSet["harmonized.dat"][[1]];
      colInx <- which(colnames(df) == name);
   
