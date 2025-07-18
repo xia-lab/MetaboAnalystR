@@ -865,7 +865,7 @@ public class MgwasBean implements Serializable {
         String symbolNm = "genes";
         String entrezNm = "gene_id";
         String pvalNm = "P-value";
-        String pvalOut = "pval.exposure";
+        String pvalOut = "pval.outcome";
         String[] keepInx = null;
         String[] ifCheck = null;
         String[] pvaloutcome = null;
@@ -882,7 +882,7 @@ public class MgwasBean implements Serializable {
                 metNm = "exposure";
                 keepInx = MgwasUtils.getResColByName(RC, netType, "mr_keep");
                 pvalNm = "pval.exposure";
-                pvalOut = "pval.exposure";
+                pvalOut = "pval.outcome";
             }
             case "outcome.dat" -> {
                 snpNm = "SNP";
@@ -890,7 +890,7 @@ public class MgwasBean implements Serializable {
                 metNm = "exposure";
                 keepInx = MgwasUtils.getResColByName(RC, netType, "mr_keep.outcome");
                  if (filtPerformed) {
-                    pvalOut = "pval.exposure";
+                    pvalOut = "pval.outcome";
                 }
             }
             case "tableView" -> {
@@ -1357,10 +1357,14 @@ public class MgwasBean implements Serializable {
     }
 
     public void resetSNPTable() {
-        setFiltPerformed(false);
         RConnection RC = sb.getRConnection();
         int res = MgwasUtils.resetSNPEntries(RC, selectedGroupKey);
         if (res == 1) {
+            setPerformClump(true);
+            setPerformProxy(false);
+            setHarmonizeOpt("2");
+            setPleiotropyOpt(false);
+            setUseSteiger(false);
             setupTable("tableView");
             filteredResTable = resTable;
             setupSumTable();
