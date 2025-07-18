@@ -5,7 +5,7 @@
 # Jeff Xia (jeff.xia@xialab.ca)
 ###########################################
 PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
-  save.image('dose.RData');
+  # save.image('dose.RData');
   # Determine covariates
   if (!exists("adj.vec") || length(adj.vec) == 0) {
     covariates <- character(0)

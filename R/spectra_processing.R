@@ -329,6 +329,9 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", cmd_exposome)
   }
 
+  cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
+  str <- paste0(str, ";\n", cmd_summarize)
+
   # progress 190
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
