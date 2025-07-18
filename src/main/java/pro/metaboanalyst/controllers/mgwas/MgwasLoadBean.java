@@ -593,7 +593,11 @@ public class MgwasLoadBean implements Serializable {
     }
 
     public String getOutcome() {
-        return selectedDisease.split("\\|")[0].trim();
+        String disease = selectedDisease.split("\\|")[0].trim();
+        String study = selectedDisease.split("\\|")[1].trim();
+        String link = "<a style=\"font-weight:normal\" href=\"" + "https://gwas.mrcieu.ac.uk/datasets/?gwas_id__icontains=" + study + "\" target=\"_blank\">" + study + "</a>";
+        String outcome = disease + " (Study: " + link + ")";
+        return outcome;
     }
 
 }
