@@ -2083,7 +2083,7 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
   if (is.null(metaData) || ncol(metaData) < 2)
     stop("Metadata frame is missing or has <2 variables.")
  
-  require('ggplot2');
+  require(ggplot2);
   ## Optional: discrete/continuous typing ------------------------------
   meta.types <- mSetObj$dataSet$meta.types
   if (is.null(meta.types))
