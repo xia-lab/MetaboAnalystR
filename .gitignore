@@ -8,3 +8,5 @@ src/*.dll
 vignettes/*.png
 vignettes/*.Rmd
 *.o
+*/.DS_Store
+.DS_Store
