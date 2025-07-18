@@ -96,7 +96,12 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
        mSetObj$dataSet$harmonized.dat <- dat;
-       print(rownames(dat))
+     if(!exists("tableView.orig",   mSetObj$dataSet)){
+        mSetObj$dataSet$tableView.orig <- dat
+        mSetObj$dataSet$exposure.ldp.org <-  exposure.dat
+       mSetObj$dataSet$outcome.dat.org <- outcome.dat
+       }
+      print(rownames(dat))
       .set.mSet(mSetObj)
   
       return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
@@ -998,9 +1003,10 @@ is.numericable <- function(x) {
 
 ResetSNPEntries  <- function(expnm="") {
   
-  mSetObj <- .get.mSet(mSetObj)
-  mSetObj$dataSet$tableView <-   mSetObj$dataSet$tableView.orig 
-  mSetObj$dataSet$harmonized.dat <- NULL
+  mSetObj <- .get.mSet(mSetObj) 
+  mSetObj$dataSet$harmonized.dat <-   mSetObj$dataSet$tableView.orig
+  mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$exposure.ldp.org
+  mSetObj$dataSet$outcome.dat <-   mSetObj$dataSet$outcome.dat.org
   return(.set.mSet(mSetObj));
   
 }

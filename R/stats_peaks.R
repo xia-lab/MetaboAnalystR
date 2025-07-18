@@ -164,6 +164,9 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   ord.inx <- order(mSetObj$dataSet$orig.cls);
   mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
   mSetObj$dataSet$url.smp.nms <- url.smp.nms[ord.inx];
+
+  # save a copy for reproducible analysis
+  mSetObj$dataSet$cls_orig <- mSetObj$dataSet$orig.cls;
   return(.set.mSet(mSetObj));
 }
 

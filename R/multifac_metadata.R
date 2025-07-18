@@ -150,6 +150,9 @@ if (any(blank.flag)) {                          # add only if blanks present
   names(mSetObj$dataSet$types.cls.lbl)   <- colnames(meta.cols)
   mSetObj$dataSet$type.cls.lbl <- class(meta.cols[, 1])
 
+  # save a copy for reproducible analysis
+  mSetObj$dataSet$cls_orig <- mSetObj$dataSet$orig.cls;
+
   return(.set.mSet(mSetObj))
 }
 

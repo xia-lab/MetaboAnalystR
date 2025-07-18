@@ -667,8 +667,12 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   mSetObj$dataSet$mum.type <- "table";
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
+
   #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
+  # save a copy for reproducible analysis
   qs::qsave(conc, file="data_orig.qs");
+  mSetObj$dataSet$cls_orig <- mSetObj$dataSet$orig.cls;
+
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   

@@ -25,7 +25,13 @@ SanityCheckData <- function(mSetObj=NA){
     return(0);
   }  
   msg <- NULL;
-  cls <- mSetObj$dataSet$orig.cls;
+
+  # enhance for reproducible analysis on this page
+  if(!is.null(mSetObj$dataSet$cls_orig)){
+    cls <- mSetObj$dataSet$cls_orig; # use the original version
+  }else{
+    cls <- mSetObj$dataSet$orig.cls;
+  }
   mSetObj$dataSet$small.smpl.size <- 0;
   
   # check class info only for one factor data
