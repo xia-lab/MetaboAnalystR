@@ -1316,22 +1316,20 @@ PlotRF.OutlierCont <- function(mSetObj = NA,
   bp <- barplot(dist.res,
                 border    = "black",
                 col       = cols,
-                las       = 2,         # keep for potential rotation if cex.names > 0
-                cex.names = 0,         # hide sample names
+                las       = 2,       # rotate sample names 90°
+                cex.names = 0.6,
+              names.arg = NA,          # hides sample names
                 ylab      = ylab.txt,
-                main      = "Outlier scores",
-                cex.axis  = 1.2,
-                cex.lab   = 1.2,
-                cex.main  = 1.2)
+                main      = "Outlier scores")
 
   # label the top 5 most extreme
   topN <- head(order(dist.res, decreasing = TRUE), 5)
-  text(x      = bp[topN],
-       y      = dist.res[topN],
+  text(x    = bp[topN],
+       y    = dist.res[topN],
        labels = names(dist.res)[topN],
-       pos    = 3,
-       cex    = 0.84,   # 0.7 * 1.2
-       xpd    = TRUE)
+       pos   = 3,
+       cex   = 0.7,
+       xpd   = TRUE)
 
   dev.off()
   invisible(.set.mSet(mSetObj))
