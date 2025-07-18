@@ -67,7 +67,32 @@ my.save.data <- function(mSetObj=NA){
           proc.data<-t(proc.data);
         }
         fast.write.csv(proc.data, file="data_processed.csv");
-        
+
+        ## ── Write data_processed_input.csv with metadata row ──
+        meta.row.label <- "Class"
+        if (!tsFormat && !is.null(mSetObj$dataSet$meta.info) && ncol(mSetObj$dataSet$meta.info) >= 1) {
+          meta.vec <- as.character(mSetObj$dataSet$meta.info[,1])
+          meta.row.label <- names(mSetObj$dataSet$meta.info)[1]
+        } else {
+          meta.vec <- as.character(mSetObj$dataSet$cls)
+        }
+
+        proc.data.num <- as.matrix(proc.data)  # samples × variables
+        compound.names <- rownames(proc.data.num)
+        sample.names   <- colnames(proc.data.num)
+
+        # Compose the table
+        header      <- c("Sample", sample.names)
+        meta.row    <- c(meta.row.label, meta.vec)
+        data.matrix <- cbind(compound.names, proc.data.num)
+
+        # Combine all and write
+        input.out <- rbind(header, meta.row, data.matrix)
+        write.table(input.out,
+                    file = "data_processed_input.csv",
+                    sep = ",", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+
         if(!is.null(mSetObj$dataSet[["norm"]])){
           if(!tsFormat){
             lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
