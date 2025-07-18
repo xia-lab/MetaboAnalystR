@@ -33,25 +33,37 @@ PCA.Anal <- function(mSetObj=NA){
   #return(length(pca[["center"]]));
 }
 
-# use a PERMANOVA to partition the euclidean distance by groups based on current score plot:
-.calculateDistSig <- function(pc.mat, grp){
+## use a PERMANOVA to partition the Euclidean distance by groups (discrete) or
+# by a continuous covariate, based on the current score plot
+.calculateDistSig <- function(pc.mat, grp, cls.type = "disc") {
 
-    data.dist <- dist(as.matrix(pc.mat), method = 'euclidean');
-    res <- vegan::adonis2(formula = data.dist ~ grp);
+  data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
-    # pairwise for multi-grp
-    if(length(levels(grp)) > 2){
-      pair.res <- .permanova_pairwise(x = data.dist, grp);
-      rownames(pair.res) <- pair.res$pairs;
-      pair.res$pairs <- NULL;
-      pair.res <- signif(pair.res,5);
-      fast.write.csv(pair.res, file="pca_pairwise_permanova.csv");
-    }else{
-      pair.res <- NULL;
+  if (cls.type == "cont") {                  
+    if (!is.numeric(grp))
+      stop("'grp' must be numeric when cls.type = \"cont\"")
+
+    res      <- vegan::adonis2(data.dist ~ grp)   
+    pair.res <- NULL                              
+
+  } else {                                      
+    grp      <- as.factor(grp)
+    res      <- vegan::adonis2(data.dist ~ grp)
+
+    if (length(levels(grp)) > 2) {               # pairwise if >2 levels
+      pair.res           <- .permanova_pairwise(x = data.dist, grp = grp)
+      rownames(pair.res) <- pair.res$pairs
+      pair.res$pairs     <- NULL
+      pair.res           <- signif(pair.res, 5)
+      fast.write.csv(pair.res, file = "pca_pairwise_permanova.csv")
+    } else {
+      pair.res <- NULL
     }
+  }
 
-    return(list(res, pair.res));
+  return(list(res, pair.res))
 }
+
 
 ###adopted from ecole package https://rdrr.io/github/phytomosaic/ecole/
 .permanova_pairwise <- function(x,
@@ -3029,12 +3041,12 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   dev.off();
 }
 
-ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999, cls.type = "disc") {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
   
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls)
+  res <- .calculateDistSig(pc.mat, cls, cls.type)
   
   # Extract the main results
   resTab <- res[[1]][1, ]
@@ -3062,12 +3074,12 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999) {
   )
 }
 
-ComputePERMANOVAstat <- function(pc1, pc2, cls, numPermutations = 999) {
+ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = 999) {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
   
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls)
+  res <- .calculateDistSig(pc.mat, cls, cls.type)
   
   # Extract the main results
   resTab <- res[[1]][1, ]

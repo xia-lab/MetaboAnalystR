@@ -67,7 +67,10 @@ my.save.data <- function(mSetObj=NA){
           proc.data<-t(proc.data);
         }
         fast.write.csv(proc.data, file="data_processed.csv");
+
+        ## ── Write data_processed_input.csv with metadata row ──
         
+
         if(!is.null(mSetObj$dataSet[["norm"]])){
           if(!tsFormat){
             lbls <- cbind("Label"= as.character(mSetObj$dataSet$cls));
