@@ -542,7 +542,7 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
-  save.image("mum.RData");
+  # save.image("mum.RData");
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$check.msg <- NULL;
   if(mSetObj$dataSet$mum.type == "table"){
