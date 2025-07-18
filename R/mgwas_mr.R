@@ -937,52 +937,39 @@ api_request <- function(route, params,
 
 UpdateSNPEntries <- function(col.id, method, value, action, expnm="") {
   #save.image("updateentries.RData");
- 
-  mSetObj <- .get.mSet(mSetObj)
+   mSetObj <- .get.mSet(mSetObj)
 
-   tab <- mSetObj$dataSet$tableView
+   tab <- mSetObj$dataSet$harmonized.dat
    nms <- rownames(tab)
-   
-    if("exposure" %in% colnames(tab)){
-     ifExp = tab$exposure==expnm;
-    }else{
-     ifExp = tab[["Common Name"]]==expnm;
-   }
  
 
   colm <- tab[[col.id]]
  
 if(method == "contain"){
-  hits <- grepl(value, colm, ignore.case = TRUE) & ifExp;
+  hits <- grepl(value, colm, ignore.case = TRUE) ;
 }else if(method == "match"){
-  hits <- tolower(colm) %in% tolower(value)  & ifExp;
+  hits <- tolower(colm) %in% tolower(value) ;
 }else{ # at least
   if(is.numericable(value)){
     
     col.val <- as.numeric(colm);  
-    hits <- (col.val > as.numeric(value))  & ifExp;
-  }else{
+    hits <- (col.val > as.numeric(value)) 
     return("NA");
   }
   
   }
 
 if(action == "keep"){
-  hits = !hits & ifExp;
+  hits = !hits;
 }else{
-  hits = hits & ifExp;
+  hits = hits;
 }
-#print(hits)
+ 
 if(sum(hits) > 0){
    tab <- tab[!hits,]
-   row.ids <- rownames(tab);
-   mSetObj$dataSet$tableView <- tab
-  if(exists("harmonized.dat",mSetObj$dataSet)){
+   #row.ids <- rownames(tab);
+   mSetObj$dataSet$harmonized.dat <- tab
  
-     harmonized.dat <- mSetObj$dataSet$harmonized.dat
-     mSetObj$dataSet$harmonized.dat <- harmonized.dat[rownames(harmonized.dat) %in% rownames(tab),]
-
-  } 
    #nms<-nms[!nms %in% rownames(tab)]
    # tableView.proc <- tableView.proc[!rownames( tableView.proc) %in% nms,]
    # mSetObj$dataSet$tableView.proc <- tableView.proc
@@ -994,8 +981,7 @@ if(sum(hits) > 0){
 }
 
 }
-
-
+ 
 is.numericable <- function(x) {
   !is.na(suppressWarnings(as.numeric(x)))
 }
