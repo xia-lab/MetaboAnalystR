@@ -108,18 +108,6 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   }
 }
 
-## ---------- QC / Blank flag columns ------------------------------------
-qc.flag    <- grepl("^QC",        smpl.nms,      ignore.case = TRUE)
-blank.flag <- grepl("^BL(ANK)?",  smpl.nms,      ignore.case = TRUE)
-
-if (any(qc.flag)) {                             # add only if QC present
-  metadata$QC <- factor(ifelse(qc.flag, "Yes", "No"),
-                        levels = c("Yes", "No"))
-}
-if (any(blank.flag)) {                          # add only if blanks present
-  metadata$Blank <- factor(ifelse(blank.flag, "Yes", "No"),
-                           levels = c("Yes", "No"))
-}
 
   ## ---------- initialise meta.types ----------
   meta.cols <- metadata[ , -1, drop = FALSE]
@@ -297,27 +285,6 @@ UpdateMetaData <- function(mSetObj=NA){
 RemoveSelectedMeta <- function(mSetObj=NA, meta){
   # save.image("rem.RData");
   mSetObj <- .get.mSet(mSetObj);
-
-  if (meta %in% c("QC", "Blank") &&
-      meta %in% colnames(mSetObj$dataSet$meta.info)) {
-
-    ## samples flagged "Yes" (case-insensitive) in this column
-    drop.smpl <- rownames(mSetObj$dataSet$meta.info)[
-      tolower(mSetObj$dataSet$meta.info[[meta]]) %in% c("yes", "qc", "blank")
-    ]
-
-    if (length(drop.smpl) > 0) {
-      feature.nm.vec <<- character(0)   
-      smpl.nm.vec    <<- drop.smpl
-      grp.nm.vec     <<- ""            
-
-      ## UpdateData handles all matrices, class vectors, metadata rows, etc.
-      .set.mSet(mSetObj)
-      UpdateData(mSetObj, order.group = FALSE)
-      mSetObj <- .get.mSet(mSetObj);
-    }
-  }
-
 
   inx <- which(colnames(mSetObj$dataSet$meta.info) == meta);
   mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[, -inx];
