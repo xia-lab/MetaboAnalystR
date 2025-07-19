@@ -1464,6 +1464,28 @@ PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog"
     return(my.enrich.net(mSetObj, netNm, overlapType, type ));
 }
 
+PlotPCAPairSummaryMeta <- function(mSetObj = NA,
+                                   imgName,
+                                   format = "png",
+                                   dpi    = default.dpi,
+                                   width  = NA,
+                                   pc.num,
+                                   meta,
+                                   metaShape = NULL){
+    if(!exists("my.mummichog.enrich.net")){ 
+        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.Rc"));
+    }
+    return(.plotPCAPairSummaryMeta(mSetObj,
+                                   imgName,
+                                   format,
+                                   dpi,
+                                   width,
+                                   pc.num,
+                                   meta,
+                                   metaShape));
+}
+
+
 
 generate_breaks = function(x, n, center = F){
   if(center){

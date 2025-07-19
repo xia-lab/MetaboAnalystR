@@ -63,7 +63,7 @@ RF.AnalMeta <- function(mSetObj = NA,
                         tryNum  = 7,
                         randomOn = 1,
                         selectedMeta) {
-
+  save.image("rf.RData");
   mSetObj  <- .get.mSet(mSetObj)
   metaType <- mSetObj$dataSet$meta.types[selectedMeta]
   
@@ -111,7 +111,7 @@ RF.AnalMeta <- function(mSetObj = NA,
     rf_out <- randomForest::randomForest(x = X,
                                          y = y,
                                          ntree = treeNum,
-                                         mtry  = tryNum,
+                                         mtry  = floor(ncol(X) / 3),
                                          importance = TRUE)   # proximity not used
   }
   
@@ -148,16 +148,18 @@ PlotRF.ClassifyMeta <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
   rf_mod  <- mSetObj$analSet$rf
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
-  
-  w <- ifelse(is.na(width), 9, ifelse(width == 0, 8, width))
+
+  is.classification <- rf_mod$type == "classification"
+  w <- ifelse(is.na(width), ifelse(is.classification, 9, 6), 
+              ifelse(width == 0, ifelse(is.classification, 8, 5.5), width))
   h <- w * 5 / 8
   mSetObj$imgSet$rf.cls <- imgName
-  
+
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
-  par(mar = c(4, 4, 3, 2))
   
-  if (rf_mod$type == "classification") {
+  if (is.classification) {
+    par(mar = c(4, 4, 3, 2))
     cols <- rainbow(ncol(rf_mod$err.rate))
     plot(rf_mod, main = "Random Forest model (classification)", col = cols)
     legend("topright",
@@ -165,19 +167,11 @@ PlotRF.ClassifyMeta <- function(mSetObj = NA,
            lty = 1,
            col = cols,
            bty = "n")
-    
-  } else {                 # regression – plot OOB MSE
-    par(mfrow = c(1, 2))
-    par(mar = c(4, 4, 3, 1))          # adjust margins
+  } else {
+    par(mar = c(4, 4, 3, 1))
     plot(rf_mod, main = "OOB error (MSE)")
-    plot(rf_mod$y, rf_mod$predicted,
-         xlab = "Observed", ylab = "OOB-Predicted",
-         pch = 16, asp = 1); abline(0, 1, lty = 2)
-    r2 <- cor(rf_mod$y, rf_mod$predicted, use = "complete.obs")^2
-    legend("topleft", legend = sprintf("R² = %.3f", r2),
-           bty = "n", xpd = NA)
   }
-  
+
   dev.off()
   .set.mSet(mSetObj)
 }
@@ -1318,7 +1312,7 @@ PlotRF.OutlierCont <- function(mSetObj = NA,
                 col       = cols,
                 las       = 2,       # rotate sample names 90°
                 cex.names = 0.6,
-              names.arg = NA,          # hides sample names
+                names.arg = NA,          # hides sample names
                 ylab      = ylab.txt,
                 main      = "Outlier scores")
 
@@ -1333,4 +1327,101 @@ PlotRF.OutlierCont <- function(mSetObj = NA,
 
   dev.off()
   invisible(.set.mSet(mSetObj))
+}
+
+PlotRFImpRankStability <- function(mSetObj = NA,
+                                   imp.vec.list,
+                                   feat.num = 15,
+                                   imgName = "rf_rank_stability",
+                                   format = "png",
+                                   dpi = 72,
+                                   width = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  # ---- Prepare top features from each importance vector ----
+  top.feat.df <- lapply(imp.vec.list, function(imp.vec) {
+    imp.top <- sort(imp.vec, decreasing = TRUE)
+    topN    <- names(imp.top)[1:min(feat.num, length(imp.top))]
+    data.frame(Feature = topN, stringsAsFactors = FALSE)
+  })
+
+  # ---- Combine and compute frequency of each feature ----
+  all.feats <- do.call(rbind, top.feat.df)
+  all.feats$Feature <- factor(all.feats$Feature)
+  freq.tbl  <- as.data.frame(table(all.feats$Feature))
+  colnames(freq.tbl) <- c("Feature", "Count")
+  freq.tbl <- freq.tbl[order(freq.tbl$Count, decreasing = TRUE), ]
+  freq.tbl$Feature <- factor(freq.tbl$Feature, levels = rev(freq.tbl$Feature))
+
+  # ---- Plot using ggplot2 ----
+  require(ggplot2)
+  require(Cairo)
+  imgName <- paste0(imgName, ".", format)
+  w <- ifelse(is.na(width), 8, width)
+  h <- w * 0.7
+
+  p <- ggplot(freq.tbl, aes(x = Feature, y = Count)) +
+    geom_bar(stat = "identity", fill = "#2b8cbe") +
+    coord_flip() +
+    theme_bw() +
+    ylab("Frequency in Top N") +
+    xlab("Feature") +
+    ggtitle("Rank Stability Across RF Runs") +
+    theme(plot.title = element_text(hjust = 0.5))
+  print(p)
+
+  mSetObj$imgSet$rf.imp.rankstab <- imgName
+  return(.set.mSet(mSetObj))
+}
+
+PlotRF.RegressionDetail <- function(mSetObj = NA,
+                                    imgName  = "rf_regression_detail",
+                                    format   = "png",
+                                    dpi      = default.dpi,
+                                    width    = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  rf_mod  <- mSetObj$analSet$rf
+
+  if (rf_mod$type != "regression") {
+    warning("This function is only for Random Forest regression models.")
+    return(invisible(.set.mSet(mSetObj)))
+  }
+
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  w <- ifelse(is.na(width), 9, ifelse(width == 0, 8, width))
+  h <- w * 5 / 8
+  mSetObj$imgSet$rf.reg.detail <- imgName
+
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = w, height = h, type = format, bg = "white")
+  par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+
+  obs  <- rf_mod$y
+  pred <- rf_mod$predicted
+
+  # ── Plot 1: Observed vs Predicted ───────────────────────────────
+  plot(obs, pred,
+       xlab = "Observed", ylab = "OOB-Predicted",
+       main = "Observed vs Predicted",
+       pch = 16, asp = 1)
+  abline(0, 1, lty = 2)
+  r2 <- cor(obs, pred, use = "complete.obs")^2
+  legend("topleft", legend = sprintf("R² = %.3f", r2),
+         bty = "n", xpd = NA)
+
+  # ── Plot 2: Rank vs Rank ────────────────────────────────────────
+  rk_obs  <- rank(obs)
+  rk_pred <- rank(pred)
+  plot(rk_obs, rk_pred,
+       xlab = "Observed Rank", ylab = "Predicted Rank",
+       main = "Rank-Rank Plot",
+       pch = 16, asp = 1)
+  abline(0, 1, lty = 2)
+  rho <- cor(obs, pred, method = "spearman", use = "complete.obs")
+  legend("topleft", legend = sprintf("ρ = %.3f", rho),
+         bty = "n", xpd = NA)
+
+  dev.off()
+  return(.set.mSet(mSetObj))
 }
