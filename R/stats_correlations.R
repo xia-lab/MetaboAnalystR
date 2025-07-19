@@ -181,15 +181,21 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   
   # compare p-values w. hmisc + cor.test
   # colnames(data) <- substr(colnames(data), 1, 18);
-  if(grepl("partial",cor.method)){
-  library(ppcor);
-  res <- pcor(data, method=gsub("partial_","",cor.method));
-  corr.mat <- res$estimate;
+if (grepl("^p-", cor.method) || grepl("^partial_", cor.method)) {
+  require(ppcor)
+  
+  # Support both "p-pearson" and "partial_pearson"
+  method <- gsub("^(p-|partial_)", "", cor.method)
+  method <- match.arg(method, c("pearson", "spearman", "kendall"))
+  
+  res <- pcor(data, method = method)
+  corr.mat <- res$estimate
   rownames(corr.mat) <- colnames(data)
   colnames(corr.mat) <- colnames(data)
-   }else{
-   corr.mat <- cor(data, method=cor.method);
-  }
+  
+} else {
+  corr.mat <- cor(data, method = cor.method)
+}
 
   # NA gives error w. hclust
   corr.mat[abs(corr.mat) < corrCutoff] <- 0;

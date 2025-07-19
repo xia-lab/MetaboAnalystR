@@ -122,11 +122,11 @@ if (meta %in% colnames(meta.info)) {
         mapping = aes(color = cls)
       )
 
-auxplot <- ggplot(data.frame(cls = cls), aes(x = 1, fill = cls)) +
-  geom_bar(position = "stack") +
-  scale_fill_manual(values = uniq.cols) +
-  labs(color = NULL, fill = NULL) + 
-  theme_void() + theme(legend.position = "bottom")
+    auxplot <- ggplot(data.frame(cls = cls), aes(x = 1, fill = cls)) +
+      geom_bar(position = "stack") +
+      scale_fill_manual(values = uniq.cols) +
+      labs(color = NULL, fill = NULL) + 
+      theme_void() + theme(legend.position = "bottom")
     }
 
     p <- p + theme_bw() +
