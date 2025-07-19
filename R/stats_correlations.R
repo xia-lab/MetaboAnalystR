@@ -574,32 +574,70 @@ GenerateTemplates <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-FeatureCorrelation <- function(mSetObj=NA, dist.name, varName){
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # test if varName is valid
-  if(!varName %in% colnames(mSetObj$dataSet$norm)){
-    AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
-    return(0);
+FeatureCorrelation <- function(mSetObj = NA, dist.name, varName) {
+  mSetObj <- .get.mSet(mSetObj)
+  norm.mat <- mSetObj$dataSet$norm
+
+  # Check valid feature
+  if (!varName %in% colnames(norm.mat)) {
+    AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!")
+    return(0)
   }
-  
-  cbtempl.results <- apply(mSetObj$dataSet$norm, 2, template.match, mSetObj$dataSet$norm[,varName], dist.name);
-  cor.res<-t(cbtempl.results);
-  
-  fdr.col <- p.adjust(cor.res[,3], "fdr");
-  cor.res <- cbind(cor.res, fdr.col);
-  colnames(cor.res)<-c("correlation", "t-stat", "p-value", "FDR");
-  ord.inx<-order(cor.res[,3])
-  sig.mat <-signif(cor.res[ord.inx,],5);
-  
-  fileName <- "correlation_feature.csv";
-  fast.write.csv(sig.mat,file=fileName);
-  
-  mSetObj$analSet$corr$sig.nm <- fileName;
-  mSetObj$analSet$corr$cor.mat <- sig.mat;
-  mSetObj$analSet$corr$pattern <- varName;
-  
-  return(.set.mSet(mSetObj));
+
+  target.vec <- norm.mat[, varName]
+
+  if (grepl("^p-", dist.name) || grepl("^partial_", dist.name)) {
+    require(ppcor)
+    
+    method <- gsub("^(p-|partial_)", "", dist.name)
+    method <- match.arg(method, c("pearson", "spearman", "kendall"))
+    
+    features <- setdiff(colnames(norm.mat), varName)
+    cor.mat <- matrix(NA, nrow = length(features), ncol = 4)
+    rownames(cor.mat) <- features
+
+    for (i in seq_along(features)) {
+      test_feat <- norm.mat[, features[i]]
+      cond_vars <- norm.mat[, setdiff(features, features[i]), drop = FALSE]
+
+      # Ensure complete cases
+      data.df <- data.frame(x = test_feat, y = target.vec, cond_vars)
+      complete <- complete.cases(data.df)
+      if (sum(complete) < 5) next
+
+      res <- tryCatch({
+        pcor.test(x = test_feat[complete], y = target.vec[complete],
+                  z = cond_vars[complete, , drop = FALSE], method = method)
+      }, error = function(e) NULL)
+
+      if (!is.null(res)) {
+        cor.mat[i, ] <- c(res$estimate, res$statistic, res$p.value, NA)
+      }
+    }
+
+    cor.mat[, 4] <- p.adjust(cor.mat[, 3], method = "fdr")
+    colnames(cor.mat) <- c("correlation", "t-stat", "p-value", "FDR")
+
+  } else {
+    # Regular correlation
+    cbtempl.results <- apply(norm.mat, 2, template.match, target.vec, dist.name)
+    cor.mat <- t(cbtempl.results)
+    fdr.col <- p.adjust(cor.mat[, 3], "fdr")
+    cor.mat <- cbind(cor.mat, fdr.col)
+    colnames(cor.mat) <- c("correlation", "t-stat", "p-value", "FDR")
+  }
+
+  ord.inx <- order(cor.mat[, 3])
+  sig.mat <- signif(cor.mat[ord.inx, ], 5)
+
+  fileName <- "correlation_feature.csv"
+  fast.write.csv(sig.mat, file = fileName)
+
+  mSetObj$analSet$corr$sig.nm <- fileName
+  mSetObj$analSet$corr$cor.mat <- sig.mat
+  mSetObj$analSet$corr$pattern <- varName
+
+  return(.set.mSet(mSetObj))
 }
 
 ###########################################
