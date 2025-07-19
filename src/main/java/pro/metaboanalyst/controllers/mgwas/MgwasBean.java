@@ -566,7 +566,7 @@ public class MgwasBean implements Serializable {
             ldProxyOpt = "no_proxy";
         }
 
-        int res;
+        int[] res;
         rm_num_pleiotropy = 0;
         if (ldProxyOpt.equals("use_proxy") & ((ldThresh != 0.8) | (mafThresh != 0.3))) {
             if (!userKeyGiven) {
@@ -584,10 +584,10 @@ public class MgwasBean implements Serializable {
             res = MgwasUtils.performSnpFiltering(sb.getRConnection(), ldclumpOpt, ldProxyOpt, ldProxies, ldThresh, pldSNPs, mafThresh, harmonizeOpt, steigerOpt, current_key);
       }
 
-        if (res > -1) {
-            if (res >= 0) {
+        if (res[0] > -1 | res[1] >-1) {
+ 
                 setupTable("harmonized.dat");
-            }
+                
             clumped = true;
             proxied = true;
             harmonized = true;
@@ -607,16 +607,16 @@ public class MgwasBean implements Serializable {
 
                 int res2 = MgwasUtils.removeEntries(sb.getRConnection(), entriesArray);
                 if (res2 > 0) {
-                    sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed! " + rm_num_pleiotropy + " SNPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
-                } else if (res2 == 0) {
-                    sb.addMessage("Info", "Harmonization succeded! No SNP has been removed." + rm_num_pleiotropy + " NPs are unchecked due to horizontal pleiotropy. You can furthur include/exclude SNPs below if necessary.");
-                } else {
+                           sb.addMessage("Info", "Filtering & Harmonization succeeded! " + res[0] + " SNP(s) have been removed through LD-based and Allele Harmonization. "+ res[1] + " SNP(s) have been removed according to Steiger filtering. "  + rm_num_pleiotropy + " pleiotropic SNP(s) are excluded. You can furthur include/exclude SNPs below if necessary.");
+                 } else if (res2 == 0) {
+                    sb.addMessage("Info", "Filtering & Harmonization succeeded! No SNP has been removed. " + rm_num_pleiotropy + " pleiotropic SNP(s) are excluded. You can furthur include/exclude SNPs below if necessary.");
+                 } else {
                     sb.addMessage("Error", "Unable to exclude " + Arrays.toString(entriesArray) + " from downstream analysis!");
                 }
             } else {
                 sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed!");
             }
-        } else if (res == -2) { // failed at proxy
+        } else if (res[0] == -2) { // failed at proxy
             String err = RDataUtils.getErrMsg(sb.getRConnection());
             sb.addMessage("Error", "Harmonization has failed:" + err);
         } else {

@@ -146,15 +146,15 @@ public class MgwasUtils {
     }
 
  
-    public static int performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt,String steigerOpt, String current_key) {
+   public static int[] performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt,String steigerOpt, String current_key) {
         try {
             String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \"" + ldProxies + "\", \"" + ldThresh + "\", \"" + pldSNPs + "\", \"" + mafThresh + "\", \"" + harmonizeOpt + "\", \"" + steigerOpt + "\", \"" + current_key + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            return RC.eval(rCommand).asInteger();
+            return RC.eval(rCommand).asIntegers();
         } catch (Exception e) {
             System.out.println(e);
         }
-        return -1;
+        return null;
     }
 
     public static String readOpenGWASKey(RConnection RC) {
