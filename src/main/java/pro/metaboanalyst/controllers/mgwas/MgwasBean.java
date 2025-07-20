@@ -49,10 +49,10 @@ public class MgwasBean implements Serializable {
 
     private String ldclumpOpt = "no_ldclump";
     private String ldProxyOpt = "no_proxy";
-    private boolean performClump = true;
+    private boolean performClump = false;
     private boolean performProxy = false;
 
-    private String harmonizeOpt = "2";
+    private String harmonizeOpt = "1";
     private boolean pleiotropyOpt = false;
     private String[] methodOpts = {"mr_egger_regression", "mr_weighted_median", "mr_ivw", "mr_simple_mode", "mr_weighted_mode", "mr_wald_ratio"};
     private boolean ldProxies = true;
@@ -1360,9 +1360,9 @@ public class MgwasBean implements Serializable {
         RConnection RC = sb.getRConnection();
         int res = MgwasUtils.resetSNPEntries(RC, selectedGroupKey);
         if (res == 1) {
-            setPerformClump(true);
+            setPerformClump(false);
             setPerformProxy(false);
-            setHarmonizeOpt("2");
+            setHarmonizeOpt("1");
             setPleiotropyOpt(false);
             setUseSteiger(false);
             setupTable("tableView");
