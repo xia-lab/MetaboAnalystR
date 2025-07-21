@@ -216,7 +216,7 @@ public class WorkflowView implements Serializable {
                             return 2;
                         }
                         NormBean nb = (NormBean) getBeanInstance("nb");
-                        //nb.preparePrenormData();
+                        nb.preparePrenormData();
                         if (nb.getRowNormOpt().equals("SpecNorm") && nb.isSpecNormSpecifed()) {
                             RDataUtils.setSampleNormFactor(sb.getRConnection(), wb.getSampleBeans());
                         }
@@ -1285,7 +1285,7 @@ public class WorkflowView implements Serializable {
                 }
                 case "Normalization", "Normalization_Table", "Normalization Intensity" -> {
                     NormBean nb = (NormBean) getBeanInstance("nb");
-                    //nb.preparePrenormData();
+                    nb.preparePrenormData();
                     nb.performDataNormalization();
                 }
                 case "Volcano" -> {

@@ -110,7 +110,6 @@ public class RPlotCustomizationBean implements Serializable {
 
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
-        System.out.println(plotSource + "========plotSource");
         if (sb.getImageSource().equals("volcano")) {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
         } else {
@@ -125,8 +124,6 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("venn", "plotVennDiagram"),
             Map.entry("scatter3d", "Plot3D"),
             Map.entry("heatmap", "PlotHeatmap"),
-            Map.entry("pca", "PlotPCA"),
-            Map.entry("plsda", "PlotPLSDA"),
             Map.entry("sparseplsda", "PlotSparsePLSDA"),
             Map.entry("rf", "PlotRandomForest"),
             Map.entry("roc", "PlotROC"),
@@ -140,7 +137,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("drcurve", "PlotMetaboliteDRCurve"),
             Map.entry("drmodelbars", "PlotDRModelBars"),
             Map.entry("drhistogram", "PlotDRHistogram"),
-            Map.entry("pcapair", "PlotPCAPairSummaryMeta"),
+            Map.entry("pca_pair_meta", "PlotPCAPairSummaryMeta"),
             Map.entry("selectedfeature", "PlotSelectedFeature"),
             Map.entry("rocboxplot", "PlotRocUnivBoxPlot"),
             Map.entry("testaccuracy", "PlotTestAccuracy"),
@@ -176,4 +173,6 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("mr_leaveoneout", "PlotLeaveOneOut"),
             Map.entry("mr_funnel", "PlotFunnel")
     );
+    
+
 }

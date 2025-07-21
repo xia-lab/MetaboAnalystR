@@ -149,7 +149,9 @@ public class RPlotCustomizationAgent implements Serializable {
                 + originalMain
                 + helperBlocks
                 + "\n\nUser request:\n" + userRequest;
-
+        
+        System.out.print(history);
+        
         chatHistory.add(new ChatMessage("user", userRequest));
 
         /*── 4. call the model ──────────────────────────────────────────────*/

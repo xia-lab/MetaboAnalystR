@@ -2997,7 +2997,7 @@ public class RDataUtils {
 
     public static String[] getMetaDataCol(RConnection RC, String colnm) {
         try {
-            String rcmd = "GetMetaDataCol(\"" + colnm + "\")";
+            String rcmd = "GetMetaDataCol(NA, \"" + colnm + "\")";
             return RC.eval(rcmd).asStrings();
         } catch (Exception rse) {
             LOGGER.error("GetMetaDataCol", rse);
