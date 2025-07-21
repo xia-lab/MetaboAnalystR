@@ -445,12 +445,10 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
     stringsAsFactors = FALSE
   )
 
-  ## ---------- 1. Legend counts & colours ---------------------------------
   counts  <- table(df$category)[c("Sig_Down","Sig_Up","Unsig.")]        # fixed order
   labels  <- paste0(c("Sig_Down","Sig_Up","Unsig."), " [", counts, "]")
   colours <- c("Sig_Down" = "#0080ff", "Sig_Up" = "#ff3333", "Unsig." = "#c0c0c0")
 
-  ## ---------- 2. Build plot ------------------------------------------------
   cls.type <- mSetObj$dataSet$cls.type   # "cont" or "disc"
   xlab     <- ifelse(cls.type == "cont", "log10(FC)", "AveFC (max |Δ|)")
 
@@ -470,7 +468,6 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
              axis.title      = element_text(face = "bold"),
              axis.text       = element_text(colour = "black"))
 
-  ## ---------- 3. Cairo output ---------------------------------------------
   outFile <- paste0(imgNm, "_dpi", dpi, ".", format)
   Cairo::Cairo(file   = outFile,
                width  = 8, height = 6,
@@ -479,7 +476,6 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
   print(p)
   dev.off()
 
-  ## ---------- 4. Book-keeping ---------------------------------------------
   mSetObj$imgSet$dose_volcano_filename <- outFile
   return(.set.mSet(mSetObj))
 }

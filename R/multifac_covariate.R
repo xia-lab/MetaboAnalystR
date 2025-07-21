@@ -105,13 +105,16 @@ RF.AnalMeta <- function(mSetObj = NA,
                                          importance = TRUE,
                                          proximity = TRUE)
   } else {                          # continuous → regression
-    mtry <- floor(ncol(X) / 3)
-    
+    if(tryNum == -1){
+        mtryVal <- floor(ncol(X) / 3)
+    }else{
+        mtryVal <- tryNum;
+    }
     y <- as.numeric(as.character(y))
     rf_out <- randomForest::randomForest(x = X,
                                          y = y,
                                          ntree = treeNum,
-                                         mtry  = floor(ncol(X) / 3),
+                                         mtry  = mtryVal,
                                          importance = TRUE)   # proximity not used
   }
   
