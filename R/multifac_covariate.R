@@ -63,7 +63,7 @@ RF.AnalMeta <- function(mSetObj = NA,
                         tryNum  = 7,
                         randomOn = 1,
                         selectedMeta) {
-  #save.image("rf.RData");
+  save.image("rf.RData");
   mSetObj  <- .get.mSet(mSetObj)
   metaType <- mSetObj$dataSet$meta.types[selectedMeta]
   
