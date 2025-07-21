@@ -86,13 +86,20 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       dat <- TwoSampleMR::harmonise_data(mSetObj$dataSet$exposure.ldp, outcome.dat, action = as.numeric(harmonizeOpt));
       dat <- dat[!duplicated(dat$row),]
       rownames(dat) <- dat$row
+      res = length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat))
+      nr = nrow(dat)
       if(steigerOpt=="use_steiger"){
        dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
        dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
       dat <- TwoSampleMR::steiger_filtering(dat)
+        print(dat$steiger_dir)
        dat<-dat[dat$steiger_dir,]
        dat$steiger_pval <- signif(dat$steiger_pval, digits = 4)
-       }
+       res = c(res,(nr - nrow(dat)))
+       }else{
+         res = c(res,0)
+
+      }
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
        mSetObj$dataSet$harmonized.dat <- dat;
@@ -104,7 +111,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       print(rownames(dat))
       .set.mSet(mSetObj)
   
-      return(length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat)));
+      return(res);
 }
 
 readOpenGWASKey <- function(){
