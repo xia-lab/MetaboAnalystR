@@ -442,7 +442,6 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
              }
            }
         }
-    # checking if some groups have low replicates
       } else if(min.grp.size < 3 | cls.num < 2){
         if(init == 1){
            isNum <- grepl("^-?[0-9.]+$", cls.Clean);
@@ -456,6 +455,12 @@ SanityCheckMeta <- function(mSetObj=NA, init = 1){
            }
         }
       }
+    if(mSetObj$dataSet$design.type %in% c("time", "time0")){
+    if (tolower(meta.name) %in% c("subject", "time")) {
+      mSetObj$dataSet$meta.types[i] <- "disc";
+    }
+  }
+
     
   }
   
