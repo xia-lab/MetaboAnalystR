@@ -10,11 +10,12 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  var.size <- ncol(mSetObj$dataSet$norm);
-  if(var.size > 10){
-    var.size <- 10;# keep top 10 should be sufficient
-  }
-  contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
+  #var.size <- ncol(mSetObj$dataSet$norm);
+  #if(var.size > 10){
+  #  var.size <- 10;# keep top 10 should be sufficient
+  #}
+  #contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
+  contrib <- factoextra::get_pca_var(pca)$contrib;
 
   # obtain variance explained
   sum.pca <- summary(pca);
@@ -30,7 +31,6 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
-  #return(length(pca[["center"]]));
 }
 
 ## use a PERMANOVA to partition the Euclidean distance by groups (discrete) or
@@ -43,7 +43,7 @@ PCA.Anal <- function(mSetObj=NA){
     if (!is.numeric(grp))
       stop("'grp' must be numeric when cls.type = \"cont\"")
 
-    res      <- vegan::adonis2(data.dist ~ grp)   
+    res <- vegan::adonis2(data.dist ~ grp)   
     pair.res <- NULL                              
 
   } else {                                      
@@ -1729,7 +1729,8 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
 
-  my.fun <- function(){
+  dat.in <- list(data=datmat, cls=cls, cv.num=cv.num);
+  dat.in$my.fun <- function(){
     rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
@@ -1737,8 +1738,6 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
     return(my.res);
   }
-  
-  dat.in <- list(data=datmat, cls=cls, cv.num=cv.num, my.fun=my.fun);
   
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
@@ -2129,15 +2128,18 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
   cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
-  my.fun <- function(){
+
+  # fix the order to make sure data defined first
+  dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num);
+  dat.in$my.fun <- function(){
     rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
     }
     my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
+    return(my.res);
   }
-  dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num, my.fun=my.fun);
-  
+
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
 }
@@ -2282,7 +2284,8 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
   cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
   datmat <- as.matrix(mSetObj$dataSet$norm);
   
-  my.fun <- function(){
+  dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums);
+  dat.in$my.fun <- function(){
     rpath <- "../../";
     if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"));
@@ -2295,9 +2298,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
     }
     return(my.res);
   }
-  
-  dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums, my.fun=my.fun);
-  
+ 
   qs::qsave(dat.in, file="dat.in.qs");
   return(.set.mSet(mSetObj));
 }

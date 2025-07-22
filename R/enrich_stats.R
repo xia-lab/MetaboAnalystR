@@ -216,7 +216,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   phenotype <- mSetObj$dataSet$cls;
   
   # there are more steps, better drop a function to compute in the remote env.
-  my.fun <- function(){
+  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits);
+  dat.in$my.fun <- function(){
     gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
     gt.res <- globaltest::result(gt.obj);
     
@@ -235,7 +236,6 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     return(list(gt.res=gt.res, pvals=stat.mat[,1]));
   }
   
-  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
   
   # store necessary data 

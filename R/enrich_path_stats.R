@@ -311,23 +311,23 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
   
+  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits);
   if(method == "gt"){
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
-    my.fun <- function(){
+    dat.in$my.fun <- function(){
       gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
       gt.res <- globaltest::result(gt.obj);
       return(gt.res[,c(5,1)]);
     }
   }else{
     mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
-    my.fun <- function(){
+    dat.in$my.fun <- function(){
       path.data <- dat.in$data;
       ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, test.genes=dat.in$subsets, method="approx");
       return(ga.out[,c(1,3)]);
     }
   }
   
-  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, my.fun=my.fun);
   qs::qsave(dat.in, file="dat.in.qs");
   
   # store data before microservice
