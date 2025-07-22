@@ -10,7 +10,7 @@
   library(ggplot2)
   library(GGally)
   library(grid)
-  save.image("pcapair.RData");
+  # save.image("pcapair.RData");
   ## ── bookkeeping ----------------------------------------------------
   mSetObj  <- .get.mSet(mSetObj)
   pclabels <- paste0("PC", 1:pc.num, " (",
