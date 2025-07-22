@@ -22,10 +22,18 @@ public class OptionBean {
         distMeasureOpts[0] = new SelectItem("pearson", "Pearson r");
         distMeasureOpts[1] = new SelectItem("spearman", "Spearman rank correlation");
         distMeasureOpts[2] = new SelectItem("kendall", "Kendall rank correlation");
-        distMeasureOpts[3] = new SelectItem("partial_pearson", "Pearson (partial)");
-        distMeasureOpts[4] = new SelectItem("partial_spearman", "Spearman (partial)");
-        distMeasureOpts[5] = new SelectItem("partial_kendall", "Kendall (partial)");
+        distMeasureOpts[3] = new SelectItem("p-pearson", "Pearson (partial)");
+        distMeasureOpts[4] = new SelectItem("p-spearman", "Spearman (partial)");
+        distMeasureOpts[5] = new SelectItem("p-kendall", "Kendall (partial)");
         return distMeasureOpts;
+    }
+
+    public SelectItem[] getPartialDistMeasureOpts() {
+        SelectItem[] opts = new SelectItem[3];
+        opts[0] = new SelectItem("pearson", "Pearson r");
+        opts[1] = new SelectItem("spearman", "Spearman rank correlation");
+        opts[2] = new SelectItem("kendall", "Kendall rank correlation");
+        return opts;
     }
 
     public SelectItem[] getTableTypeOpts() {

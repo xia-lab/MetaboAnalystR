@@ -18,12 +18,14 @@
                     <h:form id="form1">  
                         <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 23px; ">
                             <h:panelGrid columns="2" style="width: 600px">
-                                <h:outputLabel style="font-weight: bold" value="Primary metadata:"/>
+                                <h:outputLabel style="font-weight: bold" value="Primary metadata factor:"/>
 
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfMeta}">
-                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}"/>
+                                    <p:ajax update=":ac:form1"/>
+
                                 </p:selectOneMenu>
-                                <h:outputLabel style="font-weight: bold" value="Include metadata for prediction:"/>
+                                <h:outputLabel style="font-weight: bold" value="Include other metadata as predictors:"/>
                                 <p:selectCheckboxMenu  
                                     label="&nbsp; -- None Selected -- &nbsp;" 
                                     styleClass="menu" 
@@ -31,26 +33,72 @@
                                     multiple="true"  
                                     panelStyleClass="panel" 
                                     value="#{mrfBean.predictedMeta}">
-                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
-                                </p:selectCheckboxMenu > 
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}"/>
+                                </p:selectCheckboxMenu>
+                                <h:outputLabel style="font-weight: bold" value="Number of trees to grow (ntree):"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.treeNum}">
+                                    <f:selectItem itemLabel="500" itemValue="500" /> 
+                                    <f:selectItem itemLabel="1000" itemValue="1000" /> 
+                                    <f:selectItem itemLabel="2000" itemValue="2000" /> 
+                                    <f:selectItem itemLabel="5000" itemValue="5000" /> 
+                                </p:selectOneMenu>
+                                <h:outputLabel  rendered="#{mrfBean.contMeta}"
+                                                style="font-weight:bold"
+                                                value="Number of predictors to try (mtry):"/>
+                                <h:panelGrid columns="2" rendered="#{mrfBean.contMeta}">
+                                    <p:selectOneRadio value="#{mrfBean.mtryMode}" >
+                                        <f:selectItem itemLabel="Auto"   itemValue="auto"/>
+                                        <f:selectItem itemLabel="Manual" itemValue="manual"/>
+                                        <p:ajax update=":ac:form1"/>
+
+                                    </p:selectOneRadio>
+
+                                    <p:inputText    style="width:80px;"
+                                                    value="#{mrfBean.tryNum}"
+                                                    disabled="#{mrfBean.mtryMode eq 'auto'}"/>
+
+                                </h:panelGrid>
+
+
+                                <!-- ===== Discrete metadata: keep original single box ===== -->
+                                <h:outputLabel  rendered="#{!mrfBean.contMeta}"
+                                                style="font-weight:bold"
+                                                value="Number of predictors to try (mtry):"/>
+                                <p:inputText    rendered="#{!mrfBean.contMeta}"
+                                                style="width:80px;"
+                                                value="#{mrfBean.tryNum}"/>
                                 <h:outputLabel style="font-weight: bold" value="Randomness:"/>
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfRandom}">
                                     <f:selectItem itemLabel="On" itemValue="1" />
                                     <f:selectItem itemLabel="Fix current random seed" itemValue="0" /> 
                                     <f:selectItem itemLabel="Use a constant (123456)" itemValue="-1" />
                                 </p:selectOneMenu>
+
                             </h:panelGrid>
                             <p:commandButton value="Update" 
                                              onclick="PF('statusDialog').show()"
                                              oncomplete="PF('statusDialog').hide()"
-                                             update=":ac:form1:sumPane  :hisTab:cmdPane :ac:impPane :ac:outPane" 
+                                             update=":ac :infoPane:cmdPane" 
                                              actionListener="#{mrfBean.rfBn_action_time()}"/>   
                         </h:panelGrid>
                         <h:panelGrid columns="2" id="sumPane" style="padding-top: 20px">
-                            <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px" 
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 40px"
                                  src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
-                            <h:outputText escape="false" value="#{mrfBean.confText}"/>
-                        </h:panelGrid>        
+                            <h:panelGrid rendered="#{!mrfBean.contMeta}">
+                                <h:outputText escape="false" value="#{mrfBean.confText}" />
+
+                            </h:panelGrid>
+
+
+                        </h:panelGrid>  
+                        <h:panelGrid columns="2" style="padding-top: 20px" rendered="#{mrfBean.contMeta}">
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 40px"
+                                 src="#{sessionBean1.getCurrentImageURL('rf_reg_detail')}" alt="RFclass"/>
+                        </h:panelGrid>
+
+
                     </h:form>
                 </p:tab>
                 <p:tab title ="Var. Importance">

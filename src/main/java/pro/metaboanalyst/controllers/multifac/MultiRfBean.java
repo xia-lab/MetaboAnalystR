@@ -11,11 +11,13 @@ import java.util.ArrayList;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.util.List;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.Classifying;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
@@ -176,7 +178,8 @@ public class MultiRfBean implements Serializable {
                     Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
                     Classifying.plotRFOutlierMf(sb, sb.getNewImage("rf_outlier"), "png", 150);
                 }
-                case 2 -> sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "
+                case 2 ->
+                    sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "
                             + "categorical primary meta-data!");
                 default -> {
                     sb.addMessage("Error", "Something wrong occured. " + RDataUtils.getErrMsg(sb.getRConnection()));
@@ -189,5 +192,38 @@ public class MultiRfBean implements Serializable {
             LOGGER.error("rfBn_action_time", e);
         }
         return true;
+    }
+    @JsonIgnore
+    @Inject
+    private MultifacBean tb;
+
+    @JsonIgnore
+    public boolean isContMeta() {
+        List<MetaDataBean> beans = tb.getMetaDataBeans();
+        boolean contMeta = false;
+        for (int i = 0; i < beans.size(); i++) {
+            String type = beans.get(i).getParam();
+            String name = beans.get(i).getName();
+
+            if (name.equals(rfMeta)) {
+                if (type.equals("cont")) {
+                    contMeta = true;
+                }
+            }
+        }
+        return contMeta;
+    }
+    private String mtryMode = "auto";
+
+    public String getMtryMode() {
+        return mtryMode;
+    }
+
+    public void setMtryMode(String mtryMode) {
+        this.mtryMode = mtryMode;
+    }
+
+    public Integer getEffectiveMtry() {
+        return "auto".equals(mtryMode) ? -1 : tryNum;
     }
 }

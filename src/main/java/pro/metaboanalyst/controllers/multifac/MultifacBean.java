@@ -304,28 +304,40 @@ public class MultifacBean implements Serializable {
     }
     
     @JsonIgnore
+    
     public SelectItem[] getDiscreteMetaOpts() {
 
         if (discreteMetaOpts == null) {
             List<MetaDataBean> beans = getMetaDataBeans();
             int discCount = 0;
-            for (int i = 0; i < beans.size(); i++) {
-                if (!beans.get(i).getParam().equals("cont")) {
+
+            for (MetaDataBean bean : beans) {
+                if (!"cont".equals(bean.getParam())) {
                     discCount++;
                 }
             }
-            int arrInx = 0;
-            discreteMetaOpts = new SelectItem[discCount];
-            for (int i = 0; i < beans.size(); i++) {
-                if (!beans.get(i).getParam().equals("cont")) {
-                    discreteMetaOpts[arrInx] = new SelectItem(beans.get(i).getName(), beans.get(i).getName());
+
+            // +1 to include the "NA" option
+            discreteMetaOpts = new SelectItem[discCount + 1];
+            discreteMetaOpts[0] = new SelectItem("NA", "Not selected");
+
+            int arrInx = 1; // start after the NA option
+            for (MetaDataBean bean : beans) {
+                if (!"cont".equals(bean.getParam())) {
+                    discreteMetaOpts[arrInx] = new SelectItem(bean.getName(), bean.getName());
                     arrInx++;
                 }
+            }
+
+            // fallback if somehow no options were added (excluding "NA")
+            if (discCount == 0) {
+                discreteMetaOpts = new SelectItem[]{new SelectItem("NA", "Not selected")};
             }
         }
 
         return discreteMetaOpts;
     }
+
 
     public void updateMetaData() {
 

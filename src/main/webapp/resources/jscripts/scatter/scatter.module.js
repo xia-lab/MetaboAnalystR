@@ -69,7 +69,7 @@ Object3D,
         BoxGeometry,
         FontLoader,
         TextGeometry
-}
+        }
 from "../three.module.js";
 
 import { LineGeometry } from './lines/LineGeometry.js'
@@ -4594,19 +4594,19 @@ function updateCustomInfo(index, row) {
 }
 
 function loadMeta() {
-    let mdl_rows = [];
-
-    for (var i = 0; i < gData.metaCol.label.length; i++) {
-
-        mdl_rows.push(
-                {
-                    "label": gData.metaCol.label[i],
-                    "color": gData.metaCol.color[i]
-                }
-        )
-
+    console.log(gData)
+    if (gData.metaCol.type === "gradient") {
+        legendUtils.generateGradientLegend(gData.metaCol);
+    } else {
+        let mdl_rows = [];
+        for (var i = 0; i < gData.metaCol.label.length; i++) {
+            mdl_rows.push({
+                "label": gData.metaCol.label[i],
+                "color": gData.metaCol.color[i]
+            });
+        }
+        legendUtils.generateLegend(mdl_rows);
     }
-    legendUtils.generateLegend(mdl_rows);
 
 
     if (gData.metaShape !== undefined) {
@@ -4625,6 +4625,7 @@ function loadMeta() {
 
 
 }
+
 
 
 function highlightSelectedMeta(name, color, haloBool, encasingType) {

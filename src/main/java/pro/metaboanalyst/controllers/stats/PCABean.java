@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
+import pro.metaboanalyst.rwrappers.TimeSeries;
 
 /**
  *
@@ -94,7 +95,7 @@ public class PCABean implements Serializable {
     }
 
     public String pcaPairBtn_action() {
-        ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 150, pcaPairNum);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"), "png", 150, pcaPairNum, "NA", "NA");
         return null;
     }
 
