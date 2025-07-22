@@ -10,11 +10,12 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  var.size <- ncol(mSetObj$dataSet$norm);
-  if(var.size > 10){
-    var.size <- 10;# keep top 10 should be sufficient
-  }
-  contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
+  #var.size <- ncol(mSetObj$dataSet$norm);
+  #if(var.size > 10){
+  #  var.size <- 10;# keep top 10 should be sufficient
+  #}
+  #contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
+  contrib <- factoextra::get_pca_var(pca)$contrib;
 
   # obtain variance explained
   sum.pca <- summary(pca);
@@ -30,7 +31,6 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
   return(.set.mSet(mSetObj));
-  #return(length(pca[["center"]]));
 }
 
 ## use a PERMANOVA to partition the Euclidean distance by groups (discrete) or
@@ -43,7 +43,7 @@ PCA.Anal <- function(mSetObj=NA){
     if (!is.numeric(grp))
       stop("'grp' must be numeric when cls.type = \"cont\"")
 
-    res      <- vegan::adonis2(data.dist ~ grp)   
+    res <- vegan::adonis2(data.dist ~ grp)   
     pair.res <- NULL                              
 
   } else {                                      
