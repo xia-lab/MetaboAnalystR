@@ -125,9 +125,93 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   meta.cols <- metadata[ , -1, drop = FALSE]
   meta.cols[] <- lapply(meta.cols, factor)
 
-  ## ---------- original time-series checks (unchanged) ----------
-  if (mSetObj$dataSet$design.type %in% c("time", "time0")) {
-    # ... keep your existing time-series validation code here ...
+  if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
+    # determine time factor
+    if(!"time" %in% tolower(colnames(meta.cols))){
+      AddErrMsg("No time points found in your data");
+      AddErrMsg("The time points group must be labeled as <b>Time</b>");
+      return(0);
+    }
+
+    if((mSetObj$dataSet$design.type =="time0" && ncol(meta.cols) != 2 ) || !"subject" %in% tolower(colnames(meta.cols)) ){
+      AddErrMsg("Make sure the metadata table contains two columns named: time and subject!");
+      return(0)
+    }
+
+    if((mSetObj$dataSet$design.type =="time") && (ncol(meta.cols) != 3 || !"subject" %in% tolower(colnames(meta.cols)) || !"phenotype" %in% tolower(colnames(meta.cols)))){
+      AddErrMsg("Make sure the metadata table contains three columns named: time, phenotype and subject");
+      return(0)
+    }
+
+    # determine time factor and should order first by subject then by each time points
+    time.inx <- which(tolower(colnames(meta.cols)) == "time");
+    sbj.inx <- which(tolower(colnames(meta.cols)) == "subject");
+
+    # check if balanced
+    timeFreq <- table(meta.cols[, time.inx]);
+    sbjFreq <- table(meta.cols[, sbj.inx]);
+
+    timeBalanced <- min(timeFreq) == max(timeFreq);
+    sbjFreq <- min(sbjFreq) == max(sbjFreq)
+    
+    if(!timeBalanced){
+      AddErrMsg("Make sure to have equal replicates for each time points: ");
+      AddErrMsg(paste("Found min: ", min(timeFreq), " max: ", max(timeFreq)));
+      AddErrMsg("Maybe specify study design as Multiple factors / covariates");
+      return(0)
+    }
+
+    if(!sbjFreq){
+      AddErrMsg("Make sure to have equal replicates for each subjects:");
+      AddErrMsg(paste("Found min: ", min(sbjFreq), " max: ", max(sbjFreq)));
+      AddErrMsg("Maybe specify study design as Multiple factors / covariates");
+      return(0)
+    }
+
+    enoughRep <- min(timeFreq) > 2 
+
+    if(!enoughRep){
+      AddErrMsg("At least 3 time points are required.");
+      AddErrMsg("Maybe specify study design as Multiple factors / covariates");
+      return(0)
+    }
+
+    ordInx <- order(meta.cols[,sbj.inx], meta.cols[,time.inx])
+
+    meta.cols <- meta.cols[ordInx,]
+    smpl.nms <- smpl.nms[ordInx]
+    time.fac <- meta.cols[,time.inx]
+    exp.fac <- meta.cols[,-time.inx]
+    if(ncol(meta.cols)>2){
+      exp.fac <- exp.fac[,1]
+    }
+
+    mSetObj$dataSet$time.fac <- time.fac;
+    mSetObj$dataSet$exp.fac <- exp.fac;
+    if(mSetObj$dataSet$design.type =="time"){
+        cls.inx <- which(!(tolower(colnames(meta.cols)) %in% c("time","subject")));
+        meta.cols <- meta.cols[,c(cls.inx, time.inx, sbj.inx)];
+
+        facA.lbl <- colnames(meta.cols)[1];
+        cls.lbl <- facA <- meta.cols[,1];
+        mSetObj$dataSet$facA.type <- is.numeric(facA);
+        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
+        mSetObj$dataSet$facA.lbl <- facA.lbl;
+
+        facB.lbl <- colnames(meta.cols)[2];
+        facB <- meta.cols[,2];    
+        mSetObj$dataSet$facB.type <- is.numeric(facB);
+        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
+        mSetObj$dataSet$facB.lbl <- facB.lbl;
+
+    }else{ # time0
+        meta.cols <- meta.cols[,c(time.inx, sbj.inx)];
+        facA.lbl <- colnames(meta.cols)[1];
+        cls.lbl <- facA <- meta.cols[,1];
+        mSetObj$dataSet$facA.type <- is.numeric(facA);
+        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
+        mSetObj$dataSet$facA.lbl <- facA.lbl;
+    }
   }
 
   rownames(meta.cols) <- smpl.nms
