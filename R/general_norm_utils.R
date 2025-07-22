@@ -45,7 +45,6 @@ getFeatureNum <- function(mSetObj=NA){
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
-
   if(!.on.public.web){
     # call this to make sure always restart from the same footing, and taking care of prefiltering steps
     # only required to run local R package, as web will be called from interface during bean init
@@ -169,8 +168,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
     }else if(transNorm=='VsnNorm'){
-      data[is.nan(data)] <- NA
-      data[is.infinite(data)] <- NA
       data <- t(limma::normalizeVSN(t(data)));
       transnm<-"Variance Stabilizing Normalization";
     }else{
