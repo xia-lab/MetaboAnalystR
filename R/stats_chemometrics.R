@@ -360,7 +360,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
     points(pc1, pc2, pch=15, col="magenta");
     text(pc1, pc2, label=text.lbls, pos=4, col ="blue", xpd=T, cex=0.8*pca.cex);
-  }
+    }
   par(op);
   dev.off();
 

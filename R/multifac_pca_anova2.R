@@ -442,11 +442,15 @@ vals.norm[na.inx] <- 0.5
 n_cols <- length(unique(rnk[!is.na(rnk)]))
 
 # Map to a perceptually uniform gradient (viridis works well)
-if (colorGradient == "gbr") {
+  if (colorGradient == "blue") {
+    blues_core <- RColorBrewer::brewer.pal(9, "Blues")[3:9]  # keep index 3-9
+    pal_fun    <- grDevices::colorRampPalette(blues_core)
+    colors     <- pal_fun(n_cols)
+  }else if (colorGradient == "gbr") {
     colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(n_cols)
   } else if (colorGradient == "heat") {
-pal_fun <- grDevices::colorRampPalette(c("#FFFF00", "#FC8D25", "#9B0000"))   # or choose your own stops
-colors  <- pal_fun(n_cols)
+    pal_fun <- grDevices::colorRampPalette(c("#FFFF00", "#FC8D25", "#9B0000"))   # or choose your own stops
+    colors  <- pal_fun(n_cols)
   } else if (colorGradient == "topo") {
     colors <- grDevices::topo.colors(100)
   } else if (colorGradient == "gray") {
@@ -695,13 +699,19 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
              bg = adjustcolor(cols, 0.4), cex = 1.8 * pca.cex)
     }
     
-  } else {  ## ── continuous-colour branch ------------------------------
+} else {          ## ── continuous-colour branch ──────────────────────────
     
+    ## full-sample confidence ellipse (drawn before points)
+    groupVar  <- var(cbind(pc1, pc2), na.rm = TRUE)
+    groupMean <- c(mean(pc1, na.rm = TRUE), mean(pc2, na.rm = TRUE))
+    ell.all   <- ellipse::ellipse(groupVar, centre = groupMean,
+                                  level = reg, npoints = 200)
+
     blues <- rev(colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20))
     numv  <- as.numeric(as.character(colourVar))
     cols  <- blues[cut(numv, breaks = 20, labels = FALSE)]
-    
-    ## shapes
+
+    ## shapes (optional second metadata)
     if (!is.null(shapeVar) && shapeTyp == "disc") {
       shapeVar <- factor(shapeVar)
       pchs.def <- GetShapeSchemaMeta(shapeVar, show, grey.scale)
@@ -709,13 +719,33 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     } else {
       pchs <- 15
     }
-    
-    plot(pc1, pc2, xlab = xlabel, ylab = ylabel, type = "n", main = "Scores Plot")
+
+    ## ---- expand axis limits so the ellipse is fully visible ------------
+    xrg  <- range(c(pc1, ell.all[, 1]), na.rm = TRUE)
+    yrg  <- range(c(pc2, ell.all[, 2]), na.rm = TRUE)
+    ext  <- function(r) diff(r) * 0.07          # 7 % margin
+    xlim <- c(xrg[1] - ext(xrg), xrg[2] + ext(xrg))
+    ylim <- c(yrg[1] - ext(yrg), yrg[2] + ext(yrg))
+
+    ## base plot ----------------------------------------------------------
+    plot(pc1, pc2,
+         xlab = xlabel, ylab = ylabel,
+         xlim = xlim,  ylim = ylim,
+         type = "n",   main = "Scores Plot")
+    grid(col = "lightgray", lty = "dotted", lwd = 1)
+
+    ## draw ellipse for the whole data cloud
+    polygon(ell.all,
+            col = adjustcolor("grey70", alpha.f = 0.25),
+            border = "grey50", lty = 2)
+
+    ## points and (optional) labels --------------------------------------
     points(pc1, pc2, pch = pchs, col = "black", bg = cols, cex = 1.8 * pca.cex)
     if (show == 1)
-      text(pc1, pc2, label = txt, pos = 4, col = "blue", xpd = TRUE, cex = 0.8 * pca.cex)
+      text(pc1, pc2, label = txt, pos = 4, col = "blue",
+           xpd = TRUE, cex = 0.8 * pca.cex)
   }
-  
+
   ## ── unified legend(s) ----------------------------------------------
   par(xpd = TRUE)
   usr <- par("usr"); cx <- par("cxy")[1];  lgdx <- usr[2] + cx; lgdy <- usr[4] - cx

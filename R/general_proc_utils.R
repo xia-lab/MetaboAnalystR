@@ -672,10 +672,9 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     is.blank.nm  <- grepl("^blank", rownames(int.mat), ignore.case = TRUE)
 
     blank.hits <- is.blank.cls | is.blank.nm    # logical vector with no NAs
-
+    print(blank.hits);
   if (any(blank.hits)) {
 
-    ## keep counts *before* filtering so we can report changes
     n.blank.samples <- sum(blank.hits)
     n.feat.before   <- ncol(int.mat)
 
@@ -755,49 +754,52 @@ GetFilterTotalMsg <-function(mSetObj=NA){
 }
 
 
+blankfeatureFiltering <- function(idx_blank, threshold) {
 
-blankfeatureFiltering <- function(idx_blank, threshold){
+  preproc <- qs::qread("preproc.qs")
 
-  preproc <- qs::qread("preproc.qs");
-  
-  res <- apply(preproc, 2, function(x){
-    vec1 <- x[idx_blank]
-    vec2 <- x[-idx_blank]
-    return(mean(vec1, na.rm = T)/mean(vec2, na.rm = T))
+  stopifnot(
+    is.logical(idx_blank),
+    length(idx_blank) == nrow(preproc),
+    any(idx_blank),
+    any(!idx_blank)
+  )
+
+  res <- apply(preproc, 2, function(x) {
+    mean(x[ idx_blank], na.rm = TRUE) /
+      mean(x[!idx_blank], na.rm = TRUE)
   })
-  
-  ## Estimating the threshold for filtering
-  sort_res <- sort(res, decreasing = T)
-  infectPoint <- bede(x= c(1:length(sort_res)), 
-                      y = sort_res, 1)$iplast
-  if(!is.nan(infectPoint)){
-    blk_thresh <- round(sort_res[ceiling(infectPoint)],1)/5
+
+  sort_res    <- sort(res, decreasing = TRUE)
+  infectPoint <- bede(1:length(sort_res), sort_res, 1)$iplast
+
+  if (!is.nan(infectPoint)) {
+    blk_thresh <- round(sort_res[ceiling(infectPoint)], 1) / 5
   } else {
-    blk_thresh <- round(sort_res[length(sort_res)*0.2]) # Keep top 20% FC (sample/blank) peaks
+    blk_thresh <- round(sort_res[length(sort_res) * 0.2])  # top-20 %
   }
-  if(!is.numeric(blk_thresh)){
-    message("No threshold can be evaluted for blank substraction, will use the threshold provided by user!")
-    blk_thresh <- threshold;
+
+  if (!is.numeric(blk_thresh)) {
+    message("No auto threshold; using user-supplied value.")
+    blk_thresh <- threshold
   } else {
-    message(paste0("Threshold for blank filtration has been estimated as ", blk_thresh, "..."))
+    message(sprintf(
+      "Threshold for blank filtration estimated as %.3f …", blk_thresh
+    ))
   }
-  
-  InclusionVec <- apply(preproc, 2, function(x){
-    blkinto <- mean(x[idx_blank], na.rm = T)
-    smlinto <- mean(x[-idx_blank], na.rm = T)
-    if(is.nan(smlinto)){
-      return(FALSE)
-    } else if (is.nan(blkinto)) {
-      return(TRUE)
-    } else if(smlinto/blkinto > blk_thresh){
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
+
+  InclusionVec <- apply(preproc, 2, function(x) {
+    blkinto <- mean(x[ idx_blank], na.rm = TRUE)
+    smlinto <- mean(x[!idx_blank], na.rm = TRUE)
+
+    if (is.nan(smlinto))        FALSE
+    else if (is.nan(blkinto))   TRUE
+    else                        (smlinto / blkinto) > blk_thresh
   })
-  
+
   return(InclusionVec)
 }
+
 
 
 ede <- function (x, y, index) 
