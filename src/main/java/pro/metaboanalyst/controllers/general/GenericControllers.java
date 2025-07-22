@@ -148,6 +148,7 @@ public class GenericControllers implements Serializable {
                     PrimeFaces.current().executeScript("PF('statusDialog').hide()");
                     return;
                 }
+                break;
             case "Name check":
                 if (!dataType.equals("conc")) {
                     sb.addMessage("Error", "The procedure is only applicable to compound concentration data!");

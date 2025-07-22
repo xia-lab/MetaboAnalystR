@@ -34,7 +34,7 @@
                 <p:selectOneRadio id="rowRadio" value="#{normBean.rowNormOpt}" layout="custom">
                     <f:selectItem itemValue="NULL" itemLabel="None"/>
                     <f:selectItem itemValue="SpecNorm" itemLabel="Sample-specific normalization"/>
-                    <f:selectItem itemValue="SumNorm" itemLabel="Normalization by sum (scaled to 1000)"/>
+                    <f:selectItem itemValue="SumNorm" itemLabel="Normalization by sum"/>
                     <f:selectItem itemValue="MedianNorm" itemLabel="Normalization by median"/>
                     <f:selectItem itemValue="SamplePQN" itemLabel="Specify a reference sample"/>
                     <f:selectItem itemValue="GroupPQN" itemLabel="Create a pooled average sample from group"/>
@@ -44,8 +44,10 @@
                 <p:selectOneRadio id="transRadio" value="#{normBean.transNormOpt}" layout="custom">  
                     <f:selectItem itemValue="NULL" itemLabel="None"/>
                     <f:selectItem itemValue="LogNorm" itemLabel="Log(10) transformation"/>
+                    <f:selectItem itemValue="Log2Norm" itemLabel="Log(2) transformation"/>
                     <f:selectItem itemValue="SrNorm" itemLabel="Square root transformation"/>
                     <f:selectItem itemValue="CrNorm" itemLabel="Cube root transformation"/>
+                    <f:selectItem itemValue="VsnNorm" itemLabel="Variance stabilizing normalization"/>
                 </p:selectOneRadio>
                 <p:selectOneRadio id="scaleRadio" value="#{normBean.scaleNormOpt}" layout="custom">  
                     <f:selectItem itemValue="NULL" itemLabel="None"/>
@@ -55,7 +57,7 @@
                     <f:selectItem itemValue="RangeNorm" itemLabel="Range scaling"/>
                 </p:selectOneRadio>
                 <h:panelGrid cellpadding="4" style="border: solid gray thin; width:800px; font-size: 13px; line-height: 28px; padding: 20px 20px 20px 30px; margin-left: 30px" class="surface-card shadow-1 p-4 text-800">
-                    <h:outputText rendered="#{sessionBean1.roc1Col eq 'false'}" value="Sample normalization" style="font-size:13px; font-weight:bold"/>
+                    <h:outputText rendered="#{sessionBean1.roc1Col eq 'false'}" value="Sample normalization" style="font-weight:bold"/>
                     <h:panelGrid columns="3" style="padding:2px 12px 10px 10px"
                                  rendered="#{sessionBean1.roc1Col eq 'false'}">
                         <p:radioButton for="rowRadio" itemIndex="0"/>
@@ -64,7 +66,7 @@
 
                         <p:radioButton for="rowRadio" itemIndex="1"/>
                         <h:panelGroup layout="block" style="width: 360px">
-                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Sample-specific normalization"/>
+                            <p:outputLabel style="font-size:13px; font-weight: bold" value="Sample-specific normalization"/>
                             <h:outputLabel value=" (i.e. weight, volume)"/>
                         </h:panelGroup>
                         <p:commandLink value="Specify" onclick="PF('smplNormDialog').show()"/>
@@ -98,26 +100,16 @@
 
                     </h:panelGrid>
                     <h:panelGrid style="width:100%; border-bottom: darkgray dashed thin; border-top: darkgray dashed thin" 
-                                 rendered="#{sessionBean1.analType eq 'roc' and sessionBean1.dataType eq 'conc'}">
+                                 rendered="#{sessionBean1.analType eq 'roc' and sessionBean1.dataType eq 'conc' and sessionBean1.roc1Col eq 'false'}">
                         <h:panelGroup>
-                            <p:selectBooleanCheckbox value ="#{normBean.includeRatio}" 
-                                                     disabled="#{not (sessionBean1.dataType eq 'conc' and sessionBean1.roc1Col eq 'false')}"
-                                                     style="line-height: 18px"/>
+                            <p:selectBooleanCheckbox value ="#{normBean.includeRatio}" style="line-height: 18px"/>
                             <h:outputLabel style="font-weight: bold" value=" Compute and include metabolite ratios:"/>
                             <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{normBean.ratioNumOpt}">
                                 <f:selectItem itemLabel="Top 20" itemValue="20"/> 
                                 <f:selectItem itemLabel="Top 50" itemValue="50"/> 
                                 <f:selectItem itemLabel="Top 100" itemValue="100"/> 
                             </p:selectOneMenu>
-                            <h:outputLabel style="font-weight: bold" value=" from top 1000 features based on" 
-                                           rendered="#{rocAnalBean.featureRatioOptOut}"/>
-                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{normBean.ratioFilterOpt}" 
-                                             rendered="#{rocAnalBean.featureRatioOptOut}">
-                                <f:selectItem itemLabel="Sum" itemValue="sum"/> 
-                                <f:selectItem itemLabel="Variance" itemValue="var"/>
-                            </p:selectOneMenu>
                         </h:panelGroup>
-
                         <p>
                             Ratios between two metabolite concentrations may carry more information than the two corresponding metabolite 
                             concentrations alone. MetaboAnalyst will compute ratios of all possible metabolite pairs and then 
@@ -125,11 +117,9 @@
                             <u>Note, there is a potential overfitting issue associated with the procedure. The main purpose here is 
                                 to improve the chance of biomarker discovery</u>. You need to validate the performance in independent studies.
                             Log normalization will be performed during the process. You can only perform Data scaling in the next step.
-                            Please note that if your dataset contains more than 1000 compounds/features, MetaboAnalyst would only include the top
-                            1000 features based on the sum or variance of abundance of all compounds/features.
                         </p>
                     </h:panelGrid>
-                    <h:outputText value="Data transformation" style="font-size:13px; font-weight:bold"/>
+                    <h:outputText value="Data transformation" style="font-weight:bold"/>
                     <h:panelGrid columns="2" style="padding:2px 12px 10px 10px">
                         <p:radioButton for="transRadio" itemIndex="0"/>
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="None"/>
@@ -139,18 +129,32 @@
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Log transformation"/>
                             <h:outputLabel value=" (base 10)"/>
                         </h:panelGroup>
+
                         <p:radioButton for="transRadio" itemIndex="2"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Log transformation"/>
+                            <h:outputLabel value=" (base 2)"/>
+                        </h:panelGroup>
+
+                        <p:radioButton for="transRadio" itemIndex="3"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Square root transformation"/>
                             <h:outputLabel value=" (square root of data values)"/>
                         </h:panelGroup>
-                        <p:radioButton for="transRadio" itemIndex="3"/>
+
+                        <p:radioButton for="transRadio" itemIndex="4"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel style="font-size:12px; font-weight: bold" value="Cube root transformation"/>
                             <h:outputLabel value=" (cube root of data values)"/>
                         </h:panelGroup>
+
+                        <p:radioButton for="transRadio" itemIndex="5"/>
+                        <h:panelGroup layout="block">
+                            <p:outputLabel style="font-size:12px; font-weight: bold" value="Variance stabilizing normalization"/>
+                            <h:outputLabel value=" (data-adaptive transformation)"/>
+                        </h:panelGroup>
                     </h:panelGrid>
-                    <h:outputText value="Data scaling" style="font-size:13px; font-weight:bold"/>
+                    <h:outputText value="Data scaling" style="font-weight:bold"/>
                     <h:panelGrid columns="3" style="padding:2px 12px 10px 10px">
                         <p:radioButton for="scaleRadio" itemIndex="0"/>
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="None"/>
@@ -231,8 +235,8 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                             <img style="width:9in;"
-                                src="#{sessionBean1.getCurrentImageURL('norm')}" 
-                                alt="Normalization"/>
+                                 src="#{sessionBean1.getCurrentImageURL('norm')}" 
+                                 alt="Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                     <p:tab title ="Sample View">
@@ -245,7 +249,7 @@
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                             <img style="width:9in;"
-                                src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
+                                 src="#{sessionBean1.getCurrentImageURL('snorm')}" alt="Sample Normalization"/>
                         </h:panelGrid>
                     </p:tab>
                 </p:tabView>

@@ -1145,28 +1145,27 @@ public class DoseResponseBean implements Serializable {
     }
 
     public void populateDeResBeans(double pLvl, double cfLevel) {
-        int res;
+        int res = 0;
         if (contineousDoes) {
             res = RDoseUtils.computeContDoseLimma(sb.getRConnection(), pLvl, cfLevel, FDR);
         } else {
             res = RDoseUtils.computeDoseLimma(sb.getRConnection(), pLvl, cfLevel, FDR);
         }
 
-        RDoseUtils.plotDoseVolcano(sb, sb.getRConnection(), sb.getNewImage("dose_volcano"), 150, "png");
-
         if (res == 0) { // no sig
             sb.addMessage("Error", "No significant features found with current thresholds. Please adjust threhsold to select features to continue.");
             sigOK = false;
         } else if (res > 1000) {
-            sb.addMessage("Error", "Too many signficant features for dose response analysis (max 1000) - current: " + res + "!");
-            sigOK = false;
+            sb.addMessage("warning ", "Only the top 1000 features will be used for curvefitting- current: " + res + "!");
+            sigOK = true;
+
         } else if (res > 0) {
             sigOK = true;
-            dtb.update3CompModel("dose-de");
             sb.addMessage("OK", "A total of " + res + " are identified based on your parameters.");
         }
+        dtb.update3CompModel("dose-de");
     }
-
+    
     @JsonIgnore
     public DefaultStreamedContent getResTableFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/curvefit_detailed_table.csv");

@@ -1495,13 +1495,10 @@ public class RDataUtils {
 
     //deselect certain compounds from further consideration
     // maxAllowed -1 all, 1 use empirical control 
-    public static int filterVariable(SessionBean1 sb, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff) {
+    public static int filterVariable(RConnection RC, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff, String doBlank, double blankcutoff) {
         try {
-            RConnection RC = sb.getRConnection();
-            String rCommand = "FilterVariable(NA" + ", \"" + doQC + "\", " + rsd + ", \"" + varFilter + "\", " + varCutoff + ", \"" + intFilter + "\", " + intCutoff + ")";
+            String rCommand = "FilterVariable(NA" + ", \"" + doQC + "\", " + rsd + ", \"" + varFilter + "\", " + varCutoff + ", \"" + intFilter + "\", " + intCutoff + ", " + doBlank + "," + blankcutoff + ")";
             RCenter.recordRCommand(RC, rCommand);
-            sb.recordRCommandFunctionInfo(rCommand, "Filtering");
-
             return (RC.eval(rCommand).asInteger());
         } catch (Exception e) {
             LOGGER.error("filterVariable", e);
@@ -3264,4 +3261,408 @@ public class RDataUtils {
             LOGGER.error("initPrenormData", e);
         }
     }
+
+    /**
+     * Plot a lollipop chart summarising the percentage of non-missing values in
+     * every sample (wrapper for the R function `PlotMissingDistr`).
+     *
+     * @param sb active SessionBean1 (provides the RServe connection)
+     * @param imgName base file name (no extension) for the graphic
+     * @param format image format (e.g. "png", "tiff", "pdf", "svg")
+     * @param dpi dots-per-inch resolution
+     *
+     * @return 1 on success, 0 on failure
+     */
+    public static int plotMissingDistr(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // R call: let width/height default by passing NA
+            String rCommand = "PlotMissingDistr(NA, \"" + imgName + "\", \""
+                    + format + "\", " + dpi + ", width=NA)";
+
+            RCenter.recordRCommand(RC, rCommand);                 // log the call
+            if (imgName.contains("_filt")) {
+                sb.addGraphicsCMD("qc_miss_filt", rCommand);       // track graphic
+
+            } else {
+                sb.addGraphicsCMD("qc_miss", rCommand);       // track graphic
+            }
+            return RC.eval(rCommand).asInteger();                 // run & return
+        } catch (Exception e) {
+            LOGGER.error("PlotMissingDistr", e);
+        }
+        return 0; // failure
+    }
+
+    public static int plotMissingHeatmap(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // R call: no width parameter needed
+            String rCommand = "PlotMissingHeatmap(NA, \"" + imgName + "\", \"" + format + "\", " + dpi + ")";
+
+            RCenter.recordRCommand(RC, rCommand);                 // log the call
+            if (imgName.contains("_filt")) {
+                sb.addGraphicsCMD("qc_missheatmap_filt", rCommand);          // track graphic under qc_missheat
+
+            } else {
+                sb.addGraphicsCMD("qc_missheatmap", rCommand);          // track graphic under qc_missheat
+            }
+
+            return RC.eval(rCommand).asInteger();                 // run & return result
+        } catch (Exception e) {
+            LOGGER.error("PlotMissingHeatmap", e);
+        }
+        return 0; // failure
+    }
+
+    public static int exportMissingHeatmapJSON(SessionBean1 sb, String jsonFileName) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // Compose the R command
+            String rCommand = "ExportMissingHeatmapJSON(NA, \"" + jsonFileName + "\")";
+
+            // Record and execute the R command
+            RCenter.recordRCommand(RC, rCommand);
+            sb.addGraphicsCMD("qc_missheat_json", rCommand);  // Optional tracking key
+
+            return RC.eval(rCommand).asInteger(); // R function returns 1 on success
+        } catch (Exception e) {
+            LOGGER.error("ExportMissingHeatmapJSON", e);
+        }
+        return 0; // failure
+    }
+
+    public static int removeEntry(RConnection RC, String rowID) {
+        try {
+            String rCommand = "RemoveEntry(NA, \"" + rowID + "\");";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger());
+        } catch (Exception e) {
+        }
+        return 0;
+    }
+
+    public static double[][] getNetStats(RConnection RC) {
+        try {
+            String rCommand = "GetNetStats();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asDoubleMatrix();
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public static String[] getNetNames(RConnection RC) {
+        try {
+            String rCommand = "GetNetNames();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asStrings();
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public static String[] getQueryNum(RConnection RC) {
+        try {
+            String rCommand = "GetQueryNum();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asStrings();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static int[] createIGraph(RConnection RC, String type) {
+        try {
+            String rCommand = "CreateGraph(NA" + ", \"" + type + "\")";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asIntegers();
+        } catch (Exception rse) {
+            System.out.println(rse);
+        }
+        return null;
+    }
+
+    public static String[] getTableNames(RConnection RC) {
+        try {
+            String rCommand = "GetTableNames();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asStrings();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static String[] getSeedsColumn(RConnection RC) {
+        try {
+            String rCommand = "GetSeedsColumn();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asStrings();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static String[] getResCol(RConnection RC, String netType, int colInx) {
+        try {
+            String rcmd = "GetResCol(\"" + netType + "\"," + colInx + ")";
+            //RCenter.recordRCommand(RC, rcmd);
+            return RC.eval(rcmd).asStrings();
+        } catch (Exception rse) {
+            System.out.println(rse);
+            return null;
+        }
+    }
+
+    public static String[] getResRowNames(RConnection RC, String netType) {
+        try {
+            String rCommand = "GetResRowNames(\"" + netType + "\");";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asStrings());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static int prepareNet(RConnection RC, String mirNm, String netNm) {
+        try {
+            String rCommand = "PrepareNet(\"" + mirNm + "\", \"" + netNm + "\")";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception rse) {
+            System.out.println(rse);
+        }
+        return (0);
+    }
+
+    public static String getNetsNamesString(RConnection RC) {
+        try {
+            String rCommand = "GetNetsNameString();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public static String[] getPathRowNames(RConnection RC) {
+        try {
+            String rCommand = "GetPathRowNames();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asStrings());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static String[] getPathCol(RConnection RC, int colInx) {
+        try {
+            String rcmd = "GetPathCol(" + colInx + ")";
+            //RCenter.recordRCommand(RC, rcmd);
+            return RC.eval(rcmd).asStrings();
+        } catch (Exception rse) {
+            System.out.println(rse);
+            return null;
+        }
+    }
+
+    public static int plotRSDViolin(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi) {
+
+        int res = 0;
+
+        try {
+            RConnection RC = sb.getRConnection();
+
+            /* Build the R command ------------------------------------------------*/
+            // width = 0  ⇒ let R use its internal default (pass NA)
+            String widthArg = "NA";
+
+            String rCommand = String.format(
+                    "PlotRSDViolin(NA, \"%s\", \"%s\", %d, %s)",
+                    imgName, format, dpi, widthArg
+            );
+
+            /* Audit trail & graphics bookkeeping ---------------------------------*/
+            RCenter.recordRCommand(RC, rCommand);
+            sb.addGraphicsCMD("qc_rsd", rCommand);
+
+            /* Execute and capture the return value -------------------------------*/
+            res = RC.eval(rCommand).asInteger();
+
+        } catch (Exception e) {
+            LOGGER.error("plotRSDViolin", e);
+        }
+
+        return res;
+    }
+
+    public static boolean setBlankQcBool(RConnection RC,
+            boolean containsQC,
+            boolean containsBlank) {
+        try {
+            String qcFlag = containsQC ? "T" : "F";
+            String blankFlag = containsBlank ? "T" : "F";
+
+            String rCommand = "SetBlankQcBool(NA, " + qcFlag + ", " + blankFlag + ")";
+            RCenter.recordRCommand(RC, rCommand);
+
+            return RC.eval(rCommand).asInteger() == 1;
+        } catch (Exception e) {
+            LOGGER.error("setBlankQcBool", e);
+        }
+        return false;
+    }
+
+    public static int containsMetaPlaceholder(RConnection RC) {
+        int res = 0;
+        try {
+            String updateCmd = "ContainsMetaPlaceholder(NA);";
+            RCenter.recordRCommand(RC, updateCmd);
+            res = RC.eval(updateCmd).asInteger();
+        } catch (Exception e) {
+            LOGGER.error("containsMetaPlaceholder", e);
+        }
+
+        return res;
+    }
+
+    public static boolean checkContainsBlank(SessionBean1 sb) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            String rCommand = "CheckContainsBlank(NA)";
+
+            /* Audit trail & graphics bookkeeping ---------------------------------*/
+            RCenter.recordRCommand(RC, rCommand);
+            int res;
+            /* Execute and capture the return value -------------------------------*/
+            res = RC.eval(rCommand).asInteger();
+            if (res == 1) {
+                return true;
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("plotRSDViolin", e);
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns TRUE if QC samples are flagged in the current mSetObj.
+     *
+     * @param sb active SessionBean1 (provides the RConnection)
+     * @return true ⇢ QC samples present false ⇢ QC samples absent or error
+     * occurred
+     */
+    public static boolean getContainsQC(SessionBean1 sb) {
+
+        try {
+            RConnection RC = sb.getRConnection();
+
+            String rCommand = "GetContainsQC()";   // R helper we added earlier
+            //RCenter.recordRCommand(RC, rCommand);
+            // asInteger(): TRUE → 1, FALSE/NA → 0
+            return RC.eval(rCommand).asInteger() == 1;
+
+        } catch (Exception e) {
+            LOGGER.error("getContainsQC", e);
+            return false;
+        }
+    }
+
+    /**
+     * Returns TRUE if blank injections are flagged in the current mSetObj.
+     *
+     * @param sb active SessionBean1 (provides the RConnection)
+     * @return true ⇢ blanks present false ⇢ blanks absent or error occurred
+     */
+    public static boolean getContainsBlank(SessionBean1 sb) {
+
+        try {
+            RConnection RC = sb.getRConnection();
+
+            String rCommand = "GetContainsBlank()";   // R helper we added earlier
+            //RCenter.recordRCommand(RC, rCommand);
+
+            return RC.eval(rCommand).asInteger() == 1;
+
+        } catch (Exception e) {
+            LOGGER.error("getContainsBlank", e);
+            return false;
+        }
+    }
+
+    public static String getMissingTestMsg(RConnection RC, String type) {
+        try {
+            String rCommand = "GetMissingTestMsg(NA, \"" + type + "\")";
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("GetMissingTestMsg", e);
+            return null;
+        }
+    }
+
+    public static String getMissNumMsg(RConnection RC) {
+        try {
+            String rCommand = "GetMissNumMsg(NA)";
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("GetMissNumMsg", e);
+            return null;
+        }
+    }
+
+    public static int removeMissingByPercent(RConnection RC, double perc, boolean grpWise) {
+        try {
+            String grpWiseStr = grpWise ? "T" : "F";
+
+            String rCommand = "RemoveMissingByPercent(NA" + ", percent=" + perc + ", " + grpWiseStr + ")";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            LOGGER.error("removeMissingByPercent", e);
+        }
+        return 0;
+    }
+    
+    public static String getMissFilterMsg(RConnection RC) {
+        try {
+            String rCommand = "fetchMissFilterMsg(NA)";
+            //String imgName = RC.eval(rCommand).asString();
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("getMissFilterMsg", e);
+        }
+        return null;
+    }
+
+    public static String getFilterTotalMsg(RConnection RC) {
+        try {
+            String rCommand = "GetFilterTotalMsg(NA)";
+            //String imgName = RC.eval(rCommand).asString();
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("getFilterTotalMsg", e);
+        }
+        return null;
+    }
+
 }

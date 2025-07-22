@@ -110,15 +110,15 @@ public class WorkflowView implements Serializable {
     @JsonIgnore
     @Inject
     private FireUserBean fub;
-    
+
     @JsonIgnore
     @Inject
     private DatabaseClient dbc;
-    
+
     @JsonIgnore
     @Inject
     private DiagramView dv;
-         
+
     private int activeIndex = 0;
 
     private String enrichOpt = "ORA";
@@ -727,7 +727,7 @@ public class WorkflowView implements Serializable {
 
                         } else {
                             MebaBean meba = (MebaBean) getBeanInstance("meba");
-                            meba.doDefaultMEBA();
+                            FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
                         }
                     }
                     case "Random Forest2" -> {
@@ -1476,7 +1476,7 @@ public class WorkflowView implements Serializable {
                         success = false;
                     } else {
                         MebaBean meba = (MebaBean) getBeanInstance("meba");
-                        meba.doDefaultMEBA();
+                        FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
                     }
                 }
                 case "Random Forest2" -> {
@@ -1609,7 +1609,6 @@ public class WorkflowView implements Serializable {
             return;
         }
 
-
         String path = sb.getCurrentUser().getHomeDir() + "/workflow.json";
         FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), path);
         File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + fub.getEmail());
@@ -1628,7 +1627,7 @@ public class WorkflowView implements Serializable {
         String fileName = File.createTempFile("workflow_" + sb.getAnalType(), "").getName();
         FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileName + ".json");
         String fileNameOverview = fileName + "_overview";
-   
+
         dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
         HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
         dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName, ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
@@ -1653,26 +1652,46 @@ public class WorkflowView implements Serializable {
 
     public String getReadableType(String type) {
         return switch (type) {
-            case "network" -> "Network Analysis";
-            case "dose" -> "Dose Response Analysis";
-            case "metapaths" -> "Functional Meta-Analysis";
-            case "metadata" -> "Statistical Meta-Analysis";
-            case "raw" -> "LC-MS Spectra Processing";
-            case "pathinteg" -> "Joint Pathway Analysis";
-            case "stat" -> "Statistical Analysis [one factor]";
-            case "mf" -> "Statistical Analysis [metadata table]";
-            case "path" -> "Pathway Analysis";
-            case "mset" -> "Enrichment Analysis";
-            case "roc" -> "Biomarker Analysis";
-            case "power" -> "Power Analysis";
-            case "utils" -> "Other Utilities";
-            case "mass_all", "mummichog", "mass_table" -> "Functional Analysis of MS Peaks";
-            case "msetora" -> "Enrichment Analysis (ORA)";
-            case "msetqea" -> "Enrichment Analysis (QEA)";
-            case "pathqea" -> "Pathway Analysis (QEA)";
-            case "pathora" -> "Pathway Analysis (ORA)";
-            case "msetssp" -> "Enrichment Analysis (Single Sample Profiling data)";
-            default -> type;
+            case "network" ->
+                "Network Analysis";
+            case "dose" ->
+                "Dose Response Analysis";
+            case "metapaths" ->
+                "Functional Meta-Analysis";
+            case "metadata" ->
+                "Statistical Meta-Analysis";
+            case "raw" ->
+                "LC-MS Spectra Processing";
+            case "pathinteg" ->
+                "Joint Pathway Analysis";
+            case "stat" ->
+                "Statistical Analysis [one factor]";
+            case "mf" ->
+                "Statistical Analysis [metadata table]";
+            case "path" ->
+                "Pathway Analysis";
+            case "mset" ->
+                "Enrichment Analysis";
+            case "roc" ->
+                "Biomarker Analysis";
+            case "power" ->
+                "Power Analysis";
+            case "utils" ->
+                "Other Utilities";
+            case "mass_all", "mummichog", "mass_table" ->
+                "Functional Analysis of MS Peaks";
+            case "msetora" ->
+                "Enrichment Analysis (ORA)";
+            case "msetqea" ->
+                "Enrichment Analysis (QEA)";
+            case "pathqea" ->
+                "Pathway Analysis (QEA)";
+            case "pathora" ->
+                "Pathway Analysis (ORA)";
+            case "msetssp" ->
+                "Enrichment Analysis (Single Sample Profiling data)";
+            default ->
+                type;
         };
     }
 

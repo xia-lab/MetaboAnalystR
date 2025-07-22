@@ -52,6 +52,34 @@ public class ProcessBean implements Serializable {
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
     private String msgText;
 
+    private boolean grpMeasure = false;
+    private boolean sanityChecked = false;
+    private boolean grpMissFilter = false;
+
+    public boolean isGrpMeasure() {
+        return grpMeasure;
+    }
+
+    public void setGrpMeasure(boolean grpMeasure) {
+        this.grpMeasure = grpMeasure;
+    }
+
+    public boolean isSanityChecked() {
+        return sanityChecked;
+    }
+
+    public void setSanityChecked(boolean sanityChecked) {
+        this.sanityChecked = sanityChecked;
+    }
+
+    public boolean isGrpMissFilter() {
+        return grpMissFilter;
+    }
+
+    public void setGrpMissFilter(boolean grpMissFilter) {
+        this.grpMissFilter = grpMissFilter;
+    }
+
     private int filterCutoff = 5;
 
     public int getFilterCutoff() {
@@ -145,10 +173,9 @@ public class ProcessBean implements Serializable {
         this.msgText = msgText;
     }
 
-
     public void performSanityCheck() {
 
-        if(sb.isIntegChecked()){
+        if (sb.isIntegChecked()) {
             return;
         }
         RConnection RC = sb.getRConnection();
@@ -202,6 +229,9 @@ public class ProcessBean implements Serializable {
                         editBnDisabled = true;
                     }
 
+                    sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
+                    sb.setContainsQC(RDataUtils.getContainsQC(sb));
+
                 }
                 case "pathinteg" -> {
                     editBnDisabled = true;
@@ -254,6 +284,8 @@ public class ProcessBean implements Serializable {
                         proceedBnDisabled = false;
                         missingDisabled = !RDataUtils.containMissing(RC);
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
+                        sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
+                        sb.setContainsQC(RDataUtils.getContainsQC(sb));
                     } else {
                         msgVec.add("Checking data content ...failed.");
                         msgArray = RDataUtils.getErrorMsgs(RC);
@@ -290,9 +322,49 @@ public class ProcessBean implements Serializable {
         //System.out.println(msgText + "======msgText");
     }
 
-    public String imputeButton_action() {
+    private boolean imputeInit = false;
+    private String missingMsg;
+    private String missingMsgFilt;
+
+    private String missNumMsg;
+
+    public String getMissNumMsg() {
+        return missNumMsg;
+    }
+
+    public String getMissingMsgFilt() {
+        return missingMsgFilt;
+    }
+
+    public void setMissingMsgFilt(String missingMsgFilt) {
+        this.missingMsgFilt = missingMsgFilt;
+    }
+
+    public void setMissNumMsg(String missNumMsg) {
+        this.missNumMsg = missNumMsg;
+    }
+
+    public void imputeButton_action(String type) {
+        if (imputeInit) {
+            return;
+        }
         sb.setMultiGroup(RDataUtils.getGroupNumber(sb.getRConnection()) > 2);
-        return "Missing value";
+        missNumMsg = RDataUtils.getMissNumMsg(sb.getRConnection());
+
+        if (type.equals("orig")) {
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+            RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap"), "png", 150);
+            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap"));
+            missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection(), "orig");
+
+        } else {
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "png", 150);
+            RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap_filt"), "png", 150);
+            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap_filt"));
+            missingMsgFilt = RDataUtils.getMissingTestMsg(sb.getRConnection(), "filt");
+
+        }
+        imputeInit = true;
     }
 
     public String skipButton_action_default() {
@@ -302,6 +374,7 @@ public class ProcessBean implements Serializable {
             jrd.record_skipButton_action_default(sb);
             return null;
         }
+        jrd.record_skipButton_action_default(sb);
 
         if (sb.getDataType().equals("mass_all")) {
             return "mzlibview";
@@ -310,7 +383,9 @@ public class ProcessBean implements Serializable {
         RConnection RC = sb.getRConnection();
         String analType = sb.getAnalType();
 
+        //not performing replaceMin, only creates data_proc.qs at the moment.
         RDataUtils.replaceMin(RC);
+
         if (!analType.equals("mf")) {
             sb.setMultiGroup(RDataUtils.getGroupNumber(RC) > 2);
         }
@@ -318,7 +393,6 @@ public class ProcessBean implements Serializable {
         sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
         //sb.setupDataOpts();
-        jrd.record_skipButton_action_default(sb);
 
         if (analType.equals("mf")) {
             return "Metadata check";
@@ -343,6 +417,12 @@ public class ProcessBean implements Serializable {
                 & (sb.getCmpdIDType().equals("name") || sb.getCmpdIDType().equals("hmdb") || sb.getCmpdIDType().equals("kegg"))) {
             SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             return "Name check";
+        }
+
+        // check if contains "BLANK"
+        boolean res_blank = RDataUtils.checkContainsBlank(sb);
+        if (res_blank) {
+            sb.setContainsBlank(res_blank);
         }
 
         return toFilterView();
@@ -372,34 +452,63 @@ public class ProcessBean implements Serializable {
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         if (!filtered) {
-            RDataUtils.filterVariable(sb, doQC, qcCutoff, "none", -1, "mean", 0);
+            RDataUtils.filterVariable(RC, doQC, qcCutoff, "none", -1, "mean", 0, "F", 10);
         }
 
         return "Normalization";
     }
 
     public void filterButton_action() {
-        if (wb.isEditMode()) {
-            sb.addMessage("Info", "Parameters have been updated!");
-            jrd.record_filterButton_action(this);
-            return;
-        }
         RConnection RC = sb.getRConnection();
         String doQC = "F";
-        String msg = "QC filtering: none";
-        if (doQCFiltering) {
-            doQC = "T";
-            msg = "QC filtering: yes";
+        String doBlank = "F";
+        String msg;
+
+        if (doBlankSub) {
+            doBlank = "T";
+            msg = "Blank subtraction: Yes. ";
+        } else {
+            msg = "Blank subtraction: No. ";
         }
 
-        int res = RDataUtils.filterVariable(sb, doQC, qcCutoff, varFilterOpt, filterCutoff, intFilterOpt, intFilterCutoff);
+        double percent = 1.0; // all missing to remove by default
+        if (removeMissing) {
+            percent = missingPercent / 100.0;
+            msg = msg + "Missing value exclusion: Yes. ";
+        } else {
+            msg = msg + "Missing value exclusion: No. ";
+        }
+
+        //this should be called always in order to maintain consistant trace
+        int res = RDataUtils.removeMissingByPercent(RC, percent, grpMissFilter);
         if (res == 0) {
+            sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+            return;
+        } else {
+            if (removeMissing) {
+                msg = msg + RDataUtils.getMissFilterMsg(RC);
+            }
+        }
+
+        if (doQCFiltering) {
+            doQC = "T";
+            msg = msg + " QC filtering: Yes. ";
+        } else {
+            msg = msg + " QC filtering: No. ";
+        }
+
+        int res2 = RDataUtils.filterVariable(RC, doQC, qcCutoff, varFilterOpt, filterCutoff, intFilterOpt, intFilterCutoff, doBlank, blankCutoff);
+        if (res2 == 0) {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
             return;
         }
 
-        msg = msg + "; " + RDataUtils.getCurrentMsg(RC);
+        msg = msg + RDataUtils.getCurrentMsg(RC);
         sb.addMessage("OK", msg);
+
+        String filterTotalMsg = RDataUtils.getFilterTotalMsg(RC);
+        sb.addMessage("OK", filterTotalMsg);
+
         int featureNum = RDataUtils.getFiltFeatureNumber(RC);
         sb.updateFeatureNum(featureNum);
         filtered = true;
@@ -571,8 +680,10 @@ public class ProcessBean implements Serializable {
 
         String method = missingImputeOpt;
         switch (missingImputeOpt) {
-            case "replaceCol" -> method = replaceVarOpt;
-            case "impute" -> method = imputeAlgOpt;
+            case "replaceCol" ->
+                method = replaceVarOpt;
+            case "impute" ->
+                method = imputeAlgOpt;
         }
         RDataUtils.imputeVariable(sb, method);
         sb.setDataProcessed();
@@ -610,7 +721,11 @@ public class ProcessBean implements Serializable {
         } else if (!sb.getDataType().equalsIgnoreCase("conc")) {
             return "Data filter";
         } else {
-            return "Normalization";
+            if (!sb.isMissingDisabled()) {
+                return "Missing value";
+            } else {
+                return "Normalization";
+            }
         }
     }
 
@@ -698,6 +813,60 @@ public class ProcessBean implements Serializable {
 
     public void setRow_count(int row_count) {
         this.row_count = row_count;
+    }
+
+    private boolean doBlankSub = false;
+
+    /**
+     * Intensity percentage threshold for keeping features whose signal is
+     * (cutoff %) higher than the blanks. Bound to the slider & hidden input.
+     * 0–100 %.
+     */
+    private int blankCutoff = 10;
+
+    /* ── getters & setters (required for EL binding) ─────────── */
+    public boolean isDoBlankSub() {
+        return doBlankSub;
+    }
+
+    public void setDoBlankSub(boolean doBlankSub) {
+        this.doBlankSub = doBlankSub;
+    }
+
+    public String getBlankLbl() {
+        if (sb.isContainsBlank()) {
+            return "Enable blank subtraction";
+        } else {
+            return "No BLANK detected";
+        }
+    }
+
+    public String getMissingLbl() {
+        if (sb.isMissingDisabled()) {
+            return "No missing values detected";
+        } else {
+            return "Enable missing-value exclusion";
+        }
+    }
+
+    public String getQcLbl() {
+        if (sb.isContainsQC()) {
+            return "Filtering features based on QC samples";
+        } else {
+            return "No QC samples detected";
+        }
+    }
+
+    public int getBlankCutoff() {
+        return blankCutoff;
+    }
+
+    public void setBlankCutoff(int blankCutoff) {
+        this.blankCutoff = blankCutoff;
+    }
+
+    public void viewRsdPlot() {
+        RDataUtils.plotRSDViolin(sb, sb.getNewImage("qc_rsd"), "png", 150);
     }
 
 }

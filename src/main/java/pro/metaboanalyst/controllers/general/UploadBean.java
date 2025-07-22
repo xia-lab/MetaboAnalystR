@@ -850,7 +850,7 @@ public class UploadBean implements Serializable {
         switch (option) {
             case 1 -> {
                 drb.setContineousDoes(true);
-                RDataUtils.readTextDataDoseWithMeta(RC, ab.getInternalData("ewaste_data.csv"), ab.getInternalData("ewaste_metadata_dose.csv"), "colu", "cont");
+                RDataUtils.readTextDataDoseWithMeta(RC, ab.getResourceByAPI("ewaste_data.csv"), ab.getResourceByAPI("ewaste_metadata_dose.csv"), "colu", "cont");
             }
             case 2 -> {
                 drb.setContineousDoes(true);
