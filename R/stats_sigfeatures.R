@@ -32,9 +32,12 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
   if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
   imgName = paste(imgName, "dpi", dpi, ".png", sep="");
   mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
-  cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
 
-  my.fun<-function(){  
+  cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
+  dat.in <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
+                  paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName);
+
+  dat.in$my.fun<-function(){  
     library(siggenes);
     if(dat.in$cls.num==2){
       if(dat.in$paired){
@@ -92,9 +95,6 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     
     return(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat, img=imgName));
   }
-
-  dat.in <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
-                  paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName, my.fun=my.fun);
 
   qs::qsave(dat.in, file="dat.in.qs");
   mSetObj$imgSet$sam.cmpd <- imgName;
@@ -194,13 +194,14 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
     w <- width;
   }
   h <- w;
-  
-  my.fun <- function(){
+
+  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
+  dat.in$my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
     siggenes::plot(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
     dev.off();
   }
-  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
+
   qs::qsave(dat.in, file="dat.in.qs");
   mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
@@ -244,7 +245,8 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
   imgA0 = paste(imgA0, "dpi", dpi, ".png", sep="");
   imgSig = paste(imgSig, "dpi", dpi, ".png", sep="");
 
-  my.fun <- function(){
+  dat.in <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig);
+  dat.in$my.fun <- function(){
     library(siggenes);
     ebam_a0 <- siggenes::find.a0(dat.in$data, dat.in$cls, var.equal=dat.in$isVarEq, gene.names=rownames(dat.in$data), rand=123);
     
@@ -274,8 +276,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     
     return(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, a0=A0, delta=delta));
   }
-  
-  dat.in <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig, my.fun=my.fun); 
+   
   qs::qsave(dat.in, file="dat.in.qs");
 
   mSetObj$imgSet$ebam.a0 <- imgA0;
@@ -329,13 +330,14 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   }else{
     w <- h <- width;
   }
-  
-  my.fun <- function(){
+
+  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
+  dat.in$my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
     siggenes::plot(dat.in$mSetObj$analSet$ebam, dat.in$mSetObj$analSet$ebam.delta);
     dev.off();
   }
-  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName, my.fun=my.fun);
+
   qs::qsave(dat.in, file="dat.in.qs");
 
   mSetObj$imgSet$ebam.cmpd <- imgName;
