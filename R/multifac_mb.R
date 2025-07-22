@@ -11,7 +11,7 @@
 #'@export
 #'
 performMB <- function(mSetObj=NA, topPerc = 10){
-
+  save.image("mb.RData");
   mSetObj <- .get.mSet(mSetObj);
   
   if(length(meta.vec.mb) == 0){
