@@ -663,23 +663,53 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       return(0)
     }
   }
-  
-  if(blank.subtraction){
-    #save(int.mat, cls, file= "FilterVariable_dosubtraction.rda")
-    if("BLANK" %in% cls){
-        idx2keep <- blankfeatureFiltering(cls, blank.threshold);
-        idx2keep_exist <- vapply(names(idx2keep), function(x){x %in% colnames(int.mat)}, logical(1L))
-        idx2keep_all <- idx2keep & idx2keep_exist
-        ft_nms2keep <- names(which(idx2keep_all))
-        cols2keep <- vapply(colnames(int.mat), function(x){x %in% ft_nms2keep}, logical(1L))
-        int.mat <- int.mat[,cols2keep]
-        rows2keep <- which(cls != "BLANK")
-        int.mat <- int.mat[rows2keep,]        
-        cls <- cls[cls != "BLANK"]
-        cls <- droplevels(cls, "BLANK")
-        mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
-    }
+  if (blank.subtraction) {
+
+    # By class label
+    is.blank.cls <- !is.na(cls) & tolower(as.character(cls)) == "blank"
+
+    # By row-name prefix
+    is.blank.nm  <- grepl("^blank", rownames(int.mat), ignore.case = TRUE)
+
+    blank.hits <- is.blank.cls | is.blank.nm    # logical vector with no NAs
+
+  if (any(blank.hits)) {
+
+    ## keep counts *before* filtering so we can report changes
+    n.blank.samples <- sum(blank.hits)
+    n.feat.before   <- ncol(int.mat)
+
+    ## feature-level filtering against blank threshold
+    idx2keep       <- blankfeatureFiltering(blank.hits, blank.threshold)
+    idx2keep_exist <- names(idx2keep) %in% colnames(int.mat)
+    idx2keep_all   <- idx2keep & idx2keep_exist
+    ft_nms2keep    <- names(which(idx2keep_all))
+    cols2keep      <- colnames(int.mat) %in% ft_nms2keep
+    int.mat        <- int.mat[ , cols2keep, drop = FALSE]
+
+    ## remove blank rows and update class factor
+    int.mat <- int.mat[ !blank.hits, , drop = FALSE ]
+    cls     <- droplevels(cls[ !blank.hits ])
+
+    ## store back
+    mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
+
+    ## ── summary message ────────────────────────────────────────────
+    n.feat.after  <- ncol(int.mat)
+    n.feat.removed <- n.feat.before - n.feat.after
+    msg.blank <- paste0(
+      "Blank subtraction: removed ", n.blank.samples, " blank sample(s) ",
+      "and filtered out ", n.feat.removed, " feature(s) ",
+      "(threshold = ", blank.threshold, "%)."
+    )
+
+    ## append to the running message vector
+    msg <- c(msg, msg.blank)
   }
+  print(msg);
+
+}
+
   
   # no explicit user choice, will apply default empirical filtering based on variance
   if(is.null(var.cutoff)){ 
@@ -726,9 +756,8 @@ GetFilterTotalMsg <-function(mSetObj=NA){
 
 
 
-blankfeatureFiltering <- function(cls, threshold){
-  # need to evaluate raw data table without replace min
-  idx_blank <- which(as.character(cls)=="BLANK")
+blankfeatureFiltering <- function(idx_blank, threshold){
+
   preproc <- qs::qread("preproc.qs");
   
   res <- apply(preproc, 2, function(x){
