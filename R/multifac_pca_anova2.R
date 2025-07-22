@@ -746,52 +746,82 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
            xpd = TRUE, cex = 0.8 * pca.cex)
   }
 
-  ## ── unified legend(s) ----------------------------------------------
-  par(xpd = TRUE)
-  usr <- par("usr"); cx <- par("cxy")[1];  lgdx <- usr[2] + cx; lgdy <- usr[4] - cx
-  
-  if (colourTyp == "disc") {
-    
-    colourLevels <- levels(colourVar)
+  ## ── legends --------------------------------------------------------------
+## ── LEGEND HANDLING (4 explicit cases) ─────────────────────────────────
+par(xpd = TRUE)                                    # draw in margin
+usr  <- par("usr"); dx <- par("cxy")[1]
+xleg <- usr[2] + dx                                # right-hand margin
+yleg <- usr[4] - dx                                # top of plot
 
-has.shape <- !is.null(pchs.def) && length(pchs.def) > 0
+hasShape <- !is.null(shapeVar) && shapeTyp == "disc"
+isDisc   <- colourTyp == "disc"
+isCont   <- colourTyp == "cont"
 
-if (has.shape) {
-  shapeLevels  <- names(pchs.def)
-  legend.labels <- c(colourLevels, shapeLevels)
+if (isDisc && hasShape) {                    # 1 · colour-disc + shape-disc
+  colLvls <- levels(colourVar)
+  shpLvls <- levels(shapeVar)
+  legend(xleg, yleg,
+         legend = c(colLvls, shpLvls),
+         pch    = c(rep(22, length(colLvls)), pchs.def[shpLvls]),
+         pt.bg  = c(col.def[colLvls], rep(NA, length(shpLvls))),
+         col    = "black", pt.cex = 1.4, box.lty = 0)
 
-  legend.pch  <- c(rep(22, length(colourLevels)), pchs.def[shapeLevels])
-  legend.ptbg <- c(col.def[colourLevels], rep(NA, length(shapeLevels)))
-  legend.col  <- rep("black", length(legend.labels))
+} else if (isCont && hasShape) {      # 2 · colour-cont  + shape-disc ─────────
+shapeLevels <- levels(shapeVar)
+  cx  <- par("cxy")[1]                # 1 char-width
+  pad <- cx * 0.3                     # small vertical gap
 
-} else {                     # colour-only legend
-  legend.labels <- colourLevels
-  legend.pch    <- rep(22, length(colourLevels))          # filled square
-  legend.ptbg   <- col.def[colourLevels]
-  legend.col    <- rep("black", length(colourLevels))
+  bar_w   <- cx * 0.6                 # width of the bar
+  bar_x0  <- usr[2] + cx              # start one char right of plot
+  bar_x1  <- bar_x0 + bar_w
+  bar_y1  <- usr[4] - cx              # a little below top margin
+  bar_y0  <- bar_y1 - cx * 3          # ≈ 3 text lines tall
+
+  ## draw the gradient (100 stops → smooth)
+  nCol  <- 100
+  grad  <- colorRampPalette(
+            c("#08306B", "#2171B5", "#6BAED6", "#C6DBEF", "#F7FBFF"))(nCol)
+  yseq  <- seq(bar_y0, bar_y1, length.out = nCol + 1)
+  for(i in 1:nCol)
+    rect(bar_x0, yseq[i], bar_x1, yseq[i + 1],
+         col = grad[nCol - i + 1], border = NA)
+
+  ## “High/Low” labels
+  text(bar_x1 + cx * 0.3, bar_y1, "High", adj = 0, cex = 0.75)
+  text(bar_x1 + cx * 0.3, bar_y0, "Low",  adj = 0, cex = 0.75)
+
+  # Estimate legend height quickly: pt.cex=1.4 ⇒ symbol ≈ 1.4 × text height
+  lgd_y1 <- bar_y0 - pad              # top of legend (just below bar)
+  lgd_y0 <- lgd_y1 - (1.4 * length(shapeLevels) + 1) * cx
+
+  legend(x      = bar_x0,   y      = lgd_y1,
+         legend = shapeLevels,
+         pch    = pchs.def[shapeLevels],
+         col    = "black",
+         pt.cex = 1.4,
+         box.lty = 0,
+         xjust  = 0,      yjust = 1)  
+} else if (isCont) {                          # 3 · colour-cont only
+  barW <- dx*0.6
+  nCol <- 100
+  grad <- colorRampPalette(
+            c("#08306B","#2171B5","#6BAED6","#C6DBEF","#F7FBFF"))(nCol)
+  yseq <- seq(usr[3], usr[4], length.out = nCol+1)
+  for(i in 1:nCol)
+    rect(xleg, yseq[i], xleg + barW, yseq[i+1],
+         col = grad[nCol - i + 1], border = NA)
+  text(xleg + barW*1.2, usr[4], "High", adj = 0, cex = 0.75)
+  text(xleg + barW*1.2, usr[3], "Low",  adj = 0, cex = 0.75)
+
+} else if (isDisc) {                          # 4 · colour-disc only
+  colLvls <- levels(colourVar)
+  legend(xleg, yleg,
+         legend = colLvls, pch = 22,
+         pt.bg  = col.def[colLvls], col = "black",
+         pt.cex = 1.4, box.lty = 0)
 }
+par(xpd = FALSE)
 
-    
-    legend(lgdx, lgdy,
-           legend = legend.labels,
-           pch    = legend.pch,
-           pt.bg  = legend.ptbg,
-           col    = legend.col,
-           pt.cex = 1.4,
-           box.lty = 0)
-    
-  } else if (!is.null(shapeVar) && shapeTyp == "disc") {
-    
-    shapeLevels <- levels(shapeVar)
-    legend(lgdx, lgdy,
-           legend = shapeLevels,
-           pch    = pchs.def[shapeLevels],
-           col    = "black",
-           pt.cex = 1.4,
-           box.lty = 0)
-  }
-  par(xpd = FALSE)
-  
   ## ── PERMANOVA & cleanup --------------------------------------------
   mSetObj$analSet$pca$permanova.res <-
     ComputePERMANOVA(pc1, pc2,colourVar, 999, colourTyp)
