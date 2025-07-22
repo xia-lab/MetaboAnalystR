@@ -169,6 +169,8 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
     }else if(transNorm=='VsnNorm'){
+      data[is.nan(data)] <- NA
+      data[is.infinite(data)] <- NA
       data <- t(limma::normalizeVSN(t(data)));
       transnm<-"Variance Stabilizing Normalization";
     }else{
