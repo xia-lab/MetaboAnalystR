@@ -773,26 +773,36 @@ blankfeatureFiltering <- function(cls, threshold){
 
 ede <- function (x, y, index) 
 {
+
   n = length(x)
   if (index == 1) {
     y = -y
   }
-  ifelse(n >= 4, {
-    LF = y - lin2(x[1], y[1], x[n], y[n], x)
-    jf1 = which.min(LF)
-    xf1 = x[jf1]
-    jf2 = which.max(LF)
-    xf2 = x[jf2]
-    ifelse(jf2 < jf1, {
-      xfx <- NaN
+    ifelse(n >= 4, {
+      LF = y - lin2(x[1], y[1], x[n], y[n], x)
+      jf1 = which.min(LF)
+      xf1 = x[jf1]
+      jf2 = which.max(LF)
+      xf2 = x[jf2]
+      res <- jf2 < jf1
+      if(length(res)==0){
+        jf1 = NaN
+        jf2 = NaN
+        xfx = NaN
+      } else {
+        ifelse(jf2 < jf1, {
+          xfx <- NaN
+        }, {
+          xfx <- 0.5 * (xf1 + xf2)
+          if(is.na(xfx)){xfx <- NaN}
+          if(length(xfx) == 0){xfx <- NaN}
+        })
+      }
     }, {
-      xfx <- 0.5 * (xf1 + xf2)
+      jf1 = NaN
+      jf2 = NaN
+      xfx = NaN
     })
-  }, {
-    jf1 = NaN
-    jf2 = NaN
-    xfx = NaN
-  })
   out = matrix(c(jf1, jf2, xfx), nrow = 1, ncol = 3, byrow = TRUE)
   rownames(out) = "EDE"
   colnames(out) = c("j1", "j2", "chi")
