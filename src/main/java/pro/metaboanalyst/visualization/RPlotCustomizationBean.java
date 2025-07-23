@@ -1,6 +1,5 @@
 package pro.metaboanalyst.visualization;
 
-import java.io.IOException;
 import java.io.Serializable;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;

@@ -527,10 +527,7 @@ public class SessionBean1 implements Serializable {
     //1 logout and to homepage
     //0 logout only
     public void doLogout(int returnHome) {
-        if (registeredLogin) {
-            Faces.addResponseCookie("user", fub.getEmail(), "/", 3600);
-            fb.getUserMap().put(fub.getEmail(), fub);
-        }
+
         if (loggedIn) {
             if (RC != null) {
                 if (ab.isOnLocalServer()) {
@@ -548,7 +545,7 @@ public class SessionBean1 implements Serializable {
             } else {
                 FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
             }
-            //System.out.println("=====called logout: ");
+            keepUserInfo();
         } else {
 
             String rootId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
@@ -1829,4 +1826,26 @@ public class SessionBean1 implements Serializable {
         this.containsQC = containsQC;
     }
 
+    @JsonIgnore
+    @Inject
+    private FireUserBean ulb;
+
+    public void keepUserInfo() {
+        // this function is used to keep user's login information after session has been cleared
+        System.out.println("Testing user signed in status ... ");
+        boolean res;
+        if (ulb.getEmail().isEmpty()) {
+            System.out.println("Not signed in, reloading ... ");
+            res = fbc.reloadUserInfo();
+        } else {
+            System.out.println("Signed in already. ");
+
+            res = true;
+            setRegisteredLogin(true);
+
+        }
+        if (!res) {
+            System.out.println("Failed to keep user signed-in !!! @_@");
+        }
+    }
 }

@@ -304,7 +304,9 @@ public class FireBaseController implements Serializable {
 
         return false;
     }
-@Inject  StateSaver stateSaver;
+    @Inject
+    StateSaver stateSaver;
+
     public void writeDoc(String folderName, String type) throws InterruptedException, ExecutionException, JsonProcessingException {
 
         long idNum = 0;
@@ -312,7 +314,7 @@ public class FireBaseController implements Serializable {
         sb.setShareToken(token);
 
         String uid = fub.getEmail();
-System.out.println("Saver injected? " + (stateSaver != null));
+        System.out.println("Saver injected? " + (stateSaver != null));
         stateSaver.saveState();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
@@ -848,7 +850,8 @@ System.out.println("Saver injected? " + (stateSaver != null));
                     paramString[0] = ArrayList.class;
                     DataUtils.convertJsonToObj(obj, myParam, myParamType);
                 }
-                default -> LOGGER.error("Unsupported parameter type: " + myParamType);
+                default ->
+                    LOGGER.error("Unsupported parameter type: " + myParamType);
             }
         } catch (Exception ex) {
             LOGGER.error("Error executing method: " + myMethod + " on class: " + myClassType, ex);
@@ -897,18 +900,12 @@ System.out.println("Saver injected? " + (stateSaver != null));
     public boolean reloadUserInfo() {
         String value = Faces.getRequestCookie("user");
         if (value != null) {
-            String tokenId = value;
-            System.out.println("fub.getEmail()==reloadUserInfo===" + fub.getEmail());
-            System.out.println("fb.getUserMap().containsKey(tokenId)=====" + fb.getUserMap().containsKey(tokenId));
-            if (fb.getUserMap().containsKey(tokenId) && fub.getEmail().equals("")) {
-                FireUserBean ubObj = fb.getUserMap().get(tokenId);
-                //System.out.println("reloaduser====111111=" + fb.getUserMap().get(tokenId).getEmail());
+            FireUserBean stored = fb.getUserMap().get(value);
+            System.out.println("reload=====" + stored.toString());
 
-                //System.out.println("reloaduser====22=" + ubObj.getEmail());
-                fub.setFireUserBean(ubObj);
-                sb.setRegisteredLogin(true);
-                userInit = true;
-            }
+            fub.setFireUserBean(stored);          // see below
+            sb.setRegisteredLogin(true);
+
         }
 
         return userInit;
@@ -927,17 +924,16 @@ System.out.println("Saver injected? " + (stateSaver != null));
 
     public void initUserProjects() {
 
-        if (!projInit) {
-            reloadUserInfo();
-            if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
-                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
-            } else {
-                pb.setActiveTabIndex(0);
-                //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
-                setupProjectTable();
-                projInit = true;
-            }
+        reloadUserInfo();
+        if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
+        } else {
+            pb.setActiveTabIndex(0);
+            //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
+            setupProjectTable();
+            projInit = true;
         }
+
     }
 
     public void toModuleView() throws IOException {
@@ -1155,7 +1151,7 @@ System.out.println("Saver injected? " + (stateSaver != null));
         sb.setShareToken(selectedProject.getShareToken());
 
         String userFolderName = fub.getEmail();
-        
+
         long jobid = db.extractRawJobStatus(folderName, userFolderName);
         spcb.setCurrentJobId((long) jobid);
         spcb.setJobSubmitted(true);
@@ -1705,7 +1701,6 @@ System.out.println("Saver injected? " + (stateSaver != null));
         Faces.addResponseCookie("user", "", "/", 0);
 
         // Assuming you have access to the FireBase instance (fb) and the user's token
-   
         if (fb != null && fub != null) {
             String userToken = fub.getOmicsquareToken();
             if (fb.getUserMap().containsKey(userToken)) {
