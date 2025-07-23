@@ -474,7 +474,7 @@ n_cols <- length(unique(rnk[!is.na(rnk)]))
 pca3d$score$colors              <- my.col2rgb(colors)
 pca3d$score$color_legend_vals   <- vals
 pca3d$score$color_legend_type   <- "gradient"
-pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
+pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels 
 } else {
   cols <- unique(GetColorSchema(pca3d$score$facA)); 
   pca3d$score$colors <- my.col2rgb(cols);
@@ -583,13 +583,10 @@ GetAov2DnIDs <- function(mSetObj=NA){
     return("NA");
   }
 }
-
 PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = default.dpi,
                                width = NA, pcx, pcy, reg = 0.95, show = 1,
                                grey.scale = 0, cex.opt = "na",
                                meta = NULL, metaShape = NULL) {
-  ## ── debug snapshot (optional) ---------------------------------------
-  # save.image("pca.RData")
   ## ── point-size memory ----------------------------------------------
   if (!exists("pca.cex", envir = .GlobalEnv)){
     pca.cex <<- 1
@@ -598,12 +595,17 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     pca.cex <<- pca.cex + 0.1
   }else if (cex.opt == "decrease"){
     pca.cex <<- pca.cex - 0.1
-}
+  }
   
   ## ── bookkeeping -----------------------------------------------------
   mSetObj  <- .get.mSet(mSetObj)
   meta.inf <- mSetObj$dataSet$meta.info
   meta.typ <- mSetObj$dataSet$meta.types
+  
+  pca.rn <- rownames(mSetObj$analSet$pca$x)   # canonical sample order
+  
+  ## 1. Re-order full metadata table (in case you need it later)
+  meta.inf <- meta.inf[match(pca.rn, rownames(meta.inf)), , drop = FALSE]
   
   ## ----- colour & shape variables ------------------------------------
   colourVar <- mSetObj$dataSet$cls
@@ -624,6 +626,15 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   ## ── PCA coordinates -------------------------------------------------
   pc1 <- mSetObj$analSet$pca$x[, pcx]
   pc2 <- mSetObj$analSet$pca$x[, pcy]
+  
+  ## 3. Drop any rows whose metadata became NA (keeps data consistent)
+  keep <- !is.na(colourVar)            # add & !is.na(shapeVar) if needed
+  pc1  <- pc1[keep];    pc2  <- pc2[keep]
+  txt  <- substr(names(pc1), 1, 14)    # regenerate labels in sync
+  colourVar <- colourVar[keep]
+  shapeVar  <- if (!is.null(shapeVar)) shapeVar[keep] else NULL
+  pca.rn    <- pca.rn[keep]            # updated canonical order
+  
   txt <- substr(names(pc1), 1, 14)
   
   xlabel <- sprintf("PC%d (%.1f%%)", pcx, 100 * mSetObj$analSet$pca$variance[pcx])
@@ -699,129 +710,135 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
              bg = adjustcolor(cols, 0.4), cex = 1.8 * pca.cex)
     }
     
-} else {          ## ── continuous-colour branch ──────────────────────────
+  } else {          ## ── continuous-colour branch ──────────────────────────
     
     ## full-sample confidence ellipse (drawn before points)
     groupVar  <- var(cbind(pc1, pc2), na.rm = TRUE)
     groupMean <- c(mean(pc1, na.rm = TRUE), mean(pc2, na.rm = TRUE))
     ell.all   <- ellipse::ellipse(groupVar, centre = groupMean,
                                   level = reg, npoints = 200)
-
-    blues <- rev(colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20))
+    
+    blues <- colorRampPalette(brewer.pal(9, "Blues"))(20)
     numv  <- as.numeric(as.character(colourVar))
     cols  <- blues[cut(numv, breaks = 20, labels = FALSE)]
-
+    
     ## shapes (optional second metadata)
     if (!is.null(shapeVar) && shapeTyp == "disc") {
       shapeVar <- factor(shapeVar)
       pchs.def <- GetShapeSchemaMeta(shapeVar, show, grey.scale)
       pchs     <- ExpandSchema(shapeVar, pchs.def)
     } else {
-      pchs <- 15
+      pchs <- 21
     }
-
+    
     ## ---- expand axis limits so the ellipse is fully visible ------------
     xrg  <- range(c(pc1, ell.all[, 1]), na.rm = TRUE)
     yrg  <- range(c(pc2, ell.all[, 2]), na.rm = TRUE)
     ext  <- function(r) diff(r) * 0.07          # 7 % margin
     xlim <- c(xrg[1] - ext(xrg), xrg[2] + ext(xrg))
     ylim <- c(yrg[1] - ext(yrg), yrg[2] + ext(yrg))
-
+    
     ## base plot ----------------------------------------------------------
     plot(pc1, pc2,
          xlab = xlabel, ylab = ylabel,
          xlim = xlim,  ylim = ylim,
          type = "n",   main = "Scores Plot")
     grid(col = "lightgray", lty = "dotted", lwd = 1)
-
+    
     ## draw ellipse for the whole data cloud
     polygon(ell.all,
             col = adjustcolor("grey70", alpha.f = 0.25),
             border = "grey50", lty = 2)
-
+    
     ## points and (optional) labels --------------------------------------
     points(pc1, pc2, pch = pchs, col = "black", bg = cols, cex = 1.8 * pca.cex)
     if (show == 1)
-      text(pc1, pc2, label = txt, pos = 4, col = "blue",
+      text(pc1, pc2, label = txt, pos = 4,
+           col = cols,                 # ← use per-sample colours
            xpd = TRUE, cex = 0.8 * pca.cex)
   }
-
+  
   ## ── legends --------------------------------------------------------------
-## ── LEGEND HANDLING (4 explicit cases) ─────────────────────────────────
-par(xpd = TRUE)                                    # draw in margin
-usr  <- par("usr"); dx <- par("cxy")[1]
-xleg <- usr[2] + dx                                # right-hand margin
-yleg <- usr[4] - dx                                # top of plot
-
-hasShape <- !is.null(shapeVar) && shapeTyp == "disc"
-isDisc   <- colourTyp == "disc"
-isCont   <- colourTyp == "cont"
-
-if (isDisc && hasShape) {                    # 1 · colour-disc + shape-disc
-  colLvls <- levels(colourVar)
-  shpLvls <- levels(shapeVar)
-  legend(xleg, yleg,
-         legend = c(colLvls, shpLvls),
-         pch    = c(rep(22, length(colLvls)), pchs.def[shpLvls]),
-         pt.bg  = c(col.def[colLvls], rep(NA, length(shpLvls))),
-         col    = "black", pt.cex = 1.4, box.lty = 0)
-
-} else if (isCont && hasShape) {      # 2 · colour-cont  + shape-disc ─────────
-shapeLevels <- levels(shapeVar)
-  cx  <- par("cxy")[1]                # 1 char-width
-  pad <- cx * 0.3                     # small vertical gap
-
-  bar_w   <- cx * 0.6                 # width of the bar
-  bar_x0  <- usr[2] + cx              # start one char right of plot
-  bar_x1  <- bar_x0 + bar_w
-  bar_y1  <- usr[4] - cx              # a little below top margin
-  bar_y0  <- bar_y1 - cx * 3          # ≈ 3 text lines tall
-
-  ## draw the gradient (100 stops → smooth)
-  nCol  <- 100
-  grad  <- colorRampPalette(
-            c("#08306B", "#2171B5", "#6BAED6", "#C6DBEF", "#F7FBFF"))(nCol)
-  yseq  <- seq(bar_y0, bar_y1, length.out = nCol + 1)
-  for(i in 1:nCol)
-    rect(bar_x0, yseq[i], bar_x1, yseq[i + 1],
-         col = grad[nCol - i + 1], border = NA)
-
-  ## “High/Low” labels
-  text(bar_x1 + cx * 0.3, bar_y1, "High", adj = 0, cex = 0.75)
-  text(bar_x1 + cx * 0.3, bar_y0, "Low",  adj = 0, cex = 0.75)
-
-  # Estimate legend height quickly: pt.cex=1.4 ⇒ symbol ≈ 1.4 × text height
-  lgd_y1 <- bar_y0 - pad              # top of legend (just below bar)
-  lgd_y0 <- lgd_y1 - (1.4 * length(shapeLevels) + 1) * cx
-
-  legend(x      = bar_x0,   y      = lgd_y1,
-         legend = shapeLevels,
-         pch    = pchs.def[shapeLevels],
-         col    = "black",
-         pt.cex = 1.4,
-         box.lty = 0,
-         xjust  = 0,      yjust = 1)  
-} else if (isCont) {                          # 3 · colour-cont only
-  barW <- dx*0.6
-  nCol <- 100
-  grad <- colorRampPalette(
-            c("#08306B","#2171B5","#6BAED6","#C6DBEF","#F7FBFF"))(nCol)
-  yseq <- seq(usr[3], usr[4], length.out = nCol+1)
-  for(i in 1:nCol)
-    rect(xleg, yseq[i], xleg + barW, yseq[i+1],
-         col = grad[nCol - i + 1], border = NA)
-  text(xleg + barW*1.2, usr[4], "High", adj = 0, cex = 0.75)
-  text(xleg + barW*1.2, usr[3], "Low",  adj = 0, cex = 0.75)
-
-} else if (isDisc) {                          # 4 · colour-disc only
-  colLvls <- levels(colourVar)
-  legend(xleg, yleg,
-         legend = colLvls, pch = 22,
-         pt.bg  = col.def[colLvls], col = "black",
-         pt.cex = 1.4, box.lty = 0)
-}
-par(xpd = FALSE)
-
+  ## ── LEGEND HANDLING (4 explicit cases) ─────────────────────────────────
+  par(xpd = TRUE)                                    # draw in margin
+  usr  <- par("usr"); dx <- par("cxy")[1]
+  xleg <- usr[2] + dx                                # right-hand margin
+  yleg <- usr[4] - dx                                # top of plot
+  
+  hasShape <- !is.null(shapeVar) && shapeTyp == "disc"
+  isDisc   <- colourTyp == "disc"
+  isCont   <- colourTyp == "cont"
+  
+  if (isDisc && hasShape) {                    # 1 · colour-disc + shape-disc
+    colLvls <- levels(colourVar)
+    shpLvls <- levels(shapeVar)
+    legend(xleg, yleg,
+           legend = c(colLvls, shpLvls),
+           pch    = c(rep(22, length(colLvls)), pchs.def[shpLvls]),
+           pt.bg  = c(col.def[colLvls], rep(NA, length(shpLvls))),
+           col    = "black", pt.cex = 1.4, box.lty = 0)
+    
+  } else if (isCont && hasShape) {      # 2 · colour-cont  + shape-disc ─────────
+    shapeLevels <- levels(shapeVar)
+    cx  <- par("cxy")[1]                # 1 char-width
+    pad <- cx * 0.3                     # small vertical gap
+    
+    bar_w   <- cx * 0.6                 # width of the bar
+    bar_x0  <- usr[2] + cx              # start one char right of plot
+    bar_x1  <- bar_x0 + bar_w
+    bar_y1  <- usr[4] - cx              # a little below top margin
+    bar_y0  <- bar_y1 - cx * 3          # ≈ 3 text lines tall
+    
+    ## draw the gradient (100 stops → smooth)
+    nCol  <- 100
+    grad  <- colorRampPalette(brewer.pal(9, "Blues"))(nCol)
+    yseq  <- seq(bar_y0, bar_y1, length.out = nCol + 1)
+    for (i in 1:nCol)
+      rect(bar_x0, yseq[i], bar_x1, yseq[i + 1],
+           col = grad[i], border = NA)    
+    
+    ## “High/Low” labels
+    text(bar_x1 + cx * 0.3, bar_y1, "High", adj = 0, cex = 0.75)
+    text(bar_x1 + cx * 0.3, bar_y0, "Low",  adj = 0, cex = 0.75)
+    
+    # Estimate legend height quickly: pt.cex=1.4 ⇒ symbol ≈ 1.4 × text height
+    lgd_y1 <- bar_y0 - pad              # top of legend (just below bar)
+    lgd_y0 <- lgd_y1 - (1.4 * length(shapeLevels) + 1) * cx
+    
+    legend(x      = bar_x0,   y      = lgd_y1,
+           legend = shapeLevels,
+           pch    = pchs.def[shapeLevels],
+           col    = "black",
+           pt.cex = 1.4,
+           box.lty = 0,
+           xjust  = 0,      yjust = 1)  
+  } else if (isCont) {                          # 3 · colour-cont only
+    barW   <- dx * 0.6
+    nCol   <- 100
+    grad   <- colorRampPalette(brewer.pal(9, "Blues"))(nCol)
+    
+    fullH  <- usr[4] - usr[3]            # total plotting height
+    barH   <- fullH * 0.33               # want one‑third
+    y0     <- usr[3] + (fullH - barH)/2  # bottom of bar (centred)
+    yseq   <- seq(y0, y0 + barH, length.out = nCol + 1)
+    
+    for (i in 1:nCol)
+      rect(xleg, yseq[i], xleg + barW, yseq[i + 1],
+           col = grad[i], border = NA)
+    
+    ## labels at ends of the shorter bar -------------------------
+    text(xleg + barW * 1.2, yseq[length(yseq)], "High", adj = 0, cex = 0.75)
+    text(xleg + barW * 1.2, yseq[1],           "Low",  adj = 0, cex = 0.75)
+    
+  } else if (isDisc) {                          # 4 · colour-disc only
+    colLvls <- levels(colourVar)
+    legend(xleg, yleg,
+           legend = colLvls, pch = 22,
+           pt.bg  = col.def[colLvls], col = "black",
+           pt.cex = 1.4, box.lty = 0)
+  }
+  par(xpd = FALSE)
+  
   ## ── PERMANOVA & cleanup --------------------------------------------
   mSetObj$analSet$pca$permanova.res <-
     ComputePERMANOVA(pc1, pc2,colourVar, 999, colourTyp)

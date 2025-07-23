@@ -1472,7 +1472,7 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    pc.num,
                                    meta,
                                    metaShape = NULL){
-    if(!exists("my.mummichog.enrich.net")){ 
+    if(!exists(".plotPCAPairSummaryMeta")){ 
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.Rc"));
     }
     return(.plotPCAPairSummaryMeta(mSetObj,

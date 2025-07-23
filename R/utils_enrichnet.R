@@ -1,6 +1,5 @@
 
 
-
 my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
   # save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
