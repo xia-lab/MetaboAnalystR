@@ -70,6 +70,12 @@
                                      value="Workflow"/>
 
                 </h:panelGrid>
+                                <p:remoteCommand name="rcViewRsd"              
+                                 actionListener="#{procBean.viewRsdPlot()}"
+                                 update=":hisTab:cmdPane"
+                                 onstart="PF('statusDialog').show();"
+                                 oncomplete="PF('statusDialog').hide();
+                                 PF('rsdDialog').show();" />
             </h:form>
         </h:panelGrid>
 
@@ -126,8 +132,10 @@
                         <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
                     </h:panelGrid> 
                 </h:panelGrid>
+
             </h:form>         
         </p:dialog>
+        <ui:include src="/template/_qc_rsd_dialog.xhtml" />
 
         <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
                   width="800px" hideEffect="explode" resizable="true">

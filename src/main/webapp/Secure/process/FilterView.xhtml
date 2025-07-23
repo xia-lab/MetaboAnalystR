@@ -167,6 +167,24 @@
                     </h:panelGrid>
                 </p:panelGrid>
 
+
+                <ui:include src="/template/_qc_rsd_dialog.xhtml" />
+
+                <p:dialog widgetVar="missDialog" dynamic="true" modal="true" appendTo="@(body)" closable="true"
+                          header="Missing Value Distributions"
+                          hideEffect="explode" resizable="true" position="center"> 
+
+                    <p>
+                        <h:outputText value="#{procBean.missingMsg}" style="font-size: 14px; color:darkblue" escape="false"/>
+                    </p>
+
+                    <img onerror="this.style.display='none'"
+                         src="#{sessionBean1.getCurrentImageURL('qc_miss')}"
+                         alt="Missing-value lollipop plot"
+                         style="width:7in;"/>
+
+                </p:dialog>
+
                 <h:panelGrid columns="2" style="width: 900px; font-size: 14px; text-align: center; padding-top: 20px;">
                     <p:commandButton value="Submit" style="width:120px"
                                      onclick="PF('statusDialog').show()"

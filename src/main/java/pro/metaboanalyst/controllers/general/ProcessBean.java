@@ -175,7 +175,10 @@ public class ProcessBean implements Serializable {
 
     public void performSanityCheck() {
 
-        if (sb.isIntegChecked()) {
+       // if (sb.isIntegChecked()) {
+        //    return;
+        //}
+                if (sanityChecked) {
             return;
         }
         RConnection RC = sb.getRConnection();
@@ -319,6 +322,7 @@ public class ProcessBean implements Serializable {
         msg = msg + "</table>";
         msgText = msg;
         sb.setIntegChecked();
+        sanityChecked = true;
         //System.out.println(msgText + "======msgText");
     }
 
