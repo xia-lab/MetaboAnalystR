@@ -1,0 +1,41 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+
+    <p:dialog widgetVar="rsdDialog" dynamic="true" modal="true" appendTo="@(body)" 
+              closable="true"
+              header="RSD Distribution"
+              hideEffect="explode" resizable="true" position="center"> 
+        <h:panelGrid style="background:#fafafa; border:1px solid #ddd; padding:10px 20px 10px 30px; width: 720px">
+            <h:outputText escape="false"
+                          style="white-space:pre-line"
+                          value="This violin plot shows feature-level RSD (%) in biological samples and, when present, pooled QC injections.  
+                          The white box marks the 25&lt;sup&gt;th&lt;/sup&gt;, 50&lt;sup&gt;th&lt;/sup&gt;, and 75&lt;sup&gt;th&lt;/sup&gt; percentiles."/>
+        </h:panelGrid>
+        <h:form id="rsdForm">
+            <!-- description + figure -->
+            <h:panelGrid id="rsdPane" style="width:100%; text-align: center">
+
+                <!-- tiny settings icon (opens graphics dialog) -->
+                <h:panelGrid style="width:95%; text-align: right">
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_rsd')}"
+                                   update=":myGraphPane"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customize the graphics output">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                    </p:commandLink>
+                </h:panelGrid>
+
+                <!-- actual plot -->
+                <img onerror="this.style.display='none'"
+                     style="width:6in;padding:10px;"
+                     src="#{sessionBean1.getCurrentImageURL('qc_rsd')}"
+                     alt="RSDViolinImage"/>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+</ui:composition>
+

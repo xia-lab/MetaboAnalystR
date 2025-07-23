@@ -15,17 +15,17 @@ import pro.metaboanalyst.utils.DataUtils;
  * @author Jeff
  */
 public class TimeSeries {
-
-    public static void initIPCA(RConnection RC, String fileNm, String selMeta1, String selMeta2) {
+    
+    public static void initIPCA(RConnection RC, String fileNm, String selMeta1, String selMeta2, String colGradient) {
         try {
-            String rCommand = "iPCA.Anal(NA" + ", \"" + fileNm + "\", \"" + selMeta1 + "\", \"" + selMeta2 + "\")";
+            String rCommand = "iPCA.Anal(NA" + ", \"" + fileNm + "\", \"" + selMeta1 + "\", \"" + selMeta2 + "\", \"" + colGradient + "\")";
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
             System.out.println(rse);
         }
     }
-
+    
     public static void prepareLiveGraphics(RConnection RC, String urlPath, int inx) {
         try {
             String rCommand = "SetLiveGraphics(\"" + urlPath + "\", " + inx + ")";
@@ -577,4 +577,49 @@ public class TimeSeries {
         return false;
     }
 
+    public static void plotPCA2DScoreMeta(SessionBean1 sb,
+            String imgName,
+            String format,
+            int dpi,
+            int pc1Inx,
+            int pc2Inx,
+            double conf,
+            int show,
+            int greyScale,
+            String cexOpt,
+            String meta,
+            String metaShape) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            /* build R call ------------------------------------------------- */
+            String metaArg = (meta == null || meta.trim().isEmpty())
+                    ? "NULL" : "\"" + meta + "\"";
+            String metaShapeArg = (metaShape == null || metaShape.trim().isEmpty())
+                    ? "NULL" : "\"" + metaShape + "\"";
+
+            String rCommand
+                    = "PlotPCA2DScoreMeta(NA"
+                    + ", \"" + imgName + "\""
+                    + ", \"" + format + "\""
+                    + ", " + dpi
+                    + ", width=NA"
+                    + ", " + pc1Inx
+                    + ", " + pc2Inx
+                    + ", " + conf
+                    + ", " + show
+                    + ", " + greyScale
+                    + ", \"" + cexOpt + "\""
+                    + ", " + metaArg
+                    + ", " + metaShapeArg
+                    + ")";
+
+            sb.addGraphicsCMD("pca_score2d", rCommand);
+            RCenter.recordRCommand(RC, rCommand);
+            RC.voidEval(rCommand);
+
+        } catch (RserveException rse) {
+            System.out.println(rse);
+        }
+    }
 }

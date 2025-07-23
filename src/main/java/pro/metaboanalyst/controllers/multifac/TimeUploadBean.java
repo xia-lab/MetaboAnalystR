@@ -174,6 +174,18 @@ public class TimeUploadBean implements Serializable {
                 fileName = ab.getResourceByAPI("cress_time.csv");
                 testMetaFile = ab.getResourceByAPI("cress_time_meta.csv");
             }
+            case "ewaste" -> {
+                tsDataType = "pktable";
+                tsDesign = "multi";
+                tsFormat = "colmf";
+                boolean useQC = true;
+                if (ab.isOnZgyPc() && !useQC) {
+                    fileName = ab.getResourceByAPI("ewaste_data.csv");
+                } else {
+                    fileName = ab.getResourceByAPI("ewaste_data_QC.csv");
+                }
+                testMetaFile = ab.getResourceByAPI("ewaste_metadata.csv");
+            }
             default -> {
                 tsDataType = "pktable";
                 tsDesign = "time0";

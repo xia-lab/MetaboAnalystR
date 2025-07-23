@@ -278,9 +278,7 @@ public class MultifacBean implements Serializable {
     @JsonIgnore
     public SelectItem[] getAnalysisMetaOpts() {
         if (isMultiMeta()) {
-            System.out.println("======here 1");
             if (analysisMetaOpts == null) {
-                            System.out.println("======here 2");
                 List<MetaDataBean> beans = getMetaDataBeans();
                 analysisMetaOpts = new SelectItem[beans.size()];
                 for (int i = 0; i < beans.size(); i++) {
@@ -289,7 +287,6 @@ public class MultifacBean implements Serializable {
                 }
             }
         } else {
-                        System.out.println("======here 0");
             analysisMetaOpts = new SelectItem[1];
             if (sb.getAnalType().equals("dose")) {
                     System.out.println("======here 00");

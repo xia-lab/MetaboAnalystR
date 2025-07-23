@@ -7,12 +7,14 @@ package pro.metaboanalyst.controllers.stats;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
-import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Named;
 import jakarta.faces.model.SelectItem;
+import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
+import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.controllers.multifac.LivePCABean;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
 import pro.metaboanalyst.rwrappers.TimeSeries;
 
@@ -20,7 +22,7 @@ import pro.metaboanalyst.rwrappers.TimeSeries;
  *
  * @author jianguox
  */
-@RequestScoped
+@ViewScoped
 @Named("pcaBean")
 public class PCABean implements Serializable {
 
@@ -353,5 +355,39 @@ public class PCABean implements Serializable {
 
     public void setFlipOpt(String flipOtp) {
         this.flipOpt = flipOtp;
+    }
+    @JsonIgnore
+    @Inject
+    private LivePCABean lb;
+    
+    public String pcaScore2dBtn_meta_action() {
+        if (pcaScoreX == pcaScoreY) {
+            sb.addMessage("Error", "X and Y axes are of the same PC");
+        } else {
+            double conf = 0.95;
+            if (!displayConfs) {
+                conf = 0;
+            }
+            int showNames = 0;
+            if (displayNames) {
+                showNames = 1;
+            }
+
+            int useGreyScale = 0;
+            if (greyScale) {
+                useGreyScale = 1;
+            }
+            TimeSeries.plotPCA2DScoreMeta(sb, sb.getNewImage("pca_score2d"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt, lb.getColOpt(), lb.getShapeOpt());
+            PrimeFaces.current().scrollTo("ac:form3:score2dPane");
+        }
+        return null;
+    }
+
+    public void flipPCAMeta() {
+        ChemoMetrics.flipPCA(sb, flipOpt);
+        pcaScore2dBtn_meta_action();
+        lb.pcaPairBtn_action();
+        TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", lb.getColOpt(), lb.getShapeOpt(), "blue");
+
     }
 }
