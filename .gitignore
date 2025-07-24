@@ -10,3 +10,4 @@ vignettes/*.Rmd
 *.o
 */.DS_Store
 .DS_Store
+MetaboAnalystR_4.0.0.tar.gz
