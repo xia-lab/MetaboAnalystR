@@ -1547,6 +1547,20 @@ public class RDataUtils {
 
     //deselect certain compounds from further consideration
     // maxAllowed -1 all, 1 use empirical control 
+    public static int filterVariable(RConnection RC, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff, String doBlank, double blankcutoff) {
+        try {
+            String rCommand = "FilterVariable(NA" + ", \"" + doQC + "\", " + rsd + ", \"" + varFilter + "\", " + varCutoff + ", \"" + intFilter + "\", " + intCutoff + ", " + doBlank + "," + blankcutoff + ")";
+            RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger());
+        } catch (Exception e) {
+            LOGGER.error("filterVariable", e);
+            return 0;
+        }
+    }
+
+    /*
+    //deselect certain compounds from further consideration
+    // maxAllowed -1 all, 1 use empirical control 
     public static int filterVariable(SessionBean1 sb, String doQC, int rsd, String varFilter, int varCutoff, String intFilter, int intCutoff) {
         try {
             RConnection RC = sb.getRConnection();
@@ -1559,8 +1573,7 @@ public class RDataUtils {
             LOGGER.error("filterVariable", e);
             return 0;
         }
-    }
-
+    }*/
     public static int updateData(RConnection RC, String[] featVec, String[] smplVec, String[] useVec, String ordGrp) {
         try {
             String featCmd = "feature.nm.vec <- " + DataUtils.createStringVector(featVec);
@@ -1660,14 +1673,27 @@ public class RDataUtils {
         }
     }
 
-    // final sanity check to set up dataSet$proc; return feature number
-    public static int replaceMin(RConnection RC) {
+    public static int removeMissingByPercent(RConnection RC, double perc, boolean grpWise) {
         try {
-            String rCommand = "ReplaceMin(NA);";
+            String grpWiseStr = grpWise ? "T" : "F";
+
+            String rCommand = "RemoveMissingByPercent(NA" + ", percent=" + perc + ", " + grpWiseStr + ")";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
-            LOGGER.error("replaceMin", e);
+            LOGGER.error("removeMissingByPercent", e);
+        }
+        return 0;
+    }
+
+    // final sanity check to set up dataSet$proc; return feature number
+    public static int performSanityClosure(RConnection RC) {
+        try {
+            String rCommand = "PerformSanityClosure (NA);";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            LOGGER.error("performSanityClosure", e);
         }
         return -1;
     }
@@ -3305,4 +3331,61 @@ public class RDataUtils {
         return;
 
     }
+
+    public static String getMissFilterMsg(RConnection RC) {
+        try {
+            String rCommand = "fetchMissFilterMsg(NA)";
+            //String imgName = RC.eval(rCommand).asString();
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("getMissFilterMsg", e);
+        }
+        return null;
+    }
+
+    /**
+     * Returns TRUE if QC samples are flagged in the current mSetObj.
+     *
+     * @param sb active SessionBean1 (provides the RConnection)
+     * @return true ⇢ QC samples present false ⇢ QC samples absent or error
+     * occurred
+     */
+    public static boolean getContainsQC(SessionBean1 sb) {
+
+        try {
+            RConnection RC = sb.getRConnection();
+
+            String rCommand = "GetContainsQC()";   // R helper we added earlier
+            //RCenter.recordRCommand(RC, rCommand);
+            // asInteger(): TRUE → 1, FALSE/NA → 0
+            return RC.eval(rCommand).asInteger() == 1;
+
+        } catch (Exception e) {
+            LOGGER.error("getContainsQC", e);
+            return false;
+        }
+    }
+
+    /**
+     * Returns TRUE if blank injections are flagged in the current mSetObj.
+     *
+     * @param sb active SessionBean1 (provides the RConnection)
+     * @return true ⇢ blanks present false ⇢ blanks absent or error occurred
+     */
+    public static boolean getContainsBlank(SessionBean1 sb) {
+
+        try {
+            RConnection RC = sb.getRConnection();
+
+            String rCommand = "GetContainsBlank()";   // R helper we added earlier
+            //RCenter.recordRCommand(RC, rCommand);
+
+            return RC.eval(rCommand).asInteger() == 1;
+
+        } catch (Exception e) {
+            LOGGER.error("getContainsBlank", e);
+            return false;
+        }
+    }
+
 }

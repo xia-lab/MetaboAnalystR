@@ -209,6 +209,25 @@ public class SessionBean1 implements Serializable {
     private String visMode = "static"; //4 mode: ppi, chem, tf, drug
     private String uploadType = "table";
 
+    private boolean containsBlank = false;
+    private boolean containsQC = false;
+
+    public boolean isContainsBlank() {
+        return containsBlank;
+    }
+
+    public void setContainsBlank(boolean containsBlank) {
+        this.containsBlank = containsBlank;
+    }
+
+    public boolean isContainsQC() {
+        return containsQC;
+    }
+
+    public void setContainsQC(boolean containsQC) {
+        this.containsQC = containsQC;
+    }
+
     public void setNoticeSize(int noticeSize) {
         this.noticeSize = noticeSize;
     }
