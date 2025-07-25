@@ -18,7 +18,7 @@ GetSigGeneCountTotal <- function(){
 CheckRawDataAlreadyNormalized <- function(dataName=""){
   dataSet <- readDataset(dataName);
   #data <- dataSet$data.anot;
-  data <- get.annotated.data();
+  data <- .get.annotated.data();
   if(sum(data > 100) > 100){ # now we think it is raw counts
     return(0);
   }else{
@@ -39,6 +39,7 @@ GetMetaCol<- function(dataName=""){
       return(names(dataSet$comp.res.list));
     } else {
       inx <- match("logCPM", colNms)
+      return(names(dataSet$comp.res.list));
     }
     resT <- dataSet$comp.res;
     if(inx > 2){
@@ -79,20 +80,32 @@ GetSummaryData <- function(){
   return(msgSet$summaryVec);
 }
 
-GetMetaColLength<- function(dataName=""){
-  dataSet <- readDataset(dataName);
-  paramSet <- readSet(paramSet, "paramSet");
+GetMetaColLength <- function(dataName = "") {
 
-  if (dataSet$de.method=="limma"){
-    inx <- match("AveExpr", colnames(dataSet$comp.res))
-  } else if (dataSet$de.method=="deseq2"){
-    return(length(dataSet$comp.res.list));
-  } else {
-    inx <- match("logCPM", colnames(dataSet$comp.res))
+  dataSet <- readDataset(dataName)
+
+  # bail out early if no comparison results
+  if (is.null(dataSet$comp.res) && is.null(dataSet$comp.res.list)) {
+    return(0L)
   }
-  resT <- dataSet$comp.res;
-  resT <- resT[,1:inx-1]
-  return(length(colnames(resT)));
+
+  method <- tolower(dataSet$de.method)
+
+  if (method == "limma") {
+    inx <- match("AveExpr", colnames(dataSet$comp.res))
+  } else if (method == "deseq2") {
+    return(length(dataSet$comp.res.list))
+  } else {           
+    return(length(dataSet$comp.res.list))
+  }
+
+  # if the marker column isn't present → length 0
+  if (is.na(inx) || inx <= 1) {
+    return(0L)
+  }
+
+  resT <- dataSet$comp.res[, seq_len(inx - 1), drop = FALSE]
+  length(colnames(resT))
 }
 
 GetInitLib <- function(){
@@ -245,6 +258,9 @@ GetExpressResultMatrix <-function(dataName="", inxt){
     if (dataSet$de.method=="deseq2"){
         inx <- match("baseMean", colnames(dataSet$comp.res))
         res <- dataSet$comp.res.list[[inxt]];
+    }else if (dataSet$de.method=="edger"){
+        inx <- match("logCPM", colnames(dataSet$comp.res))
+        res <- dataSet$comp.res.list[[inxt]];
     }else{
         if (dataSet$de.method=="limma"){
             inx <- match("AveExpr", colnames(dataSet$comp.res))
@@ -340,9 +356,15 @@ SelectDataSet <- function(){
 }
 
 
-GetFeatureNum <-function(dataName){
-  dataSet <- readDataset(dataName);
-  return(nrow(dataSet$data.norm));
+GetFeatureNum <- function(dataName) {
+
+  dataSet <- readDataset(dataName, quiet = TRUE)
+
+  if (is.null(dataSet) || is.null(dataSet$data.norm)) {
+    return(0L)                               # nothing loaded → report zero
+  }
+
+  nrow(dataSet$data.norm)
 }
 
 # get qualified inx with at least number of replicates

@@ -912,29 +912,57 @@ readSet <- function(obj=NA, set=""){
     }
     return(obj);
 }
+load_qs <- function(url) {
+  qs::qdeserialize(curl::curl_fetch_memory(url)$content)
+}
 
-load_qs <- function(url) qs::qdeserialize(curl::curl_fetch_memory(url)$content)
+readDataset <- function(dataName = "", quiet = FALSE) {
 
-readDataset <- function(dataName=""){
+  #── 1 · quick sanity check ----------------------------------------------------
+  if (length(dataName) == 0L || dataName == "") {
+    if (!quiet) warning("readDataset: empty dataName")
+    return(NULL)
+  }
 
-    if(globalConfig$anal.mode == "api"){
-      if(exists('user.path')){
-        path <- user.path;
-        obj <- load_qs(paste0(path, replace_extension_with_qs(dataName)));
-      }else{
-        obj <- qs::qread(replace_extension_with_qs(dataName));
+  #── 2 · choose source --------------------------------------------------------
+  tryCatch({
+
+    if (globalConfig$anal.mode == "api") {
+
+      if (exists("user.path", inherits = FALSE)) {           # API + user path
+        path <- user.path
+        qsfile <- paste0(path, replace_extension_with_qs(dataName))
+        obj <- load_qs(qsfile)
+
+      } else {                                              # API, local disk
+        qsfile <- replace_extension_with_qs(dataName)
+        obj <- qs::qread(qsfile)
       }
-    }else{
-       #obj <- dataSets[[dataName]];
-            if(exists("dataSets") && !is.null(dataSets) && !is.null(dataSets[[dataName]])) {
-                obj <- dataSets[[dataName]]
-            } else {
-                obj <- qs::qread(replace_extension_with_qs(dataName))
-            }
+
+    } else {                                                # interactive mode
+
+      if (exists("dataSets") &&
+          !is.null(dataSets) &&
+          !is.null(dataSets[[dataName]])) {
+
+        obj <- dataSets[[dataName]]                         # in‑memory copy
+
+      } else {                                              # fall back to .qs
+        qsfile <- replace_extension_with_qs(dataName)
+        obj <- qs::qread(qsfile)
+      }
     }
 
-    return(obj);
+    obj
+
+  }, error = function(e) {                                  #── 3 · graceful fail
+    if (!quiet)
+      warning(sprintf("readDataset: cannot load '%s' – %s",
+                      dataName, e$message), call. = FALSE)
+    NULL
+  })
 }
+
 
 getCurrentMsg <- function(){
     msgSet <- readSet(msgSet, "msgSet");

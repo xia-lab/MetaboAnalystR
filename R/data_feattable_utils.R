@@ -54,6 +54,9 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     hit.inx <- which(colnames(resTable) == "AveExpr");
   } else {
     hit.inx <- which(colnames(resTable) == "logCPM");
+    dataSet$comp.res <- dataSet$comp.res.list[[inx]];
+    resTable <- dataSet$comp.res;
+    print(head(resTable));
   }
   
   resTable <- resTable[!is.na(resTable[,1]),]
@@ -74,7 +77,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
     hit.inx.fc <- fc.vec >= fc.lvl;
     resTable <- resTable[hit.inx.fc,];
-  } else if (dataSet$de.method=="deseq2"){
+  } else if (dataSet$de.method=="deseq2" || dataSet$de.method=="edger"){
     pos.mat <- abs(logfc.mat);
     fc.vec <- pos.mat[,1];
     hit.inx.fc <- fc.vec >= fc.lvl;
@@ -159,7 +162,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   cat(json.obj);
   sink();
 
-  if (dataSet$de.method == "deseq2") {
+  if (dataSet$de.method %in% c("deseq2", "edger")) {
   # Initialize a list to collect data from all comparisons
   significant_gene_table <- list()
 
