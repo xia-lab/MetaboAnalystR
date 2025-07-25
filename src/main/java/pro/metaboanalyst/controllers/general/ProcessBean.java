@@ -300,18 +300,53 @@ public class ProcessBean implements Serializable {
     }
 
     private boolean imputeInit = false;
+    private String missingMsg;
+    private String missingMsgFilt;
 
-    public void imputeButton_action() {
+    private String missNumMsg;
+
+    public String getMissNumMsg() {
+        return missNumMsg;
+    }
+
+    public String getMissingMsgFilt() {
+        return missingMsgFilt;
+    }
+
+    public void setMissingMsgFilt(String missingMsgFilt) {
+        this.missingMsgFilt = missingMsgFilt;
+    }
+
+    public void setMissNumMsg(String missNumMsg) {
+        this.missNumMsg = missNumMsg;
+    }
+
+    public void imputeButton_action(String type) {
         if (imputeInit) {
             return;
         }
         sb.setMultiGroup(RDataUtils.getGroupNumber(sb.getRConnection()) > 2);
-        missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection());
-        RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+        missNumMsg = RDataUtils.getMissNumMsg(sb.getRConnection());
+
+        if (type.equals("orig")) {
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+            RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap"), "png", 150);
+            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap"));
+            missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection(), "orig");
+
+        } else {
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "png", 150);
+            RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap_filt"), "png", 150);
+            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap_filt"));
+            missingMsgFilt = RDataUtils.getMissingTestMsg(sb.getRConnection(), "filt");
+
+        }
         imputeInit = true;
     }
 
-    private String missingMsg;
+    public void viewRsdPlot() {
+        RDataUtils.plotRSDViolin(sb, sb.getNewImage("qc_rsd"), "png", 150);
+    }
 
     public String getMissingMsg() {
         return missingMsg;
@@ -393,6 +428,12 @@ public class ProcessBean implements Serializable {
             return "Name check";
         }
 
+        // check if contains "BLANK"
+        boolean res_blank = RDataUtils.checkContainsBlank(sb);
+        if (res_blank) {
+            sb.setContainsBlank(res_blank);
+        }
+
         return toFilterView();
     }
 
@@ -439,16 +480,6 @@ public class ProcessBean implements Serializable {
         }
     }
 
-    /*
-    public String filterProceed_action() {
-        RConnection RC = sb.getRConnection();
-        String doQC = "F";
-        if (!filtered) {
-            RDataUtils.filterVariable(sb, doQC, qcCutoff, "none", -1, "mean", 0);
-        }
-
-        return "Normalization";
-    }*/
     public void filterButton_action() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
@@ -466,9 +497,9 @@ public class ProcessBean implements Serializable {
 
         if (doBlankSub) {
             doBlank = "T";
-            msg = "Blank subtraction: Yes. ";
+            msg = msg + "Blank subtraction: Yes. ";
         } else {
-            msg = "Blank subtraction: No. ";
+            msg = msg + "Blank subtraction: No. ";
         }
 
         double percent = 1.0; // all missing to remove by default
@@ -509,6 +540,10 @@ public class ProcessBean implements Serializable {
         sb.setMissingDisabled(res2 == 2);
         msg = msg + "; " + RDataUtils.getCurrentMsg(RC);
         sb.addMessage("OK", msg);
+
+        String filterTotalMsg = RDataUtils.getFilterTotalMsg(RC);
+        sb.addMessage("OK", filterTotalMsg);
+
         int featureNum = RDataUtils.getFiltFeatureNumber(RC);
         sb.updateFeatureNum(featureNum);
         filtered = true;
@@ -528,6 +563,16 @@ public class ProcessBean implements Serializable {
 
     public void setFiltered(boolean filtered) {
         this.filtered = filtered;
+    }
+
+    private boolean missingPerformed = false;
+
+    public boolean isMissingPerformed() {
+        return missingPerformed;
+    }
+
+    public void setMissingPerformed(boolean missingPerformed) {
+        this.missingPerformed = missingPerformed;
     }
 
     private String nmrAlignText = "";
@@ -605,7 +650,7 @@ public class ProcessBean implements Serializable {
         return "Data check";
     }
 
-    private boolean removeMissing = true;
+    private boolean removeMissing = false;
 
     public boolean isRemoveMissing() {
         return removeMissing;
@@ -625,7 +670,7 @@ public class ProcessBean implements Serializable {
         this.missingPercent = missingPercent;
     }
 
-    private String missingImputeOpt = "lod";
+    private String missingImputeOpt = "leftCensor";
 
     public String getMissingImputeOpt() {
         return missingImputeOpt;
@@ -633,6 +678,16 @@ public class ProcessBean implements Serializable {
 
     public void setMissingImputeOpt(String missingImputeOpt) {
         this.missingImputeOpt = missingImputeOpt;
+    }
+
+    private String leftCensorOpt = "lod";
+
+    public String getLeftCensorOpt() {
+        return leftCensorOpt;
+    }
+
+    public void setLeftCensorOpt(String leftCensorOpt) {
+        this.leftCensorOpt = leftCensorOpt;
     }
 
     private String replaceVarOpt;
@@ -655,39 +710,47 @@ public class ProcessBean implements Serializable {
         this.imputeAlgOpt = imputeAlgOpt;
     }
 
-    public String performMissingImpute() {
+    public void performMissingImpute() {
         RConnection RC = sb.getRConnection();
 
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
             jrd.record_performMissingImpute(this);
-            return null;
-        }
-        if (removeMissing) {
-            double percent = missingPercent / 100.0;
-            RDataUtils.removeVariableByPercent(sb, percent);
+            return;
         }
 
         String method = missingImputeOpt;
         switch (missingImputeOpt) {
+            case "leftCensor" ->
+                method = leftCensorOpt;
             case "replaceCol" ->
                 method = replaceVarOpt;
             case "impute" ->
                 method = imputeAlgOpt;
         }
-        RDataUtils.imputeVariable(sb, method);
-        sb.setDataPreprocessed();
+        int success = RDataUtils.imputeVariable(RC, method, grpLod, grpMeasure);
+        if (success == 0) {
+            String msg = RDataUtils.getCurrentMsg(RC);
+            sb.addMessage("error", msg);
+            return;
+        }
+        String msg = RDataUtils.getReplaceMsg(RC);
+        sb.addMessage("info", msg);
+        sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();
+        missingPerformed = true;
         jrd.record_performMissingImpute(this);
 
         if (analType.equals("mf")) {
-            return "Metadata check";
+            //return "Metadata check";
+            return;
         } else if (analType.equals("dose")) {
             String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
             if (metaDataGroups.length > 1) {
-                return "Metadata check";
+                // return "Metadata check";
+                return;
             }
         }
 
@@ -697,10 +760,10 @@ public class ProcessBean implements Serializable {
             } else {
                 SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             }
-            return "Name check";
+            //return "Name check";
         }
 
-        return toFilterView();
+        //return toFilterView();
     }
 
     private String toFilterView() {
@@ -711,7 +774,11 @@ public class ProcessBean implements Serializable {
         } else if (!sb.getDataType().equalsIgnoreCase("conc")) {
             return "Data filter";
         } else {
-            return "Normalization";
+            if (!sb.isMissingDisabled()) {
+                return "Data filter";
+            } else {
+                return "Normalization";
+            }
         }
     }
 

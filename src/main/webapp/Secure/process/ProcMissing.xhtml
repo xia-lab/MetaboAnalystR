@@ -7,118 +7,154 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
-        <f:event type="preRenderView" listener="#{procBean.imputeButton_action()}"/> 
+        <f:event type="preRenderView" listener="#{procBean.imputeButton_action('filter')}"/> 
         <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('Missing value', '/Secure/process/ProcMissing.xhtml')}"/> 
     </ui:define>
+    <ui:define name="myscript">
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/plotly-3.0.1.min.js"></script>
+    </ui:define>
     <ui:define name="content">
+        <h:inputHidden id="myjson" value="#{sessionBean1.getJsonDir('qc_missheatmap_filt')}" />  
         <h:form>
             <h:panelGrid style="padding:30px 40px 20px 50px; font-size: 13px; line-height: 23px; width: 95%; ">
                 <h2>Missing value estimation:</h2>
                 <p>
-                    Too many missing values will cause difficulties for downstream analysis. There are several different 
-                    methods for this purpose. 
+                    Too many missing values will cause difficulties for downstream analysis. There are three general categories for missing value imputation. 
+                    <ul>
+                        <li>
+                            <b>Left-censored data estimation</b>: it assumes that the true value of an observation is known to be below a certain threshold (the LoD), 
+                            but its exact value is unknown. The default method LoD (limit of detection) will replace
+                            all the missing values with 1/5 of the minimum positive values of individual features as proxies of their detection limits. 
+                            Alternatively, the Quantile Regression Imputation of Left-Censored data (QRILC) method which imputes missing data by modeling each 
+                            feature’s low tail as log-normal and sampling replacements.
+                        </li>
+                        <li>
+                            <b>Univariate statistical methods</b>: this approach replaces missing values by mean/median/min based on the non-missing values of the feature;
+                        </li>
+                        <li>   
+                            <b>Multivariate statistical methods</b>: these methods leverage correlations between features or samples to estimate the missing entries, including k-nearest neighbours based on similar features 
+                            - KNN (feature-wise), k-nearest neighbours based on similar samples - KNN (sample-wise), probabilistic PCA (PPCA), 
+                            Bayesian PCA (BPCA) method, singular value decomposition (SVD) (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref</a>), 
+                            and <i>missForest</i> based on random forest(<a href="https://doi.org/10.1093/bioinformatics/btr597" target="_blank">ref</a>). 
+                            Note k is set to 10 for KNN; the max missing values is set to 30000 for missForest due to its computational intensive nature.
+                        </li>
+                    </ul>
                 </p>
-                <p>
-                    <b>Univariate statistical methods</b>: Replacing missing values by LoD/mean/median/min. The default method LoD (limit of detection) will replace
-                    all the missing values with a small values (i.e. 1/5 of the minimum positive values of individual features) assuming to be the detection limit. 
-                    The assumption of this approach is that missing values are due to low abundance (i.e. below the detection limit).
-                    By default, LoD/mean/median/min are computed for individual features based on their non-missing data points. 
-                </p>
-                <p>   
-                    <b>Multivariate statistical methods</b>: MetaboAnalyst also offers other advanced statistical methods, such as k-nearest neighbours based on similar features 
-                    - KNN (feature-wise), k-nearest neighbours based on similar samples - KNN (sample-wise), probabilistic PCA (PPCA), 
-                    Bayesian PCA (BPCA) method, singular value decomposition (SVD) method to impute the missing values 
-                    (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref.</a>). Note for KNN, k is set to 10 (the default value). 
-                    These advanced statistical methods are able to estimate missing values based on patterns of missing value distribution. 
-                </p>
-                <h:panelGrid id="mvPlotPane" style="width:90%; padding:20px;; text-align: center" 
-                             rendered="#{not sessionBean1.missingDisabled}">
-                    <h3>
-                        Missing value distributions
-                    </h3>
-                    <p>
-                        <h:outputText value="#{procBean.missingMsg}" style="font-size: 14px; color:orange" escape="false"/>. 
-                        When missing value distributions are significantly different across groups, 
-                        It may be more appropriate to estimate LoD/mean/median/min values for individual groups.
-                    </p>
-                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss')}"
-                                   update=":myGraphPane"
-                                   style="margin-left: 70%"
-                                   oncomplete="PF('graphDialog').show()"
-                                   title="Customise the graphics output">
-                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                    </p:commandLink>
 
-                    <img onerror="this.style.display='none'"
-                         src="#{sessionBean1.getCurrentImageURL('qc_miss')}"
-                         alt="Missing-value lollipop plot"
-                         style="width:7in;"/>
+                <p:tabView id="ac" dynamic="true" cache="true">
 
+                    <!-- First Tab: Existing Content -->
+                    <p:tab title="Missing Value Summary">
+                        <p>
+                            <h:outputText value="#{procBean.missNumMsg}" style="font-size: 14px; color:darkorange" escape="false"/> &nbsp;
+                            <h:outputText value="#{procBean.missingMsgFilt}" style="font-size: 14px; color:darkorange" escape="false"/> 
+                        </p>
+                        <p>
+                            When the percentage of missing values or average abundance differs significantly across
+                            experimental groups, it suggests there are systematic differences in samples across groups ('batch effect'). 
+                            <b>Sample-wise normalization</b> such as normalize by mean, median, sum or probabilistic quotient normalization (PQR) are 
+                            recommended before transformation or scaling. 
+                        </p>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss_filt')}"
+                                       update=":myGraphPane"
+                                       style="margin-left: 70%"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customise the graphics output">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                        </p:commandLink>
+
+                        <img onerror="this.style.display='none'"
+                             src="#{sessionBean1.getCurrentImageURL('qc_miss_filt')}"
+                             alt="Missing-value lollipop plot"
+                             style="width:7in;"/>
+                    </p:tab>
+
+                    <!-- Second Tab: Missing Value Heatmap -->
+                    <p:tab title="Missing Value Heatmap">
+                        <p>
+                            This heatmap shows the missing value distribution across all samples and features. 
+                            Patterns such as group-specific missingness or sample-level artifacts can be quickly identified. 
+                            For large data, only the <b>first 50 samples</b> are shown.
+                        </p>
+
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_missheatmap_filt')}"
+                                       update=":myGraphPane"
+                                       style="margin-left: 70%"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customise the graphics output">
+                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                        </p:commandLink>
+
+                        <div id="qc_missheatmap" style="width:800px; height:540px;"></div>
+                        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/miss_heatmap.js"></script>
+                    </p:tab>
+                </p:tabView>
+
+                <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
+                    <f:selectItem itemLabel="Replace by a small value" itemValue="leftCensor"/>                         
+                    <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
+                    <f:selectItem itemLabel="Impute" itemValue="impute"/> 
+                </p:selectOneRadio>
+
+                <h3>
+                    Please choose a method below
+                </h3>
+                <h:panelGrid columns="3" class="surface-card shadow-1 p-4 text-800"
+                             style="width: 800px; margin-bottom: 20px;">
+
+                    <p:radioButton for="rowRadio" itemIndex="0"/>
+
+                    <p:outputLabel value="Left-censored data estimation"/> 
+                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.leftCensorOpt}">
+                        <f:selectItem itemLabel="LoD (1/5 of the min. positive value)" itemValue="lod"/> 
+                        <f:selectItem itemLabel="quantile regression (QRILC)" itemValue="qrilc"/> 
+                    </p:selectOneMenu>
+
+                    <p:radioButton for="rowRadio" itemIndex="1"/>
+
+                    <p:outputLabel value="Univariate statistical methods"/>  
+                    <h:panelGroup>
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.replaceVarOpt}">
+                            <f:selectItem itemLabel="mean" itemValue="mean"/> 
+                            <f:selectItem itemLabel="median" itemValue="median"/> 
+                            <f:selectItem itemLabel="min" itemValue="colmin"/> 
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+
+
+                    <p:radioButton for="rowRadio" itemIndex="2"/>
+
+                    <p:outputLabel value="Multivariate statistical methods"/>        
+                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.imputeAlgOpt}">
+                        <f:selectItem itemLabel="KNN (feature-wise)" itemValue="knn_var"/> 
+                        <f:selectItem itemLabel="KNN (sample-wise)" itemValue="knn_smp"/> 
+                        <f:selectItem itemLabel="PPCA" itemValue="ppca"/> 
+                        <f:selectItem itemLabel="BPCA" itemValue="bpca"/> 
+                        <f:selectItem itemLabel="SVD Impute" itemValue="svdImpute"/> 
+                        <f:selectItem itemLabel="missForest" itemValue="missForest"/> 
+                    </p:selectOneMenu>
                 </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
 
-                <h:panelGrid 
-                    class="surface-card shadow-1 p-4 text-800"
-                    style="border: 1px dashed grey; padding: 20px 20px 20px 40px; width: 780px; margin-left: 8%">
-                    <p:outputLabel value="Step 1. Remove features with too many missing values" style="font-size: 13px; font-weight: bold"/>
-                    <h:panelGrid columns="4" style="padding-bottom: 12px">
-                        <p:selectBooleanCheckbox value="#{procBean.removeMissing}" style="line-height: 18px"/> 
-                        <p:outputLabel value="Remove features with &gt;"/> 
-                        <p:inputText style="width:50px" value="#{procBean.missingPercent}"/>
-                        <p:outputLabel value="% missing values"/>
-                    </h:panelGrid>
-                    <p:outputLabel value="Step 2. Estimate the remaining missing values" style="font-size: 13px; font-weight: bold"/>
-                    <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
-                        <f:selectItem itemLabel="Exclude variables with missing value" itemValue="exclude"/> 
-                        <f:selectItem itemLabel="Replace by a small value (half of the minimum positive value in the original data)" itemValue="lod"/>                         
-                        <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
-                        <f:selectItem itemLabel="Impute" itemValue="impute"/> 
-                    </p:selectOneRadio>
-                    <h:panelGrid columns="2" cellpadding="8">
-                        <p:radioButton for="rowRadio" itemIndex="0"/>
-                        <p:outputLabel value="Exclude variables with missing values"/>
-                        <p:radioButton for="rowRadio" itemIndex="1"/>
-                        <h:panelGroup>
-                            <p:outputLabel value="Replace by LoDs (1/5 of the minimum positive value of each variable)"/> 
-                            <p:spacer style="width: 12px"/>
-                            <p:selectBooleanCheckbox value="#{procBean.grpLod}" 
-                                                     itemLabel="Use group-specific value"
-                                                     style="line-height: 18px"/> 
-                        </h:panelGroup>
-                        <p:radioButton for="rowRadio" itemIndex="2"/>
-                        <h:panelGroup>
-                            <p:outputLabel value="Replace by column (feature) "/>  
-                            <h:panelGroup>
-                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.replaceVarOpt}">
-                                    <f:selectItem itemLabel="mean" itemValue="mean"/> 
-                                    <f:selectItem itemLabel="median" itemValue="median"/> 
-                                    <f:selectItem itemLabel="min" itemValue="colmin"/> 
-                                </p:selectOneMenu>
-                                <p:spacer style="width: 12px"/>
-                                <p:selectBooleanCheckbox value="#{procBean.grpMeasure}" 
-                                                         itemLabel="Use group-specific value"
-                                                         style="line-height: 18px"/> 
-                            </h:panelGroup>
-                        </h:panelGroup>
-                        <p:radioButton for="rowRadio" itemIndex="3"/>
-                        <h:panelGroup>
-                            <p:outputLabel value="Estimate missing values using "/>        
-                            <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.imputeAlgOpt}">
-                                <f:selectItem itemLabel="KNN (feature-wise)" itemValue="knn_var"/> 
-                                <f:selectItem itemLabel="KNN (sample-wise)" itemValue="knn_smp"/> 
-                                <f:selectItem itemLabel="PPCA" itemValue="ppca"/> 
-                                <f:selectItem itemLabel="BPCA" itemValue="bpca"/> 
-                                <f:selectItem itemLabel="SVD Impute" itemValue="svdImpute"/> 
-                            </p:selectOneMenu>
-                        </h:panelGroup>
-                    </h:panelGrid>
-                </h:panelGrid>
-                <h:panelGrid style="width: 670px; text-align: center; margin-left: 10%">
-                    <p:commandButton value="Process" ajax="false" 
-                                     icon="pi pi-caret-right"
-                                     onclick="PF('statusDialog').show()" 
-                                     action="#{procBean.performMissingImpute()}"/>
-                </h:panelGrid> 
-            </h:panelGrid> 
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px; padding-left: 10%; padding-right: 10%">
+                <p:commandButton value="Submit" style="width:120px"
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide()"   
+                                 update=":hisTab:cmdPane :southform"
+                                 actionListener="#{procBean.performMissingImpute()}"/>   
+                <p:commandButton value="Proceed"  
+                                 style="width:120px" 
+                                 onclick="PF('statusDialog').show()"
+                                 oncomplete="PF('statusDialog').hide()"
+                                 disabled="#{!procBean.missingPerformed}"
+                                 ajax="false" 
+                                 action="Normalization"/>   
+            </h:panelGrid>
         </h:form>
     </ui:define>
 </ui:composition>

@@ -47,12 +47,8 @@
                             <p:commandButton value="Edit Groups" style="width:120px;" 
                                              onclick="PF('smplGrpDialog').show()"
                                              disabled="#{procBean.editBnDisabled}"
-                                             update="smplGrpForm"
-                                             />
-                            <p:commandButton value="Missing Values" ajax="false" style="width:150px;" 
-                                             onclick="PF('statusDialog').show()"
-                                             disabled="#{sessionBean1.missingDisabled}"
-                                             action="Missing value"/>
+                                             update="smplGrpForm"/>
+                        
                             <p:commandButton value="Proceed" style="width:120px;"
                                              ajax="false"
                                              onclick="PF('statusDialog').show()"
@@ -60,6 +56,7 @@
                                              icon="pi pi-caret-right"
                                              rendered="#{!sessionBean1.isBatchProject}"
                                              action="#{procBean.skipButton_action_default()}"/>
+                            
                             <p:commandButton value="Proceed" style="width:120px;"
                                              disabled="#{procBean.proceedBnDisabled}"
                                              icon="pi pi-caret-right"
