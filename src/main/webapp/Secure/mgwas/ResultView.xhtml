@@ -195,7 +195,7 @@
                                                   paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                                                   style="font-size: 10px; width: 100%; padding-top:40px" var="rb" value="#{mgwasBean.reslitTable}" rowKey="#{rb.get('rowID')}">  
                                         <p:column headerText="Potential effect" sortBy="#{rb.get('col1')}"
-                                                  filterBy="#{rb.get('col1')}" filterMatchMode="contains" width="10%">
+                                                  filterBy="#{rb.get('col1')}" filterMatchMode="contains" width="30%">
                                             <h:outputText escape="false" value="#{rb.get('col1')}"/>
                                         </p:column>
 
