@@ -90,9 +90,12 @@ PerformDEAnal<-function (dataName="", anal.type = "default", par1 = NULL, par2 =
   }else if (dataSet$de.method == "limma"){
     dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
-  }else{
+  }else if (dataSet$de.method == "edger"){
     dataSet <- prepareEdgeRContrast(dataSet, anal.type, par1, par2, nested.opt);
     dataSet <- .perform_limma_edger(dataSet, robustTrend);
+  }else{
+    dataSet <- prepareContrast(dataSet, anal.type, par1, par2, nested.opt);
+    dataSet <- .perform_williams_trend(dataSet, robustTrend);
   }
   return(RegisterData(dataSet));
 }
@@ -418,6 +421,92 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
   dataSet$comp.res <- result.list[[1]]
 
 }
+.perform_williams_trend <- function(dataSet,
+                                    robustTrend = FALSE,
+                                    verbose     = TRUE)
+{
+  require(limma)
+  require(multcomp)
+  
+  ## ── 1. expression matrix & dose factor ──────────────────────
+  expr <- if (length(dataSet$rmidx) > 0)
+    dataSet$data.norm[, -dataSet$rmidx, drop = FALSE] else
+      dataSet$data.norm
+  
+  cls_vals <- if (length(dataSet$rmidx) > 0)
+    dataSet$cls[-dataSet$rmidx] else
+      dataSet$cls
+  
+  ## attempt numeric sorting
+  unique_cls <- unique(cls_vals)
+  dose_order <- suppressWarnings(as.numeric(as.character(unique_cls)))
+  
+  if (all(!is.na(dose_order))) {
+    ord_levels <- unique_cls[order(dose_order)]
+  } else {
+    ord_levels <- sort(unique_cls)
+  }
+  
+  grp <- factor(cls_vals, levels = ord_levels, ordered = TRUE)
+  grp <- droplevels(grp)
+  
+  if (nlevels(grp) < 3)
+    stop("Williams trend test requires ≥ 3 ordered doses.")
+  
+  design <- model.matrix(~0 + grp)
+  colnames(design) <- levels(grp)
+  
+  will.mat <- multcomp::contrMat(table(grp), "Williams")
+  will.mat <- t(will.mat)
+  rownames(will.mat) <- levels(grp)
+  colnames(will.mat) <- paste0("C", seq_len(ncol(will.mat)))
+  
+  if (!identical(rownames(will.mat), colnames(design)))
+    stop("Contrast rows and design columns do not match!")
+  
+  if (verbose) {
+    cat("DEBUG ↴\n",
+        "Dose levels : ", paste(levels(grp), collapse = ", "), "\n",
+        "design :", nrow(design), "×", ncol(design), "\n",
+        "will   :", nrow(will.mat), "×", ncol(will.mat), "\n\n")
+  }
+  
+  fit      <- limma::lmFit(expr, design)
+  fit.will <- limma::eBayes(
+    limma::contrasts.fit(fit, will.mat),
+    trend  = robustTrend,
+    robust = robustTrend)
+  
+  t.mat <- fit.will$t
+  flip  <- ifelse(will.mat[1, ] < 0, -1, 1)
+  t.mat <- sweep(t.mat, 2, flip, `*`)
+  min.t <- apply(t.mat, 1, function(x) min(x, na.rm = TRUE))
+
+  P.Value   <- 2 * pt(-abs(min.t), df = fit.will$df.total)
+  adj.P.Val <- p.adjust(P.Value, "fdr")
+  
+  lev     <- levels(grp)
+  control <- lev[1]
+  pair.mat <- sapply(lev[-1], function(lv) {
+    v <- setNames(rep(0, length(lev)), lev)
+    v[lv]      <-  1
+    v[control] <- -1
+    v
+  })
+  colnames(pair.mat) <- paste0("Dose_", control , ".Dose_", lev[-1])
+  
+  pair.fit   <- limma::contrasts.fit(fit, pair.mat)
+  pair.logFC <- pair.fit$coefficients
+  
+  ## ── 7. Assemble results ────────────────────────────────────
+  topFeatures <- data.frame(
+    pair.logFC,
+    t         = min.t,
+    P.Value   = P.Value,
+    adj.P.Val = adj.P.Val,
+    check.names = FALSE)
+  
+  dataSet$comp.res <- topFeatures
   return(dataSet)
 }
 
@@ -793,7 +882,6 @@ parse_contrast_groups <- function(contrast_str) {
 
   return(topFeatures)
 }
-
 prepareEdgeRContrast <- function(dataSet,
                                  anal.type  = "reference",
                                  par1       = NULL,

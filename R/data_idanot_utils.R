@@ -278,7 +278,7 @@ AnnotateGeneData <- function(dataName, org, lvlOpt, idtype){
   col.nm <- "";
   db.nm <- "";
   
-  if (org == "zhangshugang") {
+  if (org == "zhangshugang" || org == "cro") {
       q.mat <- do.call(rbind, strsplit(feature.vec, "\\."));
       feature.vec <- q.mat[, 1];
   }
@@ -445,19 +445,45 @@ doEntrez2SymbolMapping <- function(entrez.vec,data.org="NA", data.idType="NA"){
   symbols[na.inx] <- entrez.vec[na.inx];
   return(symbols);
 }
+# note, entrez.vec could contain NA / NULL – cannot rely on rownames
+doEntrezIDAnot <- function(entrez.vec,
+                           data.org   = "NA",
+                           data.idType = "NA") {
 
-# note, entrez.vec could contain NA/null, cannot use rownames
-doEntrezIDAnot <- function(entrez.vec,data.org="hsa", data.idType){
-  tblNm <- getEntrezTableName(data.org, data.idType);
-  gene.map <-  queryGeneDB(tblNm, data.org);
-  hit.inx <- match(entrez.vec, gene.map[, "gene_id"]);
-  anot.mat <- gene.map[hit.inx, c("gene_id", "symbol", "name")];
-  
-  na.inx <- is.na(hit.inx);
-  anot.mat[na.inx, "symbol"] <- entrez.vec[na.inx];
-  anot.mat[na.inx, "name"] <- 'NA';
-  return(anot.mat);
+  if (data.org == "NA" && data.idType == "NA") {
+    paramSet  <- readSet(paramSet, "paramSet")
+    data.org  <- paramSet$data.org
+    data.idType <- paramSet$data.idType
+  }
+
+  if (tolower(data.org) == "na") {
+    # No organism context – fall back to a dummy annotation frame
+    return(data.frame(
+      gene_id = entrez.vec,
+      symbol  = entrez.vec,
+      name    = rep("NA", length(entrez.vec)),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  ## ── 2 · database lookup ---------------------------------------------------
+  tblNm   <- getEntrezTableName(data.org, data.idType)
+  gene.map <- queryGeneDB(tblNm, data.org)
+  gene.map[] <- lapply(gene.map, as.character)  # uniform character columns
+
+  hit.inx   <- match(entrez.vec, gene.map[, "gene_id"])
+  anot.mat  <- gene.map[hit.inx, c("gene_id", "symbol", "name")]
+
+  ## ── 3 · fill NAs with original IDs ---------------------------------------
+  na.inx <- is.na(hit.inx)
+  anot.mat[na.inx, "gene_id"] <- entrez.vec[na.inx]
+  anot.mat[na.inx, "symbol"]  <- entrez.vec[na.inx]
+  anot.mat[na.inx, "name"]    <- "NA"
+
+  rownames(anot.mat) <- NULL
+  return(anot.mat)
 }
+
 
 doIdMappingGeneric <- function(orig.vec, gene.map, colNm1, colNm2, type="vec"){
   

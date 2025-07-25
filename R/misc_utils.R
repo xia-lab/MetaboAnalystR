@@ -1229,3 +1229,31 @@ CheckDetailsTablePerformed <-function(type){
 
 return(performed)
 }
+
+BuildCEMiNet <- function(dataName,
+                         filter      = TRUE,
+                         min_ngen    = 30,
+                         cor_method  = "pearson",
+                         verbose     = TRUE) {
+
+  ## If a compiled helper exists, load it; otherwise fall back to R version
+  if (!exists("my.build.cemi.net", mode = "function")) {
+    cmp_file <- file.path(resource.dir,
+                          "rscripts/ExpressAnalystR/R/utils_coexp.Rc")
+    if (file.exists(cmp_file))
+      compiler::loadcmp(cmp_file)
+    cmp_file2 <- file.path(resource.dir,
+                          "rscripts/ExpressAnalystR/R/utils_coexp_net.Rc")
+    if (file.exists(cmp_file2))
+      compiler::loadcmp(cmp_file2)
+  }
+
+  ## Call the implementation (compiled or pure-R)
+  my.build.cemi.net(
+    dataName   = dataName,
+    filter     = filter,
+    min_ngen   = min_ngen,
+    cor_method = cor_method,
+    verbose    = verbose
+  )
+}

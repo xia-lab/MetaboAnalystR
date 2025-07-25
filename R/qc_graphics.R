@@ -582,310 +582,229 @@ GetPcaOutliers <- function(){
 }
 
 PlotDataNcov5 <- function(fileName, imgName, dpi, format){
-  dataSet <- readDataset(fileName);
-  if(grepl("_norm", imgName)){
-    qc.ncov5(dataSet, dataSet$data.norm, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.ncov5(dataSet, data.anot, imgName, dpi, format, F);
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
+
+  ncov5_df <- dataSet$summary_df[, c("Sample", "HighCoverageGeneCount")]
+  
+  ## Compute outlier limits
+  Q1  <- quantile(ncov5_df$HighCoverageGeneCount, 0.25)
+  Q3  <- quantile(ncov5_df$HighCoverageGeneCount, 0.75)
+  IQRv <- IQR(ncov5_df$HighCoverageGeneCount)
+  lower <- Q1 - 3 * IQRv
+  upper <- Q3 + 3 * IQRv
+
+  ncov5_df$Status <- ifelse(ncov5_df$HighCoverageGeneCount < lower |
+                            ncov5_df$HighCoverageGeneCount > upper,
+                            "Outlier", "Normal")
+
+  qc.ncov5.plot(ncov5_df, imgName, lower, upper, dpi, format);
+  qc.ncov5plot.json(ncov5_df, imgName, lower, upper);
+  return("NA")
 }
 
-qc.ncov5 <- function(dataSet, x, imgNm="NCov5_plot", dpi=72, format="png", interactive=FALSE) {
-  require("ggplot2")
-  require("Cairo")
+qc.ncov5.plot <- function(ncov5_df,
+                          imgNm = "NCov5_plot",
+                          lower,
+                          upper,
+                          dpi = 72,
+                          format = "png",
+                          interactive = FALSE) {
+  require(ggplot2)
+  require(ggrepel)
+  require(Cairo)
   
-  # Ensure dpi is a positive number
   dpi <- as.numeric(dpi)
-  if (dpi <= 0) {
-    stop("DPI must be a positive number.")
-  }
+  if (dpi <= 0) stop("DPI must be a positive number.")
+
+  g <- ggplot(ncov5_df, aes(x = "", y = HighCoverageGeneCount)) +
+    geom_boxplot(outlier.shape = NA, fill = "grey80") +
+    geom_jitter(aes(color = Status), width = 0.25, height = 0) +
+    geom_hline(yintercept = c(lower, upper),
+               linetype = "dashed", color = "blue") +
+    geom_text_repel(data = subset(ncov5_df, Status == "Outlier"),
+                    aes(label = Sample), nudge_x = 0.35, size = 3) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 11) +
+    labs(x = NULL,
+         y = "Genes with > 5 uniquely mapped reads") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank())
   
-  # Calculate NCov5 (HighCoverageGeneCount) for each sample
-  HighCoverageGeneCount <- colSums(x > 5)
-  
-  df <- data.frame(Sample = names(HighCoverageGeneCount), HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), stringsAsFactors = FALSE)
-  
-  # Check for non-finite values and remove them
-  df <- df[is.finite(df$HighCoverageGeneCount),]
-  
-  # Calculate IQR and identify outliers
-  Q1 <- quantile(df$HighCoverageGeneCount, 0.25)
-  Q3 <- quantile(df$HighCoverageGeneCount, 0.75)
-  IQR_value <- IQR(df$HighCoverageGeneCount)
-  lower_bound <- Q1 - 3 * IQR_value
-  upper_bound <- Q3 + 3 * IQR_value
-  
-  df$outlier <- ifelse(df$HighCoverageGeneCount < lower_bound | df$HighCoverageGeneCount > upper_bound, "Outlier", "Normal")
-  
-  # Create plot
-  g <- ggplot(df, aes(x = Sample, y = HighCoverageGeneCount, group = Sample, fill = outlier)) +
-    geom_bar(stat = "identity") +
-     scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
-    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
-    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
-    theme_minimal() +
-    labs( x = "Sample",
-         y = "Number of Genes with > 5 Uniquely Mapped Reads") +
-    theme(
-      text = element_text(size = 11),
-      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate and increase size of x-axis labels
-    )
-  
-  width <- 8
+  width  <- 8
   height <- 6
-  
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
-  imgNm <- paste0(fileNm, format, sep="")
-  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
+  imgNm  <- paste0(fileNm, format)
+
   if (interactive) {
-    require("plotly")
-    m <- list(
-      l = 50,
-      r = 50,
-      b = 20,
-      t = 20,
-      pad = 0.5
-    )
-    w <- 1000
-    
-    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
-    return(ggp_build)
+    require(plotly)
+    m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(plotly::ggplotly(g),
+                  autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-  if(dpi == 72){
-  dpi <- dpi *1.34
-  }
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    if (dpi == 72) dpi <- dpi * 1.34
+    Cairo(file = imgNm, width = width, height = height,
+          type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
     return("NA")
   }
 }
+
 
 PlotDataNsig <- function(fileName, imgName, dpi, format){
-  dataSet <- readDataset(fileName);
-  if(grepl("_norm", imgName)){
-    qc.nsig(dataSet, dataSet$data.norm, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.nsig(dataSet, data.anot, imgName, dpi, format, F);
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
   }
-  return("NA");
+
+  nsig_df <- dataSet$summary_df[, c("Sample", "NSig80")]
+
+
+  ## identify outliers (± 3×IQR)
+  Q1  <- quantile(nsig_df$NSig80, 0.25)
+  Q3  <- quantile(nsig_df$NSig80, 0.75)
+  IQRv <- IQR(nsig_df$NSig80)
+  lower <- Q1 - 3 * IQRv
+  upper <- Q3 + 3 * IQRv
+
+  nsig_df$outlier <- ifelse(nsig_df$NSig80 < lower | nsig_df$NSig80 > upper,
+                            "Outlier", "Normal")
+
+  qc.nsig.plot(nsig_df, imgName, lower, upper, dpi, format)
+  qc.nsigplot.json(nsig_df, imgName, lower, upper); 
+  return("NA")
 }
 
-qc.nsig <- function(dataSet, x, imgNm="NSig80_plot", dpi=72, format="png", interactive=FALSE) {
+qc.nsig.plot <- function(nsig_df,
+                         imgNm = "NSig80_plot",
+                         lower,
+                         upper,
+                         dpi = 72,
+                         format = "png",
+                         interactive = FALSE) {
   require("ggplot2")
   require("Cairo")
-  
-  # Ensure dpi is a positive number
+  require("ggrepel")
+
   dpi <- as.numeric(dpi)
-  if (dpi <= 0) {
-    stop("DPI must be a positive number.")
-  }
-  
-  # Calculate NSig80 for each sample
-  NSig80 <- apply(x, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
-  
-  df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
-  
-  # Check for non-finite values and remove them
-  df <- df[is.finite(df$NSig80),]
-  
-  # Calculate IQR and identify outliers
-  Q1 <- quantile(df$NSig80, 0.25)
-  Q3 <- quantile(df$NSig80, 0.75)
-  IQR_value <- IQR(df$NSig80)
-  lower_bound <- Q1 - 3 * IQR_value
-  upper_bound <- Q3 + 3 * IQR_value
-  
-  df$outlier <- ifelse(df$NSig80 < lower_bound | df$NSig80 > upper_bound, "Outlier", "Normal")
-  
-  # Create plot
-  g <- ggplot(df, aes(x = Sample, y = NSig80, group = Sample, fill = outlier)) +
-    geom_bar(stat = "identity") +
-    scale_fill_manual(name = "Sample Status", values = c("Normal" = "grey", "Outlier" = "red")) +
-    geom_hline(yintercept = lower_bound, linetype = "dashed", color = "blue") +
-    geom_hline(yintercept = upper_bound, linetype = "dashed", color = "blue") +
-    theme_minimal() +
-    labs(x = "Sample",
-         y = "NSig80 (Number of Genes Capturing 80% of the Signal)") +
-    theme(
-      text = element_text(size = 11),
-      axis.text.x = element_text(angle = 45, hjust = 1) # Rotate x-axis labels for better readability
-    )
-  
-  width <- 8
+  if (dpi <= 0) stop("DPI must be a positive number.")
+
+  g <- ggplot(nsig_df, aes(x = "", y = NSig80)) +
+    geom_boxplot(outlier.shape = NA, fill = "grey80") +
+    geom_jitter(aes(color = outlier), width = 0.25, height = 0) +
+    scale_color_manual(values = c("Normal" = "grey40", "Outlier" = "red")) +
+    geom_text_repel(data = subset(nsig_df, outlier == "Outlier"),
+                    aes(label = Sample), nudge_x = 0.35, size = 3) +
+    geom_hline(yintercept = c(lower, upper), linetype = "dashed",
+               color = "blue") +
+    theme_minimal(base_size = 11) +
+    labs(x = NULL,
+         y = "NSig80 (genes reaching 80 % of signal)",
+         color = "Sample Status") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+  width  <- 8
   height <- 6
-  
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep="")
-  imgNm <- paste0(fileNm, format, sep="")
-  
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
+  imgNm  <- paste0(fileNm, format)
+
   if (interactive) {
     require("plotly")
-    m <- list(
-      l = 50,
-      r = 50,
-      b = 20,
-      t = 20,
-      pad = 0.5
-    )
-    w <- 1000
-    
-    ggp_build <- layout(ggplotly(g), autosize = FALSE, width = w, height = 600, margin = m)
-    return(ggp_build)
+    m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(plotly::ggplotly(g),
+                  autosize = FALSE, width = 1000, height = 600, margin = m))
   } else {
-  if(dpi == 72){
-  dpi <- dpi *1.34
-  }
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
+    if (dpi == 72) dpi <- dpi * 1.34
+    Cairo(file = imgNm, width = width, height = height,
+          type = format, bg = "white", dpi = dpi, unit = "in")
     print(g)
     dev.off()
     return("NA")
   }
 }
 
-
-PlotDataDendrogram <- function(fileName, imgName,threshold, dpi, format){
-  dataSet <- readDataset(fileName);
-
-  if(grepl("_norm", imgName)){
-    qc.dendrogram(dataSet, dataSet$data.norm, threshold, imgName, dpi, format, F);
-  }else{
-    data.anot <- .get.annotated.data();
-    qc.dendrogram(dataSet, data.anot, threshold, imgName, dpi, format, F);
-  }
-  return("NA");
-}
-
-qc.dendrogram <- function(dataSet, x, threshold = 0.1, imgNm = "Dendrogram_plot", dpi = 72, format = "png", interactive = FALSE) {
-  require("Cairo")
-  
-  # Ensure dpi is a positive number
-  dpi <- as.numeric(dpi)
-  if (dpi <= 0) {
-    stop("DPI must be a positive number.")
-  }
-  
-  # Calculate Spearman's rank correlation matrix
-  spearman_corr <- cor(x, method = "spearman", use = "pairwise.complete.obs")
-  
-  # Convert correlation matrix to distance matrix (1 - correlation)
-  distance_matrix <- as.dist(1 - spearman_corr)
-  
-  # Perform hierarchical clustering
-  hc <- hclust(distance_matrix, method = "average")
-  
-  # Identify samples with a maximum distance greater than the threshold
-  distance_matrix_full <- as.matrix(distance_matrix)
-  max_distances <- apply(distance_matrix_full, 1, max)
-  samples_to_highlight <- names(max_distances[max_distances > threshold])
-  
-  # Create a dendrogram object
-  dend <- as.dendrogram(hc)
-  
-  # Determine the labels' colors based on outlier status
-  label_colors <- ifelse(labels(dend) %in% samples_to_highlight, "red", "black")
-  
-  # Plotting parameters
-  width <- 8
-  height <- 6
-  
-  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
-  imgNm <- paste0(fileNm, format, sep = "")
-  
-  if (interactive) {
-    stop("Interactive mode is not supported with base R plotting.")
-  } else {
-  if(dpi == 72){
-  dpi <- dpi *1.34
-  }
-    Cairo(file = imgNm, width = width, height = height, type = format, bg = "white", dpi = dpi, unit = "in")
-    
-    # Plot the dendrogram with base R
-    plot(dend, main = "Dendrogram", ylab = "Height", xlab = "", cex.axis = 0.8, cex.lab = 1.2)
-    
-    # Add colors to the labels
-    labels <- labels(dend)
-    n <- length(labels)
-    for (i in 1:n) {
-      x <- i
-      y <- -0.1 # Positioning below the axis (adjust as necessary)
-      text(x, y, labels[i], srt = 90, adj = 1, xpd = NA, col = label_colors[i], cex = 0.8)
-    }
-    
-    dev.off()
-    return("NA")
-  }
-}
-
-SummarizeQC <- function(fileName, imgNameBase, dpi = 72, format = "png", threshold = 0.1) {
+PlotDataDendrogram <- function(fileName, imgName, threshold, dpi, format){
   dataSet <- readDataset(fileName)
-  
-  summary_df <- data.frame(Sample = character(), 
-                           HighCoverageGeneCount = numeric(), 
-                           NSig80 = numeric(), 
-                           Gini = numeric(), 
-                           Dendrogram_Distance = numeric(),
-                           Outlier_HighCoverageGeneCount = numeric(),
-                           Outlier_NSig80 = numeric(),
-                           Outlier_Gini = numeric(),
-                           Outlier_Dendrogram = numeric(),
-                           stringsAsFactors = FALSE)
-  
-  if (grepl("_norm", imgNameBase)) {
-    data <- dataSet$data.norm
-  } else {
-    data <- .get.annotated.data();
-  }
-  
-  HighCoverageGeneCount <- colSums(data > 5)
-  ncov5_df <- data.frame(Sample = names(HighCoverageGeneCount), 
-                         HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), 
-                         stringsAsFactors = FALSE)
-  
-  NSig80 <- apply(data, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
-  nsig_df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
-  
-  gini_scores <- apply(data, 2, calculate_gini)
-  gini_df <- data.frame(Sample = colnames(data), Gini = gini_scores, stringsAsFactors = FALSE)
-  
-  spearman_corr <- cor(data, method = "spearman", use = "pairwise.complete.obs")
-  distance_matrix <- as.dist(1 - spearman_corr)
-  max_distances <- apply(as.matrix(distance_matrix), 1, max)
 
-  dendrogram_df <- data.frame(Sample = names(max_distances), 
-                              Dendrogram_Distance = max_distances, 
-                              stringsAsFactors = FALSE)
-  
-  # Identify outliers based on NSig80, Gini, and Dendrogram Distance
-  Q1_nsig <- quantile(nsig_df$NSig80, 0.25)
-  Q3_nsig <- quantile(nsig_df$NSig80, 0.75)
-  IQR_nsig <- IQR(nsig_df$NSig80)
-  
-  nsig_outliers <- as.numeric((nsig_df$NSig80 < (Q1_nsig - 3 * IQR_nsig)) | 
-                              (nsig_df$NSig80 > (Q3_nsig + 3 * IQR_nsig)))
-  
-  gini_outliers <- as.numeric(gini_df$Gini > 0.95)
-  
-  dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > 0.1)
-  
-  high_coverage_outliers <- as.numeric(ncov5_df$HighCoverageGeneCount < (quantile(ncov5_df$HighCoverageGeneCount, 0.25) - 3 * IQR(ncov5_df$HighCoverageGeneCount)) | 
-                                       ncov5_df$HighCoverageGeneCount > (quantile(ncov5_df$HighCoverageGeneCount, 0.75) + 3 * IQR(ncov5_df$HighCoverageGeneCount)))
-  
-  # Merge all metrics into a single dataframe
-  summary_df <- merge(ncov5_df, nsig_df, by = "Sample")
-  summary_df <- merge(summary_df, gini_df, by = "Sample")
-  summary_df <- merge(summary_df, dendrogram_df, by = "Sample")
-  
-  summary_df$Outlier_HighCoverageGeneCount <- high_coverage_outliers
-  summary_df$Outlier_NSig80 <- nsig_outliers
-  summary_df$Outlier_Gini <- gini_outliers
-  summary_df$Outlier_Dendrogram <- dendrogram_outliers
-  dataSet$summary_df <- summary_df;
-  RegisterData(dataSet)
-  return(1)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
+  }
+  dendro_df <- dataSet$summary_df[, c("Sample", "Dendrogram_Distance")]
+  dendro_df$Status <- ifelse(dendro_df$Dendrogram_Distance > threshold, "Outlier", "Normal")
+
+  ## Decide label set
+  out_idx <- which(dendro_df$Status == "Outlier")
+  label_idx <- if (length(out_idx) <= 20) {
+    out_idx
+  } else {
+    out_idx[order(dendro_df$Dendrogram_Distance[out_idx], decreasing = TRUE)[1:20]]
+  }
+  dendro_df$LabelMe <- FALSE
+  dendro_df$LabelMe[label_idx] <- TRUE
+
+
+  qc.dendrogram.plot(dendro_df, threshold, imgName, dpi, format)
+  qc.dendrogram.json(dendro_df, imgName);
+  return("NA")
 }
+
+qc.dendrogram.plot <- function(dendro_df,
+                               threshold = 0.1,
+                               imgNm = "Dendrogram_plot",
+                               dpi = 72,
+                               format = "png",
+                               interactive = FALSE) {
+  require(ggplot2)
+  require(ggrepel)
+  require(Cairo)
+
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) stop("DPI must be positive.")
+
+  set.seed(1)  # For reproducible jitter
+  dendro_df$xj <- jitter(rep(1, nrow(dendro_df)), amount = 0.25)
+
+  g <- ggplot(dendro_df, aes(x = xj, y = Dendrogram_Distance)) +
+    geom_boxplot(aes(x = 1), outlier.shape = NA,
+                 width = 0.4, fill = "grey80") +
+    geom_point(aes(color = Status), size = 2.2) +
+    geom_hline(yintercept = threshold, linetype = "dashed", color = "blue") +
+    geom_text_repel(data = dendro_df[dendro_df$LabelMe, ],
+                    aes(label = Sample),
+                    max.overlaps = Inf,
+                    box.padding = 0.35,
+                    segment.size = 0.2,
+                    size = 4.2) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 12) +
+    labs(x = NULL, y = "Max pair-wise distance (1 − Pearson ρ)") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+
+  outFile <- paste0(imgNm, "dpi", dpi, ".", format)
+
+  if (interactive) {
+    require(plotly)
+    m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(plotly::ggplotly(g),
+                  autosize = FALSE, width = 1000, height = 600, margin = m))
+  } else {
+    if (dpi == 72) dpi <- dpi * 1.34
+    Cairo(file = outFile, width = 8, height = 6,
+          type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return(outFile)
+  }
+}
+
+
 
 GetSummaryTable <- function(dataName){
   dataSet <- readDataset(dataName)
@@ -1117,4 +1036,659 @@ qc.pcaplot.json <- function(dataSet, x, imgNm) {
   sink(jsonFile); cat(json.obj); sink()
   
   return("NA")
+}
+
+PlotDataGini <- function(fileName, imgName, threshold, dpi, format){
+  dataSet <- readDataset(fileName)
+  if (is.null(dataSet$summary_df)) {
+    stop("summary_df not found in dataSet. Please run SummarizeQC first.")
+  }
+  
+  # Select Gini data
+  gini_df <- dataSet$summary_df[, c("Sample", "Gini")]
+  gini_df$Status <- ifelse(gini_df$Gini > threshold, "Outlier", "Normal")
+  
+  ## Plot
+  qc.gini.plot(gini_df, imgName, threshold, dpi, format)
+  qc.giniplot.json(gini_df, imgName);
+  return("NA")
+}
+
+qc.gini.plot <- function(gini_df,
+                         imgNm   = "Gini_plot",
+                         threshold = 0.95,
+                         dpi     = 72,
+                         format  = "png",
+                         interactive = FALSE) {
+  require(ggplot2)
+  require(ggrepel)
+  require(Cairo)
+  
+  dpi <- as.numeric(dpi)
+  if (dpi <= 0) stop("DPI must be a positive number.")
+  
+  g <- ggplot(gini_df, aes(x = "", y = Gini)) +
+    geom_boxplot(outlier.shape = NA, fill = "grey80") +
+    geom_jitter(aes(color = Status), width = 0.25, height = 0) +
+    geom_hline(yintercept = threshold, linetype = "dashed", color = "blue") +
+    geom_text_repel(data = subset(gini_df, Status == "Outlier"),
+                    aes(label = Sample), nudge_x = 0.35, size = 3) +
+    scale_color_manual(values = c(Normal = "grey40", Outlier = "red"),
+                       name = "Sample status") +
+    theme_minimal(base_size = 11) +
+    labs(x = NULL, y = "Gini coefficient") +
+    theme(axis.text.x  = element_blank(),
+          axis.ticks.x = element_blank())
+  
+  width  <- 8
+  height <- 6
+  fileNm <- paste(imgNm, "dpi", dpi, ".", sep = "")
+  imgNm  <- paste0(fileNm, format)
+  
+  if (interactive) {
+    require(plotly)
+    m <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(plotly::ggplotly(g),
+                  autosize = FALSE, width = 1000, height = 600, margin = m))
+  } else {
+    if (dpi == 72) dpi <- dpi * 1.34
+    Cairo(file = imgNm, width = width, height = height,
+          type = format, bg = "white", dpi = dpi, unit = "in")
+    print(g)
+    dev.off()
+    return("NA")
+  }
+}
+SummarizeQC <- function(fileName, imgNameBase, threshold = 0.1) {
+  save.image("summarize.RData");
+  dataSet <- readDataset(fileName)
+
+  summary_df <- data.frame(Sample = character(), 
+                           HighCoverageGeneCount = numeric(), 
+                           NSig80 = numeric(), 
+                           Gini = numeric(), 
+                           Dendrogram_Distance = numeric(),
+                           Outlier_HighCoverageGeneCount = numeric(),
+                           Outlier_NSig80 = numeric(),
+                           Outlier_Gini = numeric(),
+                           Outlier_Dendrogram = numeric(),
+                           stringsAsFactors = FALSE)
+
+  if (grepl("norm", imgNameBase)) {
+    data <- dataSet$data.norm
+  } else {
+    data <- .get.annotated.data();
+  }
+
+
+  HighCoverageGeneCount <- colSums(data > 5)
+  ncov5_df <- data.frame(Sample = names(HighCoverageGeneCount), 
+                         HighCoverageGeneCount = as.numeric(HighCoverageGeneCount), 
+                         stringsAsFactors = FALSE)
+
+  NSig80 <- apply(data, 2, function(col) sum(cumsum(sort(col, decreasing = TRUE)) <= 0.8 * sum(col)))
+  nsig_df <- data.frame(Sample = names(NSig80), NSig80 = as.numeric(NSig80), stringsAsFactors = FALSE)
+
+  gini_scores <- apply(data, 2, calculate_gini)
+  gini_df <- data.frame(Sample = colnames(data), Gini = gini_scores, stringsAsFactors = FALSE)
+
+  ## Use Pearson correlation for dendrogram distance
+  pearson_corr <- cor(data, method = "pearson", use = "pairwise.complete.obs")
+  distance_matrix <- as.dist(1 - pearson_corr)
+  dist_mat <- as.matrix(distance_matrix)
+
+  group_info <- dataSet$meta.info[,1]
+  names(group_info) <- rownames(dataSet$meta.info)
+
+  max_distances <- sapply(colnames(data), function(sample) {
+    sample_group <- group_info[sample]
+    same_group_samples <- names(group_info)[group_info == sample_group]
+    same_group_samples <- same_group_samples[same_group_samples != sample]
+
+    if (length(same_group_samples) == 0) {
+      return(NA)
+    }
+
+    max(dist_mat[sample, same_group_samples], na.rm = TRUE)
+  })
+
+  dendrogram_df <- data.frame(Sample = names(max_distances), 
+                              Dendrogram_Distance = max_distances, 
+                              stringsAsFactors = FALSE)
+
+  # Outlier calls
+  Q1_nsig <- quantile(nsig_df$NSig80, 0.25)
+  Q3_nsig <- quantile(nsig_df$NSig80, 0.75)
+  IQR_nsig <- IQR(nsig_df$NSig80)
+
+  nsig_outliers <- as.numeric((nsig_df$NSig80 < (Q1_nsig - 3 * IQR_nsig)) | 
+                              (nsig_df$NSig80 > (Q3_nsig + 3 * IQR_nsig)))
+
+  gini_outliers <- as.numeric(gini_df$Gini > 0.95)
+
+  dendrogram_outliers <- as.numeric(dendrogram_df$Dendrogram_Distance > threshold)
+
+  high_coverage_outliers <- as.numeric(
+    ncov5_df$HighCoverageGeneCount < (quantile(ncov5_df$HighCoverageGeneCount, 0.25) - 3 * IQR(ncov5_df$HighCoverageGeneCount)) | 
+    ncov5_df$HighCoverageGeneCount > (quantile(ncov5_df$HighCoverageGeneCount, 0.75) + 3 * IQR(ncov5_df$HighCoverageGeneCount))
+  )
+
+  # Combine
+  summary_df <- merge(ncov5_df, nsig_df, by = "Sample")
+  summary_df <- merge(summary_df, gini_df, by = "Sample")
+  summary_df <- merge(summary_df, dendrogram_df, by = "Sample")
+
+  summary_df$Outlier_HighCoverageGeneCount <- high_coverage_outliers
+  summary_df$Outlier_NSig80 <- nsig_outliers
+  summary_df$Outlier_Gini <- gini_outliers
+  summary_df$Outlier_Dendrogram <- dendrogram_outliers
+
+  dataSet$summary_df <- summary_df
+   RegisterData(dataSet)
+
+  return(1)
+}
+
+# -------------------------------------------------------------------------
+#  qc.giniplot.json()
+#  ------------------------------------------------------------------------
+#  gini_df      data.frame with columns: Sample, Gini, Status
+#  imgNm        stem for the JSON file (".json" is appended automatically)
+#  threshold    horizontal dashed reference line
+#  jitter.w     half-width of horizontal jitter (0–0.5 recommended)
+# -------------------------------------------------------------------------
+qc.giniplot.json <- function(gini_df,
+                             imgNm     = "Gini_plot",
+                             threshold = 0.95,
+                             jitter.w  = 0.45) {
+
+  stopifnot(all(c("Sample", "Gini", "Status") %in% names(gini_df)))
+
+  ## 1 · Tukey fences & statistical-outlier flag -------------------------
+  stats      <- boxplot.stats(gini_df$Gini, coef = 1.5)$stats
+  q1         <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence   <- q1 - 1.5 * iqr
+  highFence  <- q3 + 1.5 * iqr
+  gini_df$stat_out <- with(gini_df, Gini < lowFence | Gini > highFence)
+
+  ## 2 · Semantic palette (Normal / Outlier) -----------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## 3 · Traces ----------------------------------------------------------
+  # 3a · Box built from in-fence values only
+  tr_box <- list(
+    x              = rep(0, sum(!gini_df$stat_out)),
+    y              = I(gini_df$Gini[!gini_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · Invisible all-points trace (for autoscale)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(gini_df), -jitter.w, jitter.w)),
+    y          = I(gini_df$Gini),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · Visible points (semantic colour, stat-outlines)
+  show_labels <- nrow(gini_df) <= 20
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(gini_df), -jitter.w, jitter.w)),
+    y    = I(gini_df$Gini),
+    type = "scatter",
+    mode = if (show_labels) "markers+text" else "markers",
+    text = if (show_labels) gini_df$Sample else "",
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", gini_df$Sample,
+      "<br>Gini: ", signif(gini_df$Gini, 3),
+      "<br>Status: ", gini_df$Status
+    ),
+    marker = list(
+      color = status_cols[gini_df$Status],
+      size  = 8,
+      line  = list(
+        color = ifelse(gini_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(gini_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## 4 · Layout ----------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Gini coefficient"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(list(
+      type  = "line",
+      xref  = "paper", x0 = 0, x1 = 1,
+      yref  = "y",     y0 = threshold, y1 = threshold,
+      line  = list(color = "#0026FF", dash = "dot")
+    )),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 60, r = 110, t = 20, b = 40)
+  )
+
+  ## 5 · Write JSON ------------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+
+  invisible("NA")
+}
+
+
+# -------------------------------------------------------------------------
+#  dendro_df   data.frame with columns:
+#              Sample, Dendrogram_Distance, Status (Normal / Outlier),
+#              LabelMe (TRUE/FALSE → label on plot)
+#  imgNm       stem for JSON file ("<imgNm>.json")
+#  threshold   horizontal dashed cut-off
+#  jitter.w    half-width for horizontal jitter of points
+# -------------------------------------------------------------------------
+qc.dendrogram.json <- function(dendro_df,
+                               imgNm     = "Dendrogram_plot",
+                               threshold = 0.10,
+                               jitter.w  = 0.45) {
+
+  stopifnot(all(c("Sample", "Dendrogram_Distance", "Status", "LabelMe") %in% names(dendro_df)))
+
+  ## ── 1 · Tukey fences and statistical-outlier flag -------------------
+  stats     <- boxplot.stats(dendro_df$Dendrogram_Distance, coef = 1.5)$stats
+  q1        <- stats[2];  q3 <- stats[4];  iqr <- q3 - q1
+  lowFence  <- q1 - 1.5 * iqr
+  highFence <- q3 + 1.5 * iqr
+  dendro_df$stat_out <- with(dendro_df,
+                             Dendrogram_Distance < lowFence |
+                             Dendrogram_Distance > highFence)
+
+  ## ── 2 · Semantic palette -------------------------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ── 3 · Traces ------------------------------------------------------
+  # 3a · Box from in-fence points
+  tr_box <- list(
+    x              = rep(0, sum(!dendro_df$stat_out)),
+    y              = I(dendro_df$Dendrogram_Distance[!dendro_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · Invisible all-points scatter (autoscale helper)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(dendro_df), -jitter.w, jitter.w)),
+    y          = I(dendro_df$Dendrogram_Distance),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · Visible points (semantic colouring, stat outlines)
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(dendro_df), -jitter.w, jitter.w)),
+    y    = I(dendro_df$Dendrogram_Distance),
+    type = "scatter",
+    mode = "markers+text",
+    text = ifelse(dendro_df$LabelMe, dendro_df$Sample, ""),
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", dendro_df$Sample,
+      "<br>Distance: ", signif(dendro_df$Dendrogram_Distance, 3),
+      "<br>Status: ", dendro_df$Status
+    ),
+    marker = list(
+      color = status_cols[dendro_df$Status],
+      size  = 8,
+      line  = list(
+        color = ifelse(dendro_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(dendro_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ── 4 · Layout ------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Max pair-wise distance (1 \u2212 Pearson \u03c1)"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(list(
+      type  = "line",
+      xref  = "paper", x0 = 0, x1 = 1,
+      yref  = "y",     y0 = threshold, y1 = threshold,
+      line  = list(color = "#0026FF", dash = "dot")
+    )),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 70, r = 110, t = 20, b = 40)
+  )
+
+  ## ── 5 · Write JSON ---------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+  invisible("NA")
+}
+
+qc.ncov5plot.json <- function(ncov5_df,
+                              imgNm    = "NCov5_plot",
+                              lower,
+                              upper,
+                              jitter.w = 0.45) {
+
+  stopifnot(all(c("Sample", "HighCoverageGeneCount", "Status") %in% names(ncov5_df)),
+            is.numeric(lower), length(lower) == 1,
+            is.numeric(upper), length(upper) == 1)
+
+  ## ── 1 · Tukey fences & statistical-outlier flag --------------------
+  stats      <- boxplot.stats(ncov5_df$HighCoverageGeneCount, coef = 1.5)$stats
+  q1         <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence   <- q1 - 1.5 * iqr
+  highFence  <- q3 + 1.5 * iqr
+  ncov5_df$stat_out <- with(ncov5_df,
+                             HighCoverageGeneCount < lowFence |
+                             HighCoverageGeneCount > highFence)
+
+  ## ── 2 · palettes ----------------------------------------------------
+  stat_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ── 3 · Traces ------------------------------------------------------
+  # 3a · box (only in-fence points)
+  tr_box <- list(
+    x              = rep(0, sum(!ncov5_df$stat_out)),
+    y              = I(ncov5_df$HighCoverageGeneCount[!ncov5_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b · invisible all-points scatter (for autoscale)
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(ncov5_df), -jitter.w, jitter.w)),
+    y          = I(ncov5_df$HighCoverageGeneCount),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c · labelled points (semantic status colouring, stat-outlines)
+  # 3c · visible points (one trace for all samples)
+set.seed(2)
+points_trace <- list(
+  x    = I(runif(nrow(ncov5_df), -jitter.w, jitter.w)),
+  y    = I(ncov5_df$HighCoverageGeneCount),
+  type = "scatter",
+  mode = if (any(ncov5_df$stat_out)) "markers+text" else "markers",
+  text = ifelse(ncov5_df$stat_out, ncov5_df$Sample, ""),
+  textposition = "right",
+  name = "Samples",
+  hoverinfo = "text",
+  hovertext = paste0(
+    "Sample: ", ncov5_df$Sample,
+    "<br>Count: ", ncov5_df$HighCoverageGeneCount,
+    "<br>Status: ", ncov5_df$Status
+  ),
+  marker = list(
+    color = stat_cols[ncov5_df$Status],           # vector OK
+    size  = 8,
+    line  = list(
+      color = ifelse(ncov5_df$stat_out, "black", "rgba(0,0,0,0)"),
+      width = ifelse(ncov5_df$stat_out, 1, 0)
+    )
+  ),
+  showlegend = FALSE
+)
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ── 4 · Layout ------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF",
+    paper_bgcolor = "#FFFFFF",
+    xaxis = list(
+      title          = "",
+      range          = c(-jitter.w - 0.1, jitter.w + 0.1),
+      zeroline       = FALSE,
+      showticklabels = FALSE,
+      showline       = TRUE,
+      linecolor      = "#000000"
+    ),
+    yaxis = list(
+      title     = list(text = "Genes with > 5 uniquely mapped reads"),
+      zeroline  = FALSE,
+      ticks     = "outside",
+      showline  = TRUE,
+      linecolor = "#000000",
+      showgrid  = TRUE,
+      gridcolor = "rgba(200,200,200,0.4)"
+    ),
+    shapes = list(
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=lower, y1=lower,
+           line=list(color="#0026FF", dash="dot")),
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=upper, y1=upper,
+           line=list(color="#0026FF", dash="dot"))
+    ),
+    legend = list(
+      title       = list(text = "Sample Status"),
+      orientation = "v",
+      x = 1.02, y = 1,
+      xanchor = "left", yanchor = "top"
+    ),
+    margin = list(l = 70, r = 110, t = 20, b = 40)
+  )
+
+  ## ── 5 · Write JSON ---------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
+
+  invisible("NA")
+}
+
+qc.nsigplot.json <- function(nsig_df,
+                             imgNm    = "NSig80_plot",
+                             lower,
+                             upper,
+                             jitter.w = 0.45) {
+
+  stopifnot(all(c("Sample", "NSig80", "outlier") %in% names(nsig_df)))
+
+  ## ------------------------------------------------------------------
+  ## 1 · Compute Tukey fences and flag statistical outliers
+  ## ------------------------------------------------------------------
+  stats       <- boxplot.stats(nsig_df$NSig80, coef = 1.5)$stats
+  q1          <- stats[2]; q3 <- stats[4]; iqr <- q3 - q1
+  lowFence    <- q1 - 1.5 * iqr
+  highFence   <- q3 + 1.5 * iqr
+  nsig_df$stat_out <- with(nsig_df, NSig80 < lowFence | NSig80 > highFence)
+
+  ## ------------------------------------------------------------------
+  ## 2 · Palette for semantic status (Normal / Outlier)
+  ## ------------------------------------------------------------------
+  status_cols <- c(Normal = "#666666", Outlier = "#E41A1C")
+
+  ## ------------------------------------------------------------------
+  ## 3 · Plotly traces
+  ## ------------------------------------------------------------------
+  # 3a ─ Box: only in-fence points
+  tr_box <- list(
+    x              = rep(0, sum(!nsig_df$stat_out)),
+    y              = I(nsig_df$NSig80[!nsig_df$stat_out]),
+    quartilemethod = "linear",
+    type           = "box",
+    width          = 0.8,
+    name           = "",
+    boxpoints      = FALSE,
+    fillcolor      = "rgba(200,200,200,0.6)",
+    line           = list(color = "#000000"),
+    hoverinfo      = "skip",
+    showlegend     = FALSE
+  )
+
+  # 3b ─ Invisible “all” trace for autoscaling
+  set.seed(1)
+  tr_all <- list(
+    x          = I(runif(nrow(nsig_df), -jitter.w, jitter.w)),
+    y          = I(nsig_df$NSig80),
+    type       = "scatter",
+    mode       = "markers",
+    marker     = list(color = "rgba(0,0,0,0)", size = 0),
+    hoverinfo  = "skip",
+    showlegend = FALSE
+  )
+
+  # 3c ─ Points (semantic status colouring, stat-outliers outlined)
+  set.seed(2)
+  points_trace <- list(
+    x    = I(runif(nrow(nsig_df), -jitter.w, jitter.w)),
+    y    = I(nsig_df$NSig80),
+    type = "scatter",
+    mode = "markers+text",
+    text = ifelse(nsig_df$stat_out, nsig_df$Sample, ""),
+    textposition = "right",
+    name = "Samples",
+    hoverinfo = "text",
+    hovertext = paste0(
+      "Sample: ", nsig_df$Sample,
+      "<br>NSig80: ", nsig_df$NSig80,
+      "<br>Status: ", nsig_df$outlier
+    ),
+    marker = list(
+      color = status_cols[nsig_df$outlier],
+      size  = 8,
+      line  = list(
+        color = ifelse(nsig_df$stat_out, "black", "rgba(0,0,0,0)"),
+        width = ifelse(nsig_df$stat_out, 1, 0)
+      )
+    ),
+    showlegend = FALSE
+  )
+
+  traces <- list(tr_box, tr_all, points_trace)
+
+  ## ------------------------------------------------------------------
+  ## 4 · Layout (unchanged)
+  ## ------------------------------------------------------------------
+  layout <- list(
+    plot_bgcolor  = "#FFFFFF", paper_bgcolor = "#FFFFFF",
+    xaxis = list(title="", range=c(-jitter.w-0.1, jitter.w+0.1),
+                 zeroline=FALSE, showticklabels=FALSE,
+                 showline=TRUE, linecolor="#000"),
+    yaxis = list(title=list(text="NSig80 (genes reaching 80% of signal)"),
+                 zeroline=FALSE, ticks="outside", showline=TRUE,
+                 linecolor="#000", showgrid=TRUE,
+                 gridcolor="rgba(200,200,200,0.4)"),
+    shapes = list(
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=lower, y1=lower,
+           line=list(color="#0026FF", dash="dot")),
+      list(type="line", xref="paper", x0=0, x1=1,
+           yref="y", y0=upper, y1=upper,
+           line=list(color="#0026FF", dash="dot"))
+    ),
+    legend = list(title=list(text="Sample Status"),
+                  orientation="v", x=1.02, y=1,
+                  xanchor="left", yanchor="top"),
+    margin = list(l=70, r=110, t=20, b=40)
+  )
+
+  ## ------------------------------------------------------------------
+  ## 5 · Write JSON
+  ## ------------------------------------------------------------------
+  jsonlite::write_json(
+    list(data = traces, layout = layout),
+    paste0(imgNm, ".json"),
+    auto_unbox = TRUE, digits = 16
+  )
 }

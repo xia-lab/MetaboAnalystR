@@ -34,7 +34,9 @@ GetMetaCol<- function(dataName=""){
     colNms <- colnames(dataSet$comp.res);
     if (dataSet$de.method=="limma"){
       inx <- match("AveExpr", colNms)
-    } else if (dataSet$de.method=="deseq2"){
+    } else if(dataSet$de.method=="wtt"){
+      inx <- match("t", colNms)
+  } else if (dataSet$de.method=="deseq2"){
       inx <- match("baseMean", colNms)
       return(names(dataSet$comp.res.list));
     } else {
@@ -231,7 +233,6 @@ GetExpressResultGeneIDLinks <- function(dataName=""){
   } else {
     annots <- paste0("<a href='http://www.ncbi.nlm.nih.gov/gene?term=", ids, "' target='_blank'>NCBI</a>");
   }
-  print(head(annots));
   return(annots);  # Ensure this is a character vector, NOT a list
 }
 
@@ -251,11 +252,13 @@ GetExpressGeneIDType<-function(dataName=""){
   return(dataSet$id.current);
 }
 
-GetExpressResultMatrix <-function(dataName="", inxt){
-    dataSet <- readDataset(dataName);
+GetExpressResultMatrix <- function(dataName = "", inxt) {
+    dataSet  <- readDataset(dataName);
     paramSet <- readSet(paramSet, "paramSet");
-    inxt <- as.numeric(inxt)
-    if (dataSet$de.method=="deseq2"){
+    inxt     <- as.numeric(inxt)
+
+    if (dataSet$de.method == "deseq2") {
+
         inx <- match("baseMean", colnames(dataSet$comp.res))
         res <- dataSet$comp.res.list[[inxt]];
     }else if (dataSet$de.method=="edger"){
@@ -264,31 +267,40 @@ GetExpressResultMatrix <-function(dataName="", inxt){
     }else{
         if (dataSet$de.method=="limma"){
             inx <- match("AveExpr", colnames(dataSet$comp.res))
+        } else if (dataSet$de.method == "wtt") {
+            inx <- match("t", colnames(dataSet$comp.res))
         } else {
             inx <- match("logCPM", colnames(dataSet$comp.res))
         }
-        res <- dataSet$comp.res;
-        res <- res[,-(1:inx-1)];
-        res <- cbind(dataSet$comp.res[,inxt], res);
-        colnames(res)[1] <- colnames(dataSet$comp.res)[inxt];
+
+        res <- dataSet$comp.res
+        res <- res[, -(1:(inx - 1)), drop = FALSE]                    # ← fixed slice
+        res <- res[rownames(dataSet$comp.res), , drop = FALSE]        # ← align rows
+        res <- cbind(dataSet$comp.res[, inxt], res)
+        colnames(res)[1] <- colnames(dataSet$comp.res)[inxt]
     }
 
-    dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
-    dataSet$comp.res <- dataSet$comp.res[which(!rownames(dataSet$comp.res) %in% rownames(dataSet$sig.mat)),]
-    dataSet$comp.res <- rbind(dataSet$sig.mat, dataSet$comp.res);
-    dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ];
-    RegisterData(dataSet);
-    #print("comp.res=========")
-    #print(head(dataSet$comp.res));
-    qs::qsave(res, "express.de.res.qs");
-  
-  # max 1000 sig for display
-  if(nrow(res) > 1000){
-    res <- res[1:1000,];
-  }
-  return(signif(as.matrix(res), 5));
+    dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val), ]
+    dataSet$comp.res <- dataSet$comp.res[
+        !(rownames(dataSet$comp.res) %in% rownames(dataSet$sig.mat)), ]
+    dataSet$comp.res <- rbind(dataSet$sig.mat, dataSet$comp.res)
+    dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ]
 
+    ## --- now extract the column(s) for the return value -------
+    if (dataSet$de.method == "deseq2") {
+      res <- dataSet$comp.res.list[[inxt]]
+    } else {
+      res <- dataSet$comp.res[ , c(inxt, (inx+1):ncol(dataSet$comp.res)), drop = FALSE]
+      res <- res[order(res$adj.P.Val), ]
+      colnames(res)[1] <- colnames(dataSet$comp.res)[inxt]
+    }
+
+    RegisterData(dataSet)
+    qs::qsave(res, "express.de.res.qs")
+
+    return(head(signif(as.matrix(res), 5),1000))
 }
+
 
 ###Gene list
 GetNumOfLists <- function(){

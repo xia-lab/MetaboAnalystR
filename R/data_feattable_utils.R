@@ -114,16 +114,17 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     meta.info <- dataSet$meta.info[hit.inx,];
   }
   qs::qsave(data, file="data.stat.qs");
-  dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val),] 
-  dataSet$comp.res <- dataSet$comp.res[which(!rownames(dataSet$comp.res) %in% rownames(resTable)),]
-  dataSet$comp.res <- rbind(resTable, dataSet$comp.res);
+dataSet$comp.res <- dataSet$comp.res[order(dataSet$comp.res$adj.P.Val), ]
+dataSet$comp.res <- dataSet$comp.res[
+                      !(rownames(dataSet$comp.res) %in% rownames(resTable)), ]
+dataSet$comp.res <- rbind(resTable, dataSet$comp.res)
   
   
   dataSet$sig.mat <- resTable;
   
   if (dataSet$annotated){ # annotated to entrez
     anot.id <- rownames(dataSet$comp.res);
-    gene.anot <- doEntrezIDAnot(anot.id, paramSet$data.org, paramSet$data.idType);
+    gene.anot <- doEntrezIDAnot(anot.id, paramSet$data.org, paramSet$data.idType)
     fast.write(cbind(EntrezID=anot.id, signif (dataSet$comp.res,5), Symbols = gene.anot$symbol,  Name=gene.anot$name), row.names=F, file=filename);
   } else if (file.exists("annotation.qs")){ # annotation information available
     anot.id <- qs::qread("annotation.qs");
@@ -166,71 +167,73 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   # Initialize a list to collect data from all comparisons
   significant_gene_table <- list()
 
-  # Loop through each comparison again to collect significant gene details
+if (dataSet$de.method == "deseq2") {
+
+  significant_gene_table <- list()    # holds one data-frame per comparison
+
   for (inx in seq_along(dataSet$comp.res.list)) {
+
     resTable <- dataSet$comp.res.list[[inx]]
-    
-    # Remove rows with NA in the first column
+
+    ## --- remove rows with NA logFC (or other NAs in first col) ------------
     resTable <- resTable[!is.na(resTable[, 1]), ]
-    
-    # Select based on p-value
-    if (FDR == "true") {
-      deg.pass <- resTable$adj.P.Val <= p.lvl
-    } else {
-      deg.pass <- resTable$P.Value <= p.lvl
-    }
-    
-    # Filter based on fold change
-    logfc.mat <- abs(resTable[, "logFC"])  # Ensure the correct column is used for logFC
-    lfc.pass <- logfc.mat >= fc.lvl
-    
-    # Apply filters to identify significant genes
+
+    ## --- p-value / FDR filter --------------------------------------------
+    deg.pass <- if (FDR == "true")  resTable$adj.P.Val <= p.lvl
+                else                resTable$P.Value   <= p.lvl
+
+    ## --- logFC filter -----------------------------------------------------
+    lfc.pass <- abs(resTable[ , "logFC"]) >= fc.lvl
+
     all_pass <- deg.pass & lfc.pass
-    
-    # Extract significant genes and their details
-    significant_genes <- resTable[all_pass, ]
-    
-    # Check if there are any significant genes
-    if (nrow(significant_genes) > 0) {
-      res.anot <- doEntrezIDAnot(rownames(significant_genes), paramSet$data.org,  paramSet$data.idType);
-      significant_genes$Symbol <- res.anot$symbol;
-      significant_genes$Name <- res.anot$name;
-      significant_genes$Comparison <- names(dataSet$comp.res.list)[[inx]]
-      
-      # Append the significant genes to the list
-      significant_gene_table[[inx]] <- significant_genes
-    } else {
-      # If no significant genes, append an empty data frame with consistent columns
-      significant_gene_table[[inx]] <- data.frame()
+    if (!any(all_pass)) {                            # nothing passed
+      significant_gene_table[[inx]] <- data.frame() # keep list length constant
+      next
     }
+
+    sig <- resTable[all_pass, ]
+    sig$GeneID      <- rownames(sig)                # preserve raw ID
+    sig$Comparison  <- names(dataSet$comp.res.list)[[inx]]
+
+    ## --- annotation (optional) -------------------------------------------
+    res.anot <- doEntrezIDAnot(sig$GeneID,
+                               paramSet$data.org,
+                               paramSet$data.idType)
+    sig$Symbol <- res.anot$symbol
+    sig$Name   <- res.anot$name
+
+    significant_gene_table[[inx]] <- sig
   }
 
-  # Combine all significant genes into a single data frame
-  if (length(significant_gene_table) > 0) {
-    final_table <- do.call(rbind, significant_gene_table)
-  } else {
-    final_table <- data.frame()
-  }
+  ## ---------- combine & export -------------------------------------------
+  final_table <- do.call(rbind, significant_gene_table)  # may have duplicates
 
-  # Export the final table as a CSV file if it's not empty
-  output_file <- paste0(dataName, "_logFC_",fc.lvl , "_Significant_Genes.csv");
+  output_file <- paste0(dataName, "_logFC_",format(as.numeric(fc.lvl), digits = 2, nsmall = 0, trim = TRUE, scientific = FALSE),
+                        "_Significant_Genes.csv")
+
   if (nrow(final_table) > 0) {
-    write.csv(final_table, file = output_file, row.names = TRUE)
-  all_significant_genes <- unique(rownames(final_table))
-  de.Num.total <- length(all_significant_genes)
-    message(paste("Significant genes table has been successfully exported to:", output_file))
+    write.csv(final_table[ , setdiff(names(final_table), "GeneID")],
+              file = output_file, row.names = FALSE)
+
+    all_significant_genes <- unique(final_table$GeneID)  # de-duplicate here
+    de.Num.total          <- length(all_significant_genes)
+
+    message("Significant genes table exported to: ", output_file)
   } else {
-  de.Num.total <- 0
+    de.Num.total <- 0
     message("No significant genes identified to export.")
   }
 
-
-
+  ## ---------- bookkeeping -----------------------------------------------
   if (de.Num.total == 0) {
-    msgSet$current.msg <- paste(msgSet$current.msg, "No significant genes were identified using the given design and cutoff in any comparison.")
+    msgSet$current.msg <- paste(
+      msgSet$current.msg,
+      "No significant genes were identified using the given design and cutoff."
+    )
   }
   analSet$sig.gene.count.total <- de.Num.total
 }
+
 
   analSet$sig.gene.count <- de.Num;
   saveSet(analSet, "analSet");
@@ -240,7 +243,5 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
   dataSet$comp.res.filename <- filename;
   res <- RegisterData(dataSet);
   saveSet(paramSet, "paramSet");
-  if(res == 1){
-    return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
-  }
+  return(c(filename, de.Num, geneList, total, up, down, non.de.Num));
 }

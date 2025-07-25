@@ -245,25 +245,48 @@ PlotGeneDRCurve <- function(gene.id, gene.symbol, model.nm, b, c, d, e, bmdl, bm
     p <- p + geom_smooth(method = "lm", formula = y ~ powerfun(e,b,x,c), n = 1000)
   }
 
-  if(scale == "log2"){
-    if(model.nm %in% c("Exp3", "Exp5")){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
-      labelMap <- c("0", sort(unique(labels[labels != 0])))
-      p <- p + scale_x_continuous(trans='log2', breaks = breaks, labels = labelMap)
-    }
-  } else if(scale == "log10"){
-    if(model.nm %in% c("Exp3", "Exp5")){
-      p <- p + scale_x_continuous(trans='pseudo_log')
-    } else {
-      breaks <- c(dataSet$zero.log, sort(unique(exposure[exposure > dataSet$zero.log])))
-      labelMap <- c("0", sort(unique(labels[labels != 0])))
-      p <- p + scale_x_continuous(trans='log10', breaks = breaks, labels = labelMap)
-    }
+  ## ── x-axis scaling ─────────────────────────────────────────────────────────
+if (scale == "log2") {
+
+  if (model.nm %in% c("Exp3", "Exp5")) {
+
+    p <- p + scale_x_continuous(trans = scales::pseudo_log_trans(base = 2))
+
+  } else {
+
+    ## powers of 2 between the smallest >0 dose and the max dose
+    rng     <- range(exposure[exposure > 0], na.rm = TRUE)
+    breaks  <- 2^seq(floor(log2(rng[1])), ceiling(log2(rng[2])), by = 1)
+    breaks  <- c(dataSet$zero.log, breaks)
+    labelMap <- c("0", format(breaks[-1], scientific = FALSE))
+
+    p <- p + scale_x_continuous(trans = "log2",
+                                breaks = breaks,
+                                labels = labelMap)
   }
+
+} else if (scale == "log10") {
+
+  if (model.nm %in% c("Exp3", "Exp5")) {
+
+    p <- p + scale_x_continuous(trans = scales::pseudo_log_trans(base = 10))
+
+  } else {
+
+    ## powers of 10 between the smallest >0 dose and the max dose
+    rng     <- range(exposure[exposure > 0], na.rm = TRUE)
+    breaks  <- 10^seq(floor(log10(rng[1])), ceiling(log10(rng[2])), by = 1)
+    breaks  <- c(dataSet$zero.log, breaks)
+    labelMap <- c("0", format(breaks[-1], scientific = FALSE))
+
+    p <- p + scale_x_continuous(trans = "log10",
+                                breaks = breaks,
+                                labels = labelMap)
+  }
+}
+
   
-  imgName <- paste("Gene_", gene.id, "_", model.nm, ".png", sep="");
+  imgName <- paste("Gene_", gene.symbol, "_", model.nm, "_", scale,".png", sep="");
   Cairo(file = imgName, width=280, height=320, type="png", bg="white");
   print(p)
   dev.off();
@@ -291,150 +314,191 @@ PlotDRModelBars <- function(imgNm, dpi, format){
   imgSet$PlotDRModelBars <- imgNm;
   saveSet(imgSet);
 }
+PlotDRFilterSummary <- function(imgNm, dpi = 72, format = "png") {
 
-PlotDRHistogram <- function(imgNm, dpi, format, units, scale, width=NA) {
-  #save.image("dr.RData");
-  paramSet <- readSet(paramSet, "paramSet");
-  dataSet <- readDataset(paramSet$dataName);
+  ## 1 ── Load data -----------------------------------------------------------
+  paramSet <- readSet(paramSet, "paramSet")
+  dataSet  <- readDataset(paramSet$dataName)
 
   require(ggplot2)
   require(Cairo)
 
-  # compute P.O.D.s
+  ## 2 ── Build counts --------------------------------------------------------
+  dres   <- dataSet$bmdcalc.obj$bmdcalc.res
+  fitres <- dataSet$bmdcalc.obj$fitres.bmd
+
+  n_total   <- length(dataSet$itemselect$item)      # “Initial” = sig. features
+  n_fitted  <- nrow(dres)                           # “Fitted”  = BMD-modelled
+
+  mask_conv   <- dres$conv.pass
+  mask_ci1    <- mask_conv & dres$CI.pass
+  mask_ci2    <- mask_ci1  & dres$CI.pass2
+  mask_low    <- mask_ci2  & dres$ld.pass
+  mask_high   <- mask_low  & dres$hd.pass
+
+  lof_thr <- 0.05
+  fit_ok  <- rep(FALSE, n_fitted)
+  hit     <- match(dres$id, fitres$gene.id, nomatch = 0)
+  fit_ok[hit > 0] <- fitres$lof.p[hit] >= lof_thr
+  mask_fitp <- mask_high & fit_ok
+
+  counts <- c(
+    Initial      = n_total,
+    Fitted       = n_fitted,
+    `BMD/BMDL`   = sum(mask_conv),
+    `BMDU/BMDL`  = sum(mask_ci1),
+    `BMDU/BMD`   = sum(mask_ci2),
+    Lowdose      = sum(mask_low),
+    Highdose     = sum(mask_high),
+    FitP         = sum(mask_fitp),
+    All          = sum(mask_fitp)
+  )
+
+  pct <- round(counts / n_total * 100)
+
+  df <- data.frame(
+    step    = factor(names(counts), levels = rev(names(counts))), # reverse for ggplot
+    count   = counts,
+    percent = pct
+  )
+
+  ## 3 ── Build the bar plot --------------------------------------------------
+  p <- ggplot(df, aes(x = step, y = count, fill = percent)) +
+    geom_col(width = 0.7, colour = "black") +
+    geom_text(aes(label = paste0(count, " (", percent, "%)")),
+              hjust = 1.05, colour = "white", size = 5.0) +     # was 3.8
+    scale_fill_gradient(low = "#6AA2AD", high = "#C5D97B") +
+    coord_flip(clip = "off") +
+    labs(x = NULL, y = "Features Remaining") +
+    theme_minimal(base_size = 14) +                              # was 11
+    theme(
+      legend.position = "none",
+      plot.margin = margin(10, 40, 10, 120),   # extra left margin for long labels
+      axis.text.y = element_text(face = "bold", size = 13),      # +3 pt
+      axis.text.x = element_text(size = 12)                      # clearer axis
+    )
+
+  ## 4 ── Save & register -----------------------------------------------------
+  outFile <- paste0(imgNm, "dpi", dpi, ".", format)
+  if (dpi == 72) dpi <- 96
+  Cairo(file = outFile, width = 8, height = 6, unit = "in",
+        dpi = dpi, type = format, bg = "white")
+  print(p)
+  dev.off()
+
+  imgSet <- readSet(imgSet, "imgSet")
+  imgSet$PlotDRFilterSummary <- outFile
+  saveSet(imgSet)
+}
+
+
+PlotDRHistogram <- function(imgNm,
+                            dpi,
+                            format,
+                            units,
+                            scale,
+                            width = NA) {
+
+  ## ── 1 · Load data ───────────────────────────────────────────────────────
+  paramSet <- readSet(paramSet, "paramSet")
+  dataSet  <- readDataset(paramSet$dataName)
+
+  require(ggplot2)
+  require(Cairo)
+
+  ## ── 2 · Compute tPOD / mPOD values ──────────────────────────────────────
   s.pods <- sensPOD(pod = c("feat.20", "feat.10th", "mode"), scale)
 
-  # get sorted breakpoints
-  pod_vals <- sort(s.pods)
-  pod_min  <- pod_vals[1]
-  pod_max  <- pod_vals[length(pod_vals)]
-
-  # filter passed features
-  bmd.hist <- dataSet$bmdcalc.obj$bmdcalc.res
-  bmd.hist <- bmd.hist[bmd.hist$all.pass, ]
-
-  # transform BMD values
+  ## ── 3 · Filter features that passed all BMD criteria ────────────────────
+  bmd.hist <- subset(dataSet$bmdcalc.obj$bmdcalc.res, all.pass)
   bmd.vals <- bmd.hist$bmd
+
+  ## ── 4 · Optional log-transformation of BMDs and PODs ────────────────────
   if (scale == "log10") {
-    bmd.vals <- log10(bmd.vals);        xTitle <- "log10(Feature-level BMD)"
+    bmd.vals <- log10(bmd.vals)
     s.pods   <- log10(s.pods)
+    xTitle   <- "log10(Feature-level BMD)"
   } else if (scale == "log2") {
-    bmd.vals <- log2(bmd.vals);        xTitle <- "log2(Feature-level BMD)"
+    bmd.vals <- log2(bmd.vals)
     s.pods   <- log2(s.pods)
+    xTitle   <- "log2(Feature-level BMD)"
   } else {
     xTitle <- "Feature-level BMD"
   }
 
   bmd.df <- data.frame(bmd = bmd.vals)
 
-  baseSize <- 11 * 1.3
+  ## ── 5 · Colour palette & legend labels (copied from liked style) ────────
+  pod.cols <- c(
+    gene20         = "#D62728",
+    percentile10th = "#2CA02C",
+    mode           = "#FF7F0E"
+  )
 
+  legend.labels <- c(
+    paste0("20th feature: ",    ifelse(is.finite(s.pods["feat.20"]),    signif(s.pods["feat.20"], 2), "NA")),
+    paste0("Max 1st peak: ",    ifelse(is.finite(s.pods["mode"]),       signif(s.pods["mode"],     2), "NA")),
+    paste0("10th percentile: ", ifelse(is.finite(s.pods["feat.10th"]),  signif(s.pods["feat.10th"],2), "NA"))
+  )
+
+  ## ── 6 · Build the histogram (styling cloned) ────────────────────────────
   p <- ggplot(bmd.df, aes(x = bmd)) +
-    # 1) very subtle background regions
-    annotate(
-      "rect",
-      xmin       = -Inf, xmax = pod_min,
-      ymin       = -Inf, ymax = Inf,
-      fill       = "#DFF0D8",   # pale green
-      alpha      = 0.10,
-      inherit.aes = FALSE
-    ) +
-    annotate(
-      "rect",
-      xmin       = pod_min, xmax = pod_max,
-      ymin       = -Inf, ymax = Inf,
-      fill       = "#FCF8E3",   # pale yellow
-      alpha      = 0.10,
-      inherit.aes = FALSE
-    ) +
-    annotate(
-      "rect",
-      xmin       = pod_max, xmax = Inf,
-      ymin       = -Inf, ymax = Inf,
-      fill       = "#F2DEDE",   # pale red
-      alpha      = 0.10,
-      inherit.aes = FALSE
-    ) +
-    # 2) histogram
-    geom_histogram(
-      aes(y = ..density..),
-      bins   = 30,
-      fill   = "lightblue",
-      color  = "black",
-      alpha  = 0.8
-    ) +
-    # 3) vertical lines (tPODs)
-    geom_vline(
-      aes(xintercept = s.pods["feat.20"], colour = "gene20"),
-      size = 1
-    ) +
-    geom_vline(
-      aes(xintercept = s.pods["mode"], colour = "mode"),
-      size = 1
-    ) +
-    geom_vline(
-      aes(xintercept = s.pods["feat.10th"], colour = "percentile10th"),
-      size = 1
-    ) +
+    geom_histogram(aes(y = after_stat(count)),
+                   bins   = 30,
+                   fill   = "lightblue",
+                   colour = "black",
+                   alpha  = 0.85) +
+    {if (is.finite(s.pods["feat.20"]))
+        geom_vline(aes(xintercept = s.pods["feat.20"], colour = "gene20"), size = 1)} +
+    {if (is.finite(s.pods["mode"]))
+        geom_vline(aes(xintercept = s.pods["mode"], colour = "mode"), size = 1)} +
+    {if (is.finite(s.pods["feat.10th"]))
+        geom_vline(aes(xintercept = s.pods["feat.10th"], colour = "percentile10th"), size = 1)} +
     scale_color_manual(
       name   = "tPOD",
-      values = c(
-        gene20         = "#A7414A",
-        percentile10th = "#6A8A82",
-        mode           = "#CC9B31"
-      ),
-      labels = c(
-        paste0("20th feature: ", signif(s.pods["feat.20"], 2)),
-        paste0("Max 1st peak: ",   signif(s.pods["mode"], 2)),
-        paste0("10th percentile: ", signif(s.pods["feat.10th"], 2))
-      )
+      values = pod.cols,
+      labels = legend.labels
     ) +
-    guides(
-      colour = guide_legend(
-        override.aes = list(size = 2, linetype = 1)
-      )
-    ) +
-    # 4) transparent panel & plot background
-    theme_bw(base_size = baseSize) +
-    theme(
-      panel.background    = element_rect(fill = "transparent", color = NA),
-      plot.background     = element_rect(fill = "transparent", color = NA),
-      axis.text           = element_text(size = rel(1)),
-      axis.title          = element_text(size = rel(1)),
-      legend.text         = element_text(size = rel(1)),
-      legend.title        = element_text(size = rel(1)),
-      axis.text.x         = element_text(face = "bold"),
-      legend.position     = c(.95, .95),
-      legend.justification= c("right", "top"),
-      legend.box.just     = "right"
-    ) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.14))) +
+    theme_bw(base_size = 11 * 1.3) +
     xlab(xTitle) +
-    ylab("Density")
+    ylab("Count") +
+    theme(
+      axis.text.x       = element_text(face = "bold"),
+      legend.position   = "right",
+      legend.direction  = "vertical",
+      legend.box.margin = margin(t = 6, l = 8),
+      plot.margin       = margin(t = 10, r = 8, b = 5, l = 8),
+      legend.title      = element_text(size = rel(1)),
+      legend.text       = element_text(size = rel(0.9))
+    )
 
-  # set width/height
-  if (is.na(width) || width == 0) {
-    w <- 12; h <- 9
+  ## ── 7 · Figure size (same logic) ────────────────────────────────────────
+  if (is.na(width) || width <= 0) {
+    w <- 10;               # default width (inches)
+    h <- 7;            # 3:1.75 aspect from original
   } else {
-    w <- width; h <- width * 0.75
+    w <- width
+    h <- width * 0.75
   }
 
   imgFile <- paste0(imgNm, "dpi", dpi, ".", format)
 
-  # write with transparent background
-  Cairo(
-    file   = imgFile,
-    width  = w,
-    height = h,
-    unit   = "in",
-    dpi    = 72,
-    type   = format,
-    bg     = "transparent"
-  )
+  ## ── 8 · Render & save ───────────────────────────────────────────────────
+  Cairo(file   = imgFile,
+        width  = w,
+        height = h,
+        unit   = "in",
+        dpi    = dpi,
+        type   = format,
+        bg     = "white")          # solid white background (matches style)
   print(p)
   dev.off()
 
-  imgSet <- readSet(imgSet, "imgSet");
-  imgSet$PlotDRHistogram <- imgNm;
-  saveSet(imgSet);
+  ## ── 9 · Register in imgSet & return mSetObj (unchanged) ────────────────
+  imgSet <- readSet(imgSet, "imgSet")
+  imgSet$PlotDRHistogram <- imgNm
+  saveSet(imgSet)
 }
 
 
