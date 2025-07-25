@@ -243,7 +243,7 @@ public class RMetaUtils {
     public static int checkMetaPerformed(RConnection RC, String type) {
         try {
             String rCommand = "CheckMetaPerformed(\"" + type + "\");";
-            RCenter.recordRCommand(RC, rCommand);
+            //RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
         }

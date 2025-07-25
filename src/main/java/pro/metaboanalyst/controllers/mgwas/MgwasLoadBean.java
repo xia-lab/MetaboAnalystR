@@ -493,9 +493,9 @@ public class MgwasLoadBean implements Serializable {
         if (searchMgwasMetabolites()) {
             if (searchOutcomeItem()) {
                 //sb.setReportAvailable(false);
-                if (!mb.getSnpListMultiMet().isEmpty()) {
-                    DataUtils.setupFlashGrowl("warn", "There are " + mb.getSnpListMultiMet().size() + " SNPs that are associated with multiple metabolites (Horizontal Pleiotropy). It is advised not to include them!");
-                }
+                //if (!mb.getSnpListMultiMet().isEmpty()) {
+                //    DataUtils.setupFlashGrowl("warn", "There are " + mb.getSnpListMultiMet().size() + " SNPs that are associated with multiple metabolites (Horizontal Pleiotropy). It is advised not to include them!");
+                //}
                 mb.performSnpFiltering();
                 return "MgwasParamView";
             }

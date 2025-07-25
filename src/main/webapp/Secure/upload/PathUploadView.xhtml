@@ -56,7 +56,7 @@
                         <h:form id="form2" enctype="multipart/form-data">
                             <p:outputLabel style="font-size:14px; font-weight: bold" value="Upload your concentration data (.csv or .txt) "/>
                             <h:panelGrid columns="2" style="margin-bottom: 20px;">
-                                <h:panelGrid columns="2" style="width:670px; height: 120px; padding:10px 40px 20px 30px;">
+                                <h:panelGrid columns="2" style="width:760px; height: 120px; padding:10px 40px 20px 30px;">
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="Group Label:"/>
                                     <p:selectOneRadio value="#{pathLoader.clsOpt}">
                                         <f:selectItems value="#{optBean.clsOpts}" />
@@ -78,35 +78,55 @@
                                 </h:panelGrid>   
                                 <p:commandButton value="Submit" ajax="false" 
                                                  onclick="PF('statusDialog').show()" 
+                                                 style="margin-left: 20px"
                                                  oncomplete="PF('statusDialog').hide()"   
                                                  action="#{pathLoader.pathQeaBn_action}"/>  
                             </h:panelGrid>
 
                             <hr class="style-one"/>
-                            <p:outputLabel style="font-size:14px; font-weight: bold; padding-top: 10px" value="Use our example data"/>
-                            <h:panelGrid columns="4" style="width: 720px; padding-top: 10px; padding-left: 30px">
-                                <h:panelGroup layout="block"  style="width:60px">
-                                    <p:outputLabel style="font-weight: bold" value="Data"/>
-                                </h:panelGroup>   
-                                <h:panelGroup layout="block"  style="width:100px">
-                                    <p:outputLabel style="font-weight: bold" value="ID Type"/> 
-                                </h:panelGroup>
-                                <h:panelGroup layout="block"  style="width:100px">
-                                    <p:outputLabel style="font-weight: bold" value="Group Label"/> 
-                                </h:panelGroup>   
-                                <p:outputLabel style="font-weight: bold" value="Description"/>
+                            
+                             <p:selectOneRadio id="qeaTestRadio" value="#{pathLoader.qeaTestDataOpt}" layout="custom">  
+                                <f:selectItem itemValue="disc" itemLabel="Data 1"/>
+                                <f:selectItem itemValue="cont" itemLabel="Data 2"/> 
+                            </p:selectOneRadio>  
+                            <p:outputLabel style="font-size:14px; font-weight: bold; padding-top: 20px" value="Use our example data"/>
 
-                                <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Dataset</a>
-                                <p:outputLabel value="Common name"/>
-                                <p:outputLabel value="Discrete"/>
-                                <h:panelGrid>
-                                    Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. 
-                                    Phenotype: <b>N</b> - cachexic; <b>Y</b> - control
+                            <h:panelGrid columns="2">
+                                <h:panelGrid columns="5" style="width: 760px; padding:10px 40px 20px 30px;">
+                                    <p:spacer style="width:40px"/>
+                                    <h:panelGroup layout="block"  style="width:80px">
+                                        <p:outputLabel style="font-weight: bold" value="Data"/>
+                                    </h:panelGroup>   
+                                    <h:panelGroup layout="block"  style="width:120px">
+                                        <p:outputLabel style="font-weight: bold" value="ID Type"/> 
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block"  style="width:100px">
+                                        <p:outputLabel style="font-weight: bold" value="Group Label"/> 
+                                    </h:panelGroup>   
+                                    <p:outputLabel style="font-weight: bold" value="Description"/>
+
+                                    <p:radioButton for="qeaTestRadio" itemIndex="0"/> 
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv">Dataset 1</a>
+                                    <p:outputLabel value="Common name"/>
+                                    <p:outputLabel value="Discrete"/>
+                                    <h:panelGrid>
+                                        Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. 
+                                        Phenotype: <b>N</b> - cachexic; <b>Y</b> - control
+                                    </h:panelGrid>
+
+                                    <p:radioButton for="qeaTestRadio" itemIndex="1"/> 
+                                    <a href="https://www.xialab.ca/api/download/metaboanalyst/cachexia_continuous.csv">Dataset 2</a>
+                                    <p:outputLabel value="PubChem CID"/>
+                                    <p:outputLabel value="Continuous"/>
+                                    <h:panelGrid>
+                                        Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. 
+                                        Phenotype: <b>Muscle loss</b>
+                                    </h:panelGrid>
                                 </h:panelGrid>
-                            </h:panelGrid>
-                            <h:panelGrid style="width: 90%; padding-top: 10px; padding-bottom: 10px; text-align: center">
+
                                 <p:commandButton value="Submit" ajax="false" 
                                                  onclick="PF('statusDialog').show()" 
+                                                 style="margin-left: 20px"
                                                  oncomplete="PF('statusDialog').hide()"   
                                                  action="#{pathLoader.pathQeaExampleBn_action}"/>  
                             </h:panelGrid>

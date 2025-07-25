@@ -44,7 +44,7 @@
             </div>
             <h:form id="form1">
                 <h:panelGrid columns="2">
-                    <p:dataTable id="netTb" style="width:720px; text-align: left; padding: 20px 30px 20px 40px" 
+                    <p:dataTable id="netTb" style="width:720px; text-align: left; padding: 20px 30px 20px 40px; margin-left: 30px" 
                                  var="net" class="surface-card shadow-1 p-0 text-800" value="#{mnetResBean.netsDataModel}"> 
                         <p:column headerText="Networks" style="width:22%">  
                             #{net.name}  
@@ -66,19 +66,10 @@
                             </p:commandButton> 
                         </p:column>  
                     </p:dataTable>
-
-                    <p:commandButton id="nextBn" style="width:120px; vertical-align: top" 
-                                     value="Proceed" 
-                                     icon="pi pi-caret-right"
-                                     onclick="PF('statusDialog').show(); remoteCall()"
-                                     oncomplete="PF('statusDialog').hide();"
-                                     action="#{mnetResBean.proceedToViewer()}"
-                                     />
                 </h:panelGrid>
                 <p:remoteCommand name="remoteCall" actionListener="#{mnetResBean.prepareNetworks()}"/>
             </h:form>
 
-   
             <h:panelGrid columns ="2" style="padding-top: 30px;">
                 <b style="font-size: 1.1em;">Network Tools:</b> 
                 <p:graphicImage id="toolIcon" url="/resources/images/ui-help.png" alt="help"/>
@@ -123,6 +114,16 @@
                         oncomplete="PF('statusDialog').hide();"
                         disabled="#{not sessionBean1.dspcNet}"
                         styleClass="btnCirc"/>      
+                </h:panelGrid>
+
+                <hr class="style-one" style="width:900px;"/>
+                <h:panelGrid style="padding-top: 30px; width:900px; text-align: center">
+                    <p:commandButton id="nextBn" style="width:120px; vertical-align: top" 
+                                     value="Proceed" 
+                                     icon="pi pi-caret-right"
+                                     onclick="PF('statusDialog').show(); remoteCall()"
+                                     oncomplete="PF('statusDialog').hide();"
+                                     action="#{mnetResBean.proceedToViewer()}"/>
                 </h:panelGrid>
             </h:form>
         </h:panelGrid>

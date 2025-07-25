@@ -140,8 +140,6 @@
                                                  itemLabel="Using proxy SNPs when a direct SNP query is absent">
                             <p:ajax event="change" update="form"/>
                         </p:selectBooleanCheckbox>
-
-
                     </h:panelGroup>
 
                     <h:panelGroup layout="block" style="width:480px">
@@ -170,7 +168,6 @@
                         </p:selectOneRadio>
                     </h:panelGroup>
 
-
                     <h:panelGroup layout="block" style="width:480px">
                         <b>4. Steiger filtering (reverse causality check)</b><br/>
                         To remove SNPs that are more strongly associated with the outcome than the exposure.
@@ -179,32 +176,13 @@
                                              value="#{mgwasBean.useSteiger}"
                                              itemLabel="Use steiger filtering"/>
                 </p:panelGrid>
-                <h:panelGrid style="width:90%; padding: 20px; text-align: center;">
+                <h:panelGrid style="width:95%; padding: 20px; text-align: center;">
                     <p:commandButton value="Update"
                                      style="width:140px"
                                      update=":form"
                                      onclick="PF('statusDialog').show();"
                                      oncomplete="PF('statusDialog').hide()"
-                                     actionListener="#{mgwasBean.performSnpFiltering()}"
-                                     />
-
-                </h:panelGrid>
-
-
-                <h:panelGrid columns="2" style="padding: 30px 20px 20px 20px; width:90%; text-align: center;">
-                    <p:commandButton value="Previous"
-                                     id="testBn" style="width:120px"
-                                     styleClass="prevBn"
-                                     icon="pi pi-arrow-circle-left"
-                                     action="MgwasUploadView"/>
-
-                    <p:commandButton id="visBn" value="Proceed" style="width:120px"
-                                     onclick="PF('statusDialog').show();"
-                                     oncomplete="PF('statusDialog').hide()"
-                                     icon="pi pi-caret-right"
-                                     disabled="#{!mgwasBean.harmonized}"
-                                       action="#{mgwasBean.checkSNP()}"
-                                     /> 
+                                     actionListener="#{mgwasBean.performSnpFiltering()}"/>
                 </h:panelGrid>
             </h:form>
 
@@ -303,9 +281,25 @@
                     </h:panelGrid> 
                 </h:form>
             </p:dialog>
-
-
         </h:panelGrid>
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+               <p:commandButton value="Previous"
+                                     id="testBn" style="width:120px"
+                                     styleClass="prevBn"
+                                     icon="pi pi-arrow-circle-left"
+                                     action="MgwasUploadView"/>
+
+                    <p:commandButton id="visBn" value="Proceed" style="width:120px"
+                                     onclick="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     icon="pi pi-caret-right"
+                                     disabled="#{!mgwasBean.harmonized}"
+                                     action="#{mgwasBean.checkSNP()}"/> 
+            </h:panelGrid>
+        </h:form>
     </ui:define>
 </ui:composition>
 

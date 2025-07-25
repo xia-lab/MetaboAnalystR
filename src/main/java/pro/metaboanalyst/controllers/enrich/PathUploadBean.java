@@ -86,10 +86,20 @@ public class PathUploadBean implements Serializable {
                 RDataUtils.setMapData(RC, qVec);
                 SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
                 sb.setDataUploaded();
-                
+
                 return "Name check";
             }
         }
+    }
+
+    private String qeaTestDataOpt = "disc";
+
+    public String getQeaTestDataOpt() {
+        return qeaTestDataOpt;
+    }
+
+    public void setQeaTestDataOpt(String qeaTestDataOpt) {
+        this.qeaTestDataOpt = qeaTestDataOpt;
     }
 
     private UploadedFile csvFile;
@@ -176,8 +186,14 @@ public class PathUploadBean implements Serializable {
             return null;
         }
         sb.setDataUploaded();
-        sb.setCmpdIDType("name");
-        return processPathQeaData(ab.getResourceByAPI("human_cachexia.csv"), "rowu", "disc");
+
+        if (qeaTestDataOpt.equals("disc")) {
+            sb.setCmpdIDType("name");
+            return processPathQeaData(ab.getResourceByAPI("human_cachexia.csv"), "rowu", "disc");
+        } else {
+            sb.setCmpdIDType("pubchem");
+            return processPathQeaData(ab.getResourceByAPI("cachexia_continuous.csv"), "rowu", "cont");
+        }
     }
 
     public String pathQeaBn_action() {
@@ -356,7 +372,7 @@ public class PathUploadBean implements Serializable {
             }
             setMetaboloneMetaOpts(metaFactorsSelect);
             setMetaboloneChemIDOpts(CMPDIDsSelect);
-            setDefaultMetafactor(metaFactors[0]);            
+            setDefaultMetafactor(metaFactors[0]);
         }
         return defaultMetafactor;
     }
@@ -395,22 +411,24 @@ public class PathUploadBean implements Serializable {
         if (null == getDefaultchemid()) {
             sb.addMessage("Error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
             return null;
-        } else switch (getDefaultchemid()) {
-            case "HMDB":
-                lblType = "hmdb";
-                break;
-            case "KEGG":
-                lblType = "kegg";
-                break;
-            case "PUBCHEM":
-                lblType = "pubchem";
-                break;
-            case "CHEMICAL_NAME":
-                lblType = "name";
-                break;
-            default:
-                sb.addMessage("Error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
-                return null;
+        } else {
+            switch (getDefaultchemid()) {
+                case "HMDB":
+                    lblType = "hmdb";
+                    break;
+                case "KEGG":
+                    lblType = "kegg";
+                    break;
+                case "PUBCHEM":
+                    lblType = "pubchem";
+                    break;
+                case "CHEMICAL_NAME":
+                    lblType = "name";
+                    break;
+                default:
+                    sb.addMessage("Error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
+                    return null;
+            }
         }
 
         sb.setCmpdIDType(lblType);
