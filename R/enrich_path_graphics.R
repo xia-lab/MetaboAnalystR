@@ -12,7 +12,7 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
+PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=default.dpi){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -66,7 +66,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
+PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=default.dpi){
   
   path.id <- current.kegglib$path.ids[pathName];
   g <- current.kegglib$graph.list[[path.id]];
@@ -93,19 +93,26 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;
         cmpd.name <- paste(cmpd, ".png", sep="");
-        Cairo::Cairo(file=cmpd.name, width=180, height=180, bg = "transparent", type="png");
+        Cairo::Cairo(file=cmpd.name, width=220, height=280, bg = "transparent", type="png");
         # remember to change jscode for image size when the change the size above
-        par(mar=c(4,4,1,1));
+        par(mar=c(4,3,3,2));
         
         y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
+
+        cmpd.label <- tooltip[cmpd];
+
         if(is.factor(mSetObj$dataSet$cls)){
           cls.lbls <- mSetObj$dataSet$cls;
           if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
             cls.lbls <- as.factor(abbreviate(as.character(cls.lbls), 6));
           }
-          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, col= unique(GetColorSchema(cls.lbls)), ylab=y.label, las=2);
+          boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, 
+                main=cmpd.label,
+                col=unique(GetColorSchema(cls.lbls)), ylab=y.label, xlab = "", las=2);
         }else{
-          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
+          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], 
+            main=cmpd.label,
+            mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
           abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
         }
         dev.off();
