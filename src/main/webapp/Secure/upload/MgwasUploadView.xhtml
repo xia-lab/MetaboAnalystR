@@ -30,31 +30,31 @@
                 Please specify metabolites (exposure) and outcome of interest
             </h2>
             <p>
-                Causal analysis is based on Mendelian randomization (MR) which leverages genetic variants such as single-nucleotide polymorphisms (SNPs) 
-                as instrumental variables (IV) to estimate exposure-outcome associations. The growing number of mGWAS studies and two-sample MR method
-                permit causal analysis between metabolite and outcome of interest as described below:
+                Causal analysis is based on two-sample Mendelian randomization (2SMR) which leverages genetic variants such as single-nucleotide polymorphisms (SNPs) 
+                as instrumental variables (IV) to estimate exposure-outcome associations. The main steps as described below:
                 <ol>
                     <li>
-                        Identify SNPs that are significantly associate with a metabolite of interest from our large collections of the recent 
-                        <a href="https://www.mgwas.ca/mGWAS/Secure/upload/MGBrowseView.xhtml"  target="_blank">mGWAS studies</a> (covering &gt; 4000 metabolites including their ratios);
+                        Identify candidate SNPs that are associated with an exposure (metabolite) of interest and an outcome of interest
                     </li>
                     <li>
-                        Obtain the estimates of associations between these same SNPs with an outcome of interest from public repository.
-                        We use <a href="https://gwas.mrcieu.ac.uk/" target="_blank">Open GWAS Project</a>. 
+                        Perform SNP filtering and harmonization to make sure that that are valid IVs (e.g. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9177700/" target="_blank">relevance, independence and exclusion criteria</a>).
                     </li>
                     <li>
-                        Perform SNP filtering and harmonize the effect sizes for SNPs on the exposures and the outcomes to be for the same reference allele.
-                    </li>
-                    <li>
-                        Conduct MR analysis, sensitivity analyses, and explore the graphical outputs
+                        Conduct MR tests, explore results and literature evidence
                     </li>
                 </ol>
-                Please note you may not be able to perform causal analysis in some cases when no suitable SNPs are found in the two repositories. 
             </p>
 
             <h3 style="margin-top:20px">
                 1. Select a metabolite (exposure) of interest:
             </h3>
+            <p>
+                Due to its complex and computing intensive nature, MR analysis is performed with <u>one metabolite/exposure at a time</u>. 
+                To increase the chance of identification of the genetically influenced metabolites, metabolites that have passed the 
+                threshold in any of the <a href="https://www.mgwas.ca/mGWAS/upload/MGBrowseView.xhtml"  target="_blank">mGWAS studies</a> will be listed below. 
+                You will be able to examine the detailed SNP-metabolite associations (studies, p-values, etc) in the next page.. 
+            </p>
+
             <h:form id="form1">
                 <p:selectOneListbox id="metaboliteSelect"
                                     value="#{mgwasLoadBean.myCmpd}"
@@ -65,7 +65,7 @@
 
                     <f:selectItems value="#{mgwasLoadBean.metCompleteList}" />
                 </p:selectOneListbox> 
-                
+
                 <h3 style="margin-top:30px">
                     2. Specify an outcome of interest:
                 </h3>
@@ -79,6 +79,7 @@
                                 value="#{mgwasLoadBean.selectedDisease}" 
                                 minQueryLength="4" 
                                 maxResults="12" 
+                                style="margin-left: 20px"
                                 completeMethod="#{mgwasLoadBean.completeTextDis}" 
                                 scrollHeight="250"/>
 
