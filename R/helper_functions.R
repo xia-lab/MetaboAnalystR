@@ -34,6 +34,7 @@ GetMetaCol<- function(dataName=""){
     colNms <- colnames(dataSet$comp.res);
     if (dataSet$de.method=="limma"){
       inx <- match("AveExpr", colNms)
+      return(names(dataSet$comp.res.list));
     } else if(dataSet$de.method=="wtt"){
       inx <- match("t", colNms)
   } else if (dataSet$de.method=="deseq2"){
@@ -94,7 +95,7 @@ GetMetaColLength <- function(dataName = "") {
   method <- tolower(dataSet$de.method)
 
   if (method == "limma") {
-    inx <- match("AveExpr", colnames(dataSet$comp.res))
+    return(length(dataSet$comp.res.list))
   } else if (method == "deseq2") {
     return(length(dataSet$comp.res.list))
   } else {           
@@ -102,12 +103,12 @@ GetMetaColLength <- function(dataName = "") {
   }
 
   # if the marker column isn't present → length 0
-  if (is.na(inx) || inx <= 1) {
-    return(0L)
-  }
+  #if (is.na(inx) || inx <= 1) {
+  #  return(0L)
+  #}
 
-  resT <- dataSet$comp.res[, seq_len(inx - 1), drop = FALSE]
-  length(colnames(resT))
+  #resT <- dataSet$comp.res[, seq_len(inx - 1), drop = FALSE]
+  #length(colnames(resT))
 }
 
 GetInitLib <- function(){
@@ -264,14 +265,13 @@ GetExpressResultMatrix <- function(dataName = "", inxt) {
     }else if (dataSet$de.method=="edger"){
         inx <- match("logCPM", colnames(dataSet$comp.res))
         res <- dataSet$comp.res.list[[inxt]];
-    }else{
-        if (dataSet$de.method=="limma"){
-            inx <- match("AveExpr", colnames(dataSet$comp.res))
-        } else if (dataSet$de.method == "wtt") {
+    }else if (dataSet$de.method=="limma"){
+        inx <- match("AveExpr", colnames(dataSet$comp.res))
+        res <- dataSet$comp.res.list[[inxt]];
+    } else{
+         if (dataSet$de.method == "wtt") {
             inx <- match("t", colnames(dataSet$comp.res))
-        } else {
-            inx <- match("logCPM", colnames(dataSet$comp.res))
-        }
+        } 
 
         res <- dataSet$comp.res
         res <- res[, -(1:(inx - 1)), drop = FALSE]                    # ← fixed slice
@@ -287,7 +287,7 @@ GetExpressResultMatrix <- function(dataName = "", inxt) {
     dataSet$comp.res <- dataSet$comp.res[complete.cases(dataSet$comp.res), ]
 
     ## --- now extract the column(s) for the return value -------
-    if (dataSet$de.method == "deseq2") {
+    if (dataSet$de.method %in% c("limma", "edger", "deseq2")) {
       res <- dataSet$comp.res.list[[inxt]]
     } else {
       res <- dataSet$comp.res[ , c(inxt, (inx+1):ncol(dataSet$comp.res)), drop = FALSE]

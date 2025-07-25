@@ -86,7 +86,7 @@ GetSigDRItems <- function(deg.pval = 1, FC = 1.5, deg.FDR = FALSE, wtt = FALSE, 
   irow <- 1:length(item)
   nselect <- dim(data)[1]
   
-  if(dataSet$de.method == "deseq2" || dataSet$de.method == "edger" ){
+  if(dataSet$de.method == "deseq2" || dataSet$de.method == "edger" || dataSet$de.method == "limma" ){
 
     table_list <- dataSet$comp.res.list;
 

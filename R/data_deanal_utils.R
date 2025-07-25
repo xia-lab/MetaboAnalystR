@@ -371,9 +371,17 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     }
     fit2 <- contrasts.fit(fit, contrast.matrix);
     fit2 <- eBayes(fit2, trend=robustTrend, robust=robustTrend);
-    tblF <- topTableF(fit2, number = Inf, adjust.method = "fdr")
-    colnames(tblF)[colnames(tblF) == "FDR"] <- "adj.P.Val"
-    dataSet$comp.res <- tblF
+
+result.list <- list()
+for (nm in colnames(contrast.matrix)) {
+  tbl <- topTable(fit2, coef = nm, number = Inf, adjust.method = "fdr")
+  colnames(tbl)[colnames(tbl) == "FDR"] <- "adj.P.Val"
+  result.list[[nm]] <- tbl
+}
+
+dataSet$comp.res.list      <- result.list     
+  dataSet$comp.res <- result.list[[1]]
+
   } else if (dataSet$de.method == "edger") {
 
     set.seed(1)
@@ -419,6 +427,9 @@ prepareContrast <-function(dataSet, anal.type = "reference", par1 = NULL, par2 =
     }
   dataSet$comp.res.list <- result.list
   dataSet$comp.res <- result.list[[1]]
+
+}
+  return(dataSet);
 
 }
 .perform_williams_trend <- function(dataSet,

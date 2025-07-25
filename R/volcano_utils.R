@@ -18,7 +18,7 @@ Volcano.Anal <- function(dataName="", fileNm="name", paired=FALSE, fcthresh=0, t
 
   anal.type <- paramSet$anal.type;
 
-  inx <- as.numeric(inx)
+  inx <- 1
   #print("Prepare volcano anal");
   limit_fc <- T; #whether limit to -10 to 10 fc
   if(anal.type == "metadata"){

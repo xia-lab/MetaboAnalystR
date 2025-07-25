@@ -52,6 +52,9 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     resTable <- dataSet$comp.res;
   } else if (dataSet$de.method=="limma"){
     hit.inx <- which(colnames(resTable) == "AveExpr");
+    dataSet$comp.res <- dataSet$comp.res.list[[inx]];
+    resTable <- dataSet$comp.res;
+
   } else {
     hit.inx <- which(colnames(resTable) == "logCPM");
     dataSet$comp.res <- dataSet$comp.res.list[[inx]];
@@ -77,7 +80,7 @@ GetSigGenes <-function(dataName="", res.nm="nm", p.lvl=0.05, fc.lvl=1, inx=1, FD
     fc.vec <- apply(pos.mat, 1, max);   # for > comparisons - in this case, use the largest logFC among all comparisons
     hit.inx.fc <- fc.vec >= fc.lvl;
     resTable <- resTable[hit.inx.fc,];
-  } else if (dataSet$de.method=="deseq2" || dataSet$de.method=="edger"){
+  } else if (dataSet$de.method=="deseq2" || dataSet$de.method=="edger" || dataSet$de.method=="limma"){
     pos.mat <- abs(logfc.mat);
     fc.vec <- pos.mat[,1];
     hit.inx.fc <- fc.vec >= fc.lvl;
@@ -163,11 +166,7 @@ dataSet$comp.res <- rbind(resTable, dataSet$comp.res)
   cat(json.obj);
   sink();
 
-  if (dataSet$de.method %in% c("deseq2", "edger")) {
-  # Initialize a list to collect data from all comparisons
-  significant_gene_table <- list()
-
-if (dataSet$de.method == "deseq2") {
+  if (dataSet$de.method %in% c("deseq2", "edger", "limma")) {
 
   significant_gene_table <- list()    # holds one data-frame per comparison
 
