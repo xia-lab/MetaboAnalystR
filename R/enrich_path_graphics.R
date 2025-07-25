@@ -93,7 +93,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;
         cmpd.name <- paste(cmpd, ".png", sep="");
-        Cairo::Cairo(file=cmpd.name, width=220, height=280, bg = "transparent", type="png");
+        Cairo::Cairo(file=cmpd.name, width=220, height=260, bg = "transparent", type="png");
         # remember to change jscode for image size when the change the size above
         par(mar=c(4,3,3,2));
         
