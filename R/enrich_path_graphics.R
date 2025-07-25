@@ -110,9 +110,10 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
                 main=cmpd.label,
                 col=unique(GetColorSchema(cls.lbls)), ylab=y.label, xlab = "", las=2);
         }else{
-          Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], 
-            main=cmpd.label,
-            mSetObj$dataSet$cls, pch=19, col="forestgreen", xlab="Index", ylab=y.label);
+          # Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], 
+          # should be base plot? 
+            plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, 
+                pch=19, col="forestgreen", main=cmpd.label, xlab="Index", ylab=y.label);
           abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
         }
         dev.off();
