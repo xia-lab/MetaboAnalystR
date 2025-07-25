@@ -1862,7 +1862,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     .set.mSet(mSetObj);
 
     mSetObj <- SanityCheckData(mSetObj);
-    mSetObj <- ReplaceMin(mSetObj);
+    mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
     #mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
@@ -1886,7 +1886,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     .set.mSet(mSetObj);
 
     mSetObj <- SanityCheckData(mSetObj);
-    mSetObj <- ReplaceMin(mSetObj);
+    mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj,"F", 25, "iqr", NULL);
     #mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
@@ -1902,7 +1902,7 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     .set.mSet(mSetObj);
  
     mSetObj <- SanityCheckData(mSetObj);
-    mSetObj <- ReplaceMin(mSetObj);
+    mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
     #mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);

@@ -401,24 +401,19 @@ if (n.blank == 0) {
 #'@import qs
 #'@export
 #'
-ReplaceMin <- function(mSetObj=NA){
+PerformSanityClosure <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
   #Reset to default
   mSetObj$dataSet$filt <- mSetObj$dataSet$edit <- NULL;
   
-  # replace zero and missing values using Detection Limit for each variable 
-  int.mat <- qs::qread("preproc.qs");
-  #int.mat <- ReplaceMissingByLoD(preproc);  
-  
-  # note, this is last step of processing, also save to proc
-  #mSetObj$dataSet$proc <- as.data.frame(int.mat);
+  # note, this is last step of sanity check
+  # prepare for reproducible analysis
+
+  int.mat <- qs::qread("preproc.qs"); 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
   qs::qsave(as.data.frame(int.mat), file="data_proc.qs");
-
-  #mSetObj$msgSet$replace.msg <- paste("Zero or missing values were replaced by 1/5 of the min positive value for each variable.");
-  invisible(gc()); # suppress gc output
 
   return(.set.mSet(mSetObj));
 }
@@ -585,7 +580,9 @@ CheckContainsBlank <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, int.filter="mean", int.cutoff=0, blank.subtraction=F, blank.threshold=10){
+FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, 
+    int.filter="mean", int.cutoff=0, blank.subtraction=F, blank.threshold=10){
+
   mSetObj <- .get.mSet(mSetObj);
   
   #Reset to default
@@ -745,8 +742,19 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   }
   
   qs::qsave(int.mat, "data.filt.qs");
-  return(.set.mSet(mSetObj));
+
+  .set.mSet(mSetObj);
+
+  if(sum(is.na(int.mat)) > 0){
+    return(1);
+  }else{
+    # note here, if no missing data, need to save a copy for normlization
+    qs::qsave(int.mat, file = "data_proc.qs");
+    return(2);
+  }
 }
+
+
 
 GetFilterTotalMsg <-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
