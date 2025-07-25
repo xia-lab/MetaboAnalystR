@@ -616,6 +616,8 @@ public class MgwasBean implements Serializable {
             } else {
                 sb.addMessage("Info", "Harmonization has completed successfully! " + res + " SNP(s) had been removed!");
             }
+               setupSumTable();
+            setFiltPerformed(true);
         } else if (res[0] == -2) { // failed at proxy
             String err = RDataUtils.getErrMsg(sb.getRConnection());
             sb.addMessage("Error", "Harmonization has failed:" + err);

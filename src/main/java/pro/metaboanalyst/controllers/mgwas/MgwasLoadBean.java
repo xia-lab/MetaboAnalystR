@@ -512,6 +512,7 @@ public class MgwasLoadBean implements Serializable {
         //String[] myDisListSplit = selectedDisease.split("\\|");
         //String myDisName = myDisListSplit[0];
         String myDisId = selectedDisease.split("\\|")[1];
+            mb.setDisplayOutcome(selectedDisease.split("\\|")[0]);
         //System.out.println(myDisName);
         //System.out.println(myDisId + "====disId");
         //System.out.println("myDisName");
