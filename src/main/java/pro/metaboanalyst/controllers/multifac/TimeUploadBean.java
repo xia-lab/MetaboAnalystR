@@ -174,6 +174,13 @@ public class TimeUploadBean implements Serializable {
                 fileName = ab.getResourceByAPI("cress_time.csv");
                 testMetaFile = ab.getResourceByAPI("cress_time_meta.csv");
             }
+            case "ewaste" -> {
+                tsDataType = "pktable";
+                tsDesign = "multi";
+                tsFormat = "colmf";
+                fileName = ab.getInternalData("ewaste_data_QC.csv");
+                testMetaFile = ab.getInternalData("ewaste_metadata.csv");
+            }
             default -> {
                 tsDataType = "pktable";
                 tsDesign = "time0";
@@ -183,7 +190,6 @@ public class TimeUploadBean implements Serializable {
             }
         }
         if (!wb.isReloadingWorkflow()) {
-
             if (!sb.doLogin(tsDataType, "mf", false, false)) {
                 sb.addMessage("Error", "Analysis start failed!");
                 return null;

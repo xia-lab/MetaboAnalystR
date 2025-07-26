@@ -261,6 +261,10 @@ public class ProcessBean implements Serializable {
                         sb.settingRoc1Col(featureNum);
                         proceedBnDisabled = false;
                         sb.setMissingDisabled(!RDataUtils.containMissing(RC));
+                        
+                        sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
+                        sb.setContainsQC(RDataUtils.getContainsQC(sb));
+                        
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
                     } else {
                         msgVec.add("Checking data content ...failed.");
