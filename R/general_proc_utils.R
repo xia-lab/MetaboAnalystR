@@ -1326,8 +1326,7 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   if(grepl("_filt", imgName)){
     int.mat <- qs::qread("data.filt.qs");
   }else{
-  int.mat <- qs::qread("preproc.orig.qs")
-
+    int.mat <- qs::qread("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1335,20 +1334,24 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   nSamples  <- nrow(int.mat)
   nFeatures <- ncol(int.mat)
 
+  hide_feat_labels <- nFeatures > 100;
+  miss.mat <- is.na(int.mat);
+
+  # Order samples by missingness count (descending)
+  smpl.miss.counts <- rowSums(miss.mat);
+  ord.inx <- order(smpl.miss.counts, decreasing = TRUE);
+  int.mat <- int.mat[ord.inx,];
+
   msg <- NULL
-  if (nSamples > 50) {
-    int.mat <- int.mat[1:50, , drop = FALSE]
-    msg <- sprintf("Only the first 50 samples are shown (out of %d).", nSamples)
+  if (nSamples > 40) {
+    int.mat <- int.mat[1:40, , drop = FALSE]
+    msg <- sprintf("Only the top 40 samples with most missing values are shown (out of %d).", nSamples)
   }
 
-  hide_feat_labels <- nFeatures > 100
-
   # Order features by missingness count (descending)
-  miss.counts <- colSums(is.na(int.mat))
-  feature.order <- names(sort(miss.counts, decreasing = TRUE))
-
+  miss.counts <- colSums(miss.mat);
+  feature.order <- names(sort(miss.counts, decreasing = TRUE));
   # Convert to missing indicator matrix and long format
-  miss.mat <- is.na(int.mat)
   df <- as.data.frame(as.table(miss.mat))
   colnames(df) <- c("Sample", "Feature", "Missing")
   df$Missing <- ifelse(df$Missing, "Missing", "Present")
@@ -1381,8 +1384,7 @@ PlotMissingHeatmap <- function(mSetObj = NA,
     mSetObj$msgSet$plot.msg,
     sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi),
     msg
-  )
-
+  );
   return(.set.mSet(mSetObj))
 }
 
