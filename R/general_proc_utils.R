@@ -1407,37 +1407,42 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
-  if(grepl("_filt", fileName)){
-    int.mat <- qs::qread("data.filt.qs");
-  }else{
-  int.mat <- qs::qread("preproc.orig.qs")
-
+  if (grepl("_filt", fileName)) {
+    int.mat <- qs::qread("data.filt.qs")
+  } else {
+    int.mat <- qs::qread("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  # Limit to first 50 samples
-  if (nrow(int.mat) > 50) {
-    int.mat <- int.mat[1:50, , drop = FALSE]
-  }
-
-  # Compute missing indicator
+  # Compute missing indicator matrix
   miss.mat <- 1 * is.na(int.mat)
 
   # Order features (columns) by missing count (descending)
-  miss.counts <- colSums(miss.mat)
-  ord.idx <- order(miss.counts, decreasing = TRUE)
-  miss.mat <- miss.mat[, ord.idx]
+  feat.miss.counts <- colSums(miss.mat)
+  ord.feat.idx <- order(feat.miss.counts, decreasing = TRUE)
+  miss.mat <- miss.mat[, ord.feat.idx, drop = FALSE]
   feature.names <- colnames(miss.mat)
+
+  # Order samples (rows) by missing count (descending)
+  samp.miss.counts <- rowSums(miss.mat)
+  ord.samp.idx <- order(samp.miss.counts, decreasing = TRUE)
+  miss.mat <- miss.mat[ord.samp.idx, , drop = FALSE]
+
+  # Limit to top 50 samples *after* ordering
+  if (nrow(miss.mat) > 50) {
+    miss.mat <- miss.mat[1:50, , drop = FALSE]
+  }
+  sample.names <- rownames(miss.mat)
 
   # Convert to list of rows
   z <- unname(split(miss.mat, row(miss.mat)))
 
-  # Construct JSON object for Plotly.js v2
+  # Construct JSON object for Plotly.js
   out.list <- list(
     z = z,
     x = feature.names,
-    y = rownames(miss.mat),
+    y = sample.names,
     type = "heatmap",
     colorscale = list(list(0, "white"), list(1, "red")),
     showscale = FALSE,
@@ -1455,6 +1460,8 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 
   return(.set.mSet(mSetObj))
 }
+
+
 
 #' Check QC %RSD with pmp::filter_peaks_by_rsd
 #'
