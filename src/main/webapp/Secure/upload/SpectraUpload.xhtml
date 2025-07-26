@@ -64,9 +64,9 @@
                                           style="width:780px; margin-top: 5px; margin-bottom:5px"
                                           multiple="true" 
                                           oncomplete="sanityCheckMeta();">
-                                    <p:validateFile sizeLimit="#{applicationBean1.MAX_SPEC_SIZE}" 
-                                          fileLimit="#{applicationBean1.MAX_SPEC_NUM}" 
-                                          allowTypes="/(\.|\/)(csv|txt|zip)$/"/>
+                                <p:validateFile sizeLimit="#{applicationBean1.MAX_SPEC_SIZE}" 
+                                                fileLimit="#{applicationBean1.MAX_SPEC_NUM}" 
+                                                allowTypes="/(\.|\/)(csv|txt|zip)$/"/>
                             </p:fileUpload>
                             <p:remoteCommand name="rc"  actionListener="#{specLoader.addNumOfUploadFiles}" />
                             <p:remoteCommand name="showMetaErrorRC" actionListener="#{specLoader.showMetaError}"/>
@@ -170,6 +170,7 @@
                     <f:selectItem itemValue="malaria"/>
                     <f:selectItem itemValue="dda_example"/>
                     <f:selectItem itemValue="dia_example"/>
+                    <f:selectItem itemValue="exposome_example"/>
                 </p:selectOneRadio> 
 
                 <h:panelGrid columns="4" style="width: 860px; padding-left: 20px" cellspacing="4">
@@ -238,6 +239,20 @@
                     <h:panelGroup  layout="block" style="padding-left:10px">
                         <a href="https://www.dropbox.com/scl/fi/l9a1naq2v3bo1r31dvbhy/swath_dia_covid.zip?rlkey=yh2vli2whmiv859uvj1sj2h1l" target="_blank">Dropbox</a> <br/> 
                         <a href="http://gofile.me/4esAc/UAL63xImT" target="_blank">GoFile</a>
+                    </h:panelGroup>
+
+                    <p:radioButton for="customRadio" itemIndex="4"/>
+                    <h:panelGroup  layout="block" style="padding-left:10px">
+                        E-Waste dataset (MS1+DDA)
+                    </h:panelGroup>
+                    <h:panelGroup  layout="block" style="padding-left:10px">
+                        An exposomics dataset (UPLC-Q/E-ESI<sup>-</sup>, C18 column), including blood samples from e-waste workers from 
+                        <a href="https://doi.org/10.3390/metabo14120671" target="_blank">Pang et al.</a> 19 samples (16 MS1 Samples and 3 MS2-DDA files)
+                        are included.
+                    </h:panelGroup>
+                    <h:panelGroup  layout="block" style="padding-left:10px">
+                        <a href="https://www.dropbox.com/scl/fi/p5j72mzihpqazehbkcxkt/exposome_data.zip" target="_blank">Dropbox</a> <br/> 
+                        <a href="http://gofile.me/4esAc/nxVkZqWxR" target="_blank">GoFile</a>
                     </h:panelGroup>
 
                 </h:panelGrid>

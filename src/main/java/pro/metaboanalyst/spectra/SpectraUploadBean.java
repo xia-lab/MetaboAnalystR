@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
 import jakarta.inject.Named;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.file.UploadedFile;
@@ -302,6 +303,8 @@ public class SpectraUploadBean implements Serializable {
                 uploadDDAExample();
             case "dia_example" ->
                 uploadDIAExample();
+            case "exposome_example" ->
+                uploadExposomeExample();
             default ->
                 uploadIBDExample();
         };
@@ -454,7 +457,7 @@ public class SpectraUploadBean implements Serializable {
         if (!markerfile.exists()) {
             int res = RSpectraUtils.getCOVIDRawData(sb.getRConnection(), homeDir);
             if (res == 0) {
-                sb.addMessage("error", "Sorry! Cannot find your data! Please ask zhiqiang.pang@xialab.ca!");
+                sb.addMessage("error", "Sorry! Cannot find this data! Please ask zhiqiang.pang@xialab.ca!");
             }
         }
 
@@ -513,6 +516,51 @@ public class SpectraUploadBean implements Serializable {
         }
     }
 
+    
+    private String uploadExposomeExample() throws REXPMismatchException {
+        if (!sb.isRegisteredLogin()) {
+            sb.doLogin("spec", "raw", false, false);
+        }
+        String datadir = "/home/glassfish/projects/Exposome_example/upload";
+        String homeDir = sb.getCurrentUser().getHomeDir();
+
+        File srcDir = new File(datadir);
+
+        if (srcDir.exists()) {
+            //DataUtils.copyDir(datadir, homeDir + File.separator + "upload");
+            try {
+                Path symbolic = Paths.get(datadir);
+                Path target = Paths.get(homeDir + File.separator + "upload");
+                Files.createSymbolicLink(target, symbolic);
+            } catch (IOException ex) {
+                System.out.println("This data is not found in your local, will start a downloading!");
+            }
+        }
+
+        File markerfile = new File(homeDir + File.separator + "upload/Worker/Sample010.mzML");
+        if (!markerfile.exists()) {
+            int res = RSpectraUtils.getExposomeRawData(sb.getRConnection(), homeDir);
+            if (res == 0) {
+                sb.addMessage("error", "Sorry! Cannot find this data! Please ask zhiqiang.pang@xialab.ca!");
+            }
+        }
+
+        pcb.setMetaOk(true);
+        sb.setDataUploaded();
+        containsMeta = true;
+        pkb.setIsms2(true);
+        pkb.setMs2DataOpt("dda");
+        pkb.setContainsMetaVal(containsMeta);
+        pkb.populateSpecBeans();
+        sb.setSaveEnabled(true);
+        pcb.setTotalNumberOfSamples(19);
+        spb.setPolarity("negative");
+        spectraUploaded = true;
+
+        return "Spectra check";
+    }
+
+    
     public String goToProcessing() throws REXPMismatchException {
         // check if ms2 database exists, need to detect if the ms2 database exists for docker only        
         if (ab.isInDocker() & pkb.isIsms2()) {
