@@ -54,8 +54,8 @@ function handleSaveEvent(sendJsonFlag) {
     savedState.backgroundColor = [gradCol1, gradCol2];
     savedState.backgroundOpt = $('#backgroundOpt').val();
     savedState.netNm = netNm;
-    //savedState.enrichdb = $("#enrichdb").val();
-    //savedState.viewOpt = $("#viewOpt").val();
+    savedState.enrichdb = $("#enrichdb").val();
+    savedState.viewOpt = $("#viewOpt").val();
     let dataStr = JSON.stringify(savedState);
     console.log(JSON.stringify(savedState).length);
     sendJsonToServer(dataStr, "enrichNet", sendJsonFlag);

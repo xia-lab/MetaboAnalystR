@@ -1960,12 +1960,12 @@ function displayCurrentSelectedNodesStat(nodes, title, node = null) {
             if (enrType === "mum" || enrType === "gsea" || enrType === "integ") {
                 if (enrType === "mum") {
                     if (netData.sigCmpds.indexOf(nodes[i].label) !== -1) {
-                        stats.append('<li><a style="color:red" href="http://www.genome.jp/dbget-bin/www_bget?ko:' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
+                        stats.append('<li><a style="color:red" href="http://www.genome.jp/dbget-bin/www_bget?' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
                     } else {
-                        stats.append('<li><a href="http://www.genome.jp/dbget-bin/www_bget?ko:' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
+                        stats.append('<li><a href="http://www.genome.jp/dbget-bin/www_bget?' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
                     }
                 } else {
-                    stats.append('<li><a href="http://www.genome.jp/dbget-bin/www_bget?ko:' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
+                    stats.append('<li><a href="http://www.genome.jp/dbget-bin/www_bget?' + nodes[i].id + '" target="_blank"><u>' + nodes[i].label + '</u></a></li>');
                 }
             } else {
                 stats.append('<li>' + nodes[i].label + '</li>');
