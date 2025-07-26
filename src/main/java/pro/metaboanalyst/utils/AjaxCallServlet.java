@@ -4,10 +4,10 @@
  */
 package pro.metaboanalyst.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Inject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -52,10 +52,29 @@ import pro.metaboanalyst.spectra.SpectraUploadBean;
 @WebServlet("/faces/AjaxCall")
 public class AjaxCallServlet extends HttpServlet {
 
+    @JsonIgnore
     @Inject
-    ApplicationBean1 ab;
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
     @Inject
-    SessionBean1 sb;
+    private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private SpectraControlBean spc;
+
+    @JsonIgnore
+    @Inject
+    private SpectraUploadBean su;
+
+    @JsonIgnore
+    @Inject
+    private MummiAnalBean ma;
+
+    @JsonIgnore
+    @Inject
+    private PathBean pab;
 
     private static final Logger LOGGER = LogManager.getLogger(AjaxCallServlet.class);
 
@@ -545,12 +564,12 @@ public class AjaxCallServlet extends HttpServlet {
             }
         } else if (funcName.equalsIgnoreCase("getMetaIntegrity")) {
             //SpectraControlBean spc = findBeanInstance("spectraControlBean");
-            SpectraControlBean spc = CDI.current().select(SpectraControlBean.class).get();
+            //SpectraControlBean spc = CDI.current().select(SpectraControlBean.class).get();
             String filenms = request.getParameter("fileNms");
             boolean metaFormatOk = spc.isMetaOk();
             if (metaFormatOk) {
                 //SpectraUploadBean su = findBeanInstance("spectraUploadBean");
-                SpectraUploadBean su = CDI.current().select(SpectraUploadBean.class).get();
+                //SpectraUploadBean su = CDI.current().select(SpectraUploadBean.class).get();
 
                 boolean isMetaOk = su.checkMetaIntegrity(filenms);
                 if (!isMetaOk) {
@@ -570,12 +589,12 @@ public class AjaxCallServlet extends HttpServlet {
 
         } else if (funcName.equalsIgnoreCase("checkSessionUploaded")) {
             //SpectraControlBean spc = findBeanInstance("spectraControlBean");
-            SpectraControlBean spc = CDI.current().select(SpectraControlBean.class).get();
+            //SpectraControlBean spc = CDI.current().select(SpectraControlBean.class).get();
             boolean resB = spc.checkJobRunning();
             res = resB + "";
 
         } else if (funcName.equalsIgnoreCase("getPartialLinkInfo")) {
-            SpectraControlBean spc = findBeanInstance("spectraControlBean");
+            //SpectraControlBean spc = findBeanInstance("spectraControlBean");
 
             String url = ab.getAppUrlPath();
             res = url + "/MetaboAnalyst/faces/Share?ID=" + sb.getPartialId() + "||" + spc.getCurrentJobId();
@@ -768,7 +787,7 @@ public class AjaxCallServlet extends HttpServlet {
 
             }
             case "performPeaks2Fun", "Scatter" -> {
-                MummiAnalBean ma = CDI.current().select(MummiAnalBean.class).get();
+                //MummiAnalBean ma = CDI.current().select(MummiAnalBean.class).get();
 
                 if (ma.getAlgOpts().length > 1) {
                     url = "/Secure/mummichog/IntegMumResultView.xhtml";
@@ -790,7 +809,7 @@ public class AjaxCallServlet extends HttpServlet {
 
             }
             case "paBn_proceed_ora", "paBn_proceed_qea" -> {
-                PathBean pab = CDI.current().select(PathBean.class).get();
+                //PathBean pab = CDI.current().select(PathBean.class).get();
 
                 if (pab.getAnalOption().equals("Scatter")) {
                     if (pab.getLibOpt().startsWith("smpdb")) {

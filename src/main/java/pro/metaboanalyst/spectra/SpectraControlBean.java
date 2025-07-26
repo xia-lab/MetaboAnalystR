@@ -64,6 +64,10 @@ public class SpectraControlBean implements Serializable {
     @JsonIgnore
     private SessionBean1 sb;
 
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
+
     @Inject
     @JsonIgnore
     private SpectraParamBean sparam;
@@ -75,19 +79,19 @@ public class SpectraControlBean implements Serializable {
     @JsonIgnore
     @Inject
     private FireBaseController fbc;
-    
+
     @Inject
     @JsonIgnore
     private DatabaseClient db;
 
-    @JsonIgnore   
+    @JsonIgnore
     @Inject
     private SpectraProcessBean spb;
 
-    @JsonIgnore   
+    @JsonIgnore
     @Inject
     private DiagramView dv;
-    
+
     private boolean createdShareLink = false;
     private LinkedHashMap<String, String> javaHistory = new LinkedHashMap<>();
     // Section 0 : Variable Section - count--------------
@@ -379,7 +383,7 @@ public class SpectraControlBean implements Serializable {
         setFinishedJobId(0);
         setFinishedProgress2(0.0);
         setFinishedJobStatus("Not Started");
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
+        //WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
         wb.getCalledWorkflows().add("Spectra Processing");
 
     }
@@ -639,7 +643,7 @@ public class SpectraControlBean implements Serializable {
                     sb.addMessage("error", "Project saving failed!");
                 } else {
                     DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/spectra/JobStatusView.xhtml", "info", "Project saving is successful, you can access your project in your <b>Project View</b> page later.");
-                    
+
                 }
             } else {
                 return "Job status";

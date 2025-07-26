@@ -228,7 +228,7 @@ public class NormBean implements Serializable {
             sb.addMessage("OK", "Completed normalization. You can click <b>View Result</b> button to view the effect, or <b>Proceed</b> button to analysis page!");
             normPerformed = true;
 
-            WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
+            //WorkflowBean mywb = CDI.current().select(WorkflowBean.class).get();
             wb.getCalledWorkflows().add("Normalization");
         } else {
             sb.addMessage("Error", "Unknown error happened during data normalization process!");

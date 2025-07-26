@@ -5,17 +5,16 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.models.SampleBean;
@@ -34,11 +33,16 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 public class MetaProcBean implements Serializable {
 
     private static final Logger LOGGER = LogManager.getLogger(MetaProcBean.class);
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
-
+    @JsonIgnore
     @Inject
     private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowBean wb;
 
     private String msgTextMeta;
 
@@ -92,7 +96,7 @@ public class MetaProcBean implements Serializable {
         }
         RConnection RC = sb.getRConnection();
         RDataUtils.setDataTypeOfMeta(RC);
-        WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
+        //WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
         wb.getCalledWorkflows().add("Metadata check");
         //return "Data filter";
         if (RDataUtils.getProcFeatureNumber(RC) > 250) {
