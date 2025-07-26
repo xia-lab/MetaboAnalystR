@@ -159,7 +159,12 @@ function checkSavedState() {
                             sigInst.graph.edges().forEach(function (edge) {
                                 edge.color = rgbaCol;
                             });
-                            if (savedState.viewOpt === "enr") {
+                            if (savedState.viewOpt === "bi") {
+                                netData.bedges.forEach(function (edge) {
+                                    edge.color = rgbaCol;
+                                    sigInst.graph.addEdge(edge);
+                                });
+                            }else  {
                                 netData.edges.forEach(function (eg) {
                                     eg.color = rgbaCol;
                                     if (eg.source && eg.target) {
@@ -170,17 +175,12 @@ function checkSavedState() {
                                     if (savedState.sigInstGraphEdges.indexOf(edge.id) !== -1) {
                                         if (sigInst.graph.nodes(edge.target).borderColor) {
                                             //edge.color = hexToRGB(sigInst.graph.nodes(edge.target).borderColor, savedState.edgeOpa);
-                                            edge.color = sigInst.graph.nodes(edge.target).borderColor;
+                                            //edge.color = sigInst.graph.nodes(edge.target).borderColor;
                                         }
                                         sigInst.graph.addEdge(edge);
                                     }
                                 });
-                            } else {
-                                netData.bedges.forEach(function (edge) {
-                                    edge.color = rgbaCol;
-                                    sigInst.graph.addEdge(edge);
-                                });
-                            }
+                            } 
 
                             defaultEdgeSize = savedState.edgeSize;
                             sigInst.settings({
@@ -188,7 +188,7 @@ function checkSavedState() {
                                 maxEdgeSize: defaultEdgeSize
                             });
 
-                            $("#viewOpt").val(savedState.viewOpt);
+                            //$("#viewOpt").val(savedState.viewOpt);
 
                             sigInst.refresh();
                         }, 1000)
