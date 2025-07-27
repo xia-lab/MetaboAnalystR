@@ -268,6 +268,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   return(.set.mSet(mSetObj));
 }
 
+GetNormMethods<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+
+  meths <- paste("sample normalization:", mSetObj$dataSet$rownorm.method, 
+                "; data transformation:", mSetObj$dataSet$trans.method,
+                "; data scaling:", mSetObj$dataSet$scale.method);
+  return(meths);
+}
+
 #'Row-wise Normalization
 #'@description Row-wise norm methods, when x is a row.
 #'Normalize by a sum of each sample, assume constant sum (1000).
