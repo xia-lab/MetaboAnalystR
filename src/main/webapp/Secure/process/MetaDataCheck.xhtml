@@ -33,6 +33,7 @@
                     <h:outputText value="#{mprocBean.msgTextMeta}" escape="false"/>
                 </h:panelGrid>
 
+                <hr class="style-one"/>
                 <h3>Update your metadata using the table below</h3>
                 <ul>
                     <li>
@@ -45,7 +46,7 @@
                         Modify metadata name: click on corresponding cell on the main table to modify name
                     </li>
                     <li>
-                        Specify group order of categorical metadata: click <u>Edit</u> and go to <u>Order</u> tab to specify the order which the underlying metadata groups are (i.e low, medium, high). By default, they are ordered by alphabetical order.
+                        Groups are ordered by their alphabetical order by default. You can manually specify group order - click <u>Edit</u> and go to <u>Order</u> tab to specify the order.
                     </li>
                     <li>
                         Exclude metadata that do not pass sanity check.
@@ -57,7 +58,7 @@
                              value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
                              disabledSelection="#{multifacBean.disableMetaSelection}"  editMode="cell" editable="true"> 
                 -->
-                <p:dataTable style="width:700px;" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
+                <p:dataTable style="width:700px; margin-bottom: 30px" var="meta" rowIndexVar="rowInx" rowKey="#{meta.id}" 
                              class="surface-card shadow-1 p-0 text-800" 
                              value="#{multifacBean.metaDataBeans}"  selection="#{multifacBean.selectedMetaDataBean}" 
                              editMode="cell" editable="true"> 
@@ -92,29 +93,6 @@
                         </p:commandLink>
                     </p:column>  
                 </p:dataTable>
-                <h:panelGrid columns="2" style="width:780px; font-size: 14px; text-align: center; padding-top: 20px;">
-
-                    <p:commandButton value="Skip to analysis" 
-                                     ajax="false" 
-                                     onclick="PF('statusDialog').show()"
-                                     style="width:150px;"
-                                     disabled="#{!sessionBean1.dataNormed}"
-                                     icon="pi pi-caret-right"
-                                     action="Multi-factors"/>
-                    <p:commandButton value="Proceed" 
-                                     ajax="false" 
-                                     onclick="PF('statusDialog').show()"
-                                     style="width:120px;"
-                                     icon="pi pi-caret-right"
-                                     rendered="#{!sessionBean1.isMetaBatchProject}"
-                                     action="#{mprocBean.metacheck_proceed()}"/>
-                    <p:commandButton value="Proceed"
-                                     style="width:120px;"
-                                     icon="pi pi-caret-right"
-                                     rendered="#{sessionBean1.isMetaBatchProject}"
-                                     onclick="PF('fireBatchSaveDialog').show()"
-                                     action="#{mprocBean.metacheck_proceed4batch()}"/>
-                </h:panelGrid>
             </h:panelGrid>
         </h:form>
 
@@ -268,6 +246,32 @@
                 </h:form>
             </h:panelGrid> 
         </p:dialog> 
+    </ui:define>
 
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px; padding-left: 10%; padding-right: 10%">
+                <p:commandButton value="Skip to analysis" 
+                                 ajax="false" 
+                                 onclick="PF('statusDialog').show()"
+                                 style="width:150px;"
+                                 disabled="#{!sessionBean1.dataNormed}"
+                                 icon="pi pi-caret-right"
+                                 action="Multi-factors"/>
+                <p:commandButton value="Proceed" 
+                                 ajax="false" 
+                                 onclick="PF('statusDialog').show()"
+                                 style="width:120px;"
+                                 icon="pi pi-caret-right"
+                                 rendered="#{!sessionBean1.isMetaBatchProject}"
+                                 action="#{mprocBean.metacheck_proceed()}"/>
+                <p:commandButton value="Proceed"
+                                 style="width:120px;"
+                                 icon="pi pi-caret-right"
+                                 rendered="#{sessionBean1.isMetaBatchProject}"
+                                 onclick="PF('fireBatchSaveDialog').show()"
+                                 action="#{mprocBean.metacheck_proceed4batch()}"/>
+            </h:panelGrid> 
+        </h:form>
     </ui:define>
 </ui:composition>

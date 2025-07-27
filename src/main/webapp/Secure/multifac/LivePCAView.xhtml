@@ -48,6 +48,11 @@
             </h:form>
             <p:tabView id="ac" widgetVar="tabWidgetVar" style="min-width: 900px; max-width: 1200px; border: none; font-size: 13px;">
                 <p:tab title ="Pairwise Score Plots">
+                    <p>
+                        P-values are calculated with <b>PERMANOVA</b> (999 permutations) on the sample scores for each PC pair. 
+                        For discrete metadata, it assesses group centroid separation. 
+                        For continuous metadata, it evaluates whether the data exhibit a gradient aligned with the metadata .
+                    </p>
                     <h:form id="form1">
                         <h:panelGrid columns="3" style="padding-top: 10px; padding-left: 40px">
                             <h:outputLabel value="Display score plots for top "/>
@@ -76,6 +81,76 @@
                                  style="width:10in;"
                                  src="#{sessionBean1.getCurrentImageURL('pca_pair_meta')}" alt="PCAPairImage"/>
                         </h:panelGrid>        
+                    </h:form>
+                </p:tab>
+                <p:tab title ="2D Scores Plot">
+                    <p>
+                        The statistical significances of the group patterns are evaluated using PERMANOVA. Please note 
+                        the distributions are computed using the Euclidean distance based on the PCs in the current display. 
+                        For multiple groups, in addition to the overall significance as displayed, you can also click the 
+                        table icon to view pair-wise PERMANOVA results.
+                    </p>
+                    <h:form id="form3">
+                        <h:panelGrid columns="2" style="width:1000px; padding: 2px 20px 10px 20px; line-height: 25px">
+                            <h:panelGrid columns="2" style="width:480px;">
+                                <h:outputLabel style="font-weight: bold" value="Specify PC on X-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{pcaBean.pcaScoreX}">
+                                    <f:selectItems value="#{pcaBean.pcaAllPCs}" />
+                                </p:selectOneMenu>                             
+                                <h:outputLabel style="font-weight: bold" value="Specify PC on Y-axis:"/>
+                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:50px" value="#{pcaBean.pcaScoreY}">
+                                    <f:selectItems value="#{pcaBean.pcaAllPCs}" />
+                                </p:selectOneMenu> 
+                                <h:outputLabel style="font-weight: bold" value="Display 95% confidence regions:"/>
+                                <p:selectBooleanCheckbox value ="#{pcaBean.displayConfs}" style="line-height: 18px"/>    
+                                <h:outputLabel style="font-weight: bold" value="Display sample names:"/>
+                                <p:selectBooleanCheckbox value ="#{pcaBean.displayNames}" style="line-height: 18px"/> 
+
+                                <h:outputLabel style="font-weight: bold" value="Update font/label size"/>
+                                <p:selectOneMenu value="#{pcaBean.cexOpt}">
+                                    <f:selectItem itemLabel="Default (reset)" itemValue="na" />
+                                    <f:selectItem itemLabel="Increase (++)" itemValue="increase" />
+                                    <f:selectItem itemLabel="Decrease (--)" itemValue="decrease" />
+                                </p:selectOneMenu>
+
+                                <p:commandLink action="#{pcaBean.flipPCAMeta()}" value="Flip Image" update=":ac:form3:score2dPane :ac:form1 "/>
+                                <p:selectOneRadio value="#{pcaBean.flipOpt}">
+                                    <f:selectItem itemLabel="X axis" itemValue="x" />
+                                    <f:selectItem itemLabel="Y axis" itemValue="y" />
+                                    <f:selectItem itemLabel="All" itemValue="all" />
+                                </p:selectOneRadio>
+                            </h:panelGrid>
+                            <p:commandButton value="Update" update=":ac:form3:score2dPane  :infoPane:cmdPane" actionListener="#{pcaBean.pcaScore2dBtn_meta_action()}" partialSubmit="true"/>   
+                        </h:panelGrid>
+
+                        <h:panelGrid id="score2dPane" style="text-align: center; width:1000px; padding-top: 20px">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_score2d')}" 
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                </p:commandLink>
+
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View pair-wise PERMANOVA" rendered="#{sessionBean1.multiGroup}">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                            </h:panelGrid>
+                            <h:panelGrid style="text-align: center; width:100%">
+                                <h:outputText escape="false" value="#{pcaBean.stat4PCA}" style="font-weight: bold; font-size: 14px;"/>
+                            </h:panelGrid>
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 50px"
+                                 src="#{sessionBean1.getCurrentImageURL('pca_score2d')}" alt="PCAScore2DImage"/>
+
+                            <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" appendTo="@(body)" width="540" height="360"
+                                      hideEffect="explode" resizable="true"> 
+                                <h:panelGrid id="detailView" style="width:540px; padding: 10px; font-size: 12px">
+                                    <h3>Pair-wise PERMANOVA results</h3>
+                                    <h:outputText escape="false" value="#{pcaBean.permAnovaTxt}"/>
+                                </h:panelGrid> 
+                            </p:dialog>
+                        </h:panelGrid>  
                     </h:form>
                 </p:tab>
                 <p:tab title ="Synchronized 3D Plots">

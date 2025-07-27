@@ -11,7 +11,6 @@ import java.io.Serializable;
 import jakarta.inject.Named;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
-import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.LivePCABean;

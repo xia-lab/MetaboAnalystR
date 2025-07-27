@@ -138,7 +138,7 @@
 
                 <p:commandButton value="Edit Groups" style="width:120px;" 
                                  onclick="PF('smplGrpDialog').show()"
-                                 disabled="#{procBean.editBnDisabled}"
+                                 rendered="#{!procBean.editBnDisabled}"
                                  update=":smplGrpForm :southform"/>
 
                 <p:commandButton value="Proceed" style="width:120px;"
