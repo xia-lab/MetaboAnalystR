@@ -1583,3 +1583,31 @@ SetBlankQcBool <- function(mSetObj=NA, containsQC=F, containsBlank=F){
   mSetObj$dataSet$containsBlank <- containsBlank;
   return(.set.mSet(mSetObj));
 }
+
+## ---------------------------------------------------------------
+##  1 = QC samples present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsQC <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsQC)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsQC)))
+}
+
+## ---------------------------------------------------------------
+##  1 = blank injections present, 0 = absent / flag missing
+## ---------------------------------------------------------------
+GetContainsBlank <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.null(mSetObj$dataSet) ||
+      is.null(mSetObj$dataSet$containsBlank)) {
+    return(0L)
+  }
+  return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
+}

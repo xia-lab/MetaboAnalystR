@@ -735,6 +735,8 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
   mSetObj$msgSet$filter.total.msg <- total.msg;
   
+  mSetObj$dataSet$filt.size <- ncol(int.mat);
+
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     # make sure metadata are in sync with data
     my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
@@ -1697,36 +1699,3 @@ rm_outliers <- function(vec) {
     if (is.na(mu) || mu == 0) return(NA_real_)
     100 * stats::sd(x, na.rm = TRUE) / abs(mu)
   }
-## ---------------------------------------------------------------
-##  1 = QC samples present, 0 = absent / flag missing
-## ---------------------------------------------------------------
-GetContainsQC <- function(mSetObj = NA) {
-
-  mSetObj <- .get.mSet(mSetObj)
-
-  if (is.null(mSetObj$dataSet) ||
-      is.null(mSetObj$dataSet$containsQC)) {
-    return(0L)
-  }
-  return(as.integer(isTRUE(mSetObj$dataSet$containsQC)))
-}
-
-## ---------------------------------------------------------------
-##  1 = blank injections present, 0 = absent / flag missing
-## ---------------------------------------------------------------
-GetContainsBlank <- function(mSetObj = NA) {
-
-  mSetObj <- .get.mSet(mSetObj)
-
-  if (is.null(mSetObj$dataSet) ||
-      is.null(mSetObj$dataSet$containsBlank)) {
-    return(0L)
-  }
-  return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
-}
-
-GetFiltFeatureNumber<- function() {
-
-  mat <- qs::qread("data.filt.qs");
-  return(ncol(mat))
-}
