@@ -3524,6 +3524,7 @@ public class RDataUtils {
         return 0; // failure
     }
 
+    /*
     public static int exportMissingHeatmapJSON(SessionBean1 sb, String jsonFileName) {
         try {
             RConnection RC = sb.getRConnection();
@@ -3540,5 +3541,5 @@ public class RDataUtils {
             LOGGER.error("ExportMissingHeatmapJSON", e);
         }
         return 0; // failure
-    }
+    }*/
 }
