@@ -91,17 +91,17 @@
                 </p:tab>
             </p:tabView>
 
-            <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
-                <f:selectItem itemLabel="Replace by a small value" itemValue="leftCensor"/>                         
-                <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
-                <f:selectItem itemLabel="Impute" itemValue="impute"/> 
-            </p:selectOneRadio>
-
             <h3>
                 Please choose a method below
             </h3>
 
             <h:form id="mainForm">
+
+                <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
+                    <f:selectItem itemLabel="Replace by a small value" itemValue="leftCensor"/>                         
+                    <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
+                    <f:selectItem itemLabel="Impute" itemValue="impute"/> 
+                </p:selectOneRadio>
                 <h:panelGrid columns="3" class="surface-card shadow-1 p-4 text-800"
                              style="width: 800px; margin-bottom: 20px;">
 

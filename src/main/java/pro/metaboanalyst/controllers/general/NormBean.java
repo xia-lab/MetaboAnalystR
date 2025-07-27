@@ -208,6 +208,7 @@ public class NormBean implements Serializable {
         int res = RDataUtils.normalizeData(sb, rowNormOpt, transNormOpt, scaleNormOpt, ref, includeRatio, ratioNumOpt);
         jrd.record_PerformDataNormalization(this);
 
+        String normMeths = RDataUtils.GetNormMethods(RC);
         if (res > 0) {
 
             if (sb.getAnalType().equals("dose")) {
@@ -225,13 +226,13 @@ public class NormBean implements Serializable {
             if (sb.getAnalType().equals("roc")) {
                 rcb.resetData();
             }
-            sb.addMessage("OK", "Completed normalization. You can click <b>View Result</b> button to view the effect, or <b>Proceed</b> button to analysis page!");
+            sb.addMessage("OK", "Completed normalization: " + normMeths + ". You can click <b>View Result</b> button to view the effect, or <b>Proceed</b> button to analysis page!");
             normPerformed = true;
 
             //WorkflowBean mywb = CDI.current().select(WorkflowBean.class).get();
             wb.getCalledWorkflows().add("Normalization");
         } else {
-            sb.addMessage("Error", "Unknown error happened during data normalization process!");
+            sb.addMessage("Error", "Error happened during data normalization: "+ normMeths +".");
         }
     }
 

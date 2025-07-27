@@ -1173,6 +1173,15 @@ public class RDataUtils {
         }
     }
 
+    public static String GetNormMethods(RConnection RC) {
+        try {
+            return RC.eval("GetNormMethods(NA)").asString();
+        } catch (Exception e) {
+            LOGGER.error("GetNormMethods", e);
+        }
+        return null;
+    }
+
     public static int setRatioOption(SessionBean1 sb, String opt) {
         try {
             RConnection RC = sb.getRConnection();
