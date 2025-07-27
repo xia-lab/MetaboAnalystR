@@ -41,14 +41,13 @@
                 </ul>
             </p>
 
+            <p>
+                <h:outputText value="#{procBean.missingMsgFilt}" style="font-size: 14px; color:darkorange" escape="false"/> 
+            </p>
             <p:tabView id="ac" dynamic="true" cache="true">
 
                 <!-- First Tab: Existing Content -->
                 <p:tab title="Missing Value Summary">
-                    <p>
-                        <h:outputText value="#{procBean.missNumMsg}" style="font-size: 14px; color:darkorange" escape="false"/> &nbsp;
-                        <h:outputText value="#{procBean.missingMsgFilt}" style="font-size: 14px; color:darkorange" escape="false"/> 
-                    </p>
                     <p>
                         When the percentage of missing values or average abundance differs significantly across
                         experimental groups, it suggests there are systematic differences in samples across groups ('batch effect'). 

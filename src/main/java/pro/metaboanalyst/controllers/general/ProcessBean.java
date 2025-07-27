@@ -332,7 +332,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String getMissingMsgFilt() {
-        return missingMsgFilt;
+        return missNumMsg + " " + missingMsgFilt;
     }
 
     public void setMissingMsgFilt(String missingMsgFilt) {
