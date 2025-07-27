@@ -351,13 +351,13 @@ public class ProcessBean implements Serializable {
         missNumMsg = RDataUtils.getMissNumMsg(sb.getRConnection());
 
         if (type.equals("orig")) {
-            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "qc_miss", "png", 150);
             RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap"), "png", 150);
             //RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap"));
             missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection(), "orig");
 
         } else {
-            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "png", 150);
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "qc_miss_filt", "png", 150);
             RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap_filt"), "png", 150);
             //RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap_filt"));
             missingMsgFilt = RDataUtils.getMissingTestMsg(sb.getRConnection(), "filt");

@@ -241,12 +241,18 @@ public class RDataUtils {
 
                 // Copy all the caches first 
                 String source_path;
-                if ("customized".equals(meth)) {
-                    source_path = ab.getCustomizedCache();
-                } else if ("auto".equals(meth)) {
-                    source_path = ab.getAutoCache();
-                } else {
+                if (null == meth) {
                     source_path = null;
+                } else switch (meth) {
+                    case "customized":
+                        source_path = ab.getCustomizedCache();
+                        break;
+                    case "auto":
+                        source_path = ab.getAutoCache();
+                        break;
+                    default:
+                        source_path = null;
+                        break;
                 }
 
                 DataUtils.copyDir(source_path, homedir);
@@ -1058,6 +1064,7 @@ public class RDataUtils {
      */
     public static int plotMissingDistr(SessionBean1 sb,
             String imgName,
+            String code,
             String format,
             int dpi) {
         try {
@@ -1068,7 +1075,7 @@ public class RDataUtils {
                     + format + "\", " + dpi + ", width=NA)";
 
             RCenter.recordRCommand(RC, rCommand);                 // log the call
-            sb.addGraphicsCMD("qc_miss", rCommand);       // track graphic
+            sb.addGraphicsCMD(code, rCommand);       // track graphic
 
             return RC.eval(rCommand).asInteger();                 // run & return
         } catch (Exception e) {
@@ -1527,22 +1534,13 @@ public class RDataUtils {
 
     public static int getFiltFeatureNumber(RConnection RC) {
         try {
-            return RC.eval("GetFiltFeatureNumber()").asInteger();
+            return RC.eval("mSet$dataSet$filt.size").asInteger();
         } catch (Exception e) {
             LOGGER.error("getFiltFeatureNumber", e);
         }
         return 0;
     }
 
-    /*
-    public static int getFiltFeatureNumber(RConnection RC) {
-        try {
-            return RC.eval("ncol(mSet$dataSet$filt)").asInteger();
-        } catch (Exception e) {
-            LOGGER.error("getFiltFeatureNumber", e);
-        }
-        return 0;
-    }*/
     public static int getNormFeatureNumber(RConnection RC) {
         try {
             return RC.eval("ncol(mSet$dataSet$norm)").asInteger();
