@@ -1353,14 +1353,14 @@ PlotMissingHeatmap <- function(mSetObj = NA,
     msg <- sprintf("Only the top 40 samples with most missing values are shown (out of %d).", nSamples)
   }
 
+  # note we would like view sample from top to bottom (do reverse since R start from bottom)
+  int.mat <- int.mat[nrow(int.mat):1, , drop = FALSE]
+
   # sync
   miss.mat <- is.na(int.mat);
 
-  # R start from bottom, let reverse from top to be consistent with JS
-  miss.mat2 <- miss.mat[nrow(miss.mat):1,, drop = FALSE];
-
   # Convert to missing indicator matrix and long format
-  df <- as.data.frame(as.table(miss.mat2))
+  df <- as.data.frame(as.table(miss.mat))
   colnames(df) <- c("Sample", "Feature", "Missing")
   df$Missing <- ifelse(df$Missing, "Missing", "Present")
 
