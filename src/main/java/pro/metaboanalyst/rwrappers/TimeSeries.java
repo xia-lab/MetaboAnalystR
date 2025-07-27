@@ -16,9 +16,9 @@ import pro.metaboanalyst.utils.DataUtils;
  */
 public class TimeSeries {
 
-    public static void initIPCA(RConnection RC, String fileNm, String selMeta1, String selMeta2) {
+    public static void initIPCA(RConnection RC, String fileNm, String selMeta1, String selMeta2, String colGradient) {
         try {
-            String rCommand = "iPCA.Anal(NA" + ", \"" + fileNm + "\", \"" + selMeta1 + "\", \"" + selMeta2 + "\")";
+            String rCommand = "iPCA.Anal(NA" + ", \"" + fileNm + "\", \"" + selMeta1 + "\", \"" + selMeta2 + "\", \"" + colGradient + "\")";
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -96,12 +96,13 @@ public class TimeSeries {
         return 0;
     }
      */
-    public static void plotPCAPairSummaryMeta(SessionBean1 sb, String imageName, String format, int dpi, int pcNum, String meta, String metaShape) {
+    public static void plotPCAPairSummaryMeta(SessionBean1 sb, String imageName, String code, String format, int dpi, int pcNum, String meta, String metaShape) {
         try {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotPCAPairSummaryMeta(NA" + ", \"" + imageName + "\", \"" + format + "\", " + dpi + ", width=NA, " + pcNum + ", \"" + meta + "\", \"" + metaShape + "\")";
-            sb.addGraphicsCMD("pca_pair_meta", rCommand);
-            sb.addGraphicsMapLink("pca_pair_meta", "/Secure/multifac/LivePCAView.xhtml");
+            //sb.addGraphicsCMD("pca_pair_meta", rCommand);
+            sb.addGraphicsCMD(code, rCommand);
+            sb.addGraphicsMapLink(code, "/Secure/multifac/LivePCAView.xhtml");
 
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
@@ -577,4 +578,49 @@ public class TimeSeries {
         return false;
     }
 
+    public static void plotPCA2DScoreMeta(SessionBean1 sb,
+                                      String imgName,
+                                      String format,
+                                      int dpi,
+                                      int pc1Inx,
+                                      int pc2Inx,
+                                      double conf,
+                                      int show,
+                                      int greyScale,
+                                      String cexOpt,
+                                      String meta,        
+                                      String metaShape) { 
+        try {
+            RConnection RC = sb.getRConnection();
+
+            /* build R call ------------------------------------------------- */
+            String metaArg      = (meta == null || meta.trim().isEmpty())
+                                    ? "NULL" : "\"" + meta + "\"";
+            String metaShapeArg = (metaShape == null || metaShape.trim().isEmpty())
+                                    ? "NULL" : "\"" + metaShape + "\"";
+
+            String rCommand =
+                "PlotPCA2DScoreMeta(NA" +
+                ", \"" + imgName + "\"" +
+                ", \"" + format + "\"" +
+                ", "  + dpi +
+                ", width=NA" +
+                ", "  + pc1Inx +
+                ", "  + pc2Inx +
+                ", "  + conf +
+                ", "  + show +
+                ", "  + greyScale +
+                ", \"" + cexOpt + "\"" +
+                ", "  + metaArg +
+                ", "  + metaShapeArg +
+                ")";
+
+            sb.addGraphicsCMD("pca_score2d", rCommand);
+            RCenter.recordRCommand(RC, rCommand);
+            RC.voidEval(rCommand);
+
+        } catch (RserveException rse) {
+            System.out.println(rse);
+        }
+    }   
 }

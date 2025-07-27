@@ -16,6 +16,7 @@ import pro.metaboanalyst.rwrappers.Classifying;
 import pro.metaboanalyst.rwrappers.Clustering;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.SigVarSelect;
+import pro.metaboanalyst.rwrappers.TimeSeries;
 import pro.metaboanalyst.rwrappers.UniVarTests;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
@@ -36,15 +37,15 @@ public class AnalysisBean implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
-    
+
     @JsonIgnore
     @Inject
     private UnivBean uvb;
-    
+
     @JsonIgnore
     @Inject
     private ClassificationBean clsb;
-    
+
     public void performDefaultAnalysis(String pageID) {
         if (!sb.isAnalInit(pageID)) {
 
@@ -171,10 +172,10 @@ public class AnalysisBean implements Serializable {
         UniVarTests.plotCorrHeatMap(sb, sb.getCurrentImage("corr"), "png", 150, "col", "pearson", "bwm", "F", "F", 6, 10, 0.0);
     }
 
-
     public void doDefaultPCA() {
         if (ChemoMetrics.initPCA(sb)) {
-            ChemoMetrics.plotPCAPairSummary(sb, sb.getCurrentImage("pca_pair"), "png", 150, 5);
+            //ChemoMetrics.plotPCAPairSummary(sb, sb.getCurrentImage("pca_pair"), "png", 150, 5);
+            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"), "pca_pair", "png", 150, 5, "NA", "NA");
             ChemoMetrics.plotPCAScree(sb, sb.getCurrentImage("pca_scree"), "png", 150, 5);
             ChemoMetrics.plotPCA2DScore(sb, sb.getCurrentImage("pca_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na");
             ChemoMetrics.plotPCALoading(sb, sb.getCurrentImage("pca_loading"), "png", 150, 1, 2);  // setLoadingTable(pcImpInx);

@@ -8,7 +8,7 @@ package pro.metaboanalyst.controllers.multifac;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.List;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -22,7 +22,7 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 /**
  * @author xia
  */
-@RequestScoped
+@ViewScoped
 @Named("livePcaBean")
 public class LivePCABean implements Serializable {
 
@@ -96,8 +96,8 @@ public class LivePCABean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
             ChemoMetrics.initPCA(sb);
 
-            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
-            TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", colOpt, shapeOpt);
+            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
+            TimeSeries.initIPCA(sb.getRConnection(), sb.getNewImage("ipca_3d") + ".json", colOpt, shapeOpt, "blue");
         } else {
 
             if (wb.getFunctionInfos().get("PCA 3D") != null) {
@@ -114,8 +114,8 @@ public class LivePCABean implements Serializable {
     public void updatePCA3D() {
         sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
         ChemoMetrics.initPCA(sb);
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
-        TimeSeries.initIPCA(sb.getRConnection(), sb.getNewImage("ipca_3d") + ".json", colOpt, shapeOpt);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
+        TimeSeries.initIPCA(sb.getRConnection(), sb.getNewImage("ipca_3d") + ".json", colOpt, shapeOpt, "blue");
 
     }
 
@@ -132,7 +132,7 @@ public class LivePCABean implements Serializable {
             }
         }
 
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, colOpt, shapeOpt);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, colOpt, shapeOpt);
         return null;
     }
 }
