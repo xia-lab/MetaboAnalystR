@@ -4,7 +4,7 @@
                                     dpi    = default.dpi,
                                     width  = NA,
                                     pc.num,
-                                    meta,
+                                    meta = "Class",
                                     metaShape = NULL) {   # ← default = NULL
   library(ggplot2)
   library(GGally)
@@ -17,8 +17,8 @@
                      "%)")
   imgName  <- paste0(imgName, "dpi", dpi, ".", format)
   
-w <- ifelse(is.na(width) || width == 0, 10, width)
-h       <- w 
+    w <- ifelse(is.na(width) || width == 0, 10, width)
+    h <- w 
 
   mSetObj$imgSet$pca.pair <- imgName
   
@@ -26,15 +26,15 @@ h       <- w
                width = w, height = h, type = format, bg = "white")
   
   ## ── data -----------------------------------------------------------
-  data      <- as.data.frame(mSetObj$analSet$pca$x[, 1:pc.num])
+  data <- as.data.frame(mSetObj$analSet$pca$x[, 1:pc.num])
   if (is.null(mSetObj$dataSet$meta.info)) {
-    mSetObj$dataSet$meta.info <- data.frame(Class = mSetObj$dataSet$cls)
-    mSetObj$dataSet$meta.types <- list(Class = "disc")
+    mSetObj$dataSet$meta.info <- data.frame("Class" = mSetObj$dataSet$cls)
+    mSetObj$dataSet$meta.types <- list("Class" = "disc");
+    meta <- "Class";
   }
   
   ## Match sample order --------------------------------------------------
-  meta.info <- mSetObj$dataSet$meta.info[
-    match(rownames(data), rownames(mSetObj$dataSet$meta.info)), ]
+  meta.info <- mSetObj$dataSet$meta.info[match(rownames(data), rownames(mSetObj$dataSet$meta.info)), ]
   
   ## Extract the selected metadata variable ------------------------------
   if (meta %in% colnames(meta.info)) {
@@ -47,8 +47,7 @@ h       <- w
   }
   
   ## shape variable (may be NULL) --------------------------------------
-  shape.ok <- !is.null(metaShape) &&
-    metaShape %in% colnames(meta.info)
+  shape.ok <- !is.null(metaShape) && metaShape %in% colnames(meta.info)
   
   if (shape.ok) {
     cls2      <- meta.info[[metaShape]]
