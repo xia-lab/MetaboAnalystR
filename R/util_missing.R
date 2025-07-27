@@ -7,7 +7,7 @@ my.impute.missing <- function(mSetObj = NA,
   
   int.mat <- qs::qread("data.filt.qs");          # samples × variables
   new.mat <- NULL
-  msg     <- mSetObj$msgSet$replace.msg
+  msg     <- "";
   
   if (!is.null(mSetObj$dataSet$meta.info) &&
       ncol(mSetObj$dataSet$meta.info) >= 1) {
@@ -35,16 +35,16 @@ my.impute.missing <- function(mSetObj = NA,
   if (method == "exclude") {
     good.inx <- apply(is.na(int.mat), 2, sum) == 0
     new.mat  <- int.mat[, good.inx, drop = FALSE]
-    msg <- c(msg, "Variables with missing values were excluded.")
+    msg <- "Variables with missing values were excluded.";
     
   } else if (method == "lod") {
     ## LoD replacement (1/5 of min positive value)
     if (grpLod) {
       new.mat <- ReplaceMissingByLoD.grp(int.mat, grp)
-      msg <- c(msg, "Missing variables were replaced by group-specific LoDs (1/5 of the min positive values in its specific group for each feature).")
+      msg <- "Missing variables were replaced by group-specific LoDs (1/5 of the min positive values in its specific group for each feature).";
     } else {
       new.mat <- ReplaceMissingByLoD(int.mat)
-      msg <- c(msg, "Missing variables were replaced by LoDs (1/5 of the min positive value for each feature).")
+      msg <- "Missing variables were replaced by LoDs (1/5 of the min positive value for each feature).";
     }
     
   }else if (tolower(method) == "qrilc") {
@@ -71,8 +71,8 @@ my.impute.missing <- function(mSetObj = NA,
 
     rownames(new.mat) <- rownames(int.mat)
     colnames(new.mat) <- colnames(int.mat)
+    msg <- "Missing values were imputed with QRILC";
 
-    msg <- c(msg,"Missing values were imputed with QRILC")
   } else if (method == "colmin") {
     ## Half-min replacement
     colmin_fun <- function(m) {
@@ -80,14 +80,10 @@ my.impute.missing <- function(mSetObj = NA,
     }
     if (grpMeasure) {
       new.mat <- group_apply(int.mat, colmin_fun)
-      msg <- c(msg,
-               "Missing variables were replaced by 1/2 of the group-specific ",
-               "min values for each feature column.")
+      msg <- "Missing variables were replaced by 1/2 of the group-specific min values for each feature column."
     } else {
       new.mat <- colmin_fun(int.mat)
-      msg <- c(msg,
-               "Missing variables were replaced by 1/2 of the min value ",
-               "for each feature column.")
+      msg <- "Missing variables were replaced by 1/2 of the min value for each feature column.";
     }
     
   } else if (method == "mean") {
@@ -96,14 +92,10 @@ my.impute.missing <- function(mSetObj = NA,
     }
     if (grpMeasure) {
       new.mat <- group_apply(int.mat, mean_fun)
-      msg <- c(msg,
-               "Missing variables were replaced with the group-specific ",
-               "mean for each feature column.")
+      msg <- "Missing variables were replaced with the group-specific mean for each feature column.";
     } else {
       new.mat <- mean_fun(int.mat)
-      msg <- c(msg,
-               "Missing variables were replaced with the mean value ",
-               "for each feature column.")
+      msg <- "Missing variables were replaced with the mean value for each feature column.";
     }
     
   } else if (method == "median") {
@@ -112,14 +104,10 @@ my.impute.missing <- function(mSetObj = NA,
     }
     if (grpMeasure) {
       new.mat <- group_apply(int.mat, median_fun)
-      msg <- c(msg,
-               "Missing variables were replaced with the group-specific ",
-               "median for each feature column.")
+      msg <- "Missing variables were replaced with the group-specific median for each feature column.";
     } else {
       new.mat <- median_fun(int.mat)
-      msg <- c(msg,
-               "Missing variables were replaced with the median ",
-               "for each feature column.")
+      msg <- "Missing variables were replaced with the median for each feature column.";
     }
     
   } else {
@@ -168,23 +156,15 @@ my.impute.missing <- function(mSetObj = NA,
       
       iters <- result$iterations
       oob <- result$mean_pred_errors   # scalar or named vector
-      
-  nrms  <- if (!is.null(names(oob))) oob["NRMSE"] else oob
+      nrms  <- if (!is.null(names(oob))) oob["NRMSE"] else oob
 
-  miss_msg <- paste0(
-    "Missing values were imputed with missRanger (",
-    result$best_iter, " iteration",
-    ifelse(result$best_iter == 1, "", "s"),
-    ", OOB NRMSE = ", signif(nrms, 4), ")."
-  )
-      oob_def <- "OOB NRMSE = Out-of-Bag Normalized Root-Mean-Squared Error"
-      
-      msg <- c(msg, miss_msg, oob_def)
+      msg <- paste0(
+        "Missing values were imputed with missRanger (",
+        result$best_iter, " iteration", ifelse(result$best_iter == 1, "", "s"),
+        ", OOB NRMSE = ", signif(nrms, 4), "). OOB NRMSE refers to Out-of-Bag Normalized Root-Mean-Squared Error.");
     }
     if(method !="missForest"){
-      msg <- c(msg,
-               paste("Missing variables were imputed using",
-                     toupper(gsub("_", "-", method))))
+      msg <- paste("Missing variables were imputed using", toupper(gsub("_", "-", method)));
       
     }
   }
