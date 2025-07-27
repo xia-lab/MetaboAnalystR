@@ -98,6 +98,7 @@ public class ProcessBean implements Serializable {
 
     public void updateSmplGroup() {
         RDataUtils.setSampleGroups(sb.getRConnection(), sb.getSampleBeans(), selectedMetaData);
+        sanityChecked = false;
         performSanityCheck();
     }
 
@@ -144,7 +145,7 @@ public class ProcessBean implements Serializable {
     private boolean grpMeasure;
     private boolean sanityChecked = false;
     private boolean grpMissFilter = false;
-    
+
     public boolean isGrpMeasure() {
         return grpMeasure;
     }
@@ -178,6 +179,11 @@ public class ProcessBean implements Serializable {
             System.out.println("sanity RC is null");
             return;
         }
+
+        if (sb.getAnalType().equals("mf")) {
+            editBnDisabled = true;
+        }
+
         ArrayList<String> msgVec = new ArrayList();
         String[] msgArray = null;
         metaDataSet = new ArrayList();
@@ -195,7 +201,6 @@ public class ProcessBean implements Serializable {
                         int featureNum = RDataUtils.getOrigFeatureNumber(RC);
                         sampleNum = RDataUtils.getSampleSize(RC);
                         sb.setupDataSize(featureNum, sampleNum);
-                        proceedBnDisabled = false;
 
                         DataModel ds = new DataModel(sb, "upload");
                         ds.setSmplNum(sampleNum);
@@ -284,6 +289,10 @@ public class ProcessBean implements Serializable {
                         sb.setContainsQC(RDataUtils.getContainsQC(sb));
 
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
+
+                        sanityChecked = true;
+                        sb.setIntegChecked();
+
                     } else {
                         msgVec.add("Checking data content ...failed.");
                         msgArray = RDataUtils.getErrorMsgs(RC);
@@ -291,7 +300,6 @@ public class ProcessBean implements Serializable {
                         proceedBnDisabled = true;
                         RCenter.recordMessage(RC, "Data integrity check - <b>failed</b>");
                     }
-
                 }
             }
 
@@ -302,9 +310,6 @@ public class ProcessBean implements Serializable {
             RCenter.recordMessage(RC, "Data integrity check - <b>failed</b>");
         }
 
-        if (sb.getAnalType().equals("mf")) {
-            editBnDisabled = true;
-        }
         msgVec.addAll(Arrays.asList(msgArray));
         String msg;
         msg = "<table face=\"times\" size = \"3\">";
@@ -316,8 +321,6 @@ public class ProcessBean implements Serializable {
         }
         msg = msg + "</table>";
         msgText = msg;
-        sanityChecked = true;
-        sb.setIntegChecked();
         //System.out.println(msgText + "======msgText");
     }
 
