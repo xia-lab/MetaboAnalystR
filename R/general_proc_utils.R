@@ -1340,7 +1340,12 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   # Order samples by missingness count (descending)
   smpl.miss.counts <- rowSums(miss.mat);
   ord.inx <- order(smpl.miss.counts, decreasing = TRUE);
-  int.mat <- int.mat[ord.inx,];
+  int.mat <- int.mat[ord.inx,, drop = FALSE];
+
+  # Order features by missingness count (descending)
+  miss.counts <- colSums(miss.mat);
+  ord.inx2 <- order(miss.counts, decreasing = TRUE);
+  int.mat <- int.mat[,ord.inx2, drop = FALSE];
 
   msg <- NULL
   if (nSamples > 40) {
@@ -1348,21 +1353,20 @@ PlotMissingHeatmap <- function(mSetObj = NA,
     msg <- sprintf("Only the top 40 samples with most missing values are shown (out of %d).", nSamples)
   }
 
-  # Order features by missingness count (descending)
-  miss.counts <- colSums(miss.mat);
-  feature.order <- names(sort(miss.counts, decreasing = TRUE));
+  # sync
+  miss.mat <- is.na(int.mat);
+
+  # R start from bottom, let reverse from top to be consistent with JS
+  miss.mat2 <- miss.mat[nrow(miss.mat):1,, drop = FALSE];
+
   # Convert to missing indicator matrix and long format
-  df <- as.data.frame(as.table(miss.mat))
+  df <- as.data.frame(as.table(miss.mat2))
   colnames(df) <- c("Sample", "Feature", "Missing")
   df$Missing <- ifelse(df$Missing, "Missing", "Present")
 
-  # Apply factor levels for ordered plotting
-  df$Feature <- factor(df$Feature, levels = feature.order)
-  df$Sample <- factor(df$Sample, levels = rownames(int.mat))  # preserve original order
-
   # Heatmap plot
   img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
+  Cairo::Cairo(file = img.full, width = 8, height = 7.2, units = "in", dpi = dpi, type = format)
 
   p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
     geom_tile(color = "grey90") +
@@ -1382,9 +1386,35 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   mSetObj$imgSet$miss.heatmap <- img.full
   mSetObj$msgSet$plot.msg <- c(
     mSetObj$msgSet$plot.msg,
-    sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi),
+    sprintf("Missing value heatmap saved (%s, 8 × 7.2 in, %d dpi).", format, dpi),
     msg
   );
+
+  # ===== for web json
+  # Compute missing indicator matrix
+   miss.mat <- 1 * miss.mat;
+
+   sample.names <- rownames(miss.mat);
+   feature.names <- colnames(miss.mat);
+
+  # Convert to list of rows
+  z <- unname(split(miss.mat, row(miss.mat)))
+
+  # Construct JSON object for Plotly.js
+  out.list <- list(
+    z = z,
+    x = feature.names,
+    y = sample.names,
+    type = "heatmap",
+    colorscale = list(list(0, "white"), list(1, "red")),
+    showscale = FALSE,
+    hoverinfo = "x+y+z"
+  )
+
+  # Write JSON
+  json.out <- rjson::toJSON(out.list)
+  write(json.out, file = paste0(imgName, ".json"));
+
   return(.set.mSet(mSetObj))
 }
 
@@ -1429,9 +1459,9 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
   ord.samp.idx <- order(samp.miss.counts, decreasing = TRUE)
   miss.mat <- miss.mat[ord.samp.idx, , drop = FALSE]
 
-  # Limit to top 50 samples *after* ordering
-  if (nrow(miss.mat) > 50) {
-    miss.mat <- miss.mat[1:50, , drop = FALSE]
+  # Limit to top 40 samples *after* ordering
+  if (nrow(miss.mat) > 40) {
+    miss.mat <- miss.mat[1:40, , drop = FALSE]
   }
   sample.names <- rownames(miss.mat)
 
