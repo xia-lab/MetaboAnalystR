@@ -121,7 +121,7 @@ public class ProcessBean implements Serializable {
         this.doQCFiltering = doQCFiltering;
     }
 
-    private int qcCutoff = 25;
+    private int qcCutoff = 20;
 
     public int getQcCutoff() {
         return qcCutoff;
@@ -131,13 +131,31 @@ public class ProcessBean implements Serializable {
         this.qcCutoff = qcCutoff;
     }
 
+    private boolean grpLod;
+
+    public boolean isGrpLod() {
+        return grpLod;
+    }
+
+    public void setGrpLod(boolean grpLod) {
+        this.grpLod = grpLod;
+    }
+
+    private boolean grpMeasure;
+    private boolean sanityChecked = false;
+    private boolean grpMissFilter = false;
+    
+    public boolean isGrpMeasure() {
+        return grpMeasure;
+    }
+
+    public void setGrpMeasure(boolean grpMeasure) {
+        this.grpMeasure = grpMeasure;
+    }
+
     public void setMsgText(String msgText) {
         this.msgText = msgText;
     }
-
-    //note this is viewscoped; need to init when visit this page
-    private boolean sanityChecked = false;
-    private boolean grpMissFilter = false;
 
     public boolean isGrpMissFilter() {
         return grpMissFilter;
@@ -261,10 +279,10 @@ public class ProcessBean implements Serializable {
                         sb.settingRoc1Col(featureNum);
                         proceedBnDisabled = false;
                         sb.setMissingDisabled(!RDataUtils.containMissing(RC));
-                        
+
                         sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
                         sb.setContainsQC(RDataUtils.getContainsQC(sb));
-                        
+
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
                     } else {
                         msgVec.add("Checking data content ...failed.");
@@ -360,26 +378,6 @@ public class ProcessBean implements Serializable {
         this.missingMsg = missingMsg;
     }
 
-    private boolean grpLod;
-
-    public boolean isGrpLod() {
-        return grpLod;
-    }
-
-    public void setGrpLod(boolean grpLod) {
-        this.grpLod = grpLod;
-    }
-
-    private boolean grpMeasure;
-
-    public boolean isGrpMeasure() {
-        return grpMeasure;
-    }
-
-    public void setGrpMeasure(boolean grpMeasure) {
-        this.grpMeasure = grpMeasure;
-    }
-
     public String skipButton_action_default() {
         if (wb.isEditMode()) {
             sb.addMessage("Info", "Parameters have been updated!");
@@ -465,6 +463,7 @@ public class ProcessBean implements Serializable {
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         if (!filtered) {
+            //perform default
             int res2 = RDataUtils.filterVariable(RC, doQC, qcCutoff, "none", -1, "mean", 0, "F", 10);
             if (res2 == 0) {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
@@ -490,20 +489,17 @@ public class ProcessBean implements Serializable {
             jrd.record_filterButton_action(this);
             return;
         }
+
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         String doBlank = "F";
-        String msg = "QC filtering: none";
-        if (doQCFiltering) {
-            doQC = "T";
-            msg = "QC filtering: yes";
-        }
+        String msg;
 
         if (doBlankSub) {
             doBlank = "T";
-            msg = msg + "Blank subtraction: Yes. ";
+            msg = "Blank subtraction: Yes. ";
         } else {
-            msg = msg + "Blank subtraction: No. ";
+            msg = "Blank subtraction: No. ";
         }
 
         double percent = 1.0; // all missing to remove by default
@@ -542,7 +538,7 @@ public class ProcessBean implements Serializable {
             }
         }
         sb.setMissingDisabled(res2 == 2);
-        msg = msg + "; " + RDataUtils.getCurrentMsg(RC);
+        msg = msg + RDataUtils.getCurrentMsg(RC);
         sb.addMessage("OK", msg);
 
         String filterTotalMsg = RDataUtils.getFilterTotalMsg(RC);
@@ -740,7 +736,6 @@ public class ProcessBean implements Serializable {
         }
         String msg = RDataUtils.getReplaceMsg(RC);
         sb.addMessage("info", msg);
-        sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();

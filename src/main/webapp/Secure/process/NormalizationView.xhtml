@@ -186,7 +186,8 @@
                 </h:panelGrid> 
                 <h:panelGrid columns="3" style="width:780px; text-align: center; padding-top: 10px; margin-left: 30px">
                     <p:commandButton style="width: 100px" value="Normalize" onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()" update=":ac form1:viewBn form1:nextBn  :hisTab:cmdPane"
+                                     oncomplete="PF('statusDialog').hide()" 
+                                     update=":ac form1:viewBn form1:nextBn  :hisTab:cmdPane :globalGrowl"
                                      actionListener="#{normBean.performDataNormalization()}"/>   
                     <p:commandButton id="viewBn" style="width: 120px" value="View Result" 
                                      onclick="PF('normResDialog').show()" disabled="#{not normBean.normPerformed}"/>

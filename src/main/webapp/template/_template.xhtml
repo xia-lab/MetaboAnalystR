@@ -230,12 +230,10 @@
     <h:body styleClass="#{guestPreferences.inputStyleClass}">
         <h:form id="formHidden">
             <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
-
         </h:form>
-        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
-
 
         <div class="layout-wrapper #{guestPreferences.layoutClass} #{guestPreferences.sidebarThemeClass}"
              data-theme="#{guestPreferences.menuTheme}">
