@@ -155,7 +155,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private String exposome_details = null;
 
-    @JsonIgnore
+    @JsonIgnore 
     public String getExposome_details() {
         if ((subidx_exp != subidx_exp_current) || (resNum_exp != resNum_exp_current)) {
             exposome_details = get_specific_exposome_details(resNum_exp, subidx_exp + 1, current_ft_label, sb.getRConnection());
@@ -1897,7 +1897,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private String jsonDir;
 
-    @JsonIgnore
+    @JsonIgnore 
     public String getJsonDir() {
         String image_json_name = mirrorplot_jsonNM;
         if (!jsonHashMap.isEmpty()) {
@@ -1982,7 +1982,7 @@ public class SpectraProcessBean implements Serializable {
         this.fromGoogleDrive = fromGoogleDrive;
     }
 
-    @JsonIgnore
+    @JsonIgnore 
     public String getCentroidColName() {
         if (fromGoogleDrive) {
             return "Size Accept";
