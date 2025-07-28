@@ -49,8 +49,11 @@ body {
 }
 
 .ui-growl {
+    top: 80px !important;
+    /*
     top: auto !important;
     bottom: 50px !important;
+    */
 }
 
 .layout-content {
