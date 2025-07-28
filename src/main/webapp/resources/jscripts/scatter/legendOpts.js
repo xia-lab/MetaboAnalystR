@@ -119,7 +119,7 @@ yVal_colorlegend = H  + 70 + 8;
 
 function generateLegendShape(legendData) {
     // Add the shape legend
-    console.log(yVal_colorlegend + "===yVal_colorlegend")
+    //console.log(yVal_colorlegend + "===yVal_colorlegend")
     const shapeLegend = svg.append('g').attr('transform', 'translate(10, ' + yVal_colorlegend + ')');
     shapeLegend
             .selectAll('.shape')
@@ -159,7 +159,7 @@ function shapeToD3Symbol(shape) {
 }
 
 function mouseclick(e, i, a) {
-    console.log(i)
+    //console.log(i)
 }
 
 function updateTextColor(color) {

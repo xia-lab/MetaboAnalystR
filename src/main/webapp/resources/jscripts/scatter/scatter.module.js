@@ -69,7 +69,7 @@ Object3D,
         BoxGeometry,
         FontLoader,
         TextGeometry
-}
+        }
 from "../three.module.js";
 
 import { LineGeometry } from './lines/LineGeometry.js'
@@ -4594,20 +4594,18 @@ function updateCustomInfo(index, row) {
 }
 
 function loadMeta() {
-    let mdl_rows = [];
-
-    for (var i = 0; i < gData.metaCol.label.length; i++) {
-
-        mdl_rows.push(
-                {
-                    "label": gData.metaCol.label[i],
-                    "color": gData.metaCol.color[i]
-                }
-        )
-
+    if (gData.metaCol.type === "gradient") {
+        legendUtils.generateGradientLegend(gData.metaCol);
+    } else {
+        let mdl_rows = [];
+        for (var i = 0; i < gData.metaCol.label.length; i++) {
+            mdl_rows.push({
+                "label": gData.metaCol.label[i],
+                "color": gData.metaCol.color[i]
+            });
+        }
+        legendUtils.generateLegend(mdl_rows);
     }
-    legendUtils.generateLegend(mdl_rows);
-
 
     if (gData.metaShape !== undefined) {
         let mdl_rows2 = [];
@@ -4844,7 +4842,7 @@ function updateSampleBasedOnLoading(id) {
     });
 }
 
-function computeEncasing(ids, type, color, group = "NA", level = 0.5, alphaVal = 0.5, reloadFlag = false, grpName = "") {
+function computeEncasing(ids, type, color, group = "NA", level = 0.5, alphaVal = 0.5, reloadFlag = false, grpName = "NA") {
     if (ids.length < 10 && type === "contour") {
 
         $.messager.alert('Error', 'At least 10 data points are required for computing density contour!', 'error');
@@ -4902,7 +4900,7 @@ function computeEncasing(ids, type, color, group = "NA", level = 0.5, alphaVal =
             }
         });
     } else {
-        console.log("savedState.encasingFileNames===" + savedState.encasingFileNames)
+        //console.log("savedState.encasingFileNames===" + savedState.encasingFileNames)
         const fileName = savedState.encasingFileNames[grpName];
         $.getJSON(usr_dir + "/" + fileName, function (jsonDat) {
             var sc;
@@ -7550,41 +7548,59 @@ function doEncasing(type, reloadFlag) {
     var zArr = [];
     var meansArr = [];
     curr_meta = meta;
-    var arr = gData.meta[curr_meta];
-    var set = [...new Set(arr)];
-    if (!reloadFlag) {
-        savedState.encasingFileNames = {};
-    }
-    setTimeout(function () {
-        for (var i = 0; i < set.length; i++) {
-            var idsArr = [];
-            var col = {};
-            Scatter.graphData().nodes.forEach(function (n) {
+    if (gData.metaCol.type === "gradient") {          // ← continuous case
+        var idsAll = [], xArr = [], yArr = [], zArr = [];
 
-                if (n.meta === set[i]) {
-                    nodes_vec.push(n.id);
-                    xArr.push(n.fx);
-                    yArr.push(n.fy);
-                    zArr.push(n.fz);
-                    idsArr.push(n.id);
-                    col[set[i]] = n.color;
-                }
-            });
-            var meanX = meanF(xArr);
-            var meanY = meanF(yArr);
-            var meanZ = meanF(zArr);
-            var meanXYZ = v(meanX, meanY, meanZ);
-            meansArr.push(meanXYZ);
+        Scatter.graphData().nodes.forEach(function (n) {
+            idsAll.push(n.id);
+            xArr.push(n.fx);
+            yArr.push(n.fy);
+            zArr.push(n.fz);
+        });
 
-            (function (i) {
-                computeEncasing(idsArr, encasingType, col[set[i]], set[i], confVal, alphaVal, reloadFlag, set[i]);
-                //rest of the code
-            }(i));
+        var meanXYZ = v(meanF(xArr), meanF(yArr), meanF(zArr));
+        meansArr.push(meanXYZ);
 
-        }
+        // use a neutral colour (e.g. grey) or any default
+        computeEncasing(idsAll, encasingType, "#cf352e", "All", confVal, alphaVal);
         deleteSpherical("main");
-    }, 1);
 
+    } else {
+        var arr = gData.meta[curr_meta];
+        var set = [...new Set(arr)];
+        if (!reloadFlag) {
+            savedState.encasingFileNames = {};
+        }
+        setTimeout(function () {
+            for (var i = 0; i < set.length; i++) {
+                var idsArr = [];
+                var col = {};
+                Scatter.graphData().nodes.forEach(function (n) {
+
+                    if (n.meta === set[i]) {
+                        nodes_vec.push(n.id);
+                        xArr.push(n.fx);
+                        yArr.push(n.fy);
+                        zArr.push(n.fz);
+                        idsArr.push(n.id);
+                        col[set[i]] = n.color;
+                    }
+                });
+                var meanX = meanF(xArr);
+                var meanY = meanF(yArr);
+                var meanZ = meanF(zArr);
+                var meanXYZ = v(meanX, meanY, meanZ);
+                meansArr.push(meanXYZ);
+
+                (function (i) {
+                    computeEncasing(idsArr, encasingType, col[set[i]], set[i], confVal, alphaVal, reloadFlag, set[i]);
+                    //rest of the code
+                }(i));
+
+            }
+            deleteSpherical("main");
+        }, 1);
+    }
     /*
      for (var i = 0; i < set.length; i++) {
      dir = meansArr[i];
@@ -7828,7 +7844,7 @@ function setGradientColor(col1, col2) {
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
     var texture = new CanvasTexture(canvas);
-    console.log(col1)
+    //console.log(col1)
     // main part
     if (mainCheckBool) {
         Scatter.scene().background = texture;
@@ -8575,7 +8591,7 @@ function handleSaveEvent(reportFlag) {
         } else if (parent.window.location.href.includes("SpectraResult")) {
             type = "scores_3d";
         }
-        console.log(type);
+        //console.log(type);
         captureImageWithLegend(result, type);
         //sendImageToServer(dataURL, type);
         saveState();
