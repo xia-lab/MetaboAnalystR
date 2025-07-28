@@ -85,6 +85,30 @@ public class Classifying {
         }
     }
 
+    public static void plotRFOutlierMeta(SessionBean1 sb, String imgName, String format, int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "PlotRF.OutlierMeta(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            sb.addGraphicsCMD("rf_outlier", rCommand);
+            RC.voidEval(rCommand);
+        } catch (Exception rse) {
+            LOGGER.error("PlotRFOutlier", rse);
+        }
+    }
+
+    public static void plotRFRegressionDetail(SessionBean1 sb, String imgName, String format, int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "PlotRF.RegressionDetail(NA, \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            sb.addGraphicsCMD("rf_reg_detail", rCommand);
+            RC.voidEval(rCommand);
+        } catch (Exception rse) {
+            LOGGER.error("plotRFRegressionDetail", rse);
+        }
+    }
+
     public static void plotRFClassicationMeta(SessionBean1 sb, String imgName, String format, int dpi) {
         try {
             RConnection RC = sb.getRConnection();
@@ -295,8 +319,7 @@ public class Classifying {
             LOGGER.error("PlotSVMSigCmpds", rse);
         }
     }
-    
-    
+
     public static double[][] getMultiRFSigMat(SessionBean1 sb) {
         try {
             String rCommand = "GetMultiRFSigMat(NA)";

@@ -485,7 +485,6 @@ public class WfUploadBean implements Serializable {
             sb.addMessage("Info", "Data has been uploaded successfully");
             pcb.performSanityCheck();
             fileUploaded = true;
-
         }
         return null;
     }
@@ -510,7 +509,6 @@ public class WfUploadBean implements Serializable {
             sb.addMessage("Info", "Data has been uploaded successfully");
             pcb.performSanityCheck();
             fileUploaded = true;
-
         }
         return null;
     }

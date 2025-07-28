@@ -43,14 +43,7 @@
             <h:form>
                 <h:panelGrid columns="2" style="text-align: right; padding-right:20px; width:1080px;">
                     <h:panelGrid columns="2" style="text-align: right; padding-right:30px; width:980px;">
-                        <h:panelGrid columns="2" style="text-align: right; padding-right:10px; width:500px;">
-                            <h:panelGrid columns="5" style="text-align: left; padding-left:30px; padding-right: 30px; width:100%;">
-                                <p:selectBooleanCheckbox value ="#{pathBean.showGrid}" style="line-height: 18px"/>
-                                <h:outputLabel style="font-weight: bold" value="Show gridline"/>
-                                <p:commandLink onclick="PF('plotparam').show()" value="More options" style="padding-left: 2px; padding-right: 2px"/>
-                                <p:spacer style="width:40px"/>
-                                <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
-                            </h:panelGrid>
+                        <h:panelGrid style="text-align: right; padding-right:10px; width:500px;">
                             <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('path_view')}" 
                                            update=":myGraphPane"
                                            oncomplete="PF('graphDialog').show()"

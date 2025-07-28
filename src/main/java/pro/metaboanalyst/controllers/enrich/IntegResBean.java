@@ -10,8 +10,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.models.MetSetBean;
 import pro.metaboanalyst.models.PABean;

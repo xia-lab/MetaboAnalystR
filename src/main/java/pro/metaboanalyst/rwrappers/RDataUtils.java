@@ -241,12 +241,18 @@ public class RDataUtils {
 
                 // Copy all the caches first 
                 String source_path;
-                if ("customized".equals(meth)) {
-                    source_path = ab.getCustomizedCache();
-                } else if ("auto".equals(meth)) {
-                    source_path = ab.getAutoCache();
-                } else {
+                if (null == meth) {
                     source_path = null;
+                } else switch (meth) {
+                    case "customized":
+                        source_path = ab.getCustomizedCache();
+                        break;
+                    case "auto":
+                        source_path = ab.getAutoCache();
+                        break;
+                    default:
+                        source_path = null;
+                        break;
                 }
 
                 DataUtils.copyDir(source_path, homedir);
@@ -1035,6 +1041,49 @@ public class RDataUtils {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public static String getMissingTestMsg(RConnection RC) {
+        try {
+            String rCommand = "GetMissingTestMsg(NA)";
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("GetMissingTestMsg", e);
+            return null;
+        }
+    }
+
+    /**
+     * Plot a lollipop chart summarising the percentage of non-missing values in
+     * every sample (wrapper for the R function `PlotMissingDistr`).
+     *
+     * @param sb active SessionBean1 (provides the RServe connection)
+     * @param imgName base file name (no extension) for the graphic
+     * @param format image format (e.g. "png", "tiff", "pdf", "svg")
+     * @param dpi dots-per-inch resolution
+     *
+     * @return 1 on success, 0 on failure
+     */
+    public static int plotMissingDistr(SessionBean1 sb,
+            String imgName,
+            String code,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // R call: let width/height default by passing NA
+            String rCommand = "PlotMissingDistr(NA, \"" + imgName + "\", \""
+                    + format + "\", " + dpi + ", width=NA)";
+
+            RCenter.recordRCommand(RC, rCommand);                 // log the call
+            sb.addGraphicsCMD(code, rCommand);       // track graphic
+
+            return RC.eval(rCommand).asInteger();                 // run & return
+        } catch (Exception e) {
+            LOGGER.error("PlotMissingDistr", e);
+        }
+        return 0; // failure
+    }
+
     public static void sanityCheckRawSpectra(RConnection RC) {
 
         try {
@@ -1131,6 +1180,15 @@ public class RDataUtils {
         }
     }
 
+    public static String GetNormMethods(RConnection RC) {
+        try {
+            return RC.eval("GetNormMethods(NA)").asString();
+        } catch (Exception e) {
+            LOGGER.error("GetNormMethods", e);
+        }
+        return null;
+    }
+
     public static int setRatioOption(SessionBean1 sb, String opt) {
         try {
             RConnection RC = sb.getRConnection();
@@ -1210,8 +1268,18 @@ public class RDataUtils {
             LOGGER.error("plotSampleNormSummaryGraph", e);
         }
     }
+
     //---------------Methods for access Data information-------------
     //get data information
+    public static void initPrenormData(RConnection RC) {
+        try {
+            String rCommand = "PreparePrenormData(NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            RC.voidEval(rCommand);
+        } catch (Exception e) {
+            LOGGER.error("initPrenormData", e);
+        }
+    }
 
     public static void setPeakFormat(RConnection RC, String type) {
         try {
@@ -1466,7 +1534,7 @@ public class RDataUtils {
 
     public static int getFiltFeatureNumber(RConnection RC) {
         try {
-            return RC.eval("ncol(mSet$dataSet$filt)").asInteger();
+            return RC.eval("mSet$dataSet$filt.size").asInteger();
         } catch (Exception e) {
             LOGGER.error("getFiltFeatureNumber", e);
         }
@@ -1505,7 +1573,6 @@ public class RDataUtils {
             return 0;
         }
     }
-
     public static int updateData(RConnection RC, String[] featVec, String[] smplVec, String[] useVec, String ordGrp) {
         try {
             String featCmd = "feature.nm.vec <- " + DataUtils.createStringVector(featVec);
@@ -1605,30 +1672,48 @@ public class RDataUtils {
         }
     }
 
-    // final sanity check to set up dataSet$proc; return feature number
-    public static int replaceMin(RConnection RC) {
+    public static int removeMissingByPercent(RConnection RC, double perc, boolean grpWise) {
         try {
-            String rCommand = "ReplaceMin(NA);";
+            String grpWiseStr = grpWise ? "T" : "F";
+
+            String rCommand = "RemoveMissingByPercent(NA" + ", percent=" + perc + ", " + grpWiseStr + ")";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
-            LOGGER.error("replaceMin", e);
+            LOGGER.error("removeMissingByPercent", e);
+        }
+        return 0;
+    }
+
+    // final sanity check to set up dataSet$proc; return feature number
+    public static int performSanityClosure(RConnection RC) {
+        try {
+            String rCommand = "PerformSanityClosure (NA);";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            LOGGER.error("performSanityClosure", e);
         }
         return -1;
     }
 
-    // final sanity check to set up dataSet$proc
-    public static void imputeVariable(SessionBean1 sb, String method) {
+    public static int imputeVariable(RConnection RC, String method,
+            boolean grpLod, boolean grpMeasure) {
         try {
-            RConnection RC = sb.getRConnection();
-            String rCommand = "ImputeMissingVar(NA" + ", method=\"" + method + "\")";
-            RCenter.recordRCommand(RC, rCommand);
-            sb.recordRCommandFunctionInfo(rCommand, "performMissingImpute");
+            // convert Java booleans to "T" / "F" for R
+            String grpLodStr = grpLod ? "T" : "F";
+            String grpMeasureStr = grpMeasure ? "T" : "F";
 
-            RC.voidEval(rCommand);
+            String rCommand = "ImputeMissingVar(NA, method=\"" + method
+                    + "\", grpLod=" + grpLodStr
+                    + ", grpMeasure=" + grpMeasureStr + ")";
+
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
         } catch (Exception e) {
             LOGGER.error("imputeVariable", e);
         }
+        return 0;
     }
 
     public static String getProcZipMessage(RConnection RC) {
@@ -2476,6 +2561,16 @@ public class RDataUtils {
         return res;
     }
 
+    public static int removeEntry(RConnection RC, String rowID) {
+        try {
+            String rCommand = "RemoveEntry(NA, \"" + rowID + "\");";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger());
+        } catch (Exception e) {
+        }
+        return 0;
+    }
+
     public static int setDataTypeOfMeta(RConnection RC) {
         int res = 0;
         try {
@@ -3252,16 +3347,6 @@ public class RDataUtils {
         return 0;
     }
 
-    public static void initPrenormData(RConnection RC) {
-        try {
-            String rCommand = "PreparePrenormData(NA)";
-            RCenter.recordRCommand(RC, rCommand);
-            RC.voidEval(rCommand);
-        } catch (Exception e) {
-            LOGGER.error("initPrenormData", e);
-        }
-    }
-
     /**
      * Plot a lollipop chart summarising the percentage of non-missing values in
      * every sample (wrapper for the R function `PlotMissingDistr`).
@@ -3341,15 +3426,6 @@ public class RDataUtils {
         return 0; // failure
     }
 
-    public static int removeEntry(RConnection RC, String rowID) {
-        try {
-            String rCommand = "RemoveEntry(NA, \"" + rowID + "\");";
-            //RCenter.recordRCommand(RC, rCommand);
-            return (RC.eval(rCommand).asInteger());
-        } catch (Exception e) {
-        }
-        return 0;
-    }
 
     public static double[][] getNetStats(RConnection RC) {
         try {
@@ -3630,19 +3706,6 @@ public class RDataUtils {
         }
     }
 
-    public static int removeMissingByPercent(RConnection RC, double perc, boolean grpWise) {
-        try {
-            String grpWiseStr = grpWise ? "T" : "F";
-
-            String rCommand = "RemoveMissingByPercent(NA" + ", percent=" + perc + ", " + grpWiseStr + ")";
-            RCenter.recordRCommand(RC, rCommand);
-            return RC.eval(rCommand).asInteger();
-        } catch (Exception e) {
-            LOGGER.error("removeMissingByPercent", e);
-        }
-        return 0;
-    }
-    
     public static String getMissFilterMsg(RConnection RC) {
         try {
             String rCommand = "fetchMissFilterMsg(NA)";

@@ -195,7 +195,6 @@ public class TimeUploadBean implements Serializable {
             }
         }
         if (!wb.isReloadingWorkflow()) {
-
             if (!sb.doLogin(tsDataType, "mf", false, false)) {
                 sb.addMessage("Error", "Analysis start failed!");
                 return null;

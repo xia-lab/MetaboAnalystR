@@ -78,7 +78,7 @@
                         <h:outputLabel style="font-weight: bold" value="Secondary factor:" rendered="#{multifacBean.compDesign eq 'nest'}"/>
                         <p:selectOneMenu id="secfOpts" styleClass="menu" panelStyleClass="panel" value="#{lmBean.analysisMeta2}"
                                          rendered="#{lmBean.primaryType eq 'disc' and multifacBean.compDesign eq 'nest'}">
-                            <f:selectItem itemValue="NA" itemLabel="-- Not Selected --"/>
+                            <f:selectItem itemValue="NA" itemLabel="-- Please select --"/>
                             <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
                             <p:ajax event="change" listener="#{lmBean.compDesignChangeListener()}" update="customRadio :condDialog :grp1Dialog :contr1Dialog" />
                         </p:selectOneMenu>

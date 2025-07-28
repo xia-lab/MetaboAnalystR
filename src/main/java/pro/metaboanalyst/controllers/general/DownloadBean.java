@@ -1049,7 +1049,7 @@ public class DownloadBean implements Serializable {
     }
 
     private void prepData(String newDataType, String newAnalType, String treeType) {
-        sb.setDataProcessed();
+        sb.setDataPreprocessed();
         sb.setDataType(newDataType);
         sb.setAnalType(newAnalType);
         sb.setPaired(false);

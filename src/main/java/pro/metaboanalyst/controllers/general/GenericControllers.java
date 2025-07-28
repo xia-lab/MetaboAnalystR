@@ -31,7 +31,6 @@ import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RNetworkUtils;
 import pro.metaboanalyst.utils.DataUtils;
-import pro.metaboanalyst.utils.NaviUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
@@ -143,7 +142,7 @@ public class GenericControllers implements Serializable {
             case "Data check":
                 if (dataType.equals("conc") || dataType.equals("specbin") || dataType.equals("pktable") || dataType.equals("mass_all") || dataType.equals("mass_table")) {
                     break;
-                } else if (!sb.isDataProcessed()) {
+                } else if (!sb.isDataPreprocessed()) {
                     sb.addMessage("Error", "Your need to pre-process your data first!");
                     PrimeFaces.current().executeScript("PF('statusDialog').hide()");
                     return;

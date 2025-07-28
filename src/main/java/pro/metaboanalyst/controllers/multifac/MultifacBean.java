@@ -53,10 +53,10 @@ public class MultifacBean implements Serializable {
 
     private List<MetaDataBean> metaDataBeans = null;
     private MetaDataBean selectedMetaDataBean;
-    private String selectedMetaData = "Class";
+    private String selectedMetaData;
     private String[] metaOpts;
     private String[] discMetaOpts;
-    private String covJsonName = "";
+    private String covJsonName;
     private double rawCovThresh = 0.05;
     private boolean ascaInit = false;
     private String mbImage = null;
@@ -75,7 +75,8 @@ public class MultifacBean implements Serializable {
     private String defaultText = "The analysis has not been performed yet.";
     private SelectItem[] analysisMetaOptsAnova;
     private String covStyleOpt = "default";
-    private List<SampleBean> uniqueMetaNames = null;
+    private List<SampleBean> uniqueMetaNames;
+    private List<String> uniqueMetaStrings;
     private List<SelectItem> uniqueMetaList = null;
     private int boxMetaVersionNum = 0;
     private String compDesign = "cov";
@@ -168,16 +169,21 @@ public class MultifacBean implements Serializable {
         reinitVariables();
     }
 
+    public void resetState() {
+        reinitVariables();
+        discMetaOpts = null;
+        discreteMetaOpts = null;
+        uniqueMetaList = null;
+        uniqueMetaStrings = null;
+        uniqueMetaNames = null;
+    }
+
     public void reinitVariables() {
         analysisMetaOpts = null;
         metaDataBeans = null;
         boxMetaOpts = null;
         includedMetaData = null;
-        //discMetaOpts = null;
-        //discreteMetaOpts = null;
-        //uniqueMetaList = null;
     }
-
 
     public void editMeta(MetaDataBean meta) {
         selectedMetaDataBean = meta;
@@ -188,8 +194,10 @@ public class MultifacBean implements Serializable {
             String[] allMetas = RDataUtils.getUniqueMetaNames(sb.getRConnection(), selectedMetaDataBean.getName());
             int samSize = allMetas.length;
             uniqueMetaList = new ArrayList();
+            uniqueMetaStrings = new ArrayList();
             uniqueMetaNames = new ArrayList<>();
             for (int i = 0; i < samSize; i++) {
+                uniqueMetaStrings.add(allMetas[i]);
                 uniqueMetaList.add(new SelectItem(allMetas[i], allMetas[i]));
                 uniqueMetaNames.add(new SampleBean(allMetas[i], allMetas[i]));
             }
@@ -282,17 +290,17 @@ public class MultifacBean implements Serializable {
                 List<MetaDataBean> beans = getMetaDataBeans();
                 analysisMetaOpts = new SelectItem[beans.size()];
                 for (int i = 0; i < beans.size(); i++) {
-                                System.out.println("======here 3");
+                    System.out.println("======here 3");
                     analysisMetaOpts[i] = new SelectItem(beans.get(i).getName(), beans.get(i).getName());
                 }
             }
         } else {
             analysisMetaOpts = new SelectItem[1];
             if (sb.getAnalType().equals("dose")) {
-                    System.out.println("======here 00");
+                System.out.println("======here 00");
                 analysisMetaOpts[0] = new SelectItem("NA", "Dose");
             } else {
-                    System.out.println("======here 000");
+                System.out.println("======here 000");
                 analysisMetaOpts[0] = new SelectItem("NA", "Class");
             }
         }
@@ -561,6 +569,17 @@ public class MultifacBean implements Serializable {
         this.uniqueMetaList = uniqueMetaList;
     }
 
+    public List<String> getUniqueMetaStrings() {
+        if (uniqueMetaStrings == null) {
+            prepUniqueMetaList("NA");
+        }
+        return uniqueMetaStrings;
+    }
+
+    public void setUniqueMetaStrings(List<String> uniqueMetaStrings) {
+        this.uniqueMetaStrings = uniqueMetaStrings;
+    }
+
     public void updateMetaOrder() throws REngineException {
         String[] metaOrderArray = uniqueMetaList.toArray(String[]::new);
         RDataUtils.updateMetaOrder(sb.getRConnection(), selectedMetaData, metaOrderArray);
@@ -714,12 +733,13 @@ public class MultifacBean implements Serializable {
         this.disableTwofac = disableTwofac;
     }
 
+
     public void prepUniqueMetaList(String metacol) {
         String[] allMetas = RDataUtils.getMetaDataCol(sb.getRConnection(), metacol);
-
+        uniqueMetaStrings = new ArrayList<>();
         uniqueMetaList = new ArrayList<>();
-
         for (String grp : allMetas) {
+            uniqueMetaStrings.add(grp);
             uniqueMetaList.add(new SelectItem(grp, grp));
         }
     }

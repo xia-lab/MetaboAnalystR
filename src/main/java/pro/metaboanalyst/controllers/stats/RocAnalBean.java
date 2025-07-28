@@ -70,8 +70,7 @@ public class RocAnalBean implements Serializable {
     private String univPerfOpt = "sp";
     private double univThresh = 0.2;
     private double rocCutOff = 0.2;
-    private SelectItem[] mdlOpts = null;
-    private SelectItem[] rocMdlOpts = null;
+    private SelectItem[] mdlOpts, rocMdlOpts;
     private int rocMdlDD;
     private boolean showMisCls = false;
     //analysis mode : univ/explore/test
@@ -93,7 +92,7 @@ public class RocAnalBean implements Serializable {
     private boolean testInit = false;
     private boolean univInit = false;
     private List<FeatureBean> selectedFeatureBeans;
-    private List<FeatureBean> lassoFeatureBeans = new ArrayList();
+    private List<FeatureBean> lassoFeatureBeans;
     private DualListModel<String> sampleItems1, sampleItems2;
     private boolean smplHoldOut = false;
     private boolean showOptPoint = true;
@@ -119,6 +118,37 @@ public class RocAnalBean implements Serializable {
     private boolean canEdit = true;
     private int count = 0;
     private boolean featureRatioOptOut = false;
+    //metadata selection
+    private String selMeta = "NA";
+    private String factor1 = "NA";
+    private String factor2 = "NA";
+    private String[] grps;
+
+    public void resetState() {
+        selMeta = "NA";
+        factor1 = "NA";
+        factor2 = "NA";
+        grps = null;
+        testInit = false;
+        univInit = false;
+        smplHoldOut = false;
+        featureRatioOptOut = false;
+        currentCmpd = null;
+        featureBeans = null;
+        selectedSmpl1 = null;
+        selectedSmpl2 = null;
+        smpl1Beans = null;
+        smpl2Beans = null;
+        selectedFeatureBeans = null;
+        lassoFeatureBeans = null;
+        rocDetailsBeans = null;
+        smplPredBeans = null;
+        rocDetailsBeans = null;
+        canEdit = true;
+        count = 0;
+        // don't forget!!! ROC called mfb for these functions
+        mfb.resetState();
+    }
 
     public int getKmClustNm() {
         return kmClustNm;
@@ -181,7 +211,14 @@ public class RocAnalBean implements Serializable {
         rocMdlDD = 0;
     }
 
-    @JsonIgnore
+    public void setupSampleTable() {
+        setAnalMode("test");
+        if (sampleItems1 == null) {
+            prepareSampleBeans();
+        }
+        //sb.registerPage("Builder");
+    }
+
     public int getBestModelIndex() {
         return RocUtils.getBestModelInx(sb.getRConnection());
     }
@@ -367,7 +404,10 @@ public class RocAnalBean implements Serializable {
             jrd.record_performExploreAnalysis(this);
             return null;
         }
-
+        if ("NA".equals(selMeta)) {
+            sb.addMessage("Warn", "Please choose a metadata factor!");
+            return null;
+        }
         if (getFactor1().equals(getFactor2())) {
             sb.addMessage("Warn", "Both factors can not be the same.");
             return null;
@@ -437,7 +477,10 @@ public class RocAnalBean implements Serializable {
         if (wb.isEditMode()) {
             return;
         }
-
+        if ("NA".equals(selMeta)) {
+            sb.addMessage("Warn", "Please choose a metadata factor!");
+            return;
+        }
         if (getFactor1().equals(getFactor2())) {
             sb.addMessage("Warn", "Both factors can not be the same.");
             return;
@@ -629,7 +672,7 @@ public class RocAnalBean implements Serializable {
         String cmd = "selected.smpls <- c(\"";
         for (int i = 0; i < selectedSmpl1.size(); i++) {
             nm = selectedSmpl1.get(i);
-            if (count == 0) {
+            if (smplCount == 0) {
                 cmd = cmd + nm;
             } else {
                 cmd = cmd + "\", \"" + nm;
@@ -927,10 +970,11 @@ public class RocAnalBean implements Serializable {
     public void setupSamplePredTable() {
 
         RConnection RC = sb.getRConnection();
+        // if (RocUtils.containNewSamples(RC) == 1) {
         if (RocUtils.containNewSamples(RC) == 1) {
             String[] nms = RDataUtils.getNewSampleNameVec(RC);
             double[] probs = RDataUtils.getNewSampleProbs(RC);
-            String[] grps = RDataUtils.getNewSampleGrps(RC);
+            //String[] grps = RDataUtils.getNewSampleGrps(RC);
             smplPredBeans = new ArrayList();
             for (int i = 0; i < nms.length; i++) {
                 NameBean nb = new NameBean(nms[i]);
@@ -1199,12 +1243,6 @@ public class RocAnalBean implements Serializable {
         this.featureRatioOptOut = featureRatioOptOut;
     }
 
-    //metadata selection
-    private String selMeta = "NA";
-    private String factor1 = "NA";
-    private String factor2 = "NA";
-    private String[] grps;
-
     public void analysisMetaChangeListener() {
         grps = RDataUtils.getMetaDataCol(sb.getRConnection(), selMeta);
         List<SelectItem> list = new ArrayList<>();
@@ -1225,7 +1263,6 @@ public class RocAnalBean implements Serializable {
     }
 
     public String getSelMeta() {
-
         return selMeta;
     }
 
@@ -1236,7 +1273,7 @@ public class RocAnalBean implements Serializable {
     @JsonIgnore
     public String getFactor1() {
         if (factor1.equals("NA")) {
-            factor1 = mfb.getUniqueMetaList().get(0).getValue().toString();
+            factor1 = mfb.getUniqueMetaList().get(0).getLabel();
         }
         return factor1;
     }

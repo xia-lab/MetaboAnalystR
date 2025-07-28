@@ -9,10 +9,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
-
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.SessionBean1;

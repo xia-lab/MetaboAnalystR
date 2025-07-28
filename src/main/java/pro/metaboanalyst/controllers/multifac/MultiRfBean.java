@@ -151,7 +151,6 @@ public class MultiRfBean implements Serializable {
         try {
             if (wb.isEditMode()) {
                 sb.addMessage("Info", "Parameters have been updated!");
-
                 jrd.record_rfBn_action_time(this);
                 return true;
             }
@@ -170,13 +169,19 @@ public class MultiRfBean implements Serializable {
             }
             jrd.record_rfBn_action_time(this);
 
-            int res = Classifying.initRFMeta(sb, treeNum, tryNum, rfRandom, rfMeta, predictedMeta);
-
+            //int res = Classifying.initRFMeta(sb, treeNum, tryNum, rfRandom, rfMeta, predictedMeta);
+            int res = Classifying.initRFMeta(sb, treeNum, getEffectiveMtry(), rfRandom, rfMeta, predictedMeta);
             switch (res) {
                 case 1 -> {
+                    /*
                     Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls"), "png", 150);
                     Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
                     Classifying.plotRFOutlierMf(sb, sb.getNewImage("rf_outlier"), "png", 150);
+                     */
+                    Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls"), "png", 150);
+                    Classifying.plotRFRegressionDetail(sb, sb.getNewImage("rf_reg_detail"), "png", 150);
+                    Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
+                    Classifying.plotRFOutlierMeta(sb, sb.getNewImage("rf_outlier"), "png", 150);
                 }
                 case 2 ->
                     sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "

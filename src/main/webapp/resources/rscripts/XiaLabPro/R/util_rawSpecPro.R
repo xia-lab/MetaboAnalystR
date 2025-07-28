@@ -227,10 +227,16 @@ CreateMS2RawRscriptPro <- function(guestName, planString, mode = "dda"){
                                   topN = 10L, ncores = 4L)";
   str <- paste0(str, ";\n", cmd_export)
 
+  cmd_metabolome <- "mSet <- OptiLCMS:::PerformMetabolomeClassify(mSet, path_repo =\'/home/glassfish/projects/metabolome_lib/complete_metabolome_taxonomies_lib.qs\')"
+  str <- paste0(str, ";\n", cmd_metabolome)
+
   if(param_list$omics_type == "exposomics"){
     cmd_exposome <- "mSet <- OptiLCMS:::PerformExpsomeClassify(mSet, path_repo =\'/home/glassfish/projects/exposome_lib/complte_exposome_categories_lib.qs\')"
     str <- paste0(str, ";\n", cmd_exposome)
   }
+
+  cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
+  str <- paste0(str, ";\n", cmd_summarize)
 
   # progress 190
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
@@ -326,9 +332,9 @@ CreateRawRscriptPro <- function(guestName, planString, planString2, rawfilenms.v
     str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
   
-  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
-  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")  
   str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
+  str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
   
   # sink command for running
   sink("ExecuteRawSpec.sh");

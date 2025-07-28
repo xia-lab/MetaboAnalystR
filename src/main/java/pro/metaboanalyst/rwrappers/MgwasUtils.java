@@ -145,19 +145,16 @@ public class MgwasUtils {
         return 0;
     }
 
-    public static int performSnpFiltering(RConnection RC, String ldclumpOpt,
-            String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs,
-            double mafThresh, String harmonizeOpt, String current_key) {
+ 
+   public static int[] performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt,String steigerOpt, String current_key) {
         try {
-            String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \""
-                    + ldProxies + "\", " + ldThresh + ", \"" + pldSNPs + "\", " + mafThresh + ", \"" + harmonizeOpt
-                    + "\", \"" + current_key + "\")";
+            String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \"" + ldProxies + "\", \"" + ldThresh + "\", \"" + pldSNPs + "\", \"" + mafThresh + "\", \"" + harmonizeOpt + "\", \"" + steigerOpt + "\", \"" + current_key + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            return RC.eval(rCommand).asInteger();
+            return RC.eval(rCommand).asIntegers();
         } catch (Exception e) {
             System.out.println(e);
         }
-        return -1;
+        return null;
     }
 
     public static String readOpenGWASKey(RConnection RC) {
@@ -308,4 +305,81 @@ public class MgwasUtils {
         return 0;
     }
 
+    public static String[] getPathRowNames(RConnection RC) {
+        try {
+            String rCommand = "GetPathRowNames();";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asStrings());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static String[] getPathCol(RConnection RC, int colInx) {
+        try {
+            String rcmd = "GetPathCol(" + colInx + ")";
+            //RCenter.recordRCommand(RC, rcmd);
+            return RC.eval(rcmd).asStrings();
+        } catch (Exception rse) {
+            System.out.println(rse);
+            return null;
+        }
+    }
+
+    public static String[] getSumCol(RConnection RC, String type, String exp) {
+        try {
+            String rcmd = "GetSumCol(\"" + type + "\",\"" + exp + "\")";
+            //RCenter.recordRCommand(RC, rcmd);
+            return RC.eval(rcmd).asStrings();
+        } catch (Exception rse) {
+            System.out.println(rse);
+            return null;
+        }
+    }
+
+    public static String[] updateSNPEntries(RConnection RC, String filterCol, String filterOpt, String filterValue, String act, String tableType) {
+        try {
+            String rCommand = "UpdateSNPEntries(\"" + filterCol + "\", \"" + filterOpt + "\", \"" + filterValue + "\", \"" + act + "\", \"" + tableType + "\");";
+            RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asStrings());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return null;
+    }
+
+    public static int resetSNPEntries(RConnection RC, String tableType) {
+        try {
+            String rCommand = "ResetSNPEntries( \"" + tableType + "\");";
+            //RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger());
+        } catch (Exception e) {
+        }
+        return 0;
+
+    }
+
+    public static int performLiteratureSearch(RConnection RC, String exposure, String outcome) {
+        try {
+            String rCommand = "QueryLiteratureMelodiPresto(\"" + exposure + "\", \"" + outcome + "\")";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return 0;
+    }
+    
+    
+      public static int checkSNPs(RConnection RC) {
+        try {
+            String rCommand = "CheckSNPs()";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return 0;
+    }
 }

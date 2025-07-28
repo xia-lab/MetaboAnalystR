@@ -145,14 +145,15 @@ public class MgwasLoadBean implements Serializable {
         this.myDisList = myDisList;
     }
     private String mySNPList;
-    private String myCmpdList = "Acetic acid";
+    private String myCmpd;
 
-    public String getMyCmpdList() {
-        return myCmpdList;
+    public String getMyCmpd() {
+        //System.out.println("metaboanalyst.controllers.mgwas.MgwasLoadBean.getMyCmpdList()" + myCmpd);
+        return myCmpd;
     }
 
-    public void setMyCmpdList(String myCmpdList) {
-        this.myCmpdList = myCmpdList;
+    public void setMyCmpd(String myCmpd) {
+        this.myCmpd = myCmpd;
     }
 
     public String getMySNPList() {
@@ -380,7 +381,7 @@ public class MgwasLoadBean implements Serializable {
         }
     }
 
-    private List<String> metCompleteList = new ArrayList<>();
+    private List<String> metCompleteList;
 
     DualListModel<String> metDualList = new DualListModel<>();
 
@@ -427,14 +428,16 @@ public class MgwasLoadBean implements Serializable {
     }
 
     public List<String> getMetCompleteList() {
-
+        if (metCompleteList == null) {
+            String[] metNames = buildMetList();
+            metCompleteList = new ArrayList<>(Arrays.asList(metNames));
+        }
         return metCompleteList;
     }
 
     public void setMetCompleteList(List<String> metCompleteList) {
         this.metCompleteList = metCompleteList;
     }
-
     private List<String> disCompleteList = new ArrayList<>();
 
     public List<String> getDisCompleteList() {
@@ -447,10 +450,6 @@ public class MgwasLoadBean implements Serializable {
 
     public boolean searchMgwasMetabolites() {
         proceedDisabled = true;
-        if (metDualList.getTarget().isEmpty()) {
-            sb.addMessage("error","No metabolite(s) has been selected!");
-            return false;
-        }
 
         // need to check the database for docker
         if (ab.isInDocker()) {
@@ -470,39 +469,34 @@ public class MgwasLoadBean implements Serializable {
         sb.setCmpdIDType("name");
         sb.doLogin("NA", "mgwas", false, false);
 
-        //RDataUtils.setVepOpt(sb.getRConnection(), sb.getVepOpt()); // haploreg for snp2gene mapping in met2snp2gene
-        //RDataUtils.setLdProxy(sb.getRConnection(), sb.getLdProxyP());
-        //RDataUtils.setLdR2(sb.getRConnection(), sb.getLdR2P());
-        Object[] metDualListTarget = metDualList.getTarget().toArray();
-        String[] qVec = new String[metDualListTarget.length];
-        if (qVec.length > 5) {
-            sb.addMessage("error", "Due to its complex and computing intensive nature, you can only choose a max of 5 metabolites for MR analysis.");
-            return false;
-        }
-        for (int i = 0; i < metDualListTarget.length; i++) {
-            // Cast each element to String
-            qVec[i] = (String) metDualListTarget[i];
-        }
-        String commaDelimitedString = String.join(", ", qVec);
+        mb.setDisplayExposure(myCmpd);
         sb.setDataUploaded();
-
-        Boolean res = searchExposureItem(commaDelimitedString);
+        Boolean res = searchExposureItem(myCmpd);
         if (res) {
             sb.addMessage("info", "Exposure has been selected, you can proceed!");
             return true;
         }
-
         return false;
-
     }
 
     public String handleMgwasSelection() {
+        if (myCmpd == null || "".equals(myCmpd.trim())) {
+            sb.addMessage("error", "Please select a metabolite / exposure!");
+            return null;
+        }
+
+        if (selectedDisease == null || "".equals(selectedDisease.trim())) {
+            sb.addMessage("error", "Please select a disease / outcome!");
+            return null;
+        }
+
         if (searchMgwasMetabolites()) {
             if (searchOutcomeItem()) {
                 //sb.setReportAvailable(false);
-                if (!mb.getSnpListMultiMet().isEmpty()) {
-                      DataUtils.setupFlashGrowl("warn", "There are " + mb.getSnpListMultiMet().size() + " SNPs that are associated with multiple metabolites (Horizontal Pleiotropy). It is advised not to include them!");
-                }
+                //if (!mb.getSnpListMultiMet().isEmpty()) {
+                //    DataUtils.setupFlashGrowl("warn", "There are " + mb.getSnpListMultiMet().size() + " SNPs that are associated with multiple metabolites (Horizontal Pleiotropy). It is advised not to include them!");
+                //}
+                mb.performSnpFiltering();
                 return "MgwasParamView";
             }
         }
@@ -511,13 +505,14 @@ public class MgwasLoadBean implements Serializable {
 
     public boolean searchOutcomeItem() {
         if (selectedDisease == null) {
-            sb.addMessage("error","Input is empty!");
+            sb.addMessage("error", "Input is empty!");
             return false;
         }
 
         //String[] myDisListSplit = selectedDisease.split("\\|");
         //String myDisName = myDisListSplit[0];
         String myDisId = selectedDisease.split("\\|")[1];
+            mb.setDisplayOutcome(selectedDisease.split("\\|")[0]);
         //System.out.println(myDisName);
         //System.out.println(myDisId + "====disId");
         //System.out.println("myDisName");
@@ -589,13 +584,21 @@ public class MgwasLoadBean implements Serializable {
         //System.out.println("ress=======" + res);
         if (res == 0) {
             String msg = RDataUtils.getCurrentMsg(sb.getRConnection());
-            sb.addMessage("error",msg);
+            sb.addMessage("error", msg);
             return false;
         }
         //System.out.println("ress2=======" + res);
         mb.setupTable("exposure");
 
         return true;
+    }
+
+    public String getOutcome() {
+        String disease = selectedDisease.split("\\|")[0].trim();
+        String study = selectedDisease.split("\\|")[1].trim();
+        String link = "<a style=\"font-weight:normal\" href=\"" + "https://gwas.mrcieu.ac.uk/datasets/?gwas_id__icontains=" + study + "\" target=\"_blank\">" + study + "</a>";
+        String outcome = disease + " (Study: " + link + ")";
+        return outcome;
     }
 
 }

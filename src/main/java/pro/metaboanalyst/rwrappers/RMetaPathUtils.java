@@ -184,7 +184,7 @@ public class RMetaPathUtils {
         return res;
     }
 
-    public static int plotPathDataProfile(RConnection RC, String dataName, String dataName2, String boxName, String boxName2, String format) {
+    public static int plotPathDataProfile(RConnection RC, String dataName, String dataName2, String boxName, String boxName2, String format, int dpi) {
 
         try {
             String rCommand = "PlotPathDataProfile(\""
@@ -197,7 +197,9 @@ public class RMetaPathUtils {
                     + boxName2
                     + "\", \""
                     + format
-                    + "\");";
+                    + "\", "
+                    + dpi
+                    + ");";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {

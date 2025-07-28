@@ -48,6 +48,11 @@
             </h:form>
             <p:tabView id="ac" widgetVar="tabWidgetVar" style="min-width: 900px; max-width: 1200px; border: none; font-size: 13px;">
                 <p:tab title ="Pairwise Score Plots">
+                    <p>
+                        P-values are calculated with <b>PERMANOVA</b> (999 permutations) on the sample scores for each PC pair. 
+                        For discrete metadata, it assesses group centroid separation. 
+                        For continuous metadata, it evaluates whether the data exhibit a gradient aligned with the metadata .
+                    </p>
                     <h:form id="form1">
                         <h:panelGrid columns="3" style="padding-top: 10px; padding-left: 40px">
                             <h:outputLabel value="Display score plots for top "/>
@@ -132,7 +137,7 @@
                                 </p:commandLink>
                             </h:panelGrid>
                             <h:panelGrid style="text-align: center; width:100%">
-                                <h:outputText escape="false" value="#{pcaBean.stat4PCA}" style="font-weight: bold; color: #2738aa;font-size: 14px;"/>
+                                <h:outputText escape="false" value="#{pcaBean.stat4PCA}" style="font-weight: bold; font-size: 14px;"/>
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' 
                                  style="width:9in; padding-left: 50px"

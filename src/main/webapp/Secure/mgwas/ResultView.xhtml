@@ -22,8 +22,8 @@
                 <b>Note:</b> not all methods selected from the previous page would yield results depending of the data used.
             </p>
             <h:form id="form1">
-                <p:accordionPanel value="#{mgwasBean.compoundDataModels.values()}" var="metRes">
-                    <p:tab title="#{metRes.compoundName}">
+                <p:accordionPanel value="#{mgwasBean.compoundDataModels.values()}" var="metRes" style="border: none">
+                    <p:tab title="#{metRes.compoundName}" closable="false">
                         <!-- Content for each compound -->
                         <p:dataTable var="mrResult" value="#{metRes.mrResults}" class="surface-card shadow-1 p-0 text-800">
                             <p:columnGroup type="header">
@@ -161,7 +161,7 @@
                                     </h:panelGrid>
                                 </h:panelGrid>
                             </p:tab>
-                            <p:tab title ="Leave-one-out Sensitivity Analysis">
+                            <p:tab title ="Sensitivity Analysis">
                                 <h:panelGrid id="impPane4" style="text-align: center; padding: 20px">
                                     <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
                                         <p:commandLink  title="Download the detailed data table">
@@ -186,9 +186,58 @@
                                     </h:panelGrid>
                                 </h:panelGrid>
                             </p:tab>
+                            <p:tab title ="Literature Evidence">
+                                <h:panelGrid columns = "2">
+
+                                    <p:dataTable  id="litresultTable" paginator="true" paginatorPosition="bottom" rows="15" 
+                                                  emptyMessage="No literature evidence found."
+                                                  rowsPerPageTemplate="15,50,100" resizableColumns="true" 
+                                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                  style="font-size: 10px; width: 100%; padding-top:40px" var="rb" value="#{mgwasBean.reslitTable}" rowKey="#{rb.get('rowID')}">  
+                                        <p:column headerText="Potential Relationships" sortBy="#{rb.get('col1')}"
+                                                  filterBy="#{rb.get('col1')}" filterMatchMode="contains" width="80%">
+                                            <h:outputText escape="false" value="#{rb.get('col1')}"/>
+                                        </p:column>
+
+                                        <p:column headerText="PMIDs" sortBy="#{rb.get('col2')}" 
+                                                  filterBy="#{rb.get('col2')}" filterMatchMode="contains" width="20%">
+                                            <p:commandLink value="View" update=":form1:detailView" oncomplete="PF('pmidDialog').show()">  
+                                                <f:setPropertyActionListener value="#{rb.get('col2')}" target="#{mgwasBean.pmIDs}" />  
+                                            </p:commandLink>
+                                        </p:column>                     
+
+                                    </p:dataTable>
+
+                                    <h:panelGrid style="width: 400px; padding-left: 5px; margin-left: 20px">
+                                        <div class="ui-message-info" style="background-color: #f9f1e7; border-color: #f9f1e7; padding: 20px 28px 20px 30px; line-height: 23px; font-size: 14px">
+                                            <span class="ui-message-info-icon"/>
+                                            <span class="ui-message-info-detail">
+                                                <b>Tips</b>
+                                            </span>
+                                            <p>
+                                                The paths represent putative mechanistic chains generated through <b>triangulation analysis</b> using <a href="https://melodi-presto.mrcieu.ac.uk/" target="_blank">MELODI Presto</a> 
+                                                to integrate literature evidence. Each path starts from a specific exposure and progressing through intermediate biological entities (such as receptors, genes, metabolites, or diseases) 
+                                                ultimately reaching an outcome. Use <b>View</b> link to find out the underlying literature. 
+                                            </p>    
+                                        </div>
+                                    </h:panelGrid>
+
+                                </h:panelGrid>
+                            </p:tab>  
+
                         </p:tabView>
                     </p:tab>
                 </p:accordionPanel>
+                <p:dialog widgetVar="pmidDialog" dynamic="true" modal="true" appendTo="@(body)" 
+                          header="Literature"
+                          hideEffect="explode" resizable="true"> 
+                    <h:panelGrid id="detailView" style="width:540px; font-size: 13px; padding: 10px">
+                        <h:outputText escape="false" value="PMIDs: #{mgwasBean.pmIDs}"/>
+                        <h:panelGrid style="width:100%; text-align: center">
+                            <p:commandButton value="OK" onclick="PF('pmidDialog').hide()"/>
+                        </h:panelGrid>
+                    </h:panelGrid> 
+                </p:dialog>
             </h:form>
         </h:panelGrid>
     </ui:define>

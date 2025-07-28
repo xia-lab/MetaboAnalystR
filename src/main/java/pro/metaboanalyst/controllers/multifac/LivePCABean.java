@@ -97,7 +97,7 @@ public class LivePCABean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
             ChemoMetrics.initPCA(sb);
 
-            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
+            TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
             TimeSeries.plotPCA2DScoreMeta(sb, sb.getCurrentImage("pca_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na", getColOpt(), getShapeOpt());
 
             TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", colOpt, shapeOpt, "blue");
@@ -117,7 +117,7 @@ public class LivePCABean implements Serializable {
     public void updatePCA3D() {
         sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
         ChemoMetrics.initPCA(sb);
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, getColOpt(), getShapeOpt());
         TimeSeries.plotPCA2DScoreMeta(sb, sb.getCurrentImage("pca_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na", getColOpt(), getShapeOpt());
         TimeSeries.initIPCA(sb.getRConnection(), sb.getNewImage("ipca_3d") + ".json", colOpt, shapeOpt, "blue");
 
@@ -136,7 +136,7 @@ public class LivePCABean implements Serializable {
             }
         }
 
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "png", 150, pcaPairNum, colOpt, shapeOpt);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 150, pcaPairNum, colOpt, shapeOpt);
         return null;
     }
 }

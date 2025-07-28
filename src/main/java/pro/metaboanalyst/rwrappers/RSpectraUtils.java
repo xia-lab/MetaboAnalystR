@@ -259,6 +259,18 @@ public class RSpectraUtils {
             return 0;
         }
     }
+    
+    
+    public static int getExposomeRawData(RConnection RC, String homedir) {
+        try {
+            int res = RC.eval("getExposomeRawData(\"" + homedir + "\");").asInteger();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("getExposomeRawData", e);
+            return 0;
+        }
+    }
+
 
     public static String[] getResSummaryMsg(RConnection RC) {
         try {

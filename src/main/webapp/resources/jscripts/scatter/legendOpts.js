@@ -5,6 +5,7 @@ var yVal_colorlegend = 0;
 var indHeight = 23;
 
 function generateLegend(legendData) {
+    //console.log(legendData)
     //
     var labelArray = legendData.map(function (obj) {
         return obj.label;
@@ -45,7 +46,7 @@ function generateLegend(legendData) {
 function generateGradientLegend(meta) {
     const W = 60;          // total svg width
     const H = 150;         // height of colour bar
-    console.log(meta)
+    //console.log(meta)
     // ---------------------------------------------------------------------
 
     svg = d3.select("#myLegend")
@@ -118,7 +119,7 @@ yVal_colorlegend = H  + 70 + 8;
 
 function generateLegendShape(legendData) {
     // Add the shape legend
-    console.log(yVal_colorlegend + "===yVal_colorlegend")
+    //console.log(yVal_colorlegend + "===yVal_colorlegend")
     const shapeLegend = svg.append('g').attr('transform', 'translate(10, ' + yVal_colorlegend + ')');
     shapeLegend
             .selectAll('.shape')
@@ -158,7 +159,7 @@ function shapeToD3Symbol(shape) {
 }
 
 function mouseclick(e, i, a) {
-    console.log(i)
+    //console.log(i)
 }
 
 function updateTextColor(color) {

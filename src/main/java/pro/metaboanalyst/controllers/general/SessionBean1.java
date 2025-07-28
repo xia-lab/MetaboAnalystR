@@ -39,6 +39,7 @@ import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import org.omnifaces.util.Faces;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.workflows.WorkflowView;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -67,6 +68,10 @@ public class SessionBean1 implements Serializable {
     @JsonIgnore
     @Inject
     private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rab;
 
     @JsonIgnore
     @Inject
@@ -126,7 +131,7 @@ public class SessionBean1 implements Serializable {
     private boolean regression = false;
     private boolean keepClsOrder = true; //for multiple groups using PLS-DA and othogonal PLS-DA
     private boolean dataUploaded = false;
-    private boolean dataProcessed = false;
+    private boolean dataPreprocessed = false;
     private boolean integChecked = false;
     private boolean dataNormed = false;
     @JsonIgnore
@@ -222,6 +227,25 @@ public class SessionBean1 implements Serializable {
 
     public void setEnrNetSavedInit(boolean enrNetSavedInit) {
         this.enrNetSavedInit = enrNetSavedInit;
+    }
+
+    private boolean containsBlank = false;
+    private boolean containsQC = false;
+
+    public boolean isContainsBlank() {
+        return containsBlank;
+    }
+
+    public void setContainsBlank(boolean containsBlank) {
+        this.containsBlank = containsBlank;
+    }
+
+    public boolean isContainsQC() {
+        return containsQC;
+    }
+
+    public void setContainsQC(boolean containsQC) {
+        this.containsQC = containsQC;
     }
 
     public void setNoticeSize(int noticeSize) {
@@ -333,7 +357,6 @@ public class SessionBean1 implements Serializable {
         }
 
         if (!ab.isCompiled()) {
-
             if (!ab.compileRScripts(analType)) {
                 addMessage("error", "Cannot connect to Rserver! Please start your Rserver with the right permission!");
                 return false;
@@ -345,9 +368,7 @@ public class SessionBean1 implements Serializable {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (reload) {
@@ -366,7 +387,7 @@ public class SessionBean1 implements Serializable {
         }
         //System.out.println("pro.metaboanalyst.controllers.general.SessionBean1.doLogin()" + analType);
         RC = getRConnection(myAnalType);
-        System.out.println("CURRENTUSER===" + getCurrentUser().getOrigHomeDir());
+        //System.out.println("CURRENTUSER===" + getCurrentUser().getOrigHomeDir());
 
         if (RC == null) {
             addMessage("Error", "Cannot connect to Rserve. Please make sure that your application has been authenticated, and start your Rserver with the right permission!");
@@ -442,7 +463,6 @@ public class SessionBean1 implements Serializable {
 
     public boolean doSpecLogin(String dataType, String analType, boolean isRegression, boolean paired, String previousFolderName, boolean reload) {
         if (!ab.isCompiled()) {
-
             if (!ab.compileRScripts(analType)) {
                 addMessage("error", "Cannot connect to Rserver! Please start your Rserver with the right permission!");
                 return false;
@@ -454,9 +474,7 @@ public class SessionBean1 implements Serializable {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (reload) {
@@ -613,43 +631,62 @@ public class SessionBean1 implements Serializable {
     public void reset2DefaultState() {
         this.moduleURL = null;
         this.dataUploaded = false;
+        this.dataPreprocessed = false;
         this.integChecked = false;
-        this.dataProcessed = false;
         this.dataNormed = false;
         imgMap.clear();
+
+        //this is called in data upload, need to keep this entry
+        String uploadVal = null;
+        boolean uploaded = false;
+        if (naviTrack.keySet().contains("Upload")) {
+            uploaded = true;
+            uploadVal = naviTrack.get("Upload");
+            if (uploadVal.startsWith("/MetaboAnalyst")) {
+                uploadVal = uploadVal.substring("/MetaboAnalyst".length());
+            }
+        }
         naviTrack.clear();
         naviTrackAnalType.clear();
-
+        if (uploaded) {
+            addNaviTrack("Upload", uploadVal);
+        }
+        //reset sessionbean of individual module
+        if ("roc".equals(analType)) {
+            rab.resetState();
+        } else if ("mf".equals(analType)) {
+            rab.resetState();
+        }
     }
 
     public void setDataUploaded() {
         this.dataUploaded = true;
+        this.dataPreprocessed = false;
         this.integChecked = false;
-        this.dataProcessed = false;
         this.dataNormed = false;
         addMessage("info", "Data upload successful.");
     }
 
+    public void setDataPreprocessed() {
+        this.dataUploaded = true;
+        this.dataPreprocessed = true;
+        this.integChecked = false;
+        this.dataNormed = false;
+        addMessage("info", "Data pre-processed successful.");
+    }
+
     public void setIntegChecked() {
         this.dataUploaded = true;
+        this.dataPreprocessed = true;
         this.integChecked = true;
-        this.dataProcessed = false;
         this.dataNormed = false;
         addMessage("info", "Integrity check successful.");
     }
 
-    public void setDataProcessed() {
-        this.dataUploaded = true;
-        this.integChecked = true;
-        this.dataProcessed = true;
-        this.dataNormed = false;
-        addMessage("info", "Data processed successful.");
-    }
-
     public void setDataNormed() {
         this.dataUploaded = true;
+        this.dataPreprocessed = true;
         this.integChecked = true;
-        this.dataProcessed = true;
         this.dataNormed = true;
         addMessage("info", "Data normalization successful.");
     }
@@ -662,8 +699,8 @@ public class SessionBean1 implements Serializable {
         this.dataUploaded = dataUploaded;
     }
 
-    public boolean isDataProcessed() {
-        return dataProcessed;
+    public boolean isDataPreprocessed() {
+        return dataPreprocessed;
     }
 
     public boolean isIntegChecked() {
@@ -1557,14 +1594,13 @@ public class SessionBean1 implements Serializable {
             }
         }
 
+        //clear previous state
         if (currentUser != null) {
             if (RC != null) {
                 RC.close();
             }
             currentUser = null;
-            if (analType.equals("roc")) {
-                FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove("rocAnalBean");
-            }
+            reset2DefaultState();
         }
 
         if (analType.equals("raw") && ab.shouldUseScheduler()) {
@@ -1678,7 +1714,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void performCleaning() {
-
+        //to make sure key resources are in default state when users try different data from upload page
         long elapse = (System.currentTimeMillis() - ab.getLastCleaningTime()) / 1000; //in seconds
         //call after 10 min break
         if (elapse > 600) {
@@ -1782,6 +1818,9 @@ public class SessionBean1 implements Serializable {
         }
 
         notice.add(pre + msg + "</font>");
+        
+        //make sure to update
+        PrimeFaces.current().ajax().update("globalGrowl");
     }
 
     //relay center
@@ -1807,24 +1846,6 @@ public class SessionBean1 implements Serializable {
         this.enrNetName = enrNetName;
     }
 
-    private boolean containsBlank = false;
-    private boolean containsQC = false;
-
-    public boolean isContainsBlank() {
-        return containsBlank;
-    }
-
-    public void setContainsBlank(boolean containsBlank) {
-        this.containsBlank = containsBlank;
-    }
-
-    public boolean isContainsQC() {
-        return containsQC;
-    }
-
-    public void setContainsQC(boolean containsQC) {
-        this.containsQC = containsQC;
-    }
 
     @JsonIgnore
     @Inject

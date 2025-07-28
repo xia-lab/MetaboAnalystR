@@ -317,7 +317,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     leaveoneout_plot <-mSetObj$imgSet$mr_leaveoneout_plot[exposure]
     funnel_plot <- mSetObj$imgSet$mr_funnel_plot[exposure]
     
-    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi72\\.png$", "", scatter_plot));
+    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "", scatter_plot));
     cat(reportLinks, file=rmdFile, append=TRUE);
     cat("\n\n", file=rmdFile, append=TRUE);
     
@@ -335,7 +335,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     )
     cat(scatter_descr, file = rmdFile, append = TRUE, sep = "\n")
     
-    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi72\\.png$", "",forest_plot));
+    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",forest_plot));
     cat(reportLinks, file=rmdFile, append=TRUE);
     cat("\n\n", file=rmdFile, append=TRUE);
     
@@ -353,7 +353,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     )
     cat(forest_descr, file = rmdFile, append = TRUE, sep = "\n")
     
-    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi72\\.png$", "",leaveoneout_plot));
+    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",leaveoneout_plot));
     cat(reportLinks, file=rmdFile, append=TRUE);
     cat("\n\n", file=rmdFile, append=TRUE);
     
@@ -371,7 +371,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     )
     cat(leaveoneout_descr, file = rmdFile, append = TRUE, sep = "\n")
     
-    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi72\\.png$", "",funnel_plot));
+    reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",funnel_plot));
     cat(reportLinks, file=rmdFile, append=TRUE);
     cat("\n\n", file=rmdFile, append=TRUE);
     

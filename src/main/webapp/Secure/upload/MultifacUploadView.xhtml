@@ -123,8 +123,6 @@
                     <f:selectItem itemValue="time1" itemLabel="Time-series only"/>
                     <f:selectItem itemValue="diabetes" itemLabel="Lipidomics intensity table"/>
                     <f:selectItem itemValue="ewaste" itemLabel="LC-MS peak intensity table"/>
-                    <f:selectItem itemValue="tce" itemLabel="LC-MS peak intensity table"/>
-
                 </p:selectOneRadio> 
 
                 <p:panelGrid columns="4" style="width: 90%;" layout="tabular" styleClass="myPanelGrid" class="shadow-1 p-4 text-800" >
@@ -214,9 +212,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="5"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/ewaste_data_QC.csv">E-waste</a>
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/ewaste_data_QC.csv">E-waste</a>
                         <br />
-                        <a href="#{facesContext.externalContext.requestContextPath}/resources/data/ewaste_metadata.csv">Metadata</a>                        
+                        <a href="https://www.xialab.ca/api/download/metaboanalyst/ewaste_metadata.csv">Metadata</a>                        
                     </h:panelGroup>
                     <h:panelGroup layout="block" style="width:200px">
                         Multiple factors / covariates 
