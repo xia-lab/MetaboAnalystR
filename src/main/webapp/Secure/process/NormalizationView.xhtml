@@ -11,7 +11,7 @@
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
-        <h:form id="form1">
+        <h:form id="mainForm">
             <h:panelGrid id="normPane" styleClass="my-content-panel">
                 <h2>Data Normalization</h2>
                 <p>
@@ -184,19 +184,6 @@
                         <h:outputLabel value="(mean-centered and divided by the range of each variable)"/>
                     </h:panelGrid>
                 </h:panelGrid> 
-                <h:panelGrid columns="3" style="width:780px; text-align: center; padding-top: 10px; margin-left: 30px">
-                    <p:commandButton style="width: 100px" value="Normalize" onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()" update=":ac form1:viewBn form1:nextBn  :hisTab:cmdPane"
-                                     actionListener="#{normBean.performDataNormalization()}"/>   
-                    <p:commandButton id="viewBn" style="width: 120px" value="View Result" 
-                                     onclick="PF('normResDialog').show()" disabled="#{not normBean.normPerformed}"/>
-                    <p:commandButton id="nextBn" style="width: 100px" value="Proceed" 
-                                     onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()"
-                                     ajax="false" disabled="#{not normBean.normPerformed}" 
-                                     rendered="#{!workflowBean.editMode}"
-                                     action="#{ctl.enterModule()}"/>                               
-                </h:panelGrid>
             </h:panelGrid> 
         </h:form>
         <p:dialog widgetVar="smplNormDialog" dynamic="true" modal="true" appendTo="@(body)" height="460"
@@ -220,7 +207,7 @@
                     <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
                         <p:commandButton value="OK" 
                                          actionListener="#{normBean.setSmplSpecNorm()}" 
-                                         update=":form1:normPane  :hisTab:cmdPane"
+                                         update=":mainForm:normPane  :hisTab:cmdPane"
                                          onclick="PF('smplNormDialog').hide()"/>
                         <p:commandButton value="Cancel" onclick="PF('smplNormDialog').hide()"/>
                     </h:panelGrid> 
@@ -282,7 +269,7 @@
                     </h:panelGrid>
                     <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
                         <p:commandButton value="Submit" 
-                                         update=":form1:normPane  :hisTab:cmdPane"
+                                         update=":mainForm:normPane  :hisTab:cmdPane"
                                          onclick="PF('refSmplDialog').hide()"/>
                         <p:commandButton value="Cancel" onclick="PF('refSmplDialog').hide()"/>
                     </h:panelGrid> 
@@ -307,7 +294,7 @@
                     </h:panelGrid>
                     <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
                         <p:commandButton value="Submit" 
-                                         update=":form1:normPane  :hisTab:cmdPane"
+                                         update=":mainForm:normPane  :hisTab:cmdPane"
                                          onclick="PF('refGrpDialog').hide()"/>
                         <p:commandButton value="Cancel" onclick="PF('refGrpDialog').hide()"/>
                     </h:panelGrid> 
@@ -329,7 +316,7 @@
                     </h:panelGrid>
                     <h:panelGrid columns="2" style="padding-top: 10px; width:100%; font-size: 14px; text-align: center">
                         <p:commandButton value="Submit" 
-                                         update=":form1:normPane  :hisTab:cmdPane"
+                                         update=":mainForm:normPane  :hisTab:cmdPane"
                                          onclick="PF('refVarDialog').hide()"/>
                         <p:commandButton value="Cancel" onclick="PF('refVarDialog').hide()"/>
                     </h:panelGrid> 
@@ -337,5 +324,23 @@
             </h:form>         
         </p:dialog>
     </ui:define>
-
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="3" id="btnPane" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px; padding-left: 10%; padding-right: 10%">
+                <p:commandButton style="width: 100px" value="Normalize" onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()" 
+                                 process="mainForm @this"
+                                 update=":ac southform:viewBn southform:nextBn :hisTab:cmdPane"
+                                 actionListener="#{normBean.performDataNormalization()}"/>   
+                <p:commandButton id="viewBn" style="width: 120px" value="View Result" 
+                                 onclick="PF('normResDialog').show()" disabled="#{not normBean.normPerformed}"/>
+                <p:commandButton id="nextBn" style="width: 100px" value="Proceed" 
+                                 onclick="PF('statusDialog').show()" 
+                                 oncomplete="PF('statusDialog').hide()"
+                                 ajax="false" disabled="#{not normBean.normPerformed}" 
+                                 rendered="#{!workflowBean.editMode}"
+                                 action="#{ctl.enterModule()}"/> 
+            </h:panelGrid> 
+        </h:form>
+    </ui:define>
 </ui:composition>

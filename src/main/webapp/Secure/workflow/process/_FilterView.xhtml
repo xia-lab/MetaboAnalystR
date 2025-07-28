@@ -5,22 +5,109 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
 
-    <p:panelGrid columns="3" layout="tabular" style="width: 700px" class="surface-card shadow-1 p-4 text-800">
-        <h:outputText style="font-weight: bold" value="Reliability filter:"/>
-        <h:panelGrid columns="5" style="padding: 10px;">
-            <p:selectBooleanCheckbox value="#{procBean.doQCFiltering}" style="line-height: 18px"/> 
-            <h:outputLabel value="Filtering features based on technical repeatability QC samples"/> 
+    <p:panelGrid columns="3" layout="tabular"
+                 class="surface-card shadow-1 p-0 text-800"
+                 style="width: 90%; margin-bottom: 20px">
+
+        <h:panelGroup layout="block" style="width:200px">
+            <h:outputText style="font-weight: bold"
+                          value="Low-quality filter"/>
+        </h:panelGroup>
+        <h:panelGrid>
+            <h:panelGroup layout="block">
+                <p:selectBooleanCheckbox value="#{procBean.doBlankSub}"
+                                         disabled="#{not sessionBean1.containsBlank}"
+                                         itemLabel="#{procBean.blankLbl}"
+                                         style="line-height: 18px"/>
+                <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                <p:tooltip for="formatIcon3" styleClass="helpTip">
+                    <p>
+                        The is based on the ratio of the average intensity of the samples to that of the BLANK samples.
+                        <ol>
+                            <li>
+                                A ratio threshold is automatically estimated using a kernel density estimation model. 
+                                If the estimation fails, the user-defined threshold will be used instead
+                            </li>
+                            <li>
+                                All features are evaluated by calculating the ratio of sample (non-BLANK) intensities to BLANK 
+                                sample intensities 
+                            </li>
+                            <li>
+                                Features with ratios below the threshold will be removed 
+                            </li>
+                        </ol>
+                    </p>
+                </p:tooltip>
+            </h:panelGroup>
+            <hr/>
+            <h:panelGroup layout="block">
+                <p:selectBooleanCheckbox id="missingChk"
+                                         value="#{procBean.removeMissing}"
+                                         disabled ="#{sessionBean1.missingDisabled}"
+                                         itemLabel="#{procBean.missingLbl}"
+                                         style="line-height: 18px"/>
+            </h:panelGroup>
         </h:panelGrid>
-        <h:panelGrid columns="2" style="padding: 20px;">
+        <h:panelGrid>
+            <h:outputText style="font-weight: bold" value="For blank substraction: "/>
+            <h:panelGrid columns="4" style="padding: 10px;">
+                <h:outputText value="Sample/blank ratio threshold:"/>
+                <h:inputHidden id="txtBlank" value="#{procBean.blankCutoff}"/>
+                <p:slider for="txtBlank" display="outputBlank"
+                          minValue="2" maxValue="100"
+                          disabled="#{not sessionBean1.containsBlank}"
+                          style="width:160px; margin-left:4px; margin-right:6px"
+                          displayTemplate="{value}"/>
+                <h:outputText id="outputBlank"
+                              value="#{procBean.blankCutoff}"/>
+            </h:panelGrid>
+            <hr/>
+            <h:outputText style="font-weight: bold;" value="For missing value exclusion: "/>
+            <h:panelGrid columns="3" style="padding: 10px;">
+                <p:outputLabel value="Remove features with &gt;"/>
+                <p:inputText style="width:50px" 
+                             disabled ="#{sessionBean1.missingDisabled}"
+                             value="#{procBean.missingPercent}"/>
+                <p:outputLabel value=" %"/>
+
+                <p:outputLabel for="grpWiseChk"
+                               value="Use group-wise threshold"
+                               style="margin-top:8px;"/>
+                <p:selectBooleanCheckbox id="grpWiseChk"
+                                         disabled ="#{sessionBean1.missingDisabled}"
+                                         value="#{procBean.grpMissFilter}"/>
+                <p:commandLink value="View" style="text-decoration: underline;"
+                               disabled ="#{sessionBean1.missingDisabled}"
+                               actionListener="#{procBean.imputeButton_action('orig')}"
+                               onclick="PF('statusDialog').show();"
+                               oncomplete="PF('statusDialog').hide();PF('missDialog').show()"/>  
+            </h:panelGrid>
+        </h:panelGrid>
+
+        <h:outputText style="font-weight: bold" value="Low-repeatability filter"/>
+
+        <p:selectBooleanCheckbox value="#{procBean.doQCFiltering}" 
+                                 disabled="#{not sessionBean1.containsQC}"
+                                 itemLabel="#{procBean.qcLbl}"
+                                 style="line-height: 18px"/> 
+
+        <h:panelGrid columns="5" style="padding: 10px;">
             <h:outputText value="RSDs greater than:"/>
             <h:inputHidden id="txt2" value="#{procBean.qcCutoff}"/> 
             <p:slider for="txt2" minValue="10" maxValue="60" display="output" 
+                      disabled="#{not sessionBean1.containsQC}"
                       style="width:100px; margin-left: 4px; margin-right: 6px" 
                       displayTemplate="{value}%"/>
             <h:outputText id="output" value="#{procBean.qcCutoff}%"/>
+            <p:commandLink value="View" style="text-decoration: underline;"
+                           onclick="PF('statusDialog').show();"
+                           disabled="#{not sessionBean1.containsQC}"
+                           oncomplete="PF('statusDialog').hide();PF('rsdDialog').show()"   
+                           update=":hisTab:cmdPane"
+                           actionListener="#{procBean.viewRsdPlot()}"/>  
         </h:panelGrid>
 
-        <h:outputText style="font-weight: bold" value="Variance filter:"/>
+        <h:outputText style="font-weight: bold" value="Low-variance filter"/>
         <p:selectOneRadio layout="pageDirection" value="#{procBean.varFilterOpt}" style="font:Arial,sans-serif; font-size: 13px" styleClass="hideDisabled">
             <f:selectItem itemLabel="Interquantile range (IQR)" itemValue="iqr" /> 
             <f:selectItem itemLabel="Standard deviation (SD)" itemValue="sd" /> 
@@ -28,7 +115,7 @@
             <f:selectItem itemLabel="Relative standard deviation (RSD = SD/mean)" itemValue="rsd" /> 
             <f:selectItem itemLabel="Non-parametric relative standard deviation (MAD/median)" itemValue="nrsd" /> 
         </p:selectOneRadio>
-        <h:panelGrid columns="2" style="padding: 20px;">
+        <h:panelGrid columns="2" style="padding: 10px;">
             <h:outputText value="Percentage to filter out:"/>
             <h:inputHidden id="txt3" value="#{procBean.filterCutoff}"/>
             <p:slider for="txt3" display="output1" style="width: 160px" 
@@ -37,12 +124,12 @@
             <h:outputText id="output1" value="#{procBean.filterCutoff}%"/>
         </h:panelGrid>
 
-        <h:outputText style="font-weight: bold" value="Abundance filter:"/>
+        <h:outputText style="font-weight: bold" value="Low-abundance filter"/>
         <p:selectOneRadio layout="pageDirection" value="#{procBean.intFilterOpt}" style="font:Arial,sans-serif; font-size: 13px" styleClass="hideDisabled">
             <f:selectItem itemLabel="Mean intensity value" itemValue="mean" /> 
             <f:selectItem itemLabel="Median intensity value" itemValue="median" /> 
         </p:selectOneRadio>
-        <h:panelGrid columns="2" style="padding: 20px;">
+        <h:panelGrid columns="2" style="padding: 10px;">
             <h:outputText value="Percentage to filter out:"/>
             <h:inputHidden id="txt4" value="#{procBean.intFilterCutoff}"/>
             <p:slider for="txt4" display="output2" style="width: 160px" 

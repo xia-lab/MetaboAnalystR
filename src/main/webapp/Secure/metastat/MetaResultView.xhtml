@@ -95,8 +95,10 @@
         <p:dialog widgetVar="visDialog" dynamic="true" modal="true" appendTo="@(body)" 
                   header="Feature View"
                   hideEffect="explode" resizable="true" position="center top"> 
-            <h:panelGrid id="metaVisView" style="width:500px; text-align: center; padding: 10px">
-                <p:graphicImage value="#{metaResBean.currentFeatureImg}" /> 
+            <h:panelGrid id="metaVisView" style="text-align: center; padding: 10px">
+                <p:graphicImage 
+                    style="#{sessionBean1.cmpdImgSize}"
+                    value="#{metaResBean.currentFeatureImg}" /> 
                 Values were scaled to facilitate cross-study comparisons.
             </h:panelGrid>
         </p:dialog> 

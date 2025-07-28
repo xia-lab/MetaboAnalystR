@@ -6,14 +6,16 @@
 package pro.metaboanalyst.controllers.stats;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
+import java.io.Serializable;
 import jakarta.inject.Named;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.controllers.multifac.LivePCABean;
 import pro.metaboanalyst.rwrappers.ChemoMetrics;
+import pro.metaboanalyst.rwrappers.TimeSeries;
 
 /**
  *
@@ -23,6 +25,7 @@ import pro.metaboanalyst.rwrappers.ChemoMetrics;
 @Named("pcaBean")
 public class PCABean implements Serializable {
 
+    @JsonIgnore
     @Inject
     private SessionBean1 sb;
 
@@ -48,10 +51,6 @@ public class PCABean implements Serializable {
 
     public void setCexOpt(String cexOpt) {
         this.cexOpt = cexOpt;
-    }
-
-    public void updateCexSize() {
-
     }
 
     public int getPcaPairNum() {
@@ -94,7 +93,8 @@ public class PCABean implements Serializable {
     }
 
     public String pcaPairBtn_action() {
-        ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 150, pcaPairNum);
+        //ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 150, pcaPairNum);
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair"), "pca_pair", "png", 150, pcaPairNum, "NA", "NA");
         return null;
     }
 
@@ -199,6 +199,33 @@ public class PCABean implements Serializable {
                 useGreyScale = 1;
             }
             ChemoMetrics.plotPCA2DScore(sb, sb.getNewImage("pca_score2d"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt);
+
+        }
+        return null;
+    }
+
+    @JsonIgnore
+    @Inject
+    private LivePCABean lb;
+
+    public String pcaScore2dBtn_meta_action() {
+        if (pcaScoreX == pcaScoreY) {
+            sb.addMessage("Error", "X and Y axes are of the same PC");
+        } else {
+            double conf = 0.95;
+            if (!displayConfs) {
+                conf = 0;
+            }
+            int showNames = 0;
+            if (displayNames) {
+                showNames = 1;
+            }
+
+            int useGreyScale = 0;
+            if (greyScale) {
+                useGreyScale = 1;
+            }
+            TimeSeries.plotPCA2DScoreMeta(sb, sb.getNewImage("pca_score2d"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt, lb.getColOpt(), lb.getShapeOpt());
 
         }
         return null;
@@ -342,6 +369,13 @@ public class PCABean implements Serializable {
         pcaLoadBtn_action();
         pcaBiplotBtn_action();
         pcaScore3dBtn_action(false);
+    }
+
+    public void flipPCAMeta() {
+        ChemoMetrics.flipPCA(sb, flipOpt);
+        pcaScore2dBtn_meta_action();
+        lb.pcaPairBtn_action();
+        TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", lb.getColOpt(), lb.getShapeOpt(), "blue");
     }
 
     private String flipOpt = "y";

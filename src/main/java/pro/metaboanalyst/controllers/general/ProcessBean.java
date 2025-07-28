@@ -98,6 +98,7 @@ public class ProcessBean implements Serializable {
 
     public void updateSmplGroup() {
         RDataUtils.setSampleGroups(sb.getRConnection(), sb.getSampleBeans(), selectedMetaData);
+        sanityChecked = false;
         performSanityCheck();
     }
 
@@ -121,7 +122,7 @@ public class ProcessBean implements Serializable {
         this.doQCFiltering = doQCFiltering;
     }
 
-    private int qcCutoff = 25;
+    private int qcCutoff = 20;
 
     public int getQcCutoff() {
         return qcCutoff;
@@ -131,13 +132,31 @@ public class ProcessBean implements Serializable {
         this.qcCutoff = qcCutoff;
     }
 
+    private boolean grpLod;
+
+    public boolean isGrpLod() {
+        return grpLod;
+    }
+
+    public void setGrpLod(boolean grpLod) {
+        this.grpLod = grpLod;
+    }
+
+    private boolean grpMeasure;
+    private boolean sanityChecked = false;
+    private boolean grpMissFilter = false;
+
+    public boolean isGrpMeasure() {
+        return grpMeasure;
+    }
+
+    public void setGrpMeasure(boolean grpMeasure) {
+        this.grpMeasure = grpMeasure;
+    }
+
     public void setMsgText(String msgText) {
         this.msgText = msgText;
     }
-
-    //note this is viewscoped; need to init when visit this page
-    private boolean sanityChecked = false;
-    private boolean grpMissFilter = false;
 
     public boolean isGrpMissFilter() {
         return grpMissFilter;
@@ -160,6 +179,11 @@ public class ProcessBean implements Serializable {
             System.out.println("sanity RC is null");
             return;
         }
+
+        if (sb.getAnalType().equals("mf")) {
+            editBnDisabled = true;
+        }
+
         ArrayList<String> msgVec = new ArrayList();
         String[] msgArray = null;
         metaDataSet = new ArrayList();
@@ -177,7 +201,6 @@ public class ProcessBean implements Serializable {
                         int featureNum = RDataUtils.getOrigFeatureNumber(RC);
                         sampleNum = RDataUtils.getSampleSize(RC);
                         sb.setupDataSize(featureNum, sampleNum);
-                        proceedBnDisabled = false;
 
                         DataModel ds = new DataModel(sb, "upload");
                         ds.setSmplNum(sampleNum);
@@ -261,7 +284,15 @@ public class ProcessBean implements Serializable {
                         sb.settingRoc1Col(featureNum);
                         proceedBnDisabled = false;
                         sb.setMissingDisabled(!RDataUtils.containMissing(RC));
+
+                        sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
+                        sb.setContainsQC(RDataUtils.getContainsQC(sb));
+
                         RCenter.recordMessage(RC, "Data integrity check - <b>passed</b>");
+
+                        sanityChecked = true;
+                        sb.setIntegChecked();
+
                     } else {
                         msgVec.add("Checking data content ...failed.");
                         msgArray = RDataUtils.getErrorMsgs(RC);
@@ -269,7 +300,6 @@ public class ProcessBean implements Serializable {
                         proceedBnDisabled = true;
                         RCenter.recordMessage(RC, "Data integrity check - <b>failed</b>");
                     }
-
                 }
             }
 
@@ -280,9 +310,6 @@ public class ProcessBean implements Serializable {
             RCenter.recordMessage(RC, "Data integrity check - <b>failed</b>");
         }
 
-        if (sb.getAnalType().equals("mf")) {
-            editBnDisabled = true;
-        }
         msgVec.addAll(Arrays.asList(msgArray));
         String msg;
         msg = "<table face=\"times\" size = \"3\">";
@@ -294,8 +321,6 @@ public class ProcessBean implements Serializable {
         }
         msg = msg + "</table>";
         msgText = msg;
-        sanityChecked = true;
-        sb.setIntegChecked();
         //System.out.println(msgText + "======msgText");
     }
 
@@ -310,7 +335,7 @@ public class ProcessBean implements Serializable {
     }
 
     public String getMissingMsgFilt() {
-        return missingMsgFilt;
+        return missNumMsg + " " + missingMsgFilt;
     }
 
     public void setMissingMsgFilt(String missingMsgFilt) {
@@ -329,15 +354,15 @@ public class ProcessBean implements Serializable {
         missNumMsg = RDataUtils.getMissNumMsg(sb.getRConnection());
 
         if (type.equals("orig")) {
-            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "png", 150);
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss"), "qc_miss", "png", 150);
             RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap"), "png", 150);
-            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap"));
+            //RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap"));
             missingMsg = RDataUtils.getMissingTestMsg(sb.getRConnection(), "orig");
 
         } else {
-            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "png", 150);
+            RDataUtils.plotMissingDistr(sb, sb.getNewImage("qc_miss_filt"), "qc_miss_filt", "png", 150);
             RDataUtils.plotMissingHeatmap(sb, sb.getNewImage("qc_missheatmap_filt"), "png", 150);
-            RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap_filt"));
+            //RDataUtils.exportMissingHeatmapJSON(sb, sb.getNewImage("qc_missheatmap_filt"));
             missingMsgFilt = RDataUtils.getMissingTestMsg(sb.getRConnection(), "filt");
 
         }
@@ -354,26 +379,6 @@ public class ProcessBean implements Serializable {
 
     public void setMissingMsg(String missingMsg) {
         this.missingMsg = missingMsg;
-    }
-
-    private boolean grpLod;
-
-    public boolean isGrpLod() {
-        return grpLod;
-    }
-
-    public void setGrpLod(boolean grpLod) {
-        this.grpLod = grpLod;
-    }
-
-    private boolean grpMeasure;
-
-    public boolean isGrpMeasure() {
-        return grpMeasure;
-    }
-
-    public void setGrpMeasure(boolean grpMeasure) {
-        this.grpMeasure = grpMeasure;
     }
 
     public String skipButton_action_default() {
@@ -461,6 +466,7 @@ public class ProcessBean implements Serializable {
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         if (!filtered) {
+            //perform default
             int res2 = RDataUtils.filterVariable(RC, doQC, qcCutoff, "none", -1, "mean", 0, "F", 10);
             if (res2 == 0) {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
@@ -486,20 +492,17 @@ public class ProcessBean implements Serializable {
             jrd.record_filterButton_action(this);
             return;
         }
+
         RConnection RC = sb.getRConnection();
         String doQC = "F";
         String doBlank = "F";
-        String msg = "QC filtering: none";
-        if (doQCFiltering) {
-            doQC = "T";
-            msg = "QC filtering: yes";
-        }
+        String msg;
 
         if (doBlankSub) {
             doBlank = "T";
-            msg = msg + "Blank subtraction: Yes. ";
+            msg = "Blank subtraction: Yes. ";
         } else {
-            msg = msg + "Blank subtraction: No. ";
+            msg = "Blank subtraction: No. ";
         }
 
         double percent = 1.0; // all missing to remove by default
@@ -538,7 +541,7 @@ public class ProcessBean implements Serializable {
             }
         }
         sb.setMissingDisabled(res2 == 2);
-        msg = msg + "; " + RDataUtils.getCurrentMsg(RC);
+        msg = msg + RDataUtils.getCurrentMsg(RC);
         sb.addMessage("OK", msg);
 
         String filterTotalMsg = RDataUtils.getFilterTotalMsg(RC);
@@ -736,7 +739,6 @@ public class ProcessBean implements Serializable {
         }
         String msg = RDataUtils.getReplaceMsg(RC);
         sb.addMessage("info", msg);
-        sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();

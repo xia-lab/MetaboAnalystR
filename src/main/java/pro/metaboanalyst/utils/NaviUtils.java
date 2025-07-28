@@ -101,14 +101,9 @@ public class NaviUtils {
                 TreeNode nodep2 = new DefaultTreeNode("Data check", processNode);
                 TreeNode nodep3 = new DefaultTreeNode("Name check", processNode);
             }
-            case "time" -> {
-                listInput = true;
+            case "time", "mf" -> {
                 TreeNode nodep211 = new DefaultTreeNode("Data check", processNode);
                 TreeNode nodep212 = new DefaultTreeNode("Metadata check", processNode);
-                TreeNode nodep6 = new DefaultTreeNode("Data filter", processNode);
-                TreeNode nodep5 = new DefaultTreeNode("Missing value", processNode);
-                TreeNode nodep7 = new DefaultTreeNode("Data editor", processNode);
-                TreeNode normNode = new DefaultTreeNode("Normalization", parent);
             }
             case "stat-peak" -> {
                 TreeNode nodep3 = new DefaultTreeNode("Pre-process", processNode);

@@ -17,7 +17,7 @@
             <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
         </f:facet>
         <title>MetaboAnalyst Pro</title>
-        <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/xialab_style_2.5.css" />
+        <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/xialab_style_2.6.css" />
 
         <!-- Google tag (gtag.js) -->
         <script async='async' src="https://www.googletagmanager.com/gtag/js?id=G-WNPNCNH1RT"></script>
@@ -230,12 +230,10 @@
     <h:body styleClass="#{guestPreferences.inputStyleClass}">
         <h:form id="formHidden">
             <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
-
         </h:form>
-        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
-
 
         <div class="layout-wrapper #{guestPreferences.layoutClass} #{guestPreferences.sidebarThemeClass}"
              data-theme="#{guestPreferences.menuTheme}">

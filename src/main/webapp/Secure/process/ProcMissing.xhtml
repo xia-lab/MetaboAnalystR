@@ -15,90 +15,92 @@
     </ui:define>
     <ui:define name="content">
         <h:inputHidden id="myjson" value="#{sessionBean1.getJsonDir('qc_missheatmap_filt')}" />  
-        <h:form>
-            <h:panelGrid style="padding:30px 40px 20px 50px; font-size: 13px; line-height: 23px; width: 95%; ">
-                <h2>Missing value estimation:</h2>
-                <p>
-                    Too many missing values will cause difficulties for downstream analysis. There are three general categories for missing value imputation. 
-                    <ul>
-                        <li>
-                            <b>Left-censored data estimation</b>: it assumes that the true value of an observation is known to be below a certain threshold (the LoD), 
-                            but its exact value is unknown. The default method LoD (limit of detection) will replace
-                            all the missing values with 1/5 of the minimum positive values of individual features as proxies of their detection limits. 
-                            Alternatively, the Quantile Regression Imputation of Left-Censored data (QRILC) method which imputes missing data by modeling each 
-                            feature’s low tail as log-normal and sampling replacements.
-                        </li>
-                        <li>
-                            <b>Univariate statistical methods</b>: this approach replaces missing values by mean/median/min based on the non-missing values of the feature;
-                        </li>
-                        <li>   
-                            <b>Multivariate statistical methods</b>: these methods leverage correlations between features or samples to estimate the missing entries, including k-nearest neighbours based on similar features 
-                            - KNN (feature-wise), k-nearest neighbours based on similar samples - KNN (sample-wise), probabilistic PCA (PPCA), 
-                            Bayesian PCA (BPCA) method, singular value decomposition (SVD) (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref</a>), 
-                            and <i>missForest</i> based on random forest(<a href="https://doi.org/10.1093/bioinformatics/btr597" target="_blank">ref</a>). 
-                            Note k is set to 10 for KNN; the max missing values is set to 30000 for missForest due to its computational intensive nature.
-                        </li>
-                    </ul>
-                </p>
 
-                <p:tabView id="ac" dynamic="true" cache="true">
+        <h:panelGrid styleClass="my-content-panel">
+            <h2>Missing value estimation:</h2>
+            <p>
+                Too many missing values will cause difficulties for downstream analysis. There are three general categories for missing value imputation. 
+                <ul>
+                    <li>
+                        <b>Left-censored data estimation</b>: it assumes that the true value of an observation is known to be below a certain threshold (the LoD), 
+                        but its exact value is unknown. The default method LoD (limit of detection) will replace
+                        all the missing values with 1/5 of the minimum positive values of individual features as proxies of their detection limits. 
+                        Alternatively, the Quantile Regression Imputation of Left-Censored data (QRILC) method which imputes missing data by modeling each 
+                        feature’s low tail as log-normal and sampling replacements.
+                    </li>
+                    <li>
+                        <b>Univariate statistical methods</b>: this approach replaces missing values by mean/median/min based on the non-missing values of the feature;
+                    </li>
+                    <li>   
+                        <b>Multivariate statistical methods</b>: these methods leverage correlations between features or samples to estimate the missing entries, including k-nearest neighbours based on similar features 
+                        - KNN (feature-wise), k-nearest neighbours based on similar samples - KNN (sample-wise), probabilistic PCA (PPCA), 
+                        Bayesian PCA (BPCA) method, singular value decomposition (SVD) (<a href="http://www.ncbi.nlm.nih.gov/pubmed/17344241">ref</a>), 
+                        and <i>missForest</i> based on random forest(<a href="https://doi.org/10.1093/bioinformatics/btr597" target="_blank">ref</a>). 
+                        Note k is set to 10 for KNN; the max missing values is set to 30000 for missForest due to its computational intensive nature.
+                    </li>
+                </ul>
+            </p>
 
-                    <!-- First Tab: Existing Content -->
-                    <p:tab title="Missing Value Summary">
-                        <p>
-                            <h:outputText value="#{procBean.missNumMsg}" style="font-size: 14px; color:darkorange" escape="false"/> &nbsp;
-                            <h:outputText value="#{procBean.missingMsgFilt}" style="font-size: 14px; color:darkorange" escape="false"/> 
-                        </p>
-                        <p>
-                            When the percentage of missing values or average abundance differs significantly across
-                            experimental groups, it suggests there are systematic differences in samples across groups ('batch effect'). 
-                            <b>Sample-wise normalization</b> such as normalize by mean, median, sum or probabilistic quotient normalization (PQR) are 
-                            recommended before transformation or scaling. 
-                        </p>
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss_filt')}"
-                                       update=":myGraphPane"
-                                       style="margin-left: 70%"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customise the graphics output">
-                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                        </p:commandLink>
+            <p>
+                <h:outputText value="#{procBean.missingMsgFilt}" style="font-size: 14px; color:darkorange" escape="false"/> 
+            </p>
+            <p:tabView id="ac" dynamic="true" cache="true">
 
-                        <img onerror="this.style.display='none'"
-                             src="#{sessionBean1.getCurrentImageURL('qc_miss_filt')}"
-                             alt="Missing-value lollipop plot"
-                             style="width:7in;"/>
-                    </p:tab>
+                <!-- First Tab: Existing Content -->
+                <p:tab title="Missing Value Summary">
+                    <p>
+                        When the percentage of missing values or average abundance differs significantly across
+                        experimental groups, it suggests there are systematic differences in samples across groups ('batch effect'). 
+                        <b>Sample-wise normalization</b> such as normalize by mean, median, sum or probabilistic quotient normalization (PQR) are 
+                        recommended before transformation or scaling. 
+                    </p>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_miss_filt')}"
+                                   update=":myGraphPane"
+                                   style="margin-left: 70%"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customise the graphics output">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                    </p:commandLink>
 
-                    <!-- Second Tab: Missing Value Heatmap -->
-                    <p:tab title="Missing Value Heatmap">
-                        <p>
-                            This heatmap shows the missing value distribution across all samples and features. 
-                            Patterns such as group-specific missingness or sample-level artifacts can be quickly identified. 
-                            For large data, only the <b>first 50 samples</b> are shown.
-                        </p>
+                    <img onerror="this.style.display='none'"
+                         src="#{sessionBean1.getCurrentImageURL('qc_miss_filt')}"
+                         alt="Missing-value lollipop plot"
+                         style="width:7in;"/>
+                </p:tab>
 
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_missheatmap_filt')}"
-                                       update=":myGraphPane"
-                                       style="margin-left: 70%"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customise the graphics output">
-                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                        </p:commandLink>
+                <!-- Second Tab: Missing Value Heatmap -->
+                <p:tab title="Missing Value Heatmap">
+                    <p>
+                        This heatmap shows the missing value distribution across all samples and features. 
+                        Patterns such as group-specific missingness or sample-level artifacts can be quickly identified. 
+                        For large data, only the <b>top 40 samples</b> (with most missing values) are shown. Use your mouse 
+                        to <u>pan and zoom</u> to see more details of the sample names. 
+                    </p>
 
-                        <div id="qc_missheatmap" style="width:800px; height:540px;"></div>
-                        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/miss_heatmap.js"></script>
-                    </p:tab>
-                </p:tabView>
+                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('qc_missheatmap_filt')}"
+                                   update=":myGraphPane"
+                                   style="margin-left: 70%"
+                                   oncomplete="PF('graphDialog').show()"
+                                   title="Customise the graphics output">
+                        <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                    </p:commandLink>
+
+                    <div id="qc_missheatmap" style="width:800px; height:540px;"></div>
+                    <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/miss_heatmap.js"></script>
+                </p:tab>
+            </p:tabView>
+
+            <h3>
+                Please choose a method below
+            </h3>
+
+            <h:form id="mainForm">
 
                 <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
                     <f:selectItem itemLabel="Replace by a small value" itemValue="leftCensor"/>                         
                     <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
                     <f:selectItem itemLabel="Impute" itemValue="impute"/> 
                 </p:selectOneRadio>
-
-                <h3>
-                    Please choose a method below
-                </h3>
                 <h:panelGrid columns="3" class="surface-card shadow-1 p-4 text-800"
                              style="width: 800px; margin-bottom: 20px;">
 
@@ -134,8 +136,9 @@
                         <f:selectItem itemLabel="missForest" itemValue="missForest"/> 
                     </p:selectOneMenu>
                 </h:panelGrid>
-            </h:panelGrid>
-        </h:form>
+            </h:form>
+        </h:panelGrid>
+
     </ui:define>
 
 
@@ -145,6 +148,7 @@
                 <p:commandButton value="Submit" style="width:120px"
                                  onclick="PF('statusDialog').show()"
                                  oncomplete="PF('statusDialog').hide()"   
+                                 process="mainForm @this"
                                  update=":hisTab:cmdPane :southform"
                                  actionListener="#{procBean.performMissingImpute()}"/>   
                 <p:commandButton value="Proceed"  

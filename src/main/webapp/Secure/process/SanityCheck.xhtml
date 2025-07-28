@@ -34,35 +34,9 @@
 
             <h:form id="form1">
                 <h:panelGrid columns="2">
-                    <h:panelGrid style="padding-right: 20px">
-                        <h:panelGrid style="margin-left: 20px; border: solid gray thin; padding: 20px; width: 780px" class="surface-card surface-border shadow-1 p-4 text-800">
-                            <h:outputLabel value="#{procBean.msgText}" escape="false"/>
-                        </h:panelGrid>
-                        <h:panelGrid id="btnPane" columns="5" style="width: 780px; text-align: center; padding-left: 60px; padding-top: 20px; padding-right: 40px">        
-
-                            <p:commandButton value="View Data"  style="width:150px;" 
-                                             icon="pi pi-external-link"
-                                             onclick="PF('viewDataDialog').show()"/>
-
-                            <p:commandButton value="Edit Groups" style="width:120px;" 
-                                             onclick="PF('smplGrpDialog').show()"
-                                             disabled="#{procBean.editBnDisabled}"
-                                             update="smplGrpForm"/>
-                        
-                            <p:commandButton value="Proceed" style="width:120px;"
-                                             ajax="false"
-                                             onclick="PF('statusDialog').show()"
-                                             disabled="#{procBean.proceedBnDisabled}"
-                                             icon="pi pi-caret-right"
-                                             rendered="#{!sessionBean1.isBatchProject}"
-                                             action="#{procBean.skipButton_action_default()}"/>
-                            
-                            <p:commandButton value="Proceed" style="width:120px;"
-                                             disabled="#{procBean.proceedBnDisabled}"
-                                             icon="pi pi-caret-right"
-                                             rendered="#{sessionBean1.isBatchProject}"
-                                             onclick="PF('fireBatchSaveDialog').show()"/>
-                        </h:panelGrid> 
+                    <h:panelGrid style="margin-left: 20px; border: solid gray thin; padding: 20px; width: 780px" 
+                                 class="surface-card surface-border shadow-1 p-4 text-800">
+                        <h:outputLabel value="#{procBean.msgText}" escape="false"/>
                     </h:panelGrid>
                     <p:commandButton styleClass="btnCirc ui-button-help"
                                      rendered="false"
@@ -122,7 +96,7 @@
                     <h:panelGrid columns="2" style="width:100%; font-size: 14px; text-align: center">
                         <p:commandButton value="Update" 
                                          actionListener="#{procBean.updateSmplGroup()}" 
-                                         update=":form1"
+                                         update=":form1 :southform"
                                          onclick="PF('smplGrpDialog').hide()"/>
                         <p:commandButton value="Cancel" onclick="PF('smplGrpDialog').hide()"/>
                     </h:panelGrid> 
@@ -131,7 +105,7 @@
         </p:dialog>
 
         <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
-                  width="800px" hideEffect="explode" resizable="true">
+                  width="880px" hideEffect="explode" resizable="true">
             <p>
                 Your uploaded (raw) data are shown below for manual inspection. It represents the computer's view of your data. 
                 The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
@@ -152,5 +126,35 @@
             <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
 
         </p:dialog>
+    </ui:define>
+
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="3" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px; padding-left: 10%; padding-right: 10%">
+
+                <p:commandButton value="View Data"  style="width:150px;" 
+                                 icon="pi pi-external-link"
+                                 onclick="PF('viewDataDialog').show()"/>
+
+                <p:commandButton value="Edit Groups" style="width:120px;" 
+                                 onclick="PF('smplGrpDialog').show()"
+                                 rendered="#{!procBean.editBnDisabled}"
+                                 update=":smplGrpForm :southform"/>
+
+                <p:commandButton value="Proceed" style="width:120px;"
+                                 ajax="false"
+                                 onclick="PF('statusDialog').show()"
+                                 disabled="#{procBean.proceedBnDisabled}"
+                                 icon="pi pi-caret-right"
+                                 rendered="#{!sessionBean1.isBatchProject}"
+                                 action="#{procBean.skipButton_action_default()}"/>
+
+                <p:commandButton value="Proceed" style="width:120px;"
+                                 disabled="#{procBean.proceedBnDisabled}"
+                                 icon="pi pi-caret-right"
+                                 rendered="#{sessionBean1.isBatchProject}"
+                                 onclick="PF('fireBatchSaveDialog').show()"/>
+            </h:panelGrid> 
+        </h:form>
     </ui:define>
 </ui:composition>

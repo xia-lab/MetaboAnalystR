@@ -1791,6 +1791,9 @@ public class SessionBean1 implements Serializable {
         }
 
         notice.add(pre + msg + "</font>");
+        
+        //make sure to update
+        PrimeFaces.current().ajax().update("globalGrowl");
     }
 
     //relay center
