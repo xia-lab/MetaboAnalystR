@@ -259,8 +259,7 @@ public class RSpectraUtils {
             return 0;
         }
     }
-    
-    
+
     public static int getExposomeRawData(RConnection RC, String homedir) {
         try {
             int res = RC.eval("getExposomeRawData(\"" + homedir + "\");").asInteger();
@@ -270,7 +269,6 @@ public class RSpectraUtils {
             return 0;
         }
     }
-
 
     public static String[] getResSummaryMsg(RConnection RC) {
         try {
@@ -927,6 +925,107 @@ public class RSpectraUtils {
         } catch (Exception e) {
             LOGGER.error("DownloadAnMS2File", e);
         }
+    }
+
+    public static String[] extratExposomeClassName(RConnection RC, String group) {
+        try {
+            String[] res = RC.eval("extratExposomeClassName(\"" + group + "\")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extratExposomeClassName", e);
+        }
+        return null;
+    }
+
+    public static String[] generateCols(RConnection RC, int number) {
+        try {
+            String[] res = RC.eval("generateCols(" + number + ")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("generateCols", e);
+        }
+        return null;
+    }
+
+    //extratExposomeClassNumber
+    public static double[] extratExposomeClassNumber(RConnection RC, String number) {
+        try {
+            double[] res = RC.eval("extratExposomeClassNumber(\"" + number + "\")").asDoubles();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extratExposomeClassNumber", e);
+        }
+        return null;
+    }
+
+    public static String[] extratMetabolomeClassName(RConnection RC, String group, String level, double taxa_featPerctPie) {
+        try {
+            String[] res = RC.eval("extratMetabolomeClassName(\"" + group + "\",\"" + level + "\", " + taxa_featPerctPie + ")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extratMetabolomeClassName", e);
+        }
+        return null;
+    }
+
+    public static double[] extratMetabolomeClassNumber(RConnection RC, String group, String level, double taxa_featPerctPie) {
+        try {
+            double[] res = RC.eval("extratMetabolomeClassNumber(\"" + group + "\",\"" + level + "\", " + taxa_featPerctPie + ")").asDoubles();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extratMetabolomeClassNumber", e);
+        }
+        return null;
+    }
+
+    public static int checkMS2annotationExists(RConnection RC, int feature_idx) {
+        try {
+            int res = RC.eval("checkMS2annotationExists(" + feature_idx + ")").asInteger();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("checkMS2annotationExists", e);
+        }
+        return 0;
+    }
+
+    public static double[] extractSimScores(RConnection RC, int feature_idx, int topN) {
+        try {
+            double[] res = RC.eval("extractSimScores(" + feature_idx + ", " + topN + ")").asDoubles();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extractSimScores", e);
+        }
+        return null;
+    }
+
+    public static String[] extractformulaNMs(RConnection RC, int feature_idx, int topN) {
+        try {
+            String[] res = RC.eval("extractformulaNMs(" + feature_idx + ", " + topN + ")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extractformulaNMs", e);
+        }
+        return null;
+    }
+
+    public static String[] extractcompoundNMs(RConnection RC, int feature_idx, int topN) {
+        try {
+            String[] res = RC.eval("extractcompoundNMs(" + feature_idx + ", " + topN + ")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extractcompoundNMs", e);
+        }
+        return null;
+    }
+
+    public static String[] extractInchikeys(RConnection RC, int feature_idx, int topN) {
+        try {
+            String[] res = RC.eval("extractInchikeys(" + feature_idx + ", " + topN + ")").asStrings();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("extractInchikeys", e);
+        }
+        return null;
     }
 
 }

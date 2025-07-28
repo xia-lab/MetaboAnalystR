@@ -266,7 +266,7 @@ public class SpectraControlBean implements Serializable {
                         getIncludedFileNamesString(), sparam.getMeth(), ab,
                         sb.getCurrentUser().getHomeDir());
             }
-
+            
             if (isms2) {
                 String db_str = sparam.getMsmsDBOpt();
                 System.out.println(" db_str 1 ====> " + db_str);
@@ -286,6 +286,8 @@ public class SpectraControlBean implements Serializable {
                         + ";intensity_threshold:" + sparam.getIntensity_threshold() + ";enabledDDADeco:" + sparam.isEnableDDADeco();
                 if (sparam.getTarget_omics().equals("exposomics")) {
                     params_str = params_str + ";omics_type:exposomics";
+                } else {
+                    params_str = params_str + ";omics_type:metabolomics";
                 }
                 // ms2DataOpt is -> dda
                 if (spb.getMs2DataOpt().equals("dda")) {

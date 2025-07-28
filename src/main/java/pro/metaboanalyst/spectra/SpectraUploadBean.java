@@ -518,8 +518,9 @@ public class SpectraUploadBean implements Serializable {
 
     
     private String uploadExposomeExample() throws REXPMismatchException {
-        if (!sb.isRegisteredLogin()) {
-            sb.doLogin("spec", "raw", false, false);
+        boolean ok = sb.doLogin("spec", "raw", false, false);
+        if (!ok) {
+            return null;
         }
         String datadir = "/home/glassfish/projects/Exposome_example/upload";
         String homeDir = sb.getCurrentUser().getHomeDir();

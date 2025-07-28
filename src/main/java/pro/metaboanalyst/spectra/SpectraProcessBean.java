@@ -23,6 +23,7 @@ import pro.metaboanalyst.utils.DataUtils;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.model.ListDataModel;
+import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.File;
@@ -40,6 +41,10 @@ import pro.metaboanalyst.models.MS2ResutlsBean;
 import pro.metaboanalyst.models.SwathBean;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
+import software.xdev.chartjs.model.charts.PieChart;
+import software.xdev.chartjs.model.color.RGBAColor;
+import software.xdev.chartjs.model.data.PieData;
+import software.xdev.chartjs.model.dataset.PieDataset;
 
 /**
  * @author qiang
@@ -70,10 +75,10 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private ApplicationBean1 ab;
 
-        @JsonIgnore
+    @JsonIgnore
     @Inject
     private JavaRecord jrd;
-        
+
     /// 1.3 PCA -3D Json File
     String featureNM = "";
     // Section 1 : Plotting function -----------------------
@@ -164,6 +169,7 @@ public class SpectraProcessBean implements Serializable {
         this.exposome_details = exposome_details;
     }
 
+    @JsonIgnore 
     private static String get_specific_exposome_details(int resnum, int subidx, String ft_label, RConnection RC) {
         System.out.println("get_specific_exposome_details --  resnum ====> " + resnum);
         System.out.println("get_specific_exposome_details --  subidx ====> " + subidx);
@@ -1667,6 +1673,217 @@ public class SpectraProcessBean implements Serializable {
         return "swath".equals(ms2DataOpt);
     }
 
+    private String selTaxaLevelPieProj = "Classes";
+
+    public String getSelTaxaLevelPieProj() {
+        return selTaxaLevelPieProj;
+    }
+
+    public void setSelTaxaLevelPieProj(String selTaxaLevelPieProj) {
+        this.selTaxaLevelPieProj = selTaxaLevelPieProj;
+    }
+
+    private double taxa_featPerctPie = 0.01;
+
+    public double getTaxa_featPerctPie() {
+        return taxa_featPerctPie;
+    }
+
+    public void setTaxa_featPerctPie(double taxa_featPerctPie) {
+        this.taxa_featPerctPie = taxa_featPerctPie;
+    }
+
+    private String currentGroup = "All";
+
+    public String getCurrentGroup() {
+        return currentGroup;
+    }
+
+    public void setCurrentGroup(String currentGroup) {
+        this.currentGroup = currentGroup;
+    }
+
+    private String currentGroup2 = "All";
+
+    public String getCurrentGroup2() {
+        return currentGroup2;
+    }
+
+    public void setCurrentGroup2(String currentGroup2) {
+        this.currentGroup2 = currentGroup2;
+    }
+
+    public int preparePiechart(int mode) {
+        // mode 0 : metabolome
+        // mode 1 : exposome
+        RConnection RC = sb.getRConnection();
+
+        String[] nodeIDs, cols;
+        double[] portions;
+
+        if (mode == 0) {
+            // metabolome
+            nodeIDs = RSpectraUtils.extratMetabolomeClassName(RC, "All", selTaxaLevelPieProj, taxa_featPerctPie);
+            cols = RSpectraUtils.generateCols(RC, nodeIDs.length);
+            portions = RSpectraUtils.extratMetabolomeClassNumber(RC, "All", selTaxaLevelPieProj, taxa_featPerctPie);
+        } else {
+            // exposome
+            nodeIDs = RSpectraUtils.extratExposomeClassName(RC, "All");
+            cols = RSpectraUtils.generateCols(RC, nodeIDs.length);
+            portions = RSpectraUtils.extratExposomeClassNumber(RC, "All");
+        }
+
+        String pieModelx;
+
+        pieModelx = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(300, 50, 100)
+                                .addBackgroundColors(new RGBAColor(255, 99, 132), new RGBAColor(54, 162, 235), new RGBAColor(255, 205, 86))
+                        )
+                        .setLabels("Red", "Blue", "Yellow"))
+                .toJson();
+
+        List<String> bgColors = new ArrayList<>();
+        List<Number> values = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+
+        System.out.println("nodeIDs ==> " + nodeIDs.length);
+        System.out.println("cols ==> " + cols.length);
+        System.out.println("portions ==> " + portions.length);
+
+        for (int i = 0; i < portions.length; i++) {
+            bgColors.add(cols[i]);
+            values.add(portions[i]);
+            labels.add(nodeIDs[i]);
+        }
+//        dataSet.setBackgroundColor(bgColors);
+//        dataSet.setData(values);
+//
+//        data.addChartDataSet(dataSet);
+//        data.setLabels(labels);
+//        pieModel1.setData(data);
+//
+//        PieChartOptions options = new PieChartOptions();
+//        Legend legend = new Legend();
+//        legend.setDisplay(true);
+//        legend.setPosition("right");
+//        options.setLegend(legend);
+//
+//        pieModel1.setOptions(options);
+        if (mode == 0) {
+            setPieModel0(pieModelx);
+        } else {
+            setPieModel(pieModelx);
+        }
+        return 0;
+    }
+
+    public int updateMetabolomePiechartProj() {
+        preparePiechart(0);
+        return 0;
+    }
+
+    public int updateExposomePiechartProj() {
+        preparePiechart(1);
+        return 0;
+    }
+
+    private String pieModel;
+
+    public String getPieModel() {
+        return pieModel;
+    }
+
+    public void setPieModel(String pieModel) {
+        this.pieModel = pieModel;
+    }
+
+    private String pieModel0;
+
+    public String getPieModel0() {
+        return pieModel0;
+    }
+
+    public void setPieModel0(String pieModel0) {
+        this.pieModel0 = pieModel0;
+    }
+
+    @JsonIgnore
+    public SelectItem[] getTaxalvllower() {
+        String[] taxa1 = {"Kingdoms", "Super_classes", "Classes", "Sub_classes"};
+        SelectItem[] taxalvllower = new SelectItem[taxa1.length];
+        for (int j = 0; j < taxa1.length; j++) {
+            taxalvllower[j] = new SelectItem(taxa1[j], taxa1[j]);
+        }
+        return taxalvllower;
+    }
+
+    private String[] groupinfo_nms = {};
+
+    private String[] extractGrpInfo() {
+
+        String[] groupnames;
+
+        // Creates a new File instance by converting the given pathname string
+        // into an abstract pathname
+        String homeDir = sb.getCurrentUser().getHomeDir();
+        if (sc.isExecutExample()) {
+            if (Files.isDirectory(Paths.get("/Users/xia/Dropbox/"))) {
+                homeDir = "/Users/xia/Dropbox/Current/Test/MetaboDemoRawData/"; //xia office
+            } else if (Files.isDirectory(Paths.get("/Users/jeffxia/Dropbox/"))) {
+                homeDir = "/Users/jeffxia/Dropbox/Current/Test/MetaboDemoRawData/"; //xia laptop
+            } else { //public server
+                homeDir = "/home/glassfish/projects/MetaboDemoRawData/";
+            }
+        }
+
+        File f;
+        f = new File(homeDir + File.separator + "upload");
+
+        // Populates the array with names of files and directories
+        groupnames = f.list();
+        groupinfo_nms = groupnames;
+
+        return (groupnames);
+    }
+
+    @JsonIgnore 
+    public SelectItem[] getGrpInfo() {
+        String[] taxa1;
+        if (groupinfo_nms.length == 0) {
+            taxa1 = extractGrpInfo();
+        } else {
+            taxa1 = groupinfo_nms;
+        } //extractGrpInfo
+
+        int j = 0;
+        for (String taxa01 : taxa1) {
+            if (taxa01.equals("MS2")) {
+                continue;
+            }
+            if (taxa01.equals("QC")) {
+                continue;
+            }
+            j++;
+        }
+
+        SelectItem[] taxalvllower = new SelectItem[j + 1];
+        taxalvllower[0] = new SelectItem("All", "All");
+        int i = 1;
+        for (String taxa11 : taxa1) {
+            if (taxa11.equals("MS2")) {
+                continue;
+            }
+            if (taxa11.equals("QC")) {
+                continue;
+            }
+            taxalvllower[i] = new SelectItem(taxa11, taxa11);
+            i++;
+        }
+        return taxalvllower;
+    }
+
     private String mirrorplot_jsonNM;
 
     public String getMirrorplot_jsonNM() {
@@ -1717,6 +1934,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private StreamedContent singleMirrorImage, refSpecTxt, cmpdInfoTxt;
 
+    @JsonIgnore 
     public StreamedContent getSingleMirrorImage() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -1726,6 +1944,7 @@ public class SpectraProcessBean implements Serializable {
         return singleMirrorImage;
     }
 
+    @JsonIgnore 
     public StreamedContent getRefSpecTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -1735,6 +1954,7 @@ public class SpectraProcessBean implements Serializable {
         return refSpecTxt;
     }
 
+    @JsonIgnore 
     public StreamedContent getCmpdInfoTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
