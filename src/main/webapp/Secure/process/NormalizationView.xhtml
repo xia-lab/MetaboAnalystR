@@ -330,7 +330,7 @@
                 <p:commandButton style="width: 100px" value="Normalize" onclick="PF('statusDialog').show()" 
                                  oncomplete="PF('statusDialog').hide()" 
                                  process="mainForm @this"
-                                 update=":ac southform:viewBn southform:nextBn :hisTab:cmdPane :globalGrowl"
+                                 update=":ac southform:viewBn southform:nextBn :hisTab:cmdPane"
                                  actionListener="#{normBean.performDataNormalization()}"/>   
                 <p:commandButton id="viewBn" style="width: 120px" value="View Result" 
                                  onclick="PF('normResDialog').show()" disabled="#{not normBean.normPerformed}"/>
