@@ -350,26 +350,81 @@
                             </p:graphicImage>
                         </p:tab>
 
-                        <p:tab title="Exposome" rendered="#{spectraParamer.target_omics eq 'exposomics'}">
-                            <h:panelGrid columns = "2" style="text-align: right; position: absolute; top:55px; right:50px">
-                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('BPIcor')}" 
-                                               update=":myGraphPane"
-                                               oncomplete="PF('graphDialog').show()"
-                                               title="Customize the graphics output"
-                                               style = "padding-right: 80px">
-                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
-                                </p:commandLink>
-                                <p:graphicImage id="boxIcon6" url="/resources/images/ui-help.png" alt="help"/>
-                                <p:tooltip for="boxIcon6" styleClass="helpTip" style="width: 260px">
-                                    <p>
-                                        Summary of exposome classifications across different groups. 
-                                    </p>
-                                </p:tooltip>
+
+                        <p:tab title="Metabolome" rendered="#{spectraProcessor.isms2}">
+                            <p>
+                                Summary of Metabolome classifications across different groups. 
+                            </p>
+                            <h:panelGrid columns = "2" style="height: 410px; width:1200px">
+                                <h:panelGrid  style="height:400px; width:550px;">
+                                    <p:chart id="pie1" 
+                                                value="#{spectraProcessor.pieModel0}"  
+                                                style="height:400px; width:550px; border: none; text-align: left">
+                                    </p:chart>
+                                </h:panelGrid>
+                                <h:panelGrid columns = "2">
+                                    <h:panelGrid columns="2" style="width: 100%; padding-left: 20px;">
+                                        <p:outputLabel value="Groups:" style="font-weight: bold;"/>
+                                        <p:selectOneMenu id="grp80" value="#{spectraProcessor.currentGroup}">
+                                            <f:selectItems  value="#{spectraProcessor.grpInfo}"/>
+                                        </p:selectOneMenu>
+                                        <p:outputLabel value="Chemical taxonomic level:" style="font-weight: bold;"/>
+                                        <p:selectOneMenu id="grp8" value="#{spectraProcessor.selTaxaLevelPieProj}">
+                                            <f:selectItems  value="#{spectraProcessor.taxalvllower}"/>
+                                        </p:selectOneMenu>
+                                        <p:outputLabel value="Merge small taxa (as Others):" style="font-weight: bold"/>
+                                        <h:panelGrid columns="3" style="width:200px;">
+                                            <h:outputText value="percentage &lt;"/>
+                                            <p:inputText id="txt4" value="#{spectraProcessor.taxa_featPerctPie}" style="width:50px"/>
+                                            <h:outputText value="(0.0 - 0.5)" style="color:grey"/>
+                                        </h:panelGrid>
+                                    </h:panelGrid>
+                                    <h:panelGrid style="padding-left: 10px; padding-top: 20px;">
+                                        <p:commandButton id="grp9" 
+                                                         value="Update" 
+                                                         update="pie1" 
+                                                         onclick="PF('statusDialog').show()"
+                                                         oncomplete="PF('statusDialog').hide();"
+                                                         actionListener="#{spectraProcessor.updateMetabolomePiechartProj()}"/>
+                                    </h:panelGrid>
+                                </h:panelGrid>
                             </h:panelGrid>
-                            <p:graphicImage value="#{spectraProcessor.image}" style = "height: 486px;" cache="false">
-                                <f:param name="filename" value="exposome_cat_comparison.png" />
-                            </p:graphicImage>
                         </p:tab>
+
+                        <p:tab title="Exposome" rendered="#{spectraParamer.target_omics eq 'exposomics'}">
+                            <p>
+                                Summary of Exposome classifications across different groups. 
+                            </p>
+                            <h:panelGrid columns = "2" style="height: 410px; width:1050px">
+                                <h:panelGrid  style="height:400px; width:600px;">
+                                    <p:chart id="pie2" 
+                                                value="#{spectraProcessor.pieModel}"  
+                                                style="height:400px; width:600px; border: none; text-align: left">
+                                    </p:chart>
+                                </h:panelGrid>
+
+                                <h:panelGrid columns = "2">
+                                    <h:panelGrid columns="2" style="width: 100%; padding-left: 60px;">
+                                        <p:outputLabel value="Groups:" style="font-weight: bold;"/>
+                                        <p:selectOneMenu id="grp81" value="#{spectraProcessor.currentGroup2}">
+                                            <f:selectItems  value="#{spectraProcessor.grpInfo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGrid>
+                                    <h:panelGrid style="padding-left: 10px; padding-top: 20px;">
+                                        <p:commandButton id="grp91" 
+                                                         value="Update"
+                                                         update="pie2" 
+                                                         onclick="PF('statusDialog').show()"
+                                                         oncomplete="PF('statusDialog').hide();"
+                                                         actionListener="#{spectraProcessor.updateExposomePiechartProj()}"/>
+                                    </h:panelGrid>
+                                </h:panelGrid>
+
+                            </h:panelGrid>
+
+                        </p:tab>
+
+
                     </p:tabView>
                 </h:panelGrid>
                 <p:tabView widgetVar="tabWidget2" style="min-width: 1000px; width: 95%; text-align: left; border:none">
