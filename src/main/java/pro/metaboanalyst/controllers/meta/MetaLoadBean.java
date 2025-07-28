@@ -473,7 +473,7 @@ public class MetaLoadBean implements Serializable {
         }
         return dataSets;
     }
-
+    @JsonIgnore
     public List<DataModel> getMetaDataSets() {
         if (mDataSets == null) {
             mDataSets = new ArrayList();
@@ -490,6 +490,7 @@ public class MetaLoadBean implements Serializable {
 
     private List<DataModel> dataSetsInfo;
 
+    @JsonIgnore
     public List<DataModel> getDataSetsInfo() {
         if (dataSetsInfo == null || dataSetsInfo.isEmpty()) {
             dataSetsInfo = new ArrayList();
@@ -505,6 +506,7 @@ public class MetaLoadBean implements Serializable {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/MetaboAnalyst_merged_data.csv");
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getMetaResFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/meta_sig_features_" + analMethod + ".csv");
     }

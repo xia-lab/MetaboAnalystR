@@ -25,7 +25,7 @@ public class TimeSeries {
             System.out.println(rse);
         }
     }
-
+    
     public static void prepareLiveGraphics(RConnection RC, String urlPath, int inx) {
         try {
             String rCommand = "SetLiveGraphics(\"" + urlPath + "\", " + inx + ")";

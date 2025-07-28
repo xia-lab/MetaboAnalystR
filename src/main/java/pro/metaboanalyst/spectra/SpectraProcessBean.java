@@ -152,6 +152,7 @@ public class SpectraProcessBean implements Serializable {
         this.subidx_exp_current = subidx_exp_current;
     }
 
+    @JsonIgnore
     private String exposome_details = null;
 
     @JsonIgnore 
@@ -1658,6 +1659,7 @@ public class SpectraProcessBean implements Serializable {
 
     private boolean isms2 = !"ms1".equals(ms2DataOpt);
 
+    @JsonIgnore
     public boolean isIsms2() {
         return !"ms1".equals(ms2DataOpt);
     }
@@ -1666,6 +1668,7 @@ public class SpectraProcessBean implements Serializable {
         this.isms2 = isms2;
     }
 
+    @JsonIgnore
     public boolean isIsms2DIA() {
         return "swath".equals(ms2DataOpt);
     }
@@ -1891,6 +1894,7 @@ public class SpectraProcessBean implements Serializable {
         this.mirrorplot_jsonNM = mirrorplot_jsonNM;
     }
 
+    @JsonIgnore
     private String jsonDir;
 
     @JsonIgnore 

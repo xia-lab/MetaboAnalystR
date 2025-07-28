@@ -550,6 +550,7 @@ public class MetaPathStatBean implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public String getMetaResImage() throws IOException {
         String fileNM = sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("meta_bubble") + "dpi300.png";
         return (fileNM);

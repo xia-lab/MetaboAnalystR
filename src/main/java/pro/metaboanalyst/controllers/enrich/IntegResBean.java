@@ -105,6 +105,7 @@ public class IntegResBean implements Serializable {
         this.topoOpt = topoOpt;
     }
 
+    @JsonIgnore
     public MetSetBean[] getCurrentPathSet() {
         ArrayList<MetSetBean> libVec = new ArrayList();
         String[] details = REnrichUtils.getIntegHTMLPathSet(sb.getRConnection(), sb.getCurrentPathName());
@@ -237,6 +238,7 @@ public class IntegResBean implements Serializable {
 
     }
 
+    @JsonIgnore
     public String getPathDBOpt() {
         if (ipb.getDatatype().equals("peak")) {
             return "mgenetic";
@@ -248,6 +250,7 @@ public class IntegResBean implements Serializable {
         this.pathDBOpt = pathDBOpt;
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getDownloadPathwayFile() {
         if (ipb.getDatatype().equals("peak")) {
             return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/MetaboAnalyst_result_integ.csv");
@@ -255,6 +258,7 @@ public class IntegResBean implements Serializable {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/MetaboAnalyst_result_pathway.csv");
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getDownloadPathwayMatchingFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/jointpa_matched_features.csv");
     }

@@ -6,11 +6,12 @@
 package pro.metaboanalyst.controllers.stats;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.enterprise.context.RequestScoped;
 import java.io.Serializable;
 import jakarta.inject.Named;
 import jakarta.faces.model.SelectItem;
+import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
+import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.LivePCABean;
@@ -21,7 +22,7 @@ import pro.metaboanalyst.rwrappers.TimeSeries;
  *
  * @author jianguox
  */
-@RequestScoped
+@ViewScoped
 @Named("pcaBean")
 public class PCABean implements Serializable {
 
@@ -93,8 +94,7 @@ public class PCABean implements Serializable {
     }
 
     public String pcaPairBtn_action() {
-        //ChemoMetrics.plotPCAPairSummary(sb, sb.getNewImage("pca_pair"), "png", 150, pcaPairNum);
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair"), "pca_pair", "png", 150, pcaPairNum, "NA", "NA");
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"),"pca_pair", "png", 150, pcaPairNum, "NA", "NA");
         return null;
     }
 

@@ -148,7 +148,7 @@ public class DiagramView implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
-    
+
     @JsonIgnore
     private DefaultDiagramModel model;
     private boolean workflowFinished = false;
@@ -206,6 +206,7 @@ public class DiagramView implements Serializable {
         return executionMap;
     }
 
+    @JsonIgnore
     public Map<String, List<String>> getDependencyMap() {
         return dependencyMap;
     }
@@ -214,6 +215,7 @@ public class DiagramView implements Serializable {
         this.dependencyMap = dependencyMap;
     }
 
+    @JsonIgnore
     public Map<String, List<String>> getProcDependencyMap() {
         return procDependencyMap;
     }
@@ -254,6 +256,7 @@ public class DiagramView implements Serializable {
         this.thirdLevelNodes = thirdLevelNodes;
     }
 
+    @JsonIgnore
     public List<Element> getAllElements() {
         return allElements;
     }
@@ -282,6 +285,7 @@ public class DiagramView implements Serializable {
         this.input = input;
     }
 
+    @JsonIgnore
     public String getDependencyMapJson() {
         Gson gson = new Gson();
         JsonObject json = new JsonObject();
@@ -356,14 +360,14 @@ public class DiagramView implements Serializable {
         procDependencyMap = new HashMap<>();
         procDependencyMap.put("LC-MS Spectra", List.of(
                 "Spectra Processing",
-                "Missing Value",
                 "Data Filtering",
+                "Missing Value",
                 "Data Normalization"
         ));
         procDependencyMap.put("Compound Table", List.of(
                 "Name Mapping",
-                "Missing Value",
                 "Data Filtering",
+                "Missing Value",
                 "Data Normalization"
         ));
         procDependencyMap.put("Metabolite List", List.of(
@@ -373,13 +377,13 @@ public class DiagramView implements Serializable {
                 "Name Mapping"
         ));
         procDependencyMap.put("Generic Table", List.of(
-                "Missing Value",
                 "Data Filtering",
+                "Missing Value",
                 "Data Normalization"
         ));
         procDependencyMap.put("Peak Table", List.of(
-                "Missing Value",
                 "Data Filtering",
+                "Missing Value",
                 "Data Normalization"
         ));
         procDependencyMap.put("Peak List", List.of());
@@ -411,8 +415,8 @@ public class DiagramView implements Serializable {
 
     private List<String> secondLevelNodes = new ArrayList<>(List.of(
             "Spectra Processing",
-            "Missing Value",
             "Data Filtering",
+            "Missing Value",
             "Data Normalization",
             "Name Mapping",
             "Data Harmonization"
@@ -583,29 +587,29 @@ public class DiagramView implements Serializable {
 
         switch (input) {
             case "LC-MS Spectra" -> {
-                /*
-                connectNodes("LC-MS Spectra", EndPointAnchor.BOTTOM,
-                        "Spectra Processing", EndPointAnchor.TOP);
-                 */
+                // Spectra Processing → Data Filtering → Missing Value → Data Normalization
                 connectNodes("Spectra Processing", EndPointAnchor.RIGHT,
-                        "Missing Value", EndPointAnchor.LEFT);
-                connectNodes("Missing Value", EndPointAnchor.RIGHT,
                         "Data Filtering", EndPointAnchor.LEFT);
                 connectNodes("Data Filtering", EndPointAnchor.RIGHT,
+                        "Missing Value", EndPointAnchor.LEFT);
+                connectNodes("Missing Value", EndPointAnchor.RIGHT,
                         "Data Normalization", EndPointAnchor.LEFT);
                 toggleNodeVisibility("Name Mapping", false);
             }
+
             case "Compound Table" -> {
+                // Compound Table → Data Filtering → Missing Value → Data Normalization → Name Mapping
                 connectNodes("Compound Table", EndPointAnchor.BOTTOM,
-                        "Missing Value", EndPointAnchor.TOP);
-                connectNodes("Missing Value", EndPointAnchor.RIGHT,
-                        "Data Filtering", EndPointAnchor.LEFT);
+                        "Data Filtering", EndPointAnchor.TOP);
                 connectNodes("Data Filtering", EndPointAnchor.RIGHT,
+                        "Missing Value", EndPointAnchor.LEFT);
+                connectNodes("Missing Value", EndPointAnchor.RIGHT,
                         "Data Normalization", EndPointAnchor.LEFT);
                 connectNodes("Data Normalization", EndPointAnchor.RIGHT,
                         "Name Mapping", EndPointAnchor.LEFT);
                 toggleNodeVisibility("Spectra Processing", false);
             }
+
             case "Metabolite List" -> {
                 connectNodes("Metabolite List", EndPointAnchor.BOTTOM,
                         "Name Mapping", EndPointAnchor.TOP);
@@ -614,26 +618,31 @@ public class DiagramView implements Serializable {
                 toggleNodeVisibility("Spectra Processing", false);
                 toggleNodeVisibility("Missing Value", false);
             }
+
             case "Generic Table" -> {
+                // Generic Table → Data Filtering → Missing Value → Data Normalization
                 connectNodes("Generic Table", EndPointAnchor.BOTTOM,
-                        "Missing Value", EndPointAnchor.TOP);
-                connectNodes("Missing Value", EndPointAnchor.RIGHT,
-                        "Data Filtering", EndPointAnchor.LEFT);
+                        "Data Filtering", EndPointAnchor.TOP);
                 connectNodes("Data Filtering", EndPointAnchor.RIGHT,
+                        "Missing Value", EndPointAnchor.LEFT);
+                connectNodes("Missing Value", EndPointAnchor.RIGHT,
                         "Data Normalization", EndPointAnchor.LEFT);
                 toggleNodeVisibility("Name Mapping", false);
                 toggleNodeVisibility("Spectra Processing", false);
             }
+
             case "Peak Table" -> {
+                // Peak Table → Data Filtering → Missing Value → Data Normalization
                 connectNodes("Peak Table", EndPointAnchor.BOTTOM,
-                        "Missing Value", EndPointAnchor.TOP);
-                connectNodes("Missing Value", EndPointAnchor.RIGHT,
-                        "Data Filtering", EndPointAnchor.LEFT);
+                        "Data Filtering", EndPointAnchor.TOP);
                 connectNodes("Data Filtering", EndPointAnchor.RIGHT,
+                        "Missing Value", EndPointAnchor.LEFT);
+                connectNodes("Missing Value", EndPointAnchor.RIGHT,
                         "Data Normalization", EndPointAnchor.LEFT);
                 toggleNodeVisibility("Name Mapping", false);
                 toggleNodeVisibility("Spectra Processing", false);
             }
+
             case "Peak List" -> {
                 toggleNodeVisibility("Name Mapping", false);
                 toggleNodeVisibility("Spectra Processing", false);
@@ -656,16 +665,18 @@ public class DiagramView implements Serializable {
             case "LC-MS Spectra" -> {
                 selectNode("LC-MS Spectra", true);
                 selectNode("Spectra Processing", true);
-                selectNode("Missing Value", true);
                 selectNode("Data Filtering", true);
+
+                selectNode("Missing Value", true);
                 selectNode("Data Normalization", true);
                 toggleNodeVisibility("Name Mapping", false);
             }
             case "Compound Table" -> {
                 selectNode("Data Table", true);
                 selectNode("Compound Table", true);
-                selectNode("Missing Value", true);
                 selectNode("Data Filtering", true);
+
+                selectNode("Missing Value", true);
                 selectNode("Data Normalization", true);
                 selectNode("Name Mapping", true);
                 markNodeExecuted("Name Mapping", true);
@@ -685,8 +696,9 @@ public class DiagramView implements Serializable {
             case "Generic Table" -> {
                 selectNode("Data Table", true);
                 selectNode("Generic Table", true);
-                selectNode("Missing Value", true);
                 selectNode("Data Filtering", true);
+                selectNode("Missing Value", true);
+
                 selectNode("Data Normalization", true);
                 toggleNodeVisibility("Name Mapping", false);
                 toggleNodeVisibility("Spectra Processing", false);
@@ -694,8 +706,9 @@ public class DiagramView implements Serializable {
             case "Peak Table" -> {
                 selectNode("Data Table", true);
                 selectNode("Peak Table", true);
-                selectNode("Missing Value", true);
                 selectNode("Data Filtering", true);
+                selectNode("Missing Value", true);
+
                 selectNode("Data Normalization", true);
                 toggleNodeVisibility("Name Mapping", false);
                 toggleNodeVisibility("Spectra Processing", false);
@@ -800,6 +813,7 @@ public class DiagramView implements Serializable {
         return null; // Return null if no element with the specified title is found
     }
 
+    @JsonIgnore
     public DiagramModel getModel() {
         return model;
     }
@@ -2380,14 +2394,17 @@ public class DiagramView implements Serializable {
         }
     }
 
+    @JsonIgnore
     public boolean isNodeSelected(String nodeId) {
         return selectionMap.getOrDefault(nodeId, false);
     }
 
+    @JsonIgnore
     public boolean isNodeExecuted(String nodeId) {
         return executionMap.getOrDefault(nodeId, false);
     }
 
+    @JsonIgnore
     public boolean isNodeFailed(String nodeId) {
         return successExecutionMap.getOrDefault(nodeId, true);
     }

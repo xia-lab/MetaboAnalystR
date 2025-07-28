@@ -198,7 +198,6 @@ public class MultiRfBean implements Serializable {
         }
         return true;
     }
-
     @JsonIgnore
     @Inject
     private MultifacBean tb;
@@ -219,7 +218,6 @@ public class MultiRfBean implements Serializable {
         }
         return contMeta;
     }
-
     private String mtryMode = "auto";
 
     public String getMtryMode() {

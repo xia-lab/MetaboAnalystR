@@ -135,8 +135,10 @@ public class PathBean implements Serializable {
         this.qeaStatCode = qeaStatCode;
     }
 
+    @JsonIgnore
     private SelectItem[] pathLibOpt = null;
 
+    @JsonIgnore
     public SelectItem[] getPathLibOpt() {
         if (pathLibOpt == null) {
             setupPathLibOpt();
@@ -321,6 +323,7 @@ public class PathBean implements Serializable {
         }
     }
 
+    @JsonIgnore
     public PABean[] getPaBeans() {
         if (paBeans == null) {
             paBn_action();
@@ -415,5 +418,15 @@ public class PathBean implements Serializable {
 
         System.out.println("libOpt.startsWith(\"smpdb\")========" + libOpt.startsWith("smpdb"));
         return libOpt.startsWith("smpdb");
+    }
+
+    public String proceed2EnrichNet() {
+        int res = RDataUtils.prepareEnrichNet(sb.getRConnection(), "enrichNet_" + sb.getAnalType(), "mixed", sb.getAnalType());
+        if (res == 0) {
+            String err = RDataUtils.getErrMsg(sb.getRConnection());
+            sb.addMessage("Error", "Failed to compute enrichment network: " + err);
+        }
+        sb.setEnrNetSavedInit(false);
+        return "EnrichNetwork";
     }
 }

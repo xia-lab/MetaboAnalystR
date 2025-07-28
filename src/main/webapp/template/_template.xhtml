@@ -220,6 +220,23 @@
                 background: #ebecf0;
                 z-index:9999;
             }
+            .styleCell           {
+                text-align:center;
+                padding:6px 4px;
+            }
+            .style-icon          {
+                border:2px solid transparent;
+                border-radius:8px;
+                cursor:pointer;
+            }
+            .style-icon:hover    {
+                border-color:#808080;
+            }
+            .style-icon-selected {
+                border:2px solid #007ad9;
+                border-radius:8px;
+                box-shadow:0 0 6px rgba(0,0,0,.35);
+            }
         </style>
         <ui:insert name="mystyle"> 
         </ui:insert>
@@ -269,12 +286,6 @@
                             </ui:insert>
                             <flex-item style="flex: 1;">
                                 <div style="width: 100%; flex-direction: column; min-height: 85vh;">
-                                    <p:messages id="errMessage" widgetVar="growlWidget2" severity="error" 
-                                                style="width:100%; padding-left: 20px; padding-right: 20px"
-                                                showDetail="true" closable="true"
-                                                globalOnly="true" escape="false">
-                                        <p:autoUpdate/>
-                                    </p:messages>
                                     <ui:insert name="content"/> 
                                 </div>
                             </flex-item>
@@ -360,13 +371,20 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog> 
-        <p:dialog modal="true" widgetVar="graphDialog" header="Graphics Center"
+        <p:dialog modal="true" id="graphDialogId" widgetVar="graphDialog" header="Graphics Center"
                   style="width: 420px; height:420px;" 
                   appendTo="@(body)"
                   dynamic="true"
                   draggable="true" closable="true" resizable="true"> 
             <h:panelGrid style="padding: 10px;font-size: 13px;">
                 <p:tabView id="myGraphPane" style="width:100%; border: none;">
+                    <p:ajax event="tabChange"
+                            update=":myGraphPane"
+                            oncomplete="PF('graphDialog').jq.position({
+                            my: 'center center',
+                            at: 'center center',
+                            of: window
+                            });"/>
                     <p:tab title ="Hi-res Images">
                         <h:form id="formgraph">
                             <h:panelGrid columns="2" style="width:380px;" class="surface-card">
@@ -460,7 +478,138 @@
                             </h:panelGrid>
                         </h:form>
                     </p:tab>
+                    <p:tab title="Styling">
+                        <h:form id="styleForm">
+
+                            <p:panelGrid id="styleGrid" columns="4"
+                                         styleClass="ui-noborder ui-grid-responsive"
+                                         columnClasses="styleCell">
+
+                                <p:commandLink update=":myGraphPane"
+                                               action="#{graphStyleBean.selectStyle('0')}"
+                                               styleClass="#{graphStyleBean.selectedStyle eq '0'
+                                                             ? 'style-icon-selected' : 'style-icon'}">
+                                    <img onerror="this.style.display='none'"
+                                         src="#{graphStyleBean.iconPath('0')}"
+                                         width="60" height="60" alt="Default"/>
+                                </p:commandLink>
+
+                                <p:commandLink update=":myGraphPane"
+                                               action="#{graphStyleBean.selectStyle('1')}"
+                                               styleClass="#{graphStyleBean.selectedStyle eq '1'
+                                                             ? 'style-icon-selected' : 'style-icon'}">
+                                    <img onerror="this.style.display='none'"
+                                         src="#{graphStyleBean.iconPath('1')}"
+                                         width="60" height="60" alt="Dark"/>
+                                </p:commandLink>
+
+                                <p:commandLink update=":myGraphPane"
+                                               action="#{graphStyleBean.selectStyle('2')}"
+                                               styleClass="#{graphStyleBean.selectedStyle eq '2'
+                                                             ? 'style-icon-selected' : 'style-icon'}">
+                                    <img onerror="this.style.display='none'"
+                                         src="#{graphStyleBean.iconPath('2')}"
+                                         width="60" height="60" alt="Color-blind"/>
+                                </p:commandLink>
+
+                                <p:commandLink update=":myGraphPane"
+                                               action="#{graphStyleBean.selectStyle('3')}"
+                                               styleClass="#{graphStyleBean.selectedStyle eq '3'
+                                                             ? 'style-icon-selected' : 'style-icon'}">
+                                    <img onerror="this.style.display='none'"
+                                         src="#{graphStyleBean.iconPath('3')}"
+                                         width="60" height="60" alt="Publication"/>
+                                </p:commandLink>
+
+                            </p:panelGrid>
+
+                            <!-- live preview -->
+                            <p:outputLabel value="Preview:" style="font-weight:bold; display:block; margin-top:8px"/>
+                            <p:outputPanel id="previewPanel" style="text-align:center">
+                                <img onerror="this.style.display='none'"
+                                     src="#{graphStyleBean.previewImage}"
+                                     width="240" height="160"
+                                     class="shadow-2 surface-border" alt="Preview"/>
+                            </p:outputPanel>
+                            <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
+
+                                <p:commandLink ajax="false" styleClass="shadow-2 surface-border">
+                                    Download
+                                    <p:fileDownload value="#{graphStyleBean.previewContent}" />
+                                </p:commandLink>
+                            </h:panelGroup>
+
+                            <!-- centred Apply button -->
+                            <!--
+                            <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
+                                <p:commandButton value="Apply"
+                                                 icon="pi pi-check"
+                                                 actionListener="#{graphStyleBean.applyStyle}"
+                                                 update=":myGraphPane"
+                                                 onclick="PF('statusDialog').show()"
+                                                 oncomplete="PF('statusDialog').hide();
+                                                 PF('graphDialog').jq.position({my:'center center',
+                                                 at:'center center',
+                                                 of:window});"/>
+
+                            </h:panelGroup>
+                            -->
+                            <!-- centred Apply button -->
+
+
+                        </h:form>
+                    </p:tab>
+
+
+                    <p:tab title ="Customization">
+                        <h:form id="rPlotCustomizationForm">
+
+                            <p:panelGrid columns="1"  style="width:440px;">
+                                <!-- Customization Instructions -->
+                                <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
+                                <p:inputTextarea id="customizationPrompt" 
+                                                 value="#{rPlotCustomizationBean.prompt}"
+                                                 rows="7" 
+                                                 style="width:100%"
+                                                 placeholder="Describe how you want to customize the plot. For example:
+                                                 - Change colors (e.g., 'Use a blue color scheme')
+                                                 - Adjust text size (e.g., 'Make labels larger')
+                                                 - Modify layout (e.g., 'Increase spacing between plots')
+                                                 - Change dimensions (e.g., 'Make the plot wider')
+                                                 - Add features (e.g., 'Add a grid to the background')" />
+
+                                <p:outputLabel for="previewPanel" value="Current figure:" style="font-weight:bold"/>
+                                <p:outputPanel id="previewPanel" style="text-align:center">
+                                    <h:outputLink value="#{rPlotCustomizationBean.previewImage}" target="_blank">
+                                        <img onerror="this.style.display='none'"
+                                             src="#{rPlotCustomizationBean.previewImage}"
+                                             width="240" height="160"
+                                             class="shadow-2 surface-border"
+                                             alt="Preview"/>
+                                    </h:outputLink>
+                                </p:outputPanel>
+                            </p:panelGrid>
+                            <p:panelGrid columns="2" style="width:100%;text-align:center">
+                                <p:commandButton value="Submit" 
+                                                 action="#{rPlotCustomizationBean.applyCustomization}"
+                                                 update=":myGraphPane:rPlotCustomizationForm"
+                                                 onstart="$('#custProgressBar').show();"
+                                                 oncomplete="$('#custProgressBar').hide();" />
+                                <p:commandButton value="Cancel" 
+                                                 onclick="PF('rPlotCustomizationDialog').hide();" 
+                                                 type="button" />
+                            </p:panelGrid>
+
+
+                        </h:form>
+                    </p:tab>
+
+
                 </p:tabView> 
+                <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
+                     class="indeterminate-progress-bar">
+                    <div class="indeterminate-progress-bar__progress"></div>
+                </div>
             </h:panelGrid>
         </p:dialog>
     </h:body>

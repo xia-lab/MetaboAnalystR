@@ -78,6 +78,7 @@ public class PowerAnalBean implements Serializable {
         this.selectedContrast = selectedContrast;
     }
 
+    @JsonIgnore
     public SelectItem[] getGroupContrastOpts() {
         if (grpContrasts == null) {
             String[] nms = RDataUtils.getGroupNames(sb.getRConnection(), "");

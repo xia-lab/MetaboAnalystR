@@ -52,6 +52,34 @@ public class ProcessBean implements Serializable {
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
     private String msgText;
 
+    private boolean grpMeasure = false;
+    private boolean sanityChecked = false;
+    private boolean grpMissFilter = false;
+
+    public boolean isGrpMeasure() {
+        return grpMeasure;
+    }
+
+    public void setGrpMeasure(boolean grpMeasure) {
+        this.grpMeasure = grpMeasure;
+    }
+
+    public boolean isSanityChecked() {
+        return sanityChecked;
+    }
+
+    public void setSanityChecked(boolean sanityChecked) {
+        this.sanityChecked = sanityChecked;
+    }
+
+    public boolean isGrpMissFilter() {
+        return grpMissFilter;
+    }
+
+    public void setGrpMissFilter(boolean grpMissFilter) {
+        this.grpMissFilter = grpMissFilter;
+    }
+
     private int filterCutoff = 5;
 
     public int getFilterCutoff() {
@@ -142,28 +170,9 @@ public class ProcessBean implements Serializable {
         this.grpLod = grpLod;
     }
 
-    private boolean grpMeasure;
-    private boolean sanityChecked = false;
-    private boolean grpMissFilter = false;
-
-    public boolean isGrpMeasure() {
-        return grpMeasure;
-    }
-
-    public void setGrpMeasure(boolean grpMeasure) {
-        this.grpMeasure = grpMeasure;
-    }
 
     public void setMsgText(String msgText) {
         this.msgText = msgText;
-    }
-
-    public boolean isGrpMissFilter() {
-        return grpMissFilter;
-    }
-
-    public void setGrpMissFilter(boolean grpMissFilter) {
-        this.grpMissFilter = grpMissFilter;
     }
 
     public void performSanityCheck() {
@@ -232,6 +241,9 @@ public class ProcessBean implements Serializable {
                     } else {
                         editBnDisabled = true;
                     }
+
+                    sb.setContainsBlank(RDataUtils.getContainsBlank(sb));
+                    sb.setContainsQC(RDataUtils.getContainsQC(sb));
 
                 }
                 case "pathinteg" -> {
@@ -388,6 +400,7 @@ public class ProcessBean implements Serializable {
             jrd.record_skipButton_action_default(sb);
             return null;
         }
+        jrd.record_skipButton_action_default(sb);
 
         if (sb.getDataType().equals("mass_all")) {
             return "mzlibview";
@@ -406,7 +419,6 @@ public class ProcessBean implements Serializable {
         sb.setIntegChecked();
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
         //sb.setupDataOpts();
-        jrd.record_skipButton_action_default(sb);
 
         if (analType.equals("mf")) {
             return "Metadata check";
@@ -630,6 +642,16 @@ public class ProcessBean implements Serializable {
         this.rtThresh = rtThresh;
     }
 
+    private String msPeakText = "";
+
+    public String getMsPeakText() {
+        return msPeakText;
+    }
+
+    public void setMsPeakText(String msPeakText) {
+        this.msPeakText = msPeakText;
+    }
+
     private void setMSpeakProcTable() {
         String[] msgArray = RDataUtils.getPeaklistProcMessage(sb.getRConnection());
         String msg = "<table face=\"times\" size = \"3\">"
@@ -638,7 +660,7 @@ public class ProcessBean implements Serializable {
             msg = msg + "<tr><td align=\"left\">" + msgArray1 + "</td></tr>";
         }
         msg = msg + "</table>";
-        sb.setMsPeakText(msg);
+        msPeakText = msg;
     }
 
     public String msPeakAlignBn_action() {
@@ -737,8 +759,6 @@ public class ProcessBean implements Serializable {
             sb.addMessage("error", msg);
             return;
         }
-        String msg = RDataUtils.getReplaceMsg(RC);
-        sb.addMessage("info", msg);
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();
@@ -804,9 +824,9 @@ public class ProcessBean implements Serializable {
         //control for large data on public server
         if (!sb.isPrivileged()) {
             if (featureNum > 2500 & sb.getAnalType().equals("power")) {
-                sb.setFilterMin(defaultFilterCutoff);
+                sb.setFilterMin(0);
             } else if (featureNum > 5000) { // mandatory
-                sb.setFilterMin(defaultFilterCutoff);
+                sb.setFilterMin(0);
             } else {
                 sb.setFilterMin(0);
             }

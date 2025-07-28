@@ -178,8 +178,13 @@ public class TimeUploadBean implements Serializable {
                 tsDataType = "pktable";
                 tsDesign = "multi";
                 tsFormat = "colmf";
-                fileName = ab.getInternalData("ewaste_data_QC.csv");
-                testMetaFile = ab.getInternalData("ewaste_metadata.csv");
+                boolean useQC = true;
+                if (ab.isOnZgyPc() && !useQC) {
+                    fileName = ab.getResourceByAPI("ewaste_data.csv");
+                } else {
+                    fileName = ab.getResourceByAPI("ewaste_data_QC.csv");
+                }
+                testMetaFile = ab.getResourceByAPI("ewaste_metadata.csv");
             }
             default -> {
                 tsDataType = "pktable";

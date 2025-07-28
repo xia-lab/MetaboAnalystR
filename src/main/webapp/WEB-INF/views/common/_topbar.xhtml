@@ -1,0 +1,48 @@
+<p:dialog id="rPlotCustomizationDialog" 
+          header="R Plot Customization" 
+          widgetVar="rPlotCustomizationDialog" 
+          modal="true" 
+          resizable="true"
+          width="600"
+          height="500"
+          onShow="PF('rPlotCustomizationBean').setPlotType()">
+    
+    <h:form id="rPlotCustomizationForm">
+        <p:panelGrid columns="1" style="width:100%">
+            <!-- Customization Instructions -->
+            <p:outputLabel for="customizationPrompt" value="Customization Instructions:" />
+            <p:inputTextarea id="customizationPrompt" 
+                           value="#{rPlotCustomizationBean.prompt}"
+                           rows="5" 
+                           style="width:100%"
+                           placeholder="Describe how you want to customize the plot. For example:
+- Change colors (e.g., 'Use a blue color scheme')
+- Adjust text size (e.g., 'Make labels larger')
+- Modify layout (e.g., 'Increase spacing between plots')
+- Change dimensions (e.g., 'Make the plot wider')
+- Add features (e.g., 'Add a grid to the background')" />
+            
+            <!-- AI Response -->
+            <p:outputLabel for="aiResponse" value="AI Response:" />
+            <p:inputTextarea id="aiResponse" 
+                           value="#{rPlotCustomizationBean.aiResponse}"
+                           rows="5" 
+                           style="width:100%"
+                           readonly="true" />
+        </p:panelGrid>
+        
+        <p:commandButton value="Apply Customization" 
+                        action="#{rPlotCustomizationBean.applyCustomization}"
+                        update=":rPlotCustomizationForm:aiResponse"
+                        oncomplete="if(args.validationFailed) {PF('rPlotCustomizationDialog').hide();}" />
+        <p:commandButton value="Cancel" 
+                        onclick="PF('rPlotCustomizationDialog').hide();" 
+                        type="button" />
+    </h:form>
+</p:dialog>
+
+<!-- Add a button to open the dialog -->
+<p:commandButton value="Customize Plot" 
+                onclick="PF('rPlotCustomizationDialog').show();" 
+                type="button"
+                styleClass="ui-button-secondary" /> 

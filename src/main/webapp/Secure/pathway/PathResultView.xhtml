@@ -80,14 +80,13 @@
                         <p:commandButton value="Update" actionListener="#{pathBean.updatePathView()}" update=":myBox"/>
 
                         <p:spacer style="width:200px"/>
-                        <p:commandButton value="Enrichment Network" 
+                        <p:commandButton value="Enrich Network" 
                                          ajax="false" 
-                                         disabled="true"
                                          icon="pi pi-caret-right"
-                                         style="width: 180px;"
+                                         style="width: 140px;"
                                          onclick="PF('statusDialog').show()" 
                                          oncomplete="PF('statusDialog').hide()"                              
-                                         action="#"/>
+                                         action="#{pathBean.proceed2EnrichNet()}"/>
                     </h:panelGrid>
                 </h:panelGrid>
             </h:form>

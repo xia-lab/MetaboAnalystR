@@ -113,8 +113,9 @@
                     </p>    
                 </p:tooltip>
 
+               
                 <hr class="style-one"/>
-                <h3 style="margin-top: 30px; margin-bottom: 4px"> Try our test data</h3>
+                <h2 style="margin-top: 20px; margin-bottom: 4px"> Try our test data</h2>
                 <p:selectOneRadio id="timeRadio" value="#{tsuploader.timeDataOpt}" layout="custom">  
                     <f:selectItem itemValue="pkcovid" itemLabel="LC-MS peak intensity table"/>
                     <f:selectItem itemValue="tce" itemLabel="LC-MS peak intensity table"/>
@@ -124,7 +125,7 @@
                     <f:selectItem itemValue="ewaste" itemLabel="LC-MS peak intensity table"/>
                 </p:selectOneRadio> 
 
-                <p:panelGrid columns="4" style="width: 90%;" layout="tabular" styleClass="myPanelGrid" class="shadow-1 p-4 text-800">
+                <p:panelGrid columns="4" style="width: 90%;" layout="tabular" styleClass="myPanelGrid" class="shadow-1 p-4 text-800" >
                     <p:spacer style="width:30px"/>
                     <h:panelGroup layout="block" style="width:120px">
                         <p:outputLabel style="font-weight: bold" value="Data"/>
@@ -136,9 +137,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="0"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/covid_metabolomics_data.csv">Data</a>
+                        <a href="#{applicationBean1.apiResourcePath}covid_metabolomics_data.csv">Data</a>
                         <br />
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/covid_metadata_multiclass.csv">Metadata</a>
+                        <a href="#{applicationBean1.apiResourcePath}covid_metadata_multiclass.csv">Metadata</a>
                     </h:panelGroup>
 
                     <h:panelGroup layout="block" style="width:200px">
@@ -151,9 +152,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="1"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/TCE_feature_table.csv">Data</a>
+                        <a href="#{applicationBean1.apiResourcePath}TCE_feature_table.csv">Data</a>
                         <br />
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/TCE_metadata.csv">Metadata</a>
+                        <a href="#{applicationBean1.apiResourcePath}TCE_metadata.csv">Metadata</a>
                     </h:panelGroup>
 
                     <h:panelGroup layout="block" style="width:200px">
@@ -167,9 +168,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="2"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time.csv">Data</a>
+                        <a href="#{applicationBean1.apiResourcePath}cress_time.csv">Data</a>
                         <br />
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time_meta.csv">Metadata</a>
+                        <a href="#{applicationBean1.apiResourcePath}cress_time_meta.csv">Metadata</a>
                     </h:panelGroup>
                     <h:panelGroup layout="block" style="width:200px">
                         Time series + one condition
@@ -182,9 +183,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="3"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time1.csv">Data</a>
+                        <a href="#{applicationBean1.apiResourcePath}cress_time1.csv">Data</a>
                         <br />
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/cress_time1_meta.csv">Metadata</a>                        
+                        <a href="#{applicationBean1.apiResourcePath}cress_time1_meta.csv">Metadata</a>                        
                     </h:panelGroup>
                     <h:panelGroup layout="block" style="width:200px">
                         Time series only data 
@@ -196,9 +197,9 @@
 
                     <p:radioButton for="timeRadio" itemIndex="4"/> 
                     <h:panelGroup style="width:120px">
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/diabetes_lipids.txt">Data</a>
+                        <a href="#{applicationBean1.apiResourcePath}diabetes_lipids.txt">Data</a>
                         <br />
-                        <a href="https://www.xialab.ca/api/download/metaboanalyst/diabetes_metadata.csv">Metadata</a>                        
+                        <a href="#{applicationBean1.apiResourcePath}diabetes_metadata.csv">Metadata</a>                        
                     </h:panelGroup>
                     <h:panelGroup layout="block" style="width:200px">
                         Multiple factors / covariates 
@@ -223,7 +224,7 @@
                     </h:panelGroup>  
 
                 </p:panelGrid>
-                <h:panelGrid style="width: 90%; padding-top: 10px; padding-bottom: 10px; text-align: center">
+                <h:panelGrid style="width: 900px; padding-top: 10px; padding-bottom: 10px; text-align: center">
                     <p:commandButton value="Submit" 
                                      onclick="PF('statusDialog').show()" 
                                      ajax="false" 

@@ -174,7 +174,6 @@ public class AnalysisBean implements Serializable {
 
     public void doDefaultPCA() {
         if (ChemoMetrics.initPCA(sb)) {
-            //ChemoMetrics.plotPCAPairSummary(sb, sb.getCurrentImage("pca_pair"), "png", 150, 5);
             TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"), "pca_pair", "png", 150, 5, "NA", "NA");
             ChemoMetrics.plotPCAScree(sb, sb.getCurrentImage("pca_scree"), "png", 150, 5);
             ChemoMetrics.plotPCA2DScore(sb, sb.getCurrentImage("pca_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na");

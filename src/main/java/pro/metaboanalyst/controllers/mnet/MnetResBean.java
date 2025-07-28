@@ -258,6 +258,7 @@ public class MnetResBean implements Serializable {
         return (res);
     }
 
+    @JsonIgnore
     public List<NetBean> getNetsDataModel() {
         return netsModel;
     }
@@ -320,6 +321,7 @@ public class MnetResBean implements Serializable {
         }
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getSifFile(String name) {
         RNetworkUtils.prepareSubnetDownload(sb.getRConnection(), name);
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/" + name + "_sif.zip");

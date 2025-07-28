@@ -54,6 +54,7 @@ public class MummiAnalBean implements Serializable {
     @Inject
     private SpectraParamBean spb;
 
+    private String algOptSingle = "mum";
     private String enrichOpt = "fisher";
     private String filterOpt = "filtered";
     private String[] algOpts = {"mum"}; //"mum" and/or "gsea"
@@ -81,6 +82,14 @@ public class MummiAnalBean implements Serializable {
     private String analOption = "scatter";
     private boolean moduleSwitch = false;
     private SelectItem[] pathLibOpt = null;
+
+    public String getAlgOptSingle() {
+        return algOptSingle;
+    }
+
+    public void setAlgOptSingle(String algOptSingle) {
+        this.algOptSingle = algOptSingle;
+    }
 
     public String getEnrichOpt() {
         return enrichOpt;
@@ -154,9 +163,14 @@ public class MummiAnalBean implements Serializable {
         return "Metabolic network";
     }
 
-    //TODO
     public String proceed2EnrichNet() {
-        return "enrich network";
+        int res = RDataUtils.prepareEnrichNet(sb.getRConnection(), "enrichNet_" + algOptSingle, "mixed", algOptSingle);
+        if (res == 0) {
+            String err = RDataUtils.getErrMsg(sb.getRConnection());
+            sb.addMessage("Error", "Failed to compute enrichment network: " + err);
+        }
+        sb.setEnrNetSavedInit(false);
+        return "EnrichNetwork";
     }
 
     public void showPathDialog() {
@@ -191,10 +205,9 @@ public class MummiAnalBean implements Serializable {
         this.pvalCutoff = pvalCutoff;
     }
 
+    @JsonIgnore
     public MetSetBean[] getCurrentPathSet() {
-
         String pathname = sb.getCurrentPathName();
-
         String[] details = REnrichUtils.getMummichogHTMLPathSet(sb.getRConnection(), pathname);
         ArrayList<MetSetBean> libVec = new ArrayList();
         libVec.add(new MetSetBean(details[0], details[1], ""));
@@ -241,6 +254,7 @@ public class MummiAnalBean implements Serializable {
         this.pathDBOpt = pathDBOpt;
     }
 
+    @JsonIgnore
     public SelectItem[] getPathLibOpt() {
         if (pathLibOpt == null) {
             setupPathLibOpt();
@@ -262,6 +276,7 @@ public class MummiAnalBean implements Serializable {
         return !pathDBOpt.endsWith("mset");
     }
 
+    @JsonIgnore
     public ListDataModel<MummiBean> getMummiBeans() {
         if (listModel == null) {
             algOpts = new String[1];
@@ -276,6 +291,7 @@ public class MummiAnalBean implements Serializable {
         this.listModel = listModel;
     }
 
+    @JsonIgnore
     public ListDataModel<GseaBean> getGseaBeans() {
         if (listGSEAModel == null) {
             algOpts = new String[1];
@@ -290,6 +306,7 @@ public class MummiAnalBean implements Serializable {
         this.listGSEAModel = listGSEAModel;
     }
 
+    @JsonIgnore
     public ListDataModel<IntegBean> getIntegBeans() {
         if (listIntegModel == null) {
             algOpts = new String[2];
@@ -482,18 +499,22 @@ public class MummiAnalBean implements Serializable {
         return nextpage;
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getPathEnrichFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/mummichog_pathway_enrichment_mummichog.csv");
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getGseaPathEnrichFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/mummichog_pathway_enrichment_gsea.csv");
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getIntegPathEnrichFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/mummicho_pathway_enrichment_integ.csv");
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getCmpdHitFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/mummichog_matched_compound_all.csv");
     }

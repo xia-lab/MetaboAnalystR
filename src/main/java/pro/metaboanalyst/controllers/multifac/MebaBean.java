@@ -83,19 +83,10 @@ public class MebaBean implements Serializable {
         if (!sb.isAnalInit(pageID)) {
             sb.addNaviTrack(pageID, "/Secure/multifac/TimeCourseView.xhtml");
             //if (mebaMetas == null) {
-                mebaMetas = mfb.getDiscMetaOpts();
-                //System.out.println(mebaMetas.length);
+            //System.out.println(mebaMetas.length);
             //}
-        } else {
-
-            if (wb.getFunctionInfos().get("MEBA") != null) {
-                try {
-                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
-                } catch (Exception ex) {
-
-                }
-            }
         }
+        mebaMetas = mfb.getDiscMetaOpts();
 
     }
 

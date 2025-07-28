@@ -82,6 +82,7 @@ public class FireUserBean implements Serializable {
     }
 
     public void setFireUserBean(FireUserBean bean) {
+        System.out.println("setFireUserBean===" + bean.getEmail());
         this.email = bean.getEmail();
         this.fname = bean.getFname();
         this.institution = bean.getInstitution();
@@ -218,7 +219,7 @@ public class FireUserBean implements Serializable {
         boolean res = doUserLoginLocal();
         if (res) {
             Faces.addResponseCookie("user", email, "/", 3600);
-            fb.getUserMap().put(email, fub);
+            fb.getUserMap().put(email, this);
             setOmicsquareVerified(true);
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/ModuleView.xhtml", "info", "Login successful!");
         }
@@ -640,5 +641,20 @@ public class FireUserBean implements Serializable {
         String[] myArray = {"jeff.xia@xialab.ca", "guangyan.zhou@xialab.ca", "zhiqiang.pang@xialab.ca", "guangyan.zhou@mcgill.ca"};
         ArrayList<String> myList = new ArrayList<>(Arrays.asList(myArray));
         return myList.contains(email);
+    }
+
+    public void copyFrom(FireUserBean other) {
+        System.out.println(other.email + "===copyFrom");
+        this.email = other.email;
+        this.fname = other.fname;
+        this.institution = other.institution;
+        this.status = other.status;
+        this.omicsquareVerified = other.omicsquareVerified;
+        this.omicsquareToken = other.omicsquareToken;
+    }
+    
+        @Override
+    public String toString() {
+        return "FireUserBean{" + "email=" + email + ", password=" + password + ", fname=" + fname + ", lname=" + lname + ", institution=" + institution + ", salt=" + salt + ", userNM=" + userNM + ", securedPassword=" + securedPassword + ", status=" + status + ", omicsquareVerified=" + omicsquareVerified + ", omicsquareToken=" + omicsquareToken + '}';
     }
 }

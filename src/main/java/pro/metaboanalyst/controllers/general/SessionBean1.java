@@ -7,6 +7,7 @@ package pro.metaboanalyst.controllers.general;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
 import pro.metaboanalyst.controllers.mnet.MnetResBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.models.ColorBean;
@@ -208,6 +209,25 @@ public class SessionBean1 implements Serializable {
     private int maxtopNum;
     private String visMode = "static"; //4 mode: ppi, chem, tf, drug
     private String uploadType = "table";
+    private boolean enrNetSavedInit = false;
+
+    private boolean missingDisabled = true;
+
+    public boolean isMissingDisabled() {
+        return missingDisabled;
+    }
+
+    public void setMissingDisabled(boolean missingDisabled) {
+        this.missingDisabled = missingDisabled;
+    }
+
+    public boolean isEnrNetSavedInit() {
+        return enrNetSavedInit;
+    }
+
+    public void setEnrNetSavedInit(boolean enrNetSavedInit) {
+        this.enrNetSavedInit = enrNetSavedInit;
+    }
 
     private boolean containsBlank = false;
     private boolean containsQC = false;
@@ -525,11 +545,7 @@ public class SessionBean1 implements Serializable {
     //1 logout and to homepage
     //0 logout only
     public void doLogout(int returnHome) {
-        if (registeredLogin) {
 
-            Faces.addResponseCookie("user", fub.getEmail(), "/", 3600);
-            fb.getUserMap().put(fub.getEmail(), fub);
-        }
         if (loggedIn) {
             if (RC != null) {
                 if (ab.isOnLocalServer()) {
@@ -547,7 +563,7 @@ public class SessionBean1 implements Serializable {
             } else {
                 FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
             }
-            //System.out.println("=====called logout: ");
+            keepUserInfo();
         } else {
 
             String rootId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
@@ -722,6 +738,7 @@ public class SessionBean1 implements Serializable {
         NaviUtils.getSelectedNode(naviTree, pageName);
     }
 
+    @JsonIgnore
     public String getCurrentImage(String key) {
         if (!imgMap.containsKey(key)) {
             //  System.out.println("=========== called here!! " + key );
@@ -730,6 +747,7 @@ public class SessionBean1 implements Serializable {
         return key + "_" + imgMap.get(key) + "_";
     }
 
+    @JsonIgnore
     public String getNewImage(String key) {
         if (!imgMap.containsKey(key)) {
             imgMap.put(key, 0);
@@ -759,6 +777,7 @@ public class SessionBean1 implements Serializable {
      * @return the image at the specified URL
      */
     //@return path to image
+    @JsonIgnore
     public String getCurrentImageURL(String name) {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
@@ -769,6 +788,7 @@ public class SessionBean1 implements Serializable {
      * @param name: file name
      * @return the URL
      */
+    @JsonIgnore
     public String getJsonDir(String name) {
         if (reloadReportImage && reportJsonMap.containsKey(name)) {
             return currentUser.getRelativeDir() + "/" + reportJsonMap.get(name);
@@ -777,10 +797,12 @@ public class SessionBean1 implements Serializable {
         }
     }
 
+    @JsonIgnore
     public String getUserDir() {
         return "/MetaboAnalyst/" + currentUser.getRelativeDir();
     }
 
+    @JsonIgnore
     public String getRawUserDir() {
         String guestName = getCurrentUser().getName();
         return "/MetaboAnalyst/resources/users/" + guestName;
@@ -1293,6 +1315,7 @@ public class SessionBean1 implements Serializable {
         this.colorBeanLists = colorBeanLists;
     }
 
+    @JsonIgnore
     public SelectItem[] getMetaInfo() {
         if (metaInfo == null) {
             setupMetaInfo();
@@ -1345,6 +1368,7 @@ public class SessionBean1 implements Serializable {
         this.heatmapType = heatmapType;
     }
 
+    @JsonIgnore
     public List<SampleBean> getSampleBeans() {
         if (sampleBeans == null) {
             sampleBeans = RDataUtils.createOrigSampleBeans(RC, "Class", false);
@@ -1380,6 +1404,7 @@ public class SessionBean1 implements Serializable {
         this.partialLinkValide = partialLinkValide;
     }
 
+    @JsonIgnore
     public String getPartialLinkCheckingRes() {
         if (partialLinkValide) {
             return "OK. Your job link is valid! Retrieving your job. <br/>Please wait .....";
@@ -1522,6 +1547,7 @@ public class SessionBean1 implements Serializable {
         this.grpNmOpts = grpNmOpts;
     }
 
+    @JsonIgnore
     public SelectItem[] getGrpNmOpts() {
         if (grpNmOpts == null) {
             setupGrpNmOpts();
@@ -1745,6 +1771,7 @@ public class SessionBean1 implements Serializable {
         return false;
     }
 
+    @JsonIgnore
     public String getTemplatePath() {
         if (isWorkflowMode()) {
             return "/template/_template_workflow.xhtml";
@@ -1801,23 +1828,45 @@ public class SessionBean1 implements Serializable {
         jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
     }
 
-    private boolean missingDisabled = true;
+    @Inject
+    private MummiAnalBean ma;
+    private String enrNetName = "";
 
-    public boolean isMissingDisabled() {
-        return missingDisabled;
+    public String getEnrNetName() {
+        if (getAnalType().startsWith("path")) {
+            enrNetName = "enrichNet_" + analType + ".json";
+        } else {//mummichogg methods: mum, gsea,integ
+            enrNetName = "enrichNet_" + ma.getAlgOptSingle() + ".json";
+        }
+        return enrNetName;
     }
 
-    public void setMissingDisabled(boolean missingDisabled) {
-        this.missingDisabled = missingDisabled;
+    public void setEnrNetName(String enrNetName) {
+
+        this.enrNetName = enrNetName;
     }
 
-    private String msPeakText = "";
 
-    public String getMsPeakText() {
-        return msPeakText;
-    }
+    @JsonIgnore
+    @Inject
+    private FireUserBean ulb;
 
-    public void setMsPeakText(String msPeakText) {
-        this.msPeakText = msPeakText;
+    public void keepUserInfo() {
+        // this function is used to keep user's login information after session has been cleared
+        System.out.println("Testing user signed in status ... ");
+        boolean res;
+        if (ulb.getEmail().isEmpty()) {
+            System.out.println("Not signed in, reloading ... ");
+            res = fbc.reloadUserInfo();
+        } else {
+            System.out.println("Signed in already. ");
+
+            res = true;
+            setRegisteredLogin(true);
+
+        }
+        if (!res) {
+            System.out.println("Failed to keep user signed-in !!! @_@");
+        }
     }
 }

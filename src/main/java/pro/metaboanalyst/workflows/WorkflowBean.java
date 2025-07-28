@@ -158,7 +158,7 @@ public class WorkflowBean implements Serializable {
     public void setSampleBeans(List<SampleBean> sampleBeans) {
         this.sampleBeans = sampleBeans;
     }
-
+    
     public String getCurrentSubFolder() {
         if (sb.isWorkflowMode()) {
             return currentSubFolder;
@@ -171,6 +171,7 @@ public class WorkflowBean implements Serializable {
         this.currentSubFolder = currentSubFolder;
     }
 
+    @JsonIgnore
     public boolean isProcButtonsRendered() {
         return !(sb.getAnalType().equals("metadata") || sb.getAnalType().equals("metapaths"));
     }
@@ -1111,7 +1112,8 @@ public class WorkflowBean implements Serializable {
         sb.addMessage("info", param.getFolderName() + " is removed.");
         workflowOptions.remove(param);
     }
-
+    
+    @JsonIgnore
     public WorkflowParameters getWorkflowParameterByFolderName(String folderName) {
         if (folderName == null || folderName.isEmpty()) {
             throw new IllegalArgumentException("Folder name must not be null or empty");
@@ -1125,7 +1127,7 @@ public class WorkflowBean implements Serializable {
     }
 
     private String selectedGrp1, selectedGrp2;
-
+    @JsonIgnore
     public String getSelectedGrp1() {
         if (selectedGrp1 == null) {
             selectedGrp1 = mf.getUniqueMetaList().get(0).getValue().toString();
@@ -1136,7 +1138,7 @@ public class WorkflowBean implements Serializable {
     public void setSelectedGrp1(String selectedGrp1) {
         this.selectedGrp1 = selectedGrp1;
     }
-
+    @JsonIgnore
     public String getSelectedGrp2() {
         if (selectedGrp2 == null) {
             selectedGrp2 = mf.getUniqueMetaList().get(1).getValue().toString();

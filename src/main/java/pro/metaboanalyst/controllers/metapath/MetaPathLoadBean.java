@@ -448,6 +448,7 @@ public class MetaPathLoadBean implements Serializable {
         mDataSets.add(dm);
     }
 
+    @JsonIgnore
     public DefaultStreamedContent getMergedFile() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/MetaboAnalyst_merged_data.csv");
     }

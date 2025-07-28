@@ -447,7 +447,7 @@
             <from-outcome>metadata</from-outcome>
             <to-view-id>/Secure/upload/MetaLoadView.xhtml</to-view-id>
         </navigation-case> 
-                <navigation-case>
+        <navigation-case>
             <from-outcome>MetaQCView</from-outcome>
             <to-view-id>/Secure/metastat/MetaQCView.xhtml</to-view-id>
             <redirect/>
@@ -691,6 +691,12 @@
             <to-view-id>/Secure/workflow/upload/MetaPathLoadView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>
+        <navigation-case>
+            <from-outcome>EnrichNetwork</from-outcome>
+            <to-view-id>/Secure/viewer/EnrichNetwork.xhtml</to-view-id>
+            <redirect/>
+        </navigation-case> 
+        
     </navigation-rule> 
 </faces-config>
        

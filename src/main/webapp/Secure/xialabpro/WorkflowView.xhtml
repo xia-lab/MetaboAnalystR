@@ -379,42 +379,42 @@
                             <div style="text-align: center;" class="myiconsize #{diagramView.isNodeSelected(el.id) ? 'selected' : ''}">
                                 <div style="padding:7px" >
 
-                                    <h:outputText rendered="#{el.type eq 'input'}" value="#{el.name}" style="display:block;margin-top:3px;" />
-                                    <h:outputText rendered="#{el.type ne 'input'}" value="#{el.name}" style="display:block;margin-top:1em;" />
+                                    <h:outputText rendered="#{el.data.type eq 'input'}" value="#{el.data.name}" style="display:block;margin-top:3px;" />
+                                    <h:outputText rendered="#{el.data.type ne 'input'}" value="#{el.data.name}" style="display:block;margin-top:1em;" />
 
                                     <!-- Top-Right Checkmark -->
 
-                                    <h:panelGroup styleClass="checkmark-container" rendered="#{diagramView.isNodeExecuted(el.id)}">
+                                    <h:panelGroup styleClass="checkmark-container" rendered="#{diagramView.isNodeExecuted(el.data.id)}">
                                         <span style="position: absolute; top: 0px; right: 0px; color: green; font-size: 30px;">&#10003;</span>
                                     </h:panelGroup>
 
-                                    <h:panelGroup styleClass="xmark-container" rendered="#{!diagramView.isNodeFailed(el.id)}">
+                                    <h:panelGroup styleClass="xmark-container" rendered="#{!diagramView.isNodeFailed(el.data.id)}">
                                         <span style="position: absolute; top: 0px; right: 0px; color: red; font-size: 30px;">&#10007;</span>
                                     </h:panelGroup>
 
                                     <!-- Clickable Icon -->
-                                    <h:panelGroup rendered="#{el.type eq 'input'}" styleClass="center-icon">
-                                        <img src="#{facesContext.externalContext.requestContextPath}/#{el.image}" 
+                                    <h:panelGroup rendered="#{el.data.type eq 'input'}" styleClass="center-icon">
+                                        <img src="#{facesContext.externalContext.requestContextPath}/#{el.data.image}" 
                                              style="height: 60px;"></img>
                                     </h:panelGroup>
-                                    <h:panelGroup rendered="#{el.type eq 'proc'}" styleClass="center-icon">
+                                    <h:panelGroup rendered="#{el.data.type eq 'proc'}" styleClass="center-icon">
                                         <p:commandButton title="Adjust parameters"
                                                          icon="pi pi-cog"
                                                          style="padding: 0; border: none; background: none"
-                                                         onclick="handleNodeAction([{name: 'nodeId', value: '#{el.name}'}]);
+                                                         onclick="handleNodeAction([{name: 'nodeId', value: '#{el.data.name}'}]);
                                                                  event.stopPropagation();
                                                                  return false;">
                                         </p:commandButton>
                                     </h:panelGroup>
 
-                                    <h:panelGroup rendered="#{el.type eq 'anal'}" styleClass="center-icon">
+                                    <h:panelGroup rendered="#{el.data.type eq 'anal'}" styleClass="center-icon">
                                         <p:commandButton title="View Detail"
                                                          icon="pi pi-share-alt"
                                                          update="designForm"
                                                          style="padding: 0; border: none; background: none;"
                                                          onclick="event.stopPropagation(); return false;">
                                             <!-- Display Image Inside the Button -->
-                                            <f:param name="nodeId" value="#{el.name}" />
+                                            <f:param name="nodeId" value="#{el.data.name}" />
                                         </p:commandButton>
                                     </h:panelGroup>
 

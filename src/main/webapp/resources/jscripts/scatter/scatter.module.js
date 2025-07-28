@@ -4625,6 +4625,7 @@ function loadMeta() {
 }
 
 
+
 function highlightSelectedMeta(name, color, haloBool, encasingType) {
     var sizeval = parseInt($("#nsize").val());
     if (current_main_plot === "score") {

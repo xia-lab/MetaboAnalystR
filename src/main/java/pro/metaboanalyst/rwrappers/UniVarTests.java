@@ -986,5 +986,37 @@ public class UniVarTests {
             System.out.println(rse);
         }
     }
+    
+    
+    public static void plotVolcanoCustom(SessionBean1 sb, String imgName, int plotLbl, int plotTheme, String format, int dpi, int labelNum, int plotStyle) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "PlotVolcanoCustom(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + "," + plotStyle + ")";
+            RCenter.recordRCommand(RC, rCommand);
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
+
+            sb.addGraphicsCMD("volcano", rCommand);
+            sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
+
+            RC.voidEval(rCommand);
+        } catch (RserveException rse) {
+            System.out.println(rse);
+        }
+    }
+    public static void plotVolcanoAI(SessionBean1 sb, String imgName, int plotLbl, int plotTheme, String format, int dpi, int labelNum) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "PlotVolcanoAI(NA" + ", \"" + imgName + "\"," + plotLbl + ", " + plotTheme + ", \"" + format + "\", " + dpi + ", width=NA, " + labelNum + ")";
+            RCenter.recordRCommand(RC, rCommand);
+            sb.recordRCommandFunctionInfo(rCommand, "Volcano");
+
+            sb.addGraphicsCMD("volcano", rCommand);
+            sb.addGraphicsMapLink("volcano", "/Secure/analysis/VolcanoView.xhtml");
+
+            RC.voidEval(rCommand);
+        } catch (RserveException rse) {
+            System.out.println(rse);
+        }
+    }
 
 }
