@@ -24,11 +24,11 @@ import pro.metaboanalyst.rwrappers.RCenter;
  * <p>
  * New features:
  * <ul>
- *   <li>Accepts an <strong>optional list of helper functions</strong> that are
- *       appended to the LLM prompt so the model has full context.</li>
- *   <li>Strips <code>```r</code> fences, handles multi-function responses
- *       and ensures <em>every</em> top-level assignment is renamed with the
- *       <code>AI</code> suffix.</li>
+ * <li>Accepts an <strong>optional list of helper functions</strong> that are
+ * appended to the LLM prompt so the model has full context.</li>
+ * <li>Strips <code>```r</code> fences, handles multi-function responses and
+ * ensures <em>every</em> top-level assignment is renamed with the
+ * <code>AI</code> suffix.</li>
  * </ul>
  */
 @Named
@@ -38,11 +38,18 @@ public class RPlotCustomizationAgent implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = Logger.getLogger(RPlotCustomizationAgent.class.getName());
 
-    private static final String SYSTEM_PROMPT =
-            "You are an expert in R programming and data visualization. "
-          + "Update the R plotting function below according to the user's request "
-          + "while preserving core analytical logic. "
-          + "Return ONLY the modified R code or a concise status message when no change is required.";
+    private static final String SYSTEM_PROMPT
+            = "You are an expert R programmer specializing in data visualization for MetaboAnalyst. "
+            + "\n\nYour task is to modify R plotting functions according to user requests while maintaining compatibility with the existing codebase."
+            + "\n\nREQUIREMENTS:"
+            + "\n1. Return ONLY valid R code without markdown fences or explanatory text"
+            + "\n2. Preserve all core analytical logic and data processing steps"
+            + "\n3. Maintain existing function signatures when possible; if new parameters are needed, make them optional with sensible defaults"
+            + "\n4. Ensure all helper functions are updated consistently with the main function"
+            + "\n5. Use standard R plotting parameter conventions (e.g., pch values: 0=square, 1=circle, 2=triangle, 5=diamond)"
+            + "\n6. Preserve all existing styling, legends, and layout logic unless specifically requested to change"
+            + "\n\nIf no changes are needed, return: \"No modification required.\""
+            + "\n\nFocus on making minimal, targeted changes that fulfill the user's request without breaking existing functionality.";
 
     @Inject
     private transient ApplicationBean1 appBean;
@@ -74,27 +81,28 @@ public class RPlotCustomizationAgent implements Serializable {
     /*───────────────────────────────────────────────────────────────────────────
      *  PUBLIC API
      *─────────────────────────────────────────────────────────────────────────*/
-
-    /** Back-compat wrapper: call with no helpers. */
+    /**
+     * Back-compat wrapper: call with no helpers.
+     */
     public String customizePlot(String key, String functionName, String userRequest) {
         return customizePlot(key, functionName, Collections.emptyList(), userRequest);
     }
 
     /**
-     * Generate a customised plot by rewriting the specified R function
-     * (plus any helper routines) via the LLM, then evaluating the result.
+     * Generate a customised plot by rewriting the specified R function (plus
+     * any helper routines) via the LLM, then evaluating the result.
      *
-     * @param key          graphics-map key (used to replay the command)
+     * @param key graphics-map key (used to replay the command)
      * @param functionName name of the main R routine to edit
-     * @param helpers      extra R functions that the main routine relies on
-     * @param userRequest  natural-language instructions from the UI
+     * @param helpers extra R functions that the main routine relies on
+     * @param userRequest natural-language instructions from the UI
      * @return the modified R code (with <code>AI</code> suffixes) or an error
-     *         message suitable for display
+     * message suitable for display
      */
     public String customizePlot(String key,
-                                String functionName,
-                                List<String> helpers,
-                                String userRequest) {
+            String functionName,
+            List<String> helpers,
+            String userRequest) {
 
         /*── sanity checks ───────────────────────────────────────────────────*/
         if (RSCRIPT_DIR == null) {
@@ -127,12 +135,11 @@ public class RPlotCustomizationAgent implements Serializable {
         /*── 2. pull helper sources (if any) ────────────────────────────────*/
         StringBuilder helperBlocks = new StringBuilder();
         for (String helper : helpers) {
-            String resolvedHelper =
-                    FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null))
-                                     .rFuncName;
+            String resolvedHelper
+                    = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
             readFunctionCode(resolvedHelper).ifPresent(code -> {
                 helperBlocks.append("\n\n# Helper: ").append(resolvedHelper)
-                            .append("\n").append(code);
+                        .append("\n").append(code);
             });
         }
 
@@ -140,7 +147,7 @@ public class RPlotCustomizationAgent implements Serializable {
         StringBuilder history = new StringBuilder();
         for (ChatMessage m : chatHistory) {
             history.append('[').append(m.role).append("]\n")
-                   .append(m.content).append("\n\n");
+                    .append(m.content).append("\n\n");
         }
 
         String prompt = history
@@ -150,32 +157,102 @@ public class RPlotCustomizationAgent implements Serializable {
                 + helperBlocks
                 + "\n\nUser request:\n" + userRequest;
         
-        System.out.print(history);
-        
+        System.out.println(prompt + "\n"); 
+               
         chatHistory.add(new ChatMessage("user", userRequest));
 
         /*── 4. call the model ──────────────────────────────────────────────*/
         String llmOut = aiClient.generateText(prompt);
         chatHistory.add(new ChatMessage("model", llmOut));
-
+        
+        // debugging
+        System.out.println("Model Response: \n" + llmOut);
+        
         /*── 5. sanitise: strip fences, rename assignments, enforce suffix ─*/
         llmOut = llmOut.replaceAll("(?s)```[rR]?\\s*", "")
-                       .replaceAll("(?s)```\\s*$", "");
-
+                .replaceAll("(?s)```\\s*$", "");
+        
+        
+ 
         final String aiSuffix = "AI";
-        final String aiMain   = functionName + aiSuffix;
+        final String aiMain = functionName + aiSuffix;
 
+        
+        /**
         // rename every *top-level* assignment with the original main name
         llmOut = llmOut.replaceAll(
                 "(?m)^\\s*"
-              + Pattern.quote(functionName)
-              + "\\s*<-\\s*function",
+                + Pattern.quote(functionName)
+                + "\\s*<-\\s*function",
                 aiMain + " <- function");
+        
+        
+        // NEW: rename all helper function assignments ----------------------->
+        // Handle both explicit assignment and anonymous function after comment
+        // Pattern 1: explicit assignment "Plot.PairScatter <- function"
+        for (String helper : helpers) {
+            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*"
+                    + Pattern.quote(resolvedHelper)
+                    + "\\s*<-\\s*function",
+                    resolvedHelper + aiSuffix + " <- function");
+            
+            // Pattern 2: anonymous function after helper comment "# Helper: Plot.PairScatter\nfunction"
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*#\\s*Helper:\\s*" + Pattern.quote(resolvedHelper) + "\\s*\\n\\s*function",
+                    "# Helper: " + resolvedHelper + aiSuffix + "\n" + resolvedHelper + aiSuffix + " <- function");
+        }
 
-        // if still anonymous (no "<- function" anywhere) prepend assignment
-        if (!llmOut.matches("(?s).*<-\\s*function.*")) {
+        // update function calls to use AI versions of helpers
+        for (String helper : helpers) {
+            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
+            // replace helper function with "AI" suffix
+            llmOut = llmOut.replaceAll(
+                    "\\b" + Pattern.quote(resolvedHelper) + "\\s*\\(",
+                    resolvedHelper + aiSuffix + "(");
+        }
+        // ---------------------------- NEW section -------------------------->
+        
+        // if main function is still anonymous, prepend assignment
+        if (!llmOut.matches("(?s).*" + Pattern.quote(aiMain) + "\\s*<-\\s*function.*")) {
             llmOut = aiMain + " <- " + llmOut.trim();
         }
+        **/
+        
+        
+        
+        // <---------------- NEW ADDITION ------------------------------------->
+        // NEW: rename all helper function assignments -----------------------
+        // Only need Pattern 2 since helpers also come as anonymous functions with comments
+        for (String helper : helpers) {
+            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
+            
+            // Pattern 2: anonymous function after helper comment "# Helper: Plot.PairScatter\nfunction"
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*#\\s*Helper:\\s*" + Pattern.quote(resolvedHelper) + "\\s*\\n\\s*function",
+                    "# Helper: " + resolvedHelper + aiSuffix + "\n" + resolvedHelper + aiSuffix + " <- function");
+        }
+
+        // update function calls to use AI versions of helpers
+        for (String helper : helpers) {
+            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
+            // replace function calls like "Plot.PairScatter(" with "Plot.PairScatterAI("
+            llmOut = llmOut.replaceAll(
+                    "\\b" + Pattern.quote(resolvedHelper) + "\\s*\\(",
+                    resolvedHelper + aiSuffix + "(");
+        }
+        
+        // Since LLM always returns anonymous functions, always prepend assignment for main function
+        llmOut = aiMain + " <- " + llmOut.trim();
+        
+        // <---------------- NEW ADDITION ------------------------------------->
+        
+        
+        
+        
+        // debugging: show the final transformed code
+        System.out.println("Final transformed code:\n" + llmOut);
 
         /*── 6. evaluate the code in R ──────────────────────────────────────*/
         try {
@@ -195,10 +272,9 @@ public class RPlotCustomizationAgent implements Serializable {
     /*───────────────────────────────────────────────────────────────────────────
      *  INTERNAL HELPERS
      *─────────────────────────────────────────────────────────────────────────*/
-
     private Optional<String> readFunctionCode(String rFuncName) {
         try {
-            String rCmd = "paste(deparse(" + rFuncName + "), collapse='\\n')";
+            String rCmd = "paste(deparse(" + rFuncName + "), collapse='\\n')";  // returns the code in the R session as txt for the LLM, e.g. r code for my.plot.volcano
             String code = sb.getRConnection().eval(rCmd).asString();
             return Optional.of(code);
         } catch (Exception ex) {
@@ -213,7 +289,7 @@ public class RPlotCustomizationAgent implements Serializable {
             return;
         }
         try {
-            String modified = originalCmd.replaceFirst("(\\w+)\\(", "$1" + aiSuffix + "(");
+            String modified = originalCmd.replaceFirst("([\\w.]+)\\(", "$1" + aiSuffix + "("); // added . in regex
             System.out.println(modified);
             RConnection rc = sb.getRConnection();
             RCenter.recordRCommand(rc, modified);
@@ -223,18 +299,24 @@ public class RPlotCustomizationAgent implements Serializable {
         }
     }
 
-    private static String err(String msg) { return "Error: " + msg; }
+    private static String err(String msg) {
+        return "Error: " + msg;
+    }
 
     /*───────────────────────────────────────────────────────────────────────────
      *  SUPPORT CLASSES
      *─────────────────────────────────────────────────────────────────────────*/
-    private record ChatMessage(String role, String content) {}
+    private record ChatMessage(String role, String content) {
+
+    }
 
     private static final Map<String, FunctionMapping> FUNCTION_MAPPINGS = Map.of(
-            "PlotVolcano",     new FunctionMapping("my.plot.volcano",   "util_volcano.Rc"),
-            "plotVennDiagram", new FunctionMapping("my.plot.venn",      "util_venndiagram.Rc"),
-            "Plot3D",          new FunctionMapping("my.plot.scatter3d", "util_scatter3d.Rc")
+            "PlotVolcano", new FunctionMapping("my.plot.volcano", "util_volcano.Rc"),
+            "plotVennDiagram", new FunctionMapping("my.plot.venn", "util_venndiagram.Rc"),
+            "Plot3D", new FunctionMapping("my.plot.scatter3d", "util_scatter3d.Rc")
     );
 
-    private record FunctionMapping(String rFuncName, String rScriptFile) {}
+    private record FunctionMapping(String rFuncName, String rScriptFile) {
+
+    }
 }
