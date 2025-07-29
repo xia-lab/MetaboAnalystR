@@ -336,6 +336,14 @@
                                 within a reasonable time. 
                             </p>
                             <h:panelGrid id="permPane" style="width: 100%; text-align: center">
+                                <h:panelGrid columns="2" style="text-align: right; padding-left: 650px; width: 760px;">
+                                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('opls_perm')}"
+                                                   update=":myGraphPane"
+                                                   oncomplete="PF('graphDialog').show()"
+                                                   title="Customize the graphics output">
+                                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                    </p:commandLink>
+                                </h:panelGrid>
                                 <h:outputLabel style="font-weight: bold" value="#{oplsBean.permMsg}"/>
                                 <img onerror='this.style.display="none"' 
                                      style="width:8in; padding-left: 50px"

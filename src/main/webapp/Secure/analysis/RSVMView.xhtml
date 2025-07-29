@@ -42,8 +42,18 @@
                                              actionListener="#{classBean.svmBn_action()}"/>   
                         </h:panelGrid>
 
-                        <h:panelGrid id="sumPane" style="padding-top: 20px">
-                            <img onerror='this.style.display="none"' 
+                        <h:panelGrid id="sumPane" style="padding-top: 20px; width: 100%;">
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('svm_cls')}"
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>                            <img onerror='this.style.display="none"' 
                                  style="width:9in; padding-left: 40px"
                                  src="#{sessionBean1.getCurrentImageURL('svm_cls')}" alt="SVMclass"/>
                         </h:panelGrid>        
@@ -55,6 +65,17 @@
                             Please note : features are ranked by their frequencies being selected in the best classifiers 
                             (only top 15 will be shown)
                         </p>
+                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
+                                <p:commandLink onclick="PF('detailDialog').show()" title="View the detailed data table">
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('svm_imp')}"
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
+                            </h:panelGrid>
                         <img onerror='this.style.display="none"' 
                              style="width:8in; padding-left: 40px"
                              src="#{sessionBean1.getCurrentImageURL('svm_imp')}" alt="SVMImp"/>

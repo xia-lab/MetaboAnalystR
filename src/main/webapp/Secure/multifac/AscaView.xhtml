@@ -32,7 +32,6 @@
                     </li>
                 </ul>
             </p>
-
             <h:form id="form1">
                 <h:panelGrid columns="2">
                     <h:panelGrid columns="2" style="width: 560px; padding-left: 30px; padding-right: 40px; padding-bottom: 10px">
@@ -67,15 +66,47 @@
                         <h:outputText escape="false" value="#{multifacBean.defaultText}" rendered="#{!multifacBean.ascaInit}"/>
                     </h:panelGrid>
                     <h:panelGrid id="pairPane" style="padding: 20px">
+                        <h:panelGrid columns="1" style="width: 8in; text-align: left;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_scree')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Image Options">
+                                <i class="pi pi-palette" style="font-size: 1.0rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
                         <img onerror='this.style.display="none"'  
                              style="width:8in;" 
                              src="#{sessionBean1.getCurrentImageURL('asca_scree')}"  alt="ASCAScreeImage"/>
                     </h:panelGrid>        
                 </p:tab>
                 <p:tab title ="Major Patterns">
-                    <h:panelGrid id="screePane" style="padding: 20px; text-align: center; width:90%">
+                     <h:panelGrid id="screePane" style="padding: 20px; text-align: center; width:90%">
+                        <h:panelGrid columns="1" style="width: 5in; text-align: left; margin: 0 auto;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_fa')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Image Options">
+                                <i class="pi pi-palette" style="font-size: 1.0rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
                         <img onerror='this.style.display="none"'  style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fa')}"/>
+                        <h:panelGrid columns="1" style="width: 5in; text-align: left; margin: 0 auto;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_fb')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Image Options">
+                                <i class="pi pi-palette" style="font-size: 1.0rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
                         <img onerror='this.style.display="none"' style="width:5in;"  src="#{sessionBean1.getCurrentImageURL('asca_fb')}"/>
+                        <h:panelGrid columns="1" style="width: 5in; text-align: left; margin: 0 auto;">
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_fab')}" 
+                                           update=":myGraphPane"
+                                           oncomplete="PF('graphDialog').show()"
+                                           title="Image Options">
+                                <i class="pi pi-palette" style="font-size: 1.0rem"/>
+                            </p:commandLink>
+                        </h:panelGrid>
                         <img onerror='this.style.display="none"' style="height:8in;"  src="#{sessionBean1.getCurrentImageURL('asca_fab')}"/>
                     </h:panelGrid>     
                 </p:tab>
@@ -158,11 +189,19 @@
                                         <f:selectItem itemLabel="200" itemValue="200" /> 
                                     </p:selectOneMenu>
                                 </h:panelGrid>
-                                <p:commandButton value="Submit" 
-                                                 onclick="PF('statusDialog').show()"
-                                                 oncomplete="PF('statusDialog').hide()"
-                                                 update=":ac:form3:permPane  :hisTab:cmdPane" 
-                                                 actionListener="#{ascaBean.permBn_action()}"/>   
+                                <h:panelGrid columns="2" style="text-align: right;">
+                                    <p:commandButton value="Submit" 
+                                                     onclick="PF('statusDialog').show()"
+                                                     oncomplete="PF('statusDialog').hide()"
+                                                     update=":ac:form3:permPane  :hisTab:cmdPane" 
+                                                     actionListener="#{ascaBean.permBn_action()}"/>
+                                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('asca_perm')}" 
+                                                   update=":myGraphPane"
+                                                   oncomplete="PF('graphDialog').show()"
+                                                   title="Image Options" style="padding-left: 10px;">
+                                        <i class="pi pi-palette" style="font-size: 1.0rem"/>
+                                    </p:commandLink>
+                                </h:panelGrid>
                             </h:panelGrid>
                             <p>
                                 Permutation is a computationally intensive procedure. For large dataset, 

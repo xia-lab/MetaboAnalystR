@@ -255,14 +255,28 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qea", "PlotQEA.Overview"),
             Map.entry("qea_dot", "PlotEnrichDotPlot"),
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
-            Map.entry("path_view", "PlotPathSummary")
+            Map.entry("path_view", "PlotPathSummary"),
+            Map.entry("svm_imp", "PlotRSVM.Cmpd"),
+            Map.entry("svm_cls", "PlotRSVM.Classification"),
+            Map.entry("opls_perm", "PlotOPLS.Permutation"),
+            Map.entry("asca_scree", "PlotASCAModelScree"),
+            Map.entry("asca_fa", "PlotASCAModel"),
+            Map.entry("asca_fb", "PlotASCAModel"),
+            Map.entry("asca_fab", "PlotASCAInteraction"),
+            Map.entry("asca_perm", "PlotASCA.Permutation"),
+            Map.entry("qc_meta_pca", "PlotMetaPCA"),
+            Map.entry("pls_imp", "PlotPLS.Imp"),
+            Map.entry("pls_cv", "PlotSPLSDA.Classification"),
+            Map.entry("pls_perm", "PlotSPLS.Permutation")
     );
+    
     
     
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
         Map.entry("PlotSPLSLoading", List.of("PlotImpVar")),
         Map.entry("PlotPLS.Imp", List.of("PlotImpVar")),
         Map.entry("PlotOPLS.Imp", List.of("PlotImpVar")),
+        Map.entry("PlotRSVM.Cmpd", List.of("PlotImpVar")),
         Map.entry("PlotSPLSPairSummary", List.of("Plot.PairScatter")),
         Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd")),
         Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd")),
@@ -272,6 +286,9 @@ public class RPlotCustomizationBean implements Serializable {
         Map.entry("PlotForest", List.of(".mr_forestPlot")),
         Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
         Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
-        Map.entry("rf_imp", List.of("PlotImpVarMeta"))
+        Map.entry("rf_imp", List.of("PlotImpVarMeta")),
+        Map.entry("PlotQEA.Overview", List.of("PlotMSEA.Overview"))
     );
+    
+   
 }
