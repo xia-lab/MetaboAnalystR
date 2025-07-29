@@ -83,6 +83,7 @@ import * as legendUtils from "./legendOpts.js";
 export {boundingClusters, initScatter3D, embeddedCollapsed, gData, scene2, takeImageBool, setTakeImageBool};
 
 var savedState = {};
+savedState.encasingFileNames = [];
 var nodeSizeFactor = 2000;
 var nodeSizeFactorLoading = 1200;
 var gridsArr = [];
@@ -7527,8 +7528,7 @@ function greyOutNodes() {
 }
 
 
-function doEncasing(type, reloadFlag) {
-
+function doEncasing(type) {
     var meta, encasingType, confVal, alphaVal;
     if (type === "biplot") {
         meta = $('#biplotMetaOpt').val();
@@ -7563,45 +7563,37 @@ function doEncasing(type, reloadFlag) {
         meansArr.push(meanXYZ);
 
         // use a neutral colour (e.g. grey) or any default
-        computeEncasing(idsAll, encasingType, "#cf352e", "All", confVal, alphaVal);
+        computeEncasing(idsAll, encasingType, "#3c28d4", "All", confVal, alphaVal);
         deleteSpherical("main");
-
-    } else {
+    } else {                                          // ← discrete case
         var arr = gData.meta[curr_meta];
         var set = [...new Set(arr)];
-        if (!reloadFlag) {
-            savedState.encasingFileNames = {};
-        }
         setTimeout(function () {
             for (var i = 0; i < set.length; i++) {
-                var idsArr = [];
-                var col = {};
-                Scatter.graphData().nodes.forEach(function (n) {
+                var idsArr = [], xArr = [], yArr = [], zArr = [], col = {};
 
+                Scatter.graphData().nodes.forEach(function (n) {
                     if (n.meta === set[i]) {
-                        nodes_vec.push(n.id);
+                        idsArr.push(n.id);
                         xArr.push(n.fx);
                         yArr.push(n.fy);
                         zArr.push(n.fz);
-                        idsArr.push(n.id);
                         col[set[i]] = n.color;
                     }
                 });
-                var meanX = meanF(xArr);
-                var meanY = meanF(yArr);
-                var meanZ = meanF(zArr);
-                var meanXYZ = v(meanX, meanY, meanZ);
+
+                var meanXYZ = v(meanF(xArr), meanF(yArr), meanF(zArr));
                 meansArr.push(meanXYZ);
 
                 (function (i) {
-                    computeEncasing(idsArr, encasingType, col[set[i]], set[i], confVal, alphaVal, reloadFlag, set[i]);
-                    //rest of the code
+                    computeEncasing(idsArr, encasingType, col[set[i]],
+                            set[i], confVal, alphaVal);
                 }(i));
-
             }
             deleteSpherical("main");
         }, 1);
     }
+
     /*
      for (var i = 0; i < set.length; i++) {
      dir = meansArr[i];
@@ -7619,17 +7611,6 @@ function doEncasing(type, reloadFlag) {
      */
     //$.messager.progress('close');
     //$("#biplotdlg2").dialog("close");
-}
-
-function biplotLoading() {
-    $("#loader").show();
-    if (current_main_plot === "score") {
-        switchToLoadingCallBack(function () {
-            doBiplotLoading("biplot");
-        });
-    } else {
-        doBiplotLoading("biplot");
-    }
 }
 
 function globalEncasing(callback) {
@@ -7665,7 +7646,6 @@ function switchToLoadingCallBack(callBack) {
             //computeEllipsoid(scene2, cont.ids, cont.color, cont.type)
         }
     }
-    //computeContours(scene2)
     Scatter.graphData(gData);
     deleteSpherical("inset");
     setTimeout(function () {

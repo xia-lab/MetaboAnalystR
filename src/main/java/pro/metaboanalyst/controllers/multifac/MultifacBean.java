@@ -52,6 +52,7 @@ public class MultifacBean implements Serializable {
     @JsonIgnore
 
     private List<MetaDataBean> metaDataBeans = null;
+    @JsonIgnore
     private MetaDataBean selectedMetaDataBean;
     private String selectedMetaData;
     private String[] metaOpts;
