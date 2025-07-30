@@ -1295,172 +1295,127 @@ PlotMissingDistr <- function(mSetObj = NA,
 
 
 
-#' @title Missing Value Heatmap
+
+#' @title Generate Missing Value Heatmap (PNG and/or JSON)
 #' @description
-#'   Generates a heatmap showing the locations of missing values across samples (rows) and features (columns).
-#'   Useful for identifying patterns of group-specific or sample-level missingness.
+#'   This function creates a static heatmap (PNG) and/or an interactive JSON file for Plotly.js,
+#'   showing missing values in the data matrix. Samples and features are ordered by missingness.
 #'
-#' @usage
-#'   PlotMissingHeatmap(mSetObj = NA,
-#'                      imgName  = "miss_heatmap",
-#'                      format   = "png",
-#'                      dpi      = 150)
-#'
-#' @param mSetObj  MetaboAnalyst object.
-#' @param imgName  Base output name (no extension).
-#' @param format   Image format: "png", "tiff", "pdf", or "svg". Default "png".
-#' @param dpi      Device resolution (dpi). Default 150.
+#' @param mSetObj   MetaboAnalyst object.
+#' @param prefix    Output file prefix (no extension).
+#' @param format    Image format for static plot ("png", "pdf", etc.).
+#' @param dpi       Resolution of static image.
+#' @param to.json   Export to JSON for Plotly.js.
+#' @param to.image  Export to PNG or static image.
 #'
 #' @export
-#'
 PlotMissingHeatmap <- function(mSetObj = NA,
-                               imgName  = "miss_heatmap",
-                               format   = "png",
-                               dpi      = 150) {
-  
+                                   prefix = "missing_heatmap",
+                                   format = "png",
+                                   dpi = 150,
+                                   to.json = TRUE,
+                                   to.image = TRUE) {
   require("ggplot2")
   require("qs")
   require("Cairo")
-  
-  mSetObj <- .get.mSet(mSetObj)
-  if(grepl("_filt", imgName)){
-    int.mat <- qs::qread("data.filt.qs");
-  }else{
-    int.mat <- qs::qread("preproc.orig.qs")
-  }
-
-  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
-
-  nSamples  <- nrow(int.mat)
-  nFeatures <- ncol(int.mat)
-
-  hide_feat_labels <- nFeatures > 100;
-  miss.mat <- is.na(int.mat);
-
-  # Order samples by missingness count (descending)
-  smpl.miss.counts <- rowSums(miss.mat);
-  ord.inx <- order(smpl.miss.counts, decreasing = TRUE);
-  int.mat <- int.mat[ord.inx,];
-
-  msg <- NULL
-  if (nSamples > 40) {
-    int.mat <- int.mat[1:40, , drop = FALSE]
-    msg <- sprintf("Only the top 40 samples with most missing values are shown (out of %d).", nSamples)
-  }
-
-  # Order features by missingness count (descending)
-  miss.counts <- colSums(miss.mat);
-  feature.order <- names(sort(miss.counts, decreasing = TRUE));
-  # Convert to missing indicator matrix and long format
-  df <- as.data.frame(as.table(miss.mat))
-  colnames(df) <- c("Sample", "Feature", "Missing")
-  df$Missing <- ifelse(df$Missing, "Missing", "Present")
-
-  # Apply factor levels for ordered plotting
-  df$Feature <- factor(df$Feature, levels = feature.order)
-  df$Sample <- factor(df$Sample, levels = rownames(int.mat))  # preserve original order
-
-  # Heatmap plot
-  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
-
-  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
-    geom_tile(color = "grey90") +
-    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
-    theme_minimal(base_size = 13) +
-    theme(
-      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
-      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
-      legend.position = "top",
-      panel.grid = element_blank()
-    )
-
-  print(p)
-  dev.off()
-
-  # Book-keeping
-  mSetObj$imgSet$miss.heatmap <- img.full
-  mSetObj$msgSet$plot.msg <- c(
-    mSetObj$msgSet$plot.msg,
-    sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi),
-    msg
-  );
-  return(.set.mSet(mSetObj))
-}
-
-
-#' @title Export Missing Value Heatmap to JSON for Plotly.js (v3)
-#' @description
-#'   Prepares a JSON file with the missingness matrix (0 = present, 1 = missing) formatted for Plotly.js v3 heatmap.
-#'
-#' @usage
-#'   ExportMissingHeatmapJSON(mSetObj = NA,
-#'                            fileName = "missing_heatmap.json")
-#'
-#' @param mSetObj   MetaboAnalyst object.
-#' @param fileName  Output JSON file name.
-#'
-#' @export
-ExportMissingHeatmapJSON <- function(mSetObj = NA,
-                                     fileName = "missing_heatmap.json") {
-  require("qs")
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
-  if (grepl("_filt", fileName)) {
-    int.mat <- qs::qread("data.filt.qs")
+
+  # Load appropriate matrix
+  int.mat <- if (grepl("_filt", prefix)) {
+    qs::qread("data.filt.qs")
   } else {
-    int.mat <- qs::qread("preproc.orig.qs")
+    qs::qread("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
 
-  # Compute missing indicator matrix
-  miss.mat <- 1 * is.na(int.mat)
+  # Compute missing matrix
+  miss.mat <- is.na(int.mat)
 
-  # Order features (columns) by missing count (descending)
+  # Order features by missingness
   feat.miss.counts <- colSums(miss.mat)
   ord.feat.idx <- order(feat.miss.counts, decreasing = TRUE)
   miss.mat <- miss.mat[, ord.feat.idx, drop = FALSE]
-  feature.names <- colnames(miss.mat)
 
-  # Order samples (rows) by missing count (descending)
+  # Order samples by missingness
   samp.miss.counts <- rowSums(miss.mat)
   ord.samp.idx <- order(samp.miss.counts, decreasing = TRUE)
   miss.mat <- miss.mat[ord.samp.idx, , drop = FALSE]
 
-  # Limit to top 50 samples *after* ordering
+  # Limit to top 50 samples
   if (nrow(miss.mat) > 50) {
     miss.mat <- miss.mat[1:50, , drop = FALSE]
   }
+
+  print(head(miss.mat))
+  print(dim(miss.mat));
+
+  feature.names <- colnames(miss.mat)
   sample.names <- rownames(miss.mat)
 
-  # Convert to list of rows
-  z <- unname(split(miss.mat, row(miss.mat)))
+  ## ---------------- PNG Export -----------------
+  if (to.image) {
+    df <- as.data.frame(as.table(miss.mat))
+    colnames(df) <- c("Sample", "Feature", "Missing")
+    df$Missing <- ifelse(df$Missing, "Missing", "Present")
 
-  # Construct JSON object for Plotly.js
-  out.list <- list(
-    z = z,
-    x = feature.names,
-    y = sample.names,
-    type = "heatmap",
-    colorscale = list(list(0, "white"), list(1, "red")),
-    showscale = FALSE,
-    hoverinfo = "x+y+z"
-  )
+    df$Feature <- factor(df$Feature, levels = feature.names)
+    df$Sample <- factor(df$Sample, levels = sample.names)
 
-  # Write JSON
-  json.out <- rjson::toJSON(out.list)
-  write(json.out, file = paste0(fileName, ".json"))
+    img.full <- paste0(prefix, "dpi", dpi, ".", format)
+    hide_feat_labels <- ncol(miss.mat) > 100
 
-  mSetObj$msgSet$plot.msg <- c(
-    mSetObj$msgSet$plot.msg,
-    sprintf("Missing value heatmap exported to JSON (%s).", fileName)
-  )
+    Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
+
+    p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
+      geom_tile(color = "grey90") +
+      scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
+      theme_minimal(base_size = 13) +
+      theme(
+        axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
+        axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
+        legend.position = "top",
+        panel.grid = element_blank()
+      )
+
+    print(p)
+    dev.off()
+
+    mSetObj$imgSet$miss.heatmap <- img.full
+    mSetObj$msgSet$plot.msg <- c(
+      mSetObj$msgSet$plot.msg,
+      sprintf("Missing value heatmap saved (%s, 8 × 6 in, %d dpi).", format, dpi)
+    )
+  }
+
+  ## ---------------- JSON Export -----------------
+  if (to.json) {
+    z <- unname(split(1 * miss.mat, row(miss.mat)))
+
+    json.list <- list(
+      z = z,
+      x = feature.names,
+      y = sample.names,
+      type = "heatmap",
+      colorscale = list(list(0, "white"), list(1, "red")),
+      showscale = FALSE,
+      hoverinfo = "x+y+z"
+    )
+
+    json.out <- rjson::toJSON(json.list)
+    json.path <- paste0(prefix, ".json")
+    write(json.out, file = json.path)
+
+    mSetObj$msgSet$plot.msg <- c(
+      mSetObj$msgSet$plot.msg,
+      sprintf("Missing value heatmap exported to JSON (%s).", json.path)
+    )
+  }
 
   return(.set.mSet(mSetObj))
 }
-
 
 
 #' Check QC %RSD with pmp::filter_peaks_by_rsd
