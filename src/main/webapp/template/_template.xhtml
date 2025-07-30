@@ -589,15 +589,13 @@
                                     </h:outputLink>
                                 </p:outputPanel>
                             </p:panelGrid>
-                            <p:panelGrid columns="2" style="width:100%;text-align:center">
-                                <p:commandButton value="Submit" 
+                            <p:panelGrid style="width:100%" columns="1">
+                                <p:commandButton value="Submit"
+                                                 style="display:block;margin:0 auto;"
                                                  action="#{rPlotCustomizationBean.applyCustomization}"
                                                  update=":myGraphPane:rPlotCustomizationForm"
                                                  onstart="$('#custProgressBar').show();"
                                                  oncomplete="$('#custProgressBar').hide();" />
-                                <p:commandButton value="Cancel" 
-                                                 onclick="PF('rPlotCustomizationDialog').hide();" 
-                                                 type="button" />
                             </p:panelGrid>
 
 
