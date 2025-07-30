@@ -54,7 +54,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj <- .get.mSet(mSetObj);
   
   data <- qs::qread("prenorm.qs");
-
   cls <- mSetObj$dataSet$prenorm.cls;
   
   colNames <- colnames(data);
@@ -117,7 +116,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     colNames <- colNames[-inx];
   }
 
-  # record row-normed data for fold change analysis (b/c not applicable for mean-centered data)
+  # record row-normed data for fold change analysis 
   row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
   qs::qsave(row.norm, file="row_norm.qs");
   # this is for biomarker analysis only (for compound concentration data)
@@ -138,7 +137,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     hit.inx <- rank(-fstats) <= ratioNum;  # get top n
     
     ratio.mat <- ratio.mat[, hit.inx, drop=FALSE];
-    
+
+    mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F);
+   
     data <- cbind(norm.data, ratio.mat);
     
     colNames <- colnames(data);
@@ -199,30 +200,25 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   # need to do some sanity check, for log there may be Inf values introduced
   data <- CleanData(data, T, F);
   
-  ## drop features whose column-names are NA or literal "NA" ─────
-  badCol <- is.na(colnames(data)) | tolower(colnames(data)) == "na"
-  if (any(badCol)) {
-    data <- data[ , !badCol, drop = FALSE]
-    colNames <- colnames(data)           # refresh vector
-    msg      <- paste0("Removed ", sum(badCol),
-                       " feature(s) whose name is NA after normalization.")
-    mSetObj$msgSet$norm.nafeat.msg <- msg
-  }
-
-  if(ratio){
-    mSetObj$dataSet$ratio <- CleanData(ratio.mat, T, F);
-
-  }
+  ## drop features whose column-names are NA or literal "NA"
+  ## JX: this is impossible or must be dealt with explicitly
+  # badCol <- is.na(colnames(data)) | tolower(colnames(data)) == "na"
+  #if (any(badCol)) {
+  #  data <- data[ , !badCol, drop = FALSE]
+  #  colNames <- colnames(data)           # refresh vector
+  #  msg      <- paste0("Removed ", sum(badCol),
+  #                     " feature(s) whose name is NA after normalization.")
+  #  mSetObj$msgSet$norm.nafeat.msg <- msg
+  #}
 
   mSetObj$dataSet$norm <- as.data.frame(data);
-
-  qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
   mSetObj$dataSet$cls <- cls;
-  
   mSetObj$dataSet$rownorm.method <- rownm;
   mSetObj$dataSet$trans.method <- transnm;
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
+
+  qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
 
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     
@@ -266,6 +262,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
   
   return(.set.mSet(mSetObj));
+}
+
+GetNormMethods<-function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+
+  meths <- paste("sample normalization:", mSetObj$dataSet$rownorm.method, 
+                "; data transformation:", mSetObj$dataSet$trans.method,
+                "; data scaling:", mSetObj$dataSet$scale.method);
+  return(meths);
 }
 
 #'Row-wise Normalization

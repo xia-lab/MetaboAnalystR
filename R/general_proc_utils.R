@@ -735,6 +735,8 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   total.msg <-  paste0("A total of ", ncol(int.mat), " features remain after filtering.")
   mSetObj$msgSet$filter.total.msg <- total.msg;
   
+  mSetObj$dataSet$filt.size <- ncol(int.mat);
+
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     # make sure metadata are in sync with data
     my.sync <- .sync.data.metadata(int.mat, mSetObj$dataSet$meta.info);
@@ -1318,6 +1320,119 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   require("ggplot2")
   require("qs")
   require("Cairo")
+  
+  mSetObj <- .get.mSet(mSetObj)
+  if(grepl("_filt", imgName)){
+    int.mat <- qs::qread("data.filt.qs");
+  }else{
+    int.mat <- qs::qread("preproc.orig.qs")
+  }
+
+  if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
+
+  nSamples  <- nrow(int.mat)
+  nFeatures <- ncol(int.mat)
+
+  hide_feat_labels <- nFeatures > 100;
+  miss.mat <- is.na(int.mat);
+
+  # Order samples by missingness count (descending)
+  smpl.miss.counts <- rowSums(miss.mat);
+  ord.inx <- order(smpl.miss.counts, decreasing = TRUE);
+  int.mat <- int.mat[ord.inx,, drop = FALSE];
+
+  # Order features by missingness count (descending)
+  miss.counts <- colSums(miss.mat);
+  ord.inx2 <- order(miss.counts, decreasing = TRUE);
+  int.mat <- int.mat[,ord.inx2, drop = FALSE];
+
+  msg <- NULL
+  if (nSamples > 40) {
+    int.mat <- int.mat[1:40, , drop = FALSE]
+    msg <- sprintf("Only the top 40 samples with most missing values are shown (out of %d).", nSamples)
+  }
+
+  # note we would like view sample from top to bottom (do reverse since R start from bottom)
+  int.mat <- int.mat[nrow(int.mat):1, , drop = FALSE]
+
+  # sync
+  miss.mat <- is.na(int.mat);
+
+  # Convert to missing indicator matrix and long format
+  df <- as.data.frame(as.table(miss.mat))
+  colnames(df) <- c("Sample", "Feature", "Missing")
+  df$Missing <- ifelse(df$Missing, "Missing", "Present")
+
+  # Heatmap plot
+  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  Cairo::Cairo(file = img.full, width = 8, height = 7.2, units = "in", dpi = dpi, type = format)
+
+  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
+    geom_tile(color = "grey90") +
+    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
+    theme_minimal(base_size = 13) +
+    theme(
+      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
+      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
+      legend.position = "top",
+      panel.grid = element_blank()
+    )
+
+  print(p)
+  dev.off()
+
+  # Book-keeping
+  mSetObj$imgSet$miss.heatmap <- img.full
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing value heatmap saved (%s, 8 × 7.2 in, %d dpi).", format, dpi),
+    msg
+  );
+
+  # ===== for web json
+  # Compute missing indicator matrix
+   miss.mat <- 1 * miss.mat;
+
+   sample.names <- rownames(miss.mat);
+   feature.names <- colnames(miss.mat);
+
+  # Convert to list of rows
+  z <- unname(split(miss.mat, row(miss.mat)))
+
+  # Construct JSON object for Plotly.js
+  out.list <- list(
+    z = z,
+    x = feature.names,
+    y = sample.names,
+    type = "heatmap",
+    colorscale = list(list(0, "white"), list(1, "red")),
+    showscale = FALSE,
+    hoverinfo = "x+y+z"
+  )
+
+  # Write JSON
+  json.out <- rjson::toJSON(out.list)
+  write(json.out, file = paste0(imgName, ".json"));
+
+  return(.set.mSet(mSetObj))
+}
+
+
+#' @title Export Missing Value Heatmap to JSON for Plotly.js (v3)
+#' @description
+#'   Prepares a JSON file with the missingness matrix (0 = present, 1 = missing) formatted for Plotly.js v3 heatmap.
+#'
+#' @usage
+#'   ExportMissingHeatmapJSON(mSetObj = NA,
+#'                            fileName = "missing_heatmap.json")
+#'
+#' @param mSetObj   MetaboAnalyst object.
+#' @param fileName  Output JSON file name.
+#'
+#' @export
+ExportMissingHeatmapJSON <- function(mSetObj = NA,
+                                     fileName = "missing_heatmap.json") {
+  require("qs")
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)
@@ -1344,9 +1459,9 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   ord.samp.idx <- order(samp.miss.counts, decreasing = TRUE)
   miss.mat <- miss.mat[ord.samp.idx, , drop = FALSE]
 
-  # Limit to top 50 samples
-  if (nrow(miss.mat) > 50) {
-    miss.mat <- miss.mat[1:50, , drop = FALSE]
+  # Limit to top 40 samples *after* ordering
+  if (nrow(miss.mat) > 40) {
+    miss.mat <- miss.mat[1:40, , drop = FALSE]
   }
 
   print(head(miss.mat))
@@ -1622,36 +1737,3 @@ rm_outliers <- function(vec) {
     if (is.na(mu) || mu == 0) return(NA_real_)
     100 * stats::sd(x, na.rm = TRUE) / abs(mu)
   }
-## ---------------------------------------------------------------
-##  1 = QC samples present, 0 = absent / flag missing
-## ---------------------------------------------------------------
-GetContainsQC <- function(mSetObj = NA) {
-
-  mSetObj <- .get.mSet(mSetObj)
-
-  if (is.null(mSetObj$dataSet) ||
-      is.null(mSetObj$dataSet$containsQC)) {
-    return(0L)
-  }
-  return(as.integer(isTRUE(mSetObj$dataSet$containsQC)))
-}
-
-## ---------------------------------------------------------------
-##  1 = blank injections present, 0 = absent / flag missing
-## ---------------------------------------------------------------
-GetContainsBlank <- function(mSetObj = NA) {
-
-  mSetObj <- .get.mSet(mSetObj)
-
-  if (is.null(mSetObj$dataSet) ||
-      is.null(mSetObj$dataSet$containsBlank)) {
-    return(0L)
-  }
-  return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
-}
-
-GetFiltFeatureNumber<- function() {
-
-  mat <- qs::qread("data.filt.qs");
-  return(ncol(mat))
-}
