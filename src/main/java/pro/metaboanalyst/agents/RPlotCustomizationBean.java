@@ -180,7 +180,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pca_scree", "PlotPCAScree"),
             Map.entry("pca_pair", "PlotPCAPairSummary"),
             Map.entry("spls_perm", "PlotSPLS.Permutation"),
-            Map.entry("dose_volcano", "PlotDoseVolcano"),
+            Map.entry("dose_volcano", "PlotDoseVolcano"), // Error message: No R command found for source: dose_volcano
             Map.entry("dr_histogram", "PlotDRHistogram"),
             Map.entry("raw_spec_stic", "plotSingleTIC"),
             Map.entry("plot_kegg_graph", "PlotKEGGPath"),
@@ -268,8 +268,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pls_perm", "PlotSPLS.Permutation"),
             Map.entry("qc_miss_filt", "PlotMissingDistr"),
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
-            Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
-            Map.entry("cmpd", "")
+            Map.entry("cls_roc_lr", "PlotROC.LRmodel")
+            
     );
     
     
