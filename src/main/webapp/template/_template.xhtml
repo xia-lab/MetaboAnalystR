@@ -149,12 +149,7 @@
                 var growlMessageType = "#{flash.growlMessageType}";
 
                 if (growlMessage) {
-                    // Show the growl message using PrimeFaces growl component
-                    if (growlMessageType === "error") {
-                        PF('growlWidget2').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    } else {
-                        PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    }
+                    PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
                 }
             });
 
@@ -248,7 +243,7 @@
         <h:form id="formHidden">
             <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
         </h:form>
-        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false" sticky="true">
+        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn, error" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
 
@@ -589,15 +584,13 @@
                                     </h:outputLink>
                                 </p:outputPanel>
                             </p:panelGrid>
-                            <p:panelGrid columns="2" style="width:100%;text-align:center">
-                                <p:commandButton value="Submit" 
+                            <p:panelGrid style="width:100%" columns="1">
+                                <p:commandButton value="Submit"
+                                                 style="display:block;margin:0 auto;"
                                                  action="#{rPlotCustomizationBean.applyCustomization}"
                                                  update=":myGraphPane:rPlotCustomizationForm"
                                                  onstart="$('#custProgressBar').show();"
                                                  oncomplete="$('#custProgressBar').hide();" />
-                                <p:commandButton value="Cancel" 
-                                                 onclick="PF('rPlotCustomizationDialog').hide();" 
-                                                 type="button" />
                             </p:panelGrid>
 
 

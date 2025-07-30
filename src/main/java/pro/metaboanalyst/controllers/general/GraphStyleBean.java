@@ -70,12 +70,12 @@ public class GraphStyleBean implements Serializable {
      */
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
-        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png";
+        return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png";
     }
 
     public DefaultStreamedContent getPreviewContent() {
         String plotSource = sb.getImageSource();
-        return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi72.png");
+        return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png");
     }
 
     /**

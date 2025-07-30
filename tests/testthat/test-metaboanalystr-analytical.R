@@ -87,7 +87,7 @@ test_that("Multiple factors analysis", {
   ## check CovariateScatter.Anal res
   adj.vec <<- "Gender";
   mSet<-CovariateScatter.Anal(mSet, 
-                              "covariate_plot_0_dpi72.png", 
+                              "covariate_plot_0_dpi150.png", 
                               "png", "Diagnosis", "COVID", 
                               "NA" , 0.05)
   expect_equal(nrow(mSet[["dataSet"]][["meta.info"]]), 59)

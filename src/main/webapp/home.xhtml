@@ -21,11 +21,7 @@
 
                 if (growlMessage) {
                     // Show the growl message using PrimeFaces growl component
-                    if (growlMessageType === "error") {
-                        PF('growlWidget2').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    } else {
-                        PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    }
+                    PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
                 }
             });
             function handleDialogOpen() {
@@ -91,10 +87,7 @@
         <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
     </h:head>
     <h:body>
-        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
-            <p:autoUpdate/>
-        </p:growl> 
-        <p:growl id="growl2" widgetVar="growlWidget2" severity="error" showDetail="true" globalOnly="false" escape="false" sticky="true">
+        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn, error" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
         <div id="header" style="clear: both; margin: 0; padding: 0; height: 100vh; background-color: #304562; position: relative"  
