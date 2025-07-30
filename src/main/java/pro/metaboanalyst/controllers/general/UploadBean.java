@@ -178,6 +178,11 @@ public class UploadBean implements Serializable {
 
     public String handleZipFileUpload() {
 
+        if (zipFile == null || zipFile.getSize() == 0) {
+            sb.addMessage("Error", "File is empty!");
+            return null;
+        }
+
         boolean paired = false;
         if (pairFile != null && pairFile.getSize() > 0) {
             paired = true;
@@ -464,10 +469,11 @@ public class UploadBean implements Serializable {
 
     public String uploadRocData() {
 
-        if (dataFile.getSize() == 0) {
+        if (dataFile == null || dataFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty");
             return null;
         }
+
         if (sb.doLogin(dataType, "roc", false, false)) {
             RConnection RC = sb.getRConnection();
             String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
@@ -556,7 +562,7 @@ public class UploadBean implements Serializable {
 
     public String handleMzTabUpload() {
 
-        if (mzTabFile.getSize() == 0) {
+        if (mzTabFile == null || mzTabFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty!");
             return null;
         }
@@ -672,7 +678,7 @@ public class UploadBean implements Serializable {
 
     public String handleMetabolonData(String analType) {
 
-        if (metabolonFile.getSize() == 0) {
+        if (metabolonFile == null || metabolonFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty!");
             return null;
         }
