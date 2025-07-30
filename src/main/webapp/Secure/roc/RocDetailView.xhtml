@@ -44,6 +44,33 @@
                 </h:panelGrid>
 
                 <h:panelGrid id="imgPane" class="surface-card shadow-1 p-0 text-800" style="width:95%; text-align: center; padding: 20px">
+                    <h:panelGrid columns="3" style="margin-left:600px; width:200px;">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc_univ_')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc_boxplot_')}" 
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                    </h:panelGrid>
+
+                    <p:tooltip for="helpIcon2" styleClass="helpTip">
+                        <p>
+                            Boxplot of the selected metabolomic feature from the user's uploaded data. The black dots
+                            represent the concentrations of the selected feature from all samples. The notch indicates
+                            the 95% confidence interval around the median of each group, defined as +/- 1.58*IQR/sqrt(n).
+                            The notch can be used to evaluate differences between groups; if the notches 
+                            do not overlap, the medians are likely different. Meanwhile, the mean concentration of each group is indicated
+                            with a red diamond. If "Show optimal cutoff using:" was selected, it is indicated with a horizontal 
+                            red line on the boxplot.
+                        </p>
+                    </p:tooltip>
                     <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocDetailImg}" alt="rocImg"/>
                     <img onerror='this.style.display="none"' style="height:6in;" src="#{rocAnalBean.rocBPDetailImg}" alt="rocBoxImg"/>
                 </h:panelGrid>  
