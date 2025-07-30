@@ -13,19 +13,17 @@
     <ui:define name="content">
         <h:panelGrid styleClass="my-content-panel">
             <h2>Random Forest</h2>
-                        <p:tabView id="ac" style="width:100%; border: none; background: none; font-size: 13px;">
+            <p:tabView id="ac" widgetVar="tabWidget" style="width:100%; border: none; font-size: 13px;">
                 <p:tab title ="Classification">
                     <h:form id="form1">  
                         <h:panelGrid columns="2" style="padding: 2px 20px 10px 20px; line-height: 23px; ">
                             <h:panelGrid columns="2" style="width: 600px">
-                                <h:outputLabel style="font-weight: bold" value="Primary metadata factor:"/>
+                                <h:outputLabel style="font-weight: bold" value="Primary metadata:"/>
 
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfMeta}">
-                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}"/>
-                                    <p:ajax update=":ac:form1"/>
-
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
                                 </p:selectOneMenu>
-                                <h:outputLabel style="font-weight: bold" value="Include other metadata as predictors:"/>
+                                <h:outputLabel style="font-weight: bold" value="Include metadata for prediction:"/>
                                 <p:selectCheckboxMenu  
                                     label="&nbsp; -- None Selected -- &nbsp;" 
                                     styleClass="menu" 
@@ -33,52 +31,19 @@
                                     multiple="true"  
                                     panelStyleClass="panel" 
                                     value="#{mrfBean.predictedMeta}">
-                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}"/>
-                                </p:selectCheckboxMenu>
-                                <h:outputLabel style="font-weight: bold" value="Number of trees to grow (ntree):"/>
-                                <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.treeNum}">
-                                    <f:selectItem itemLabel="500" itemValue="500" /> 
-                                    <f:selectItem itemLabel="1000" itemValue="1000" /> 
-                                    <f:selectItem itemLabel="2000" itemValue="2000" /> 
-                                    <f:selectItem itemLabel="5000" itemValue="5000" /> 
-                                </p:selectOneMenu>
-                                <h:outputLabel  rendered="#{mrfBean.contMeta}"
-                                                style="font-weight:bold"
-                                                value="Number of predictors to try (mtry):"/>
-                                <h:panelGrid columns="2" rendered="#{mrfBean.contMeta}">
-                                    <p:selectOneRadio value="#{mrfBean.mtryMode}" >
-                                        <f:selectItem itemLabel="Auto"   itemValue="auto"/>
-                                        <f:selectItem itemLabel="Manual" itemValue="manual"/>
-                                        <p:ajax update=":ac:form1"/>
-
-                                    </p:selectOneRadio>
-
-                                    <p:inputText    style="width:80px;"
-                                                    value="#{mrfBean.tryNum}"
-                                                    disabled="#{mrfBean.mtryMode eq 'auto'}"/>
-
-                                </h:panelGrid>
-
-
-                                <!-- ===== Discrete metadata: keep original single box ===== -->
-                                <h:outputLabel  rendered="#{!mrfBean.contMeta}"
-                                                style="font-weight:bold"
-                                                value="Number of predictors to try (mtry):"/>
-                                <p:inputText    rendered="#{!mrfBean.contMeta}"
-                                                style="width:80px;"
-                                                value="#{mrfBean.tryNum}"/>
+                                    <f:selectItems value="#{multifacBean.analysisMetaOpts}" />
+                                </p:selectCheckboxMenu > 
                                 <h:outputLabel style="font-weight: bold" value="Randomness:"/>
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{mrfBean.rfRandom}">
                                     <f:selectItem itemLabel="On" itemValue="1" />
                                     <f:selectItem itemLabel="Fix current random seed" itemValue="0" /> 
                                     <f:selectItem itemLabel="Use a constant (123456)" itemValue="-1" />
                                 </p:selectOneMenu>
-
                             </h:panelGrid>
                             <p:commandButton value="Update" 
                                              onclick="PF('statusDialog').show()"
                                              oncomplete="PF('statusDialog').hide()"
-                                             update=":ac :hisTab:cmdPane" 
+                                             update=":ac:form1:sumPane  :hisTab:cmdPane :ac:impPane :ac:outPane" 
                                              actionListener="#{mrfBean.rfBn_action_time()}"/>   
                         </h:panelGrid>
                         <h:panelGrid columns="2" id="sumPane" style="padding-top: 20px">
@@ -88,18 +53,16 @@
                             <h:panelGrid rendered="#{!mrfBean.contMeta}">
                                 <h:outputText escape="false" value="#{mrfBean.confText}" />
                             </h:panelGrid>
-                        </h:panelGrid>  
-                        <h:panelGrid columns="2" style="padding-top: 20px" rendered="#{mrfBean.contMeta}">
-                            <img onerror='this.style.display="none"' 
-                                 style="width:9in; padding-left: 40px"
-                                 src="#{sessionBean1.getCurrentImageURL('rf_reg_detail')}" alt="RFclass"/>
-                        </h:panelGrid>
+                            <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px; margin: 10px auto;" 
+                                 src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
+                            <h:outputText escape="false" value="#{mrfBean.confText}" style="margin: 0 auto;"/>
+                        </h:panelGrid>        
                     </h:form>
                 </p:tab>
                 <p:tab title ="Var. Importance">
                     <h:panelGrid id="impPane" style="padding:20px; text-align: center; width: 1000px;">
                         <p>
-                            Features ranked by their contributions to classification accuracy (Mean Decrease Accuracy) for discrete metadata or %IncMSE (Percent Increase in Mean-Squared Error) for continuous metadata.
+                            Features ranked by their contributions to classification accuracy (Mean Decrease Accuracy)
                         </p>
                         <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
                             <p:commandLink action="#{sessionBean1.detailsLnk_action('rf')}" title="View the detailed data table">
@@ -109,7 +72,7 @@
                                            update=":myGraphPane"
                                            oncomplete="PF('graphDialog').show()"
                                            title="Customize the graphics output">
-                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
                         <img onerror='this.style.display="none"' 
@@ -117,7 +80,7 @@
                              src="#{sessionBean1.getCurrentImageURL('rf_imp_meta')}" alt="RFImp"/>
                     </h:panelGrid> 
                 </p:tab>
-                <p:tab title ="Outlier Detection" rendered="#{!mrfBean.contMeta}">
+                <p:tab title ="Outlier Detection">
                     <h:panelGrid id="outPane" style="padding:20px; text-align: center; width: 1000px;">
                         <p>
                             Only top 5 potential outliers are labeled

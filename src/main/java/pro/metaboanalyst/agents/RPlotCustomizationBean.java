@@ -239,7 +239,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("asca_impb", "PlotAscaImpVar"),
             Map.entry("asca_impab", "PlotAscaImpVar"),
             Map.entry("rf_imp", "PlotRF.VIPMeta"),
-            Map.entry("rf_cls", "PlotRF.Classify"),
+            Map.entry("rf_cls", "PlotRF.ClassifyMeta"),
             Map.entry("rf_outlier", "PlotRF.Outlier"),
             Map.entry("mb", "PlotMBTimeProfile"),
             Map.entry("integ_peaks", "PlotPSEAIntegPaths"),
@@ -249,7 +249,23 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qea", "PlotQEA.Overview"),
             Map.entry("qea_dot", "PlotEnrichDotPlot"),
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
-            Map.entry("path_view", "PlotPathSummary")
+            Map.entry("path_view", "PlotPathSummary"),
+            Map.entry("svm_imp", "PlotRSVM.Cmpd"),
+            Map.entry("svm_cls", "PlotRSVM.Classification"),
+            Map.entry("opls_perm", "PlotOPLS.Permutation"),
+            Map.entry("asca_scree", "PlotASCAModelScree"),
+            Map.entry("asca_fa", "PlotASCAModel"),
+            Map.entry("asca_fb", "PlotASCAModel"),
+            Map.entry("asca_fab", "PlotASCAInteraction"),
+            Map.entry("asca_perm", "PlotASCA.Permutation"),
+            Map.entry("qc_meta_pca", "PlotMetaPCA"),
+            Map.entry("pls_imp", "PlotPLS.Imp"),
+            Map.entry("pls_cv", "PlotSPLSDA.Classification"),
+            Map.entry("pls_perm", "PlotSPLS.Permutation"),
+            Map.entry("qc_miss_filt", "PlotMissingDistr"),
+            Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
+            Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
+            Map.entry("cmpd", "")
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
@@ -268,4 +284,6 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("rf_imp_meta", List.of("PlotImpVarMeta")),
             Map.entry("rf_imp", List.of("PlotImpVar"))
     );
+    
+   
 }

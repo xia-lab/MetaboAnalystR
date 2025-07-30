@@ -128,9 +128,7 @@
                             <i class="pi pi-download pi-2x" ></i>
                         </p:commandLink> 
                     </h:panelGrid>
-                    <img onerror='this.style.display="none"' 
-                         style="width:8in; height:6in;" 
-                         src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
+                    <img onerror='this.style.display="none"' style="width:8in; height:6in;" src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
                 </h:panelGrid>
             </h:panelGrid>
         </h:panelGrid>
@@ -246,15 +244,21 @@
                     control. You can view the detailed curve fitting results of each feature in the next page. 
                 </p>
                 <h:panelGrid style="width:100%; text-align:center;">  
-                    <h:panelGrid style="width:100px; text-align: right; float:right" columns="2">
+                    <h:panelGrid style="width:100px; text-align: right; float:right" columns="3">
+                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('dr_barplot')}"
+                                       update=":myGraphPane"
+                                       oncomplete="PF('graphDialog').show()"
+                                       title="Customize the graphics output">
+                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                        </p:commandLink>
+                        
                         <p:commandLink   id="img1x" 
                                          actionListener="#{sessionBean1.graphicsLnk_action('dr_barplot')}"
                                          oncomplete="PF('graphDialog').show()">
                             <i class="pi pi-download pi-2x" ></i>
                         </p:commandLink> 
                     </h:panelGrid>
-                    <img onerror='this.style.display="none"' 
-                         style="width:8in; height:6in;" src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
+                    <img onerror='this.style.display="none"' style="width:8in; height:6in;" src="#{sessionBean1.getCurrentImageURL('dr_barplot')}" alt="CurveFitBar"/>
                 </h:panelGrid>
             </h:panelGrid>
         </h:panelGrid>

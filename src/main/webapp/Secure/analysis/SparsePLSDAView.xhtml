@@ -178,28 +178,34 @@
                     </h:panelGrid>
                 </p:tab>
                 <p:tab title ="Performance">
-                    The performance of the current sPLS-DA models are evaluated using cross validations (CV) with increasing numbers of components 
-                    created using the specified number of variables. The results from CV may change slightly due to random sub-sampling procedures, 
-                    especially for small data size. 
+                    The performance of the current sPLS-DA models are evaluated using cross validations (CV) with increasing numbers of components
+                    created using the specified number of variables. The results from CV may change slightly due to random sub-sampling procedures,
+                    especially for small data size.
                     <h:form id="form55">
-                        <h:panelGrid  columns="2" style="line-height: 25px">
+                        <h:panelGrid columns="2" style="line-height: 25px">
                             <h:panelGrid columns="2" style="width:320px; padding: 10px">
                                 <h:outputLabel style="font-weight: bold" value="Validation method:"/>
                                 <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{splsBean.cvOpt}">
-                                    <f:selectItem itemLabel="5-fold CV" itemValue="5" /> 
-                                    <f:selectItem itemLabel="10-fold CV" itemValue="10" /> 
-                                    <f:selectItem itemLabel="LOOCV" itemValue="loo" /> 
+                                    <f:selectItem itemLabel="5-fold CV" itemValue="5" />
+                                    <f:selectItem itemLabel="10-fold CV" itemValue="10" />
+                                    <f:selectItem itemLabel="LOOCV" itemValue="loo" />
                                 </p:selectOneMenu>
                             </h:panelGrid>
-                            <h:panelGrid style="padding-left: 20px">
-                                <p:commandButton value="Submit" 
-                                                 update=":ac:form55 :hisTab:cmdPane" 
-                                                 actionListener="#{splsBean.splsCvBtn_action()}" partialSubmit="true"/>   
+                            <h:panelGrid columns="2" style="padding-left: 20px; align-items: flex-start;">
+                                 <p:commandButton value="Submit"
+                                                 update=":ac:form55 :hisTab:cmdPane"
+                                                 actionListener="#{splsBean.splsCvBtn_action()}" partialSubmit="true"/>
+                                 <p:commandLink style="padding-left: 10px;"
+                                                actionListener="#{sessionBean1.graphicsLnk_action('spls_cv')}"
+                                                update=":myGraphPane"
+                                                oncomplete="PF('graphDialog').show()"
+                                                title="Customize the graphics output">
+                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                 </p:commandLink>
                             </h:panelGrid>
                         </h:panelGrid>
-
-                        <img onerror='this.style.display="none"' 
-                              style="width:8in; padding-left: 50px"
+                        <img onerror='this.style.display="none"'
+                             style="width:8in; padding-left: 50px"
                              src="#{sessionBean1.getCurrentImageURL('spls_cv')}" alt="SPLSclass"/>
                     </h:form>
                 </p:tab>
