@@ -18,12 +18,9 @@
     </h:head>
 
     <h:body styleClass="login-body #{guestPreferences.inputStyleClass}">
-        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false">
+        <p:growl id="growl" widgetVar="growlWidget" severity="info, warn, error" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
-        <p:growl id="growl2" widgetVar="growlWidget2" severity="error" showDetail="true" globalOnly="false" escape="false" sticky="true">
-            <p:autoUpdate/>
-        </p:growl>
         <div class="login-wrapper">
             <div class="login-panel">
                 <div style="width: 100%; text-align: center; padding-top: 20px">

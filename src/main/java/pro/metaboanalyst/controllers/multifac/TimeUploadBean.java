@@ -237,7 +237,7 @@ public class TimeUploadBean implements Serializable {
 
     public String handleMetabolonData(String analType) {
 
-        if (metabolonFile.getSize() == 0) {
+        if (metabolonFile == null || metabolonFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty!");
             return null;
         }

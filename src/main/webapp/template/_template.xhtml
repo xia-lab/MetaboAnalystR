@@ -149,12 +149,7 @@
                 var growlMessageType = "#{flash.growlMessageType}";
 
                 if (growlMessage) {
-                    // Show the growl message using PrimeFaces growl component
-                    if (growlMessageType === "error") {
-                        PF('growlWidget2').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    } else {
-                        PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
-                    }
+                    PF('growlWidget').show([{severity: growlMessageType, summary: growlMessageType.toUpperCase(), detail: growlMessage}]);
                 }
             });
 
@@ -248,7 +243,7 @@
         <h:form id="formHidden">
             <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
         </h:form>
-        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn" showDetail="true" globalOnly="true" escape="false" sticky="true">
+        <p:growl id="globalGrowl" widgetVar="growlWidget" severity="info, warn, error" showDetail="true" globalOnly="true" escape="false" sticky="true">
             <p:autoUpdate/>
         </p:growl> 
 
