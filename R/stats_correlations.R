@@ -184,7 +184,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 if (grepl("^p-", cor.method) || grepl("^partial_", cor.method)) {
   require(ppcor)
   
-  # Support both "p-pearson" and "partial_pearson"
   method <- gsub("^(p-|partial_)", "", cor.method)
   method <- match.arg(method, c("pearson", "spearman", "kendall"))
   

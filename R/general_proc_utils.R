@@ -1312,7 +1312,7 @@ PlotMissingDistr <- function(mSetObj = NA,
 #'
 #' @export
 PlotMissingHeatmap <- function(mSetObj = NA,
-                                   prefix = "missing_heatmap",
+                                   imgName = "missing_heatmap",
                                    format = "png",
                                    dpi = 150,
                                    to.json = TRUE,

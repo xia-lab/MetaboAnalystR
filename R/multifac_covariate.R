@@ -1157,7 +1157,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   }
 }
 
-FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName){
+FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName, corr.type="default"){
 
   mSetObj <- .get.mSet(mSetObj);
   if(!exists('cov.vec')){
