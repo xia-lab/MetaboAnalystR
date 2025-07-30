@@ -178,10 +178,10 @@ public class MultiRfBean implements Serializable {
                     Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
                     Classifying.plotRFOutlierMf(sb, sb.getNewImage("rf_outlier"), "png", 150);
                      */
-                    Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls"), "png", 150);
+                    Classifying.plotRFClassicationMeta(sb, sb.getNewImage("rf_cls_meta"), "png", 150);
                     Classifying.plotRFRegressionDetail(sb, sb.getNewImage("rf_reg_detail"), "png", 150);
-                    Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp"), "png", 150);
-                    Classifying.plotRFOutlierMeta(sb, sb.getNewImage("rf_outlier"), "png", 150);
+                    Classifying.plotRFCmpdMeta(sb, sb.getNewImage("rf_imp_meta"), "png", 150);
+                    Classifying.plotRFOutlierMeta(sb, sb.getNewImage("rf_outlier_meta"), "png", 150);
                 }
                 case 2 ->
                     sb.addMessage("Error", "The Random Forest module is only set up for classification. Please choose a "

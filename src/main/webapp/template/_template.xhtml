@@ -473,6 +473,7 @@
                             </h:panelGrid>
                         </h:form>
                     </p:tab>
+                    <!--
                     <p:tab title="Styling">
                         <h:form id="styleForm">
 
@@ -483,78 +484,59 @@
                                 <p:commandLink update=":myGraphPane"
                                                action="#{graphStyleBean.selectStyle('0')}"
                                                styleClass="#{graphStyleBean.selectedStyle eq '0'
-                                                             ? 'style-icon-selected' : 'style-icon'}">
-                                    <img onerror="this.style.display='none'"
-                                         src="#{graphStyleBean.iconPath('0')}"
-                                         width="60" height="60" alt="Default"/>
-                                </p:commandLink>
+                                  ? 'style-icon-selected' : 'style-icon'}">
+         <img onerror="this.style.display='none'"
+              src="#{graphStyleBean.iconPath('0')}"
+              width="60" height="60" alt="Default"/>
+     </p:commandLink>
 
-                                <p:commandLink update=":myGraphPane"
-                                               action="#{graphStyleBean.selectStyle('1')}"
-                                               styleClass="#{graphStyleBean.selectedStyle eq '1'
-                                                             ? 'style-icon-selected' : 'style-icon'}">
-                                    <img onerror="this.style.display='none'"
-                                         src="#{graphStyleBean.iconPath('1')}"
-                                         width="60" height="60" alt="Dark"/>
-                                </p:commandLink>
+     <p:commandLink update=":myGraphPane"
+                    action="#{graphStyleBean.selectStyle('1')}"
+                    styleClass="#{graphStyleBean.selectedStyle eq '1'
+                                  ? 'style-icon-selected' : 'style-icon'}">
+         <img onerror="this.style.display='none'"
+              src="#{graphStyleBean.iconPath('1')}"
+              width="60" height="60" alt="Dark"/>
+     </p:commandLink>
 
-                                <p:commandLink update=":myGraphPane"
-                                               action="#{graphStyleBean.selectStyle('2')}"
-                                               styleClass="#{graphStyleBean.selectedStyle eq '2'
-                                                             ? 'style-icon-selected' : 'style-icon'}">
-                                    <img onerror="this.style.display='none'"
-                                         src="#{graphStyleBean.iconPath('2')}"
-                                         width="60" height="60" alt="Color-blind"/>
-                                </p:commandLink>
+     <p:commandLink update=":myGraphPane"
+                    action="#{graphStyleBean.selectStyle('2')}"
+                    styleClass="#{graphStyleBean.selectedStyle eq '2'
+                                  ? 'style-icon-selected' : 'style-icon'}">
+         <img onerror="this.style.display='none'"
+              src="#{graphStyleBean.iconPath('2')}"
+              width="60" height="60" alt="Color-blind"/>
+     </p:commandLink>
 
-                                <p:commandLink update=":myGraphPane"
-                                               action="#{graphStyleBean.selectStyle('3')}"
-                                               styleClass="#{graphStyleBean.selectedStyle eq '3'
-                                                             ? 'style-icon-selected' : 'style-icon'}">
-                                    <img onerror="this.style.display='none'"
-                                         src="#{graphStyleBean.iconPath('3')}"
-                                         width="60" height="60" alt="Publication"/>
-                                </p:commandLink>
+     <p:commandLink update=":myGraphPane"
+                    action="#{graphStyleBean.selectStyle('3')}"
+                    styleClass="#{graphStyleBean.selectedStyle eq '3'
+                                  ? 'style-icon-selected' : 'style-icon'}">
+         <img onerror="this.style.display='none'"
+              src="#{graphStyleBean.iconPath('3')}"
+              width="60" height="60" alt="Publication"/>
+     </p:commandLink>
 
-                            </p:panelGrid>
+ </p:panelGrid>
 
-                            <!-- live preview -->
-                            <p:outputLabel value="Preview:" style="font-weight:bold; display:block; margin-top:8px"/>
-                            <p:outputPanel id="previewPanel" style="text-align:center">
-                                <img onerror="this.style.display='none'"
-                                     src="#{graphStyleBean.previewImage}"
-                                     width="240" height="160"
-                                     class="shadow-2 surface-border" alt="Preview"/>
-                            </p:outputPanel>
-                            <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
+ <p:outputLabel value="Preview:" style="font-weight:bold; display:block; margin-top:8px"/>
+ <p:outputPanel id="previewPanel" style="text-align:center">
+     <img onerror="this.style.display='none'"
+          src="#{graphStyleBean.previewImage}"
+          width="240" height="160"
+          class="shadow-2 surface-border" alt="Preview"/>
+ </p:outputPanel>
+ <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
 
-                                <p:commandLink ajax="false" styleClass="shadow-2 surface-border">
-                                    Download
-                                    <p:fileDownload value="#{graphStyleBean.previewContent}" />
-                                </p:commandLink>
-                            </h:panelGroup>
+     <p:commandLink ajax="false" styleClass="shadow-2 surface-border">
+         Download
+         <p:fileDownload value="#{graphStyleBean.previewContent}" />
+     </p:commandLink>
+ </h:panelGroup>
 
-                            <!-- centred Apply button -->
-                            <!--
-                            <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
-                                <p:commandButton value="Apply"
-                                                 icon="pi pi-check"
-                                                 actionListener="#{graphStyleBean.applyStyle}"
-                                                 update=":myGraphPane"
-                                                 onclick="PF('statusDialog').show()"
-                                                 oncomplete="PF('statusDialog').hide();
-                                                 PF('graphDialog').jq.position({my:'center center',
-                                                 at:'center center',
-                                                 of:window});"/>
-
-                            </h:panelGroup>
-                            -->
-                            <!-- centred Apply button -->
-
-
-                        </h:form>
-                    </p:tab>
-
+</h:form>
+</p:tab>
+                    -->
 
                     <p:tab title ="Customization">
                         <h:form id="rPlotCustomizationForm">

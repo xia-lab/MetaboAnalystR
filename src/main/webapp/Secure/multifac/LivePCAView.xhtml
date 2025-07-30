@@ -125,7 +125,7 @@
 
                         <h:panelGrid id="score2dPane" style="text-align: center; width:1000px; padding-top: 20px">
                             <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_score2d')}" 
+                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('pca_score2d_meta')}" 
                                                update=":myGraphPane"
                                                oncomplete="PF('graphDialog').show()"
                                                title="Customize the graphics output">
@@ -141,7 +141,7 @@
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' 
                                  style="width:9in; padding-left: 50px"
-                                 src="#{sessionBean1.getCurrentImageURL('pca_score2d')}" alt="PCAScore2DImage"/>
+                                 src="#{sessionBean1.getCurrentImageURL('pca_score2d_meta')}" alt="PCAScore2DImage"/>
 
                             <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" appendTo="@(body)" width="540" height="360"
                                       hideEffect="explode" resizable="true"> 

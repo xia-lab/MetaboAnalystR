@@ -1,6 +1,5 @@
 package pro.metaboanalyst.agents;
 
-import java.io.IOException;
 import java.io.Serializable;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -9,7 +8,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import pro.metaboanalyst.agents.RPlotCustomizationAgent;
 import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -78,7 +76,28 @@ public class RPlotCustomizationBean implements Serializable {
         this.aiResponse = aiResponse;
     }
 
-/**
+    /**
+     * public void applyCustomization() { try { if (prompt == null ||
+     * prompt.trim().isEmpty()) { sb.addMessage("error", "Please provide
+     * customization instructions"); return; }
+     *
+     * String source = sb.getImageSource(); plotType =
+     * GRAPHICS_CMD_TO_R_FUNC.get(source);
+     *
+     * if (plotType == null) { sb.addMessage("error", "Unsupported plot type for
+     * source: " + source); return; }
+     *
+     * // Get the R command from the session bean's graphics map String
+     * rCommand = sb.getGraphicsMap().get(source); if (rCommand == null) {
+     * sb.addMessage("error", "No R command found for source: " + source);
+     * return; }
+     *
+     * // Get the AI response String response =
+     * aiCustomizer.customizePlot(source, plotType, prompt); aiResponse =
+     * response; } catch (Exception e) { sb.addMessage("error", "Error applying
+     * customization: " + e.getMessage()); } }
+     *
+     */
     public void applyCustomization() {
         try {
             if (prompt == null || prompt.trim().isEmpty()) {
@@ -87,38 +106,13 @@ public class RPlotCustomizationBean implements Serializable {
             }
 
             String source = sb.getImageSource();
-            plotType = GRAPHICS_CMD_TO_R_FUNC.get(source);
-
-            if (plotType == null) {
-                sb.addMessage("error", "Unsupported plot type for source: " + source);
-                return;
+            if (source.contains("roc_univ_")) {
+                plotType = "Perform.UnivROC";
+            } else if (source.contains("roc_boxplot_")) {
+                plotType = "PlotRocUnivBoxPlot";
+            } else {
+                plotType = GRAPHICS_CMD_TO_R_FUNC.get(source);
             }
-
-            // Get the R command from the session bean's graphics map
-            String rCommand = sb.getGraphicsMap().get(source);
-            if (rCommand == null) {
-                sb.addMessage("error", "No R command found for source: " + source);
-                return;
-            }
-
-            // Get the AI response
-            String response = aiCustomizer.customizePlot(source, plotType, prompt);
-            aiResponse = response;
-        } catch (Exception e) {
-            sb.addMessage("error", "Error applying customization: " + e.getMessage());
-        }
-    }
-
-*/
-    public void applyCustomization() {
-        try {
-            if (prompt == null || prompt.trim().isEmpty()) {
-                sb.addMessage("error", "Please provide customization instructions");
-                return;
-            }
-
-            String source = sb.getImageSource();
-            plotType = GRAPHICS_CMD_TO_R_FUNC.get(source);
 
             if (plotType == null) {
                 sb.addMessage("error", "Unsupported plot type for source: " + source);
@@ -134,7 +128,7 @@ public class RPlotCustomizationBean implements Serializable {
 
             // Get helpers for this plot type
             List<String> helpers = HELPERS.getOrDefault(plotType, List.of());
-            
+
             // Get the AI response
             String response = aiCustomizer.customizePlot(source, plotType, helpers, prompt);
             aiResponse = response;
@@ -142,7 +136,7 @@ public class RPlotCustomizationBean implements Serializable {
             sb.addMessage("error", "Error applying customization: " + e.getMessage());
         }
     }
-    
+
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
         System.out.println(plotSource + "========plotSource");
@@ -152,7 +146,6 @@ public class RPlotCustomizationBean implements Serializable {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
         }
     }
-
 
     public static final Map<String, String> GRAPHICS_CMD_TO_R_FUNC = Map.ofEntries(
             Map.entry("aov", "PlotANOVA"),
@@ -177,6 +170,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pcapair", "PlotPCAPairSummaryMeta"),
             Map.entry("selectedfeature", "PlotSelectedFeature"),
             Map.entry("roc_boxplot_", "PlotRocUnivBoxPlot"),
+            Map.entry("roc_univ_", "Perform.UnivROC"),//to fix
             Map.entry("cls_imp", "PlotImpBiomarkers"),
             Map.entry("pca_scree", "PlotPCAScree"),
             Map.entry("pca_pair", "PlotPCAPairSummary"),
@@ -188,6 +182,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("tree", "PlotHCTree"),
             Map.entry("pca_loading", "PlotPCALoading"),
             Map.entry("pca_score2d", "PlotPCA2DScore"),
+            Map.entry("pca_score2d_meta", "PlotPCA2DScoreMeta"),
             Map.entry("load_boxplot", "PlotLoadBoxplot"),
             Map.entry("power_stat", "PlotPowerStat"),
             Map.entry("power_profile", "PlotPowerProfile"),
@@ -211,8 +206,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("opls_splot", "PlotOPLS.Splot"),
             Map.entry("opls_imp", "PlotOPLS.Imp"),
             Map.entry("opls_mdl", "PlotOPLS.MDL"),
-            Map.entry("sam_imp", "PlotSAM.Cmpd"), 
-            Map.entry("ebam_imp", "PlotEBAM.Cmpd"), 
+            Map.entry("sam_imp", "PlotSAM.Cmpd"),
+            Map.entry("ebam_imp", "PlotEBAM.Cmpd"),
             Map.entry("spls_pair", "PlotSPLSPairSummary"),
             Map.entry("spls_loading", "PlotSPLSLoading"),
             Map.entry("spls_score2d", "PlotSPLS2DScore"),
@@ -230,7 +225,6 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pls_loading3d", "PlotPLS3DLoading"),
             Map.entry("pls_biplot", "PlotPLSBiplot"),
             Map.entry("pls_pair", "PlotPLSPairSummary"),
-            Map.entry("roc_univ_", "Perform.UnivROC"),
             Map.entry("cls_prob", "PlotProbView"),
             Map.entry("cls_accu", "PlotAccuracy"),
             Map.entry("cls_test_roc", "PlotROCTest"),
@@ -257,21 +251,21 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
             Map.entry("path_view", "PlotPathSummary")
     );
-    
-    
+
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
-        Map.entry("PlotSPLSLoading", List.of("PlotImpVar")),
-        Map.entry("PlotPLS.Imp", List.of("PlotImpVar")),
-        Map.entry("PlotOPLS.Imp", List.of("PlotImpVar")),
-        Map.entry("PlotSPLSPairSummary", List.of("Plot.PairScatter")),
-        Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd")),
-        Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd")),
-        Map.entry("PlotPCAPairSummary", List.of("Plot.PairScatter")),
-        Map.entry("PlotPLSPairSummary", List.of("Plot.PairScatter")),
-        Map.entry("PlotScatter", List.of(".mr_scatterPlot")),
-        Map.entry("PlotForest", List.of(".mr_forestPlot")),
-        Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
-        Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
-        Map.entry("rf_imp", List.of("PlotImpVarMeta"))
+            Map.entry("PlotSPLSLoading", List.of("PlotImpVar")),
+            Map.entry("PlotPLS.Imp", List.of("PlotImpVar")),
+            Map.entry("PlotOPLS.Imp", List.of("PlotImpVar")),
+            Map.entry("PlotSPLSPairSummary", List.of("Plot.PairScatter")),
+            Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd")),
+            Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd")),
+            Map.entry("PlotPCAPairSummary", List.of("Plot.PairScatter")),
+            Map.entry("PlotPLSPairSummary", List.of("Plot.PairScatter")),
+            Map.entry("PlotScatter", List.of(".mr_scatterPlot")),
+            Map.entry("PlotForest", List.of(".mr_forestPlot")),
+            Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
+            Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
+            Map.entry("rf_imp_meta", List.of("PlotImpVarMeta")),
+            Map.entry("rf_imp", List.of("PlotImpVar"))
     );
 }

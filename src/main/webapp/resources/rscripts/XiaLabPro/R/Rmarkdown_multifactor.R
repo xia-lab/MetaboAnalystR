@@ -923,7 +923,7 @@ CreateRandomForest <- function(mSetObj=NA){
   
   # fig 21
   link <- GetSharingLink(mSetObj)
-  reportLinks <- getReportLinks(link, "rf_cls_multifac", "rf_cls");
+  reportLinks <- getReportLinks(link, "rf_cls_multifac", "rf_cls_meta");
 
   cat(reportLinks, file=rmdFile, append=TRUE);
   cat("\n\n", file=rmdFile, append=TRUE);
@@ -943,7 +943,7 @@ CreateRandomForest <- function(mSetObj=NA){
   # fig 22
   
   link <- GetSharingLink(mSetObj)
-  reportLinks <- getReportLinks(link, "rf_imp_multifac", "rf_imp");
+  reportLinks <- getReportLinks(link, "rf_imp_multifac", "rf_imp_meta");
 
   cat(reportLinks, file=rmdFile, append=TRUE);
   cat("\n\n", file=rmdFile, append=TRUE);
@@ -963,7 +963,7 @@ CreateRandomForest <- function(mSetObj=NA){
   # fig 23
   
   link <- GetSharingLink(mSetObj)
-  reportLinks <- getReportLinks(link, "rf_outlier_multifac", "rf_outlier");
+  reportLinks <- getReportLinks(link, "rf_outlier_multifac", "rf_outlier_meta");
   cat(reportLinks, file=rmdFile, append=TRUE);
   cat("\n\n", file=rmdFile, append=TRUE);
   

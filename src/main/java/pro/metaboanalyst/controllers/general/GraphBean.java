@@ -274,7 +274,7 @@ public class GraphBean implements Serializable {
         sb.setImgDownloadTxt(imgDownloadTxt);
     }
 
-    private final List<String> shapeColImgs = Arrays.asList(new String[]{"pca_pair", "pca_score2d", "pls_pair", "pls_score2d",
+    private final List<String> shapeColImgs = Arrays.asList(new String[]{"pca_pair", "pca_score2d", "pca_score2d_meta", "pls_pair", "pls_score2d",
         "spls_pair", "spls_score2d", "opls_score2d", "cmpd", "roc.boxplot", "tree", "heatmap", "mb"});
 
     public boolean isRenderStatus() {

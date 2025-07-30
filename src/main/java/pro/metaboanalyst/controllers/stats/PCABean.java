@@ -225,7 +225,7 @@ public class PCABean implements Serializable {
             if (greyScale) {
                 useGreyScale = 1;
             }
-            TimeSeries.plotPCA2DScoreMeta(sb, sb.getNewImage("pca_score2d"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt, lb.getColOpt(), lb.getShapeOpt());
+            TimeSeries.plotPCA2DScoreMeta(sb, sb.getNewImage("pca_score2d_meta"), "png", 150, pcaScoreX, pcaScoreY, conf, showNames, useGreyScale, cexOpt, lb.getColOpt(), lb.getShapeOpt());
 
         }
         return null;
