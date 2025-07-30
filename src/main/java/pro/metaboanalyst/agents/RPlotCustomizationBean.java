@@ -1,6 +1,5 @@
 package pro.metaboanalyst.agents;
 
-import java.io.IOException;
 import java.io.Serializable;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -9,7 +8,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import pro.metaboanalyst.agents.RPlotCustomizationAgent;
 import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -177,6 +175,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pcapair", "PlotPCAPairSummaryMeta"),
             Map.entry("selectedfeature", "PlotSelectedFeature"),
             Map.entry("roc_boxplot_", "PlotRocUnivBoxPlot"),
+            Map.entry("roc_univ_", "Perform.UnivROC"),
             Map.entry("cls_imp", "PlotImpBiomarkers"),
             Map.entry("pca_scree", "PlotPCAScree"),
             Map.entry("pca_pair", "PlotPCAPairSummary"),
@@ -230,7 +229,6 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pls_loading3d", "PlotPLS3DLoading"),
             Map.entry("pls_biplot", "PlotPLSBiplot"),
             Map.entry("pls_pair", "PlotPLSPairSummary"),
-            Map.entry("roc_univ_", "Perform.UnivROC"),
             Map.entry("cls_prob", "PlotProbView"),
             Map.entry("cls_accu", "PlotAccuracy"),
             Map.entry("cls_test_roc", "PlotROCTest"),
@@ -245,7 +243,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("asca_impb", "PlotAscaImpVar"),
             Map.entry("asca_impab", "PlotAscaImpVar"),
             Map.entry("rf_imp", "PlotRF.VIPMeta"),
-            Map.entry("rf_cls", "PlotRF.Classify"),
+            Map.entry("rf_cls", "PlotRF.ClassifyMeta"),
             Map.entry("rf_outlier", "PlotRF.Outlier"),
             Map.entry("mb", "PlotMBTimeProfile"),
             Map.entry("integ_peaks", "PlotPSEAIntegPaths"),
@@ -267,7 +265,11 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qc_meta_pca", "PlotMetaPCA"),
             Map.entry("pls_imp", "PlotPLS.Imp"),
             Map.entry("pls_cv", "PlotSPLSDA.Classification"),
-            Map.entry("pls_perm", "PlotSPLS.Permutation")
+            Map.entry("pls_perm", "PlotSPLS.Permutation"),
+            Map.entry("qc_miss_filt", "PlotMissingDistr"),
+            Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
+            Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
+            Map.entry("cmpd", "")
     );
     
     
