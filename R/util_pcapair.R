@@ -44,6 +44,7 @@
   } else {
     cls       <- mSetObj$dataSet$cls
     cls.type  <- "disc"
+    meta      <- "Group"   # <-- Avoid NA title for legend
   }
   
   ## shape variable (may be NULL) --------------------------------------
