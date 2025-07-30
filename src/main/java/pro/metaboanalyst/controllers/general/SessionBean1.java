@@ -1803,24 +1803,21 @@ public class SessionBean1 implements Serializable {
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", msg));
             pre = "<font color='red'>[ERROR]: ";
             noticeSize = noticeSize + 1;
-            PrimeFaces.current().ajax().update(":formBell");
-            PrimeFaces.current().ajax().update(":errMessage");
+            PrimeFaces.current().ajax().update(":formBell :globalError");
         } else if (type.equalsIgnoreCase("warn")) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", msg));
             pre = "<font color='orange'>[WARNING]: ";
             noticeSize = noticeSize + 1;
-            PrimeFaces.current().ajax().update(":formBell");
+            PrimeFaces.current().ajax().update(":formBell :globalGrowl");
         } else {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "OK", msg));
             pre = "<font color='#4BB543'>[Success]: ";
+            PrimeFaces.current().ajax().update(":formBell :globalGrowl");
         }
 
         notice.add(pre + msg + "</font>");
-        
-        //make sure to update
-        PrimeFaces.current().ajax().update("globalGrowl");
     }
 
     //relay center
@@ -1845,7 +1842,6 @@ public class SessionBean1 implements Serializable {
 
         this.enrNetName = enrNetName;
     }
-
 
     @JsonIgnore
     @Inject
