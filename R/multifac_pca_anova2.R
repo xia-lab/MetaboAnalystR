@@ -118,9 +118,9 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
   
   # only do for top topN (200 by default)
   if(dim(mSetObj$dataSet$norm)[2] > topN){
-    metab.var <- apply(as.matrix(mSetObj$dataSet$filt), 2, function(x){
-      mean.lev <- mean(x)
-      var(x/mean.lev)
+    data.filt <-  qs::qread("data_proc.qs");
+    metab.var <- apply(as.matrix(data.filt), 2, function(x){
+      var(x/mean(x))
     })
     high.var <- names(sort(metab.var, decreasing = TRUE))[1:topN]
     dat <- mSetObj$dataSet$norm[,colnames(mSetObj$dataSet$norm) %in% high.var]
