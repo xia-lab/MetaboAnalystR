@@ -750,7 +750,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   if(sum(is.na(int.mat)) > 0){
     return(1);
   }else{
-    # note here, if no missing data, need to save a copy for normlization
+    # note here, if no missing data, need to save a copy for normalization
     qs::qsave(int.mat, file = "data_proc.qs");
     return(2);
   }
