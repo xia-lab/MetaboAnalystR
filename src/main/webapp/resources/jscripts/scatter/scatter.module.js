@@ -221,6 +221,8 @@ var gData;
 var fogBool;
 var lastNodeClick = 0;
 var algType = "";
+var msOptbool = false;
+
 function setTakeImageBool(value) {
     takeImageBool = value;
 }
@@ -478,7 +480,15 @@ function initMain(elemName) {
             if (nd.meta === "mcia.seg") {
                 opaNodeObj(nd, 0);
             } else {
-                opaNodeObj(nd, 1);
+                if (msOptbool) {
+                    if (nd.tcolor === "#DCDCDC") {
+                        opaNodeObj(nd, 0.2);
+                    } else {
+                        opaNodeObj(nd, 1);
+                    }
+                } else {
+                    opaNodeObj(nd, 1);
+                }
             }
             materialNodeObj(nd, "MeshPhysicalMaterial");
             if (nd.shape !== undefined) {
@@ -517,12 +527,23 @@ function initNodeAppearances() {
             if (nd.meta === "mcia.seg") {
                 opaNodeObj(nd, 0);
             } else {
-                opaNodeObj(nd, 1);
+                if (msOptbool) {
+                    if (nd.tcolor === "#DCDCDC") {                        
+                        opaNodeObj(nd, 0.2);                        
+                    } else {
+                        opaNodeObj(nd, 1);
+                        materialNodeObj(nd, "MeshPhysicalMaterial");
+                    }
+
+                } else {
+                    opaNodeObj(nd, 1);
+                    materialNodeObj(nd, "MeshPhysicalMaterial");
+                }
             }
-            materialNodeObj(nd, "MeshPhysicalMaterial");
+            //materialNodeObj(nd, "MeshPhysicalMaterial");
             deleteOutline(nd);
             if (nd.shape !== undefined) {
-                shapeNodeObj(nd, nd.shape)
+                shapeNodeObj(nd, nd.shape);
             }
         });
     }, 500);
@@ -1277,7 +1298,10 @@ function setupNetworkFunctions() {
         console.log($('#form1 #loadingSlider', parent.document));
         var val = $('#form1 #loadingSlider', parent.document).val();
         var opt = $('#form1 #pcaDisplay', parent.document).val();
-        updateLoading(opt, val);
+        var msf = $('#form1 #showms2', parent.document).is(':checked');
+        console.log("======== -------msf ===> " + msf);
+        msOptbool = msf;
+        updateLoading(opt, val, msf);
     });
 
 
@@ -7380,7 +7404,15 @@ function switchToLoading() {
         Scatter.graphData().nodes.forEach(function (nd) {
             nd.highlight = 0;
             colorNodeObj(nd, nd.tcolor);
-            opaNodeObj(nd, 1);
+            if (msOptbool) {
+                if (nd.tcolor === "#DCDCDC") {
+                    opaNodeObj(nd, 0.2);
+                } else {
+                    opaNodeObj(nd, 1);
+                }
+            } else {
+                opaNodeObj(nd, 1);
+            }
             deleteOutline(nd);
         });
 
@@ -7453,7 +7485,16 @@ function switchToScore() {
             if (nd.meta === "mcia.seg") {
                 opaNodeObj(nd, 0);
             } else {
-                opaNodeObj(nd, 1);
+                if (msOptbool) {
+                    if (nd.tcolor === "#DCDCDC") {
+                        opaNodeObj(nd, 0.2);
+                    } else {
+                        opaNodeObj(nd, 1);
+                    }
+
+                } else {
+                    opaNodeObj(nd, 1);
+                }
             }
             sizeNodeObj(nd, 1);
             deleteOutline(nd);
@@ -7655,7 +7696,16 @@ function switchToLoadingCallBack(callBack) {
             if (nd.meta === "mcia.seg") {
                 opaNodeObj(nd, 0);
             } else {
-                opaNodeObj(nd, 1);
+                if (msOptbool) {
+                    if (nd.tcolor === "#DCDCDC") {
+                        opaNodeObj(nd, 0.2);
+                    } else {
+                        opaNodeObj(nd, 1);
+                    }
+
+                } else {
+                    opaNodeObj(nd, 1);
+                }
             }
             deleteOutline(nd);
         });
@@ -7707,7 +7757,15 @@ function switchToScoreCallBack(callBack) {
         Scatter.graphData().nodes.forEach(function (nd) {
             nd.highlight = 0;
             colorNodeObj(nd, nd.tcolor);
-            opaNodeObj(nd, 1);
+            if (msOptbool) {
+                if (nd.tcolor === "#DCDCDC") {
+                    opaNodeObj(nd, 0.2);
+                } else {
+                    opaNodeObj(nd, 1);
+                }
+            } else {
+                opaNodeObj(nd, 1);
+            }
             sizeNodeObj(nd, 1);
             deleteOutline(nd);
         });
@@ -8187,22 +8245,22 @@ function getTimeBoxPlot(id) {
     });
 }
 
-function updateLoading(opt, nb) {
-    performLoad(nb, function (result) {
+function updateLoading(opt, nb, msOpt) {
+    performLoad(nb, msOpt, function (result) {
         if (result !== "NA") {
-            updateLoad(opt, result);
+            updateLoad(opt, msOpt, result);
         }
     });
 }
 
-function performLoad(nb, callBack) {
+function performLoad(nb, msOpt, callBack) {
     $.ajax({
         beforeSend: function () {
         },
         dataType: "html",
         type: "POST",
         url: '/MetaboAnalyst/faces/AjaxCall',
-        data: "function=updateLoading" + "&number=" + nb,
+        data: "function=updateLoading" + "&number=" + nb + "&msopt=" + msOpt,
         async: true,
         cache: false,
         success: function (result) {
@@ -8213,7 +8271,7 @@ function performLoad(nb, callBack) {
     });
 }
 
-function updateLoad(opt, result) {
+function updateLoad(opt, msOpt, result) {
     if (current_main_plot === "loading") {
         switchToScore();
     }
@@ -8502,7 +8560,12 @@ function initialSaveState(jsonNm) {
                                     if (nd.meta === "mcia.seg") {
                                         opaNodeObj(nd, 0);
                                     } else {
-                                        opaNodeObj(nd, 1);
+                                        if (nd.tcolor === "#DCDCDC") {
+                                            opaNodeObj(nd, 0.2);
+                                        } else {
+                                            opaNodeObj(nd, 1);
+                                        }
+                                        //opaNodeObj(nd, 1);
                                     }
                                     materialNodeObj(nd, "MeshPhysicalMaterial");
                                     if (nd.shape !== undefined) {
@@ -8527,7 +8590,16 @@ function initialSaveState(jsonNm) {
                             if (nd.meta === "mcia.seg") {
                                 opaNodeObj(nd, 0);
                             } else {
-                                opaNodeObj(nd, 1);
+                                if (msOptbool) {
+                                    if (nd.tcolor === "#DCDCDC") {
+                                        opaNodeObj(nd, 0.2);
+                                    } else {
+                                        opaNodeObj(nd, 1);
+                                    }
+                                } else {
+                                    opaNodeObj(nd, 1);
+                                }
+                                //opaNodeObj(nd, 1);
                             }
                             materialNodeObj(nd, "MeshPhysicalMaterial");
                             if (nd.shape !== undefined) {

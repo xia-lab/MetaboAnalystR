@@ -42,7 +42,6 @@ import pro.metaboanalyst.models.SwathBean;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import software.xdev.chartjs.model.charts.PieChart;
-import software.xdev.chartjs.model.color.RGBAColor;
 import software.xdev.chartjs.model.data.PieData;
 import software.xdev.chartjs.model.dataset.PieDataset;
 
@@ -155,7 +154,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private String exposome_details = null;
 
-    @JsonIgnore 
+    @JsonIgnore
     public String getExposome_details() {
         if ((subidx_exp != subidx_exp_current) || (resNum_exp != resNum_exp_current)) {
             exposome_details = get_specific_exposome_details(resNum_exp, subidx_exp + 1, current_ft_label, sb.getRConnection());
@@ -169,7 +168,7 @@ public class SpectraProcessBean implements Serializable {
         this.exposome_details = exposome_details;
     }
 
-    @JsonIgnore 
+    @JsonIgnore
     private static String get_specific_exposome_details(int resnum, int subidx, String ft_label, RConnection RC) {
         System.out.println("get_specific_exposome_details --  resnum ====> " + resnum);
         System.out.println("get_specific_exposome_details --  subidx ====> " + subidx);
@@ -292,6 +291,82 @@ public class SpectraProcessBean implements Serializable {
         this.showlabel = showlabel;
     }
 
+    /// plot summary of the single feature
+    private boolean ms2annotated = false;
+
+    public boolean isMs2annotated() {
+        return ms2annotated;
+    }
+
+    public void setMs2annotated(boolean ms2annotated) {
+        this.ms2annotated = ms2annotated;
+    }
+
+    private ListDataModel<MS2ResutlsBean> FeatureModelMS2Single = null;
+
+    public ListDataModel<MS2ResutlsBean> getFeatureModelMS2Single() {
+        return FeatureModelMS2Single;
+    }
+
+    public void setFeatureModelMS2Single(ListDataModel<MS2ResutlsBean> FeatureModelMS2Single) {
+        this.FeatureModelMS2Single = FeatureModelMS2Single;
+    }
+
+    public String viewMSFeature() {
+        // plot box and EIC
+        plotMSfeature("png");
+        System.out.println("=== featureNum0===> " + featureNum0);
+        System.out.println("=== featureNum===> " + featureNum);
+        // find potential MS2 annotation esxits or not
+        int res_num = RSpectraUtils.checkMS2annotationExists(sb.getRConnection(), featureNum);
+        System.out.println("=== res_num 1===> " + res_num);
+        if (res_num != 0) {
+            ms2annotated = true;
+            //  if ms2 results are there, let's show top 3 results if any
+            System.out.println("=== res_num 2===> " + res_num);
+            ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
+            MS2ResutlsBean mfb;
+            if (res_num > 3) {
+                double[] scores = RSpectraUtils.extractSimScores(sb.getRConnection(), featureNum, 3);
+                String[] formulas = RSpectraUtils.extractformulaNMs(sb.getRConnection(), featureNum, 3);
+                String[] compounds = RSpectraUtils.extractcompoundNMs(sb.getRConnection(), featureNum, 3);
+                String[] inchikeys = RSpectraUtils.extractInchikeys(sb.getRConnection(), featureNum, 3);
+
+                for (int j = 0; j < 3; j++) {
+                    mfb = new MS2ResutlsBean(featureNum, j + 1,
+                            0, 0, 0, 0,
+                            scores[j], 0, formulas[j], compounds[j], "", inchikeys[j],
+                            0, "", "");
+                    MS2ResutlsBeans.add(mfb);
+                }
+
+            } else {
+                double[] scores = RSpectraUtils.extractSimScores(sb.getRConnection(), featureNum, res_num);
+                String[] formulas = RSpectraUtils.extractformulaNMs(sb.getRConnection(), featureNum, res_num);
+                String[] compounds = RSpectraUtils.extractcompoundNMs(sb.getRConnection(), featureNum, res_num);
+                String[] inchikeys = RSpectraUtils.extractInchikeys(sb.getRConnection(), featureNum, res_num);
+
+                for (int j = 0; j < res_num; j++) {
+                    mfb = new MS2ResutlsBean(featureNum, j + 1,
+                            0, 0, 0, 0,
+                            scores[j], 0, formulas[j], compounds[j], "", inchikeys[j],
+                            0, "", "");
+                    MS2ResutlsBeans.add(mfb);
+                }
+
+            }
+            FeatureModelMS2Single = new ListDataModel(MS2ResutlsBeans);
+
+        } else {
+            ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
+            FeatureModelMS2Single = new ListDataModel(MS2ResutlsBeans);
+            return "";
+        }
+
+        // plot mirror plot
+        return "";
+    }
+
     public List<String> getUploadedFileNamesSaved() {
         return uploadedFileNamesSaved;
     }
@@ -328,6 +403,61 @@ public class SpectraProcessBean implements Serializable {
         } else {
             return ""; //return nothing for now. TODO: to optimize this point.
         }
+    }
+
+    public String viewMSFeature2() {
+        // plot box and EIC
+        String filenm = plotMSfeature("svg");
+        System.out.println("=== featureNum02===> " + featureNum0);
+        System.out.println("=== featureNum2===> " + featureNum);
+        // find potential MS2 annotation esxits or not
+        int res_num = RSpectraUtils.checkMS2annotationExists(sb.getRConnection(), featureNum);
+        System.out.println("=== res_num 12===> " + res_num);
+        if (res_num != 0) {
+            ms2annotated = true;
+            //  if ms2 results are there, let's show top 3 results if any
+            System.out.println("=== res_num 22===> " + res_num);
+            ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
+            MS2ResutlsBean mfb;
+            if (res_num > 3) {
+                double[] scores = RSpectraUtils.extractSimScores(sb.getRConnection(), featureNum, 3);
+                String[] formulas = RSpectraUtils.extractformulaNMs(sb.getRConnection(), featureNum, 3);
+                String[] compounds = RSpectraUtils.extractcompoundNMs(sb.getRConnection(), featureNum, 3);
+                String[] inchikeys = RSpectraUtils.extractInchikeys(sb.getRConnection(), featureNum, 3);
+
+                for (int j = 0; j < 3; j++) {
+                    mfb = new MS2ResutlsBean(featureNum, j + 1,
+                            0, 0, 0, 0,
+                            scores[j], 0, formulas[j], compounds[j], "", inchikeys[j],
+                            0, "", "");
+                    MS2ResutlsBeans.add(mfb);
+                }
+
+            } else {
+                double[] scores = RSpectraUtils.extractSimScores(sb.getRConnection(), featureNum, res_num);
+                String[] formulas = RSpectraUtils.extractformulaNMs(sb.getRConnection(), featureNum, res_num);
+                String[] compounds = RSpectraUtils.extractcompoundNMs(sb.getRConnection(), featureNum, res_num);
+                String[] inchikeys = RSpectraUtils.extractInchikeys(sb.getRConnection(), featureNum, res_num);
+
+                for (int j = 0; j < res_num; j++) {
+                    mfb = new MS2ResutlsBean(featureNum, j + 1,
+                            0, 0, 0, 0,
+                            scores[j], 0, formulas[j], compounds[j], "", inchikeys[j],
+                            0, "", "");
+                    MS2ResutlsBeans.add(mfb);
+                }
+
+            }
+            FeatureModelMS2Single = new ListDataModel(MS2ResutlsBeans);
+
+        } else {
+            ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
+            FeatureModelMS2Single = new ListDataModel(MS2ResutlsBeans);
+            return filenm;
+        }
+
+        // plot mirror plot
+        return filenm;
     }
 
     public String plotMSfeatureUpdate() {
@@ -1661,7 +1791,8 @@ public class SpectraProcessBean implements Serializable {
 
     @JsonIgnore
     public boolean isIsms2() {
-        return !"ms1".equals(ms2DataOpt);
+        isms2 = !"ms1".equals(ms2DataOpt);
+        return isms2;
     }
 
     public void setIsms2(boolean isms2) {
@@ -1733,17 +1864,6 @@ public class SpectraProcessBean implements Serializable {
             portions = RSpectraUtils.extratExposomeClassNumber(RC, "All");
         }
 
-        String pieModelx;
-
-        pieModelx = new PieChart()
-                .setData(new PieData()
-                        .addDataset(new PieDataset()
-                                .setData(300, 50, 100)
-                                .addBackgroundColors(new RGBAColor(255, 99, 132), new RGBAColor(54, 162, 235), new RGBAColor(255, 205, 86))
-                        )
-                        .setLabels("Red", "Blue", "Yellow"))
-                .toJson();
-
         List<String> bgColors = new ArrayList<>();
         List<Number> values = new ArrayList<>();
         List<String> labels = new ArrayList<>();
@@ -1757,18 +1877,18 @@ public class SpectraProcessBean implements Serializable {
             values.add(portions[i]);
             labels.add(nodeIDs[i]);
         }
-//        dataSet.setBackgroundColor(bgColors);
-//        dataSet.setData(values);
-//
-//        data.addChartDataSet(dataSet);
-//        data.setLabels(labels);
-//        pieModel1.setData(data);
-//
-//        PieChartOptions options = new PieChartOptions();
-//        Legend legend = new Legend();
-//        legend.setDisplay(true);
-//        legend.setPosition("right");
-//        options.setLegend(legend);
+
+        String pieModelx;
+
+        pieModelx = new PieChart()
+                .setData(new PieData()
+                        .addDataset(new PieDataset()
+                                .setData(values)
+                                .addBackgroundColors(bgColors)
+                        )
+                        .setLabels(labels))
+                .toJson();
+
 //
 //        pieModel1.setOptions(options);
         if (mode == 0) {
@@ -1802,10 +1922,12 @@ public class SpectraProcessBean implements Serializable {
     private String pieModel0;
 
     public String getPieModel0() {
+        System.out.println("===== pieModel0=====> " + pieModel0);
         return pieModel0;
     }
 
     public void setPieModel0(String pieModel0) {
+        System.out.println("==set=== pieModel0=====> " + pieModel0);
         this.pieModel0 = pieModel0;
     }
 
@@ -1848,7 +1970,7 @@ public class SpectraProcessBean implements Serializable {
         return (groupnames);
     }
 
-    @JsonIgnore 
+    @JsonIgnore
     public SelectItem[] getGrpInfo() {
         String[] taxa1;
         if (groupinfo_nms.length == 0) {
@@ -1897,7 +2019,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private String jsonDir;
 
-    @JsonIgnore 
+    @JsonIgnore
     public String getJsonDir() {
         String image_json_name = mirrorplot_jsonNM;
         if (!jsonHashMap.isEmpty()) {
@@ -1934,7 +2056,7 @@ public class SpectraProcessBean implements Serializable {
     @JsonIgnore
     private StreamedContent singleMirrorImage, refSpecTxt, cmpdInfoTxt;
 
-    @JsonIgnore 
+    @JsonIgnore
     public StreamedContent getSingleMirrorImage() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -1944,7 +2066,7 @@ public class SpectraProcessBean implements Serializable {
         return singleMirrorImage;
     }
 
-    @JsonIgnore 
+    @JsonIgnore
     public StreamedContent getRefSpecTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -1954,7 +2076,7 @@ public class SpectraProcessBean implements Serializable {
         return refSpecTxt;
     }
 
-    @JsonIgnore 
+    @JsonIgnore
     public StreamedContent getCmpdInfoTxt() {
         String filepath = sb.getCurrentUser().getHomeDir() + "/";
         try {
@@ -1982,7 +2104,7 @@ public class SpectraProcessBean implements Serializable {
         this.fromGoogleDrive = fromGoogleDrive;
     }
 
-    @JsonIgnore 
+    @JsonIgnore
     public String getCentroidColName() {
         if (fromGoogleDrive) {
             return "Size Accept";
