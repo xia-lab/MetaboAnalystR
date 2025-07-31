@@ -169,6 +169,13 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
     }else if(transNorm=='VsnNorm'){
+n_inf <- sum(is.infinite(data))   # ±Inf
+n_nan <- sum(is.nan(data))        # NaN (not a number)
+n_na  <- sum(is.na(data))         # plain NA  (optional but useful)
+cat("Total cells : ", length(data), "\n",
+    "  • ±Inf   : ", n_inf, "\n",
+    "  • NaN    : ", n_nan, "\n",
+    "  • NA     : ", n_na,  "\n")
       data <- t(limma::normalizeVSN(t(data)));
       transnm<-"Variance Stabilizing Normalization";
     }else{

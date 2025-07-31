@@ -1157,76 +1157,186 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   }
 }
 
-FeatureCorrelationMeta <- function(mSetObj=NA, dist.name="pearson", tgtType, varName, corr.type="default"){
-
-  mSetObj <- .get.mSet(mSetObj);
-  if(!exists('cov.vec')){
-    adj.bool = F;
-    cov.vec = "NA";
-  }else{
-    if(length(cov.vec) > 0){
-      adj.bool = T;
-    }else{
-      adj.bool = F;
-      cov.vec = "NA";
-    }
-  }
-
-   covariates <- mSetObj$dataSet$meta.info
-   var.types <- mSetObj[["dataSet"]][["meta.types"]]
-   library(dplyr);
-   for(i in c(1:length(var.types))){ # ensure all columns are numeric as required by correlation analysis
-        if(var.types[i] == "disc"){
-            covariates[,i] <- covariates[,i] %>% as.numeric()-1;
-        }
-   }
-
-  input.data <- mSetObj$dataSet$norm;
-
-  if(tgtType == "featNm"){
-    # test if varName is valid
-    if(!varName %in% colnames(mSetObj$dataSet$norm)){
-        AddErrMsg("Invalid feature name - not found! Feature might have been filtered out!");
-        return(0);
-    }
-    # need to exclude the target itself
-    inx <- which(colnames(input.data) == varName);
-    tgt.var <- input.data[,inx];
-    input.data <- input.data[,-inx];
-  }else{
-    tgt.var <- covariates[,varName];
-  }
-
-  if(adj.bool){
-    adj.vars <- covariates[, cov.vec];
-    require("ppcor");
-    if(max(input.data) >= 1e8){
-     # values bigger than 1x10^8 will beyond the computational ability. Enforce an log transform here
-      input.data[input.data <= 0] <- 1
-      input.data <- log10(input.data)
-    }
-    cbtempl.results <- apply(input.data, 2, template.pmatch, tgt.var, dist.name, adj.vars);
-  }else{
-    cbtempl.results <- apply(input.data, 2, template.match, tgt.var, dist.name);
-  }
-  cor.res<-t(cbtempl.results);
-
-  fdr.col <- p.adjust(cor.res[,3], "fdr");
-  cor.res <- cbind(cor.res, fdr.col);
-  colnames(cor.res)<-c("correlation", "t-stat", "p-value", "FDR");
-  ord.inx<-order(cor.res[,3])
-  sig.mat <-signif(cor.res[ord.inx,],5);
+FeatureCorrelationMeta <- function(mSetObj     = NA,
+                                   dist.name   = "pearson",
+                                   tgtType,
+                                   varName,
+                                   corr.type   = "default",
+                                   cov.vec     = NULL) {
+  mSetObj <- .get.mSet(mSetObj)
   
-  fileName <- "correlation_feature.csv";
-  fast.write.csv(sig.mat,file=fileName);
+  # metadata → numeric for discrete variables
+  covariates <- mSetObj$dataSet$meta.info
+  var.types  <- mSetObj$dataSet$meta.types
+  for (i in seq_along(var.types)) {
+    if (var.types[[i]] == "disc")
+      covariates[, i] <- as.numeric(covariates[, i]) - 1
+  }
   
-  mSetObj$analSet$corr$cov.vec <- cov.vec;  
-  mSetObj$analSet$corr$dist.name <- dist.name;  
-  mSetObj$analSet$corr$sig.nm <- fileName;
-  mSetObj$analSet$corr$cor.mat <- sig.mat;
-  mSetObj$analSet$corr$pattern <- varName;
+  ## ── 1 · target & feature matrix ────────────────────────────────────
+  input.data <- mSetObj$dataSet$norm      # features
+  if (tgtType == "featNm") {                 # target is a feature
+    if (!varName %in% colnames(input.data)) {
+      AddErrMsg("Feature not found; it may have been filtered out.")
+      return(0)
+    }
+    tgt.var   <- input.data[, varName]
+    input.data <- input.data[, colnames(input.data) != varName, drop = FALSE]
+  } else {                                   # target is metadata
+    if (!varName %in% colnames(covariates)) {
+      AddErrMsg("Metadata variable not found!")
+      return(0)
+    }
+    tgt.var <- covariates[, varName]
+  }
   
-  return(.set.mSet(mSetObj));
+  ## ── 2 · choose correlation strategy ────────────────────────────────
+  if (tolower(corr.type) == "partial") {
+    
+    if (!requireNamespace("ppcor",  quietly = TRUE))
+      stop("Package 'ppcor'  is required for partial correlations.")
+    if (!requireNamespace("glasso", quietly = TRUE))
+      stop("Package 'glasso' is required for graphical-lasso fallback.")
+    
+    ## 2a · build full matrix  (target + features + optional covariates)
+    full.mat <- cbind(target = tgt.var, input.data)
+    
+    if (!is.null(cov.vec) && length(cov.vec) > 0 && !all(cov.vec == "NA")) {
+      cov.vec <- intersect(cov.vec, colnames(covariates))
+      if (length(cov.vec) > 0)
+        full.mat <- cbind(full.mat, covariates[, cov.vec, drop = FALSE])
+    }
+    
+    nSam <- nrow(full.mat)
+    nVar <- ncol(full.mat)
+    
+    if (nVar > 1000) {
+        AddErrMsg("A maximum of 1000 features is supported for partial correlation analysis. Please apply a stricter filtering.")
+        return(0)
+    }
+
+    ## 2b · HIGH-DIMENSION branch (graphical lasso) --------------------
+    if (nVar >= nSam + 5) {
+      
+      if (!requireNamespace("BigQuic", quietly = TRUE))
+        stop("Package 'BigQuic' is required (install.packages('BigQuic')).")
+      
+      X <- scale(full.mat)                       # always standardise
+      S <- cov(X, use = "pairwise")              # only for λ heuristic
+      
+      # --- choose λ --------------------------------------------------------
+      # small λ → dense Ω, large λ → sparse Ω ; heuristic below is fast
+      lambda <- 0.1 * median(abs(S[upper.tri(S)]))
+      
+      # --- run BigQUIC  ----------------------------------------------------
+      ##  use_ram = TRUE returns everything in R (no on-disk files)
+      bq <- BigQuic::BigQuic(X = X, lambda = lambda,
+                             numthreads = parallel::detectCores(logical = FALSE),
+                             use_ram    = TRUE, verbose = 0)
+      
+      # BigQuic result
+      Omega <- bq$precision_matrices[[1]]  # usually a sparse dgCMatrix
+      
+      # Ensure names (BigQuic may not set them)
+      if (is.null(dimnames(Omega))) {
+        vars <- colnames(full.mat)
+        dimnames(Omega) <- list(vars, vars)
+      }
+      
+      # Diagonal (sparse-safe) and guards
+      d <- Matrix::diag(Omega)                 # vector of length p
+      # protect against zeros/negatives/NA
+      bad <- !is.finite(d) | d <= 0
+      if (any(bad)) {
+        # small ridge to avoid division by zero
+        eps <- 1e-8
+        d[bad] <- eps
+      }
+      
+      # Indices
+      target.row <- which(colnames(full.mat) == "target")
+      feat.cols  <- match(colnames(input.data), colnames(full.mat))
+      
+      # ❗ Compute ONLY what we need: target ↔ features partial correlations
+      #    r_j = - Ω_{target,j} / sqrt( Ω_{target,target} * Ω_{j,j} )
+      den_t  <- sqrt(d[target.row])
+      den_js <- sqrt(d[feat.cols])
+      
+      num <- Omega[target.row, feat.cols, drop = TRUE]     # sparse extract -> numeric
+      r   <- - num / (den_t * den_js)
+      
+      # Simple large-sample z/p approximations (same as before)
+      pv <- 2 * pnorm(-abs(r) * sqrt(nSam - 3))
+      tt <- sign(r) * qnorm(1 - pv/2)
+      
+      cor.res <- cbind(correlation = r,
+                       `t-stat`    = tt,
+                       `p-value`   = pv)
+    } else {
+      
+      pc <- ppcor::pcor(full.mat, method = dist.name)
+      
+      ## restore dimnames if ppcor dropped them
+      if (is.null(dimnames(pc$estimate))) {
+        vars <- colnames(full.mat)
+        dimnames(pc$estimate)  <- list(vars, vars)
+        dimnames(pc$statistic) <- list(vars, vars)
+        dimnames(pc$p.value)   <- list(vars, vars)
+        warning("pcor() returned matrix without dimnames; restored.")
+      }
+      
+      t.row  <- "target"
+      f.cols <- colnames(input.data)
+      
+      r  <- pc$estimate [t.row,  f.cols]
+      tt <- pc$statistic[t.row,  f.cols]
+      pv <- pc$p.value  [t.row,  f.cols]
+      
+      # remove features with NA stats (singular cov)
+      keep <- !is.na(r) & !is.na(pv)
+      if (!all(keep)) {
+        warning(sprintf(
+          "Dropped %d feature(s) with NA partial-cor statistics.",
+          sum(!keep)
+        ))
+      }
+      r  <- r [keep]
+      tt <- tt[keep]
+      pv <- pv[keep]
+      
+      cor.res <- cbind(correlation = r,
+                       `t-stat`    = tt,
+                       `p-value`   = pv)
+    }
+    
+  } else {
+    
+    cbtempl.results <- apply(input.data, 2,
+                             template.match, tgt.var, dist.name)
+    cor.res <- t(cbtempl.results)
+    colnames(cor.res) <- c("correlation", "t-stat", "p-value");
+  }
+  
+  ## ── 4 · finish up  (FDR, ordering, export) ─────────────────────────
+  rownames(cor.res) <- colnames(input.data)
+  
+  cor.res <- cbind(cor.res,
+                   FDR = p.adjust(cor.res[, "p-value"], "fdr"))
+  
+  sig.mat <- signif(cor.res[order(cor.res[, "p-value"]), ], 5)
+  
+  fileName <- "correlation_feature.csv"
+  fast.write.csv(sig.mat, fileName)
+  
+  mSetObj$analSet$corr <- list(
+    cov.vec   = if (is.null(cov.vec)) "NA" else cov.vec,
+    dist.name = dist.name,
+    sig.nm    = fileName,
+    cor.mat   = sig.mat,
+    pattern   = varName
+  )
+  
+  return(.set.mSet(mSetObj))
 }
 
 #'Random Forest Significance matrix
@@ -1427,4 +1537,15 @@ PlotRF.RegressionDetail <- function(mSetObj = NA,
 
   dev.off()
   return(.set.mSet(mSetObj))
+}
+
+partial_shrink <- function(X, method = c("pearson","spearman")){
+  method <- match.arg(method)
+  if(method == "spearman") X <- apply(X, 2, rank, ties.method = "average")
+
+  S  <- corpcor::cov.shrink(X)      # shrinkage covariance
+  Ω  <- solve(S)                    # precision matrix
+  P  <- -cov2cor(Ω)                 # partial correlations
+  diag(P) <- 1
+  return(P)
 }
