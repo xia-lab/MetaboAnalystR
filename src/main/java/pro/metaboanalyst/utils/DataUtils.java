@@ -93,8 +93,10 @@ import jakarta.enterprise.inject.spi.AnnotatedField;
 /* ------------- Java reflection + collections -------------- */
 import java.lang.reflect.Field;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
+import pro.metaboanalyst.lts.FunctionInfo;
 
 /**
  *
@@ -2020,6 +2022,20 @@ public class DataUtils {
         } catch (Exception e) {
             System.err.println("CDI container is not available. Ensure this code runs within a Jakarta EE environment or after CDI is initialized. Error: " + e.getMessage());
             return null;
+        }
+    }
+    
+    public static FunctionInfo convertLinkedHashMapToFunctionInfo(Object obj) {
+        if (obj instanceof LinkedHashMap) {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.convertValue(obj, FunctionInfo.class);
+
+        } else if (obj instanceof FunctionInfo) {
+            return (FunctionInfo) obj;
+
+        } else {
+            throw new IllegalArgumentException(
+                    "Unsupported object type: " + obj.getClass());
         }
     }
 }
