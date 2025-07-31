@@ -206,8 +206,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("opls_splot", "PlotOPLS.Splot"),
             Map.entry("opls_imp", "PlotOPLS.Imp"),
             Map.entry("opls_mdl", "PlotOPLS.MDL"),
-            Map.entry("sam_imp", "PlotSAM.Cmpd"), // AI received code, changed code, no change in the plot, no new plot generated at users folder
-            Map.entry("ebam_imp", "PlotEBAM.Cmpd"), // AI received code, changed code, no change in the plot, no new plot generated at users folder
+            Map.entry("sam_imp", "PlotSAM.Cmpd"), 
+            Map.entry("ebam_imp", "PlotEBAM.Cmpd"), 
             Map.entry("spls_pair", "PlotSPLSPairSummary"),
             Map.entry("spls_loading", "PlotSPLSLoading"),
             Map.entry("spls_score2d", "PlotSPLS2DScore"),
