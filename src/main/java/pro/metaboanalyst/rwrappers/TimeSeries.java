@@ -615,7 +615,7 @@ public class TimeSeries {
                 ", "  + metaShapeArg +
                 ")";
 
-            sb.addGraphicsCMD("pca_score2d", rCommand);
+            sb.addGraphicsCMD("pca_score2d_meta", rCommand);
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
 

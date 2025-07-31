@@ -46,17 +46,12 @@
                                              update=":ac:form1:sumPane  :hisTab:cmdPane :ac:impPane :ac:outPane" 
                                              actionListener="#{mrfBean.rfBn_action_time()}"/>   
                         </h:panelGrid>
-                        <h:panelGrid columns="1" id="sumPane" style="padding-top: 20px; text-align: center;">
-                            <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px; margin: 0 auto;">
-                                <p:commandLink action="#{sessionBean1.detailsLnk_action('rf_cls')}" title="View the detailed data table">
-                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                                </p:commandLink>
-                                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('rf_cls')}" 
-                                               update=":myGraphPane"
-                                               oncomplete="PF('graphDialog').show()"
-                                               title="Customize the graphics output">
-                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                                </p:commandLink>
+                        <h:panelGrid columns="2" id="sumPane" style="padding-top: 20px">
+                            <img onerror='this.style.display="none"' 
+                                 style="width:9in; padding-left: 40px"
+                                 src="#{sessionBean1.getCurrentImageURL('rf_cls_meta')}" alt="RFclass"/>
+                            <h:panelGrid rendered="#{!mrfBean.contMeta}">
+                                <h:outputText escape="false" value="#{mrfBean.confText}" />
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px; margin: 10px auto;" 
                                  src="#{sessionBean1.getCurrentImageURL('rf_cls')}" alt="RFclass"/>
@@ -73,14 +68,16 @@
                             <p:commandLink action="#{sessionBean1.detailsLnk_action('rf')}" title="View the detailed data table">
                                 <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
                             </p:commandLink>
-                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('rf_imp')}" 
+                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('rf_imp_meta')}" 
                                            update=":myGraphPane"
                                            oncomplete="PF('graphDialog').show()"
                                            title="Customize the graphics output">
                                 <i class="pi pi-palette" style="font-size: 1.1rem"/>
                             </p:commandLink>
                         </h:panelGrid>
-                        <img onerror='this.style.display="none"' style="width:8in; padding-left: 40px" src="#{sessionBean1.getCurrentImageURL('rf_imp')}" alt="RFImp"/>
+                        <img onerror='this.style.display="none"' 
+                             style="width:8in; padding-left: 40px"
+                             src="#{sessionBean1.getCurrentImageURL('rf_imp_meta')}" alt="RFImp"/>
                     </h:panelGrid> 
                 </p:tab>
                 <p:tab title ="Outlier Detection">
@@ -88,19 +85,9 @@
                         <p>
                             Only top 5 potential outliers are labeled
                         </p>
-                        <h:panelGrid columns="2" style="text-align: right; padding-left: 700px; width: 760px;">
-                            <p:commandLink action="#{sessionBean1.detailsLnk_action('rf_outlier')}" title="View the detailed data table">
-                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/table.png"/>
-                            </p:commandLink>
-                            <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('rf_outlier')}" 
-                                           update=":myGraphPane"
-                                           oncomplete="PF('graphDialog').show()"
-                                           title="Customize the graphics output">
-                                <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                            </p:commandLink>
-                        </h:panelGrid>
-                        <img onerror='this.style.display="none"' style="width:9in; padding-left: 40px"
-                             src="#{sessionBean1.getCurrentImageURL('rf_outlier')}" alt="RFoutlier"/>
+                        <img onerror='this.style.display="none"' 
+                             style="width:9in; padding-left: 40px"
+                             src="#{sessionBean1.getCurrentImageURL('rf_outlier_meta')}" alt="RFoutlier"/>
                     </h:panelGrid> 
                 </p:tab>
             </p:tabView> 
