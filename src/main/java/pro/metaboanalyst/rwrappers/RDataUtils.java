@@ -2503,10 +2503,10 @@ public class RDataUtils {
         return res;
     }
 
-    public static int update3DPCA(RConnection RC, int num) {
+    public static int update3DPCA(RConnection RC, int num, String msopt) {
         int res = 0;
         try {
-            String rCommand = "updateSpectra3DPCA(" + num + ");";
+            String rCommand = "updateSpectra3DPCA(" + num + ",\"" + msopt + "\");";
             RCenter.recordRCommand(RC, rCommand);
             res = RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
