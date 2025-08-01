@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+src/*.o
+src/*.so
+src/*.dll
+vignettes/*.png
+vignettes/*.Rmd
+*.o
+/tests/
+/R/
