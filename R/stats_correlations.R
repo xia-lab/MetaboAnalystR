@@ -23,50 +23,82 @@ template.pmatch <- function(x, template, dist.name, cov.vars) {
 #'@param pattern Set the pattern, default is set to NULL
 #'@export
 #'
-Match.Pattern <- function(mSetObj=NA, dist.name="pearson", pattern=NULL){
-  mSetObj <- .get.mSet(mSetObj);
-  if(is.null(pattern)){
-    pattern <- paste(1:length(levels(mSetObj$dataSet$cls)), collapse="-");
+Match.Pattern <- function(mSetObj  = NA,
+                           dist.name = "pearson",
+                           pattern   = NULL){
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  ## ------------------------------------------------------------------
+  if (is.null(pattern))
+    pattern <- paste(seq_along(levels(mSetObj$dataSet$cls)), collapse = "-")
+
+  templ <- as.numeric(ClearStrings(strsplit(pattern, "-", fixed = TRUE)[[1]]))
+
+  if (all(templ == templ[1]))
+    stop("Cannot calculate correlation on constant values!")
+
+  ## rebuild template to match sample order ---------------------------
+  cls         <- mSetObj$dataSet$cls
+  all.lvls    <- levels(cls)
+  if (length(templ) != length(all.lvls))
+    stop("Wrong template: must match the number of groups.")
+
+  new.template <- numeric(length(cls))
+  for (i in seq_along(all.lvls))
+    new.template[cls == all.lvls[i]] <- templ[i]
+
+  ## ------------------------------------------------------------------
+  X <- mSetObj$dataSet$norm          # samples × features
+
+  is.partial <- grepl("^p-|^partial_", dist.name)
+
+  if (is.partial) {                  # ===== partial correlation =====
+
+    method <- sub("^(p-|partial_)", "", dist.name)
+    method <- match.arg(method, c("pearson", "spearman"))
+
+    feat.names <- colnames(X)
+    cor.res    <- matrix(NA_real_, nrow = ncol(X), ncol = 3,
+                         dimnames = list(feat.names,
+                                         c("correlation","t-stat","p-value")))
+
+    for (j in seq_along(feat.names)) {
+      x        <- X[,  j]
+      z        <- X[, -j, drop = FALSE]      # all other features
+      complete <- complete.cases(x, new.template, z)
+      if (sum(complete) < 5) next            # skip if too few samples
+
+      ans <- try(ppcor::pcor.test(x[complete],
+                                  new.template[complete],
+                                  z[complete, ], method = method),
+                 silent = TRUE)
+      if (!inherits(ans, "try-error"))
+        cor.res[j, ] <- c(ans$estimate, ans$statistic, ans$p.value)
+    }
+
+  } else {                         # ===== ordinary correlation ======
+    tmp      <- apply(X, 2, template.match, new.template, dist.name)
+    cor.res  <- t(tmp)
   }
-  templ <- as.numeric(ClearStrings(strsplit(pattern, "-", fixed=TRUE)[[1]]));
-  
-  if(all(templ==templ[1])){
-    AddErrMsg("Cannot calculate correlation on constant values!");
-    return(0);
-  }
-  
-  new.template <- vector(mode="numeric", length=length(mSetObj$dataSet$cls))
-  # expand to match each levels in the dataSet$cls
-  all.lvls <- levels(mSetObj$dataSet$cls);
-  
-  if(length(templ)!=length(all.lvls)){
-    AddErrMsg("Wrong template - must the same length as the group number!");
-    return(0);
-  }
-  
-  for(i in 1:length(templ)){
-    hit.inx <- mSetObj$dataSet$cls == all.lvls[i]
-    new.template[hit.inx] = templ[i];
-  }
-  
-  cbtempl.results <- apply(mSetObj$dataSet$norm, 2, template.match, new.template, dist.name);
-  
-  cor.res <- t(cbtempl.results);
-  
-  fdr.col <- p.adjust(cor.res[,3], "fdr");
-  cor.res <- cbind(cor.res, fdr.col);
-  colnames(cor.res)<-c("correlation", "t-stat", "p-value", "FDR");
-  ord.inx<-order(cor.res[,3]);
-  
-  sig.mat <- signif(cor.res[ord.inx,],5);
-  
-  fileName <- "correlation_pattern.csv";
-  fast.write.csv(sig.mat,file=fileName);
-  
-  mSetObj$analSet$corr$sig.nm <- fileName;
-  mSetObj$analSet$corr$cor.mat <- sig.mat;
-  mSetObj$analSet$corr$pattern <- pattern;
-  return(.set.mSet(mSetObj));
+
+  ## ------------------------------------------------------------------
+  rownames(cor.res) <- colnames(X)
+  cor.res           <- cor.res[!is.na(cor.res[, 3]), , drop = FALSE]
+  cor.res           <- cbind(cor.res,
+                             FDR = p.adjust(cor.res[, 3], "fdr"))
+  colnames(cor.res) <- c("correlation", "t-stat", "p-value", "FDR")
+
+  sig.mat <- signif(cor.res[order(cor.res[, 3]), ], 5)
+
+  fileName <- "correlation_pattern.csv"
+  fast.write.csv(sig.mat, file = fileName)
+
+  mSetObj$analSet$corr$sig.nm   <- fileName
+  mSetObj$analSet$corr$cor.mat  <- sig.mat
+  mSetObj$analSet$corr$pattern  <- pattern
+
+  .set.mSet(mSetObj)
 }
 
 #'Pattern hunter, correlation plot
@@ -184,7 +216,6 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 if (grepl("^p-", cor.method) || grepl("^partial_", cor.method)) {
   require(ppcor)
   
-  # Support both "p-pearson" and "partial_pearson"
   method <- gsub("^(p-|partial_)", "", cor.method)
   method <- match.arg(method, c("pearson", "spearman", "kendall"))
   
