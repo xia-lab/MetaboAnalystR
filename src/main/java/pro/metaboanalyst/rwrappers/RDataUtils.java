@@ -243,16 +243,18 @@ public class RDataUtils {
                 String source_path;
                 if (null == meth) {
                     source_path = null;
-                } else switch (meth) {
-                    case "customized":
-                        source_path = ab.getCustomizedCache();
-                        break;
-                    case "auto":
-                        source_path = ab.getAutoCache();
-                        break;
-                    default:
-                        source_path = null;
-                        break;
+                } else {
+                    switch (meth) {
+                        case "customized":
+                            source_path = ab.getCustomizedCache();
+                            break;
+                        case "auto":
+                            source_path = ab.getAutoCache();
+                            break;
+                        default:
+                            source_path = null;
+                            break;
+                    }
                 }
 
                 DataUtils.copyDir(source_path, homedir);
@@ -1573,6 +1575,7 @@ public class RDataUtils {
             return 0;
         }
     }
+
     public static int updateData(RConnection RC, String[] featVec, String[] smplVec, String[] useVec, String ordGrp) {
         try {
             String featCmd = "feature.nm.vec <- " + DataUtils.createStringVector(featVec);
@@ -3426,7 +3429,6 @@ public class RDataUtils {
         return 0; // failure
     }
 
-
     public static double[][] getNetStats(RConnection RC) {
         try {
             String rCommand = "GetNetStats();";
@@ -3728,4 +3730,14 @@ public class RDataUtils {
         return null;
     }
 
+    public static String getReplaceMsg(RConnection RC) {
+        try {
+            String rCommand = "fetchReplaceMsg(NA)";
+            //String imgName = RC.eval(rCommand).asString();
+            return RC.eval(rCommand).asString();
+        } catch (Exception e) {
+            LOGGER.error("getReplaceMsg", e);
+        }
+        return null;
+    }
 }
