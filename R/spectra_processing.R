@@ -3390,7 +3390,7 @@ checkMS2annotationExists <- function(feature_idx){
             return(which(x == colnames(res_dt)))
         }, integer(1L))
         res_vec_cpmd <- res_dt[rowidx, colidx]        
-        return(length(!is.na(res_vec_cpmd)))
+        return(length(which(!is.na(res_vec_cpmd))))
     }
     return(0)
 }
