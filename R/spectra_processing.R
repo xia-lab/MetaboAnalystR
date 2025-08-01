@@ -730,6 +730,7 @@ updateSpectra3DPCA <- function(featureNM = 100, msopt = "false"){
     
   }
 save(selectRow_idx, file = 'selectRow_idx.rda')
+  sort(selectRow_idx) -> selectRow_idx
   if(msopt=="true"){
     if(file.exists("compound_msn_results_index.qs")){
         dt_ms2 <- qs::qread("compound_msn_results_index.qs")
@@ -3065,7 +3066,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   # fl <- strsplit(fl,"@")[[1]]
   # mz <- as.double(fl[1])
   # rt <- as.double(fl[2])
-  peak_mtx <- as.data.frame(peak_mtx)
+  peak_mtx <- as.data.frame(peak_mtx_complete)
   mz <- mean(as.numeric(peak_mtx_complete[peak_idx, c(1:2)]))
   rt <- mean(as.numeric(peak_mtx_complete[peak_idx, c(3:4)]))
   mz <- round(mz, 4)
