@@ -505,6 +505,20 @@ public class RSpectraUtils {
         return 0;
     }
 
+    public static int PerformMirrorPlotting(RConnection RC, String fragDB_path, String featurelabel, int result_num, int sub_idx,
+            double ppm, String imageNM,
+            double dpi, String format, int width, int height) {
+        try {
+            int res = RC.eval("PerformMirrorPlotting(NA, \"" + fragDB_path + "\"," + result_num
+                    + ", " + sub_idx + ", F, " + ppm + "," + dpi + ", \"" + format + "\", " + width
+                    + ", " + height + ")").asInteger();
+            return res;
+        } catch (Exception e) {
+            LOGGER.error("PerformMirrorPlotting", e);
+        }
+        return 0;
+    }
+
     public static int SaintyCheckMSPfile(RConnection RC, String filename, String format_type) {
         try {
             String rCommand = "SaintyCheckMSPfile(NA, " + "\"" + filename + "\", \"" + format_type + "\", TRUE)";

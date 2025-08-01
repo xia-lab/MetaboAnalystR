@@ -945,6 +945,32 @@ public class SpectraProcessBean implements Serializable {
         return resx;
     }
 
+    public int plotMirrorMatching2() {
+
+        if (ab.isOnQiangPc()) {
+            fragDB_path = "/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite";
+        } else if (ab.isOnProServer() || ab.isOnVipServer() || ab.isInDocker()) {
+            fragDB_path = "/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite";
+        }
+
+        mirrorplot_imgNM = "mirror_plotting_" + resNum + "_" + subidx + "_150.png";
+        mirrorplot_jsonNM = "mirror_plotting_" + resNum + "_" + subidx + "_150.json";
+        int resx = RSpectraUtils.PerformMirrorPlotting(sb.getRConnection(), fragDB_path,
+                current_ft_label, resNum, subidx, 10, mirrorplot_imgNM, 150,
+                "png", 10, 6);
+
+        internalizeImage(mirrorplot_jsonNM);
+
+        jsonHashMap.put(resNum + "", mirrorplot_jsonNM);
+        imgsHashMap.put(resNum + "", mirrorplot_imgNM);
+        refspecHMap.put(resNum + "", "reference_spectrum_" + resNum + "_" + subidx + ".txt");
+        cmpdinfHMap.put(resNum + "", "compound_info_" + resNum + "_" + subidx + ".txt");
+
+        System.out.println("mirror=====" + resNum);
+
+        return resx;
+    }
+
     private int resNum = 0;
 
     public int getResNum() {
