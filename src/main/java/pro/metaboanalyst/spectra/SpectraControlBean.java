@@ -266,7 +266,7 @@ public class SpectraControlBean implements Serializable {
                         getIncludedFileNamesString(), sparam.getMeth(), ab,
                         sb.getCurrentUser().getHomeDir());
             }
-            
+
             if (isms2) {
                 String db_str = sparam.getMsmsDBOpt();
                 System.out.println(" db_str 1 ====> " + db_str);
@@ -526,6 +526,8 @@ public class SpectraControlBean implements Serializable {
         rCommand = "OptiLCMS::PlotSpectraPCA(mSet = NULL, imgName = \"raw_spec_pca.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_pca", rCommand);
         sb.addGraphicsMapLink("raw_spec_pca", "/Secure/spectra/SpectraResult.xhtml");
+        
+        isms2 = !"ms1".equals(spb.getMs2DataOpt());
 
         if (ab.shouldUseScheduler() && !(executExample && paramNotChanged)) {
 
@@ -552,6 +554,16 @@ public class SpectraControlBean implements Serializable {
                 }
                 String omics_type = RDataUtils.retrieveOmicsType(sb.getRConnection());
                 sparam.setTarget_omics(omics_type);
+                System.out.println("===== isms2==1==> " + isms2);
+                if (isms2) {
+                    if (omics_type.equals("metabolomics")) {
+                        spb.preparePiechart(0);
+                    } else {
+                        spb.preparePiechart(0);
+                        spb.preparePiechart(1);
+                    }
+                }
+
                 return "Spectra result";
             } else {
                 sb.addMessage("error", "Job is not completed yet! Please wait until the Job Status becomes Finished.");
@@ -575,6 +587,15 @@ public class SpectraControlBean implements Serializable {
             spb.summarizeProcessingMsg();
             String omics_type = RDataUtils.retrieveOmicsType(sb.getRConnection());
             sparam.setTarget_omics(omics_type);
+            System.out.println("===== isms2==2==> " + isms2);
+            if (isms2) {
+                if (omics_type.equals("metabolomics")) {
+                    spb.preparePiechart(0);
+                } else {
+                    spb.preparePiechart(0);
+                    spb.preparePiechart(1);
+                }
+            }
 
             return "Spectra result";
         }

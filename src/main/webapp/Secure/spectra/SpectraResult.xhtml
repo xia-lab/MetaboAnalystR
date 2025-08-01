@@ -123,6 +123,29 @@
                                 });
                     }
 
+                    function plotintmirror1() {
+
+                        var elemID = 'myid2';// + ID;
+                        var mirrorwidgetID = 'mirrorwidget2';
+                        console.log("plotintmirror1 ====> " + mirrorwidgetID);
+                        console.log("plotintmirror1 ====> " + mirrorwidgetID);
+                        console.log("myid2 ===> " + document.getElementById('form1:featsum:' + elemID).value)
+                        $.getJSON('/MetaboAnalyst' + document.getElementById('form1:featsum:' + elemID).value,
+                                function (scriptData) {
+
+                                    if (scriptData) {
+                                        var data = scriptData.x;
+                                        var graphDiv = document.getElementById(mirrorwidgetID);
+
+                                        data.layout.autosize = true;
+
+                                        var config = {displaylogo: false, displayModeBar: false, scrollZoom: true, responsive: true};
+                                        Plotly.newPlot(graphDiv, data.data, data.layout, config);
+                                        PF('statusDialog').hide();
+                                    }
+                                });
+                    }
+
                     function resetAxis() {
                         var mirrorwidgetID = 'mirrorwidget';
                         var con = document.getElementById(mirrorwidgetID);
@@ -167,6 +190,26 @@
                         Plotly.update(graphDiv, {}, newlayout);
 
                     }
+
+                    function chartExtender()
+                    {
+                        var options = {
+                            options: {
+                                plugins: {
+                                    legend: {
+                                        display: true,
+                                        position: 'right' // 👈 move legend to right side
+                                    },
+                                    datalabels: {
+                                        color: 'HotPink' // your original datalabels config
+                                    }
+                                }
+                            }
+                        };
+
+                        //merge all options into the main chart options
+                        $.extend(true, this.cfg.config, options);
+                    }
                 </script>
                 <h:inputHidden id='resNumSrc' value="#{spectraProcessor.resNum}"/>
 
@@ -203,6 +246,10 @@
                                        title="value must be within 20 and #{spectraProcessor.rawFeatureBean.rowCount}"
                                        min="20"
                                        max="#{spectraProcessor.rawFeatureBean.rowCount}"/>
+                                <div style="padding-top: 5px; display: inline;"> 
+                                    <input type="checkbox" id="showms2" name="showms2box" value="true"/>
+                                </div>                                
+                                <label for="vehicle1">MS2 Only</label>
                                 <div align="center" style="display:inline-block; padding-left:10px; padding-bottom:5px">
                                     <a id="updateLoading" href="#" style="border-radius: 6px; text-align: center; border: 0.5px solid #C8C8C8; padding: 2px 5px 2px 5px;
                                        background-color: #F8F8F8; color: #202020; text-decoration: none; display: inline-block; font-size: 12px;">Update</a>
@@ -350,16 +397,17 @@
                             </p:graphicImage>
                         </p:tab>
 
-
                         <p:tab title="Metabolome" rendered="#{spectraProcessor.isms2}">
                             <p>
                                 Summary of Metabolome classifications across different groups. 
                             </p>
+
                             <h:panelGrid columns = "2" style="height: 410px; width:1200px">
-                                <h:panelGrid  style="height:400px; width:550px;">
+
+                                <h:panelGrid  style="height:650px; width:650px;">
                                     <p:chart id="pie1" 
-                                                value="#{spectraProcessor.pieModel0}"  
-                                                style="height:400px; width:550px; border: none; text-align: left">
+                                             value="#{spectraProcessor.pieModel0}" 
+                                             style="height:650px; width:650px; border: none; text-align: left" extender="chartExtender">
                                     </p:chart>
                                 </h:panelGrid>
                                 <h:panelGrid columns = "2">
@@ -396,10 +444,10 @@
                                 Summary of Exposome classifications across different groups. 
                             </p>
                             <h:panelGrid columns = "2" style="height: 410px; width:1050px">
-                                <h:panelGrid  style="height:400px; width:600px;">
+                                <h:panelGrid  style="height:650px; width:650px;">
                                     <p:chart id="pie2" 
-                                                value="#{spectraProcessor.pieModel}"  
-                                                style="height:400px; width:600px; border: none; text-align: left">
+                                             value="#{spectraProcessor.pieModel}"  
+                                             style="height:650px; width:650px; border: none; text-align: left" extender="chartExtender">
                                     </p:chart>
                                 </h:panelGrid>
 
@@ -531,11 +579,11 @@
                             <p:column headerText="View"  style="width:40px; text-align: center">
                                 <p:commandButton
                                     style="margin-left: 5px; height:20px; width:30px;"
-                                    action="#{spectraProcessor.plotMSfeature('png')}"
+                                    action="#{spectraProcessor.viewMSFeature()}"
                                     onclick="PF('statusDialog').show()"
-                                    oncomplete ="getXICPlot2();PF('statusDialog').hide()"
+                                    oncomplete ="getXICPlot2();PF('statusDialog').hide(); updateJsonDir();"
                                     icon="pi pi-image"                                    
-                                    update="intensity">
+                                    update="form1:featsum">
                                     <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.featureNum0}"/>
                                 </p:commandButton>
                             </p:column>
@@ -667,6 +715,155 @@
                         </h:panelGrid>
                     </h:panelGrid>         
                 </p:dialog>
+
+                <p:remoteCommand name="updateDialogMP2" update="form1:featsum:mp2"/>
+                <p:remoteCommand name="updateJsonDir" update="form1:featsum:myid2"/>
+                <p:dialog header="Feature Summary" widgetVar="BoxPlotdialog" 
+                          dynamic="true" modal="true" appendTo="@(body)" height="650" width="1080"
+                          hideEffect="explode" resizable="true" onShow="updateDialog()">
+                    <p:tabView style="min-width: 1000px; width: 95%; text-align: left; border:none" id="featsum">
+                        <p:tab title="Boxplots and EICs">
+                            <h:panelGrid id="intensity" style="padding:2px 10px 8px 20px; width:100%; line-height: 23px">
+                                <h:form id="xicform">
+                                    <h:panelGrid id="eic" columns = "5" style="text-align: right; position: absolute; top:5px; right:50px;">
+                                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EIC_int')}" 
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics of boxplot"
+                                                       style = "padding-right: 280px">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>   
+
+                                        <h:panelGroup layout="block">
+                                            <h:outputLabel value="Plot names " style="font-size: 12px;"/>
+                                            <p:selectBooleanCheckbox value="#{spectraProcessor.showlabel}" 
+                                                                     title="Show Sample Name in EIC" style="line-height: 18px"/>
+                                        </h:panelGroup>
+                                        <p:commandLink actionListener="#{spectraProcessor.resetSingleXIC()}" 
+                                                       update=":myGraphPane singlexicplot"
+                                                       oncomplete="updateSingleXICs()"
+                                                       title="Reset the EIC/XIC image"
+                                                       style = "padding-left: 10px;">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/reset2.png" style="width: 20px"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EICs')}"
+                                                       update=":myGraphPane"
+                                                       oncomplete="PF('graphDialog').show()"
+                                                       title="Customize the graphics of EIC/XIC samples"
+                                                       style = "padding-left: 10px;">
+                                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
+                                        </p:commandLink>
+                                        <p:graphicImage id="EICIcon2" url="/resources/images/ui_help.png" alt="help" style = "padding-left: 10px"/>
+                                        <p:tooltip for="EICIcon2" styleClass="helpTip" style="width: 320px">
+                                            <p>
+                                                The box plot and Extracted Ion Chromatograms (EICs/XICs) can be exported as high-resolution images.
+                                                Click the "Reset" to clear all EICs and restart from zero.
+                                            </p>
+                                        </p:tooltip>
+                                    </h:panelGrid> 
+
+                                    <h:panelGrid id="xicplots" columns="2">
+                                        <h:outputText id="xicplot" 
+                                                      value="#{spectraProcessor.svgStringBox}" 
+                                                      escape="false"/> 
+                                        <p:graphicImage id="singlexicplot" style=" color:green; font:20px Impact; padding-left: 20px; padding-top: 5px; text-align: center; width:450px;"
+                                                        value="#{spectraProcessor.singleXICPlot}" 
+                                                        cache="false"/>
+                                    </h:panelGrid>
+
+                                    <p:remoteCommand name="updateXICs"
+                                                     process="@this"
+                                                     partialSubmit="true" 
+                                                     update="xicplot" />
+                                    <p:remoteCommand name="updateSingleXICs" update="singlexicplot" />
+                                </h:form>
+                                <p style="text-align: center">
+                                    <u>Mouse over</u> a data point on a boxplot to view its sample name. <u>Double click</u> to show its EIC. 
+                                    Clicking different data points will stack their EICs. Click the <u>Reset</u> icon to restart. 
+                                </p>
+                                <!--                <span class="tip-content">tooltip message</span>-->
+                            </h:panelGrid>
+                        </p:tab>
+
+                        <p:tab title="MS/MS Annotations" rendered="#{spectraProcessor.ms2annotated}">
+
+
+                            <p:dataTable id="ms2TBrows" var="data" paginator="false" rows="50"
+                                         value="#{spectraProcessor.featureModelMS2Single}">
+
+                                <p:column headerText="Compound" filterMatchMode="startsWith" style="width:20%;">
+                                    #{data.compounds}
+                                </p:column>
+
+                                <p:column headerText="Formula" style="width:15%;">
+                                    #{data.formulas}
+                                </p:column>
+
+                                <p:column headerText="Matching Score" style="width:12.5%;">
+                                    #{data.similarity_score}
+                                </p:column>
+
+                                <p:column headerText="InchiKey" style="width:25%;">
+                                    #{data.inchiKeys}
+                                </p:column>
+
+                                <p:column headerText="View"  style="width:12.5%; text-align: center">
+                                    <p:commandButton
+                                        style="margin-left: 5px; height:20px; width:30px;"
+                                        action="#{spectraProcessor.plotMirrorMatching2()}"
+                                        onclick="PF('statusDialog').show(); updateDialogMP(); updateJsonDir()"
+                                        oncomplete ="PF('statusDialog').hide();updateJsonDir(); plotintmirror1();"
+                                        update="form1:featsum:mp2"
+                                        icon="pi pi-image">
+                                        <f:setPropertyActionListener value="#{data.featureNo}" target="#{spectraProcessor.resNum}"/>
+                                        <f:setPropertyActionListener value="#{data.sub_idx}" target="#{spectraProcessor.subidx}"/>
+                                    </p:commandButton>
+                                </p:column>
+                            </p:dataTable>
+
+                            <h:panelGrid id="mp2" style="font-size: 12px;">
+                                <h:inputHidden id="myid2" value="#{spectraProcessor.jsonDir}"/>
+                                <h:panelGrid id="itPane2" style="border: none">
+                                    <div id="mirrorwidget2" style="width:100%;" class="html-widget"></div>
+                                </h:panelGrid>
+                                <h:panelGrid style="border: none; width: 45%; margin-left: 25%" columns="5">
+                                    <p:commandButton value="SVG" title="Click to download SVG image"
+                                                     style="width: 80px;  color:black; background: none; border: none"
+                                                     onclick="export_image('svg')"  
+                                                     icon="pi pi-download"/>
+
+                                    <p:commandButton value="PNG" title="Click to download png image"
+                                                     style="width: 80px; color:black; background: none; border: none"
+                                                     onclick="export_image('png')"
+                                                     icon="pi pi-download"/>
+
+                                    <p:commandButton value="Spectrum" title="Click to download refence spectrum (mz + intensity)"
+                                                     style="width: 100px; color:black; background: none; border: none;"
+                                                     onclick="PrimeFaces.monitorDownload(start, stop);"
+                                                     icon="pi pi-download">
+                                        <p:fileDownload value="#{spectraProcessor.refSpecTxt}"/>
+                                    </p:commandButton>
+
+                                    <p:commandButton value="Compound" title="Click to download compound information"
+                                                     style="width: 110px; color:black; background: none; border: none"
+                                                     onclick="PrimeFaces.monitorDownload(start, stop);"                                                 
+                                                     icon="pi pi-download">
+                                        <p:fileDownload value="#{spectraProcessor.cmpdInfoTxt}"/>
+                                    </p:commandButton>                                
+
+                                    <p:commandButton value="Reset" title="Click to reset axes of the interactive image"
+                                                     style="width: 80px; color:black; background: none; border: none;"
+                                                     onclick="resetAxis()"
+                                                     icon="pi pi-replay"/>
+                                </h:panelGrid>
+                            </h:panelGrid>
+
+                        </p:tab>
+                    </p:tabView>
+
+                </p:dialog>
+
+
             </h:form>
         </h:panelGrid>
 
@@ -710,72 +907,6 @@
                     The labels marked in the TIC is the corresponding <b>m/z value</b> of the <u>base ion</u> in the peak.
                 </div>
             </h:panelGrid>         
-        </p:dialog>
-
-        <p:dialog header="Boxplots and EICs" widgetVar="BoxPlotdialog" dynamic="true" modal="true" appendTo="@(body)" height="555" width="980"
-                  hideEffect="explode" resizable="true" onShow="updateDialog()">
-
-            <h:panelGrid id="intensity" style="padding:2px 10px 8px 20px; width:100%; line-height: 23px">
-                <h:form id="xicform">
-                    <h:panelGrid id="eic" columns = "5" style="text-align: right; position: absolute; top:5px; right:50px;">
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EIC_int')}" 
-                                       update=":myGraphPane"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customize the graphics of boxplot"
-                                       style = "padding-right: 280px">
-                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                        </p:commandLink>   
-
-                        <h:panelGroup layout="block">
-                            <h:outputLabel value="Plot names " style="font-size: 12px;"/>
-                            <p:selectBooleanCheckbox value="#{spectraProcessor.showlabel}" 
-                                                     title="Show Sample Name in EIC" style="line-height: 18px"/>
-                        </h:panelGroup>
-                        <p:commandLink actionListener="#{spectraProcessor.resetSingleXIC()}" 
-                                       update=":myGraphPane singlexicplot"
-                                       oncomplete="updateSingleXICs()"
-                                       title="Reset the EIC/XIC image"
-                                       style = "padding-left: 10px;">
-                            <img src="#{facesContext.externalContext.requestContextPath}/resources/images/reset2.png" style="width: 20px"/>
-                        </p:commandLink>
-                        <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('EICs')}"
-                                       update=":myGraphPane"
-                                       oncomplete="PF('graphDialog').show()"
-                                       title="Customize the graphics of EIC/XIC samples"
-                                       style = "padding-left: 10px;">
-                            <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                        </p:commandLink>
-                        <p:graphicImage id="EICIcon2" url="/resources/images/ui-help.png" alt="help" style = "padding-left: 10px"/>
-                        <p:tooltip for="EICIcon2" styleClass="helpTip" style="width: 320px">
-                            <p>
-                                The box plot and Extracted Ion Chromatograms (EICs/XICs) can be exported as high-resolution images.
-                                Click the "Reset" to clear all EICs and restart from zero.
-                            </p>
-                        </p:tooltip>
-                    </h:panelGrid> 
-
-                    <h:panelGrid id="xicplots" columns="2">
-                        <h:outputText id="xicplot" 
-                                      value="#{spectraProcessor.svgStringBox}" 
-                                      escape="false"/> 
-                        <p:graphicImage id="singlexicplot" style=" color:green; font:20px Impact; padding-left: 20px; padding-top: 5px; text-align: center;"
-                                        value="#{spectraProcessor.singleXICPlot}" 
-                                        cache="false"/>
-                    </h:panelGrid>
-
-                    <p:remoteCommand name="updateXICs"
-                                     process="@this"
-                                     partialSubmit="true" 
-                                     update="xicplot" />
-                    <p:remoteCommand name="updateSingleXICs" update="singlexicplot" />
-                </h:form>
-                <p style="text-align: center">
-                    <u>Mouse over</u> a data point on a boxplot to view its sample name. <u>Double click</u> to show its EIC. 
-                    Clicking different data points will stack their EICs. Click the <u>Reset</u> icon to restart. 
-                </p>
-            </h:panelGrid>  
-            <span class="tip-content">tooltip message</span>
-
         </p:dialog>
 
         <p:dialog header="Matching Mirror Plot" widgetVar="mirrorp" dynamic="true" modal="true" appendTo="@(body)" 

@@ -293,7 +293,7 @@ public class AjaxCallServlet extends HttpServlet {
                 spb.setFeatureNum(idnew);
             }
 
-            String fileNm = spb.plotMSfeature("svg");
+            String fileNm = spb.viewMSFeature2();
             res = fileNm;
 
         } else if (funcName.equalsIgnoreCase("loadingBoxPlot")) {
@@ -323,8 +323,9 @@ public class AjaxCallServlet extends HttpServlet {
             spb.setFeatureNM(request.getParameter("number"));
 
             int nb = Integer.parseInt(request.getParameter("number"));
-            int res1 = RDataUtils.update3DPCA(sb.getRConnection(), nb);
-
+            String msopt = request.getParameter("msopt");
+            int res1 = RDataUtils.update3DPCA(sb.getRConnection(), nb, msopt);
+            
             if (res1 > 0) {
                 spb.internalizeRes(nb);
                 res = spb.getLoadingJson();
