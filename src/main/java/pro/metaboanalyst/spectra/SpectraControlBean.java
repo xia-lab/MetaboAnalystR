@@ -554,7 +554,6 @@ public class SpectraControlBean implements Serializable {
                 }
                 String omics_type = RDataUtils.retrieveOmicsType(sb.getRConnection());
                 sparam.setTarget_omics(omics_type);
-                System.out.println("===== isms2==1==> " + isms2);
                 if (isms2) {
                     if (omics_type.equals("metabolomics")) {
                         spb.preparePiechart(0);

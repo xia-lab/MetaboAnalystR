@@ -1894,10 +1894,6 @@ public class SpectraProcessBean implements Serializable {
         List<Number> values = new ArrayList<>();
         List<String> labels = new ArrayList<>();
 
-        System.out.println("nodeIDs ==> " + nodeIDs.length);
-        System.out.println("cols ==> " + cols.length);
-        System.out.println("portions ==> " + portions.length);
-
         for (int i = 0; i < portions.length; i++) {
             bgColors.add(cols[i]);
             values.add(portions[i]);
@@ -1948,12 +1944,10 @@ public class SpectraProcessBean implements Serializable {
     private String pieModel0;
 
     public String getPieModel0() {
-        System.out.println("===== pieModel0=====> " + pieModel0);
         return pieModel0;
     }
 
     public void setPieModel0(String pieModel0) {
-        System.out.println("==set=== pieModel0=====> " + pieModel0);
         this.pieModel0 = pieModel0;
     }
 
