@@ -232,6 +232,12 @@ public class FireUserBean implements Serializable {
             sb.addMessage("error", "Login failed! Please check the validity of your project path!");
             return false;
         } else if (res.length == 1) {
+            System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
+            if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") ) {
+                if (res[0].contains("Login Error - User exists but is not authorized for tool")) {
+                    return true;
+                }
+            }
             sb.addMessage("error", res[0]);
             return false;
         } else { // success
@@ -652,8 +658,8 @@ public class FireUserBean implements Serializable {
         this.omicsquareVerified = other.omicsquareVerified;
         this.omicsquareToken = other.omicsquareToken;
     }
-    
-        @Override
+
+    @Override
     public String toString() {
         return "FireUserBean{" + "email=" + email + ", password=" + password + ", fname=" + fname + ", lname=" + lname + ", institution=" + institution + ", salt=" + salt + ", userNM=" + userNM + ", securedPassword=" + securedPassword + ", status=" + status + ", omicsquareVerified=" + omicsquareVerified + ", omicsquareToken=" + omicsquareToken + '}';
     }
