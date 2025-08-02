@@ -39,11 +39,12 @@
             <h:panelGrid columns="3">            
 
                 <p:accordionPanel >
-                    <p:tab title="Missing Value">
-                        <ui:include src="/Secure/workflow/process/_MissingView.xhtml" />
-                    </p:tab>
+
                     <p:tab title="Filtering">
                         <ui:include src="/Secure/workflow/process/_FilterView.xhtml" />
+                    </p:tab>
+                    <p:tab title="Missing Value">
+                        <ui:include src="/Secure/workflow/process/_MissingView.xhtml" />
                     </p:tab>
                     <p:tab title="Normalization">
                         <ui:include src="/Secure/workflow/process/_NormalizationView.xhtml" />

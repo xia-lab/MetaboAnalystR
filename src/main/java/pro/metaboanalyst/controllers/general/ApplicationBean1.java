@@ -98,6 +98,12 @@ public class ApplicationBean1 implements Serializable {
             raw_spec_folder = "/data/glassfish/projects/metaboanalyst/";
             toolLocation = "eu";
 
+        } else if (domain_url.contains("as.metaboanalyst.ca")) {
+            app_url = "https://as.metaboanalyst.ca";
+            onProServer = true;
+            raw_spec_folder = "/data/glassfish/projects/metaboanalyst/";
+            toolLocation = "as";
+
         } else if (domain_url.contains("vip.metaboanalyst.ca")) {
             app_url = "https://vip.metaboanalyst.ca";
             onProServer = true;

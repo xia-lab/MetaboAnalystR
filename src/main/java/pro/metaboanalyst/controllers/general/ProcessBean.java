@@ -170,7 +170,6 @@ public class ProcessBean implements Serializable {
         this.grpLod = grpLod;
     }
 
-
     public void setMsgText(String msgText) {
         this.msgText = msgText;
     }
@@ -759,6 +758,8 @@ public class ProcessBean implements Serializable {
             sb.addMessage("error", msg);
             return;
         }
+        String msg = RDataUtils.getReplaceMsg(RC);
+        sb.addMessage("info", msg);
         sb.setSmallSmplSize(RDataUtils.isSmallSampleSize(RC));
 
         String analType = sb.getAnalType();
