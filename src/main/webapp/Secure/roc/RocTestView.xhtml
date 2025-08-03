@@ -249,6 +249,14 @@
 
                             <!-- ROC Plot with CV test set -->
                             <h:panelGrid id="rocLRpanel" columns="1" >
+                                <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
+                                    <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('cls_roc_lr')}" 
+                                                   update=":myGraphPane"
+                                                   oncomplete="PF('graphDialog').show()"
+                                                   title="Customize the graphics output">
+                                        <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                    </p:commandLink>
+                                </h:panelGrid>
                                 <img onerror='this.style.display="none"' 
                                      style="width:8in;"
                                      src="#{sessionBean1.getCurrentImageURL('cls_roc_lr')}" alt="ROCLRImage"/>

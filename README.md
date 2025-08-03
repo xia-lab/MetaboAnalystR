@@ -1,368 +1,246 @@
+---
+title: "ExpressAnalystR"
+output: html_document
+---
+- [Description](#description)
+- [Installation](#installation)
+  * [1. Install package dependencies](#install-package-dependencies)
+  * [2. Install the package](#install-the-package)
+- [Tips for using the ExpressAnalystR package](#tips-for-using-the-expressanalystr-package)
+- [Examples](#examples)
+  * [1. Starting from a gene expression matrix](#starting-from-a-gene-expression-matrix)
+    + [1.1 Load ExpressAnalystR library and initialize R objects](#load-expressanalystr-library-and-initialize-r-objects)
+    + [1.2 Read data table](#read-data-table)
+    + [1.3 Annotate gene IDs to Entrez](#annotate-gene-ids-to-entrez)
+    + [1.4 Perform data filtering and normalization](#perform-data-filtering-and-normalization)
+    + [1.5 Prepare differential expression (DE) analysis](#prepare-differential-expression--de--analysis)
+    + [1.6 Perform DE analysis and check DE results](#perform-de-analysis-and-check-de-results)
+    + [1.7 Visualize gene expression pattern of individual gene](#visualize-gene-expression-pattern-of-individual-gene)
+  * [2. Starting from three datasets for meta-analysis](#starting-from-three-datasets-for-meta-analysis)
+    + [2.1 Load ExpressAnalystR library and initialize R objects](#load-expressanalystr-library-and-initialize-r-objects)
+    + [2.2 Process each individual dataset](#process-each-individual-dataset)
+    + [2.3 Perform data integrity check (compatibility)](#perform-data-integrity-check--compatibility-)
+    + [2.4 Check diagnostic plot and perform batch correction](#check-diagnostic-plot-and-perform-batch-correction)
+    + [2.5 Perform statistical meta-analysis using combine p-values method](#perform-statistical-meta-analysis-using-combine-p-values-method)
+    + [2.6 View result tables](#view-result-tables)
 
-# MetaboAnalyst Pro
+## Description
 
-<p align="center">
-  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/inst/docs/MetaboAnalystRlogo.png">
-</p>
+**_ExpressAnalystR_** is the underlying R package synchronized with ExpressAnalyst web server. It is designed for statistical analysis, enrichment analysis and visual analytics of single and multiple gene expression data, both matrix and gene list. The R
+package is composed of R functions necessary for the web-server to perform data annotation, normalization, differential expression and meta-analysis.
 
-## Job Scheduler - Quartz 
+Following installation and loading of ExpressAnalystR, users will be able to reproduce web server results from their local computers using the R command history downloaded from ExpressAnalystR. Running the R functions will allow more flexibility and reproducibility.
 
-psql -h localhost -p 5432 -U quartz -d quartzdb
+Note - ExpressAnalystR is still under development - we cannot guarantee full functionality
 
-# Install PostgreSQL
+## Installation
 
-Please follow this tutorial to install PostgrSQL: https://www.postgresql.org/download/
+### 1. Install package dependencies
 
-
-
-# Configure PostgreSQL for Quartz
-```sql
- create user quartz with password 'quartz_xialab_$Omics!';
- create database quartzdb with owner quartz;
- \c quartzdb quartz
- 
-CREATE TABLE IF NOT EXISTS workflow_job_status (
-    job_id        VARCHAR(255) PRIMARY KEY,
-    token         VARCHAR(255),
-    status        VARCHAR(100),
-    updated_time  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
- 
- GRANT ALL ON SCHEMA public TO quartz;
- 
-   CREATE TABLE QRTZ_LOCKS (
-    SCHED_NAME VARCHAR(120) NOT NULL,
-    LOCK_NAME VARCHAR(40) NOT NULL,
-    PRIMARY KEY (SCHED_NAME, LOCK_NAME)
-);
-
-  CREATE TABLE QRTZ_SCHEDULER_STATE (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      INSTANCE_NAME VARCHAR(200) NOT NULL,
-      LAST_CHECKIN_TIME BIGINT NOT NULL,
-      CHECKIN_INTERVAL BIGINT NOT NULL,
-      PRIMARY KEY (SCHED_NAME, INSTANCE_NAME)
-  );
-  
-  CREATE TABLE QRTZ_JOB_DETAILS (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      JOB_NAME VARCHAR(200) NOT NULL,
-      JOB_GROUP VARCHAR(200) NOT NULL,
-      DESCRIPTION VARCHAR(250) NULL,
-      JOB_CLASS_NAME VARCHAR(250) NOT NULL,
-      IS_DURABLE BOOLEAN NOT NULL,
-      IS_NONCONCURRENT BOOLEAN NOT NULL,
-      IS_UPDATE_DATA BOOLEAN NOT NULL,
-      REQUESTS_RECOVERY BOOLEAN NOT NULL,
-      JOB_DATA BYTEA NULL,
-      PRIMARY KEY (SCHED_NAME, JOB_NAME, JOB_GROUP)
-  );
-  
-  CREATE TABLE QRTZ_TRIGGERS (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      TRIGGER_NAME VARCHAR(200) NOT NULL,
-      TRIGGER_GROUP VARCHAR(200) NOT NULL,
-      JOB_NAME VARCHAR(200) NOT NULL,
-      JOB_GROUP VARCHAR(200) NOT NULL,
-      DESCRIPTION VARCHAR(250) NULL,
-      NEXT_FIRE_TIME BIGINT NULL,
-      PREV_FIRE_TIME BIGINT NULL,
-      PRIORITY INTEGER NULL,
-      TRIGGER_STATE VARCHAR(16) NOT NULL,
-      TRIGGER_TYPE VARCHAR(8) NOT NULL,
-      START_TIME BIGINT NOT NULL,
-      END_TIME BIGINT NULL,
-      CALENDAR_NAME VARCHAR(200) NULL,
-      MISFIRE_INSTR INTEGER NULL,
-      JOB_DATA BYTEA NULL,
-      PRIMARY KEY (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
-  );
-  
-  CREATE TABLE QRTZ_SCHEDULER_STATE (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      INSTANCE_NAME VARCHAR(200) NOT NULL,
-      LAST_CHECKIN_TIME BIGINT NOT NULL,
-      CHECKIN_INTERVAL BIGINT NOT NULL,
-      PRIMARY KEY (SCHED_NAME, INSTANCE_NAME)
-  );
-  
-  CREATE TABLE QRTZ_PAUSED_TRIGGER_GRPS (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      TRIGGER_GROUP VARCHAR(200) NOT NULL,
-      PRIMARY KEY (SCHED_NAME, TRIGGER_GROUP)
-  );                                    
-                                       
-  CREATE TABLE QRTZ_FIRED_TRIGGERS (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      ENTRY_ID VARCHAR(95) NOT NULL,
-      TRIGGER_NAME VARCHAR(200) NOT NULL,
-      TRIGGER_GROUP VARCHAR(200) NOT NULL,
-      INSTANCE_NAME VARCHAR(200) NOT NULL,
-      FIRED_TIME BIGINT NOT NULL,
-      SCHED_TIME BIGINT NOT NULL,
-      PRIORITY INTEGER NOT NULL,
-      STATE VARCHAR(16) NOT NULL,
-      JOB_NAME VARCHAR(200) NULL,
-      JOB_GROUP VARCHAR(200) NULL,
-      IS_NONCONCURRENT BOOLEAN NULL,
-      REQUESTS_RECOVERY BOOLEAN NULL,
-      PRIMARY KEY (SCHED_NAME, ENTRY_ID)
-  );
-  
-  CREATE TABLE QRTZ_SIMPLE_TRIGGERS (
-      SCHED_NAME VARCHAR(120) NOT NULL,
-      TRIGGER_NAME VARCHAR(200) NOT NULL,
-      TRIGGER_GROUP VARCHAR(200) NOT NULL,
-      REPEAT_COUNT BIGINT NOT NULL,
-      REPEAT_INTERVAL BIGINT NOT NULL,
-      TIMES_TRIGGERED BIGINT NOT NULL,
-      PRIMARY KEY (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP),
-      FOREIGN KEY (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
-          REFERENCES QRTZ_TRIGGERS(SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP)
-          ON DELETE CASCADE
-  );
-
-
+To use ExpressAnalystR, make sure your R version is >4.0.3 and install all package dependencies. Ensure that you are able to download packages from Bioconductor. To install package dependencies, use the pacman R package. Note that some of these packages may require additional library dependencies that need to be installed prior to their own successful installation.
 
 ```
-# MetaboAnalyst-Pro-2025-R2
-# MetaboAnalystR 4.0: a unified LC-MS workflow for global metabolomics
-
-<p align="center">
-  <img src="https://github.com/xia-lab/MetaboAnalystR/blob/master/inst/docs/MetaboAnalystRlogo.png">
-</p>
-
-## Description 
-
-MetaboAnalystR 4.0 contains the R functions and libraries underlying the popular MetaboAnalyst web server, including metabolomic data analysis, visualization, and functional interpretation. The package is synchronized with the MetaboAnalyst web server. After installing and loading the package, users will be able to reproduce the same results from their local computers using the corresponding R command history downloaded from MetaboAnalyst web site, thereby achieving maximum flexibility and reproducibility. 
-
-#### If you prefer using the web-based platform in a local environment, we provide long-term stable (LTS) release of [MetaboAnalyst-Pro](https://www.xialab.ca/pro/protools.xhtml) with Enterprise Solution for local installation. Please [contact us](https://www.xialab.ca/pro/contact.xhtml).
-
-The version 4.0 aims to address three key challenges facing global metabolomics. By leveraging the best practices established by the community, MetaboAnalyst R 4.0 offers three key features: 
-1) an auto-optimized feature detection and quantification module for LC-MS1 spectra processing;
-2) a streamlined MS/MS spectra deconvolution and compound annotation module for both data-dependent acquisition (DDA) or data-independent acquisition (DIA); 
-3) a sensitive and debiased functional interpretation module for functional analysis directly from LC-MS and MS/MS results. 
-
-MetaboAnalystR 4.0 comes with a large collection of knowledgebases (~500,000 entries of metabolite sets) and spectra databases (~1.5 million MS2 spectra) to support local large-scale processing or using our API service. 
- 
-Our comprehensive benchmark studies show that MetaboAnalystR 4.0 can significantly improve the quantification accuracy and identification coverage of the metabolome. Serial dilutions demonstrate that MetaboAnalystR 4.0 can accurately detect and identify > 10% more high-quality MS and MS/MS features. For both DDA and DIA datasets, MetaboAnalystR 4.0 can increase the true positive rate of chemical identification by > 40% without increasing false identifications. The increased coverage and accuracy enable more accurate biological insights. In conclusion, MetaboAnalystR 4.0 provides an efficient pipeline that bridges LC-MS/MS data processing to biological insights in the open-source R environment.
-
-## Getting Started
-
-### Step 1. Install package dependencies 
-
-To use MetaboAnalystR 4.0, first install all package dependencies. Ensure that you have necessary system environment configured. 
-
-For Linux (e.g. Ubuntu 18.04/20.04): libcairo2-dev, libnetcdf-dev, libxml2, libxt-dev and libssl-dev should be installed at frist;
-
-For Windows (e.g. 7/8/8.1/10): Rtools should be installed.
-
-For Mac OS: In order to compile R for Mac OS, you need Xcode and GNU Fortran compiler [installed](https://mac.r-project.org/tools/). We suggest you follow these [steps](https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/) to help with your installation.
-
-R base with version > 3.6.1 is recommended. The compatibility of latest version (v4.0.0) is under evaluation. As for installation of package dependencies, there are two options:
-
-**Option 1** 
-
-Enter the R function (metanr_packages) and then use the function. A printed message will appear informing you whether or not any R packages were installed.
-
-Function to download packages:
-
-```R
-metanr_packages <- function(){
-
-  metr_pkgs <- c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","devtools","crmn","httr","qs")
-  
-  list_installed <- installed.packages()
-  
-  new_pkgs <- subset(metr_pkgs, !(metr_pkgs %in% list_installed[, "Package"]))
-  
-  if(length(new_pkgs)!=0){
-    
-    if (!requireNamespace("BiocManager", quietly = TRUE))
-        install.packages("BiocManager")
-    BiocManager::install(new_pkgs)
-    print(c(new_pkgs, " packages added..."))
-  }
-  
-  if((length(new_pkgs)<1)){
-    print("No new packages added...")
-  }
-}
-```
-Usage of function:
-```R
-metanr_packages()
-```
-
-**Option 2** 
-
-Use the pacman R package (for those with >R 3.5.1). 
-
-```R
 install.packages("pacman")
 
 library(pacman)
 
-pacman::p_load(c("impute", "pcaMethods", "globaltest", "GlobalAncova", "Rgraphviz", "preprocessCore", "genefilter", "sva", "limma", "KEGGgraph", "siggenes","BiocParallel", "MSnbase", "multtest","RBGL","edgeR","fgsea","httr","qs"))
+pacman::p_load(igraph, RColorBrewer, qs, rjson, RSQLite)
 ```
-### Step 2. Install the package
 
-MetaboAnalystR 4.0 is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. You can install the MetaboAnalylstR 3.0 via any of the three options: A) using the R package devtools, B) cloning the github, C) manually downloading the .tar.gz file. Note that the MetaboAnalystR 3.0 github will have the most up-to-date version of the package. 
+### 2. Install the package
 
-#### Option A) Install the package directly from github using the *devtools* package. Open R and enter:
+ExpressAnalystR is freely available from GitHub. The package documentation, including the vignettes for each module and user manual is available within the downloaded R package file. If all package dependencies were installed, you will be able to install the ExpressAnalystR. 
 
-Due to issues with Latex, some users may find that they are only able to install MetaboAnalystR 4.0 without any documentation (i.e. vignettes). 
+Install the package directly from github using the _devtools_ package. Open R and enter:
 
-```R
+```
 # Step 1: Install devtools
-install.packages("devtools")
+install.packages('devtools')
 library(devtools)
 
-# Step 2: Install MetaboAnalystR with documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = TRUE, build_manual =T)
+# Step 2: Install ExpressAnalystR WITHOUT documentation
+devtools::install_github("xia-lab/ExpressAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"))
 
-# Step 2: Install MetaboAnalystR without documentation
-devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
-
+# Step 2: Install ExpressAnalystR WITH documentation
+devtools::install_github("xia-lab/ExpressAnalystR", build = TRUE, build_opts = c("--no-resave-data", "--no-manual"), build_vignettes = TRUE)
 ```
 
-#### Option B) Clone Github and install locally
+## Tips for using the ExpressAnalystR package
 
-The * must be replaced by what is actually downloaded and built.  
+1. The first function that you will use in every module is the `Init.Data` function, which initiates R objects that stores user's data, parameters for further processing and analysis.
+2. The ExpressAnalystR package will output data files/tables/analysis/networks outputs in your current working directory.
+3. Every function must be executed in sequence as it is shown on the R Command history, please do not skip any commands as this can result in errors downstream.
+4. Main functions in ExpressAnalystR are documented. Use the _?Function_ format to open its documentation. For instance, use `?ExpressAnalystR::ReadTabExpression` to find out more about this function.
+5. It is recommended to set the working folder to an empty folder because numerous files will be generated through the process.
+6. R package is not useful for visual analytics as they are hosted on the website. It's mainly useful for statistical analysis (differential expression and meta-analysis).
+7. R package is derived from R scripts used for powering web server. The values returned are often not useful in the context of local usage. The results from R functions are saved in a format qs file named as the file name of original data table. For gene list, the format qs file is named "datalist1". use this function to access: 
+```dataSet <- readDataset(fileName)```
 
-```R
-git clone https://github.com/xia-lab/MetaboAnalystR.git
-R CMD build MetaboAnalystR
-R CMD INSTALL MetaboAnalystR_4.0.0.tar.gz
+## Examples
 
+### 1. Starting from a gene expression matrix
+Before you start, please download the [example](https://www.expressanalyst.ca/ExpressAnalyst/resources/data/test/estrogen.txt) dataset. It is a microarray gene expression data of a human breast-cancer cell line. <br />
+#### 1.1 Load ExpressAnalystR library and initialize R objects
+```
+library(ExpressAnalystR)
+
+#boolean FALSE indicates local mode (vs web mode);
+Init.Data(FALSE);
+
+# Set analysis type to single gene expression matrix
+SetAnalType("onedata");
+```
+#### 1.2 Read data table
+```
+dataSets <- ReadTabExpressData("estrogen.txt");
+```
+#### 1.3 Annotate gene IDs to Entrez
+For this step it is imortant to please select correct organism, data type (array or RNA-seq), id type and gene-level summary (mean, median, sum).
+For gene-level summary, microarray can use mean or median while RNA-seq needs to be sum.
+```
+dataSets <- PerformDataAnnot("estrogen.txt", "hsa", "array", "hgu95av2", "mean");
+```
+Take a look at the mapped dataset by reading the dataset's qs file using ```readDataset(fileName)``` function.
+```
+dataSet <- readDataset("estrogen.txt")
+print(head(dataSet$data.anot[c(1:5),]))
+```
+Check diagnostics plots to look at overall data distribution, sample separation.
+```
+PlotDataBox("estrogen.txt", "qc_boxplot_", 72, "png");
+PlotDataPCA("estrogen.txt", "qc_pca_", 72, "png");
+```
+Check your working directory for png images named ``qc_boxplot_dpi72.png`` and ``qc_pca_dpi72.png``, open them. <br />
+![Box Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_boxplot.png) <br />
+Box plot shows that the expression distribution of samples are between around -4 to 12.5. This shows that the data has already been normalized. <br />
+![PCA Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_pca.png)
+PCA plot shows sample separation both between absent and present, and also, low and high. Depending of your experimental design, try to see if the samples are separated by the metadata of interest, it can also be used to see whether there are potentially mislabed sample.
+
+#### 1.4 Perform data filtering and normalization
+No normalization need to be performed, PCA plot from previous step shows that the dataset is already normalized.
+Filter by variance (lower 15% removed)
+Filter by relative abundance (lower 4 percentile of average expression signal)
+Filter by count not applied (only for RNASeq data)
+Filter unannotated genes TRUE
+```
+dataSets <- PerformExpressNormalization("estrogen.txt", "none", 15, 4, 0);
+```
+#### 1.5 Prepare differential expression (DE) analysis
+Selected metadata of interest, in this case we are interested in investigating the effect of presence of Estrogen Receptor (ER) vs absence. We are not setting secondary factor and blocking factor. After selecting metadata, compute design matrix and select DE analysis algorithm by running ``SetupDesignMatrix`` function. For microarray data, only ``limma`` can be used.
+```
+dataSets <- SetSelectedMetaInfo("estrogen.txt","ER", "NA", F);
+dataSets <- SetupDesignMatrix("estrogen.txt", "limma");
+```
+#### 1.6 Perform DE analysis and check DE results
+Fold change is log2 transformed.
+Adjusted P-value using False Discovery Rate (FDR) method.
+```
+dataSets <- PerformDEAnal("estrogen.txt", "custom", "absent vs. present", "NA", "intonly");
+dataSet <- readDataset("estrogen.txt");
+print(head(dataSet$comp.res));
 ```
 
-#### Option C) Manual download of MetaboAnalystR_3.0.3.tar.gz and install locally
+#### 1.7 Visualize gene expression pattern of individual gene
+```
+PlotSelectedGene("estrogen.txt","5111");
+```
+Check the resulting png image (Gene_5111.png) in your working directory. <br />
+![Violin Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/Gene_5111.png)
 
-Manually download the .tar.gz file from [here](https://drive.google.com/file/d/1OHRUzXFDukWXEKxTLMF9X1fHRN06uFFu/view?usp=sharing). 
+### 2. Starting from three datasets for meta-analysis
+Before you start, please download the example datasets into your working directory [E-GEOD-25713](https://dev.expressanalyst.ca/resources/data/test/E-GEOD-25713.txt), [E-GEOD-59276.txt](https://dev.expressanalyst.ca/resources/data/test/E-GEOD-59276.txt),
+[GSE69588.txt](https://dev.expressanalyst.ca/resources/data/test/GSE69588.txt). These three testing datasets (containing subset of 5000 genes) are from a meta-analysis of helminth infections in mouse liver.
 
-```R
-cd ~/Downloads
-R CMD INSTALL MetaboAnalystR_3.0.3.tar.gz
+#### 2.1 Load ExpressAnalystR library and initialize R objects
+```
+library(ExpressAnalystR)
 
+#boolean FALSE indicates local mode (vs web mode);
+Init.Data(FALSE);
+
+# Set analysis type to meta-analysis
+SetAnalType("metadata");
 ```
 
-## Case Studies
+#### 2.2 Process each individual dataset
+```
+#Read dataset text file
+dataSets <- ReadOmicsData("E-GEOD-25713.txt");
+dataSets <- SanityCheckData("E-GEOD-25713.txt");
 
-### MetaboAnalystR 3.0: Towards an Optimized Workflow for Global Metabolomics
-
-The case studies have been preformed in our article of this version [here](https://www.mdpi.com/2218-1989/10/5/186) (available online now). The example running R code of this article have been provided as a vignette inside the R package.
-
-
-### MetaboAnalystR 2.0: From Raw Spectra to Biological Insights
-
-The R scripts to perform all of the analysis from our previous manuscript "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights" can be found [here](https://github.com/jsychong/MetaboAnalystR/tree/master/MetaboAnalystR_2_Supplementary_Data).
-
-The detailed tutorial of the outdated version to perform a comprehensive end-to-end metabolomics data workflow from raw data preprocessing to knowledge-based analysis still works. The tutorial is available as a PDF is also available inside the R package as a vignette.
-
-### MetaboAnalystR 1.0:  flexible and reproducible analysis of metabolomics data
-To demonstrate the functionality, flexibility, and scalability of the MetaboAnalystR v1.0.0 package, three use-cases using two sets of metabolomics data is available [here](https://github.com/jsychong/MetaboAnalystR/tree/master/Supplementary_Material). In this folder you will find detailed discussions and comparisons with the MetaboAnalyst web-platform.
-
-## Tutorials
-
-For detailed tutorials on how to use MetaboAnalystR 4.0, please refer to the R package vignettes. These vignettes include detailed step-by-step workflows with example data for each of the main MetaboAnalytR 4.0 modules, a case-study showcasing the new end-to-end functionality of MetaboAnalystR 4.0. The raw data processing workflow has been accelerated and gradually mature. Note, the functions below work only if the R package vignettes were built. 
-
-Within R:
-```R
-vignette(package="MetaboAnalystR")
+#Map gene id to entrez id
+dataSets <- AnnotateGeneData("E-GEOD-25713.txt", "mmu", "entrez");
 ```
 
-Within a web-browser:
-```R
-browseVignettes("MetaboAnalystR")
+Visually inspect dataset using box plot (``qc_boxplot_0_dpi72.png``) and pca plot (``qc_pca_0_dpi72.png``).
 ```
-
-## Citation
-
-MetaboAnalystR package has been developed by the [XiaLab](https://www.xialab.ca/) at McGill University. We encourage users to further develop the package to suit their needs. If you use the R package, please cite us: 
-
-* Zhiqiang Pang, Jasmine Chong, Shuzhao Li and Jianguo Xia. "MetaboAnalystR 3.0: Toward an Optimized Workflow for Global Metabolomics" [link](https://doi.org/10.3390/metabo10050186)
-
-* Jasmine Chong, Mai Yamamoto, and Jianguo Xia. "MetaboAnalystR 2.0: From Raw Spectra to Biological Insights." 
-Metabolites 9.3 (2019): 57. [link](https://www.mdpi.com/2218-1989/9/3/57)
-
-* Jasmine Chong, and Jianguo Xia. "MetaboAnalystR: an R package for flexible and reproducible analysis of metabolomics data." Bioinformatics 34.24 (2018): 4313-4314. [link](https://doi.org/10.1093/bioinformatics/bty528)
-
-*From within R:*
-
-```R
-citation("MetaboAnalystR")
+PlotDataProfile("E-GEOD-25713.txt", "raw", "qc_boxplot_0_", "qc_pca_0_");
 ```
+![Box Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_boxplot_meta.png)
+![PCA Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_pca_meta.png)
 
-## Previous Version Releases
+```
+#Remove variables with more than 50% missing data
+dataSets <- RemoveMissingPercent("E-GEOD-25713.txt", 0.5);
 
-MetaboAnalystR 3.0.2 can be downloaded [here](https://drive.google.com/file/d/1SGv6IxhDYayTO5hqOU-uoumoHxUUAiLC/view?usp=sharing).
-MetaboAnalystR 3.0.1 can be downloaded [here](https://drive.google.com/file/d/1l6Lp1VbLTlXzyViVKDr1uWWH3KNoyWty/view?usp=sharing).
-MetaboAnalystR 3.0.0 can be downloaded [here](https://drive.google.com/file/d/1N70p5zEUAaQeqllXyxH7SR4dzw0STHu7/view?usp=sharing).
-MetaboAnalystR 2.0.4 can be downloaded [here](https://www.dropbox.com/s/3nl69jzp9wh6sjh/MetaboAnalystR_2.0.4.tar.gz?dl=0).
+#Replace missing value with minimum values across dataset
+dataSets <- ImputeMissingVar("E-GEOD-25713.txt", "min");
 
-## Bugs or feature requests
+#Replace missing value with minimum values across dataset
+dataSets <- NormalizingDataMeta("E-GEOD-25713.txt", "NA");
+dataSets <- PerformDEAnalMeta("E-GEOD-25713.txt", "limma", "CLASS", 0.05, 0.0);
 
-To inform us of any bugs or requests, please open a new issue (and @ Zhiqiang-PANG !!) or send an email to zhiqiang.pang@mail.mcgill.ca.
+#read and process the other two datasets
+dataSets <- ReadOmicsData("E-GEOD-59276.txt");
+dataSets <- SanityCheckData("E-GEOD-59276.txt");
+dataSets <- AnnotateGeneData("E-GEOD-59276.txt", "mmu", "entrez");
+dataSets <- RemoveMissingPercent("E-GEOD-59276.txt", 0.5)
+dataSets <- ImputeMissingVar("E-GEOD-59276.txt", "min")
+dataSets <- NormalizingDataMeta("E-GEOD-59276.txt", "NA");
+dataSets <- PerformDEAnalMeta("E-GEOD-59276.txt", "limma", "CLASS", 0.05, 0.0);
 
-## MetaboAnalystR History & Updates
+dataSets <- ReadOmicsData("GSE69588.txt");
+dataSets <- SanityCheckData("GSE69588.txt");
+dataSets <- AnnotateGeneData("GSE69588.txt", "mmu", "entrez");
+dataSets <- RemoveMissingPercent("GSE69588.txt", 0.5)
+dataSets <- ImputeMissingVar("GSE69588.txt", "min")
+dataSets <- NormalizingDataMeta("GSE69588.txt", "NA");
+dataSets <- PerformDEAnalMeta("GSE69588.txt", "limma", "CLASS", 0.05, 0.0);
+```
+#### 2.3 Perform data integrity check (compatibility)
+```
+CheckMetaDataIntegrity();
+```
+#### 2.4 Check diagnostic plot and perform batch correction
+```
+PlotMetaPCA("qc_meta_pca_","72", "png", "");
+```
+![PCA Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_meta_pca_beforeBatch.png) <br />
+There is clear signs of batch effect. The samples from same dataset are largely clustered together. To remove the batch effect, we need to run comBat batch correction algorithm
+```
+#Apply batch effect correction
+PerformBatchCorrection();
 
-05-30-2023 - Version Update: 4.0.0: pre-release of version 4.0
+#Check the result 
+PlotMetaPCA("qc_meta_pca_afterBatch_","72", "png", "");
+```
+Here is the result after batch correction. <br />
+![PCA Plot](https://dev.expressanalyst.ca/ExpressAnalyst/resources/images/RTutorial/qc_meta_pca_afterBatch.png) <br />
 
-11-27-2022 - Version Update: 3.3.0: pre-version of 4.0 by fixing bugs and stablize the functions
-
-10-30-2022 - Bug fixes and update
-
-02-01-2022 - Raw data processing pipeline update
-
-07-18-2021 - Bug fixed and API services fixes
-
-06-18-2020 - Version Update: 3.2.0
-
-01-20-2021 - Sync R code, updates bug fixes
-
-12-30-2020 - Version Update: 3.1.0
-
-09-22-2020 - Sync R code w. web, change .rds files to .qs (requires .qs R package). 
-
-07-23-2020 - added new function for dot plots for enrichment analysis (PlotEnrichDotPlot).
-
-06-27-2020 - Version Update: 3.0.3 - update bug fixes for raw data processing, and added functions for Empty MS scan removal and MS data centroid;
-
-05-08-2020 - Version Update: 3.0.2 - update bug fixes for raw data processing plot, and slim down the database to speed up the installation;
-
-05-01-2020 - Version Update: 3.0.1 - update bug fixes for batch effect correction and compatible with web server, and added Signal Drift Correction Method;
-
-04-10-2020 - Version Update: 3.0.0 - ultra-fast parameter optimization for peak picking, automated batch effect correction, and improved pathway activity prediction from LC-MS peaks;
-
-03-12-2020 - Version Update: 2.0.4 - added retention time for MS Peaks to Paths (Beta)! + added troubleshooting for compound mapping
-
-02-19-2020 - Version Update: 2.0.3 - update bug fixes w. web server
-
-01-14-2020 - Version Update: 2.0.2 - updated gene mapping to use internal SQlite database (included in /inst), added Rserve engine (Rcode synchronized with web-server) + added functions for users to create their own mummichog libraries
-
-01-08-2020 - Updating code for box plots + mummichog 
-
-04-11-2019 - Version Update: 2.0.1 - updated underlying code of MS Peaks to Paths, new functions to create plots to summarize results of mummichog and GSEA analysis, fixed bugs with compound name matching, updated documentation
-
-03-05-2019 - Version Update: 2.0.0! - added function for graphical integration of results from mummichog and fGSEA, added new tutorial with example data from the fecal metabolome of IBD patients
-
-03-03-2019 - Version Update: 1.0.4 - added support for pathway activity prediction using fGSEA; major release coming soon after bug fixes
-
-02-11-2019 - Version Update: 1.0.3 - updated underlying R code w. changes to MetaboAnalyst 4.53 + updated documentation
-
-11-20-2018 - Version Update: 1.0.2 - updated links in R code (https) + underlying code w. changes to MetaboAnalyst 4.39 
-
-05-25-2018 - Version Update: 1.0.1 - updated underlying R code w. changes to MetaboAnalyst 4.09
-
-04-20-2018 - Submission to CRAN
-
-04-16-2018 - Testing with R Version 3.4.4
-
-04-10-2018 - Updated underlying R code w. changes to MetaboAnalyst 4.0 
-
-03-23-2018 - Added 2 more package dependencies 
-
-02-23-2018 - Minor bug fixes based on user feedback (MetaboAnalystR_1.0.0.6.tar.gz)
-
-02-05-2018 - Update MetaboAnalystR with 3 new modules in conjunction with the release of MetaboAnalyst Version 4
+#### 2.5 Perform statistical meta-analysis using combine p-values method
+```
+analSet <- PerformPvalCombination("fisher", 0.05)
+```
+#### 2.6 View result tables
+```
+analSet <- readSet(analSet, "analSet");
+print(head(analSet$meta.mat));
+       CombinedTstat CombinedPval
+16854         89.093   2.7728e-14
+246256        99.964   2.7728e-14
+105855        94.751   2.7728e-14
+19241        105.030   2.7728e-14
+319169        94.339   2.7728e-14
+16819        100.880   2.7728e-14
+```
+For a more detailed table containing additionally log fold change and p-values of features for individual dataset, please check this csv file [meta_sig_genes_metap.csv](https://dev.expressanalyst.ca/ExpressAnalyst/resources/data/RTutorial/meta_sig_genes_metap.csv), it is also generated in your working directory.

@@ -1,1 +1,8 @@
-/target/
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+/workingdir
+
+/CloudUpload/target/
+/DevOmicSquare/target/

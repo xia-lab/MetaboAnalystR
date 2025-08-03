@@ -57,13 +57,13 @@
               hideEffect="explode" resizable="true">
         <h:panelGrid id="imgPane" style="width:720px;">
             <h:panelGrid columns="3" style="margin-left:480px; width:200px;">
-                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.univ')}" 
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc_univ_')}" 
                                update=":myGraphPane"
                                oncomplete="PF('graphDialog').show()"
                                title="Customize the graphics output">
                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                 </p:commandLink>
-                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc.boxplot')}" 
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('roc_boxplot_')}" 
                                update=":myGraphPane"
                                oncomplete="PF('graphDialog').show()"
                                title="Customize the graphics output">  

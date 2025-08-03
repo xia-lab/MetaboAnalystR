@@ -128,7 +128,7 @@ public class JobMonitor {
                         }
 
                         if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
-                                & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP2"))) {
+                                & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
                             res = sendPostRequest("vip2", folderName, jid, job_email);
                             //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip2", folderName);
                         } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
