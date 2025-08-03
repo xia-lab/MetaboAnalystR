@@ -264,8 +264,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pls_perm", "PlotSPLS.Permutation"),
             Map.entry("qc_miss_filt", "PlotMissingDistr"),
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
-            Map.entry("cls_roc_lr", "PlotROC.LRmodel")
-            
+            Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
+            Map.entry("cmpd", "PlotCmpdSummary")
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
