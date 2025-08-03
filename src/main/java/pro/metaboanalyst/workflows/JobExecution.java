@@ -220,7 +220,7 @@ public class JobExecution implements Serializable {
                     );
 
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
-                            & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP2"))) {
+                            & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
                         node = "vip2";
                     } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
                         node = "vip";
