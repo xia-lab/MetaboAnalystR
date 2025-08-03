@@ -179,7 +179,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("dr_histogram", "PlotDRHistogram"), 
             Map.entry("raw_spec_stic", "plotSingleTIC"),
             Map.entry("plot_kegg_graph", "PlotKEGGPath"),
-            Map.entry("tree", "PlotHCTree"),
+            Map.entry("tree", "PlotHCTree"), 
             Map.entry("pca_loading", "PlotPCALoading"),
             Map.entry("pca_score2d", "PlotPCA2DScore"),
             Map.entry("pca_score2d_meta", "PlotPCA2DScoreMeta"),
@@ -212,7 +212,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("spls_loading", "PlotSPLSLoading"),
             Map.entry("spls_score2d", "PlotSPLS2DScore"),
             Map.entry("spls_cv", "PlotSPLSDA.Classification"),
-            Map.entry("ptn", "PlotCorr"),
+            Map.entry("ptn", "PlotCorr"), // AI can update the code, new image in users folder, web interface not updating
             Map.entry("km_pca", "PlotClustPCA"),
             Map.entry("km", "PlotKmeans"),
             Map.entry("som_pca", "PlotClustPCA"),
@@ -241,7 +241,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("rf_imp", "PlotRF.VIPMeta"),
             Map.entry("rf_cls", "PlotRF.ClassifyMeta"),
             Map.entry("rf_outlier", "PlotRF.Outlier"),
-            Map.entry("mb", "PlotMBTimeProfile"),
+            Map.entry("mb", "PlotMBTimeProfile"), // Ai updated and generated the code, no update in users folder
             Map.entry("integ_peaks", "PlotPSEAIntegPaths"),
             Map.entry("peaks_to_paths", "PlotPeaks2Paths"),
             Map.entry("norm", "PlotNormSummary"),
@@ -260,12 +260,12 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("asca_perm", "PlotASCA.Permutation"),
             Map.entry("qc_meta_pca", "PlotMetaPCA"),
             Map.entry("pls_imp", "PlotPLS.Imp"),
-            Map.entry("pls_cv", "PlotSPLSDA.Classification"),
-            Map.entry("pls_perm", "PlotSPLS.Permutation"),
+            Map.entry("pls_cv", "PlotPLS.Classification"),
+            Map.entry("pls_perm", "PlotPLS.Permutation"),
             Map.entry("qc_miss_filt", "PlotMissingDistr"),
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
-            Map.entry("cmpd", "PlotCmpdSummary")
+            Map.entry("cmpd", "PlotCmpdSummary") // Ai can change no preview in customization box, new image updated in users folder
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
