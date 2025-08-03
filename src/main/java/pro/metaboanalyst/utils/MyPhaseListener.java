@@ -106,6 +106,11 @@ public class MyPhaseListener implements PhaseListener {
 
     private static final Logger LOGGER = LogManager.getLogger(MyPhaseListener.class);
 
+    private <T> T getBeanByName(String name, Class<T> clazz) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        return context.getApplication().evaluateExpressionGet(context, "#{" + name + "}", clazz);
+    }
+
     @Override
     public void afterPhase(PhaseEvent event) {
         FacesContext context = event.getFacesContext();
@@ -253,41 +258,33 @@ public class MyPhaseListener implements PhaseListener {
     }
 
     private void handleResumeRawRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
 
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
-        MailService ms = (MailService) context.getExternalContext().getSessionMap().get("mailService");
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        DiagramView dv = getBeanByName("diagramView", DiagramView.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+        MailService ms = getBeanByName("mailService", MailService.class);
+
         try {
             String folderName = request.getParameter("folderName");
             String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
-            //System.out.println("handleResumeRawRequest_folderName===" + folderName);
+            System.out.println("handleResumeRawRequest_folderName===" + folderName);
 
             boolean res = dv.resumeRawProject(folderName, jobId, email);
             if (res) {
-                FireUserBean fu = (FireUserBean) DataUtils.getBeanInstanceByName("fireUserBean");
+                FireUserBean fu = getBeanByName("fireUserBean", FireUserBean.class);
+                fu.setEmail(email);
 
                 RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
 
-                //String funcName = "finishRawProject";
-                //String shareLink = ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?"
-                //        + "funcNm=" + URLEncoder.encode(funcName, StandardCharsets.UTF_8) + "&"
-                //        + "folderName=" + URLEncoder.encode(folderName, StandardCharsets.UTF_8) + "&"
-                //        + "jobId=" + URLEncoder.encode(jobId, StandardCharsets.UTF_8) + "&"
-                //        + "email=" + URLEncoder.encode(email, StandardCharsets.UTF_8);
-                fu.setEmail(email);
-                //System.out.println("handleResumeRawRequest_EMAIL===" + email);
-                //System.out.println("handleResumeRawRequest_ANAL===" + sb.getAnalType());
                 fbc.setFireDocName("Workflow Project");
                 boolean saveRes = fbc.saveProject("project");
                 if (saveRes) {
                     RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
-                            & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP2"))) {
+                            && Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP2"))) {
                         DataUtils.sendRawFinishEmail(ms, "vip2", email, jobId, folderName);
                     } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
                         DataUtils.sendRawFinishEmail(ms, "vip", email, jobId, folderName);
@@ -296,9 +293,7 @@ public class MyPhaseListener implements PhaseListener {
             }
         } catch (Exception e) {
             LOGGER.error("handleResumeRawRequest", e);
-            context.getApplication().getNavigationHandler().handleNavigation(context,
-                    "*", "logout");
-
+            context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
         }
     }
 

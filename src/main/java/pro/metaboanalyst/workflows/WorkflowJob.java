@@ -31,9 +31,11 @@ public class WorkflowJob implements Job {
         String node = (String) dataMap.get("node");
         String type = (String) dataMap.get("type");
         String folderName = (String) dataMap.get("folderName");
+        String baseUrl = (String) dataMap.get("baseUrl");
+
         QuartzDbUtils.insertJobStatus(jobId, token, "IN_PROGRESS");
 
-        boolean res = DataUtils.sendPostRequest(node, appName, token, "executeWorkflowJob", email, type, folderName, jobId);
+        boolean res = DataUtils.sendPostRequest(node, appName, token, "executeWorkflowJob", email, type, folderName, jobId, baseUrl);
 
         if (res) {
             System.out.println("Job Finished...");

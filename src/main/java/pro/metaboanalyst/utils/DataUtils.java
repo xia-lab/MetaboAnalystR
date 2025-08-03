@@ -1733,11 +1733,11 @@ public class DataUtils {
         }
     }
 
-    public static boolean sendPostRequest(String node, String appName, String token, String funName, String email, String type, String folderName, String jobId) throws JobExecutionException {
+    public static boolean sendPostRequest(String node, String appName, String token, String funName, String email, String type, String folderName, String jobId, String baseUrl) throws JobExecutionException {
         String urlString;
 
         if (node.equals("localhost")) {
-            urlString = "http://10.120.1.18:8081/" + appName + "/faces/AjaxHandler.xhtml?funcNm=" + funName;
+            urlString = baseUrl + "/faces/AjaxHandler.xhtml?funcNm=" + funName;
         } else {
             urlString = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml?funcNm=" + funName;
         }
@@ -1779,11 +1779,11 @@ public class DataUtils {
         }
     }
 
-    public static String constructNavigationURL(String node, String appName, String token, String funName) {
+    public static String constructNavigationURL(String node, String appName, String token, String funName, ApplicationBean1 ab) {
         String baseUrl;
 
         if (node.equals("localhost")) {
-            baseUrl = "http://10.120.1.18:8081/" + appName + "/faces/AjaxHandler.xhtml";
+            baseUrl = ab.getBaseUrlDyn() +  "/faces/AjaxHandler.xhtml";
         } else {
             baseUrl = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml";
         }

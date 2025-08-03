@@ -61,6 +61,7 @@ import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.lts.HistoryBean;
+import pro.metaboanalyst.lts.JobMonitor;
 import pro.metaboanalyst.lts.JobScheduler;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.project.ProjectModel;
@@ -76,6 +77,8 @@ import pro.metaboanalyst.utils.DataUtils;
 @Named("diagramView")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DiagramView implements Serializable {
+
+
 
     @JsonIgnore
     @Inject
@@ -2495,7 +2498,7 @@ public class DiagramView implements Serializable {
 
     public void submitWorkflowJob() {
 //ab.isOnZgyPc() ||
-        if (ab.isOnProServer() || ab.isOnQiangPc()) {
+        if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isOnZgyPc()) {
             if (selectionMap.getOrDefault("Spectra Processing", false)) {
                 startWorkflow();
             } else {
@@ -2576,6 +2579,7 @@ public class DiagramView implements Serializable {
         jobDataMap.put("type", type);
         jobDataMap.put("folderName", sb.getCurrentUser().getHomeDir());
         jobDataMap.put("jobId", jobNM);
+        jobDataMap.put("baseUrl", ab.getBaseUrlDyn());
 
         jeb.setStopStatusCheck(false);
         jeb.setStatusMsg("Job is running...");
