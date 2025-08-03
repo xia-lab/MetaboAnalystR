@@ -237,10 +237,13 @@ CreateRawAnalyworkflow <- function(){
 
 CreateParamsSumTableRMD <- function() {
   load("params.rda");
+  # need to identify if the algorithm is asari  
+  ms1_algo <- readLines("ms1_algorithm.txt")  
   paramdt <- data.frame(Parameters = names(peakParams),
                         values = vapply(1:length(peakParams), FUN = function(x){
                           as.character(peakParams[[x]])
                         }, FUN.VALUE = character(1L)))
+  if(ms1_algo=="asari"){paramdt[1,2] <- "Asari"}
   return(paramdt)
 }
 
@@ -866,7 +869,7 @@ CreateMSnAnalMethod <- function(){
     "params <- qs::qread('msn_param_list.qs');",
     "params_df <- as.data.frame(params)",
     "params_df <- as.data.frame(t(params_df))",
-    "rownames(params_df) <- c('ppm for MS1','ppm for MS2','Filtering threshold','Searching Targets','Database','Window Size', 'Similarity Method', 'Ion Mode', 'Threshold of Intensity', 'use Deco', 'use Entropy');",
+    "rownames(params_df) <- c('ppm for MS1','ppm for MS2','Filtering threshold','Searching Targets','Database','Window Size', 'Similarity Method', 'Ion Mode', 'Threshold of Intensity', 'use Deco', 'Omics Type', 'use Entropy');",
     "colnames(params_df) <- 'Values';",
     paste0("create_dt(params_df,  caption = 'Table ", 
            table.count, 
