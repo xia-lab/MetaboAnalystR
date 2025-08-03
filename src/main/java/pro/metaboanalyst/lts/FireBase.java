@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.lts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
@@ -63,10 +64,12 @@ public class FireBase implements Serializable {
         }
     }
 
+        @JsonIgnore
+    @Inject
+    private JobMonitor jm;
     public void initJobMonitor() {
         System.out.println("Trying to init job monitor....");
-        JobMonitor jobMoni = new JobMonitor();
-        jobMoni.start();
+        jm.init();
     }
 
     public String getRscriptsDBPath() {

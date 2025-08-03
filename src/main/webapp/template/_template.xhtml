@@ -370,7 +370,9 @@
                   style="width: 420px; height:420px;" 
                   appendTo="@(body)"
                   dynamic="true"
-                  draggable="true" closable="true" resizable="true"> 
+                  draggable="true" closable="true" resizable="true"
+                  onShow="PrimeFaces.ajax.Request.handle({source: this.id, update: 'myGraphPane:formgraph myGraphPane:rPlotCustomizationForm'});">
+
             <h:panelGrid style="padding: 10px;font-size: 13px;">
                 <p:tabView id="myGraphPane" style="width:100%; border: none;">
                     <p:ajax event="tabChange"

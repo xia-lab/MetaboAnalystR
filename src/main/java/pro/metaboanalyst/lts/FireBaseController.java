@@ -899,13 +899,19 @@ public class FireBaseController implements Serializable {
 
     public boolean reloadUserInfo() {
         String value = Faces.getRequestCookie("user");
+        userInit = false;
+
         if (value != null) {
             FireUserBean stored = fb.getUserMap().get(value);
+            if (stored == null) {
+                System.out.println("failed to reload");
+                return false;
+            }
             System.out.println("reload=====" + stored.toString());
 
             fub.setFireUserBean(stored);          // see below
             sb.setRegisteredLogin(true);
-
+            userInit = true;
         }
 
         return userInit;

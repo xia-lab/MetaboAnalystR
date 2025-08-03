@@ -367,7 +367,7 @@ public class SpectraControlBean implements Serializable {
                         JobPos = "unknown";
                     }
                     db.recordRawJob(JobID, fub.getEmail(), sb.getCurrentUser().getName(), JobPos);
-                    RDataUtils.recordspecjob2local(RC, fub.getEmail(), JobID + "", "submitted", sb.getCurrentUser().getName());
+                    RDataUtils.recordspecjob2local(RC, fub.getEmail(), JobID + "", "UNCOMPLETE", sb.getCurrentUser().getName());
                 }
             }
 
@@ -452,7 +452,9 @@ public class SpectraControlBean implements Serializable {
     }
 
     public void checkStatus() throws IOException {
-
+        if(sb.getCurrentUser() == null){
+            return;
+        }
         String jobStatus = null;
         if ("Running".equals(currentJobStatus) && count > 20) {
             if (count % 15 == 0) {
@@ -526,7 +528,7 @@ public class SpectraControlBean implements Serializable {
         rCommand = "OptiLCMS::PlotSpectraPCA(mSet = NULL, imgName = \"raw_spec_pca.png\", format = \"png\", dpi = 150, width = 12);";
         sb.addGraphicsCMD("raw_spec_pca", rCommand);
         sb.addGraphicsMapLink("raw_spec_pca", "/Secure/spectra/SpectraResult.xhtml");
-        
+
         isms2 = !"ms1".equals(spb.getMs2DataOpt());
 
         if (ab.shouldUseScheduler() && !(executExample && paramNotChanged)) {

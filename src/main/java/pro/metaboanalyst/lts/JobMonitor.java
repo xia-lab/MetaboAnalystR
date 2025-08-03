@@ -5,6 +5,8 @@
 package pro.metaboanalyst.lts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -26,6 +28,8 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 
@@ -35,7 +39,7 @@ import pro.metaboanalyst.controllers.general.ApplicationBean1;
  */
 @ApplicationScoped
 @Named("jobMonitor")
-public class JobMonitor extends Thread {
+public class JobMonitor {
 
     @JsonIgnore
     @Inject
@@ -43,6 +47,16 @@ public class JobMonitor extends Thread {
     @JsonIgnore
     @Inject
     private MailService ms;
+
+    public void init() {
+        if (ab.isOnQiangPc() || ab.isOnZgyPc() || ab.isOnVipServer() || ab.isOnVipServer2()) {
+            Executors.newSingleThreadScheduledExecutor()
+                     .scheduleAtFixedRate(this::run, 0, 15, TimeUnit.SECONDS);
+            System.out.println("JobMonitor scheduled.");
+        } else {
+            System.out.println("JobMonitor skipped on this machine.");
+        }
+    }
 
     public void run() {
         System.out.println("Running into job monitor....");
@@ -94,7 +108,7 @@ public class JobMonitor extends Thread {
                             + "this_email <- as.character(dt[dt$jobid==" + jid + ",3]); this_email";
                     job_email = RC.eval(rCmd).asString();
 
-                    if (job_email.length() < 4) {
+                    if (job_email == null || job_email.length() < 4) {
                         continue;
                     }
 
@@ -221,6 +235,7 @@ public class JobMonitor extends Thread {
     public boolean sendPostRequest(String node, String folderName, String jobId, String email) {
         String baseUri = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml";
         HttpClient client = HttpClient.newHttpClient();
+        System.out.println("SENDPOSTREQUEST=============" + baseUri);
 
         if (node.equals("localhost")) {
             baseUri = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
@@ -249,6 +264,7 @@ public class JobMonitor extends Thread {
 
             // Send request and handle response
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("SENDPOSTREQUEST===========urlParameters=====" + urlParameters);
 
             if (response.statusCode() == 200) { // HTTP OK
                 // Process the response content
@@ -266,6 +282,10 @@ public class JobMonitor extends Thread {
             return false;
         }
 
+    }
+
+    private void checkJobs() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     /**

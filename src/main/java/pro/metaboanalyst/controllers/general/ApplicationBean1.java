@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.ExternalContext;
 import jakarta.inject.Named;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.ServletContext;
@@ -74,7 +75,6 @@ public class ApplicationBean1 implements Serializable {
      */
     private static final String usr_home = "/users/";
     private String projectsHome = "/data/glassfish/projects/metaboanalyst/";
-
 
     public String getAppName() {
         return appName;
@@ -550,5 +550,6 @@ public class ApplicationBean1 implements Serializable {
         System.out.println("getBaseUrlDyn===" + scheme + "://" + serverName + ":" + serverPort + contextPath);
         return scheme + "://" + serverName + ":" + serverPort + contextPath;
     }
+
 
 }

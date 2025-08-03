@@ -2960,10 +2960,34 @@ public class RDataUtils {
     }
 
     public static int recordspecjob2local(RConnection RC, String email, String jobID, String status, String folder) {
-        String rCommand = "dt<-read.csv(\"/data/glassfish/projects/data/all_slurm_jobs.csv\", header = TRUE);"
-                + "dt2 <- data.frame(jobid=" + jobID + ", emailed=FALSE, email='" + email + "', folder='" + folder + "', wfstatus='UNCOMPLETE'); "
-                + "dt <- rbind(dt, dt2);"
-                + "write.csv(dt, file = \"/data/glassfish/projects/data/all_slurm_jobs.csv\", row.names = FALSE)";
+        String rCommand
+                = "dt <- read.csv(\"/data/glassfish/projects/data/all_slurm_jobs.csv\", header = TRUE);\n"
+                + "idx <- which(dt$folder == \"" + folder + "\");\n"
+                + "if (length(idx) > 0) {\n"
+                + "  dt$wfstatus[idx] <- \"" + status + "\";\n"
+                + "} else {\n"
+                + "  dt2 <- data.frame(jobid=\"" + jobID + "\", emailed=FALSE, email=\"" + email + "\", folder=\"" + folder + "\", wfstatus=\"" + status + "\");\n"
+                + "  dt <- rbind(dt, dt2);\n"
+                + "}\n"
+                + "write.csv(dt, file = \"/data/glassfish/projects/data/all_slurm_jobs.csv\", row.names = FALSE);";
+
+        try {
+            RC.voidEval(rCommand);
+        } catch (RserveException ex) {
+            java.util.logging.Logger.getLogger(RDataUtils.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    public static int updateSlurmStatusByFolder(RConnection RC, String status, String folder) {
+        String rCommand
+                = "dt <- read.csv(\"/data/glassfish/projects/data/all_slurm_jobs.csv\", header = TRUE);\n"
+                + "idx <- which(dt$folder == \"" + folder + "\");\n"
+                + "if (length(idx) > 0) {\n"
+                + "  dt$wfstatus[idx] <- \"" + status + "\";\n"
+                + "  write.csv(dt, file = \"/data/glassfish/projects/data/all_slurm_jobs.csv\", row.names = FALSE);\n"
+                + "}";
+
         try {
             RC.voidEval(rCommand);
         } catch (RserveException ex) {

@@ -120,7 +120,7 @@ public class JobExecution implements Serializable {
                             QuartzDbUtils.updateJobStatus(jobId, "FINISHED");
                             stopStatusCheck = true;
                             String token = QuartzDbUtils.getTokenByJobId(jobId);
-                            String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob");
+                            String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab);
                             DataUtils.doRedirect(url, ab);
                         }
                         case "FAILED", "ERROR" -> statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
@@ -211,7 +211,7 @@ public class JobExecution implements Serializable {
                 } else if ("WORKFLOW_FINISHED".equalsIgnoreCase(status)) {
                     PrimeFaces.current().executeScript("PF('rawWorkflowProgressDialog').hide()");
                     System.out.println("REACHED=======================WORKFLOW_FINISHED");
-                    String node = "vip2";
+                    String node = "vip";
                     String funcName = "finishRawProject";
                     Map<String, String> params = Map.of(
                             "folderName", folderName,
@@ -264,13 +264,14 @@ public class JobExecution implements Serializable {
         }
     }
 
-    public boolean sendPostRequest(String node, String folderName, String jobId, String email) {
+    public boolean sendPostRequest(String node, String folderName, String jobId, String email, ApplicationBean1 ab) {
         String baseUri = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml";
         HttpClient client = HttpClient.newHttpClient();
+        System.out.println("SENDPOSTREQUEST=============" + baseUri);
 
         if (node.equals("localhost")) {
             // enforce url for local testing
-            baseUri = "http://10.120.1.18:8081/MetaboAnalyst/faces/AjaxHandler.xhtml";
+            baseUri = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
         }
 
         try {
