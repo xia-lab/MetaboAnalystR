@@ -675,7 +675,7 @@ public class UniVarTests {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotMultiFacCmpdSummary(NA" + ", \"" + cmpdName + "\",\"" + meta + "\", \"" + meta2 + "\", " + ver + ", \"" + format + "\", " + dpi + ", width=NA)";
             RCenter.recordRCommand(RC, rCommand);
-            sb.addGraphicsCMD("cmpd", rCommand);
+            sb.addGraphicsCMD("cmpd_mf", rCommand);
             return RC.eval(rCommand).asString();
         } catch (Exception rse) {
             System.out.println(rse);

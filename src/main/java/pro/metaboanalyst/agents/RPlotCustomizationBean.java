@@ -140,8 +140,14 @@ public class RPlotCustomizationBean implements Serializable {
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
         System.out.println(plotSource + "========plotSource");
-        if (plotSource.equals("volcano")) {
-            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
+        if (plotSource.equals("cmpd")) {
+            if (!sb.showMultiBoxView()) {
+                System.out.println(sb.getCmpdSummaryImg());
+                return sb.getCmpdSummaryImg() + "?t=" + System.currentTimeMillis();
+            } else {
+                System.out.println(sb.getBoxplotUrl());
+                return sb.getBoxplotUrl() + "?t=" + System.currentTimeMillis();
+            }
         } else {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
         }
@@ -265,7 +271,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qc_miss_filt", "PlotMissingDistr"),
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
-            Map.entry("cmpd", "")
+            Map.entry("cmpd", "PlotCmpdSummary")
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
@@ -284,6 +290,5 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("rf_imp_meta", List.of("PlotImpVarMeta")),
             Map.entry("rf_imp", List.of("PlotImpVar"))
     );
-    
-   
+
 }
