@@ -174,16 +174,14 @@ public class MyPhaseListener implements PhaseListener {
         }
 
         if (rootId.contains(JobManager)) {
+            FacesContext facesContext = event.getFacesContext();
 
-            FacesContext facesContext = event.getFacesContext(); // Get the current FacesContext
+            SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+            UserLoginBean ulb = getBeanByName("userLoginBean", UserLoginBean.class);
 
-            // Retrieve your session-scoped bean from the session map
-            // The key is typically the @Named value, or the decapitalized class name
-            SessionBean1 sb = (SessionBean1) facesContext.getExternalContext().getSessionMap().get("sessionBean1");
-            UserLoginBean ulb = (UserLoginBean) facesContext.getExternalContext().getSessionMap().get("userLoginBean");
             if (!(sb.isRegisteredLogin() && ulb.isJobManager())) {
-                context.getApplication().getNavigationHandler().handleNavigation(context, "*", "Exit");
-                context.responseComplete();
+                facesContext.getApplication().getNavigationHandler().handleNavigation(facesContext, "*", "Exit");
+                facesContext.responseComplete();
             }
         } else if (rootId.contains(resetToken)) {
             handleResetRequest(event);
@@ -215,13 +213,14 @@ public class MyPhaseListener implements PhaseListener {
     }
 
     private void handlePartialRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        ProjectBean prjb = (ProjectBean) context.getExternalContext().getSessionMap().get("projectBean");
-        SpectraControlBean spcb = (SpectraControlBean) context.getExternalContext().getSessionMap().get("spectraController");
+
+        ApplicationBean1 ab = getBeanByName("applicationBean1", ApplicationBean1.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        ProjectBean prjb = getBeanByName("projectBean", ProjectBean.class);
+        SpectraControlBean spcb = getBeanByName("spectraController", SpectraControlBean.class);
+
         try {
             String partialId = request.getParameter("ID");
             sb.setPartialId(partialId);
@@ -235,7 +234,7 @@ public class MyPhaseListener implements PhaseListener {
 
             sb.setPartialLinkValide(res);
             if (res) {
-                //Temporary, NEED TO FIX NAVITRACK SAVING/LOADING LATER
+                // Temporary, NEED TO FIX NAVITRACK SAVING/LOADING LATER
                 sb.initNaviTree("spec");
                 sb.addNaviTrack("Upload", null);
                 sb.addNaviTrack("Spectra check", null);
@@ -253,7 +252,6 @@ public class MyPhaseListener implements PhaseListener {
             LOGGER.error("handlePartialRequest", e);
             context.getApplication().getNavigationHandler().handleNavigation(context,
                     "*", "logout");
-
         }
     }
 
@@ -298,10 +296,11 @@ public class MyPhaseListener implements PhaseListener {
     }
 
     private void handleResetRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
+
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+
         String token = request.getParameter("token");
         if (token != null) {
             sb.setResetToken(token);
@@ -310,60 +309,46 @@ public class MyPhaseListener implements PhaseListener {
 
     private void handleLoadingProjectRequest(PhaseEvent event) {
         PrimeFaces.current().executeScript("PF('statusDialog').show();");
+
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ProjectBean prjb = (ProjectBean) context.getExternalContext().getSessionMap().get("projectBean");
-        UserLoginBean ulb = (UserLoginBean) context.getExternalContext().getSessionMap().get("userLoginBean");
+
+        ProjectBean prjb = getBeanByName("projectBean", ProjectBean.class);
+        UserLoginBean ulb = getBeanByName("userLoginBean", UserLoginBean.class);
+
         try {
             String projectLoadingCode = request.getParameter("ID");
             String userId = projectLoadingCode.split("_")[0];
             long UserNM = Long.parseLong(userId);
             String guestFolder = projectLoadingCode.split("_")[1];
+
             String pageFlag = "";
             boolean ready;
             boolean ready0;
 
+            // 1. keep user signed in
+            ulb.setUserNM(UserNM);
+            ulb.doLoginKeep(guestFolder);
+
+            // 2. Restore selected projects
+            String initRes = prjb.initializeProject(guestFolder);
+            ready0 = initRes != null;
+
+            // 3. Load project based on folder type
             if (guestFolder.startsWith("nv")) {
-
-                //Several steps need to be done for this case:
-                // 1. keep user signned in
-                ulb.setUserNM(UserNM);
-                ulb.doLoginKeep(guestFolder);
-
-                // 2. Restore selected projects
-                String initRes = prjb.initializeProject(guestFolder);
-                ready0 = initRes != null;
-
-                // 3. load new project
                 String loadRes = prjb.loadnewProject();
-                if (loadRes == null) {
-                    ready = false;
-                } else {
-                    ready = true;
+                ready = loadRes != null;
+                if (ready) {
                     pageFlag = "spec";
                 }
-
             } else {
-
-                // 1. keep user signned in
-                ulb.setUserNM(UserNM);
-                ulb.doLoginKeep(guestFolder);
-
-                // 2. Restore selected projects
-                String initRes = prjb.initializeProject(guestFolder);
-                ready0 = initRes != null;
-
-                // 3. load project
                 String loadRes = prjb.loadProject();
-                if (loadRes == null) {
-                    ready = false;
-                } else {
-                    ready = true;
+                ready = loadRes != null;
+                if (ready) {
                     pageFlag = loadRes;
                 }
             }
 
-            // 4. If everything ready (both readys equals true), jump into the corresponsing page
             PrimeFaces.current().executeScript("PF('statusDialog').hide();");
             if (ready0 && ready) {
                 context.getApplication().getNavigationHandler().handleNavigation(context,
@@ -374,19 +359,18 @@ public class MyPhaseListener implements PhaseListener {
             LOGGER.error("handleLoadingProjectRequest", e);
             context.getApplication().getNavigationHandler().handleNavigation(context,
                     "*", "logout");
-
         }
     }
 
     private void handleFirePartialRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
-        try {
 
+        ApplicationBean1 ab = getBeanByName("applicationBean1", ApplicationBean1.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+
+        try {
             String tokenId = request.getParameter("tokenId");
             String analNavi = request.getParameter("analNavi");
             String imgCmd = request.getParameter("imgCmd");
@@ -398,23 +382,18 @@ public class MyPhaseListener implements PhaseListener {
             if (analNavi != null && !analNavi.isEmpty()) {
                 String cmpd = request.getParameter("cmpd");
                 fbc.loadReport(tokenId, analNavi, cmpd);
-                // DataUtils.doRedirect("/MetaboAnalys/docs/Format.xhtml");
-
             } else if (imgCmd != null && !imgCmd.isEmpty()) {
-
                 fbc.loadProject(tokenId, "share");
-                //System.out.println("loadProject ==> ");
                 sb.graphicsLnk_action(imgCmd);
                 sb.setFormatOpt(imgType);
                 fbc.generateHighDef2();
-
             } else if (downloadPath != null && !downloadPath.isEmpty()) {
                 fbc.loadProject(tokenId, "share");
                 DataUtils.doRedirect("/MetaboAnalyst/" + sb.getCurrentUser().getRelativeDir() + File.separator + downloadPath, ab);
             } else {
                 res = fbc.loadProject(tokenId, "share");
                 if (res) {
-                    if (null == returnNavi) {
+                    if (returnNavi == null) {
                         DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/ProjectLanding.xhtml", ab);
                     } else {
                         switch (returnNavi) {
@@ -422,15 +401,12 @@ public class MyPhaseListener implements PhaseListener {
                                 sb.goToResultPage();
                             case "workflow" ->
                                 DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", ab);
-                            default -> {
-                            }
                         }
                     }
                 } else {
                     DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/home.xhtml", "error", "Failed to load project!");
                 }
             }
-
         } catch (Exception e) {
             LOGGER.error("handleFireBaseProjectLoad", e);
         }
@@ -439,46 +415,41 @@ public class MyPhaseListener implements PhaseListener {
     private void handleVerifiedRequest(PhaseEvent event) {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
+
+        FireUserBean fub = getBeanByName("fireUserBean", FireUserBean.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+
         try {
-            //boolean success = fu.reloadUserInfo();
-            String tokenId = (String) request.getParameter("token");
-            String projectId = (String) request.getParameter("projectId");
-            String navi = (String) request.getParameter("navi");
+            String tokenId = request.getParameter("token");
+            String projectId = request.getParameter("projectId");
+            String navi = request.getParameter("navi");
             boolean success = fub.loginHandshake(tokenId);
+
             if (success) {
                 if (navi != null) {
-                    context.getApplication().getNavigationHandler().handleNavigation(context,
-                            "*", navi);
+                    context.getApplication().getNavigationHandler().handleNavigation(context, "*", navi);
                 } else if (projectId != null) {
                     fbc.setProjectToLoadId(projectId);
-                    context.getApplication().getNavigationHandler().handleNavigation(context,
-                            "*", "ProjectView");
+                    context.getApplication().getNavigationHandler().handleNavigation(context, "*", "ProjectView");
                 } else {
                     sb.addMessage("info", "Login successful!");
-                    context.getApplication().getNavigationHandler().handleNavigation(context,
-                            "*", "Upload");
+                    context.getApplication().getNavigationHandler().handleNavigation(context, "*", "Upload");
                 }
-
             } else {
                 sb.addMessage("error", "Login failed, please try again!");
-                context.getApplication().getNavigationHandler().handleNavigation(context,
-                        "*", "logout");
+                context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
             }
-
         } catch (Exception e) {
             LOGGER.error("handleVerifiedRequest", e);
-            context.getApplication().getNavigationHandler().handleNavigation(context,
-                    "*", "logout");
+            context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
         }
     }
 
     private void handleActivationRequest(PhaseEvent event) {
 
         FacesContext context = event.getFacesContext();
-        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
+        FireUserBean fub = getBeanByName("fireUserBean", FireUserBean.class);
         try {
             //System.out.println("activateView===========");
             String activationCode = context.getExternalContext().getRequestParameterMap().get("code");
@@ -501,10 +472,8 @@ public class MyPhaseListener implements PhaseListener {
             PrimeFaces.current().executeScript("PF('" + cmd + "').show()");
         } catch (Exception e) {
             LOGGER.error("handleActivationRequest", e);
-            context.getApplication().getNavigationHandler().handleNavigation(context,
-                    "*", "logout");
+            context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
         }
-
     }
 
     private void handleLoginExternalRequest(PhaseEvent event) {
@@ -512,12 +481,14 @@ public class MyPhaseListener implements PhaseListener {
 
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
-        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
-        FireBase fb = (FireBase) context.getExternalContext().getSessionMap().get("fireBase");
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        //If no parameters are passed, then, try to parse the JSON body of the API request
+
+        FireUserBean fub = getBeanByName("fireUserBean", FireUserBean.class);
+        FireBase fb = getBeanByName("fireBase", FireBase.class);
+
         try {
+            String username = request.getParameter("username");
+            String password = request.getParameter("password");
+
             fub.setEmail(username);
             fub.setPassword(password);
             boolean res = fub.doUserLoginLocal();
@@ -525,53 +496,40 @@ public class MyPhaseListener implements PhaseListener {
             if (res) {
                 String uid = UUID.randomUUID().toString();
                 fb.getLoginUserMap().put(uid, fub);
-
                 response.setStatus(HttpServletResponse.SC_OK);
-                // Set the content type, for example, text/plain or application/json
                 response.setContentType("text/plain");
-
-                // Set the body of the response
                 response.getWriter().write(uid);
             } else {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Login failed");
-
             }
             context.responseComplete();
-
         } catch (Exception exception) {
             exception.printStackTrace();
             try {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Login failed");
                 context.responseComplete();
-
             } catch (IOException ex) {
-                java.util.logging.Logger.getLogger(MyPhaseListener.class
-                        .getName()).log(Level.SEVERE, null, ex);
+                // Logger.getLogger(MyPhaseListener.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            //context.getApplication().getNavigationHandler().handleNavigation(context,"*", "logout");
         }
-
     }
 
     public void handleProjectDownloadRequest(PhaseEvent event) {
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
         HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
-        FireBase fb = (FireBase) context.getExternalContext().getSessionMap().get("fireBase");
+
+        FireBase fb = getBeanByName("fireBase", FireBase.class);
+
         try {
             String email = request.getParameter("email");
             String folderName = request.getParameter("folderName");
-
             String sourceFilePath = fb.getProjectPath() + "user_folders/" + email + "/" + folderName + ".zip";
             File file = new File(sourceFilePath);
-            // Serve the downloaded file to the client
 
             if (file.exists()) {
                 response.setContentType("application/zip");
-                String headerKey = "Content-Disposition";
-                String headerValue = String.format("attachment; filename=\"%s\"", file.getName());
-                response.setHeader(headerKey, headerValue);
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
                 response.setContentLength((int) file.length());
 
                 try (BufferedInputStream input = new BufferedInputStream(new FileInputStream(file)); OutputStream output = response.getOutputStream()) {
@@ -582,45 +540,47 @@ public class MyPhaseListener implements PhaseListener {
                         output.write(buffer, 0, length);
                     }
                     output.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
 
-                context.responseComplete(); // Prevent JSF navigation
+                context.responseComplete();
             } else {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void handleWorkflowStartRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
-        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
-        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
-        try {
 
+        ApplicationBean1 ab = getBeanByName("applicationBean1", ApplicationBean1.class);
+        FireUserBean fub = getBeanByName("fireUserBean", FireUserBean.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+        DiagramView dv = getBeanByName("diagramView", DiagramView.class);
+
+        try {
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
             String jobId = request.getParameter("jobId");
+
             boolean res = fbc.loadProject(tokenId, "workflow");
             if (res) {
                 boolean wfRes = dv.startWorkflow();
                 if (wfRes) {
                     sb.setCurrentNaviUrl("/Secure/xialabpro/ResultView.xhtml");
                     fub.setEmail(email);
-                    String shareLink = ab.getApp_url() + "/" + ab.getAppName() + "/faces/AjaxHandler.xhtml?funcNm=finishWorkflowJob&tokenId=" + tokenId;
+
+                    String shareLink = ab.getApp_url() + "/" + ab.getAppName()
+                            + "/faces/AjaxHandler.xhtml?funcNm=finishWorkflowJob&tokenId=" + tokenId;
+
                     sb.addMessage("info", DataUtils.obtainTimestampText());
                     sb.addMessage("info", "Your workflow processing job (ID: " + jobId + ") status has become <b>COMPLETED</b>.");
                     sb.addMessage("info", "You can access the following link to resume your project: "
                             + "<a href=\"" + shareLink + "\">click here</a>.\n");
+
                     dv.setShowNotif(true);
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
@@ -629,7 +589,6 @@ public class MyPhaseListener implements PhaseListener {
                     }
                 }
             } else {
-
                 DataUtils.doRedirectWithGrowl(sb, "/ExpressAnalyst/home.xhtml", "error", "Failed to load project!");
             }
         } catch (Exception e) {
@@ -638,51 +597,50 @@ public class MyPhaseListener implements PhaseListener {
     }
 
     private void handleWorkflowFinishRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
-        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
-        WorkflowBean wfb = (WorkflowBean) context.getExternalContext().getSessionMap().get("workflowBean");
+
+        ApplicationBean1 ab = getBeanByName("applicationBean1", ApplicationBean1.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+        DiagramView dv = getBeanByName("diagramView", DiagramView.class);
+        WorkflowBean wfb = getBeanByName("workflowBean", WorkflowBean.class);
+
         try {
             String tokenId = request.getParameter("tokenId");
             boolean res = fbc.loadProject(tokenId, "workflow");
+
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
                 if (wfb.getWorkflowOptions() != null && !wfb.getWorkflowOptions().isEmpty()) {
                     DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Workflow completed!");
-                    //DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml?callFunc=checkPagesToVisit", "info", "Workflow completed!");
-
                 } else {
                     DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml?callFunc=checkPagesToVisit", ab);
                 }
-                //DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Workflow completed!");
             } else {
                 dv.setStatusMsg("<b style='color: green'>Workflow Failed.</b>");
                 DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/home.xhtml", "error", "Failed to load project!");
             }
-
         } catch (Exception e) {
             LOGGER.error("handleFireBaseProjectLoad", e);
         }
     }
 
     private void handleFinishRawRequest(PhaseEvent event) {
-
         FacesContext context = event.getFacesContext();
         HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
-        ApplicationBean1 ab = (ApplicationBean1) context.getExternalContext().getSessionMap().get("applicationBean1");
-        SessionBean1 sb = (SessionBean1) context.getExternalContext().getSessionMap().get("sessionBean1");
-        FireBaseController fbc = (FireBaseController) context.getExternalContext().getSessionMap().get("fireBaseController");
-        DiagramView dv = (DiagramView) context.getExternalContext().getSessionMap().get("diagramView");
-        FireUserBean fub = (FireUserBean) context.getExternalContext().getSessionMap().get("fireUserBean");
-        DatabaseClient dbc = (DatabaseClient) context.getExternalContext().getSessionMap().get("databaseClient");
+
+        ApplicationBean1 ab = getBeanByName("applicationBean1", ApplicationBean1.class);
+        SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
+        FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
+        DiagramView dv = getBeanByName("diagramView", DiagramView.class);
+        FireUserBean fub = getBeanByName("fireUserBean", FireUserBean.class);
+        DatabaseClient dbc = getBeanByName("databaseClient", DatabaseClient.class);
+
         try {
             String folderName = request.getParameter("folderName");
-            //String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
+
             Map<String, Object> obj = dbc.obtainFolderNameProject(folderName);
             Optional<Map.Entry<String, Object>> matchingEntry = obj.entrySet().stream()
                     .filter(entry -> entry.getKey().equals("partialtoken") || entry.getKey().contains("partialtoken"))
@@ -695,23 +653,22 @@ public class MyPhaseListener implements PhaseListener {
                     if (res1) {
                         fub.setEmail(email);
                         dv.setWorkflowFinished(true);
-                        //SpectraProcessBean spb = (SpectraProcessBean) DataUtils.getBeanInstanceByName("spectraProcessor");
-                        //spb.internalizeRes(0);
-                        DataUtils.copyFile(new File("/data/glassfish/projects/metaboanalyst/" + folderName + "/mSet.rda"), new File(sb.getCurrentUser().getHomeDir() + "/mSet.rda"));
+                        DataUtils.copyFile(
+                                new File("/data/glassfish/projects/metaboanalyst/" + folderName + "/mSet.rda"),
+                                new File(sb.getCurrentUser().getHomeDir() + "/mSet.rda")
+                        );
                         RCenter.loadHistory(sb.getRConnection());
                         sb.setAnalType("roc");
                         DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml", ab);
                     }
                 } catch (Exception ex) {
-                    java.util.logging.Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
+                    LOGGER.error("handlePartialRequest", ex);
                 }
             }
-
         } catch (Exception e) {
             LOGGER.error("handlePartialRequest", e);
-            context.getApplication().getNavigationHandler().handleNavigation(context,
-                    "*", "logout");
-
+            context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
         }
     }
+
 }
