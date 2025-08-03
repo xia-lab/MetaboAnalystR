@@ -27,11 +27,11 @@ if(file.exists("/home/zgy/sqlite/")){
   loadPathOMS <- "../../rscripts/XiaLabPro/R/"
   compilePath <- "../rscripts/"
   workingPath <- "../rscripts/MetaboAnalystR/src/"
-} else if (file.exists("/home/glassfish/payara6_micro/useVIP2")){ # this is used for testing or beta vip node/app
-  compilePath = "/home/glassfish/payara6_micro/MetaboAnalyst_beta_dir/applications/MetaboAnalyst/resources/rscripts/"
-  loadPath = "/home/glassfish/payara6_micro/MetaboAnalyst_beta_dir/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/R/"
-  workingPath <- "/home/glassfish/payara6_micro/MetaboAnalyst_beta_dir/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/src/"
-  loadPathOMS <- "/home/glassfish/payara6_micro/MetaboAnalyst_beta_dir/applications/MetaboAnalyst/resources/rscripts/XiaLabPro/R/"
+} else if (file.exists("/home/glassfish/payara6_micro/useVIP_2025R2")){ # this is used for testing or beta vip node/app
+  compilePath = "/home/glassfish/payara6_micro/MetaboAnalyst_dir_r2_2025/applications/MetaboAnalyst/resources/rscripts/"
+  loadPath = "/home/glassfish/payara6_micro/MetaboAnalyst_dir_r2_2025/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/R/"
+  workingPath <- "/home/glassfish/payara6_micro/MetaboAnalyst_dir_r2_2025/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/src/"
+  loadPathOMS <- "/home/glassfish/payara6_micro/MetaboAnalyst_dir_r2_2025/applications/MetaboAnalyst/resources/rscripts/XiaLabPro/R/"
 } else if (file.exists("/home/glassfish/payara6_micro/useVIP")){ # this is used for regular vip node/app
   compilePath = "/home/glassfish/payara6_micro/MetaboAnalyst_dir/applications/MetaboAnalyst/resources/rscripts/"
   loadPath = "/home/glassfish/payara6_micro/MetaboAnalyst_dir/applications/MetaboAnalyst/resources/rscripts/MetaboAnalystR/R/"
