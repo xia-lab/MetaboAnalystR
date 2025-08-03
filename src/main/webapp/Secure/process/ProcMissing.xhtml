@@ -95,47 +95,7 @@
             </h3>
 
             <h:form id="mainForm">
-
-                <p:selectOneRadio id="rowRadio" value="#{procBean.missingImputeOpt}" layout="custom">
-                    <f:selectItem itemLabel="Replace by a small value" itemValue="leftCensor"/>                         
-                    <f:selectItem itemLabel="Replace by feature mode" itemValue="replaceCol"/> 
-                    <f:selectItem itemLabel="Impute" itemValue="impute"/> 
-                </p:selectOneRadio>
-                <h:panelGrid columns="3" class="surface-card shadow-1 p-4 text-800"
-                             style="width: 800px; margin-bottom: 20px;">
-
-                    <p:radioButton for="rowRadio" itemIndex="0"/>
-
-                    <p:outputLabel value="Left-censored data estimation"/> 
-                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.leftCensorOpt}">
-                        <f:selectItem itemLabel="LoD (1/5 of the min. positive value)" itemValue="lod"/> 
-                        <f:selectItem itemLabel="quantile regression (QRILC)" itemValue="qrilc"/> 
-                    </p:selectOneMenu>
-
-                    <p:radioButton for="rowRadio" itemIndex="1"/>
-
-                    <p:outputLabel value="Univariate statistical methods"/>  
-                    <h:panelGroup>
-                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.replaceVarOpt}">
-                            <f:selectItem itemLabel="mean" itemValue="mean"/> 
-                            <f:selectItem itemLabel="median" itemValue="median"/> 
-                            <f:selectItem itemLabel="min" itemValue="colmin"/> 
-                        </p:selectOneMenu>
-                    </h:panelGroup>
-
-
-                    <p:radioButton for="rowRadio" itemIndex="2"/>
-
-                    <p:outputLabel value="Multivariate statistical methods"/>        
-                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{procBean.imputeAlgOpt}">
-                        <f:selectItem itemLabel="KNN (feature-wise)" itemValue="knn_var"/> 
-                        <f:selectItem itemLabel="KNN (sample-wise)" itemValue="knn_smp"/> 
-                        <f:selectItem itemLabel="PPCA" itemValue="ppca"/> 
-                        <f:selectItem itemLabel="BPCA" itemValue="bpca"/> 
-                        <f:selectItem itemLabel="SVD Impute" itemValue="svdImpute"/> 
-                        <f:selectItem itemLabel="missForest" itemValue="missForest"/> 
-                    </p:selectOneMenu>
-                </h:panelGrid>
+                <ui:include src="/Secure/workflow/process/_MissingView.xhtml" />
             </h:form>
         </h:panelGrid>
 

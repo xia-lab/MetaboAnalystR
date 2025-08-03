@@ -78,7 +78,7 @@ public class WorkflowBean implements Serializable {
     @JsonIgnore
     @Inject
     private ProcessBean procBean;
-    
+
     @JsonIgnore
     @Inject
     private NormBean normBean;
@@ -158,7 +158,7 @@ public class WorkflowBean implements Serializable {
     public void setSampleBeans(List<SampleBean> sampleBeans) {
         this.sampleBeans = sampleBeans;
     }
-    
+
     public String getCurrentSubFolder() {
         if (sb.isWorkflowMode()) {
             return currentSubFolder;
@@ -1112,7 +1112,7 @@ public class WorkflowBean implements Serializable {
         sb.addMessage("info", param.getFolderName() + " is removed.");
         workflowOptions.remove(param);
     }
-    
+
     @JsonIgnore
     public WorkflowParameters getWorkflowParameterByFolderName(String folderName) {
         if (folderName == null || folderName.isEmpty()) {
@@ -1127,6 +1127,7 @@ public class WorkflowBean implements Serializable {
     }
 
     private String selectedGrp1, selectedGrp2;
+
     @JsonIgnore
     public String getSelectedGrp1() {
         if (selectedGrp1 == null) {
@@ -1138,6 +1139,7 @@ public class WorkflowBean implements Serializable {
     public void setSelectedGrp1(String selectedGrp1) {
         this.selectedGrp1 = selectedGrp1;
     }
+
     @JsonIgnore
     public String getSelectedGrp2() {
         if (selectedGrp2 == null) {
@@ -1158,8 +1160,28 @@ public class WorkflowBean implements Serializable {
         }
     }
 
-    public void setFunctionInfos(Map<String, FunctionInfo> functionInfos) {
-        this.functionInfos = functionInfos;
+    public void setFunctionInfos(Map<String, ?> rawFunctionInfos) {
+        // Always reset the internal map
+        this.functionInfos = new LinkedHashMap<>();
+
+        if (rawFunctionInfos != null) {
+            for (Map.Entry<String, ?> entry : rawFunctionInfos.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+
+                if (value instanceof LinkedHashMap) {
+                    // Convert map → FunctionInfo
+                    FunctionInfo info
+                            = DataUtils.convertLinkedHashMapToFunctionInfo(value);
+                    this.functionInfos.put(key, info);
+
+                } else if (value instanceof FunctionInfo info) {
+                    // Already typed – just store it
+                    this.functionInfos.put(key, info);
+
+                } // else: silently ignore or throw, depending on your policy
+            }
+        }
     }
 
 }
