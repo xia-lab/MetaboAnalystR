@@ -170,7 +170,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pca_biplot", "PlotPCABiplot"),
             Map.entry("tt", "PlotTT"),
             Map.entry("cmpdview", "PlotCmpdView"),
-            Map.entry("drcurve", "PlotMetaboliteDRCurve"),
+            Map.entry("metabolite_dr_curve", "PlotMetaboliteDRCurve"),
             Map.entry("drmodelbars", "PlotDRModelBars"),
             Map.entry("drhistogram", "PlotDRHistogram"),
             Map.entry("pcapair", "PlotPCAPairSummaryMeta"),
@@ -252,7 +252,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("peaks_to_paths", "PlotPeaks2Paths"),
             Map.entry("norm", "PlotNormSummary"),
             Map.entry("snorm", "PlotSampleNormSummary"),
-            Map.entry("qea", "PlotQEA.Overview"),
+            Map.entry("qea", "PlotQEA.Overview"), 
             Map.entry("qea_dot", "PlotEnrichDotPlot"),
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
             Map.entry("path_view", "PlotPathSummary"),
@@ -271,7 +271,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qc_miss_filt", "PlotMissingDistr"),
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
-            Map.entry("cmpd", "PlotCmpdSummary")
+            Map.entry("cmpd", "PlotCmpdSummary"),
+            Map.entry("dr_barplot", "PlotDRModelBars")
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
@@ -288,7 +289,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
             Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
             Map.entry("rf_imp_meta", List.of("PlotImpVarMeta")),
-            Map.entry("rf_imp", List.of("PlotImpVar"))
+            Map.entry("rf_imp", List.of("PlotImpVar")),
+            Map.entry("PlotQEA.Overview", List.of("PlotMSEA.Overview"))
     );
 
 }
