@@ -1539,13 +1539,13 @@ PlotRF.RegressionDetail <- function(mSetObj = NA,
   return(.set.mSet(mSetObj))
 }
 
-partial_shrink <- function(X, method = c("pearson","spearman")){
+partial_shrink <- function(x, method = c("pearson","spearman")){
   method <- match.arg(method)
-  if(method == "spearman") X <- apply(X, 2, rank, ties.method = "average")
+  if(method == "spearman") x <- apply(x, 2, rank, ties.method = "average")
 
-  S  <- corpcor::cov.shrink(X)      # shrinkage covariance
-  Ω  <- solve(S)                    # precision matrix
-  P  <- -cov2cor(Ω)                 # partial correlations
-  diag(P) <- 1
-  return(P)
+  s <- corpcor::cov.shrink(X)      # shrinkage covariance
+  om  <- solve(s)                    # precision matrix
+  p  <- -cov2cor(om)                 # partial correlations
+  diag(p) <- 1
+  return(p)
 }
