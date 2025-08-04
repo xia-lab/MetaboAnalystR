@@ -1750,12 +1750,17 @@ public class FireBaseController implements Serializable {
         } else if (ab.isInDocker()) {
             myURL = ab.getDomainURL() + "/Secure/upload/SpectraUpload.xhtml";
         } else {
-            if(ab.getVersion_code().equals("2025R2")){
+            if (ab.getVersionCode().equals("2025R2")) {
                 myURL = "https://vip2.metaboanalyst.ca/MetaboAnalyst/Secure/upload/SpectraUpload.xhtml";
             } else {
                 myURL = "https://vip.metaboanalyst.ca/MetaboAnalyst/Secure/upload/SpectraUpload.xhtml";
             }
-            
+
+            if (!ab.isOnVipServer() & ab.getVersionCode().equals("2025R2")) {
+                fub.sendPostRequest("vip2", "spec");
+                return myURL;
+            }
+
             if (!ab.isOnVipServer()) {
                 fub.sendPostRequest("vip", "spec");
                 return myURL;

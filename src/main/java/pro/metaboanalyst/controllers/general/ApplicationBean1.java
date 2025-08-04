@@ -62,7 +62,7 @@ public class ApplicationBean1 implements Serializable {
     public static int MAX_SPEC_SIZE = 214958080;
     public static int MAX_SPEC_NUM = 200;
     
-    public static String version_code = "2025R2";
+    public String versionCode = "2025R2";
 
     private boolean compiled = false;
 
@@ -553,8 +553,8 @@ public class ApplicationBean1 implements Serializable {
         return scheme + "://" + serverName + ":" + serverPort + contextPath;
     }
 
-    public static String getVersion_code() {
-        return version_code;
+    public String getVersionCode() {
+        return versionCode;
     }
 
 }
