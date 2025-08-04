@@ -273,6 +273,11 @@ GetImageDesc <- function(mSetObj = NA, type) {
   "svm_imp" = "<b>[SVM Sig. Features]</b>: Significant features identified by R-SVM. Features are ranked by their frequencies of being selected in the classifer.",
   "svm_cls" = "<b>[SVM performance]</b>: Recursive classification with SVM with different features. The red circle indicates the best classifier.",
   "roc_univ" = "<b>[Classical ROC]</b>: The ROC curve of an individual biomarker.",
+  "qc_miss " = "<b>[Missing Value Summary - before filtering]</b>: Two boxplots display sample-level missingness metrics across experimental groups. The top plot shows the percentage of missing values per sample; the bottom plot shows the average non-missing abundance. Groups are color-coded by the selected metadata variable.",
+  "qc_missheatmap" = "<b>[Missing Value Heatmap - before filtering]</b>: A heatmap showing the distribution of missing values across samples and features. Rows represent samples (ordered by missingness), and columns represent features (also ordered). Red tiles indicate missing entries, and white tiles indicate present values.",
+  "qc_miss_filt " = "<b>[Missing Value Summary]</b>: Two boxplots display sample-level missingness metrics across experimental groups. The top plot shows the percentage of missing values per sample; the bottom plot shows the average non-missing abundance. Groups are color-coded by the selected metadata variable.",
+  "qc_missheatmap_filt" = "<b>[Missing Value Heatmap]</b>: A heatmap showing the distribution of missing values across samples and features. Rows represent samples (ordered by missingness), and columns represent features (also ordered). Red tiles indicate missing entries, and white tiles indicate present values.",
+
   "cls_roc" = paste0(
     "<b>[ROC Overview]</b>: ",
     "ROC curves for all biomarker models based on their average performance ",
