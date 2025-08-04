@@ -62,7 +62,7 @@ public class ApplicationBean1 implements Serializable {
     public static int MAX_SPEC_SIZE = 214958080;
     public static int MAX_SPEC_NUM = 200;
     
-    public String versionCode = "2025R2";
+    private String versionCode = "2025R2";
 
     private boolean compiled = false;
 
