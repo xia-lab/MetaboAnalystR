@@ -128,6 +128,18 @@
                     <p:menuitem value="Logout" icon="pi pi-sign-out" 
                                 onclick="document.getElementById('safeLogoutBtn').click()"/>
                 </d:menu>
+
+                <p:commandButton id="downloadButtonPptx"
+                                 value="Download PPTX"
+                                 style="display:none"          
+                                 ajax="false"                 
+                                 icon="pi pi-download"
+                                 actionListener="#{downloader.preparePptx}"  
+                                 onclick="PrimeFaces.monitorDownload(
+                                 function(){ PF('statusDialog').show(); },
+                                 function(){ PF('statusDialog').hide(); });" >
+                                 <p:fileDownload value="#{downloader.pptxFile}" contentDisposition="attachment"/>
+                </p:commandButton>
             </h:form>
         </div>
     </div>

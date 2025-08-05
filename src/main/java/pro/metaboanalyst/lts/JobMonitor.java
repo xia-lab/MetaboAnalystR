@@ -153,7 +153,6 @@ public class JobMonitor {
                             }
                         }
 
-                        res = sendReminderEmail(job_status, jid, job_email);
                     }
 
                     if (res) {

@@ -2180,7 +2180,7 @@ public class DiagramView implements Serializable {
         if (matchingEntry.isPresent()) {
             Object token2 = matchingEntry.get().getValue();
             try {
-                boolean res1 = fcb.loadProject(token2 + "", "project");
+                boolean res1 = fcb.loadProject(token2 + "", "workflow");
             } catch (Exception ex) {
                 Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
             }

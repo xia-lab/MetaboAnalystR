@@ -1144,36 +1144,43 @@ public class DataUtils {
      * @param outdir Output directory
      */
     public static void extract(String zipfileName, String outdirName) {
-        File zipfile = new File(zipfileName);
-        File outdir = new File(outdirName);
-        try {
-            try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipfile))) {
-                ZipEntry entry;
-                String name, dir;
-                while ((entry = zin.getNextEntry()) != null) {
-                    name = entry.getName();
-                    if (entry.isDirectory()) {
-                        mkdirs(outdir, name);
-                        continue;
-                    }
-                    /* this part is necessary because file entry can come before
-                    * directory entry where is file located
-                    * i.e.:
-                    *   /foo/foo.txt
-                    *   /foo/
-                     */
-                    dir = dirpart(name);
-                    if (dir != null) {
-                        mkdirs(outdir, dir);
-                    }
+    System.out.println("[extract] Extracting " + zipfileName + " → " + outdirName);
 
-                    extractFile2(zin, outdir, name);
-                }
+    File zipfile = new File(zipfileName);
+    File outdir  = new File(outdirName);
+
+    try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipfile))) {
+
+        ZipEntry entry;
+        while ((entry = zin.getNextEntry()) != null) {
+            String name = entry.getName();
+            System.out.println("  ↳ entry: " + name);
+
+            // ── handle directories ───────────────────────────────────────────
+            if (entry.isDirectory()) {
+                mkdirs(outdir, name);
+                System.out.println("    [mkdir] " + new File(outdir, name).getAbsolutePath());
+                continue;
             }
-        } catch (IOException e) {
-            LOGGER.error("extract", e);
+
+            // ── make sure parent folders exist (may be missing in ZIP order) ─
+            String dir = dirpart(name);
+            if (dir != null) {
+                mkdirs(outdir, dir);
+                System.out.println("    [mkdir] " + new File(outdir, dir).getAbsolutePath());
+            }
+
+            // ── extract file ─────────────────────────────────────────────────
+            System.out.println("    [file]  " + new File(outdir, name).getAbsolutePath());
+            extractFile2(zin, outdir, name);
         }
+
+        System.out.println("[extract] Done.");
+    } catch (IOException e) {
+        LOGGER.error("extract", e);
+        System.err.println("[extract] ERROR: " + e.getMessage());
     }
+}
 
     private static void extractFile2(ZipInputStream in, File outdir, String name) throws IOException {
         byte[] buffer = new byte[BUFFER_SIZE];
