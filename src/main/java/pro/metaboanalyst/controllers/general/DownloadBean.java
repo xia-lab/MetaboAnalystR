@@ -331,6 +331,11 @@ public class DownloadBean implements Serializable {
             String path;
 
             String directory = sb.getCurrentUser().getRelativeDir() + File.separator;
+            if (sb.getAnalType().equals("raw") || sb.getAnalType().equals("spec")) {
+                String guestName = sb.getCurrentUser().getName();
+                String myDir = ab.getRealUserHomePath() + guestName;
+                directory = "/resources/users/" + guestName;
+            }
             path = directory + File.separator + picture;
 
             String key = getMatchingKey(picture, sb.getGraphicsMapLink());
@@ -347,6 +352,7 @@ public class DownloadBean implements Serializable {
                 }
             }
 
+            System.out.println("= setupGalleryStat === key ---> " + key);
             if (picture.contains("_demo")) {
                 galleryImages.add(new GalleryImage(fcu.obtainLegend(key) + " (visit to update)", path, "/MetaboAnalyst" + interactiveUrl));
             } else {

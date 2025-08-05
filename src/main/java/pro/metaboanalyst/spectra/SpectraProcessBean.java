@@ -1562,6 +1562,30 @@ public class SpectraProcessBean implements Serializable {
                 if (num == 0) {
                     DataUtils.copyFile(mSetObj, new File(currentmSetObj));
                 }
+                
+                String internal_path = sb.getCurrentUser().getHomeDir();
+                String png_name;
+                
+                System.out.println("===== internal_path====> " + internal_path);
+                System.out.println("=====    myDir     ====> " + myDir);
+                
+                File[] pngfiles = new File(internal_path).listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
+                File pngnewfile, pngoldfile;
+                if (pngfiles != null) {
+                    for (File pngfile : pngfiles) {                        
+                        png_name = pngfile.getName();
+                        pngnewfile = new File(myDir + "/" + png_name);
+                        pngoldfile = new File(internal_path + "/" + png_name);
+                        DataUtils.copyFile(pngoldfile, pngnewfile);
+                        System.out.println(pngfile.getAbsolutePath());
+                    }
+                }
+                File msn_res = new File(sb.getCurrentUser().getHomeDir() + "/msn_result.zip");
+                if(msn_res.exists()){
+                    String currentmsnres = myDir + "/msn_result.zip";
+                    DataUtils.copyFile(msn_res, new File(currentmsnres));
+                }
+                
             }
         }
     }
