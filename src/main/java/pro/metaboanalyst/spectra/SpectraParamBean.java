@@ -567,6 +567,8 @@ public class SpectraParamBean implements Serializable {
     }
     private String[] newsadducts;
     private String[] newtadducts;
+    
+    @JsonIgnore
     private DualListModel<String> adductItems;
 
     public void initializeAdductList() {
@@ -574,7 +576,7 @@ public class SpectraParamBean implements Serializable {
         this.newtadducts = Arrays.copyOfRange(adds, 0, 7);
         this.newsadducts = Arrays.copyOfRange(adds, 8, adds.length - 1);
     }
-
+    @JsonIgnore
     public DualListModel<String> getAdductItems() {
         if (newtadducts == null || newsadducts == null) {
             initializeAdductList();

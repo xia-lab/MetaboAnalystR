@@ -175,15 +175,22 @@ public class JobExecution implements Serializable {
             rCommand = "dt <- read.csv(\"" + dataPath + "\", header = TRUE); "
                     + "as.character(dt[!dt$emailed, 'email'])";
             String jobEmails[] = RC.eval(rCommand).asStrings();
+            
+            rCommand = "dt <- read.csv(\"" + dataPath + "\", header = TRUE); "
+                    + "as.character(dt[!dt$wfBool, 'email'])";
+            String jobWfBools[] = RC.eval(rCommand).asStrings();
 
             Map<String, String> jobFolderMap = new HashMap<>();
             Map<String, String> jobStatusMap = new HashMap<>();
             Map<String, String> jobEmailMap = new HashMap<>();
+            Map<String, String> jobWfBoolMap = new HashMap<>();
 
             for (int i = 0; i < jobIDs.length; i++) {
                 jobFolderMap.put(jobIDs[i], folderNms[i]);
                 jobStatusMap.put(jobIDs[i], jobStatuses[i] != null ? jobStatuses[i] : "UNKNOWN");
                 jobEmailMap.put(jobIDs[i], jobEmails[i]);
+               jobWfBoolMap.put(jobIDs[i], jobWfBools[i]);
+
             }
 
             String currentUserFolder = sb.getCurrentUser().getName();
@@ -192,7 +199,8 @@ public class JobExecution implements Serializable {
                 String folderName = jobFolderMap.get(jid);
                 String status = jobStatusMap.get(jid);
                 String email = jobEmailMap.get(jid);
-                
+                                String wfBool = jobWfBoolMap.get(jid);
+
                 // Ensure the job is associated with the current user's folder
                 if (!currentUserFolder.equals(folderName)) {
                     continue; // Skip jobs that do not belong to the current user

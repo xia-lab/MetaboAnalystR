@@ -582,7 +582,7 @@ public class MyPhaseListener implements PhaseListener {
                             + "<a href=\"" + shareLink + "\">click here</a>.\n");
 
                     dv.setShowNotif(true);
-                    boolean saveRes = fbc.saveProject("workflow");
+                    boolean saveRes = fbc.saveProject("project");
                     if (saveRes) {
                         QuartzDbUtils.updateJobStatus(jobId, "COMPLETED");
                         dv.sendRawResume(email, jobId, shareLink);
@@ -608,7 +608,7 @@ public class MyPhaseListener implements PhaseListener {
 
         try {
             String tokenId = request.getParameter("tokenId");
-            boolean res = fbc.loadProject(tokenId, "workflow");
+            boolean res = fbc.loadProject(tokenId, "project");
 
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
@@ -658,7 +658,7 @@ public class MyPhaseListener implements PhaseListener {
                                 new File(sb.getCurrentUser().getHomeDir() + "/mSet.rda")
                         );
                         RCenter.loadHistory(sb.getRConnection());
-                        sb.setAnalType("roc");
+                        //sb.setAnalType("roc");
                         DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml", ab);
                     }
                 } catch (Exception ex) {

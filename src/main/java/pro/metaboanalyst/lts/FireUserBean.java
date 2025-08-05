@@ -233,7 +233,7 @@ public class FireUserBean implements Serializable {
             return false;
         } else if (res.length == 1) {
             System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
-            if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") ) {
+            if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") || ab.getToolLocation().equals("vip2") || ab.getToolLocation().equals("vip")  ) {
                 if (res[0].contains("Login Error - User exists but is not authorized for tool")) {
                     return true;
                 }

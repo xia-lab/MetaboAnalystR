@@ -2959,24 +2959,45 @@ public class RDataUtils {
 
     }
 
-    public static int recordspecjob2local(RConnection RC, String email, String jobID, String status, String folder) {
+    public static int recordspecjob2local(RConnection RC,
+            String email,
+            String jobID,
+            String status,
+            String folder,
+            String wfBool) {          // “TRUE” or “FALSE”
         String rCommand
-                = "dt <- read.csv(\"/data/glassfish/projects/data/all_slurm_jobs.csv\", header = TRUE);\n"
-                + "idx <- which(dt$folder == \"" + folder + "\");\n"
+                = // 1 · load CSV without auto-converting strings to factors
+                "dt <- read.csv('/data/glassfish/projects/data/all_slurm_jobs.csv', "
+                + "               header = TRUE, stringsAsFactors = FALSE);\n"
+                + // 2 · look for an existing row
+                "idx <- which(dt$folder == '" + folder + "');\n"
                 + "if (length(idx) > 0) {\n"
-                + "  dt$wfstatus[idx] <- \"" + status + "\";\n"
-                + "} else {\n"
-                + "  dt2 <- data.frame(jobid=\"" + jobID + "\", emailed=FALSE, email=\"" + email + "\", folder=\"" + folder + "\", wfstatus=\"" + status + "\");\n"
+                + "  dt$wfstatus[idx] <- '" + status + "';\n"
+                + // update status
+                "  dt$wfBool[idx]  <- as.logical('" + wfBool + "');\n"
+                +// keep wfBool in sync
+                "} else {\n"
+                + "  dt2 <- data.frame(jobid    = as.integer(" + jobID + "),\n"
+                + "                    emailed  = FALSE,\n"
+                + "                    email    = '" + email + "',\n"
+                + "                    folder   = '" + folder + "',\n"
+                + "                    wfstatus = '" + status + "',\n"
+                + "                    wfBool   = as.logical('" + wfBool + "'),\n"
+                + "                    stringsAsFactors = FALSE);\n"
                 + "  dt <- rbind(dt, dt2);\n"
                 + "}\n"
-                + "write.csv(dt, file = \"/data/glassfish/projects/data/all_slurm_jobs.csv\", row.names = FALSE);";
+                + // 3 · save back
+                "write.csv(dt, file = '/data/glassfish/projects/data/all_slurm_jobs.csv', "
+                + "          row.names = FALSE);\n";
 
         try {
             RC.voidEval(rCommand);
+            return 0;                               // success
         } catch (RserveException ex) {
-            java.util.logging.Logger.getLogger(RDataUtils.class.getName()).log(Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(RDataUtils.class.getName())
+                    .log(Level.SEVERE, null, ex);
+            return -1;                              // signal failure up-stream
         }
-        return 0;
     }
 
     public static int updateSlurmStatusByFolder(RConnection RC, String status, String folder) {
@@ -3150,7 +3171,7 @@ public class RDataUtils {
 
             // Ensure the file exists
             String checkCommand = "if(!file.exists(\"" + dataPath + "\")) {"
-                    + "write.csv(data.frame(jobid=0, emailed=T, email='', folder='', wfstatus=''), "
+                    + "write.csv(data.frame(jobid=0, emailed=T, email='', folder='', wfstatus='', wfBool=''), "
                     + "file = \"" + dataPath + "\", row.names = FALSE)}";
             RC.voidEval(checkCommand);
 

@@ -2180,15 +2180,13 @@ public class DiagramView implements Serializable {
         if (matchingEntry.isPresent()) {
             Object token2 = matchingEntry.get().getValue();
             try {
-                boolean res1 = fcb.loadProject(token2 + "", "workflow");
+                boolean res1 = fcb.loadProject(token2 + "", "project");
             } catch (Exception ex) {
                 Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        System.out.println("currentHomeDIR============" + sb.getCurrentUser().getOrigHomeDir());
         sb.doLogin("conc", "roc", false, false, folderName, true);
-        System.out.println("currentHomeDIR============2" + sb.getCurrentUser().getOrigHomeDir());
 
         String fileName = "metaboanalyst_input.csv";
         String inPath = "/data/glassfish/projects/metaboanalyst/" + folderName + "/";

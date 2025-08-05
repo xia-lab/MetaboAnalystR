@@ -965,7 +965,7 @@ public class WorkflowView implements Serializable {
                         }
                         String res = sc.goToJobStatus(false);
                         sc.setCount(5);
-                        sc.performPlan();
+                        sc.performPlan("TRUE");
                         if (sc.isJobSubmitted()) {
                             sb.addNaviTrack("Job status", "/Secure/spectra/JobStatusView.xhtml", success);
                         } else {
