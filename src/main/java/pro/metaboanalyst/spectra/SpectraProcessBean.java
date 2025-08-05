@@ -1580,6 +1580,11 @@ public class SpectraProcessBean implements Serializable {
                         System.out.println(pngfile.getAbsolutePath());
                     }
                 }
+                File msn_res = new File(sb.getCurrentUser().getHomeDir() + "/msn_result.zip");
+                if(msn_res.exists()){
+                    String currentmsnres = myDir + "/msn_result.zip";
+                    DataUtils.copyFile(msn_res, new File(currentmsnres));
+                }
                 
             }
         }
