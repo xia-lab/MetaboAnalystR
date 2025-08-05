@@ -329,9 +329,6 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", cmd_exposome)
   }
 
-  cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
-  str <- paste0(str, ";\n", cmd_summarize)
-
   # progress 190
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
@@ -349,6 +346,17 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_saving <- "qs::qsave(mSet, file = \'msn_mset_result.qs\')";
   str <- paste0(str, ";\n", cmd_saving)
   
+  cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
+  str <- paste0(str, ";\n", cmd_summarize)
+
+    if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
+    export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite\')";
+    str <- paste0(str, ";\n", export_msn_all)
+  } else if (file.exists("/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite")){
+    export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite\')";
+    str <- paste0(str, ";\n", export_msn_all)
+  }
+
   # progress 198
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 12/12: MS/MS data processing finished! We are finalizing the job! \n\'),ecol = \'\',progress = 198)";
   str <- paste0(str, ";\n", cmd_prgs)
