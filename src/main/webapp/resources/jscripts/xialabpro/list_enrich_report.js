@@ -164,7 +164,7 @@ function checkSavedState() {
                                     edge.color = rgbaCol;
                                     sigInst.graph.addEdge(edge);
                                 });
-                            }else  {
+                            } else {
                                 netData.edges.forEach(function (eg) {
                                     eg.color = rgbaCol;
                                     if (eg.source && eg.target) {
@@ -180,7 +180,7 @@ function checkSavedState() {
                                         sigInst.graph.addEdge(edge);
                                     }
                                 });
-                            } 
+                            }
 
                             defaultEdgeSize = savedState.edgeSize;
                             sigInst.settings({
@@ -199,17 +199,18 @@ function checkSavedState() {
                 } else {
                     setTimeout(function () {
                         setNetworkB();
-                    }, 200)
-                    let res = checkPagesToVisit();
-                    if (!res) {
-                        parent.PF("statusDialog").show();
+                        let res = checkPagesToVisit();
+                        if (!res) {
+                            parent.PF("statusDialog").show();
 
-                        setTimeout(function () {
-                            handleSaveEvent(false)
-                            parent.PF("statusDialog").hide();
-                        }, 2000);
-                        console.log('File does not exist. Init normally');
-                    }
+                            setTimeout(function () {
+                                handleSaveEvent(false)
+                                parent.PF("statusDialog").hide();
+                            }, 2000);
+                            console.log('File does not exist. Init normally');
+                        }
+                    }, 200)
+
                 }
 
             }
