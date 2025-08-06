@@ -23,6 +23,7 @@ import java.util.logging.Level;
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
+import java.io.UncheckedIOException;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,6 +43,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.primefaces.model.DefaultStreamedContent;
 import org.rosuda.REngine.REXPString;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
@@ -104,7 +106,7 @@ public class DownloadBean implements Serializable {
     @JsonIgnore
     @Inject
     private FireBase fbb;
-    
+
     @JsonIgnore
     @Inject
     private DatabaseClient dbc;
@@ -120,45 +122,45 @@ public class DownloadBean implements Serializable {
     @JsonIgnore
     @Inject
     private MummiAnalBean mab;
-    
-    @JsonIgnore
-    @Inject
-    private DetailsBean dtb;
-    
-    @JsonIgnore
-    @Inject
-    private DoseResponseBean drb;
-            
-    @JsonIgnore
-    @Inject
-    private MetaPathStatBean mpb;
-    
-    @JsonIgnore
-    @Inject
-    private  MetaResBean mrb;
-    
-    @JsonIgnore
-    @Inject
-    private MetaLoadBean mlb;
-            
-    @JsonIgnore
-    @Inject
-    private  MgwasBean mgwb;
-        
-    @JsonIgnore
-    @Inject
-    private  MultifacBean mfb;
-    @JsonIgnore
-    @Inject
-    private  LimmaBean lmb;
 
     @JsonIgnore
     @Inject
-    private  MetaLoadBean ldb;
+    private DetailsBean dtb;
+
     @JsonIgnore
     @Inject
-    private  MetaStatBean msb;
-        
+    private DoseResponseBean drb;
+
+    @JsonIgnore
+    @Inject
+    private MetaPathStatBean mpb;
+
+    @JsonIgnore
+    @Inject
+    private MetaResBean mrb;
+
+    @JsonIgnore
+    @Inject
+    private MetaLoadBean mlb;
+
+    @JsonIgnore
+    @Inject
+    private MgwasBean mgwb;
+
+    @JsonIgnore
+    @Inject
+    private MultifacBean mfb;
+    @JsonIgnore
+    @Inject
+    private LimmaBean lmb;
+
+    @JsonIgnore
+    @Inject
+    private MetaLoadBean ldb;
+    @JsonIgnore
+    @Inject
+    private MetaStatBean msb;
+
     private ResultBean[] downloads;
 
     public ResultBean[] getDownloads() {
@@ -329,6 +331,11 @@ public class DownloadBean implements Serializable {
             String path;
 
             String directory = sb.getCurrentUser().getRelativeDir() + File.separator;
+            if (sb.getAnalType().equals("raw") || sb.getAnalType().equals("spec")) {
+                String guestName = sb.getCurrentUser().getName();
+                String myDir = ab.getRealUserHomePath() + guestName;
+                directory = "/resources/users/" + guestName;
+            }
             path = directory + File.separator + picture;
 
             String key = getMatchingKey(picture, sb.getGraphicsMapLink());
@@ -345,6 +352,7 @@ public class DownloadBean implements Serializable {
                 }
             }
 
+            System.out.println("= setupGalleryStat === key ---> " + key);
             if (picture.contains("_demo")) {
                 galleryImages.add(new GalleryImage(fcu.obtainLegend(key) + " (visit to update)", path, "/MetaboAnalyst" + interactiveUrl));
             } else {
@@ -470,7 +478,7 @@ public class DownloadBean implements Serializable {
             int rowNum = fileSize / 2;
             downloads = new ResultBean[rowNum];
             String fileNMA, fileNMB, fileNMALink, fileNMBLink;
-
+            /*
             if (ab.shouldUseScheduler() && sb.getAnalType().equals("raw")) {
                 for (int i = 0; i < rowNum; i++) {
                     fileNMA = fileNames.get(i);
@@ -486,6 +494,7 @@ public class DownloadBean implements Serializable {
                     downloads[i] = new ResultBean(fileNMA, fileNMB, fileNMALink, fileNMBLink);
                 }
             } else {
+*/
                 for (int i = 0; i < rowNum; i++) {
                     fileNMA = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
                     if (i == rowNum - 1 && added) {
@@ -495,7 +504,7 @@ public class DownloadBean implements Serializable {
                     }
                     downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
                 }
-            }
+            //}
         }
 
         tableInit = true;
@@ -699,6 +708,30 @@ public class DownloadBean implements Serializable {
         }
     }
 
+    private StreamedContent pptxFile;
+
+    public void preparePptx() {
+        Path path = Paths.get(
+                sb.getCurrentUser().getHomeDir(), "Analysis_Presentation.pptx");
+
+        pptxFile = DefaultStreamedContent.builder()
+                .name("Analysis_Presentation.pptx")
+                .contentType(
+                        "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+                .stream(() -> {
+                    try {
+                        return Files.newInputStream(path);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);   // re-throw as unchecked
+                    }
+                })
+                .build();
+    }
+
+    public StreamedContent getPptxFile() {
+        return pptxFile;
+    }
+
     public boolean generateReportByModule(String module, String format) {
         if (!module.equals("NA")) {
             wb.setReportModule(module);
@@ -883,13 +916,15 @@ public class DownloadBean implements Serializable {
                         || name.endsWith(".png")
                         || (name.endsWith(".R") & !name.endsWith("ExecuteRawSpec.R"))
                         || name.endsWith(".json")
-                        || name.endsWith(".pdf");
+                        || name.endsWith(".pdf") 
+                        || name.endsWith("msn_result.zip");
             } else {
                 return name.endsWith(".csv")
                         || name.endsWith(".png")
                         || (name.endsWith(".R") & !name.endsWith("ExecuteRawSpec.R"))
                         || name.endsWith(".json")
-                        || name.endsWith("Report.pdf");
+                        || name.endsWith("Report.pdf")
+                        || name.endsWith("msn_result.zip");
             }
         }
     }
@@ -1016,7 +1051,7 @@ public class DownloadBean implements Serializable {
                     newDataType = "mass_table";
                     treeOpt = "mummichgo-table";
                     //mummi specif updates
-            
+
                     mab.setDisabledV2(true);
                     mab.setModuleSwitch(true);
                 } else {
@@ -1268,7 +1303,9 @@ public class DownloadBean implements Serializable {
         boolean res;
         if (sb.getAnalType().equals(module)) {
             res = true;
-        } else res = wb.getModuleNames().contains(module);
+        } else {
+            res = wb.getModuleNames().contains(module);
+        }
 
         return res;
     }
@@ -1369,7 +1406,7 @@ public class DownloadBean implements Serializable {
 
         }
         if (containsModule("mgwas")) {
-        
+
             if (RDataUtils.checkDetailsTablePerformed(sb.getRConnection(), "harmonized.dat")) {
                 mgwb.setupTable("harmonized.dat");
             }
@@ -1395,7 +1432,7 @@ public class DownloadBean implements Serializable {
 
     public String generateSummaryLM() {
         StringBuilder summary = new StringBuilder();
-     
+
         // Retrieve selections from multifacBean and lmBean
         String comparisonOption = mfb.getNestCompOpt();
         String studyDesign = mfb.getCompDesign();
@@ -1410,26 +1447,33 @@ public class DownloadBean implements Serializable {
 
         // Add comparison option
         switch (comparisonOption) {
-            case "ref" -> summary.append("- Comparison: Against a common control\n");
-            case "custom" -> summary.append("- Comparison: Specific comparison\n");
-            case "inter" -> summary.append("- Comparison: Interactivity\n");
-            case "nested" -> summary.append("- Comparison: Nested comparisons\n");
-            default -> summary.append("- Comparison: Not specified\n");
+            case "ref" ->
+                summary.append("- Comparison: Against a common control\n");
+            case "custom" ->
+                summary.append("- Comparison: Specific comparison\n");
+            case "inter" ->
+                summary.append("- Comparison: Interactivity\n");
+            case "nested" ->
+                summary.append("- Comparison: Nested comparisons\n");
+            default ->
+                summary.append("- Comparison: Not specified\n");
         }
 
         if (null == studyDesign) {
             summary.append("- Study Design: Not specified\n");
         } else // Add study design
-        switch (studyDesign) {
-            case "cov":
-                summary.append("- Study Design: Single Factor\n");
-                break;
-            case "nest":
-                summary.append("- Study Design: Two Factors\n");
-                break;
-            default:
-                summary.append("- Study Design: Not specified\n");
-                break;
+        {
+            switch (studyDesign) {
+                case "cov":
+                    summary.append("- Study Design: Single Factor\n");
+                    break;
+                case "nest":
+                    summary.append("- Study Design: Two Factors\n");
+                    break;
+                default:
+                    summary.append("- Study Design: Not specified\n");
+                    break;
+            }
         }
 
         // Add primary metadata
@@ -1471,29 +1515,32 @@ public class DownloadBean implements Serializable {
     }
 
     public String generateMetaAnalysisSummary() {
-      
+
         StringBuilder summary = new StringBuilder("<ul>"); // Start an HTML unordered list
 
         String analysisMethod = ldb.getAnalMethod(); // Get the selected meta-analysis method
 
         if (null == analysisMethod) {
             summary.append("<li><b>Analysis Method:</b> Not Specified</li>");
-        } else switch (analysisMethod) {
-            case "metap" -> {
-                summary.append("<li><b>Analysis Method:</b> P-value Combination</li>");
-                summary.append("<li><b>Combination Method:</b> ").append(msb.getMetapMethod()).append("</li>");
-                summary.append("<li><b>P-value Significance Level:</b> ").append(msb.getMetpSigLvl()).append("</li>");
+        } else {
+            switch (analysisMethod) {
+                case "metap" -> {
+                    summary.append("<li><b>Analysis Method:</b> P-value Combination</li>");
+                    summary.append("<li><b>Combination Method:</b> ").append(msb.getMetapMethod()).append("</li>");
+                    summary.append("<li><b>P-value Significance Level:</b> ").append(msb.getMetpSigLvl()).append("</li>");
+                }
+                case "votecount" -> {
+                    summary.append("<li><b>Analysis Method:</b> Vote Counting</li>");
+                    summary.append("<li><b>Significance Level:</b> ").append(msb.getVcSigLvl()).append("</li>");
+                    summary.append("<li><b>Minimum Votes Required:</b> ").append(msb.getMinVote()).append("</li>");
+                }
+                case "merge" -> {
+                    summary.append("<li><b>Analysis Method:</b> Direct Merging</li>");
+                    summary.append("<li><b>Significance Level:</b> ").append(msb.getDmSigLvl()).append("</li>");
+                }
+                default ->
+                    summary.append("<li><b>Analysis Method:</b> Not Specified</li>");
             }
-            case "votecount" -> {
-                summary.append("<li><b>Analysis Method:</b> Vote Counting</li>");
-                summary.append("<li><b>Significance Level:</b> ").append(msb.getVcSigLvl()).append("</li>");
-                summary.append("<li><b>Minimum Votes Required:</b> ").append(msb.getMinVote()).append("</li>");
-            }
-            case "merge" -> {
-                summary.append("<li><b>Analysis Method:</b> Direct Merging</li>");
-                summary.append("<li><b>Significance Level:</b> ").append(msb.getDmSigLvl()).append("</li>");
-            }
-            default -> summary.append("<li><b>Analysis Method:</b> Not Specified</li>");
         }
 
         summary.append("</ul>"); // Close the unordered list

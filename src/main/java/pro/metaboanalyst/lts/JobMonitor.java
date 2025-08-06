@@ -51,7 +51,7 @@ public class JobMonitor {
     public void init() {
         if (ab.isOnQiangPc() || ab.isOnZgyPc() || ab.isOnVipServer() || ab.isOnVipServer2()) {
             Executors.newSingleThreadScheduledExecutor()
-                     .scheduleAtFixedRate(this::run, 0, 15, TimeUnit.SECONDS);
+                    .scheduleAtFixedRate(this::run, 0, 15, TimeUnit.SECONDS);
             System.out.println("JobMonitor scheduled.");
         } else {
             System.out.println("JobMonitor skipped on this machine.");
@@ -81,7 +81,7 @@ public class JobMonitor {
 
                 // Ensure the all_slurm_jobs.csv file exists
                 rCommand = "if(!file.exists(\"" + dataPath + "\")){"
-                        + "write.csv(data.frame(jobid=0, emailed=T, email='', folder='', wfstatus=''), "
+                        + "write.csv(data.frame(jobid=0, emailed=T, email='', folder='', wfstatus='', wfBool=''), "
                         + "file = \"" + dataPath + "\", row.names = FALSE)}";
                 RC.voidEval(rCommand);
 
@@ -112,6 +112,12 @@ public class JobMonitor {
                         continue;
                     }
 
+                    /* ── 2 · inside the for-loop, fetch wfBool for this job id ──────────────── */
+                    rCmd
+                            = "dt <- read.csv('" + dataPath + "', header = TRUE); "
+                            + "as.logical(dt[dt$jobid == " + jid + ", 'wfBool'])";
+                    boolean wfBool = RC.eval(rCmd).asInteger() == 1; // TRUE → 1, FALSE → 0
+
                     System.out.println("==== this job_email====> " + job_email);
                     System.out.println("==== this job_status====> " + job_status);
 
@@ -119,6 +125,7 @@ public class JobMonitor {
                     if (job_status.contains("CANCELLED") || job_status.contains("FAILED")) {
                         res = sendReminderEmail(job_status, jid, job_email);
                     } else if (job_status.contains("COMPLETED")) {
+
                         String folderName = jobFolderMap.get(jid);
                         String filePath = "/data/glassfish/projects/metaboanalyst/" + folderName + "/metaboanalyst_input.csv";
                         File file = new File(filePath);
@@ -127,20 +134,25 @@ public class JobMonitor {
                             continue;
                         }
 
-                        if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
-                                & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
-                            res = sendPostRequest("vip2", folderName, jid, job_email);
-                            //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip2", folderName);
-                        } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
-                            res = sendPostRequest("vip", folderName, jid, job_email);
-                            //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip", folderName);
-                        } else if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
-                            // Qiang's local for testing purpose
-                            System.out.println("before sendPostRequest Qiang's local <=========");
-                            res = sendPostRequest("localhost", folderName, jid, job_email);
+                        if (!wfBool) {
+                            res = sendReminderEmail(job_status, jid, job_email);
+
+                        } else {
+
+                            if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
+                                    & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
+                                res = sendPostRequest("vip2", folderName, jid, job_email);
+                                //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip2", folderName);
+                            } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
+                                res = sendPostRequest("vip", folderName, jid, job_email);
+                                //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip", folderName);
+                            } else if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
+                                // Qiang's local for testing purpose
+                                System.out.println("before sendPostRequest Qiang's local <=========");
+                                res = sendPostRequest("localhost", folderName, jid, job_email);
+                            }
                         }
 
-                        //res = sendReminderEmail(job_status, jid, job_email);
                     }
 
                     if (res) {

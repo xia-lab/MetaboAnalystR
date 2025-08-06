@@ -375,6 +375,13 @@ public class DataUtils {
         }
     }
 
+    public static void copyFileIfExists(String src, String dst) throws IOException {
+        File in = new File(src);
+        if (in.exists()) {
+            copyFile(in, new File(dst));          
+        }
+    }
+
     /**
      * public static void fetchFile(String in, File out) { try { InputStream fis
      * = new URL(in).openStream(); FileOutputStream fos = new
@@ -1144,34 +1151,41 @@ public class DataUtils {
      * @param outdir Output directory
      */
     public static void extract(String zipfileName, String outdirName) {
+        System.out.println("[extract] Extracting " + zipfileName + " → " + outdirName);
+
         File zipfile = new File(zipfileName);
         File outdir = new File(outdirName);
-        try {
-            try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipfile))) {
-                ZipEntry entry;
-                String name, dir;
-                while ((entry = zin.getNextEntry()) != null) {
-                    name = entry.getName();
-                    if (entry.isDirectory()) {
-                        mkdirs(outdir, name);
-                        continue;
-                    }
-                    /* this part is necessary because file entry can come before
-                    * directory entry where is file located
-                    * i.e.:
-                    *   /foo/foo.txt
-                    *   /foo/
-                     */
-                    dir = dirpart(name);
-                    if (dir != null) {
-                        mkdirs(outdir, dir);
-                    }
 
-                    extractFile2(zin, outdir, name);
+        try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipfile))) {
+
+            ZipEntry entry;
+            while ((entry = zin.getNextEntry()) != null) {
+                String name = entry.getName();
+                System.out.println("  ↳ entry: " + name);
+
+                // ── handle directories ───────────────────────────────────────────
+                if (entry.isDirectory()) {
+                    mkdirs(outdir, name);
+                    System.out.println("    [mkdir] " + new File(outdir, name).getAbsolutePath());
+                    continue;
                 }
+
+                // ── make sure parent folders exist (may be missing in ZIP order) ─
+                String dir = dirpart(name);
+                if (dir != null) {
+                    mkdirs(outdir, dir);
+                    System.out.println("    [mkdir] " + new File(outdir, dir).getAbsolutePath());
+                }
+
+                // ── extract file ─────────────────────────────────────────────────
+                System.out.println("    [file]  " + new File(outdir, name).getAbsolutePath());
+                extractFile2(zin, outdir, name);
             }
+
+            System.out.println("[extract] Done.");
         } catch (IOException e) {
             LOGGER.error("extract", e);
+            System.err.println("[extract] ERROR: " + e.getMessage());
         }
     }
 
@@ -1653,43 +1667,58 @@ public class DataUtils {
         File newFolder = new File(newFolderPath);
 
         try {
-            // Check if the current folder exists
-            if (!currentFolder.exists() || !currentFolder.isDirectory()) {
-                throw new IOException("Current folder does not exist or is not a directory: " + currentFolderPath);
+            // 1 · sanity checks --------------------------------------------------
+            if (!currentFolder.isDirectory()) {
+                throw new IOException("Current folder does not exist or is not a directory: "
+                        + currentFolderPath);
+            }
+            if (!newFolder.exists() && !newFolder.mkdirs()) {
+                throw new IOException("Failed to create new folder: " + newFolderPath);
             }
 
-            // Create the new folder
-            if (!newFolder.exists()) {
-                if (!newFolder.mkdirs()) {
-                    throw new IOException("Failed to create new folder: " + newFolderPath);
-                }
-            }
-
-            // Copy the contents of the current folder to the new folder
+            // 2 · iterate over children -----------------------------------------
             File[] files = currentFolder.listFiles();
             if (files == null) {
-                throw new IOException("Cannot list files in the directory: " + currentFolderPath);
+                throw new IOException("Cannot list files in directory: " + currentFolderPath);
             }
 
+            Set<String> bannedExt = Set.of("mzml", "mzxml", "mzdata");
+
             for (File file : files) {
-                // Skip the new folder and its subfolders
+                // skip the destination folder itself (defensive)
                 if (file.getAbsolutePath().equals(newFolder.getAbsolutePath())) {
                     continue;
                 }
 
-                File targetFile = new File(newFolder, file.getName());
+                File target = new File(newFolder, file.getName());
+
                 if (file.isDirectory()) {
-                    //createAndCopyFolder(file.getAbsolutePath(), targetFile.getAbsolutePath());
+                    // recurse (uncomment if you want deep copy)
+                    // createAndCopyFolder(file.getAbsolutePath(), target.getAbsolutePath());
                 } else {
-                    // Copy files
-                    Files.copy(file.toPath(), targetFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    String ext = getExtension(file.getName()).toLowerCase();
+                    if (bannedExt.contains(ext)) {
+                        System.out.println("  · skipping " + file.getName());
+                        continue;                           // ← do NOT copy
+                    }
+                    Files.copy(file.toPath(), target.toPath(),
+                            StandardCopyOption.REPLACE_EXISTING);
                 }
             }
+            System.out.println("Contents copied successfully from "
+                    + currentFolderPath + " to " + newFolderPath);
 
-            System.out.println("Contents copied successfully from " + currentFolderPath + " to " + newFolderPath);
         } catch (IOException e) {
             System.err.println("Error during folder copy: " + e.getMessage());
         }
+    }
+
+    /**
+     * Helper: returns everything after the last '.' or "" if none.
+     */
+    private static String getExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        return (dot >= 0 && dot < filename.length() - 1) ? filename.substring(dot + 1) : "";
     }
 
     public static void removeFilesByExtensions(String folderPath, List<String> extensions) {
@@ -1783,7 +1812,7 @@ public class DataUtils {
         String baseUrl;
 
         if (node.equals("localhost")) {
-            baseUrl = ab.getBaseUrlDyn() +  "/faces/AjaxHandler.xhtml";
+            baseUrl = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
         } else {
             baseUrl = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml";
         }
@@ -2024,7 +2053,7 @@ public class DataUtils {
             return null;
         }
     }
-    
+
     public static FunctionInfo convertLinkedHashMapToFunctionInfo(Object obj) {
         if (obj instanceof LinkedHashMap) {
             ObjectMapper mapper = new ObjectMapper();

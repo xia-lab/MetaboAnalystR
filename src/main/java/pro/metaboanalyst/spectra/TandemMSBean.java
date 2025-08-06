@@ -1182,7 +1182,7 @@ public class TandemMSBean implements Serializable {
                 msmsDBOpt, simlarity_meth, precMZ, simi_cutoff, ionMode, unit1, unit2, "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName);
 
         // create job bash
-        RSpectraUtils.createSLURMBash(sb.getRConnection(), "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName + "/ExecuteRawSpec.sh");
+        RSpectraUtils.createSLURMBash(sb.getRConnection(), "/data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName + "/");
 
         // submit job to SLURM
         String JobSubmission = "sbatch /data/glassfish/projects/metaboanalyst/ms2_tmp/" + guestName + "/ExecuteRawSpec.sh";

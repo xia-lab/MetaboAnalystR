@@ -8,7 +8,7 @@
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Job status', '/Secure/spectra/JobStatusView.xhtml')}"/>
-        <f:event type="preRenderView" listener="#{spectraController.performPlan()}"/>
+        <f:event type="preRenderView" listener="#{spectraController.performPlan('FALSE')}"/>
     </ui:define>
     <ui:define name="myscript">
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/partialSave.js"></script>

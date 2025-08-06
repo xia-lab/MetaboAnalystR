@@ -2186,9 +2186,7 @@ public class DiagramView implements Serializable {
             }
         }
 
-        System.out.println("currentHomeDIR============" + sb.getCurrentUser().getOrigHomeDir());
         sb.doLogin("conc", "roc", false, false, folderName, true);
-        System.out.println("currentHomeDIR============2" + sb.getCurrentUser().getOrigHomeDir());
 
         String fileName = "metaboanalyst_input.csv";
         String inPath = "/data/glassfish/projects/metaboanalyst/" + folderName + "/";

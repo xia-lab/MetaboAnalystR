@@ -154,6 +154,7 @@ public class RPlotCustomizationBean implements Serializable {
     }
 
     public static final Map<String, String> GRAPHICS_CMD_TO_R_FUNC = Map.ofEntries(
+            Map.entry("qc_rsd", "PlotRSDViolin"),
             Map.entry("aov", "PlotANOVA"),
             Map.entry("volcano", "PlotVolcano"),
             Map.entry("venn", "plotVennDiagram"),
@@ -182,10 +183,10 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pca_pair", "PlotPCAPairSummary"),
             Map.entry("spls_perm", "PlotSPLS.Permutation"),
             Map.entry("dose_volcano", "PlotDoseVolcano"), // Error message: No R command found for source: dose_volcano
-            Map.entry("dr_histogram", "PlotDRHistogram"), 
+            Map.entry("dr_histogram", "PlotDRHistogram"),
             Map.entry("raw_spec_stic", "plotSingleTIC"),
             Map.entry("plot_kegg_graph", "PlotKEGGPath"),
-            Map.entry("tree", "PlotHCTree"), 
+            Map.entry("tree", "PlotHCTree"),
             Map.entry("pca_loading", "PlotPCALoading"),
             Map.entry("pca_score2d", "PlotPCA2DScore"),
             Map.entry("pca_score2d_meta", "PlotPCA2DScoreMeta"),

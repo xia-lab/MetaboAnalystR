@@ -5,6 +5,11 @@
         <param-value>local</param-value>
     </context-param>
     <context-param>
+        <param-name>primefaces.COOKIE_SAMESITE</param-name> 
+        <param-value>off</param-value>
+    </context-param>
+
+    <context-param>
         <param-name>jakarta.faces.ENABLE_WEBSOCKET_ENDPOINT</param-name>
         <param-value>true</param-value>
     </context-param>

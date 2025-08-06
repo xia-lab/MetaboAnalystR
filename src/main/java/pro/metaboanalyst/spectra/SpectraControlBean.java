@@ -163,8 +163,9 @@ public class SpectraControlBean implements Serializable {
         this.javaHistory = javaHistory;
     }
 
+    
     // Section 1 : General Controller -------------------
-    public void performPlan() throws REXPMismatchException {
+    public void performPlan(String workflowBoolString) throws REXPMismatchException {
 
         int pid;
 
@@ -367,7 +368,7 @@ public class SpectraControlBean implements Serializable {
                         JobPos = "unknown";
                     }
                     db.recordRawJob(JobID, fub.getEmail(), sb.getCurrentUser().getName(), JobPos);
-                    RDataUtils.recordspecjob2local(RC, fub.getEmail(), JobID + "", "UNCOMPLETE", sb.getCurrentUser().getName());
+                    RDataUtils.recordspecjob2local(RC, fub.getEmail(), JobID + "", "UNCOMPLETE", sb.getCurrentUser().getName(), workflowBoolString);
                 }
             }
 

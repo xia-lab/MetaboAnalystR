@@ -658,7 +658,7 @@ public class FireBaseController implements Serializable {
         String bucketObjectName = "user_folders/" + userFolderName + "/" + folderName + ".zip";
         String localFilePath = fb.getProjectPath() + bucketObjectName;
         File f = new File(localFilePath);
-        //check whether in local, if not load from firebase storage
+
         if (f.exists()) {
             DataUtils.extract(localFilePath, destDirPath);
         } else {
