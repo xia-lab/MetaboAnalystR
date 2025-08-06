@@ -478,7 +478,7 @@ public class DownloadBean implements Serializable {
             int rowNum = fileSize / 2;
             downloads = new ResultBean[rowNum];
             String fileNMA, fileNMB, fileNMALink, fileNMBLink;
-
+            /*
             if (ab.shouldUseScheduler() && sb.getAnalType().equals("raw")) {
                 for (int i = 0; i < rowNum; i++) {
                     fileNMA = fileNames.get(i);
@@ -494,6 +494,7 @@ public class DownloadBean implements Serializable {
                     downloads[i] = new ResultBean(fileNMA, fileNMB, fileNMALink, fileNMBLink);
                 }
             } else {
+*/
                 for (int i = 0; i < rowNum; i++) {
                     fileNMA = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
                     if (i == rowNum - 1 && added) {
@@ -503,7 +504,7 @@ public class DownloadBean implements Serializable {
                     }
                     downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
                 }
-            }
+            //}
         }
 
         tableInit = true;

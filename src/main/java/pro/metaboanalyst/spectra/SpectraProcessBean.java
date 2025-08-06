@@ -1536,7 +1536,7 @@ public class SpectraProcessBean implements Serializable {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + "/metaboanalyst_spec_proc.txt");
     }
 
-    public void internalizeRes(int num) {
+    public void internalizeResOld(int num) {
         if (ab.isOnProServer() || ab.isInDocker()) {
             String NmIdx = (num == 0) ? "" : Integer.toString(num);
 
@@ -1562,17 +1562,17 @@ public class SpectraProcessBean implements Serializable {
                 if (num == 0) {
                     DataUtils.copyFile(mSetObj, new File(currentmSetObj));
                 }
-                
+
                 String internal_path = sb.getCurrentUser().getHomeDir();
                 String png_name;
-                
+
                 System.out.println("===== internal_path====> " + internal_path);
                 System.out.println("=====    myDir     ====> " + myDir);
-                
+
                 File[] pngfiles = new File(internal_path).listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
                 File pngnewfile, pngoldfile;
                 if (pngfiles != null) {
-                    for (File pngfile : pngfiles) {                        
+                    for (File pngfile : pngfiles) {
                         png_name = pngfile.getName();
                         pngnewfile = new File(myDir + "/" + png_name);
                         pngoldfile = new File(internal_path + "/" + png_name);
@@ -1581,12 +1581,69 @@ public class SpectraProcessBean implements Serializable {
                     }
                 }
                 File msn_res = new File(sb.getCurrentUser().getHomeDir() + "/msn_result.zip");
-                if(msn_res.exists()){
+                if (msn_res.exists()) {
                     String currentmsnres = myDir + "/msn_result.zip";
                     DataUtils.copyFile(msn_res, new File(currentmsnres));
                 }
-                
+
             }
+        }
+    }
+
+    public void internalizeRes(int num) {
+        // Run only on Pro server or in Docker image
+        if (!(ab.isOnProServer() || ab.isInDocker())) {
+            return;
+        }
+
+        /* ------------------------------------------------------------------ */
+ /* 0. Resolve source (user home) and destination (guest folder)       */
+ /* ------------------------------------------------------------------ */
+        String srcDir = sb.getCurrentUser().getHomeDir();                 // e.g. /tmp/user123
+        String dstDir = ab.getRealUserHomePath() + sb.getCurrentUser().getName(); // /data/users/user123
+        File guestFolder = new File(dstDir);
+        if (!guestFolder.exists() && !guestFolder.mkdirs()) {
+            System.err.println("internalizeRes: cannot create guest folder " + dstDir);
+            return;
+        }
+
+        try {
+            /* -------------------------------------------------------------- */
+ /* 1. First call (num == 0) → full copy, then return              */
+ /* -------------------------------------------------------------- */
+            if (num == 0) {
+                DataUtils.createAndCopyFolder(srcDir, dstDir);  // deep copy, skips mzML/mzXML/mzData
+                System.out.printf("internalizeRes: full snapshot %s → %s%n", srcDir, dstDir);
+                return;
+            }
+
+            /* -------------------------------------------------------------- */
+ /* 2. Subsequent calls (num > 0) → incremental copy               */
+ /* -------------------------------------------------------------- */
+            String suffix = Integer.toString(num);                // “1”, “2”, …
+            String loadingIn = srcDir + "/spectra_3d_loading" + suffix + ".json";
+            String loadingOut = dstDir + "/spectra_3d_loading" + suffix + ".json";
+
+            // copy spectra_3d_loadingN.json if it exists
+            DataUtils.copyFileIfExists(loadingIn, loadingOut);
+
+            // copy PNGs produced during this step
+            File[] pngs = new File(srcDir).listFiles((d, n) -> n.toLowerCase().endsWith(".png"));
+            if (pngs != null) {
+                for (File f : pngs) {
+                    DataUtils.copyFile(f, new File(dstDir, f.getName()));
+                }
+            }
+
+            // copy msn_result.zip if present
+            DataUtils.copyFileIfExists(srcDir + "/msn_result.zip",
+                    dstDir + "/msn_result.zip");
+
+            System.out.printf("internalizeRes: incremental step %d copied to %s%n", num, dstDir);
+
+        } catch (Exception ex) {
+            System.err.println("internalizeRes copy error: " + ex.getMessage());
+            ex.printStackTrace(System.err);
         }
     }
 

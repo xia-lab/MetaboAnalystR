@@ -260,22 +260,26 @@
 
                 <p:dataTable style="width:100%; padding: 20px" var="dnld" value="#{downloader.downloads}" styleClass="hidden-header">  
                     <p:column >
-                        <h:outputText escape="false" value="#{dnld.fileNameA}" rendered="#{sessionBean1.getAnalType() ne 'raw'}"/>
+                        <h:outputText escape="false" value="#{dnld.fileNameA}"/>
+                        <!--
                         <p:commandLink style="font-size: 13px;"
                                        ajax="false" 
                                        value="#{dnld.fileNameA}"
                                        rendered="#{sessionBean1.getAnalType() eq 'raw'}">
                             <p:fileDownload value="#{dnld.fileNameAContent}" />
                         </p:commandLink>
+                        -->
                     </p:column>
                     <p:column>
-                        <h:outputText escape="false" value="#{dnld.fileNameB}" rendered="#{sessionBean1.getAnalType() ne 'raw'}"/>
+                        <h:outputText escape="false" value="#{dnld.fileNameB}"/>
+                        <!--
                         <p:commandLink style="font-size: 13px;"
                                        ajax="false" 
                                        value="#{dnld.fileNameB}"
                                        rendered="#{sessionBean1.getAnalType() eq 'raw'}">
                             <p:fileDownload value="#{dnld.fileNameBContent}" /> 
                         </p:commandLink>
+                        -->
                     </p:column>
                 </p:dataTable>  
             </p:panel>
