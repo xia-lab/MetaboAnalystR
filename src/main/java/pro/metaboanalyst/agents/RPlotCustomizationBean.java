@@ -154,9 +154,11 @@ public class RPlotCustomizationBean implements Serializable {
     }
 
     public static final Map<String, String> GRAPHICS_CMD_TO_R_FUNC = Map.ofEntries(
+            Map.entry("norm", "PlotNormSummary"), // ok
+            Map.entry("snorm", "PlotSampleNormSummary"), //ok
             Map.entry("qc_rsd", "PlotRSDViolin"),
             Map.entry("aov", "PlotANOVA"),
-            Map.entry("volcano", "PlotVolcano"),
+            Map.entry("volcano", "PlotVolcano"), // ok
             Map.entry("venn", "plotVennDiagram"),
             Map.entry("scatter3d", "Plot3D"),
             Map.entry("heatmap", "PlotHeatmap"),
@@ -164,32 +166,32 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("plsda", "PlotPLSDA"),
             Map.entry("sparseplsda", "PlotSparsePLSDA"),
             Map.entry("rf", "PlotRandomForest"),
-            Map.entry("cls_roc", "PlotROC"),
+            Map.entry("cls_roc", "PlotROC"), // ok
             Map.entry("tsne", "PlotTSNE"),
             Map.entry("umap", "PlotUMAP"),
             Map.entry("clustpca", "PlotClustPCA"),
-            Map.entry("pca_biplot", "PlotPCABiplot"),
-            Map.entry("tt", "PlotTT"),
+            Map.entry("pca_biplot", "PlotPCABiplot"), //ok
+            Map.entry("tt", "PlotTT"), // ok
             Map.entry("cmpdview", "PlotCmpdView"),
             Map.entry("metabolite_dr_curve", "PlotMetaboliteDRCurve"),
             Map.entry("drmodelbars", "PlotDRModelBars"),
             Map.entry("drhistogram", "PlotDRHistogram"),
             Map.entry("pcapair", "PlotPCAPairSummaryMeta"),
             Map.entry("selectedfeature", "PlotSelectedFeature"),
-            Map.entry("roc_boxplot_", "PlotRocUnivBoxPlot"),
+            Map.entry("roc_boxplot_", "PlotRocUnivBoxPlot"), // to fix
             Map.entry("roc_univ_", "Perform.UnivROC"),//to fix
-            Map.entry("cls_imp", "PlotImpBiomarkers"),
-            Map.entry("pca_scree", "PlotPCAScree"),
-            Map.entry("pca_pair", "PlotPCAPairSummary"),
+            Map.entry("cls_imp", "PlotImpBiomarkers"), // ok
+            Map.entry("pca_scree", "PlotPCAScree"), // ok
+            Map.entry("pca_pair", "PlotPCAPairSummary"), // ok
             Map.entry("spls_perm", "PlotSPLS.Permutation"),
             Map.entry("dose_volcano", "PlotDoseVolcano"), // Error message: No R command found for source: dose_volcano
-            Map.entry("dr_histogram", "PlotDRHistogram"),
+            Map.entry("dr_histogram", "PlotDRHistogram"), // ok
             Map.entry("raw_spec_stic", "plotSingleTIC"),
             Map.entry("plot_kegg_graph", "PlotKEGGPath"),
-            Map.entry("tree", "PlotHCTree"),
-            Map.entry("pca_loading", "PlotPCALoading"),
-            Map.entry("pca_score2d", "PlotPCA2DScore"),
-            Map.entry("pca_score2d_meta", "PlotPCA2DScoreMeta"),
+            Map.entry("tree", "PlotHCTree"), // ok
+            Map.entry("pca_loading", "PlotPCALoading"), //ok
+            Map.entry("pca_score2d", "PlotPCA2DScore"), //ok
+            Map.entry("pca_score2d_meta", "PlotPCA2DScoreMeta"), // ok
             Map.entry("load_boxplot", "PlotLoadBoxplot"),
             Map.entry("power_stat", "PlotPowerStat"),
             Map.entry("power_profile", "PlotPowerProfile"),
@@ -199,7 +201,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("cmpd_summary", "PlotCmpdSummary"),
             Map.entry("multifac_cmpd_summary", "PlotMultiFacCmpdSummary"),
             Map.entry("corr_heatmap", "PlotStaticCorrHeatMap"),
-            Map.entry("metaCorrHeatmap", "PlotMetaCorrHeatmap"),
+            Map.entry("metaCorrHeatmap", "PlotMetaCorrHeatmap"), // AI can update the code, no update in UI, but new plot exist in user folder
             Map.entry("meta_density", "PlotMetaDensity"),
             Map.entry("pathway_meta", "PlotPathwayMetaAnalysis"),
             Map.entry("asca_model", "PlotASCAModel"),
@@ -208,72 +210,71 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("_mr_forest_plot", "PlotForest"),
             Map.entry("_mr_leaveoneout_plot", "PlotLeaveOneOut"),
             Map.entry("_mr_funnel_plot", "PlotFunnel"),
-            Map.entry("fc", "PlotFC"),
-            Map.entry("opls_score2d", "PlotOPLS2DScore"),
-            Map.entry("opls_splot", "PlotOPLS.Splot"),
-            Map.entry("opls_imp", "PlotOPLS.Imp"),
-            Map.entry("opls_mdl", "PlotOPLS.MDL"),
+            Map.entry("fc", "PlotFC"), // ok
+            Map.entry("opls_score2d", "PlotOPLS2DScore"), //ok
+            Map.entry("opls_splot", "PlotOPLS.Splot"), // ok
+            Map.entry("opls_imp", "PlotOPLS.Imp"), // ok
+            Map.entry("opls_mdl", "PlotOPLS.MDL"), //ok
             Map.entry("sam_imp", "PlotSAM.Cmpd"), // AI receives and changed the code, but no change in user interface, no new plot in user folder
             Map.entry("ebam_imp", "PlotEBAM.Cmpd"), // AI receives and changed the code, but no change in user interface, no new plot in user folder
-            Map.entry("spls_pair", "PlotSPLSPairSummary"),
-            Map.entry("spls_loading", "PlotSPLSLoading"),
-            Map.entry("spls_score2d", "PlotSPLS2DScore"),
-            Map.entry("spls_cv", "PlotSPLSDA.Classification"),
+            Map.entry("spls_pair", "PlotSPLSPairSummary"), //ok
+            Map.entry("spls_loading", "PlotSPLSLoading"), // ok
+            Map.entry("spls_score2d", "PlotSPLS2DScore"), // ok
+            Map.entry("spls_cv", "PlotSPLSDA.Classification"), // ok
             Map.entry("ptn", "PlotCorr"), // AI can update the code, new image in users folder, web interface not updating
-            Map.entry("km_pca", "PlotClustPCA"),
-            Map.entry("km", "PlotKmeans"),
-            Map.entry("som_pca", "PlotClustPCA"),
-            Map.entry("som", "PlotSOM"),
+            Map.entry("km_pca", "PlotClustPCA"), // ok
+            Map.entry("km", "PlotKmeans"), // ok
+            Map.entry("som_pca", "PlotClustPCA"), // ok
+            Map.entry("som", "PlotSOM"), // ok
             Map.entry("pca_score3d", "PlotPCA3DScore"),
             Map.entry("pca_loading3d", "PlotPCA3DLoading"),
             Map.entry("pls_score2d", "PlotPLS2DScore"),
             Map.entry("pls_score3d", "PlotPLS3DScoreImg"),
-            Map.entry("pls_loading", "PlotPLSLoading"),
+            Map.entry("pls_loading", "PlotPLSLoading"), //ok
             Map.entry("pls_loading3d", "PlotPLS3DLoading"),
             Map.entry("pls_biplot", "PlotPLSBiplot"),
             Map.entry("pls_pair", "PlotPLSPairSummary"),
-            Map.entry("cls_prob", "PlotProbView"),
-            Map.entry("cls_accu", "PlotAccuracy"),
-            Map.entry("cls_test_roc", "PlotROCTest"),
-            Map.entry("cls_test_prob", "PlotProbViewTest"),
-            Map.entry("cls_test_accu", "PlotTestAccuracy"),
-            Map.entry("roc_perm", "Plot.Permutation"),
-            Map.entry("metaHeatmap", "PlotMetaHeatmap"),
+            Map.entry("cls_prob", "PlotProbView"), // ok
+            Map.entry("cls_accu", "PlotAccuracy"), // ok
+            Map.entry("cls_test_roc", "PlotROCTest"), //ok
+            Map.entry("cls_test_prob", "PlotProbViewTest"), //ok
+            Map.entry("cls_test_accu", "PlotTestAccuracy"), // ok
+            Map.entry("roc_perm", "Plot.Permutation"), //ok
+            Map.entry("metaHeatmap", "PlotMetaHeatmap"), // AI can update the code, but the final function is called: PlotStaticMetaHeatmapAI, differs from original
             Map.entry("pca_pair_meta", "PlotPCAPairSummaryMeta"),
-            Map.entry("covariate_plot", "PlotCovariateMap"),
-            Map.entry("aov2", "PlotANOVA2"),
+            Map.entry("covariate_plot", "PlotCovariateMap"), // ok
+            Map.entry("aov2", "PlotANOVA2"), // ok
             Map.entry("asca_impa", "PlotAscaImpVar"),
             Map.entry("asca_impb", "PlotAscaImpVar"),
             Map.entry("asca_impab", "PlotAscaImpVar"),
-            Map.entry("rf_imp", "PlotRF.VIPMeta"),
+            Map.entry("rf_imp", "PlotRF.VIP"), // updated, ok now
             Map.entry("rf_cls", "PlotRF.ClassifyMeta"),
             Map.entry("rf_outlier", "PlotRF.Outlier"),
             Map.entry("mb", "PlotMBTimeProfile"), // Ai updated and generated the code, no update in users folder
             Map.entry("integ_peaks", "PlotPSEAIntegPaths"),
             Map.entry("peaks_to_paths", "PlotPeaks2Paths"),
-            Map.entry("norm", "PlotNormSummary"),
-            Map.entry("snorm", "PlotSampleNormSummary"),
             Map.entry("qea", "PlotQEA.Overview"), 
             Map.entry("qea_dot", "PlotEnrichDotPlot"),
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
             Map.entry("path_view", "PlotPathSummary"),
-            Map.entry("svm_imp", "PlotRSVM.Cmpd"),
-            Map.entry("svm_cls", "PlotRSVM.Classification"),
-            Map.entry("opls_perm", "PlotOPLS.Permutation"),
+            Map.entry("svm_imp", "PlotRSVM.Cmpd"), // ok
+            Map.entry("svm_cls", "PlotRSVM.Classification"), // ok
+            Map.entry("opls_perm", "PlotOPLS.Permutation"), // ok
             Map.entry("asca_scree", "PlotASCAModelScree"),
             Map.entry("asca_fa", "PlotASCAModel"),
             Map.entry("asca_fb", "PlotASCAModel"),
             Map.entry("asca_fab", "PlotASCAInteraction"),
             Map.entry("asca_perm", "PlotASCA.Permutation"),
-            Map.entry("qc_meta_pca", "PlotMetaPCA"),
-            Map.entry("pls_imp", "PlotPLS.Imp"),
-            Map.entry("pls_cv", "PlotPLS.Classification"),
+            Map.entry("qc_meta_pca", "PlotMetaPCA"), // ok
+            Map.entry("pls_imp", "PlotPLS.Imp"), //ok
+            Map.entry("pls_cv", "PlotPLS.Classification"), // ok
             Map.entry("pls_perm", "PlotPLS.Permutation"),
-            Map.entry("qc_miss_filt", "PlotMissingDistr"),
-            Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"),
+            Map.entry("qc_miss_filt", "PlotMissingDistr"), //ok
+            Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"), // ok
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
-            Map.entry("cmpd", "PlotCmpdSummary"),
-            Map.entry("dr_barplot", "PlotDRModelBars")
+            Map.entry("cmpd", "PlotCmpdSummary"), // ok
+            Map.entry("dr_barplot", "PlotDRModelBars"), // Unsupported plot type for source: dr_barplot
+            Map.entry("rf_imp_meta", "PlotRF.VIPMeta") // new update, but no backend logic to link up this script to the front-end
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
@@ -289,7 +290,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotForest", List.of(".mr_forestPlot")),
             Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
             Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
-            Map.entry("rf_imp_meta", List.of("PlotImpVarMeta")),
+            Map.entry("PlotRF.VIPMeta", List.of("PlotImpVarDisc")), // updated
             Map.entry("rf_imp", List.of("PlotImpVar")),
             Map.entry("PlotQEA.Overview", List.of("PlotMSEA.Overview"))
     );
