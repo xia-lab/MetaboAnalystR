@@ -916,13 +916,15 @@ public class DownloadBean implements Serializable {
                         || name.endsWith(".png")
                         || (name.endsWith(".R") & !name.endsWith("ExecuteRawSpec.R"))
                         || name.endsWith(".json")
-                        || name.endsWith(".pdf");
+                        || name.endsWith(".pdf") 
+                        || name.endsWith("msn_result.zip");
             } else {
                 return name.endsWith(".csv")
                         || name.endsWith(".png")
                         || (name.endsWith(".R") & !name.endsWith("ExecuteRawSpec.R"))
                         || name.endsWith(".json")
-                        || name.endsWith("Report.pdf");
+                        || name.endsWith("Report.pdf")
+                        || name.endsWith("msn_result.zip");
             }
         }
     }
