@@ -1816,7 +1816,7 @@ public class DataUtils {
         } else {
             baseUrl = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml";
         }
-
+        System.out.println("constructNavigationURL===" + baseUrl);
         // Build query parameters
         String queryParameters = Map.of(
                 "funcNm", funName,

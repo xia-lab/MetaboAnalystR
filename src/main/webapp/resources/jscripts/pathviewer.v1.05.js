@@ -85,7 +85,7 @@ function initPathwayViewer() {
         async: false,
         cache: false,
         success: function (result) {
-         
+            console.log(result);
             var res = result.split("||");
             paView = res[0];
             setLeftImageMap(res[1]);
@@ -257,7 +257,9 @@ function renderImage(pathname) {
         timeout: 8000,
         success: function (result) {
             loadImage(result);
+            if($.messager){
             $.messager.progress('close');
+        }
         },
         error: function () {
             $.messager.alert('Error', 'Failed to process the request! Try to clear Browser History and perform analysis again.', 'error');
@@ -304,7 +306,6 @@ function prepareInit(pathname) {
 }
 
 function loadImage(response) {
-    //alert(response);
     if (response.substr(0, 10) === "pathImgURL") {
         baseWidth = paneWidth;
         baseHeight = paneHeight;
@@ -338,7 +339,7 @@ function loadImage2() {
     }
 
     imloaded = true;
-    //       alert("inside loadImage2 " + rectArray.length);
+          console.log("inside loadImage2 " + rectArray.length);
     resize(100, 50, 50);
 }
 
@@ -376,12 +377,12 @@ function getfgSession(loadWidth, loadHeight, zoompc, panXpc, panYpc) {
                 $.messager.progress('close');
             },
             error: function () {
-                $.messager.alert('Error',"No pathway was detected!");
+                $.messager.alert('Error', "No pathway was detected!");
                 $.messager.progress('close');
             }
         });
     } else {
-        $.messager.alert('Error',"No pathway was detected!");
+        $.messager.alert('Error', "No pathway was detected!");
     }
 }
 
@@ -397,7 +398,7 @@ function fgsessionFetched(resTxt, zoompc, panXpc, panYpc) {
             fgyoffset = panYpc;
             fgsessionFetched2();
         } else {
-            $.messager.alert('Error',"Failed to create a zoom-in image. If you are the Sys Admin, please make sure that the convert command is available in the PATH.");
+            $.messager.alert('Error', "Failed to create a zoom-in image. If you are the Sys Admin, please make sure that the convert command is available in the PATH.");
         }
     } else {
         $.messager.alert('Error', 'Failed to process the request! Try to clear Browser History and perform analysis again.', 'error');
@@ -555,7 +556,7 @@ function dragPress(evt) {   //catches when the mouse is pressed on the map
                 }
                 info = info + "</table>";
                 overlib(info, WRAP, STICKY, CAPTION, "Details", CLOSECLICK);
-            }else{
+            } else {
                 var info = 'Importance : ' + box.impact;
                 if (box.pvalue !== "NA") {
                     info = info + '<br/>P value : ' + box.pvalue;
@@ -901,7 +902,7 @@ function detectBrowser() {
             ver = parseFloat(RegExp.$1);
 
         if (ver < 8.0) {
-            $.messager.alert('Error',"Please install a modern web browser.");
+            $.messager.alert('Error', "Please install a modern web browser.");
         }
     }
 }

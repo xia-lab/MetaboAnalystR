@@ -56,6 +56,24 @@ public class PABean implements Serializable {
         this.pcmpd = pcmpd;
     }
 
+    public String getIntegOpt() {
+        return integOpt;
+    }
+
+    public void setIntegOpt(String integOpt) {
+        this.integOpt = integOpt;
+    }
+
+    public double getpVal() {
+        return pVal;
+    }
+
+    public void setpVal(double pVal) {
+        this.pVal = pVal;
+    }
+
+    
+    
     public String getMatch() {
         if (integOpt.startsWith("pval")) {
             return "(" + (int) expNum + ", " + hitNum + ")/" + setNum;

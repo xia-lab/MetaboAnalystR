@@ -122,6 +122,7 @@ public class JobExecution implements Serializable {
                             String token = QuartzDbUtils.getTokenByJobId(jobId);
                             String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab);
                             DataUtils.doRedirect(url, ab);
+                            
                         }
                         case "FAILED", "ERROR" -> statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
                         case "FINISHED" -> {
