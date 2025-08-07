@@ -206,10 +206,10 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pathway_meta", "PlotPathwayMetaAnalysis"),
             Map.entry("asca_model", "PlotASCAModel"),
             Map.entry("asca_interaction", "PlotASCAInteraction"),
-            Map.entry("_mr_scatter_plot", "PlotScatter"),
-            Map.entry("_mr_forest_plot", "PlotForest"),
-            Map.entry("_mr_leaveoneout_plot", "PlotLeaveOneOut"),
-            Map.entry("_mr_funnel_plot", "PlotFunnel"),
+            Map.entry("_mr_scatter_plot", "PlotScatter"), // unsupport plot type, perhaps should be `mr_scatter_plot`? (source: /mgwas/ResultView.xhtml)
+            Map.entry("_mr_forest_plot", "PlotForest"), // unsupport plot type, perhaps should be `mr_forest_plot`? (source: /mgwas/ResultView.xhtml)
+            Map.entry("_mr_leaveoneout_plot", "PlotLeaveOneOut"), // unsupport plot type, perhaps should be `mr_leaveoneout_plot`? (source: /mgwas/ResultView.xhtml)
+            Map.entry("_mr_funnel_plot", "PlotFunnel"), // unsupport plot type, perhaps should be `mr_funnel_plot`? (source: /mgwas/ResultView.xhtml)
             Map.entry("fc", "PlotFC"), // ok
             Map.entry("opls_score2d", "PlotOPLS2DScore"), //ok
             Map.entry("opls_splot", "PlotOPLS.Splot"), // ok
@@ -251,12 +251,13 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("rf_cls", "PlotRF.ClassifyMeta"),
             Map.entry("rf_outlier", "PlotRF.Outlier"),
             Map.entry("mb", "PlotMBTimeProfile"), // Ai updated and generated the code, no update in users folder
-            Map.entry("integ_peaks", "PlotPSEAIntegPaths"),
+            Map.entry("integ_peaks", "PlotPSEAIntegPaths"), // ok
             Map.entry("peaks_to_paths", "PlotPeaks2Paths"),
-            Map.entry("qea", "PlotQEA.Overview"), 
-            Map.entry("qea_dot", "PlotEnrichDotPlot"),
+            Map.entry("peaks_to_paths_gsea", "PlotPeaks2Paths"),
+            Map.entry("qea", "PlotQEA.Overview"), // ok
+            Map.entry("qea_dot", "PlotEnrichDotPlot"), // ok
             Map.entry("ora_dot", "PlotEnrichDotPlot"),
-            Map.entry("path_view", "PlotPathSummary"),
+            Map.entry("path_view", "PlotPathSummary"), // ok
             Map.entry("svm_imp", "PlotRSVM.Cmpd"), // ok
             Map.entry("svm_cls", "PlotRSVM.Classification"), // ok
             Map.entry("opls_perm", "PlotOPLS.Permutation"), // ok
@@ -274,7 +275,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
             Map.entry("cmpd", "PlotCmpdSummary"), // ok
             Map.entry("dr_barplot", "PlotDRModelBars"), // Unsupported plot type for source: dr_barplot
-            Map.entry("rf_imp_meta", "PlotRF.VIPMeta") // new update, but no backend logic to link up this script to the front-end
+            Map.entry("rf_imp_meta", "PlotRF.VIPMeta") // no backend logic to link up this script to the front-end
+         
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
