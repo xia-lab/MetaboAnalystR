@@ -8,6 +8,7 @@
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">    
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('ID map', '/Secure/pathinteg/IntegMapView.xhtml')}"/>
+        <f:event type="preRenderView" listener="#{procBean.performSanityCheck()}"/> 
     </ui:define>
     <ui:define name="content">
         <h:panelGrid styleClass="my-content-panel">
