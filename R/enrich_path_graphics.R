@@ -562,6 +562,8 @@ GeneratePathwayJSON<-function(pathway.nm){
 #'
 RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=NA){
   mSetObj <- .get.mSet(mSetObj);
+  library(igraph);
+
   Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="white");
   if(mSetObj$analSet$type == "pathinteg"){
     font.cex <- 0.7*zoom.factor/100;

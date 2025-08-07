@@ -981,6 +981,12 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
   
   mSetObj <- .get.mSet(mSetObj);
 
+  if(!exists('current.kegglib')){
+    if(file.exists("current.kegglib.qs")){
+        current.kegglib <<- qs::qread("current.kegglib.qs");
+    }
+  }
+  library(igraph);
   path.id <- current.kegglib$path.ids[pathName];
   g <- current.kegglib$graph.list[[path.id]];
   if(is_igraph(g)){
@@ -1342,6 +1348,7 @@ getEdgeLty<-function(graph){
 
 # return gene and compounds highlighted in the pathway
 GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
+    library(igraph);
 
     mSetObj <- .get.mSet(mSetObj);
     path.id <- current.kegglib$path.ids[[pathName]];
