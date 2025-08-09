@@ -54,61 +54,42 @@
                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              style="font-size: 10px; width: 100%; padding-top:10px" var="rb" value="#{mgwasBean.doSNPViewing()}" rowKey="#{rb.get('rowID')}">  
 
-                    <p:column headerText="SNP ID" sortBy="#{rb.get('col2')}" 
-                              width="6">
+                    <p:column headerText="Include" width="36">
+                        <p:column headerText="Include">
+                            <p:selectBooleanCheckbox value="#{rb['selected']}" immediate="true">
+                                <p:ajax listener="#{mgwasBean.handleSelect(rb)}" />
+                            </p:selectBooleanCheckbox>
+                        </p:column>
+                    </p:column>
+                    <p:column headerText="SNP ID" sortBy="#{rb.get('col2')}">
                         <h:outputText escape="false" value="#{rb.get('col2')}" />
                     </p:column>
-                    <p:column headerText="Nearest Gene" sortBy="#{rb.get('col12')}" 
-                              width="40">
+                    <p:column headerText="Nearest Gene" sortBy="#{rb.get('col12')}">
                         <h:outputText escape="false" value="#{rb.get('col12')}"/>   
                     </p:column>
-                    <p:column rendered="#{mgwasBean.filtPerformed}" headerText="Pval (outcome)" sortBy="" width="40">
+                    <p:column rendered="#{mgwasBean.filtPerformed}" headerText="Pval (outcome)">
                         <h:outputText escape="false" value="#{rb.get('pvaloutcome')}"/>   
                     </p:column>
-                    <p:column headerText="Exposure" sortBy="#{rb.get('col11')}" 
-                              width="40">
+                    <p:column headerText="Exposure" sortBy="#{rb.get('col11')}" style="width:20%">
                         <h:outputText escape="false" value="#{rb.get('col11')}"/>   
                     </p:column>
-                    <p:column headerText="Pval (exposure)" sortBy="#{rb.get('pval')}" width="40">
+                    <p:column headerText="Pval (exposure)" sortBy="#{rb.get('pval')}">
                         <h:outputText escape="false" value="#{rb.get('pval')}"/>   
                     </p:column>
-
-                    <p:column headerText="Biofluid" sortBy="#{rb.get('biofluid')}" 
-                              width="40">
+                    <p:column headerText="Biofluid" sortBy="#{rb.get('biofluid')}">
                         <h:outputText escape="false" value="#{rb.get('biofluid')}"/>   
                     </p:column>
-
-                    <p:column headerText="Population" sortBy="#{rb.get('pop')}" 
-                              width="40">
+                    <p:column headerText="Population" sortBy="#{rb.get('pop')}">
                         <h:outputText escape="false" value="#{rb.get('pop')}"/>   
                     </p:column>
 
-                    <p:column headerText="Study" sortBy="#{rb.get('study')}" 
-                              width="40">
+                    <p:column headerText="Study" sortBy="#{rb.get('study')}">
                         <h:outputText escape="false" value="#{rb.get('study')}"/>   
                     </p:column>
-                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Steiger direction" sortBy="#{rb.get('dir')}" 
-                              width="40">
-                        <h:outputText escape="false" value="#{rb.get('dir')}"/>   
-                    </p:column>
 
-
-                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Steiger direction" sortBy="#{rb.get('dir')}" 
-                              width="40">
-                        <h:outputText escape="false" value="#{rb.get('dir')}"/>   
-                    </p:column>
-
-
-                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" headerText="Pval (steiger)" sortBy="#{rb.get('stn')}" 
-                              width="40">
+                    <p:column rendered="#{mgwasBean.steigerOpt eq 'use_steiger' and mgwasBean.filtPerformed}" 
+                              headerText="Pval (steiger)" sortBy="#{rb.get('stn')}">
                         <h:outputText escape="false" value="#{rb.get('pvalsteiger')}"/>   
-                    </p:column>
-
-
-                    <p:column headerText="Include" width="5">
-                        <p:selectBooleanCheckbox value="#{rb['selected']}">
-                            <p:ajax listener="#{mgwasBean.handleSelect(rb)}"/>
-                        </p:selectBooleanCheckbox>
                     </p:column>
                 </p:dataTable>
 
@@ -286,18 +267,18 @@
     <ui:define name="myfooter">
         <h:form id="southform">
             <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
-               <p:commandButton value="Previous"
-                                     id="testBn" style="width:120px"
-                                     styleClass="prevBn"
-                                     icon="pi pi-arrow-circle-left"
-                                     action="MgwasUploadView"/>
+                <p:commandButton value="Previous"
+                                 id="testBn" style="width:120px"
+                                 styleClass="prevBn"
+                                 icon="pi pi-arrow-circle-left"
+                                 action="MgwasUploadView"/>
 
-                    <p:commandButton id="visBn" value="Proceed" style="width:120px"
-                                     onclick="PF('statusDialog').show();"
-                                     oncomplete="PF('statusDialog').hide()"
-                                     icon="pi pi-caret-right"
-                                     disabled="#{!mgwasBean.harmonized}"
-                                     action="#{mgwasBean.checkSNP()}"/> 
+                <p:commandButton id="visBn" value="Proceed" style="width:120px"
+                                 onclick="PF('statusDialog').show();"
+                                 oncomplete="PF('statusDialog').hide()"
+                                 icon="pi pi-caret-right"
+                                 disabled="#{!mgwasBean.harmonized}"
+                                 action="#{mgwasBean.checkSNP()}"/> 
             </h:panelGrid>
         </h:form>
     </ui:define>
