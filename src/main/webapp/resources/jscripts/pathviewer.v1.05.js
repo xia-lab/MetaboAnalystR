@@ -85,7 +85,7 @@ function initPathwayViewer() {
         async: false,
         cache: false,
         success: function (result) {
-            console.log(result);
+            //console.log(result);
             var res = result.split("||");
             paView = res[0];
             setLeftImageMap(res[1]);
@@ -339,7 +339,7 @@ function loadImage2() {
     }
 
     imloaded = true;
-          console.log("inside loadImage2 " + rectArray.length);
+    //console.log("inside loadImage2 " + rectArray.length);
     resize(100, 50, 50);
 }
 

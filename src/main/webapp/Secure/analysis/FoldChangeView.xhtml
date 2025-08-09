@@ -110,7 +110,7 @@
 
                         function extender() {
                             light = $(parent.window.document).find("#formHidden\\:selectedTheme").val();
-                            console.log(light)
+                            //console.log(light)
                             if (light === "light") {
                                 textColor = "grey";
                                 gridColor = "lightgrey";
@@ -118,7 +118,7 @@
                                 textColor = "white";
                                 gridColor = 'rgb(200, 200, 200,0.2)';
                             }
-                            console.log(textColor)
+                            //console.log(textColor)
                             var pointMap = #{detailsBean.pointMapJson};
                             var maxX = document.getElementById('maxX').value;
                             var step = maxX / 10;

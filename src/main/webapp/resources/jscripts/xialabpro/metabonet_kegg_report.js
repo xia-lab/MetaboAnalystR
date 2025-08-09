@@ -40,7 +40,7 @@ function initReportFunctions() {
         savedState.highlightedNodesId = highlightedNodesId;
         savedState.highlightedNodes = highlightedNodes;
         let dataStr = JSON.stringify(savedState);
-        console.log(dataStr.length + "==jsonlength")
+        //console.log(dataStr.length + "==jsonlength")
         sendJsonToServer(dataStr, "network_MetaboNet", sendJsonFlag);
     }
 
@@ -64,10 +64,10 @@ function checkSavedState() {
     fetch(usr_dir + "/" + fileNm)
             .then(response => {
                 if (response.ok) {
-                    console.log('File exists. Reload previous state');
+                    //console.log('File exists. Reload previous state');
                     $.getJSON(usr_dir + "/" + fileNm, function (data) {
                         savedState = data;
-                        console.log(data)
+                        //console.log(data)
 
                         backgroundColor = savedState.backgroundColor;
                         pathnameOpt = savedState.pathnameOpt;
@@ -91,7 +91,7 @@ function checkSavedState() {
                             for (var i = 0; i < savedState.selectedRows.length; i++) {
                                 var row = savedState.selectedRows[i];
                                 highlightColor = row.colorOnly;
-                                console.log(row.ID)
+                                //console.log(row.ID)
                                 $('#dg2').datagrid('selectRow', row.ID);
                             }
                         }

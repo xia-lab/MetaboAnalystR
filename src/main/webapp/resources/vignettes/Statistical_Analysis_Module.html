@@ -2327,8 +2327,8 @@ HTMLWidgets.widget({
       if (d === 1) {
         data = rowname.concat(data)
       } else if (d !== 0) {
-        console.log(data);
-        console.log(table.columns().indexes());
+        //console.log(data);
+        //console.log(table.columns().indexes());
         throw 'New data must be of the same length as current data (' + n + ')';
       };
       table.row.add(data).draw(resetPaging);
@@ -2343,7 +2343,7 @@ HTMLWidgets.widget({
       filterRow.toArray().map(function(td, i) {
         var v = typeof columns === 'string' ? columns : columns[i];
         if (typeof v === 'undefined') {
-          console.log('The search keyword for column ' + i + ' is undefined')
+          //console.log('The search keyword for column ' + i + ' is undefined')
           return;
         }
         $(td).find('input').first().val(v);

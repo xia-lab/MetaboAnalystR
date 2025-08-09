@@ -18,7 +18,7 @@ if (light === "light") {
     textColor = "white";
     gridColor = 'rgb(200, 200, 200,0.2)';
 }
-console.log(textColor)
+//console.log(textColor)
 
 
 function showMummichog() {

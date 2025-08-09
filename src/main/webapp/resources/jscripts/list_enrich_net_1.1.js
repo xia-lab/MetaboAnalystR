@@ -116,7 +116,7 @@ function showSigmaNetwork() {
     initLib = jobinfo[4];
     initOkay = jobinfo[5];
     netNm = jobinfo[6];
-    console.log(netNm)
+    //console.log(netNm)
     var reportInit = jobinfo[7];
     savedStateInit = jobinfo[8];
     //console.log(jobinfo);
@@ -280,12 +280,12 @@ function showSigmaNetwork() {
 
 function setupSideBar() {
     return new Promise((resolve, reject) => {
-        console.log(usr_dir + "/" + netNm);
+        //console.log(usr_dir + "/" + netNm);
 
         if (initOkay === "true") {
             $.getJSON(usr_dir + "/" + netNm, function (data) {
                 netData = data;
-                console.log(netData);
+                //console.log(netData);
 
                 updateBackgroundColorGradient("#222222", "#222222");
                 // setOrder();
@@ -322,7 +322,7 @@ function setupSideBar() {
             $.messager.alert('Error', 'No enriched gene sets have been found using KEGG database, please try with another database', 'error');
             $.getJSON(usr_dir + "/" + netNm, function (data) {
                 netData = data;
-                console.log(netData);
+                //console.log(netData);
 
                 intersect_names = "";
                 $("#dNmOpt").attr('disabled', 'disabled');
@@ -491,8 +491,8 @@ function loadDgs(method) {
             sigInst.refresh();
         }
     });
-    console.log(mdl_rows)
-    console.log($("#dg2"))
+    //console.log(mdl_rows)
+    //console.log($("#dg2"))
     $('#dg2').datagrid('loadData', mdl_rows);
 }
 
@@ -651,7 +651,7 @@ function setNetworkB() {
             nd.y = nd.posy;
             nd.highlight = 0;
             nd.size = nd.true_size;
-            console.log(nd.molType)
+            //console.log(nd.molType)
             if (nd.molType === "compound") {
                 nd.type = "square";
                 nd.color = nd.colorw;
@@ -716,7 +716,7 @@ function setNetworkB() {
             sigInst.killForceAtlas2();
         }, runtime);
     } else {
-        console.log(data.nodes);
+        //console.log(data.nodes);
         for (var i = 0; i < data.nodes.length; i++) {
             var nd = data.nodes[i];
             nd.x = nd.posx;
@@ -835,7 +835,7 @@ function setupFileDownload(result) {
 }
 
 function initTopMenu() {
-    console.log(isLts + "====isLts");
+    //console.log(isLts + "====isLts");
     if (isLts) {
         initReportFunctions();
     }
@@ -1624,7 +1624,7 @@ function doSetEnrichmentTest() {
                     symbol2entrez[v] = k;
                 });
                 setNetworkB();
-                console.log(netData)
+                //console.log(netData)
                 $("#dNmOpt").attr('disabled', 'disabled')
                 setOrder();
                 /*&
@@ -1877,9 +1877,9 @@ function setupFileDownload(result) {
 }
 
 function formatNum(val, row) {
-    console.log(val);
+    //console.log(val);
 
-    console.log(row);
+    //console.log(row);
     if (val.toString().length > 7) {
         return parseFloat(val.toPrecision(3)).toExponential();
     } else {
@@ -1888,8 +1888,8 @@ function formatNum(val, row) {
 }
 
 function updateNetworkLayout(fileNm) {
-    console.log(fileNm)
-    console.log(usr_dir + "====usr_dir");
+    //console.log(fileNm)
+    //console.log(usr_dir + "====usr_dir");
     $.getJSON(usr_dir + '/' + fileNm, function (data) {
         //console.log(data);
         var nd_pos = {};
@@ -1917,9 +1917,9 @@ function updateNetworkLayout(fileNm) {
 function displayCurrentSelectedNodesStat(nodes, title, node = null) {
     var stats = $("#stats");
     stats.empty();
-    console.log(netData.pwType);
-    console.log(node);
-    console.log(netData.pwType.toLowerCase().includes("kegg"))
+    //console.log(netData.pwType);
+    //console.log(node);
+    //console.log(netData.pwType.toLowerCase().includes("kegg"))
     if (node !== null && netData.pwType.toLowerCase().includes("kegg") && ["mum", "gsea", "integ"].indexOf(enrType) === -1) {
         if (enrType !== "mum") {
             stats.append(
@@ -1983,7 +1983,7 @@ function displayCurrentSelectedNodesStat(nodes, title, node = null) {
         }
         stats.append('</table> ');
     }
-    console.log(stats);
+    //console.log(stats);
 }
 
 function resetNetwork() {
@@ -2004,8 +2004,8 @@ function expNodes(label) {
     var contrastCol = getContrastColor(gradCol1.replace("#", ""));
     var data = netData;
 
-    console.log(data.hits);
-    console.log(label);
+    //console.log(data.hits);
+    //console.log(label);
 
     /* ---------- expanded genes for this set -------------------------------- */
     var genes = data.hits[label];

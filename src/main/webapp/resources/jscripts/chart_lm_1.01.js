@@ -16,7 +16,7 @@ if (light === "true") {
     textColor = "white";
     gridColor = 'rgb(200, 200, 200,0.2)';
 }
-console.log(textColor)
+//console.log(textColor)
 
 
 // select elements

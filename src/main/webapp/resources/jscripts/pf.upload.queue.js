@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Wait for the login check to complete
         loggedIn = await doSpecLoginAsync();
-        console.log(loggedIn + "================123");
+        //console.log(loggedIn + "================123");
 
         if (loggedIn !== "true") {
             return;
@@ -123,7 +123,7 @@ function doSpecLogin() {
     return(res);
 }
 function getMetaIntegrity() {
-    console.log("metaintegrity")
+    //console.log("metaintegrity")
     var res = -100;
     var filenmsarr = "";
     for (var i = 0; i < tempArr.length; i++) {
@@ -133,7 +133,7 @@ function getMetaIntegrity() {
             filenmsarr = filenmsarr + "; " + tempArr[i].name;
         }
     }
-    console.log(filenmsarr)
+    //console.log(filenmsarr)
     getMetaIntegrityRC([{name: 'fileNms', value: filenmsarr}]);
 
     return res;

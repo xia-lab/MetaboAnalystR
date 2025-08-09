@@ -66,7 +66,7 @@ function initKEGGViewer() {
         async: false,
         success: function (data) {
             usr_dir = data; // Use the response data here
-            console.log(usr_dir); // Check what you received
+            //console.log(usr_dir); // Check what you received
         },
         error: function (xhr, status, error) {
             console.error("Error occurred: " + error);

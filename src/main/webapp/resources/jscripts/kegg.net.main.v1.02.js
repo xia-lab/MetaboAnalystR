@@ -345,7 +345,7 @@ function loadCompoundEnrichTable(result) {
 
         data_grid.datagrid({
             onSelect: function (index, row) {
-                console.log(path_nms)
+                //console.log(path_nms)
                 var hit_inx = path_nms.indexOf(row.pathname);
                 var key = Object.keys(hit_all)[hit_inx];
                 current_fun_kos = hit_all[key];

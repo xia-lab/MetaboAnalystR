@@ -1,6 +1,6 @@
 
 $.getJSON('/MetaboAnalyst' + document.getElementById('myjson').value, function (data) {
-    console.log(data);
+    //console.log(data);
     const nFeat = data.x.length;
     const showXLabels = nFeat <= 30;
 

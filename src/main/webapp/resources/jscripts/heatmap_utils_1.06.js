@@ -514,8 +514,8 @@ function doEnrichmentTest() {
         } else {
             if (heatmapType === "mummichog") {
                 $.getJSON(usr_dir + result, function (raw_data) {
-                    console.log(raw_data)
-                    clearAnnot()
+                    //console.log(raw_data)
+                    clearAnnot();
 
                     //var query = $('#queryView').val();
                     var query = "focus";

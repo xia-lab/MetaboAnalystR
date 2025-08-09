@@ -6,7 +6,7 @@ var savedState = {};
 var savedStateInit = false;
 
 function initReportFunctions() {
-    console.log("initreport");
+    //console.log("initreport");
 
     $('#reportBn').bind('click keypress', function (event) {
         handleSaveEvent(false);
@@ -14,7 +14,7 @@ function initReportFunctions() {
 
     var element = $(parent.window.document).find("#sidebar-form\\:m_report");
     element.bind('click keypress', function (event) {
-        console.log("saveevent");
+        //console.log("saveevent");
         handleSaveEvent(true);
     });
 

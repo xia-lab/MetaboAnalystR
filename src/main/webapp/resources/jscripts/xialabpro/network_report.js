@@ -29,7 +29,7 @@ function checkSavedState(reportJsonName) {
                     $.getJSON(usr_dir + "/" + reportJsonName, function (data) {
                         savedState = data;
 
-                        console.log(savedState)
+                        //console.log(savedState)
                         updateBackgroundColorGradient(savedState.gradCol1, savedState.gradCol2);
                         sigInst.graph.clear();
                         var newNodesArr = [];

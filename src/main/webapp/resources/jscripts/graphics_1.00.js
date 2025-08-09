@@ -627,12 +627,12 @@ function export_image(name) {
 }
 
 function updateTextInput(val) {
-    console.log("updateTextInput -->" + val);
+    //console.log("updateTextInput -->" + val);
     document.getElementById('textInput').value = val;
 }
 
 function updateloadingslider(val) {
-    console.log("updateloadingslider -->" + val);
+    //console.log("updateloadingslider -->" + val);
     document.getElementById('loadingSlider').value = val;
 }
 

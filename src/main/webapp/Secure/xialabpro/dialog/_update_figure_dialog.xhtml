@@ -6,7 +6,7 @@
     <script>
         function startNavigation(pagesToVisit) {
             localStorage.setItem('pagesToVisit', JSON.stringify(pagesToVisit));
-            console.log("pagesToVisit = " + pagesToVisit);
+            //console.log("pagesToVisit = " + pagesToVisit);
 
             PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Execution Finished! Now fetching result images... Please be patient."}]);
 

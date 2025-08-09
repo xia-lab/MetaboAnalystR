@@ -228,7 +228,7 @@ function setTakeImageBool(value) {
 }
 
 function initScatter3D(jsonNm) {
-    console.log("parent===> " + parent);
+    //console.log("parent===> " + parent);
 
     try {
         parent.PF("statusDialog").show();
@@ -254,7 +254,7 @@ function initScatter3D(jsonNm) {
     $.getJSON('/MetaboAnalyst' + jsonNm, function (raw_data) {
         currFileNm = curr_omics;
         gData = raw_data;
-        console.log(gData);
+        //console.log(gData);
         if (gData.loading !== "NA" && gData.loading !== undefined) {
             gData.navigation = gData.loading;
             var arr;
@@ -774,7 +774,7 @@ function modifyNode(node) {
         }
 
     }
-    console.log(node);
+    //console.log(node);
     //displayNodeInfo(node);
 
 }
@@ -1295,11 +1295,11 @@ function setupFileDownload(result) {
 function setupNetworkFunctions() {
     initReportFunctions();
     $('#form1 #updateLoading', parent.document).bind('click keypress', function (event) {
-        console.log($('#form1 #loadingSlider', parent.document));
+        //console.log($('#form1 #loadingSlider', parent.document));
         var val = $('#form1 #loadingSlider', parent.document).val();
         var opt = $('#form1 #pcaDisplay', parent.document).val();
         var msf = $('#form1 #showms2', parent.document).is(':checked');
-        console.log("======== -------msf ===> " + msf);
+        //console.log("======== -------msf ===> " + msf);
         msOptbool = msf;
         updateLoading(opt, val, msf);
     });
@@ -1342,7 +1342,7 @@ function setupNetworkFunctions() {
 
         var type = $('#nodeOpt').val();
         var val = $('#sizeOpt').val();
-        console.log(type);
+        //console.log(type);
         if (val === "increase") {
             if (type === "inset") {
                 nodeSizeFactorLoading = nodeSizeFactorLoading * 0.95;
@@ -1606,7 +1606,7 @@ function setupNetworkFunctions() {
         } else {
             for (var propertyName in myTexts) {
                 if (propertyName.includes("tick@_")) {
-                    console.log("abc")
+                    //console.log("abc")
                     myTexts[propertyName].material.visible = false;
                 }
             }
@@ -1657,7 +1657,7 @@ function setupNetworkFunctions() {
                 }
                 hideLabel = true;
                 Scatter.graphData().nodes.forEach(function (nd) {
-                    console.log(nd)
+                    //console.log(nd)
                     if (nd.meta !== "mcia.seg" && nd.meta !== undefined) {
                         opaNodeObjForLabelToggle(nd, 0);
                         addTextNodeObj(nd, 48, "name"); // scene1 or scene2
@@ -1833,7 +1833,7 @@ function setupNetworkFunctions() {
         //need to go back to node view
         $('#loader').show();
         var val = $("#nodeDisplayOpt").val();
-        console.log(val);
+        //console.log(val);
         if (val === "text") {
             if (viewMode === "textMeta" || viewMode === "textMeta2") {
                 Scatter.graphData().nodes.forEach(function (nd) {
@@ -1843,7 +1843,7 @@ function setupNetworkFunctions() {
             }
             hideLabel = true;
             Scatter.graphData().nodes.forEach(function (nd) {
-                console.log(nd)
+                //console.log(nd)
                 if (nd.meta !== "mcia.seg" && nd.meta !== undefined) {
                     opaNodeObjForLabelToggle(nd, 0);
                     addTextNodeObj(nd, 48, "name"); // scene1 or scene2
@@ -1936,7 +1936,7 @@ function setupNetworkFunctions() {
 
     console.log($('#form11 #updatePcaBn', parent.document));
     $('#form11 #updatePcaBn', parent.document).bind('click keypress', function (event) {
-        console.log("update=====")
+        //console.log("update=====")
     });
 
 
@@ -4180,7 +4180,7 @@ function computeEllipsoid(meshObj, scene, ids, color, type, group = "NA", alphaV
 
     var col;
     var mesh;
-    console.log(meshObj)
+    //console.log(meshObj)
     for (var i = 0; i < meshObj.length; i++) {
         var ob_orig = meshObj[i].vb;
         var ob = [];
@@ -7661,7 +7661,7 @@ function globalEncasing(callback) {
         });
     } else {
 
-        console.log("encasing");
+        //console.log("encasing");
         doEncasing("encasing", false);
     }
     callback();
@@ -8452,7 +8452,7 @@ function sendImageToServerFull(dataURL, type, format, callback = null) {
 
         },
         success: function () {
-            console.log("Success: Image saving");
+            //console.log("Success: Image saving");
             if (typeof callback === "function") {
                 callback();
             }
@@ -8533,13 +8533,13 @@ function initialSaveState(jsonNm) {
         } else {
             fileNm = jsonNm;
         }
-        console.log('/MetaboAnalyst' + "/" + fileNm);
-        console.log('/MetaboAnalyst+fileNm' + "--->" + fileNm);
+        //console.log('/MetaboAnalyst' + "/" + fileNm);
+        //console.log('/MetaboAnalyst+fileNm' + "--->" + fileNm);
 
         fetch('/MetaboAnalyst' + "/" + fileNm)
                 .then(response => {
                     if (response.ok) {
-                        console.log('File exists. Reload previous state');
+                        //console.log('File exists. Reload previous state');
                         $.getJSON('/MetaboAnalyst' + "/" + fileNm, function (data) {
                             savedState = data;
                             Scatter.cameraPosition(savedState.cameraPosition);

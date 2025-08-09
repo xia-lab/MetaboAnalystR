@@ -48,7 +48,7 @@ function attachEvent() {
 
 function attachEdgeEvent() {
     const connections = document.querySelectorAll(".jtk-connector");
-    console.log(connections);
+    //console.log(connections);
     connections.forEach((connection) => {
         connection.addEventListener("dblclick", function () {
             // Highlight the clicked connection
@@ -70,10 +70,10 @@ function reattachEvents() {
 }
 
 function startNavigation(pagesToVisit) {
-    console.log("pages=============");
+    //console.log("pages=============");
     localStorage.setItem('pagesToVisit', JSON.stringify(pagesToVisit));
     // Navigate to the first page after a short delay
-    console.log("pagesToVisit = " + pagesToVisit)
+    //console.log("pagesToVisit = " + pagesToVisit)
     PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Execution Finished! Now fetching result images... Please be patient."}]);
 
     setTimeout(function () {

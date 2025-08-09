@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function initNetwork() {
     var analType = document.getElementById('formHidden1:naviType').value;
     var analType2 = document.getElementById('formHidden1:analType').value;
-    console.log("analType2====" + analType2);
+    //console.log("analType2====" + analType2);
     if (analType === "unknown" || analType === "NA") {
         analType = "stat";
     }
@@ -44,7 +44,7 @@ function initNetwork() {
             netType = analType;
         }
         var fileName;
-        console.log(netType + " ====netype");
+        //console.log(netType + " ====netype");
         if (netType === "stat" || netType === "mf") {
             fileName = netType + "_net_v2.json";
         } else {
@@ -182,8 +182,8 @@ function initNetwork() {
                             const baseRankSep = 30;
                             const adjustedRankSep = Math.max(baseRankSep, targetHeight / longestPath);
 
-                            console.log('Longest Path:', longestPath);
-                            console.log('Adjusted RankSep:', adjustedRankSep);
+                           // console.log('Longest Path:', longestPath);
+                            //console.log('Adjusted RankSep:', adjustedRankSep);
 
                             if (cy.nodes().length > 0 && cy.edges().length > 0) {
                                 cy.layout({
@@ -340,15 +340,15 @@ function setupButtons() {
                     }
                     return;
                 }
-                console.log("running into line 324 url ==> " + url);
-                console.log("running into line 325 url ==> " + id);
+                //console.log("running into line 324 url ==> " + url);
+                //console.log("running into line 325 url ==> " + id);
                 if (node.hasClass('highlighted-green') || node.hasClass('highlighted-red')) {
 
                     var url;
                     (async () => {
                         try {
                             url = await getUrl(id);
-                            console.log('URL received:', url);
+                            //console.log('URL received:', url);
                             if (url !== "" && url !== undefined) {
                                 window.location = domainUrl + url;
                             }
@@ -414,8 +414,8 @@ function setupButtons() {
                     }
 
                     var naviType = document.getElementById('formHidden1:naviType').value
-                    console.log("running into line 382 url ==> " + naviType);
-                    console.log(naviType)
+                    //console.log("running into line 382 url ==> " + naviType);
+                   // console.log(naviType)
                     if (url !== "") {
                         var url;
                         (async () => {
@@ -443,7 +443,7 @@ function setupButtons() {
     $('#formHelp\\:dldBn').bind('click keypress', function (event) {
         const networkState = cy.json();
         const networkStateJson = JSON.stringify(networkState);
-        console.log(networkStateJson)
+        //console.log(networkStateJson)
 
         const blob = new Blob([networkStateJson], {type: "application/json"});
         const url = URL.createObjectURL(blob);
@@ -780,7 +780,7 @@ function predefinedWorkflow_enrichment(sel, analType) {
 
 function predefinedWorkflow_mummichog(sel) {
     const dataType = document.getElementById('formHidden1:dataType').value;
-    console.log(dataType);
+    //console.log(dataType);
     var statNodes;
     if (dataType === "mass_table") {
         statNodes = [
@@ -814,7 +814,7 @@ function predefinedWorkflow_mummichog(sel) {
 
 function predefinedWorkflow_pathqea(sel) {
     const dataType = document.getElementById('formHidden1:dataType').value;
-    console.log(dataType);
+    //console.log(dataType);
     var statNodes;
     statNodes = [
         "MetaboAnalyst",
@@ -838,13 +838,13 @@ function predefinedWorkflow_pathqea(sel) {
         ];
         selArray = [...statNodes, ...array];
     }
-    console.log(selArray)
+    //console.log(selArray)
 }
 
 
 function predefinedWorkflow_pathora(sel) {
     const dataType = document.getElementById('formHidden1:dataType').value;
-    console.log(dataType);
+    //console.log(dataType);
     var statNodes;
     statNodes = [
         "MetaboAnalyst",
@@ -865,14 +865,14 @@ function predefinedWorkflow_pathora(sel) {
         ];
         selArray = [...statNodes, ...array];
     }
-    console.log(selArray)
+    //console.log(selArray)
 }
 
 
 function predefinedWorkflow_network(sel) {
     const dataType = document.getElementById('formHidden1:dataType').value;
     var statNodes;
-    console.log(dataType);
+    //console.log(dataType);
     if (dataType === "conc") {
         statNodes = [
             "MetaboAnalyst",
@@ -1046,7 +1046,7 @@ function workflowRc() {
                                 }
                             }
                         });
-                        console.log(func);
+                        //console.log(func);
                         if (func === "Save Project") {
                             updateProcess();
                             PF('projRunDialog').show();
@@ -1135,14 +1135,14 @@ function workflowRc() {
     } else {
         selArray.unshift("Save Project");
     }
-    console.log("========== selArray======= ");
-    console.log(selArray);
+    //console.log("========== selArray======= ");
+    //console.log(selArray);
     if (typeof selArray !== 'undefined' && selArray.length > 0) {
-        console.log("Starting execution of selArray:", selArray);
+        //console.log("Starting execution of selArray:", selArray);
         // Create a sequence of promises to execute each function one by one
         selArray.reduce((promise, func, index) => {
             return promise.then(() => {
-                console.log("Executing function:", func);
+                //console.log("Executing function:", func);
                 return executeFunction(func, index);
             });
         }, Promise.resolve())
@@ -1153,7 +1153,7 @@ function workflowRc() {
                         PF('growlWidget').show([{severity: 'info', summary: 'INFO', detail: 'Workflow has been executed successfully!'}]);
                         PF('statusDialog').hide();
                         var funcArrErr = document.getElementById('formHidden1:funcArrErr').value;
-                        console.log(funcArrErr);
+                        //console.log(funcArrErr);
                         var funcArrErr = [];
                         cy.nodes().forEach(function (n) {
                             if (n.hasClass("highlighted-red")) {
@@ -1653,13 +1653,13 @@ function reinitState() {
     var trimmedFuncArr = funcArr.slice(1, -1);
     // Split the string by commas and trim any extra whitespace from each element
     trimmedFuncArr.split(',').map(item => item.trim());
-    console.log(trimmedFuncArr);
+    //console.log(trimmedFuncArr);
 
     var funcArrErr = document.getElementById('formHidden1:funcArrErr').value;
     var trimmedFuncArrErr = funcArrErr.slice(1, -1);
     // Split the string by commas and trim any extra whitespace from each element
     trimmedFuncArrErr.split(',').map(item => item.trim());
-    console.log(trimmedFuncArrErr);
+    //console.log(trimmedFuncArrErr);
 
     cy.nodes().forEach(function (n) {
         if (trimmedFuncArr.indexOf(n.id()) !== -1) {
@@ -1787,10 +1787,10 @@ function calculateLongestPath(cy) {
 
 
 function startNavigation(pagesToVisit) {
-    console.log("pages=============");
+    //console.log("pages=============");
     localStorage.setItem('pagesToVisit', JSON.stringify(pagesToVisit));
     // Navigate to the first page after a short delay
-    console.log("pagesToVisit = " + pagesToVisit)
+    //console.log("pagesToVisit = " + pagesToVisit)
     setTimeout(function () {
         window.location.href = pagesToVisit[0];
     }, 2000); // Delay before navigating to the first page

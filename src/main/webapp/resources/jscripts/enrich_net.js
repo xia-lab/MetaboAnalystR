@@ -63,7 +63,7 @@ function showSigmaNetwork() {
     });
     sigma.plugins.dragNodes(sigInst, sigInst.renderers[0]);
     sigInst.bind('doubleClickNode', function (e) {
-        console.log(e);
+        //console.log(e);
         PF('msetDialog').hide();
         $.ajax({
             dataType: "html",

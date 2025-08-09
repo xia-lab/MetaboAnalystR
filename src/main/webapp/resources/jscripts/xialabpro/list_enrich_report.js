@@ -57,7 +57,7 @@ function handleSaveEvent(sendJsonFlag) {
     savedState.enrichdb = $("#enrichdb").val();
     savedState.viewOpt = $("#viewOpt").val();
     let dataStr = JSON.stringify(savedState);
-    console.log(JSON.stringify(savedState).length);
+    //console.log(JSON.stringify(savedState).length);
     sendJsonToServer(dataStr, "enrichNet", sendJsonFlag);
 
 }
@@ -89,7 +89,7 @@ function checkPagesToVisit() {
     }
 }
 function checkSavedState() {
-    console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA===" + savedStateInit)
+    //console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA===" + savedStateInit)
 
     if (savedStateInit === "false") {
         setTimeout(function () {
@@ -120,13 +120,13 @@ function checkSavedState() {
                         if (savedState.backgroundOpt) {
                             $('#backgroundOpt').val(savedState.backgroundOpt);
                         }
-                        console.log(savedState);
+                        //console.log(savedState);
                         netData.backgroundColor[0] = savedState.backgroundColor[0];
                         netData.backgroundColor[1] = savedState.backgroundColor[1];
                         if ("edgeColor" in savedState) {
                             edgeColor = savedState.edgeColor;
                         }
-                        console.log(edgeColor)
+                        //console.log(edgeColor)
                         updateBackgroundColorGradient(netData.backgroundColor[0], netData.backgroundColor[1]);
                         setTimeout(function () {
                             sigInst.graph.clear();
@@ -155,7 +155,7 @@ function checkSavedState() {
 
 
                             var rgbaCol = hexToRGB(edgeColor, savedState.edgeOpa);
-                            console.log(rgbaCol)
+                            //console.log(rgbaCol)
                             sigInst.graph.edges().forEach(function (edge) {
                                 edge.color = rgbaCol;
                             });
@@ -192,7 +192,7 @@ function checkSavedState() {
 
                             sigInst.refresh();
                         }, 1000)
-                        console.log(savedState)
+                        //console.log(savedState)
                     });
 
 
