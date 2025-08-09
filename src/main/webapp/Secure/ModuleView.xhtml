@@ -96,7 +96,7 @@
         </style>
     </ui:define> 
     <ui:define name="content">
-        <h:panelGrid style="padding:4% 5% 2% 5%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva">
+        <h:panelGrid style="padding:3% 5% 2% 5%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva">
             <h:form id="selectForm">
                 <div id = "form_con" style="padding:1% 3% 1% 1%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva; min-height: 80vh !important">
                     <div class="ui-g surface-section p-4" style='padding: 30px; line-height: 23px;'>
@@ -183,15 +183,19 @@
                         <div class="ui-g-2  mypane5 mypane" onclick="window.location = '#{ctl.getModuleURL(12)}'">Causal Analysis <br/> [Mendelian randomization]</div>
                         <div class="ui-g-4"></div>
                     </div>
-                    <h:panelGrid columns="2" style='text-align:center; padding: 20px 10px 26px 10px; margin-top:30px; width:100%'> 
+                    <h:panelGrid columns="3" style='text-align:center; padding: 20px 10px 20px 10px; margin-top:20px; width:100%'> 
+                        <p:commandButton value="Saved Projects" 
+                                         styleClass="ui-button-outlined ui-button-info"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="ProjectView"/>
+                        <p:commandButton value="Your Data" 
+                                         styleClass="ui-button-outlined ui-button-help" 
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="DataCenterView"/>
                         <p:commandButton value="Create Workflows" 
                                          styleClass="ui-button-outlined ui-button-help" 
-                                         style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
                                          action="WorkflowView"/>
-                        <p:commandButton value="Saved Project" 
-                                         styleClass="ui-button-outlined ui-button-info"
-                                         style="font-size:16px !important; font-weight: bold; height:48px; width: 200px"
-                                         action="ProjectView"/>
                     </h:panelGrid>
                 </div> 
                 <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>

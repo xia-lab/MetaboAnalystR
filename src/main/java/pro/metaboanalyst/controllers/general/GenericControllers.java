@@ -660,7 +660,7 @@ public class GenericControllers implements Serializable {
 
         //set the 4th URL
         menuItem = new DefaultMenuItem();
-        menuItem.setValue("Data Prep.");
+        menuItem.setValue("Data");
         //menuItem.setOnclick("doLogoutModule();");
         if (wb.getDataPreparationUrl().isEmpty()) {
             menuItem.setOnclick("document.getElementById('checkWorkflowInput').click()");

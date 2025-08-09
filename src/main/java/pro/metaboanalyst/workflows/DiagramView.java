@@ -1097,7 +1097,7 @@ public class DiagramView implements Serializable {
             DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml",
                     "info",
-                    "Please click on Data Preparation to try our example or upload your own data!"
+                    "Please click on Data menu to try our example or upload your own data!"
             );
         }
     }
