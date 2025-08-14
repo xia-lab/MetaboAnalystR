@@ -1811,12 +1811,11 @@ public class DataUtils {
     public static String constructNavigationURL(String node, String appName, String token, String funName, ApplicationBean1 ab) {
         String baseUrl;
 
-        if (node.equals("localhost")) {
+        if (node.equals("localhost") || node.equals("local")) {
             baseUrl = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
         } else {
             baseUrl = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml";
         }
-        System.out.println("constructNavigationURL===" + baseUrl);
         // Build query parameters
         String queryParameters = Map.of(
                 "funcNm", funName,
