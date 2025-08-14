@@ -59,6 +59,11 @@ CalculateHyperScore <- function(mSetObj=NA){
     saveRDS(toSend, "tosend.rds")
     return(my.hyperscore.kegg());
   }
+
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
   
   current.mset <- current.msetlib$member;
   
@@ -141,6 +146,11 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
+
   if(.on.public.web){
     .prepare.globaltest.score(mSetObj);
     .perform.computing();   

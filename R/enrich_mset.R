@@ -234,6 +234,12 @@ SearchMsetLibraries<-function(mSetObj=NA, query, type){
 SearchByCompound <- function(mSetObj=NA, query){
   
   mSetObj <- .get.mSet(mSetObj);
+
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
+
   names.vec <- current.msetlib$member;
   matched.inx <- NULL;
   matched <- FALSE;
@@ -555,16 +561,28 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'License: GNU GPL (>= 2)
 GetMsetNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
   return(current.msetlib$name);
 }
 
 GetMsetMembers<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
   return(current.msetlib$member);
 }
 
 GetMsetReferences<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+    }
+
   return(current.msetlib$reference);
 }
 
