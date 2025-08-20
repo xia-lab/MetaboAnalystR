@@ -1,0 +1,76 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+
+    <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/pf.upload.js"></script>  
+
+    <h:panelGrid style="text-align: center; width: 100%; padding:10px">
+        <p:commandLink onclick="PF('uploadDialog').show()" >
+            <span style="color: tomato;">
+                <i class="pi pi-cloud-upload" style="color: tomato !important; font-size: 54px"/>
+            </span>
+            <div style="width: 100%; padding-top: 6px;">
+                <p:outputLabel style="font-weight:bold; text-decoration: none!important" value="Data Upload"/>
+            </div>
+        </p:commandLink>
+    </h:panelGrid>
+    <p:dialog widgetVar="uploadDialog" dynamic="true" modal="true" appendTo="@(body)" header="Upload Your Data" 
+              position="center center" onShow="PF('uploadDialog').initPosition()"
+              hideEffect="explode" resizable="true"> 
+        <h:form id="uploadform" enctype="multipart/form-data">
+            <div style="padding: 20px; line-height: 23px; width:630px;">
+                <p:remoteCommand name="validateFiles" actionListener="#{uploadBean.checkIntegrity}"/>
+                <div>
+                    <p>
+                        <b>Drag-and-drop</b> your gene expression tables (max 10 files, maximum 200MB per file).  
+                        Once the upload is completed, process them one by one use the table below.
+                        Please make sure they share same meta-data groups (i.e. Control and Infected in each dataset).
+                        You can also <b>Try Examples</b> on the bottom of the page. 
+                    </p>
+                </div>
+                <p:fileUpload listener="#{uploadBean.handleFileUploadMulti}"
+                              sequential="true"
+                              update=":form :infoPane"
+                              auto="false" 
+                              label="Choose" 
+                              mode="advanced" 
+                              style="width:600px; padding-top: 10px; line-height: 18px"
+                              multiple="true" 
+                              oncomplete="handleMultiFileUploadRequest(PF('importFile'), validateFiles);"
+                              widgetVar="importFile">
+                    <p:validateFile sizeLimit="#{applicationBean1.FILE_SIZE_BYTE}"
+                                    fileLimit="10"           
+                                    allowTypes="/(\.|\/)(csv|txt|zip)$/"/>
+                </p:fileUpload>
+                <h3>Tips</h3>  	
+
+
+                <div>
+                    Accept .csv or .txt tables with genes in rows and samples in columns. 
+                    Make sure to add <b>#CLASS</b> to the first column of second row to specify group information.
+                    Hover your mouse to the help icon for more info.                     
+                    <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/> 
+                </div>
+                <p:tooltip for="formatIcon" styleClass="helpTip">
+                    <b>Sample name, one class label (one missing value)</b>
+                    <pre>
+    #NAME	Sample1	Sample2	Sample3	Sample4	Sampl5	Sampl6	Sample7	Sample8
+    #CLASS	case	case	case	case	control	control	control	control
+    Gene1	-3.06	-2.25	-1.15	-6.64	0.4	1.08	1.22	1.02
+    Gene2	-1.36	-0.67	-0.17	-0.97	-2.32	-5.06	0.28	1.32
+    Gene3	1.61	-0.27	0.71	-0.62	0.14		0.11	0.98
+    Gene4	0.93	1.29	-0.23	-0.74	-2	-1.25	1.07	1.27
+                    </pre>
+
+                </p:tooltip>
+
+
+            </div>
+            <div style="text-align: center; width:600px; padding-bottom: 20px">
+                <p:commandButton value="Done!" onclick="PF('uploadDialog').hide()"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:composition>
+
