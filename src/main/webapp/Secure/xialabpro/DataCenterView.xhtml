@@ -1,0 +1,277 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+
+    <!-- ─────────────────────────────────────────────────────────────
+         Meta hooks & breadcrumb
+    ─────────────────────────────────────────────────────────────── -->
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{fireBaseController.initUserDatasets()}"/>
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Data Manager', '/Secure/xialabpro/DataManager.xhtml')}"/>
+    </ui:define>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         Page styles (keep minimal; leverage layout theme)
+    ─────────────────────────────────────────────────────────────── -->
+    <ui:define name="mystyle">
+        <style>
+            .warnHighlight {
+                color: #d32f2f !important;
+            }
+            .my-content-panel {
+                width: 100%;
+            }
+            .button-panel {
+                width: 100%;
+                padding: 2px;
+                font-size: 13px;
+                text-align:center;
+            }
+            .col-label  {
+                width: 140px;
+                text-align: right;
+                padding-right: 10px;
+                vertical-align: middle;
+            }
+            .col-input  {
+                width: 520px;
+                vertical-align: middle;
+            }
+            .col-action {
+                text-align: left;
+                vertical-align: middle;
+            }
+            .narrow-column {
+                width: 40px;
+                text-align: center;
+            }
+            .wide-column   {
+                text-align: left;
+            }
+            .soft-note {
+                color:#546e7a;
+                font-size: 0.95rem;
+            }
+            .icon-btn {
+                font-size: 1.3rem;
+            }
+        </style>
+        <script type="text/javascript">
+            // Optional helpers for downloads (used by exporter/template buttons)
+            function start() {
+                PF('statusDialog').show();
+            }
+            function stop() {
+                PF('statusDialog').hide();
+            }
+        </script>
+    </ui:define>
+
+    <!-- ─────────────────────────────────────────────────────────────
+         Main content
+    ─────────────────────────────────────────────────────────────── -->
+    <ui:define name="upload">
+        <ui:include src="/template/_uploader.xhtml" />
+    </ui:define>
+
+    <ui:define name="content">
+        <h:panelGrid styleClass="my-content-panel">
+            <p:growl id="msgs" showDetail="true" life="6000"/>
+
+            <h2>Data Management</h2>
+            <p class="soft-note">
+                Upload one or more datasets (CSV/TSV/TXT or ZIP). Your uploaded files appear in the table below, where you can preview,
+                download, edit metadata, or delete them.
+            </p>
+
+        <ui:include src="/template/_dataset_overlaypanel.xhtml" />
+            <h:form id="dataTableForm">
+                <p:toolbar styleClass="surface-card shadow-1 p-2 mb-2">
+                    <p:toolbarGroup align="right">
+                        <p:commandButton value="Refresh" icon="pi pi-refresh" update=":dataTableForm:dsTable :msgs" actionListener="#{dataManagerBean.refresh}"/>
+                        <p:spacer width="8"/>
+                        <p:commandButton value="Delete Selected" icon="pi pi-trash" styleClass="ui-button-danger"
+                                         onclick="PF('bulkDelDialog').show();return false;"
+                                         disabled="#{empty dataManagerBean.selectedDatasets}"/>
+                        <p:spacer width="8"/>
+                        <p:commandButton type="button" value="Export CSV" icon="pi pi-file"
+                                         onclick="PrimeFaces.monitorDownload(start, stop);" styleClass="ui-button-outlined">
+                            <p:dataExporter type="csv" target=":dataTableForm:dsTable" fileName="datasets"/>
+                        </p:commandButton>
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+                <p:dataTable id="dsTable"
+                             var="ds"
+                             value="#{dataManagerBean.datasetTable}"
+                             widgetVar="dsTableWV"
+                             paginator="true" rows="25" rowsPerPageTemplate="25,50,100"
+                             paginatorPosition="bottom"
+                             class="surface-card shadow-1 p-0 text-800"
+                             rowKey="#{ds.id}"
+                             selectionMode="multiple"
+                             selection="#{dataManagerBean.selectedDatasets}"
+                             sortBy="#{ds.uploadedAt}">
+
+                    <p:column headerText="ID" sortBy="#{ds.id}" style="width: 120px; text-align:center;">
+                        <p:commandLink value="#{ds.id}"
+                                       update=":editForm"
+                                       oncomplete="PF('editDialog').show();">
+                            <f:setPropertyActionListener value="#{ds}" target="#{dataManagerBean.selected}"/>
+                        </p:commandLink>
+                    </p:column>
+
+                    <p:column headerText="Title" sortBy="#{ds.title}" filterBy="#{ds.title}" filterMatchMode="contains" styleClass="wide-column">
+                        <h:outputText value="#{ds.title}"/>
+                    </p:column>
+
+                    <p:column headerText="Filename" sortBy="#{ds.filename}" filterBy="#{ds.filename}" filterMatchMode="contains">
+                        <h:outputText value="#{ds.filename}"/>
+                    </p:column>
+
+                    <p:column headerText="Type" sortBy="#{ds.type}" style="width:120px; text-align:center;">
+                        <h:outputText value="#{ds.type}"/>
+                    </p:column>
+
+                    <p:column headerText="Size" sortBy="#{ds.humanSize}" style="width:110px; text-align:right;">
+                        <h:outputText value="#{ds.humanSize}"/>
+                    </p:column>
+
+                    <p:column headerText="Date" sortBy="#{ds.uploadedAt}" style="width: 170px; text-align:center;">
+                        <h:outputText value="#{ds.uploadedAt}">
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:180px; text-align:center;">
+                        <p:commandLink id="previewBn" title="Preview (first rows)" update=":previewForm" oncomplete="PF('previewDialog').show();">
+                            <i class="pi pi-eye icon-btn"></i>
+                            <f:setPropertyActionListener value="#{ds}" target="#{dataManagerBean.selected}"/>
+                            <f:setPropertyActionListener value="head" target="#{dataManagerBean.previewMode}"/>
+                            <p:tooltip for="previewBn" value="Preview the first ~20 rows"/>
+                        </p:commandLink>
+
+                        <p:spacer width="10"/>
+                        <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
+                            <i class="pi pi-download icon-btn"></i>
+                            <f:setPropertyActionListener value="#{ds}" target="#{dataManagerBean.selected}"/>
+                            <p:fileDownload value="#{dataManagerBean.downloadSelected}"/>
+                            <p:tooltip for="downloadBn" value="Download original file"/>
+                        </p:commandLink>
+
+                        <p:spacer width="10"/>
+                        <p:commandLink id="deleteBn" title="Delete" onclick="PF('delDialog').show();">
+                            <i class="pi pi-trash icon-btn" style="color:orangered"></i>
+                            <f:setPropertyActionListener value="#{ds}" target="#{dataManagerBean.selected}"/>
+                            <p:tooltip for="deleteBn" value="Delete this dataset"/>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </h:panelGrid>
+
+        <!-- ===================== Dialogs ===================== -->
+
+        <!-- Busy / status dialog (re-used everywhere) -->
+        <p:dialog widgetVar="statusDialog" header="Processing..." modal="true" closable="false" draggable="false" resizable="false" appendTo="@(body)">
+            <p:panel style="text-align:center; padding:12px;">
+                <i class="pi pi-spin pi-spinner" style="font-size:2rem"></i>
+                <div class="soft-note" style="margin-top:8px;">Please wait</div>
+            </p:panel>
+        </p:dialog>
+
+        <!-- Help dialog for upload -->
+        <p:dialog header="Upload Help" widgetVar="uploadHelp" modal="true" appendTo="@(body)">
+            <h:panelGrid style="width:520px; line-height:1.5; font-size: 14px;">
+                <ul>
+                    <li>Supported formats: CSV, TSV, TXT, or a ZIP containing one of these.</li>
+                    <li>Recommended: first row = header (feature names); first column = unique IDs or sample names.</li>
+                    <li>Max size per file: 100 MB. Up to 20 files per batch.</li>
+                    <li>Use the <b>CSV Template</b> button to download a starter file with the expected columns.</li>
+                </ul>
+            </h:panelGrid>
+        </p:dialog>
+
+        <!-- Edit dataset metadata -->
+        <p:dialog header="Edit Dataset Info" widgetVar="editDialog" dynamic="true" modal="true" appendTo="@(body)" hideEffect="fade" resizable="true">
+            <h:form id="editForm">
+                <h:panelGrid styleClass="surface-card shadow-1 p-4 text-800" style="width:460px;">
+                    <p:outputLabel for="edTitle" value="Title" style="font-weight:bold"/>
+                    <p:inputText id="edTitle" value="#{dataManagerBean.selected.title}" style="width:100%"/>
+
+                    <p:outputLabel for="edDesc" value="Description" style="font-weight:bold; margin-top:8px;"/>
+                    <p:inputTextarea id="edDesc" value="#{dataManagerBean.selected.description}" rows="6" autoResize="true" style="width:100%"/>
+
+                    <p:outputLabel for="edTags" value="Tags (comma-separated)" style="font-weight:bold; margin-top:8px;"/>
+                    <p:chips id="edTags" value="#{dataManagerBean.selected.tags}"/>
+                </h:panelGrid>
+                <h:panelGrid columns="2" style="width:100%; text-align:center; margin-top:8px;">
+                    <p:commandButton value="Cancel" onclick="PF('editDialog').hide();return false;"/>
+                    <p:commandButton value="Update" styleClass="ui-button-success" onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('editDialog').hide();" update=":msgs :dataTableForm:dsTable" actionListener="#{dataManagerBean.updateDatasetInfo}"/>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <!-- Per-row delete confirmation -->
+        <p:dialog widgetVar="delDialog" modal="true" header="Delete Dataset" appendTo="@(body)" closable="true">
+            <h:form>
+                <h:panelGrid style="width:420px; line-height:1.6; font-size:14px;">
+                    <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            <i class="pi pi-exclamation-triangle" style="font-size:42px;color:#f57c00"></i>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            This action will permanently delete <b>#{dataManagerBean.selected.title}</b> (ID: #{dataManagerBean.selected.id}).
+                            Proceed?
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:100%; text-align:center;">
+                        <p:commandButton value="Cancel" onclick="PF('delDialog').hide();return false;"/>
+                        <p:commandButton value="Yes, delete" styleClass="ui-button-danger" onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('delDialog').hide();" update=":msgs :dataTableForm:dsTable" actionListener="#{dataManagerBean.deleteSelected}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <!-- Bulk delete confirmation -->
+        <p:dialog widgetVar="bulkDelDialog" modal="true" header="Delete Selected Datasets" appendTo="@(body)">
+            <h:form>
+                <h:panelGrid style="width:460px; line-height:1.6; font-size:14px;">
+                    <p>
+                        You are about to delete <b>#{dataManagerBean.selectedDatasets.size()}</b> items. This cannot be undone. Continue?
+                    </p>
+                    <h:panelGrid columns="2" style="width:100%; text-align:center;">
+                        <p:commandButton value="Cancel" onclick="PF('bulkDelDialog').hide();return false;"/>
+                        <p:commandButton value="Delete" styleClass="ui-button-danger" onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('bulkDelDialog').hide();" update=":msgs :dataTableForm:dsTable" actionListener="#{dataManagerBean.deleteBatch}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <!-- File head preview -->
+        <p:dialog header="Preview (first rows)" widgetVar="previewDialog" dynamic="true" modal="true" appendTo="@(body)" resizable="true" width="800">
+            <h:form id="previewForm">
+                <p:panel styleClass="surface-card shadow-1 p-2">
+                    <p:dataTable id="headTable"
+                                 value="#{dataManagerBean.previewRows}"
+                                 var="row"
+                                 scrollable="true" scrollHeight="420"
+                                 rows="20">
+                        <p:columns value="#{dataManagerBean.previewCols}" var="col" columnIndexVar="cidx" headerText="#{col}">
+                            <h:outputText value="#{row[cidx]}"/>
+                        </p:columns>
+                    </p:dataTable>
+                </p:panel>
+                <div style="text-align:right; margin-top:8px;">
+                    <p:commandButton value="Close" onclick="PF('previewDialog').hide();return false;"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

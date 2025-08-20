@@ -1799,4 +1799,59 @@ public class FireBaseController implements Serializable {
         sb.addMessage("info", "This feature has been added to report!");
     }
 
+    public void initUserDatasets() {
+
+        reloadUserInfo();
+        if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
+        } else {
+            pb.setActiveTabIndex(0);
+            //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
+            setupProjectTable();
+            projInit = true;
+        }
+
+    }
+
+    public boolean setupDataTable() {
+
+        try {
+            ArrayList<HashMap<String, Object>> res = db.getProjectsFromPostgres(fub.getEmail(), ab.getAppName(), ab.getToolLocation());
+            pb.setProjectTable(new ArrayList());
+            if (res == null) {
+                return false;
+            }
+
+            boolean loadProjectBool = false;
+            for (HashMap<String, Object> myHashMap : res) {
+                Map<String, Object> myMap = myHashMap;
+
+                Object projectTypeObject = myMap.get("projecttype");
+                if (projectTypeObject != null && "workflow".equals(projectTypeObject.toString())) {
+                    continue; // Skip this project and move to the next iteration
+                }
+                ProjectModel project = createProjectFromMap(myMap);
+                pb.getProjectTable().add(project);
+                if (!projectToLoadId.isEmpty()) {
+                    Object idObject = myMap.get("id"); // This will get the value associated with 'Id' key
+                    if (idObject != null) { // Check if the 'Id' exists
+                        String idString = idObject + "";
+                        if (idString.equals(projectToLoadId)) {
+                            pb.setProjectToLoad(project);
+                            loadProjectBool = true;
+                            projectToLoadId = "";
+                        }
+                    }
+                }
+            }
+            if (loadProjectBool) {
+                pb.settingProceedType("load");
+            }
+            return true;
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to load project information!");
+            e.printStackTrace();  // Logging the exception
+            return false;
+        }
+    }
 }

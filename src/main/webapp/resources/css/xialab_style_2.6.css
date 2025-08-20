@@ -372,16 +372,16 @@ a:visited {
 /*
 * position overlay on current page
 */
-.my-float-btn{
+.my-float-btn {
     position: fixed;
-    width: 50px !important;
-    height: 50px !important;
-    background: none;
-    border-width: 0 !important;
-    font-size: 2.0em !important;
-    bottom: 60px;
-    right: 40px;
-    z-index: 9999;
+    width: 72px !important;
+    height: 72px !important;
+    border-width: 3px !important;
+    font-size: 1.2em;
+    font-weight: bolder;
+    top: 100px;
+    right: 36px;
+    z-index: 999;
 }
 
 .my-float-bot{
@@ -391,9 +391,6 @@ a:visited {
     z-index: 9999;
 }
 
-.my-float-btn .pi{
-    font-size: 1.8em !important;
-}
 
 body .ui-fileupload .ui-fileupload-buttonbar {
     background:inherit !important;
