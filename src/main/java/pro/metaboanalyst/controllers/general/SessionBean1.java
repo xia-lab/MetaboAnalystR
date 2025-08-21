@@ -438,7 +438,11 @@ public class SessionBean1 implements Serializable {
         }
 
         this.setLoggedIn(true);
-        addMessage("info", "Log in successful.");
+        try {
+            addMessage("info", "Log in successful.");
+        } catch (Exception e) {
+        
+        }
         try {
             //WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
             wb.setCalledWorkflowsError(new LinkedHashSet());
