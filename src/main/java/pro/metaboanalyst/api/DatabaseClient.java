@@ -14,6 +14,12 @@ import java.util.logging.Logger;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -448,6 +454,40 @@ public class DatabaseClient {
             }
         }
     }
+    
+    
+    public String insertDataset(String email,
+            String node,
+            String title,
+            String filename,
+            String type,
+            long sizeBytes,
+            int sampleNum) {
+        if (ab.isInDocker()) {
+            // Direct DB call (local container)
+            return DatabaseController.insertDataset(email, node, title, filename, type, sizeBytes, sampleNum);
+        } else {
+            try {
+                // Build JSON payload
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("email", email);
+                payload.put("node", node);
+                payload.put("title", title);
+                payload.put("filename", filename);
+                payload.put("type", type);           // e.g. "csv"/"tsv"/"txt"/"zip"
+                payload.put("sizeBytes", sizeBytes); // raw bytes
+                payload.put("samplenum", sampleNum); // integer >= 0
+
+                // POST to the datasets endpoint (TEXT_PLAIN response in our JAX-RS)
+                return apiClient.post("/database/datasets/insert", toJson(payload));
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error inserting dataset", e);
+                return "Error inserting dataset: " + e.getMessage();
+            }
+        }
+    }
+
+
 
     private String toJson(Map<String, ?> map) {
         return new Gson().toJson(map);

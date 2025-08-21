@@ -18,12 +18,12 @@
         }
 
     </style>
-    <h:form id="dataListForm2">
-        <p:commandButton id="mydatabtn" value="Data" 
-                         styleClass="ui-button-raised rounded-button ui-button-outlined my-float-btn"/>
-        <p:overlayPanel for="mydatabtn" dismissable="false" showCloseIcon="true" style="width:300px">
-        <ui:include src="/template/_uploader.xhtml" />
 
+    <p:commandButton id="mydatabtn" value="Data" 
+                     styleClass="ui-button-raised rounded-button ui-button-outlined my-float-btn"/>
+    <p:overlayPanel for="mydatabtn" dismissable="false" showCloseIcon="true" style="width:300px">
+        <ui:include src="/template/_uploader.xhtml" />
+        <h:form id="dataListForm2">
             <p:dataTable rendered="#{sessionBean1.analType ne 'metapaths' and sessionBean1.analType ne 'metadata' }" id="listTblMeta" style="margin-top: 20px; padding: 10px; width:100%;" 
                          class="surface-card shadow-1 p-0 text-800"
                          var="data" rowKey="#{data.name}" value="#{procBean.metaDataSet}"> 
@@ -105,10 +105,10 @@
 
 
             </h:panelGrid>
+        </h:form> 
 
-        </p:overlayPanel>
+    </p:overlayPanel>
 
-    </h:form> 
 
     <p:dialog widgetVar="dataPanelDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
               width="800px" hideEffect="explode" resizable="true">

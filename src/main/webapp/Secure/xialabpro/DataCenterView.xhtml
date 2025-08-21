@@ -89,7 +89,7 @@
                 download, edit metadata, or delete them.
             </p>
 
-        <ui:include src="/template/_dataset_overlaypanel.xhtml" />
+            <ui:include src="/template/_dataset_overlaypanel.xhtml" />
             <h:form id="dataTableForm">
                 <p:toolbar styleClass="surface-card shadow-1 p-2 mb-2">
                     <p:toolbarGroup align="right">
@@ -141,7 +141,9 @@
                     <p:column headerText="Size" sortBy="#{ds.humanSize}" style="width:110px; text-align:right;">
                         <h:outputText value="#{ds.humanSize}"/>
                     </p:column>
-
+                    <p:column headerText="Samples" sortBy="#{ds.samplenum}" style="width:100px; text-align:right;">
+                        <h:outputText value="#{ds.samplenum}"/>
+                    </p:column>
                     <p:column headerText="Date" sortBy="#{ds.uploadedAt}" style="width: 170px; text-align:center;">
                         <h:outputText value="#{ds.uploadedAt}">
                             <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>

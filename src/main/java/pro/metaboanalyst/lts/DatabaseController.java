@@ -1637,4 +1637,44 @@ public class DatabaseController implements Serializable {
 
         return projectDetails; // Return all column values as a map or an empty map if no match is found
     }
+
+    public static String insertDataset(String email,
+            String node,
+            String title,
+            String filename,
+            String type,
+            long sizeBytes,
+            int sampleNum) {
+        final String sql
+                = "INSERT INTO datasets (title, filename, type, size_bytes, email, node, samplenum) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id";
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, title);
+            ps.setString(2, filename);
+            ps.setString(3, type);        // e.g., "csv", "tsv", "txt", "zip"
+            ps.setLong(4, sizeBytes);     // store raw bytes; UI can format
+            ps.setString(5, email);       // citext in PG handles case-insensitivity
+            ps.setString(6, node);        // server/node identifier
+            ps.setInt(7, sampleNum);      // >= 0 (DB has CHECK constraint)
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // PG JDBC maps UUID nicely:
+                    Object obj = rs.getObject(1);
+                    String idStr = (obj instanceof java.util.UUID)
+                            ? ((java.util.UUID) obj).toString()
+                            : String.valueOf(obj);
+                    return "Dataset inserted successfully. id=" + idStr;
+                } else {
+                    return "Dataset insertion failed.";
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("SQLException in insertDataset: " + ex.getMessage());
+            return "Error inserting dataset - " + ex.getMessage();
+        }
+    }
+
 }

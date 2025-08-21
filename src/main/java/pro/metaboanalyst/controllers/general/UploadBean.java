@@ -12,6 +12,12 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.file.UploadedFile;
@@ -19,6 +25,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
+import org.primefaces.event.FileUploadEvent;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
@@ -870,5 +877,46 @@ public class UploadBean implements Serializable {
         }
         sb.setDataUploaded();
         return "Data check";
+    }
+    
+    
+    public void handleFileUploadMulti(FileUploadEvent event) {
+
+        UploadedFile dataFile = event.getFile();
+
+        if (dataFile == null || dataFile.getSize() == 0) {
+            sb.addMessage("error", "Empty data file?");
+            return;
+        }
+        
+        if (ab.isOnProServer()) { // size limit will apply only on public server
+            if (dataFile.getSize() > ab.getMAX_UPLOAD_SIZE()) {
+                sb.addMessage("error", "The file size exceeds limit:" + ab.getMAX_UPLOAD_SIZE());
+                dataFile = null;
+                return;
+            }
+        }
+
+
+        RConnection RC = sb.getRConnection();
+        String homeDir = sb.getCurrentUser().getHomeDir();
+
+        //do actual upload 
+        String fileName = dataFile.getFileName();
+        try {
+            InputStream in = dataFile.getInputStream();
+            OutputStream out = new FileOutputStream(new File(homeDir + File.separator + fileName));
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, len);
+            }
+            in.close();
+            out.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+
     }
 }
