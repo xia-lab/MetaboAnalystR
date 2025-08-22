@@ -80,6 +80,8 @@ public class RocUtils {
             String rCommand = "Perform.UnivROC(NA" + ", \"" + featNm + "\", " + version + ", \"" + format + "\", " + dpi + ", " + isAUC + ", " + isOpt + ", \"" + optMethod + "\", " + isPartial + ", \"" + measure + "\", " + cutoff + ")";
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("roc_univ_" + featNm, rCommand);
+            sb.addGraphicsCMD("roc_univ_", rCommand);
+
             sb.addGraphicsMapLink("roc_univ_" + featNm, "/Secure/roc/UnivRocView.xhtml");
 
             return RC.eval(rCommand).asString();
@@ -95,6 +97,8 @@ public class RocUtils {
             String rCommand = "PlotRocUnivBoxPlot(NA" + ", \"" + featNm + "\", " + version + ", \"" + format + "\", " + dpi + ", " + isOpt + ", " + isQuery + ")";
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("roc_boxplot_" + featNm, rCommand);
+            sb.addGraphicsCMD("roc_boxplot_", rCommand);
+
             sb.addGraphicsMapLink("roc_boxplot_" + featNm, "/Secure/roc/UnivRocView.xhtml");
 
             return RC.eval(rCommand).asString();

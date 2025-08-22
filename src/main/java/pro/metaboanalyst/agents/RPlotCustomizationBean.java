@@ -1,5 +1,6 @@
 package pro.metaboanalyst.agents;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -11,11 +12,16 @@ import java.util.Map;
 import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
 
 @Named("rPlotCustomizationBean")
 @ViewScoped
 public class RPlotCustomizationBean implements Serializable {
 
+    @JsonIgnore
+    @Inject
+    private RocAnalBean rcb;
+    
     @Inject
     private SessionBean1 sb;
 
@@ -148,6 +154,10 @@ public class RPlotCustomizationBean implements Serializable {
                 System.out.println(sb.getBoxplotUrl());
                 return sb.getBoxplotUrl() + "?t=" + System.currentTimeMillis();
             }
+        } else if (plotSource.equals("roc_univ_")) {
+            return rcb.getRocUnivImg() + "?t=" + System.currentTimeMillis();
+        }else if (plotSource.equals("roc_boxplot_")) {
+            return rcb.getRocUnivBPImg() + "?t=" + System.currentTimeMillis();
         } else {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
         }
@@ -276,7 +286,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("cmpd", "PlotCmpdSummary"), // ok
             Map.entry("dr_barplot", "PlotDRModelBars"), // Unsupported plot type for source: dr_barplot
             Map.entry("rf_imp_meta", "PlotRF.VIPMeta") // no backend logic to link up this script to the front-end
-         
+
     );
 
     private static final Map<String, List<String>> HELPERS = Map.ofEntries(
