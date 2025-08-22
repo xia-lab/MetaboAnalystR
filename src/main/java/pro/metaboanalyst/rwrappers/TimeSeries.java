@@ -25,7 +25,7 @@ public class TimeSeries {
             System.out.println(rse);
         }
     }
-    
+
     public static void prepareLiveGraphics(RConnection RC, String urlPath, int inx) {
         try {
             String rCommand = "SetLiveGraphics(\"" + urlPath + "\", " + inx + ")";
@@ -102,8 +102,11 @@ public class TimeSeries {
             String rCommand = "PlotPCAPairSummaryMeta(NA" + ", \"" + imageName + "\", \"" + format + "\", " + dpi + ", width=NA, " + pcNum + ", \"" + meta + "\", \"" + metaShape + "\")";
             //sb.addGraphicsCMD("pca_pair_meta", rCommand);
             sb.addGraphicsCMD(code, rCommand);
-            sb.addGraphicsMapLink(code, "/Secure/multifac/LivePCAView.xhtml");
-
+            if (code.equals("pca_pair_meta")) {
+                sb.addGraphicsMapLink(code, "/Secure/multifac/LivePCAView.xhtml");
+            } else {
+                sb.addGraphicsMapLink(code, "/Secure/analysis/PCAView.xhtml");
+            }
             RCenter.recordRCommand(RC, rCommand);
             RC.voidEval(rCommand);
         } catch (RserveException rse) {
@@ -579,41 +582,41 @@ public class TimeSeries {
     }
 
     public static void plotPCA2DScoreMeta(SessionBean1 sb,
-                                      String imgName,
-                                      String format,
-                                      int dpi,
-                                      int pc1Inx,
-                                      int pc2Inx,
-                                      double conf,
-                                      int show,
-                                      int greyScale,
-                                      String cexOpt,
-                                      String meta,        
-                                      String metaShape) { 
+            String imgName,
+            String format,
+            int dpi,
+            int pc1Inx,
+            int pc2Inx,
+            double conf,
+            int show,
+            int greyScale,
+            String cexOpt,
+            String meta,
+            String metaShape) {
         try {
             RConnection RC = sb.getRConnection();
 
             /* build R call ------------------------------------------------- */
-            String metaArg      = (meta == null || meta.trim().isEmpty())
-                                    ? "NULL" : "\"" + meta + "\"";
+            String metaArg = (meta == null || meta.trim().isEmpty())
+                    ? "NULL" : "\"" + meta + "\"";
             String metaShapeArg = (metaShape == null || metaShape.trim().isEmpty())
-                                    ? "NULL" : "\"" + metaShape + "\"";
+                    ? "NULL" : "\"" + metaShape + "\"";
 
-            String rCommand =
-                "PlotPCA2DScoreMeta(NA" +
-                ", \"" + imgName + "\"" +
-                ", \"" + format + "\"" +
-                ", "  + dpi +
-                ", width=NA" +
-                ", "  + pc1Inx +
-                ", "  + pc2Inx +
-                ", "  + conf +
-                ", "  + show +
-                ", "  + greyScale +
-                ", \"" + cexOpt + "\"" +
-                ", "  + metaArg +
-                ", "  + metaShapeArg +
-                ")";
+            String rCommand
+                    = "PlotPCA2DScoreMeta(NA"
+                    + ", \"" + imgName + "\""
+                    + ", \"" + format + "\""
+                    + ", " + dpi
+                    + ", width=NA"
+                    + ", " + pc1Inx
+                    + ", " + pc2Inx
+                    + ", " + conf
+                    + ", " + show
+                    + ", " + greyScale
+                    + ", \"" + cexOpt + "\""
+                    + ", " + metaArg
+                    + ", " + metaShapeArg
+                    + ")";
 
             sb.addGraphicsCMD("pca_score2d_meta", rCommand);
             RCenter.recordRCommand(RC, rCommand);
@@ -622,5 +625,5 @@ public class TimeSeries {
         } catch (RserveException rse) {
             System.out.println(rse);
         }
-    }   
+    }
 }

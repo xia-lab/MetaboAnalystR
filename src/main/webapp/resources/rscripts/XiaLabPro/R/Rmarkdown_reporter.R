@@ -438,6 +438,27 @@ writeLines(html_content, "custom-scripts.html")
 
     </style>\n\n")
     cat(container_css, file=rmdFile, sep="\n", append=TRUE)
+
+    ## ── unified setup chunk (TMPDIR + figure dir + device) ─────────────
+    setup_chunk <- c(
+      "```{r setup, include=FALSE}",
+      "# Stable temp & figure directories to avoid /tmp cleanup issues",
+      "if (!nzchar(Sys.getenv('TMPDIR'))) Sys.setenv(TMPDIR = file.path(getwd(), 'tmp'))",
+      "dir.create(Sys.getenv('TMPDIR'), showWarnings = FALSE, recursive = TRUE)",
+      "dir.create('figure', showWarnings = FALSE, recursive = TRUE)",
+      "",
+      "# Device: prefer ragg, fall back to png; set DPI and default fig path",
+      "dev_choice <- if (requireNamespace('ragg', quietly = TRUE)) 'ragg_png' else 'png'",
+      "knitr::opts_chunk$set(",
+      "  echo = FALSE, warning = FALSE, message = FALSE,",
+      "  fig.path = 'figure/', dev = dev_choice, dpi = 150",
+      ")",
+      "",
+      "# Headless bitmap safety (Cairo on Linux servers)",
+      "options(bitmapType = 'cairo')",
+      "```"
+    )
+    cat(setup_chunk, file = rmdFile, sep = "\n", append = TRUE)
   }
   
   code_settings <- c("```{r echo=FALSE}",

@@ -177,7 +177,7 @@
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' 
                                  style="width:10in; padding-left: 50px"
-                                 src="#{sessionBean1.getCurrentImageURL('pca_pair')}" alt="PCAPairImage"/>
+                                 src="#{sessionBean1.getCurrentImageURLNoCache('pca_pair')}" alt="PCAPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -191,7 +191,7 @@
                                 </p:selectOneMenu>
                                 <h:outputLabel style="font-weight: bold" value=" PCs"/>
                             </h:panelGroup>
-                            <p:commandButton value="Update" update=":ac:form2:screePane  :hisTab:cmdPane" actionListener="#{pcaBean.pcaScreeBtn_action()}"/>   
+                            <p:commandButton value="Update" update=":ac:form2  :hisTab:cmdPane" actionListener="#{pcaBean.pcaScreeBtn_action()}"/>   
                         </h:panelGrid>
 
                         <h:outputText value ="The green line on top shows the accumulated variance explained; the blue line underneath shows the 
@@ -206,7 +206,7 @@
                         </h:panelGrid>
                         <img onerror='this.style.display="none"' 
                              style="width:10in; padding-left: 50px"
-                             src="#{sessionBean1.getCurrentImageURL('pca_scree')}" alt="PCAScreeImage"/>
+                             src="#{sessionBean1.getCurrentImageURLNoCache('pca_scree')}" alt="PCAScreeImage"/>
 
                     </h:form>
                 </p:tab>

@@ -75,6 +75,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.time.OffsetDateTime;
+import java.util.UUID;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
@@ -1854,4 +1856,90 @@ public class FireBaseController implements Serializable {
             return false;
         }
     }
+    
+    
+public void generateDatasetJson(String title,
+                                File dataFile,
+                                int sampleNum,
+                                boolean insertToDBNow,
+                                boolean msgBool) throws IOException {
+    // 0) Basic validation (like your workflow check)
+    if (dataFile == null || !dataFile.exists() || !dataFile.isFile()) {
+        if (msgBool) {
+            sb.addMessage("Error", "Dataset file is missing or invalid.");
+        } else {
+            System.out.println("dataset file missing/invalid: " + dataFile);
+        }
+        return;
+    }
+
+    // 1) Ensure user folder exists (same pattern as workflow)
+    String userEmail = fub.getEmail();
+    File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + userEmail);
+    if (!projSubFolder.exists()) {
+        boolean ok = projSubFolder.mkdirs();
+        if (!ok) {
+            if (msgBool) {
+                sb.addMessage("Error", "Saving dataset failed: cannot create user folder!");
+            } else {
+                System.out.println("Cannot create user folder: " + projSubFolder);
+            }
+            return;
+        }
+    }
+
+    // 2) Build the DatasetRow (POJO) — matches your JSF table + DB schema
+    DatasetRow ds = new DatasetRow();
+    // Let DB assign UUID on insert; but keep a client-side token for traceability if you like:
+    // ds.setId(UUID.randomUUID());  // optional (DB has its own uuid default)
+    ds.setEmail(userEmail);
+    // Use your notion of “node” — if you already track it elsewhere, swap this:
+    ds.setNode(ab.getToolLocation());  // or ab.getAppName() / ab.getServerNode()
+    ds.setTitle((title != null && !title.trim().isEmpty()) ? title.trim() : dataFile.getName());
+    ds.setFilename(dataFile.getName());
+    ds.setType(getExtLower(dataFile.getName()));     // csv/tsv/txt/zip
+    ds.setSizeBytes(dataFile.length());
+    ds.setSamplenum(Math.max(0, sampleNum));
+    ds.setUploadedAt(OffsetDateTime.now());
+
+    // Optional UI-only fields (used by your edit dialog)
+    ds.setDescription(null);
+    ds.setTags(null);
+
+    // 3) Save JSON “stub” alongside the file (similar to your workflow JSON)
+    String base = "dataset_" + UUID.randomUUID();
+    File jsonOut = new File(projSubFolder, base + ".json");
+    ObjectMapper om = new ObjectMapper();
+    om.findAndRegisterModules(); // to serialize OffsetDateTime cleanly
+    om.writerWithDefaultPrettyPrinter().writeValue(jsonOut, ds);
+
+    // 4) (Optional) insert now — or keep the JSON for later batch insertion
+    if (insertToDBNow) {
+        String result = db.insertDataset(
+                ds.getEmail(),
+                ds.getNode(),
+                ds.getTitle(),
+                ds.getFilename(),
+                ds.getType(),
+                ds.getSizeBytes(),
+                ds.getSamplenum()
+        );
+        if (msgBool) sb.addMessage("info", result);
+        else         System.out.println("insertDataset result: " + result);
+    } else {
+        if (msgBool) {
+            sb.addMessage("info", "Dataset metadata saved: " + jsonOut.getName());
+        } else {
+            System.out.println("Saved dataset JSON stub: " + jsonOut.getAbsolutePath());
+        }
+    }
+}
+
+/** Small helper: get lowercase extension without dot; empty string if none. */
+private static String getExtLower(String name) {
+    if (name == null) return "";
+    int i = name.lastIndexOf('.');
+    return (i >= 0 && i < name.length() - 1) ? name.substring(i + 1).toLowerCase() : "";
+}
+
 }

@@ -782,6 +782,48 @@ public class SessionBean1 implements Serializable {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
 
+    @JsonIgnore
+    public String getCurrentImageURLNoCache(String name) {
+        // Build a URL with forward slashes and append a cache-busting query param
+        String root = ab.getRootContext();                   // e.g. "/ExpressAnalyst"
+        String rel = getCurrentUser().getRelativeDir();     // e.g. "users/zgy/session123/"
+        String file = getCurrentImage(name) + "dpi150.png";  // e.g. "pca_pairdpi150.png" (your convention)
+
+        // Normalize pieces to avoid double slashes and backslashes
+        StringBuilder sb = new StringBuilder();
+        if (root == null) {
+            root = "";
+        }
+        if (!root.startsWith("/")) {
+            sb.append('/');
+        }
+        sb.append(root.replace('\\', '/'));
+        if (sb.charAt(sb.length() - 1) != '/') {
+            sb.append('/');
+        }
+        if (rel != null && !rel.isEmpty()) {
+            sb.append(rel.replace('\\', '/'));
+            if (sb.charAt(sb.length() - 1) != '/') {
+                sb.append('/');
+            }
+        }
+        sb.append(file);
+
+        long v = getImageStamp(name);
+        return sb.toString() + (sb.indexOf("?") >= 0 ? "&" : "?") + "v=" + v;
+    }
+
+    // In SessionBean1 (or your image-serving bean)
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> imgStamp = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void bumpImageStamp(String key) {
+        imgStamp.put(key, System.currentTimeMillis());
+    }
+
+    public long getImageStamp(String key) {
+        return imgStamp.computeIfAbsent(key, k -> System.currentTimeMillis());
+    }
+
     /**
      * get JSON files for interactive
      *
@@ -809,6 +851,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void addGraphicsCMD(String key, String rcmd) {
+        bumpImageStamp(key);
         graphicsMap.put(key, rcmd);
     }
 
