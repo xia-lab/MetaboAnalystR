@@ -628,6 +628,9 @@ CreateDataProcdoc <- function(mSetObj=NA){
     cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
   }
 
+  if(is.null(mSet$msgSet$replace.msg))
+    mSet$msgSet$replace.msg <- "No data replacement was performed."
+
   missingMsg <- paste("*", mSet$msgSet$replace.msg);
   missingMsg <- paste0(missingMsg, collapse = "\\\n");
 
@@ -639,7 +642,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
              since zero values may cause problem for data normalization (i.e. log), they are also 
              replaced with this small value. User can also specify other methods, such as replacing by mean/median,
              K-Nearest Neighbours (KNN), Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)
-             method to impute the missing values. Please choose the one that is the most appropriate for your data.\n",
+             method to impute the missing values.\n",
              missingMsg,
              "\n");
   cat(descr, file=rmdFile, append=TRUE, sep="\n");

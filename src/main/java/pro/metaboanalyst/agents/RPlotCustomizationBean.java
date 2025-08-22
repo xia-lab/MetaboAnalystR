@@ -293,7 +293,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotFunnel", List.of(".mr_funnelPLot")),
             Map.entry("PlotLeaveOneOut", List.of(".mr_looPlot")),
             Map.entry("PlotRF.VIPMeta", List.of("PlotImpVarDisc")), // updated
-            Map.entry("rf_imp", List.of("PlotImpVar")),
+            Map.entry("PlotRF.VIP", List.of("PlotImpVar")),
             Map.entry("PlotQEA.Overview", List.of("PlotMSEA.Overview"))
     );
 
