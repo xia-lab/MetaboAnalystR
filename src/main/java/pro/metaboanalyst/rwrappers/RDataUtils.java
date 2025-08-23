@@ -3785,4 +3785,33 @@ public class RDataUtils {
         }
         return null;
     }
+
+    public static int plotMetaCorrHeatmap(SessionBean1 sb,
+            String corMethod, // "univariate" | "partial"
+            String corOpt, // "pearson" | "spearman" | …
+            String colorGradient, // "viridis", "gbr", …
+            boolean interactive, // TRUE ⇒ Plotly widget
+            String imgName,
+            String format,
+            int dpi) {
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // Build the R command by simple string concatenation
+            String rCommand
+                    = "PlotMetaCorrHeatmap(NA, \"" + corOpt + "\", \"" + imgName + "\", \""
+                    + format + "\", " + dpi + ", width=NA, "
+                    + "cor.method=\"" + corMethod + "\", "
+                    + "colorGradient=\"" + colorGradient + "\", "
+                    + "interactive=" + (interactive ? "TRUE" : "FALSE") + ")";
+
+            RCenter.recordRCommand(RC, rCommand);
+            sb.addGraphicsCMD("metaCorrHeatmap", rCommand);
+
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception e) {
+            LOGGER.error("plotMetaCorrHeatmap", e);
+            return 0;
+        }
+    }
 }

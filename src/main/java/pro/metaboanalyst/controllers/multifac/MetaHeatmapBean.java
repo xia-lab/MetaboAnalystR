@@ -28,11 +28,11 @@ public class MetaHeatmapBean implements Serializable {
     private WorkflowBean wb;
     @Inject
     private SessionBean1 sb;
-    
-        @JsonIgnore
+
+    @JsonIgnore
     @Inject
     private JavaRecord jrd;
-        
+
     private final String pageID = "Metadata";
 
     private String metaDistOpt = "euclidean";
@@ -112,7 +112,11 @@ public class MetaHeatmapBean implements Serializable {
         if (!sb.isAnalInit(pageID)) {
             jrd.record_metaOverviewBn_action(this);
             sb.addNaviTrack(pageID, "/Secure/multifac/MetaDataView.xhtml");
-            RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 150);
+            int res = RDataUtils.plotMetaCorrHeatmap(sb,
+                    "univariate", // corMethod
+                    corOpt,
+                    "default", // colorGradient
+                    false, sb.getNewImage("metaCorrHeatmap"), "png", 150);
             RDataUtils.plotMetaHeatmap(sb, "overview", "both", "euclidean", "ward.D", "bwm",
                     includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
         } else {
@@ -128,24 +132,48 @@ public class MetaHeatmapBean implements Serializable {
 
     public boolean metaOverviewBn_action() {
         jrd.record_metaOverviewBn_action(this);
-        if (wb.isEditMode()) {
+
+        String ucMethod = "univariate";
+        switch (corOpt) {
+            case "u-pearson" -> {
+                ucMethod = "univariate";
+                corOpt = "pearson";
+            }
+            case "u-spearman" -> {
+                ucMethod = "univariate";
+                corOpt = "spearman";
+            }
+            case "u-kendall" -> {
+                ucMethod = "univariate";
+                corOpt = "kendall";
+            }
+            case "p-pearson" -> {
+                ucMethod = "partial";
+                corOpt = "pearson";
+            }
+            case "p-spearman" -> {
+                ucMethod = "partial";
+                corOpt = "spearman";
+            }
+            case "p-kendall" -> {
+                ucMethod = "partial";
+                corOpt = "kendall";
+            }
+            default -> {
+            }
+        }
+
+        int res = RDataUtils.plotMetaCorrHeatmap(sb,
+                ucMethod, // corMethod
+                corOpt,
+                "default", // colorGradient
+                false, sb.getNewImage("metaCorrHeatmap"), "png", 150);
+        if (res == 0) {
+            sb.addMessage("Error", "Unknown error occured in the image generation!");
+            return false;
+        } else {
             return true;
         }
-        int res = RDataUtils.plotMetaCorrHeatmap(sb, corOpt, sb.getNewImage("metaCorrHeatmap"), "png", 150);
-        if (res == 0) {
-            sb.addMessage("Error", "Unknown error occured in the metadata correlation heatmap generation!");
-            return false;
-
-        }
-
-        res = RDataUtils.plotMetaHeatmap(sb, metaViewOpt, metaClusterSelOpt, metaDistOpt, metaClusterOpt, metaColorOpt,
-                includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
-        if (res == 0) {
-            sb.addMessage("Error", "Please change standardization parameters and try again!");
-            return false;
-
-        }
-        return true;
 
     }
 }
