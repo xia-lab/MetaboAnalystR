@@ -1091,7 +1091,12 @@ public class SessionBean1 implements Serializable {
 
     public void graphicsLnk_action(String code) {
         setImgDownloadTxt("");
-        imgSource = code;
+        if(code.contains("roc_univ_") || code.contains("roc_boxplot_")){
+            imgSource = code + rab.getCurrentCmpd();
+        }else{
+                    imgSource = code;
+
+        }
         //System.out.println("===========current img key: " + code);
     }
 

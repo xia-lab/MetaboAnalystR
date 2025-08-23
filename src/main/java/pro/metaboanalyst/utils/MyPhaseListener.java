@@ -570,7 +570,7 @@ public class MyPhaseListener implements PhaseListener {
             if (res) {
                 boolean wfRes = dv.startWorkflow();
                 if (wfRes) {
-                    sb.setCurrentNaviUrl("/Secure/xialabpro/ResultView.xhtml");
+                    sb.setCurrentNaviUrl("/Secure/xialabpro/DashboardView.xhtml");
                     fub.setEmail(email);
 
                     String shareLink = ab.getApp_url() + "/" + ab.getAppName()
