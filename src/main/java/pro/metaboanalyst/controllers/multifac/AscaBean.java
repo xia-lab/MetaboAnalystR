@@ -123,7 +123,7 @@ public class AscaBean implements Serializable {
         if (!sb.isAnalInit(pageID)) {
             sb.addNaviTrack(pageID, "/Secure/multifac/AscaView.xhtml");
         }
-
+/*
         if (wb.getFunctionInfos().get("ASCA") != null) {
             try {
                 FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("ASCA"));
@@ -131,7 +131,7 @@ public class AscaBean implements Serializable {
 
             }
         }
-
+*/
         if (selectedMetasAsca == null) {
             selectedMetasAsca = mfb.getDiscMetaOpts();
         }

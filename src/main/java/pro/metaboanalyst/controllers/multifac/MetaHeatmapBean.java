@@ -119,15 +119,7 @@ public class MetaHeatmapBean implements Serializable {
                     false, sb.getNewImage("metaCorrHeatmap"), "png", 150);
             RDataUtils.plotMetaHeatmap(sb, "overview", "both", "euclidean", "ward.D", "bwm",
                     includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
-        } else {
-            if (wb.getFunctionInfos().get("Metadata Heatmap") != null) {
-                try {
-                    FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("Metadata Heatmap"));
-                } catch (Exception ex) {
-
-                }
-            }
-        }
+        } 
     }
 
     public boolean metaOverviewBn_action() {
