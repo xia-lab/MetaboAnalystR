@@ -21,7 +21,7 @@ public class RPlotCustomizationBean implements Serializable {
     @JsonIgnore
     @Inject
     private RocAnalBean rcb;
-    
+
     @Inject
     private SessionBean1 sb;
 
@@ -156,7 +156,7 @@ public class RPlotCustomizationBean implements Serializable {
             }
         } else if (plotSource.equals("roc_univ_")) {
             return rcb.getRocUnivImg() + "?t=" + System.currentTimeMillis();
-        }else if (plotSource.equals("roc_boxplot_")) {
+        } else if (plotSource.equals("roc_boxplot_")) {
             return rcb.getRocUnivBPImg() + "?t=" + System.currentTimeMillis();
         } else {
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
@@ -294,8 +294,8 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotPLS.Imp", List.of("PlotImpVar")),
             Map.entry("PlotOPLS.Imp", List.of("PlotImpVar")),
             Map.entry("PlotSPLSPairSummary", List.of("Plot.PairScatter")),
-            Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd")),
-            Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd")),
+            Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd", "sam.plot2")),
+            Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd", "plotEbam")),
             Map.entry("PlotPCAPairSummary", List.of("Plot.PairScatter")),
             Map.entry("PlotPLSPairSummary", List.of("Plot.PairScatter")),
             Map.entry("PlotScatter", List.of(".mr_scatterPlot")),

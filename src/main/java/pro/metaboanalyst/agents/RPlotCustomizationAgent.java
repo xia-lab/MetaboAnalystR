@@ -7,11 +7,13 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -58,7 +60,6 @@ public class RPlotCustomizationAgent implements Serializable {
     private transient SessionBean1 sb;
 
     private transient GoogleAIClient aiClient;
-    private static String RSCRIPT_DIR;
     private final List<ChatMessage> chatHistory = new ArrayList<>();
 
     /*───────────────────────────────────────────────────────────────────────────
@@ -70,7 +71,6 @@ public class RPlotCustomizationAgent implements Serializable {
             LOG.severe("ApplicationBean1 not injected – cannot resolve R script path");
             return;
         }
-        RSCRIPT_DIR = appBean.getRscriptsHomePath() + "/XiaLabPro/R/plotting";
         try {
             aiClient = new GoogleAIClient();
         } catch (Exception e) {
@@ -104,10 +104,6 @@ public class RPlotCustomizationAgent implements Serializable {
             List<String> helpers,
             String userRequest) {
 
-        /*── sanity checks ───────────────────────────────────────────────────*/
-        if (RSCRIPT_DIR == null) {
-            return err("R script directory not initialised");
-        }
         if (aiClient == null) {
             return err("AI client not initialised");
         }
@@ -156,101 +152,99 @@ public class RPlotCustomizationAgent implements Serializable {
                 + originalMain
                 + helperBlocks
                 + "\n\nUser request:\n" + userRequest;
-        
-        System.out.println(prompt + "\n"); 
-               
+
+        System.out.println(prompt + "\n");
+
         chatHistory.add(new ChatMessage("user", userRequest));
 
         /*── 4. call the model ──────────────────────────────────────────────*/
         String llmOut = aiClient.generateText(prompt);
         chatHistory.add(new ChatMessage("model", llmOut));
-        
+
         // debugging
         System.out.println("Model Response: \n" + llmOut);
-        
-        /*── 5. sanitise: strip fences, rename assignments, enforce suffix ─*/
-        llmOut = llmOut.replaceAll("(?s)```[rR]?\\s*", "")
-                .replaceAll("(?s)```\\s*$", "");
-        
-        
- 
+
+        /*── 5. sanitize + suffix main & helpers + rewrite call-sites ─────────────*/
+        llmOut = llmOut
+                .replaceAll("(?s)```[rR]?\\s*", "")
+                .replaceAll("(?s)```\\s*$", "")
+                .trim();
+
         final String aiSuffix = "AI";
         final String aiMain = functionName + aiSuffix;
 
-        
-        /**
-        // rename every *top-level* assignment with the original main name
-        llmOut = llmOut.replaceAll(
-                "(?m)^\\s*"
-                + Pattern.quote(functionName)
-                + "\\s*<-\\s*function",
-                aiMain + " <- function");
-        
-        
-        // NEW: rename all helper function assignments ----------------------->
-        // Handle both explicit assignment and anonymous function after comment
-        // Pattern 1: explicit assignment "Plot.PairScatter <- function"
-        for (String helper : helpers) {
-            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
-            llmOut = llmOut.replaceAll(
-                    "(?m)^\\s*"
-                    + Pattern.quote(resolvedHelper)
-                    + "\\s*<-\\s*function",
-                    resolvedHelper + aiSuffix + " <- function");
-            
-            // Pattern 2: anonymous function after helper comment "# Helper: Plot.PairScatter\nfunction"
-            llmOut = llmOut.replaceAll(
-                    "(?m)^\\s*#\\s*Helper:\\s*" + Pattern.quote(resolvedHelper) + "\\s*\\n\\s*function",
-                    "# Helper: " + resolvedHelper + aiSuffix + "\n" + resolvedHelper + aiSuffix + " <- function");
+        /* 5a) Detect helper blocks of the form:
+ *   # Helper: <Name>
+ *   function(...) { ... }
+ * and helpers already assigned:
+ *   <Name>AI <- function(...) { ... }
+         */
+        Pattern hdrPat = Pattern.compile("(?m)^\\s*#\\s*Helper:\\s*([\\w\\.]+)\\s*\\n\\s*function\\b");
+        Pattern asgPat = Pattern.compile("(?m)^\\s*([\\w\\.]+)" + Pattern.quote(aiSuffix) + "\\s*<-\\s*function\\b");
+
+        LinkedHashMap<String, String> helperMap = new LinkedHashMap<>(); // base -> target
+
+        Matcher mh = hdrPat.matcher(llmOut);
+        while (mh.find()) {
+            String raw = mh.group(1); // may already include AI
+            String base = raw.endsWith(aiSuffix) ? raw.substring(0, raw.length() - aiSuffix.length()) : raw;
+            helperMap.put(base, base + aiSuffix);
         }
 
-        // update function calls to use AI versions of helpers
-        for (String helper : helpers) {
-            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
-            // replace helper function with "AI" suffix
-            llmOut = llmOut.replaceAll(
-                    "\\b" + Pattern.quote(resolvedHelper) + "\\s*\\(",
-                    resolvedHelper + aiSuffix + "(");
-        }
-        // ---------------------------- NEW section -------------------------->
-        
-        // if main function is still anonymous, prepend assignment
-        if (!llmOut.matches("(?s).*" + Pattern.quote(aiMain) + "\\s*<-\\s*function.*")) {
-            llmOut = aiMain + " <- " + llmOut.trim();
-        }
-        **/
-        
-        
-        
-        // <---------------- NEW ADDITION ------------------------------------->
-        // NEW: rename all helper function assignments -----------------------
-        // Only need Pattern 2 since helpers also come as anonymous functions with comments
-        for (String helper : helpers) {
-            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
-            
-            // Pattern 2: anonymous function after helper comment "# Helper: Plot.PairScatter\nfunction"
-            llmOut = llmOut.replaceAll(
-                    "(?m)^\\s*#\\s*Helper:\\s*" + Pattern.quote(resolvedHelper) + "\\s*\\n\\s*function",
-                    "# Helper: " + resolvedHelper + aiSuffix + "\n" + resolvedHelper + aiSuffix + " <- function");
+        Matcher ma = asgPat.matcher(llmOut);
+        while (ma.find()) {
+            String base = ma.group(1); // already without AI (we matched <Name>AI)
+            helperMap.putIfAbsent(base, base + aiSuffix);
         }
 
-        // update function calls to use AI versions of helpers
-        for (String helper : helpers) {
-            String resolvedHelper = FUNCTION_MAPPINGS.getOrDefault(helper, new FunctionMapping(helper, null)).rFuncName;
-            // replace function calls like "Plot.PairScatter(" with "Plot.PairScatterAI("
-            llmOut = llmOut.replaceAll(
-                    "\\b" + Pattern.quote(resolvedHelper) + "\\s*\\(",
-                    resolvedHelper + aiSuffix + "(");
+        /* Also honor any helpers passed in explicitly */
+        for (String h : helpers) {
+            String base = FUNCTION_MAPPINGS.getOrDefault(h, new FunctionMapping(h, null)).rFuncName;
+            helperMap.putIfAbsent(base, base + aiSuffix);
         }
-        
-        // Since LLM always returns anonymous functions, always prepend assignment for main function
-        llmOut = aiMain + " <- " + llmOut.trim();
-        
+
+        /* 5b) Normalize helper headers to include assignment to AI name */
+        for (Map.Entry<String, String> e : helperMap.entrySet()) {
+            String baseQ = Pattern.quote(e.getKey());
+            String tgt = e.getValue();
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*#\\s*Helper:\\s*" + baseQ + "\\s*\\n\\s*function\\b",
+                    "# Helper: " + tgt + "\n" + tgt + " <- function"
+            );
+        }
+
+        /* 5c) Ensure the MAIN is assigned to <functionName>AI */
+        if (llmOut.startsWith("function")) {
+            llmOut = aiMain + " <- " + llmOut;
+        } else {
+            llmOut = llmOut.replaceFirst("(?ms)^(\\s*)([\\w\\.]+)\\s*<-\\s*function\\b",
+                    "$1" + aiMain + " <- function");
+        }
+
+        /* 5d) Rewrite ALL call-sites to helpers INSIDE the code:
+ *    base(  ->  baseAI(
+ * Guard against namespaced calls (pkg::base()), and token-boundary on the left.
+         */
+        for (Map.Entry<String, String> e : helperMap.entrySet()) {
+            String base = e.getKey();
+            String tgt = e.getValue();
+
+            // (?<![\\w\\.:])  = not preceded by word char, dot, or colon (avoids foo.bar( and pkg::foo()
+            // \\s*\\(          = actual call
+            String callPat = "(?<![\\w\\.:])" + Pattern.quote(base) + "\\s*\\(";
+            llmOut = llmOut.replaceAll(callPat, tgt + "(");
+        }
+
+        /* Optional: if the main ever self-calls via its original R name (rare), rewrite too.
+    * For example, if resolvedMain appears as a call token inside body.
+         */
+        String resolvedMainBase = resolvedMain; // from step 0
+        if (resolvedMainBase != null && !resolvedMainBase.isBlank()) {
+            String callPat = "(?<![\\w\\.:])" + Pattern.quote(resolvedMainBase) + "\\s*\\(";
+            llmOut = llmOut.replaceAll(callPat, aiMain + "(");
+        }
+
         // <---------------- NEW ADDITION ------------------------------------->
-        
-        
-        
-        
         // debugging: show the final transformed code
         System.out.println("Final transformed code:\n" + llmOut);
 
