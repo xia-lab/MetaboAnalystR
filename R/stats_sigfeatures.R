@@ -90,7 +90,8 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     
     # plot SAM plot
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dpi, width=8, height=8, type="png", bg="white");
-    siggenes::plot(sam_out, delta);
+    #siggenes::plot(sam_out, delta);
+    sam.plot2(sam_out, delta);
     dev.off();        
     
     return(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat, img=imgName));
@@ -198,7 +199,8 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
   dat.in$my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
-    siggenes::plot(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
+    #siggenes::plot(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
+    sam.plot2(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
     dev.off();
   }
 
@@ -334,7 +336,7 @@ PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
   dat.in$my.fun <- function(){
     Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
-    siggenes::plot(dat.in$mSetObj$analSet$ebam, dat.in$mSetObj$analSet$ebam.delta);
+    plotEbam(dat.in$mSetObj$analSet$ebam, dat.in$mSetObj$analSet$ebam.delta);
     dev.off();
   }
 
@@ -422,3 +424,227 @@ GetSigTable.EBAM <- function(mSetObj=NA){
   GetSigTable(mSetObj$analSet$ebam.cmpds, "EBAM", mSetObj$dataSet$type);
 }
 
+sam.plot2 <- function (object, delta, pos.stats = NULL, sig.col = 3, xlim = NULL, 
+    ylim = NULL, main = NULL, xlab = NULL, ylab = NULL, pty = "s", 
+    lab = c(10, 10, 7), pch = NULL, sig.cex = 1, ...) 
+{
+    if (!is(object, "SAM")) 
+        stop("object must be an object of class SAM.")
+    if (is.null(pos.stats)) 
+        pos.stats <- ifelse(all(object@d >= 0, na.rm = TRUE), 
+            2, 1)
+    if (!pos.stats %in% 0:2) 
+        stop("pos.stats must be either 0 (statistics are not displayed),\n", 
+            "1 (stats are displayed in the upper left of the plot), or 2 (lower right).")
+    if (length(sig.col) == 1) 
+        col.down <- col.up <- sig.col
+    else {
+        col.down <- sig.col[1]
+        col.up <- sig.col[2]
+    }
+    d.sort <- sort(object@d)
+    d.bar <- object@d.bar
+    if (is.null(xlim)) 
+        xlim <- c(min(d.sort, d.bar), max(d.sort, d.bar))
+    if (is.null(ylim)) 
+        ylim <- c(min(d.sort, d.bar), max(d.sort, d.bar))
+    if (is.null(main)) 
+        main <- paste("SAM Plot for Delta =", delta)
+    if (is.null(xlab)) 
+        xlab <- "Expected d(i) values"
+    if (is.null(ylab)) 
+        ylab <- "Observed d(i) values"
+    par.store <- list(par()$pty, par()$lab)
+    on.exit(par(pty = par.store[[1]], lab = par.store[[2]]))
+    par(pty = pty, lab = lab)
+    mat.fdr <- stats.cal(object@d, object@d.bar, object@vec.false, 
+        object@p0, delta = delta)
+    d.up <- which(d.sort >= mat.fdr[, "cutup"])
+    d.down <- which(d.sort <= mat.fdr[, "cutlow"])
+    if (length(c(d.up, d.down)) == 0) 
+        plot(d.bar, d.sort, main = main, xlab = xlab, ylab = ylab, 
+            xlim = xlim, ylim = ylim, pch = pch, ...)
+    else {
+        plot(d.bar[-c(d.up, d.down)], d.sort[-c(d.up, d.down)], 
+            main = main, xlab = xlab, ylab = ylab, xlim = xlim, 
+            ylim = ylim, pch = pch, ...)
+        points(d.bar[d.up], d.sort[d.up], col = col.up, cex = sig.cex, 
+            pch = pch)
+        points(d.bar[d.down], d.sort[d.down], col = col.down, 
+            cex = sig.cex, pch = pch)
+    }
+    abline(0, 1)
+    abline(delta, 1, lty = 2)
+    abline(-delta, 1, lty = 2)
+    abline(h = mat.fdr[, "cutup"], lty = 5, cex = 1.5)
+    abline(h = mat.fdr[, "cutlow"], lty = 5, cex = 1.5)
+    stats <- paste(c("cutlow:", "cutup:", "p0:", "Significant:", 
+        "False:", "FDR:"), round(mat.fdr[1, c("cutlow", "cutup", 
+        "p0", "Called", "False", "FDR")], 3), sep = "  ")
+    if (pos.stats == 1) 
+        text(rep(xlim[1], 6), seq(ylim[2], ylim[2] - (ylim[2] - 
+            ylim[1])/4, le = 6), stats, adj = 0, cex = 0.75)
+    if (pos.stats == 2) 
+        text(rep(xlim[2] - (xlim[2] - xlim[1])/4, 6), seq(ylim[1], 
+            ylim[1] + (ylim[2] - ylim[1])/4, le = 6), stats, 
+            adj = 0, cex = 0.75)
+}
+
+stats.cal <- function (d, d.bar, vec.false, p0, delta = NULL, le.delta = 10) 
+{
+    d.sort <- sort(d)
+    d.diff <- d.sort - d.bar
+    m <- length(d.diff)
+    if (is.null(delta)) {
+        ra.ddiff <- range(abs(d.diff))
+        delta <- round(seq(max(0.1, ra.ddiff[1]), max(1, ra.ddiff[2]), 
+            le = le.delta), 1)
+    }
+    else {
+        if (any(delta <= 0)) 
+            stop("delta must be larger than 0.")
+        le.delta <- length(delta)
+    }
+    j0 <- which(d.bar == min(d.bar[d.bar >= 0]))[1]
+    mat.fdr <- matrix(0, le.delta, 9)
+    dimnames(mat.fdr) <- list(1:le.delta, c("Delta", "p0", "False", 
+        "Called", "FDR", "cutlow", "cutup", "j2", "j1"))
+    mat.fdr[, "Delta"] <- delta
+    mat.fdr[, "p0"] <- p0
+    vec.order <- as.numeric(na.exclude(vec.false[order(d)]))
+    for (i in 1:le.delta) {
+        mat.fdr[i, "j1"] <- j1 <- ifelse(any(d.diff[j0:m] >= 
+            delta[i]), j0 - 1 + min(which(d.diff[j0:m] >= delta[i])), 
+            m + 1)
+        mat.fdr[i, "cutup"] <- ifelse(j1 != m + 1, d.sort[j1], 
+            Inf)
+        mat.fdr[i, "j2"] <- j2 <- ifelse(any(d.diff[1:(j0 - 1)] <= 
+            -delta[i]) & j0 != 1, max(which(d.diff[1:(j0 - 1)] <= 
+            -delta[i])), 0)
+        mat.fdr[i, "cutlow"] <- ifelse(j2 != 0, d.sort[j2], -Inf)
+        mat.fdr[i, "Called"] <- m - j1 + 1 + j2
+        mat.fdr[i, "False"] <- ifelse(j1 == m + 1, 0, vec.order[j1]) + 
+            ifelse(j2 == 0, 0, vec.order[j2])
+        mat.fdr[i, "FDR"] <- min(p0 * mat.fdr[i, "False"]/max(mat.fdr[i, 
+            "Called"], 1), 1)
+    }
+    mat.fdr
+}
+
+compNumber1 <- function (z, post, p0, B, delta = 0.9, vec.pos = NULL, vec.neg = NULL) 
+{
+    if (any(delta <= 0 | delta > 1)) 
+        stop("The delta values must be between 0 and 1.")
+    z.sort <- sort(z)
+    z.order <- order(z)
+    post <- post[z.order]
+    if (length(vec.pos) == 0) 
+        probs <- 1/(B * (1 - post)/p0 + 1)
+    else {
+        vec.pos <- vec.pos[z.order]
+        vec.neg <- vec.neg[z.order]
+    }
+    n.delta <- length(delta)
+    m <- length(z)
+    mat.delta <- matrix(0, n.delta, 5)
+    rownames(mat.delta) <- 1:n.delta
+    colnames(mat.delta) <- c("Delta", "Number", "FDR", "CL", 
+        "CU")
+    mat.delta[, 1] <- delta
+    for (i in 1:n.delta) {
+        if (any(z.sort < 0) & post[1] >= delta[i]) {
+            tmp <- post[z.sort < 0]
+            tmp.ids <- which(tmp < delta[i])
+            if (length(tmp.ids) == 0) 
+                j1 <- ifelse(any(tmp == delta[i]), min(which(tmp == 
+                  delta[i])), length(tmp))
+            else j1 <- min(tmp.ids) - 1
+            f1 <- if (length(vec.neg) == 0) 
+                sum(1/probs[1:j1] - 1)/B
+            else vec.neg[j1]
+            mat.delta[i, 4] <- z.sort[j1]
+        }
+        else {
+            j1 <- 0
+            f1 <- 0
+            mat.delta[i, 4] <- -Inf
+        }
+        if (post[m] >= delta[i]) {
+            tmp <- rev(post[z.sort >= 0])
+            tmp.ids <- which(tmp < delta[i])
+            if (length(tmp.ids) == 0) 
+                j2 <- ifelse(any(tmp == delta[i]), min(which(tmp == 
+                  delta[i])), length(tmp))
+            else j2 <- min(tmp.ids) - 1
+            f2 <- if (length(vec.pos) == 0) 
+                sum(1/probs[(m - j2 + 1):m] - 1)/B
+            else vec.pos[m - j2 + 1]
+            mat.delta[i, 5] <- z.sort[m - j2 + 1]
+        }
+        else {
+            j2 <- 0
+            f2 <- 0
+            mat.delta[i, 5] <- Inf
+        }
+        mat.delta[i, 2] <- j1 + j2
+        mat.delta[i, 3] <- min(1, p0 * (f1 + f2)/max(1, j1 + 
+            j2))
+    }
+    mat.delta
+}
+
+
+plotEbam <- function (x, y, ...) 
+{
+    .local <- function (x, y, pos.stats = 2, sig.col = 3, sig.cex = 1, 
+        pch = NULL, stats.cex = 0.8, main = NULL, xlab = NULL, 
+        ylab = NULL, y.intersp = 1.3, ...) 
+    {
+        z <- x@z
+        post <- x@posterior
+        if (missing(y)) 
+            y <- x@mat.fdr[, 1]
+        if (length(y) != 1) 
+            stop("More than one delta value has been specified.")
+        mat.fdr <- compNumber1(x@z, x@posterior, x@p0, nrow(x@mat.samp), 
+            delta = y, vec.pos = x@vec.pos, vec.neg = x@vec.neg)
+        if (is.null(main)) 
+            main <- paste("EBAM Plot for Delta =", y)
+        if (is.null(xlab)) 
+            xlab <- "z Value"
+        if (is.null(ylab)) 
+            ylab <- "Posterior"
+        if (length(sig.col) > 1) 
+            stop("sig.col must be of length 1.")
+        ids <- which(z <= mat.fdr[, 4] | z >= mat.fdr[, 5])
+        twosided <- any(z < 0)
+        if (is.null(pos.stats)) 
+            pos.stats <- 2
+        if (!pos.stats %in% (0:4)) 
+            stop("pos.stats must be an integer between 0 and 4.")
+        if (length(ids) == 0) 
+            plot(z, post, main = main, xlab = xlab, ylab = ylab, 
+                pch = pch, ...)
+        else {
+            plot(z[-ids], post[-ids], main = main, xlab = xlab, 
+                ylab = ylab, pch = pch, xlim = range(z), ylim = range(post), 
+                ...)
+            points(z[ids], post[ids], cex = sig.cex, col = sig.col, 
+                pch = pch)
+        }
+        abline(h = y, lty = "dashed")
+        if (pos.stats != 0) {
+            tmp <- c("Significant:", "FDR:", "p0:", if (length(x@a0) == 
+                1) "a0:", if (twosided) "Cutlow:", "Cutup:")
+            tmp2 <- c(mat.fdr[, 2], round(mat.fdr[, 3], 3), round(x@p0, 
+                3), if (length(x@a0) == 1) round(x@a0, 3), if (twosided) round(mat.fdr[, 
+                4], 3), round(mat.fdr[, 5], 3))
+            textLegend <- paste(tmp, tmp2, sep = "  ")
+            where <- switch(pos.stats, "top", "bottomright", 
+                "bottomleft", "topleft")
+            legend(where, legend = textLegend, cex = stats.cex, 
+                bty = "n", y.intersp = y.intersp)
+        }
+    }
+    .local(x, y, ...)
+}
