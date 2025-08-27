@@ -284,6 +284,9 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("qc_missheatmap_filt", "PlotMissingHeatmap"), // ok
             Map.entry("cls_roc_lr", "PlotROC.LRmodel"),
             Map.entry("cmpd", "PlotCmpdSummary"), // ok
+            Map.entry("qea_pie", "PlotEnrichPieChart"), // ok
+            Map.entry("ora_pie", "PlotEnrichPieChart"), // ok
+
             Map.entry("dr_barplot", "PlotDRModelBars"), // Unsupported plot type for source: dr_barplot
             Map.entry("rf_imp_meta", "PlotRF.VIPMeta") // no backend logic to link up this script to the front-end
 
