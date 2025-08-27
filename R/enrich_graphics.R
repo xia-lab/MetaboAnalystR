@@ -369,78 +369,90 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA){
+PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA, maxNameLen = 40){
   
-  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- .get.mSet(mSetObj)
+  if(.on.public.web){ load_ggplot() }
   
-  if(.on.public.web){
-    load_ggplot()
+  # local helper: truncate and disambiguate duplicates created by truncation
+  .trunc_unique <- function(x, maxlen){
+    lab <- ifelse(nchar(x) > maxlen, paste0(substr(x, 1, maxlen - 3), "..."), x)
+    # add (2), (3), ... for duplicated truncated labels to keep them unique & ordered
+    idx <- ave(seq_along(lab), lab, FUN = function(i) if(length(i) > 1) seq_along(i) else rep(0L, length(i)))
+    lab[idx > 1] <- paste0(lab[idx > 1], " (", idx[idx > 1], ")")
+    lab
   }
   
   if(enrichType == "ora"){
     results <- mSetObj$analSet$ora.mat
-    my.cols <- GetMyHeatCols(nrow(results));
+    my.cols <- GetMyHeatCols(nrow(results))
     if(nrow(results) > 25){
       results <- results[1:25,]
-      my.cols <- my.cols[1:25];
+      my.cols <- my.cols[1:25]
     }
+    orig_names <- rownames(results)
+    disp_names <- .trunc_unique(orig_names, maxNameLen)
+    df <- data.frame(
+      Name  = factor(disp_names, levels = rev(disp_names)),
+      rawp  = results[,4],
+      logp  = -log10(results[,4]),
+      folds = results[,3]/results[,2],
+      stringsAsFactors = FALSE
+    )
     
-    df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
-                     rawp = results[,4],
-                     logp = -log10(results[,4]),
-                     folds = results[,3]/results[,2])
-    
-  }else if(enrichType == "qea"){
+  } else if(enrichType == "qea"){
     results <- mSetObj$analSet$qea.mat
-    my.cols <- GetMyHeatCols(nrow(results));   
+    my.cols <- GetMyHeatCols(nrow(results))
     if(nrow(results) > 25){
       results <- results[1:25,]
-      my.cols <- my.cols[1:25];
+      my.cols <- my.cols[1:25]
     }
-    df <- data.frame(Name = factor(row.names(results), levels = rev(row.names(results))),
-                     rawp = results[,5],
-                     logp = -log10(results[,5]),
-                     folds = results[,3]/results[,4]
-                    )
-    
+    orig_names <- rownames(results)
+    disp_names <- .trunc_unique(orig_names, maxNameLen)
+    df <- data.frame(
+      Name  = factor(disp_names, levels = rev(disp_names)),
+      rawp  = results[,5],
+      logp  = -log10(results[,5]),
+      folds = results[,3]/results[,4],
+      stringsAsFactors = FALSE
+    )
   }
-
-  maxp <- max(df$rawp);
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  maxp <- max(df$rawp, na.rm = TRUE)
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
   
   if(is.na(width)){
-    w <- 10;
-    h <- 9;
-  }else if(width == 0){
-    h <- w <- 7;
-  }else{
-    h <- w <- width;
+    w <- 10; h <- 9
+  } else if(width == 0){
+    h <- w <- 7
+  } else {
+    h <- w <- width
   }
   
-  p <- ggplot(df, 
-              aes(x = logp, y = Name)) + 
-    geom_point(aes(size = folds, color = rawp)) + scale_size_continuous(range = c(2, 8)) +
+  p <- ggplot(df, aes(x = logp, y = Name)) +
+    geom_point(aes(size = folds, color = rawp)) +
+    scale_size_continuous(range = c(2, 8)) +
     theme_bw(base_size = 14) +
-    scale_colour_gradient(limits=c(0, maxp), low=my.cols[1], high = my.cols[length(my.cols)]) +
-    ylab(NULL) + xlab("-log10 (p-value)") + 
+    scale_colour_gradient(limits = c(0, maxp), low = my.cols[1], high = my.cols[length(my.cols)]) +
+    ylab(NULL) + xlab("-log10 (p-value)") +
     ggtitle("Overview of Enriched Metabolite Sets (Top 25)") +
-    theme(legend.text=element_text(size=13),
-          legend.title=element_text(size=14))
+    theme(legend.text = element_text(size = 13),
+          legend.title = element_text(size = 14))
   
   p$labels$colour <- "P-value"
-  p$labels$size <- "Enrichment Ratio"
+  p$labels$size   <- "Enrichment Ratio"
   
-  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h)
+  ggsave(p, filename = imgName, dpi = dpi, width = w, height = h)
   
   if(enrichType == "ora"){
     mSetObj$imgSet$ora_dot <- imgName
-  }else if(enrichType == "qea"){
-    mSetObj$imgSet$qea_dot <-imgName;
+  } else if(enrichType == "qea"){
+    mSetObj$imgSet$qea_dot <- imgName
   }
-  
-  mSetObj$imgSet$current.img <- imgName;
-  return(.set.mSet(mSetObj));
+  mSetObj$imgSet$current.img <- imgName
+  return(.set.mSet(mSetObj))
 }
+
 
 # Utility function
 concplot <- function(mn, lower, upper, labels=NULL,
