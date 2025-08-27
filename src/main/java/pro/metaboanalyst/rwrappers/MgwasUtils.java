@@ -145,8 +145,7 @@ public class MgwasUtils {
         return 0;
     }
 
- 
-   public static int[] performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt,String steigerOpt, String current_key) {
+    public static int[] performSnpFiltering(RConnection RC, String ldclumpOpt, String ldProxyOpt, boolean ldProxies, double ldThresh, boolean pldSNPs, double mafThresh, String harmonizeOpt, String steigerOpt, String current_key) {
         try {
             String rCommand = "PerformSnpFiltering(NA, \"" + ldclumpOpt + "\", \"" + ldProxyOpt + "\", \"" + ldProxies + "\", \"" + ldThresh + "\", \"" + pldSNPs + "\", \"" + mafThresh + "\", \"" + harmonizeOpt + "\", \"" + steigerOpt + "\", \"" + current_key + "\")";
             RCenter.recordRCommand(RC, rCommand);
@@ -207,6 +206,8 @@ public class MgwasUtils {
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD(exposure + "_mr_scatter_plot", rCommand);
+            sb.addGraphicsCMD("mr_scatter_plot", rCommand);
+
             sb.addGraphicsMapLink(exposure + "_mr_scatter_plot", "/Secure/analysis/RSVMView.xhtml");
 
             return RC.eval(rCommand).asInteger();
@@ -222,6 +223,8 @@ public class MgwasUtils {
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD(exposure + "_mr_forest_plot", rCommand);
+            sb.addGraphicsCMD("mr_forest_plot", rCommand);
+
             sb.addGraphicsMapLink(exposure + "_mr_scatter_plot", "/Secure/mgwas/ResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
@@ -237,6 +240,8 @@ public class MgwasUtils {
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD(exposure + "_mr_leaveoneout_plot", rCommand);
+            sb.addGraphicsCMD("mr_leaveoneout_plot", rCommand);
+
             sb.addGraphicsMapLink(exposure + "_mr_leaveoneout_plot", "/Secure/mgwas/ResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
@@ -252,6 +257,8 @@ public class MgwasUtils {
             RConnection RC = sb.getRConnection();
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD(exposure + "_mr_funnel_plot", rCommand);
+                        sb.addGraphicsCMD("mr_funnel_plot", rCommand);
+
             sb.addGraphicsMapLink(exposure + "_mr_funnel_plot", "/Secure/mgwas/ResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
@@ -370,9 +377,8 @@ public class MgwasUtils {
         }
         return 0;
     }
-    
-    
-      public static int checkSNPs(RConnection RC) {
+
+    public static int checkSNPs(RConnection RC) {
         try {
             String rCommand = "CheckSNPs()";
             RCenter.recordRCommand(RC, rCommand);

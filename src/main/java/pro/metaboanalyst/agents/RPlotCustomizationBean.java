@@ -8,6 +8,7 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -118,6 +119,23 @@ public class RPlotCustomizationBean implements Serializable {
                 plotType = "PlotRocUnivBoxPlot";
             } else {
                 plotType = GRAPHICS_CMD_TO_R_FUNC.get(source);
+                if (plotType == null && source != null) {
+                    final String src = source.toLowerCase(Locale.ROOT);
+                    String bestKey = null;
+                    for (String k : GRAPHICS_CMD_TO_R_FUNC.keySet()) {
+                        if (k == null) {
+                            continue;
+                        }
+                        if (src.contains(k.toLowerCase(Locale.ROOT))) {
+                            if (bestKey == null || k.length() > bestKey.length()) {
+                                bestKey = k;
+                            }
+                        }
+                    }
+                    if (bestKey != null) {
+                        plotType = GRAPHICS_CMD_TO_R_FUNC.get(bestKey);
+                    }
+                }
             }
 
             if (plotType == null) {
