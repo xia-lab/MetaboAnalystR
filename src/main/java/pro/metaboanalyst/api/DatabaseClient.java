@@ -3,6 +3,7 @@ package pro.metaboanalyst.api;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -14,17 +15,14 @@ import java.util.logging.Logger;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.UUID;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
+import pro.metaboanalyst.datalts.DatasetFile;
 import pro.metaboanalyst.lts.DatabaseController;
+import pro.metaboanalyst.datalts.DatasetRow;
 
 @RequestScoped
 @Named("databaseClient")
@@ -33,11 +31,11 @@ public class DatabaseClient {
     @JsonIgnore
     @Inject
     private ApplicationBean1 ab;
-    
+
     @JsonIgnore
     @Inject
     private DatabaseController dbc;
-    
+
     private static final Logger LOGGER = Logger.getLogger(DatabaseClient.class.getName());
     private final ApiClient apiClient;
 
@@ -454,8 +452,8 @@ public class DatabaseClient {
             }
         }
     }
-    
-    
+
+// Backward-compatible wrapper: single primary file -> calls multi-file path
     public String insertDataset(String email,
             String node,
             String title,
@@ -463,31 +461,148 @@ public class DatabaseClient {
             String type,
             long sizeBytes,
             int sampleNum) {
+        DatasetFile primary = new DatasetFile();
+        primary.setRole("data");
+        primary.setFilename(filename);
+        primary.setType(type);
+        primary.setSizeBytes(sizeBytes);
+
+        return insertDataset(email, node, title, sampleNum, java.util.List.of(primary));
+    }
+
+    /**
+     * New: multi-file insert (data + metadata + etc.)
+     */
+    public String insertDataset(String email,
+            String node,
+            String title,
+            int sampleNum,
+            java.util.List<DatasetFile> files) {
+        if (files == null || files.isEmpty()) {
+            return "Error inserting dataset: at least one file is required.";
+        }
+
         if (ab.isInDocker()) {
-            // Direct DB call (local container)
-            return DatabaseController.insertDataset(email, node, title, filename, type, sizeBytes, sampleNum);
+            // Direct DB path
+            return DatabaseController.insertDatasetWithFiles(email, node, title, sampleNum, null, files);
         } else {
             try {
-                // Build JSON payload
-                Map<String, Object> payload = new HashMap<>();
-                payload.put("email", email);
-                payload.put("node", node);
-                payload.put("title", title);
-                payload.put("filename", filename);
-                payload.put("type", type);           // e.g. "csv"/"tsv"/"txt"/"zip"
-                payload.put("sizeBytes", sizeBytes); // raw bytes
-                payload.put("samplenum", sampleNum); // integer >= 0
+                // Build nested JSON payload
+                java.util.Map<String, Object> dataset = new java.util.LinkedHashMap<>();
+                dataset.put("email", email);
+                dataset.put("node", node);
+                dataset.put("title", title);
+                dataset.put("samplenum", sampleNum);
 
-                // POST to the datasets endpoint (TEXT_PLAIN response in our JAX-RS)
+                java.util.List<java.util.Map<String, Object>> fileList = new java.util.ArrayList<>();
+                for (DatasetFile f : files) {
+                    java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("role", safeRole(f.getRole()));
+                    m.put("filename", f.getFilename());
+                    m.put("type", nvl(f.getType(), "bin"));
+                    m.put("sizeBytes", Math.max(0L, f.getSizeBytes()));
+                    if (f.getUploadedAt() != null) {
+                        m.put("uploadedAt", f.getUploadedAt().toString());
+                    }
+                    fileList.add(m);
+                }
+
+                java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+                payload.put("dataset", dataset);
+                payload.put("files", fileList);
+
                 return apiClient.post("/database/datasets/insert", toJson(payload));
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error inserting dataset", e);
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error inserting dataset", e);
                 return "Error inserting dataset: " + e.getMessage();
             }
         }
     }
 
+    /**
+     * Convenience: accept a DatasetRow that already contains files[].
+     */
+    public String insertDataset(DatasetRow ds) {
+        return insertDataset(
+                ds.getEmail(), ds.getNode(), ds.getTitle(), ds.getSamplenum(),
+                ds.getFiles() == null ? java.util.List.of() : ds.getFiles()
+        );
+    }
 
+    /* ---- small helpers (same as DAO) ---- */
+    private static String nvl(String s, String def) {
+        return (s == null || s.trim().isEmpty()) ? def : s;
+    }
+
+    private static String safeRole(String role) {
+        if (role == null) {
+            return "other";
+        }
+        switch (role.toLowerCase(java.util.Locale.ROOT)) {
+            case "data":
+            case "metadata":
+            case "supplement":
+            case "archive":
+                return role.toLowerCase();
+            default:
+                return "other";
+        }
+    }
+
+    public ArrayList<DatasetRow> getDatasetsForEmail(String email) {
+        ArrayList<DatasetRow> out = new ArrayList<>();
+        if (email == null || email.isBlank()) {
+            return out;
+        }
+
+        try {
+            if (ab.isInDocker()) {
+                // Direct Postgres path (your DAO we wrote earlier)
+                return DatabaseController.getDatasetsForEmail(email);
+            } else {
+                // Remote path: call your API and parse JSON into DatasetRow[]
+                String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
+                // Suggested endpoint: GET /database/datasets/by-email?email=<email>
+                String json = apiClient.get("/database/datasets/by-email?email=" + q);
+
+                ObjectMapper om = new ObjectMapper().findAndRegisterModules(); // handles OffsetDateTime
+                List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {
+                });
+                out.addAll(list);
+                return out;
+            }
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
+            return out; // empty list on error (UI can show a growl)
+        }
+    }
+
+    public List<DatasetFile> getDatasetFiles(UUID datasetId) {
+        List<DatasetFile> out = new ArrayList<>();
+        if (datasetId == null) {
+            return out;
+        }
+
+        try {
+            if (ab.isInDocker()) {
+                // Direct Postgres path (DAO)
+                return DatabaseController.getDatasetFiles(datasetId);
+            } else {
+                // Remote API path
+                String json = apiClient.get("/database/datasets/" + datasetId + "/files");
+
+                ObjectMapper om = new ObjectMapper().registerModule(new JavaTimeModule())
+                        .findAndRegisterModules();
+                List<DatasetFile> list = om.readValue(json, new TypeReference<List<DatasetFile>>() {
+                });
+                out.addAll(list);
+                return out;
+            }
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching dataset files for " + datasetId, e);
+            return out; // empty list on error
+        }
+    }
 
     private String toJson(Map<String, ?> map) {
         return new Gson().toJson(map);

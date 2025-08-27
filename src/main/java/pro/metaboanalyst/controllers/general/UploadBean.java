@@ -29,6 +29,7 @@ import org.primefaces.event.FileUploadEvent;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
+import pro.metaboanalyst.datalts.DatasetController;
 
 /**
  *
@@ -53,6 +54,10 @@ public class UploadBean implements Serializable {
     @JsonIgnore
     @Inject
     private MultifacBean mfb;
+
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
 
     private static final Logger LOGGER = LogManager.getLogger(UploadBean.class);
     /*
@@ -102,44 +107,58 @@ public class UploadBean implements Serializable {
     Data upload for statistics module
      */
     public String handleFileUpload() {
-
         if (dataFile == null || dataFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty");
             return null;
         }
 
-        boolean paired = false;
-        if (dataFormat.endsWith("p")) {
-            paired = true;
+        boolean paired = dataFormat != null && dataFormat.endsWith("p");
+
+        if (!sb.doLogin(dataType, "stat", false, paired)) {
+            sb.addMessage("Error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
+            return null;
         }
 
-        if (sb.doLogin(dataType, "stat", false, paired)) {
-            try {
-                RConnection RC = sb.getRConnection();
-                String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-                if (fileName == null) {
-                    sb.addMessage("Error", "Failed to read in the CSV file.");
-                    return null;
-                }
+        try {
+            RConnection RC = sb.getRConnection();
 
-                if (RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
-                    sb.setDataUploaded();
-                    return "Data check";
-                } else {
-                    String err = RDataUtils.getErrMsg(RC);
-                    sb.addMessage("Error", "Failed to read in the CSV file." + err);
-                    return null;
-                }
-            } catch (Exception e) {
-                //e.printStackTrace();
-                sb.addMessage("Error", "Exception occured: " + e);
-                LOGGER.error("handleFileUpload", e);
+            // 1) Save to user's home dir for R (existing behavior)
+            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            if (fileName == null) {
+                sb.addMessage("Error", "Failed to read in the CSV file.");
+                return null;
             }
-        }
-        sb.addMessage("Error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
-        return null;
-    }
 
+            // 2) Let R read/validate (existing behavior)
+            if (!RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
+                String err = RDataUtils.getErrMsg(RC);
+                sb.addMessage("Error", "Failed to read in the CSV file. " + err);
+                return null;
+            }
+            sb.setDataUploaded();
+
+            // 3) Insert dataset (via API/DB) and save the physical file to dataset folder
+            String niceTitle = stripExt(fileName);
+
+            int samples = 10;//inferSampleNumFromR(RC);
+
+            java.util.List<org.primefaces.model.file.UploadedFile> files = java.util.List.of(dataFile);
+            java.util.List<String> roles = java.util.List.of("data");
+
+            java.util.UUID datasetId = dc.insertAndSaveDataset(niceTitle, samples, files, roles);
+
+            if (datasetId == null) {
+                return null;
+            }
+
+            return "Data check";
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Exception occured: " + e.getMessage());
+            LOGGER.error("handleFileUpload", e);
+            return null;
+        }
+    }
     /*
      * Handle zip file examples (containing csv or txt files)
      */
@@ -878,8 +897,7 @@ public class UploadBean implements Serializable {
         sb.setDataUploaded();
         return "Data check";
     }
-    
-    
+
     public void handleFileUploadMulti(FileUploadEvent event) {
 
         UploadedFile dataFile = event.getFile();
@@ -888,7 +906,7 @@ public class UploadBean implements Serializable {
             sb.addMessage("error", "Empty data file?");
             return;
         }
-        
+
         if (ab.isOnProServer()) { // size limit will apply only on public server
             if (dataFile.getSize() > ab.getMAX_UPLOAD_SIZE()) {
                 sb.addMessage("error", "The file size exceeds limit:" + ab.getMAX_UPLOAD_SIZE());
@@ -896,7 +914,6 @@ public class UploadBean implements Serializable {
                 return;
             }
         }
-
 
         RConnection RC = sb.getRConnection();
         String homeDir = sb.getCurrentUser().getHomeDir();
@@ -917,6 +934,13 @@ public class UploadBean implements Serializable {
             System.out.println(e.getMessage());
         }
 
+    }
 
+    private static String stripExt(String name) {
+        if (name == null) {
+            return "Dataset";
+        }
+        int i = name.lastIndexOf('.');
+        return (i > 0) ? name.substring(0, i) : name;
     }
 }

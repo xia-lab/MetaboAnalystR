@@ -25,8 +25,13 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.inject.Named;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.UUID;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.datalts.DatasetFile;
+import pro.metaboanalyst.datalts.DatasetRow;
 import pro.metaboanalyst.rwrappers.RCenter;
 
 /**
@@ -1677,4 +1682,202 @@ public class DatabaseController implements Serializable {
         }
     }
 
+    public static String insertDatasetWithFiles(String email,
+            String node,
+            String title,
+            int sampleNum,
+            OffsetDateTime uploadedAt, // optional; null -> now()
+            List<DatasetFile> files) {
+        final String dsSql
+                = "INSERT INTO datasets (title, filename, type, size_bytes, uploaded_at, email, node, samplenum) "
+                + "VALUES (?, ?, ?, ?, COALESCE(?, now()), ?, ?, ?) RETURNING id";
+
+        final String fileSql
+                = "INSERT INTO dataset_files (dataset_id, role, filename, type, size_bytes, uploaded_at) "
+                + "VALUES (?, ?, ?, ?, ?, COALESCE(?, now()))";
+
+        // 0) Basic guards
+        if (files == null || files.isEmpty()) {
+            return "Error inserting dataset - no files supplied.";
+        }
+        DatasetFile primary = files.get(0);
+        if (primary.getRole() == null || primary.getFilename() == null || primary.getType() == null) {
+            return "Error inserting dataset - primary file must have role/filename/type.";
+        }
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection()) {
+            con.setAutoCommit(false);
+            UUID datasetId;
+
+            // 1) Insert dataset (legacy columns populated from first file)
+            try (PreparedStatement ps = con.prepareStatement(dsSql)) {
+                ps.setString(1, nvl(title, primary.getFilename())); // title fallback = filename
+                ps.setString(2, primary.getFilename());
+                ps.setString(3, nvl(primary.getType(), "bin"));
+                ps.setLong(4, Math.max(0L, primary.getSizeBytes()));
+                ps.setObject(5, uploadedAt);                        // null -> COALESCE(now())
+                ps.setString(6, email);
+                ps.setString(7, node);
+                ps.setInt(8, Math.max(0, sampleNum));
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        con.rollback();
+                        return "Dataset insertion failed.";
+                    }
+                    Object obj = rs.getObject(1);
+                    datasetId = (obj instanceof UUID) ? (UUID) obj : UUID.fromString(String.valueOf(obj));
+                }
+            }
+
+            // 2) Insert all files exactly as provided
+            try (PreparedStatement fps = con.prepareStatement(fileSql)) {
+                for (DatasetFile f : files) {
+                    if (f.getRole() == null || f.getFilename() == null || f.getType() == null) {
+                        con.rollback();
+                        return "Error inserting dataset - each file must have role/filename/type.";
+                    }
+                    fps.setObject(1, datasetId);
+                    fps.setString(2, f.getRole());                 // << no normalization
+                    fps.setString(3, f.getFilename());
+                    fps.setString(4, nvl(f.getType(), "bin"));
+                    fps.setLong(5, Math.max(0L, f.getSizeBytes()));
+                    fps.setObject(6, f.getUploadedAt());           // null -> COALESCE(now())
+                    fps.addBatch();
+                }
+                fps.executeBatch();
+            }
+
+            con.commit();
+            return "Dataset inserted successfully. id=" + datasetId + " files=" + files.size();
+
+        } catch (SQLException ex) {
+            // Nice messages for common constraint errors
+            String sqlState = ex.getSQLState();
+            // 23514 = check constraint violation (e.g., role not in allowed set)
+            if ("23514".equals(sqlState)) {
+                return "Error inserting dataset - invalid value violates a check constraint (e.g., role). Detail: " + ex.getMessage();
+            }
+            // 23503 = foreign key violation (shouldn't happen here)
+            if ("23503".equals(sqlState)) {
+                return "Error inserting dataset - foreign key issue: " + ex.getMessage();
+            }
+            System.err.println("SQLException in insertDatasetWithFiles: " + ex.getMessage());
+            return "Error inserting dataset - " + ex.getMessage();
+        }
+    }
+
+    // In DatabaseClient (Postgres)
+    public static ArrayList<DatasetRow> getDatasetsForEmail(String email) {
+        final String sql
+                = "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
+                + "       d.email, d.node, d.samplenum, "
+                + "       COALESCE(df.file_count, 0) AS file_count, "
+                + "       COALESCE(df.has_metadata, false) AS has_metadata "
+                + "FROM datasets d "
+                + "LEFT JOIN ( "
+                + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
+                + "  FROM dataset_files GROUP BY dataset_id "
+                + ") df ON df.dataset_id = d.id "
+                + "WHERE d.email = ? "
+                + // ← no node filter
+                "ORDER BY d.uploaded_at DESC, d.node";
+
+        ArrayList<DatasetRow> out = new ArrayList<>();
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DatasetRow d = new DatasetRow();
+                    Object idObj = rs.getObject("id");
+                    if (idObj instanceof java.util.UUID) {
+                        d.setId((java.util.UUID) idObj);
+                    } else if (idObj != null) {
+                        d.setId(java.util.UUID.fromString(String.valueOf(idObj)));
+                    }
+
+                    d.setTitle(rs.getString("title"));
+                    d.setFilename(rs.getString("filename"));
+                    d.setType(rs.getString("type"));
+                    d.setSizeBytes(rs.getLong("size_bytes"));
+
+                    try {
+                        d.setUploadedAt(rs.getObject("uploaded_at", java.time.OffsetDateTime.class));
+                    } catch (Exception ignore) {
+                        if (rs.getTimestamp("uploaded_at") != null) {
+                            d.setUploadedAt(rs.getTimestamp("uploaded_at").toInstant()
+                                    .atOffset(java.time.OffsetDateTime.now().getOffset()));
+                        }
+                    }
+
+                    d.setEmail(rs.getString("email"));
+                    d.setNode(rs.getString("node"));
+                    d.setSamplenum(rs.getInt("samplenum"));
+                    d.setFileCount(rs.getInt("file_count"));
+                    d.setHasMetadata(rs.getBoolean("has_metadata"));
+                    out.add(d);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("getDatasetsForEmail SQL error: " + ex.getMessage());
+        }
+        return out;
+    }
+
+    public static List<DatasetFile> getDatasetFiles(java.util.UUID datasetId) {
+        final String sql
+                = "SELECT id, dataset_id, role, filename, type, size_bytes, uploaded_at "
+                + "FROM dataset_files WHERE dataset_id = ? ORDER BY role, filename";
+
+        List<DatasetFile> files = new ArrayList<>();
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setObject(1, datasetId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DatasetFile f = new DatasetFile();
+
+                    // id: BIGSERIAL -> Long
+                    Long fid = rs.getObject("id", Long.class); // PGJDBC 42.2+ supports this
+                    if (fid == null) {
+                        long v = rs.getLong("id");
+                        fid = rs.wasNull() ? null : v;
+                    }
+                    f.setId(fid);
+
+                    // dataset_id: UUID
+                    java.util.UUID did = null;
+                    try {
+                        did = rs.getObject("dataset_id", java.util.UUID.class);
+                    } catch (Exception ignore) {
+                        Object obj = rs.getObject("dataset_id");
+                        if (obj != null) {
+                            did = java.util.UUID.fromString(String.valueOf(obj));
+                        }
+                    }
+                    f.setDatasetId(did);
+
+                    f.setRole(rs.getString("role"));
+                    f.setFilename(rs.getString("filename"));
+                    f.setType(rs.getString("type"));
+                    f.setSizeBytes(rs.getLong("size_bytes"));
+                    try {
+                        f.setUploadedAt(rs.getObject("uploaded_at", java.time.OffsetDateTime.class));
+                    } catch (Exception ignore) {
+                        /* optional fallback */ }
+
+                    files.add(f);
+                }
+            }
+        } catch (SQLException ex) {
+            System.err.println("getDatasetFiles SQL error: " + ex.getMessage());
+        }
+        return files;
+    }
+
+    private static String nvl(String s, String def) {
+        return (s == null || s.trim().isEmpty()) ? def : s;
+    }
 }
