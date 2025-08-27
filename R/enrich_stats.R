@@ -412,104 +412,110 @@ CalculateSSP<-function(mSetObj=NA){
 #'@param colPal Character, input the preferred R Color Brewer palette to be
 #'used for the pie chart. By default this is set to "Set1".
 #'@import ggplot2
-
 PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=default.dpi, width=8,
-                                 maxClass = 15, colPal = "Set1"){
-  
-  mSetObj <- .get.mSet(mSetObj);
+                               maxClass = 15, colPal = "Set1", includeOthers = TRUE){
 
-  if(.on.public.web){
-    load_ggplot()
+  mSetObj <- .get.mSet(mSetObj)
+  if (.on.public.web) load_ggplot()
+
+  nm.map <- GetFinalNameMap(mSetObj)
+  valid.inx <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb))
+  ora.vec <- nm.map$hmdb[valid.inx]
+
+  q.size <- length(ora.vec)
+  if (all(is.na(ora.vec)) || q.size == 0) {
+    AddErrMsg("No valid HMDB compound names found!")
+    return(0)
   }
-  
-  # make a clean dataSet$cmpd data based on name mapping
-  # only valid hmdb name will be used
-  nm.map <- GetFinalNameMap(mSetObj);
-  valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
-  ora.vec <- nm.map$hmdb[valid.inx];
-  
-  q.size <- length(ora.vec);
-  
-  if(all(is.na(ora.vec)) || q.size==0) {
-    AddErrMsg("No valid HMDB compound names found!");
-    return(0);
-  }
-  
+
   current.mset <- current.msetlib$member
-  
-  # make a clean metabilite set based on reference metabolome filtering
-  # also need to update ora.vec to the updated mset
-  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
-    current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
-    mSetObj$dataSet$filtered.mset <- current.mset;
-    ora.vec <- ora.vec[ora.vec %in% unique(unlist(current.mset, use.names = FALSE))]
-    q.size <- length(ora.vec);
-  }
-  
-  set.size <- length(current.mset);
-  
-  if(set.size ==1){
-    AddErrMsg("Cannot create pie-chart for a single metabolite set!");
-    return(0);
-  }
-  
-  hits <- lapply(current.mset, function(x){x[x %in% ora.vec]});
-  hit.num <- unlist(lapply(hits, function(x) length(x)), use.names = FALSE);
-  
-  if(sum(hit.num>0)==0){
-    AddErrMsg("No matches were found to the selected metabolite set library!");
-    return(0);
-  }
-  
 
-  hit.members <- unlist(lapply(hits, function(x) paste(x, collapse = "; ")))
-  
-  pie.data <- data.frame(cbind(Group = names(hits), Hits = as.numeric(hit.num), Members = hit.members));
-  pie.data <- pie.data[!(pie.data[,2]==0), ]
-  ord.inx <- order(pie.data[,2], decreasing = T);
-  pie.data <- pie.data[ord.inx, , drop = FALSE];
-  
-  if(nrow(pie.data) > maxClass){
-    pie.data <- pie.data[1:maxClass,]
+  # optional metabolome filter
+  if (mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)) {
+    current.mset <- lapply(current.mset, function(x) x[x %in% mSetObj$dataSet$metabo.filter.hmdb])
+    mSetObj$dataSet$filtered.mset <- current.mset
+    ora.vec <- ora.vec[ora.vec %in% unique(unlist(current.mset, use.names = FALSE))]
+    q.size <- length(ora.vec)
   }
+
+  if (length(current.mset) == 1) {
+    AddErrMsg("Cannot create pie-chart for a single metabolite set!")
+    return(0)
+  }
+
+  hits     <- lapply(current.mset, function(x) x[x %in% ora.vec])
+  hit.num  <- vapply(hits, length, integer(1))
+  if (sum(hit.num > 0) == 0) {
+    AddErrMsg("No matches were found to the selected metabolite set library!")
+    return(0)
+  }
+  hit.members <- vapply(hits, function(x) paste(x, collapse = "; "), character(1))
+
+  ## IMPORTANT: build data.frame WITHOUT cbind(), preserve numeric types
+  pie.data <- data.frame(
+    Group   = names(hits),
+    Hits    = as.integer(hit.num),
+    Members = hit.members,
+    stringsAsFactors = FALSE
+  )
+  pie.data <- pie.data[pie.data$Hits > 0L, , drop = FALSE]
+
+  # Order by descending hits
+  pie.data <- pie.data[order(pie.data$Hits, decreasing = TRUE), , drop = FALSE]
+
+  # Keep top N and optionally add "Others"
+  if (nrow(pie.data) > maxClass) {
+    if (isTRUE(includeOthers)) {
+      others.sum <- sum(pie.data$Hits[(maxClass+1):nrow(pie.data)])
+      pie.data <- rbind(pie.data[1:maxClass, ],
+                        data.frame(Group="Others", Hits=others.sum, Members="", stringsAsFactors=FALSE))
+    } else {
+      pie.data <- pie.data[1:maxClass, ]
+    }
+  }
+
+  # Compute percentages from the EXACT rows being plotted/exported
+  total <- sum(pie.data$Hits)
+  pie.data$Percent <- if (total > 0) pie.data$Hits / total * 100 else 0
+
+  # lock factor order for plotting + color mapping
+  pie.data$Group <- factor(pie.data$Group, levels = pie.data$Group)
 
   mSetObj$analSet$enrich.pie.data <- pie.data
-  
-  if(nrow(pie.data) > 9){
+
+  # Colors
+  if (nrow(pie.data) > 9) {
     col.fun <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(8, colPal))
     group_colors <- col.fun(nrow(pie.data))
-  }else{
+  } else {
     group_colors <- RColorBrewer::brewer.pal(8, colPal)[1:nrow(pie.data)]
   }
-  
-  names(group_colors) <- pie.data[,1]
+  names(group_colors) <- as.character(pie.data$Group)
   mSetObj$analSet$enrich.pie.cols <- group_colors
-  
-  # Basic piechart
-  p <- ggplot(pie.data, aes(x="", y=Hits, fill=Group)) +
-    geom_bar(stat="identity", width=1, color="white") +
-    coord_polar("y", start=0) + theme_void() +
+
+  # Plot
+  p <- ggplot(pie.data, aes(x = "", y = Hits, fill = Group)) +
+    geom_bar(stat = "identity", width = 1, color = "white") +
+    coord_polar("y", start = 0) + theme_void() +
     scale_fill_manual(values = group_colors) +
-    theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt")) +
-    theme(legend.text=element_text(size=12),
-          legend.title=element_text(size=13))
+    theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt"),
+          legend.text  = element_text(size = 12),
+          legend.title = element_text(size = 13))
 
-  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  long.name <- max(nchar(pie.data[,1]))
-  
-  if(long.name > 25){
-    w <- 10
-    h <- 7
-  }else{
-    h <- width - 1 
-    w <- width
-  }
+  img.file <- paste0(imgName, "dpi", dpi, ".", format)
+  # size heuristic
+  long.name <- max(nchar(as.character(pie.data$Group)))
+  if (is.infinite(long.name)) long.name <- 0
+  if (long.name > 25) { w <- 10; h <- 7 } else { h <- width - 1; w <- width }
 
-  ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
-  fast.write.csv(mSetObj$analSet$enrich.pie.data, file="msea_pie_data.csv");
-  return(.set.mSet(mSetObj));
+  ggsave(filename = img.file, plot = p, dpi = dpi, width = w, height = h, limitsize = FALSE)
+
+  # Export EXACT data PF should use (numeric Hits + Percent)
+  fast.write.csv(pie.data, file = "msea_pie_data.csv")
+
+  return(.set.mSet(mSetObj))
 }
+
 
 
 ##############################################
