@@ -1916,4 +1916,15 @@ public class SessionBean1 implements Serializable {
             System.out.println("Failed to keep user signed-in !!! @_@");
         }
     }
+    
+    private String graphTypeOptAI = "default"; //default or AI
+
+    public String getGraphTypeOptAI() {
+        return graphTypeOptAI;
+    }
+
+    public void setGraphTypeOptAI(String graphTypeOptAI) {
+        this.graphTypeOptAI = graphTypeOptAI;
+    }
+    
 }

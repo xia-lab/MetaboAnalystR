@@ -14,6 +14,13 @@ import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.security.MessageDigest;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Named("rPlotCustomizationBean")
 @ViewScoped
@@ -210,7 +217,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("roc_univ_", "Perform.UnivROC"),//to fix
             Map.entry("cls_imp", "PlotImpBiomarkers"), // ok
             Map.entry("pca_scree", "PlotPCAScree"), // ok
-            Map.entry("pca_pair", "PlotPCAPairSummary"), // ok
+            Map.entry("pca_pair", "PlotPCAPairSummaryMeta"), // ok
             Map.entry("spls_perm", "PlotSPLS.Permutation"),
             Map.entry("dose_volcano", "PlotDoseVolcano"), // Error message: No R command found for source: dose_volcano
             Map.entry("dr_histogram", "PlotDRHistogram"), // ok
@@ -317,7 +324,7 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotSPLSPairSummary", List.of("Plot.PairScatter")),
             Map.entry("PlotSAM.Cmpd", List.of(".prepare.sam.cmpd", "sam.plot2")),
             Map.entry("PlotEBAM.Cmpd", List.of(".prepare.ebam.cmpd", "plotEbam")),
-            Map.entry("PlotPCAPairSummary", List.of("Plot.PairScatter")),
+            Map.entry("PlotPCAPairSummaryMeta", List.of(".plot.pca.pair.meta", "GetColorSchema")),
             Map.entry("PlotPLSPairSummary", List.of("Plot.PairScatter")),
             Map.entry("PlotScatter", List.of(".mr_scatterPlot")),
             Map.entry("PlotForest", List.of(".mr_forestPlot")),

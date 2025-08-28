@@ -13,6 +13,11 @@ import java.util.List;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
@@ -39,6 +44,10 @@ public class GraphBean implements Serializable {
 
     @JsonIgnore
     @Inject
+    private ApplicationBean1 ab;
+
+    @JsonIgnore
+    @Inject
     private SessionBean1 sb;
 
     @JsonIgnore
@@ -60,7 +69,7 @@ public class GraphBean implements Serializable {
     @JsonIgnore
     @Inject
     private MetaPathStatBean mpsb;
-    
+
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
 
     public void updateColorScheme() {
@@ -104,7 +113,7 @@ public class GraphBean implements Serializable {
         String formatOpt = sb.getFormatOpt();
         if (formatOpt.equals("png") || formatOpt.equals("tiff")) {
             mydpi = sb.getDpiOpt() + "";
-        }else{
+        } else {
             mydpi = "72"; //somehow, this value affect PDF and SVG, 72 works well
         }
         //System.out.println(key + "==========key");
@@ -260,8 +269,48 @@ public class GraphBean implements Serializable {
                 imgName = imgName + "dpi" + mydpi + "." + formatOpt;
                 try {
                     RConnection RC = sb.getRConnection();
-                    RCenter.recordRCommand(RC, rcmd);
-                    RC.voidEval(rcmd);
+                    if ("ai".equals(sb.getGraphTypeOptAI())) {
+                        // 1) derive the main R function name from the command
+                        String func = null;
+                        Matcher mfn = Pattern.compile("(?m)^\\s*([\\w\\.]+)\\s*\\(").matcher(rcmd);
+                        if (mfn.find()) {
+                            func = mfn.group(1);
+                        }
+
+                        if (func != null && !func.isBlank()) {
+                            // 2) expected AI script: <root>/<user>/<FuncName>AI.R
+                            Path aiDir = Paths.get(sb.getCurrentUser().getHomeDir());
+                            String aiFileName = deriveAIScriptFileNameStable(func); // e.g. PlotSAM.CmpdAI.R
+                            Path aiFile = aiDir.resolve(aiFileName);
+
+                            if (Files.exists(aiFile)) {
+                                try {
+                                    // 3) source AI script and call FuncNameAI(...)
+                                    sourceRFile(aiFile);
+                                    String aiCmd = rcmd.replaceFirst("(?m)^\\s*" + Pattern.quote(func) + "\\s*\\(", func + "AI(");
+                                    RCenter.recordRCommand(RC, aiCmd);
+                                    RC.voidEval(aiCmd);
+                                } catch (Exception ex) {
+                                    LOGGER.error("AI graph execution failed; falling back to default", ex);
+                                    sb.addMessage("warn", "AI customization failed to run; showing the default plot instead.");
+                                    RCenter.recordRCommand(RC, rcmd);
+                                    RC.voidEval(rcmd);
+                                }
+                            } else {
+                                sb.addMessage("warn", "No saved AI customization found for " + func + "; showing the default plot.");
+                                RCenter.recordRCommand(RC, rcmd);
+                                RC.voidEval(rcmd);
+                            }
+                        } else {
+                            sb.addMessage("warn", "Unable to detect plot function; using the default plot.");
+                            RCenter.recordRCommand(RC, rcmd);
+                            RC.voidEval(rcmd);
+                        }
+                    } else {
+                        RCenter.recordRCommand(RC, rcmd);
+                        RC.voidEval(rcmd);
+                    }
+
                 } catch (Exception e) {
                     // e.printStackTrace();
                     LOGGER.error("graphBn_action", e);
@@ -272,6 +321,17 @@ public class GraphBean implements Serializable {
         String imgDownloadTxt = "<b>Download the image: </b> <a target='_blank' href = \"/MetaboAnalyst/resources/users/" + sb.getCurrentUser().getName()
                 + File.separator + imgName + "\"><b>" + imgName + "</b></a>";
         sb.setImgDownloadTxt(imgDownloadTxt);
+    }
+
+    private void sourceRFile(Path file) throws Exception {
+        String rPath = file.toString().replace("\\", "/").replace("'", "\\'");
+        sb.getRConnection().eval("source('" + rPath + "', encoding='UTF-8')");
+    }
+
+    private String deriveAIScriptFileNameStable(String plotType) {
+        String safePlot = (plotType == null ? "UnknownPlot" : plotType)
+                .replaceAll("[^A-Za-z0-9._-]", "_");
+        return safePlot + "AI.R";          // e.g., PlotSAM.CmpdAI.R
     }
 
     private final List<String> shapeColImgs = Arrays.asList(new String[]{"pca_pair", "pca_score2d", "pca_score2d_meta", "pls_pair", "pls_score2d",

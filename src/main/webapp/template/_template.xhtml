@@ -387,11 +387,19 @@
                         <h:form id="formgraph">
                             <h:panelGrid columns="2" style="width:380px;" class="surface-card">
                                 <h:panelGrid columns="2" style="padding-top: 10px; padding-left: 20px">
-                                    <h:outputLabel value="Theme:" rendered="#{sessionBean1.imageSource eq 'covariate_plot'}"/>
-                                    <p:selectOneMenu id="themeOpts" styleClass="menu" panelStyleClass="panel" value="#{multifacBean.covStyleOpt}" rendered="#{sessionBean1.imageSource eq 'covariate_plot'}">
+
+                                    <h:panelGroup layout="inline">
+                                        <h:outputText id="typeLbl" value="Type:"/>
+                                        <h:outputLink id="typeHelp" style="margin-left:6px; cursor:help;" onclick="return false;">
+                                            <i class="pi pi-info-circle" style="font-size:1rem;"></i>
+                                        </h:outputLink>
+                                    </h:panelGroup>
+
+                                    <p:selectOneMenu id="themeOpts" value="#{sessionBean1.graphTypeOptAI}">
                                         <f:selectItem itemValue="default" itemLabel="Default"/>
-                                        <f:selectItem itemValue="ggplot" itemLabel="ggplot"/>
+                                        <f:selectItem itemValue="ai"      itemLabel="AI-generated"/>
                                     </p:selectOneMenu>
+
                                     <h:outputLabel value="Format:"/>
                                     <p:selectOneMenu value="#{sessionBean1.formatOpt}">
                                         <f:selectItem itemLabel="PNG" itemValue="png"/> 
@@ -412,6 +420,13 @@
                                         <f:selectItem itemLabel="7 inches" itemValue="7"/>  
                                         <f:selectItem itemLabel="12 inches" itemValue="12"/>  
                                     </p:selectOneMenu>
+                                    <p:tooltip for="typeHelp" styleClass="helpTip" position="right" showEffect="fade" hideEffect="fade">
+                                        <p>
+                                            Note: a customized function must be generated first in the
+                                            <strong>Customization</strong> tab. After saving, choose
+                                            <em>AI-generated</em> to use it; otherwise the default plot is used.
+                                        </p>
+                                    </p:tooltip>
                                 </h:panelGrid>
                                 <p:commandButton value="Submit" 
                                                  update=":myGraphPane:formgraph:glink"
@@ -419,9 +434,9 @@
                                                  oncomplete="PF('statusDialog').hide()"
                                                  actionListener="#{graphBean.graphBn_action()}"/>
                             </h:panelGrid>
-                            <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
-                                <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
-                            </h:panelGrid>
+                                <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+                                    <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
+                                </h:panelGrid>
                         </h:form>
                     </p:tab>
                     <p:tab title ="Colors &amp; Shapes" rendered="#{graphBean.renderStatus}">
@@ -569,7 +584,14 @@
                                     </h:outputLink>
                                 </p:outputPanel>
                             </p:panelGrid>
-                            <p:panelGrid style="width:100%" columns="1">
+                            <p:panelGrid style="width:100%" columns="2">
+                                <p:commandButton value="Reset"
+                                                 style="display:block;margin:0 auto;"
+                                                 action="#{rPlotCustomizationBean.resetCustomization}"
+                                                 update=":myGraphPane:rPlotCustomizationForm"
+                                                 onstart="$('#custProgressBar').show();"
+                                                 oncomplete="$('#custProgressBar').hide();" />
+
                                 <p:commandButton value="Submit"
                                                  style="display:block;margin:0 auto;"
                                                  action="#{rPlotCustomizationBean.applyCustomization}"
