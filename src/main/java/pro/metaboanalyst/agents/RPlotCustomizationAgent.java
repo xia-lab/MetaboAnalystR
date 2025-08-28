@@ -179,113 +179,119 @@ public class RPlotCustomizationAgent implements Serializable {
         // debugging
         System.out.println("Model Response: \n" + llmOut);
 
-      /*── 5. sanitize + suffix main & helpers + rewrite call-sites ─────────────*/
-llmOut = llmOut
-        .replaceAll("(?s)```[rR]?\\s*", "")
-        .replaceAll("(?s)```\\s*$", "")
-        .trim();
+        /*── 5. sanitize + suffix main & helpers + rewrite call-sites ─────────────*/
+        llmOut = llmOut
+                .replaceAll("(?s)```[rR]?\\s*", "")
+                .replaceAll("(?s)```\\s*$", "")
+                .trim();
 
-final String aiSuffix = "AI";
-final String aiMain   = functionName + aiSuffix;
+        final String aiSuffix = "AI";
+        final String aiMain = functionName + aiSuffix;
 
-/* Detect helpers:
+        /* Detect helpers:
  *  A) Header style:   # Helper: <Name>\nfunction(...)
  *  B) AI-assigned:    <Name>AI <- function(...)
  *  C) BASE-assigned:  <Name>    <- function(...)     (incl. leading dots)
- */
-Pattern hdrPat      = Pattern.compile("(?m)^\\s*#\\s*Helper:\\s*([\\w\\.]+)\\s*\\n\\s*function\\b");
-Pattern asgAIPat    = Pattern.compile("(?m)^\\s*([\\w\\.]+)"+Pattern.quote(aiSuffix)+"\\s*<-\\s*function\\b");
-Pattern asgBasePat  = Pattern.compile("(?m)^\\s*([\\w\\.]+)\\s*<-\\s*function\\b");
+         */
+        Pattern hdrPat = Pattern.compile("(?m)^\\s*#\\s*Helper:\\s*([\\w\\.]+)\\s*\\n\\s*function\\b");
+        Pattern asgAIPat = Pattern.compile("(?m)^\\s*([\\w\\.]+)" + Pattern.quote(aiSuffix) + "\\s*<-\\s*function\\b");
+        Pattern asgBasePat = Pattern.compile("(?m)^\\s*([\\w\\.]+)\\s*<-\\s*function\\b");
 
-LinkedHashMap<String,String> helperMap = new LinkedHashMap<>(); // base -> target
+        LinkedHashMap<String, String> helperMap = new LinkedHashMap<>(); // base -> target
 
 // (A) header-tagged helpers
-Matcher mh = hdrPat.matcher(llmOut);
-while (mh.find()) {
-    String raw  = mh.group(1);
-    String base = raw.endsWith(aiSuffix) ? raw.substring(0, raw.length()-aiSuffix.length()) : raw;
-    helperMap.put(base, base + aiSuffix);
-}
+        Matcher mh = hdrPat.matcher(llmOut);
+        while (mh.find()) {
+            String raw = mh.group(1);
+            String base = raw.endsWith(aiSuffix) ? raw.substring(0, raw.length() - aiSuffix.length()) : raw;
+            helperMap.put(base, base + aiSuffix);
+        }
 
 // (B) helpers already assigned with AI
-Matcher ma = asgAIPat.matcher(llmOut);
-while (ma.find()) {
-    String base = ma.group(1);
-    if (!base.equals(functionName) && !base.equals(resolvedMain))
-        helperMap.putIfAbsent(base, base + aiSuffix);
-}
+        Matcher ma = asgAIPat.matcher(llmOut);
+        while (ma.find()) {
+            String base = ma.group(1);
+            if (!base.equals(functionName) && !base.equals(resolvedMain)) {
+                helperMap.putIfAbsent(base, base + aiSuffix);
+            }
+        }
 
 // (explicit) helpers provided by Java mapping
-for (String h : helpers) {
-    String base = FUNCTION_MAPPINGS.getOrDefault(h, new FunctionMapping(h, null)).rFuncName;
-    if (base != null && !base.isBlank())
-        helperMap.putIfAbsent(base, base + aiSuffix);
-}
+        for (String h : helpers) {
+            String base = FUNCTION_MAPPINGS.getOrDefault(h, new FunctionMapping(h, null)).rFuncName;
+            if (base != null && !base.isBlank()) {
+                helperMap.putIfAbsent(base, base + aiSuffix);
+            }
+        }
 
 // (C) any other top-level function assignments (incl. leading-dot helpers)
-Matcher mb = asgBasePat.matcher(llmOut);
-while (mb.find()) {
-    String name = mb.group(1);
-    if (name.endsWith(aiSuffix)) continue;                 // already AI
-    if (name.equals(functionName) || name.equals(resolvedMain)) continue; // skip main
-    helperMap.putIfAbsent(name, name + aiSuffix);
-}
+        Matcher mb = asgBasePat.matcher(llmOut);
+        while (mb.find()) {
+            String name = mb.group(1);
+            if (name.endsWith(aiSuffix)) {
+                continue;                 // already AI
+            }
+            if (name.equals(functionName) || name.equals(resolvedMain)) {
+                continue; // skip main
+            }
+            helperMap.putIfAbsent(name, name + aiSuffix);
+        }
 
-/* Normalize header helpers to include AI assignment */
-for (Map.Entry<String,String> e : helperMap.entrySet()) {
-    String baseQ = Pattern.quote(e.getKey());
-    String tgt   = e.getValue();
-    llmOut = llmOut.replaceAll(
-        "(?m)^\\s*#\\s*Helper:\\s*" + baseQ + "\\s*\\n\\s*function\\b",
-        "# Helper: " + tgt + "\n" + tgt + " <- function"
-    );
-}
+        /* Normalize header helpers to include AI assignment */
+        for (Map.Entry<String, String> e : helperMap.entrySet()) {
+            String baseQ = Pattern.quote(e.getKey());
+            String tgt = e.getValue();
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*#\\s*Helper:\\s*" + baseQ + "\\s*\\n\\s*function\\b",
+                    "# Helper: " + tgt + "\n" + tgt + " <- function"
+            );
+        }
 
-/* Convert any BASE helper assignments to AI assignments */
-for (Map.Entry<String,String> e : helperMap.entrySet()) {
-    String baseQ = Pattern.quote(e.getKey());
-    String tgt   = e.getValue();
-    llmOut = llmOut.replaceAll(
-        "(?m)^\\s*" + baseQ + "\\s*<-\\s*function\\b",
-        tgt + " <- function"
-    );
-}
+        /* Convert any BASE helper assignments to AI assignments */
+        for (Map.Entry<String, String> e : helperMap.entrySet()) {
+            String baseQ = Pattern.quote(e.getKey());
+            String tgt = e.getValue();
+            llmOut = llmOut.replaceAll(
+                    "(?m)^\\s*" + baseQ + "\\s*<-\\s*function\\b",
+                    tgt + " <- function"
+            );
+        }
 
-/* Ensure the MAIN is assigned to <functionName>AI */
-if (llmOut.startsWith("function")) {
-    llmOut = aiMain + " <- " + llmOut;
-} else {
-    llmOut = llmOut.replaceFirst("(?ms)^(\\s*)([\\w\\.]+)\\s*<-\\s*function\\b",
-            "$1" + aiMain + " <- function");
-}
+        /* Ensure the MAIN is assigned to <functionName>AI */
+        if (llmOut.startsWith("function")) {
+            llmOut = aiMain + " <- " + llmOut;
+        } else {
+            llmOut = llmOut.replaceFirst("(?ms)^(\\s*)([\\w\\.]+)\\s*<-\\s*function\\b",
+                    "$1" + aiMain + " <- function");
+        }
 
-/* Rewrite ALL helper call-sites and dynamic lookups to AI names */
-for (Map.Entry<String,String> e : helperMap.entrySet()) {
-    String base = e.getKey();
-    String tgt  = e.getValue();
+        /* Rewrite ALL helper call-sites and dynamic lookups to AI names */
+        for (Map.Entry<String, String> e : helperMap.entrySet()) {
+            String base = e.getKey();
+            String tgt = e.getValue();
 
-    // calls: base(  -> baseAI(   (avoid pkg::base and foo.bar)
-    String callPat = "(?<![\\w\\.:])" + Pattern.quote(base) + "\\s*\\(";
-    llmOut = llmOut.replaceAll(callPat, tgt + "(");
+            // calls: base(  -> baseAI(   (avoid pkg::base and foo.bar)
+            String callPat = "(?<![\\w\\.:])" + Pattern.quote(base) + "\\s*\\(";
+            llmOut = llmOut.replaceAll(callPat, tgt + "(");
 
-    // exists('base') / exists("base") -> exists('baseAI')
-    llmOut = llmOut.replaceAll("\\bexists\\s*\\(\\s*'"  + Pattern.quote(base) + "'\\s*\\)", "exists('"  + tgt + "')");
-    llmOut = llmOut.replaceAll("\\bexists\\s*\\(\\s*\"" + Pattern.quote(base) + "\"\\s*\\)", "exists(\"" + tgt + "\")");
+            // exists('base') / exists("base") -> exists('baseAI')
+            llmOut = llmOut.replaceAll("\\bexists\\s*\\(\\s*'" + Pattern.quote(base) + "'\\s*\\)", "exists('" + tgt + "')");
+            llmOut = llmOut.replaceAll("\\bexists\\s*\\(\\s*\"" + Pattern.quote(base) + "\"\\s*\\)", "exists(\"" + tgt + "\")");
 
-    // get('base') / get("base") -> get('baseAI')
-    llmOut = llmOut.replaceAll("\\bget\\s*\\(\\s*'"     + Pattern.quote(base) + "'\\s*",     "get('"     + tgt + "'");
-    llmOut = llmOut.replaceAll("\\bget\\s*\\(\\s*\""    + Pattern.quote(base) + "\"\\s*",    "get(\""    + tgt + "\"");
-}
+            // get('base') / get("base") -> get('baseAI')
+            llmOut = llmOut.replaceAll("\\bget\\s*\\(\\s*'" + Pattern.quote(base) + "'\\s*", "get('" + tgt + "'");
+            llmOut = llmOut.replaceAll("\\bget\\s*\\(\\s*\"" + Pattern.quote(base) + "\"\\s*", "get(\"" + tgt + "\"");
+        }
 
-/* Canonicalize main variants (dotted/undotted, case) in defs & calls */
-llmOut = llmOut.replaceFirst(
-    "(?mis)^\\s*[\\.]?" + Pattern.quote(functionName + aiSuffix) + "\\s*<-\\s*function\\b",
-    aiMain + " <- function"
-);
-llmOut = llmOut.replaceAll(
-    "(?i)(?<![\\w\\.:])\\.?"+Pattern.quote(functionName + aiSuffix)+"\\s*\\(",
-    aiMain + "("
-);
+        /* Canonicalize main variants (dotted/undotted, case) in defs & calls */
+        llmOut = llmOut.replaceFirst(
+                "(?mis)^\\s*[\\.]?" + Pattern.quote(functionName + aiSuffix) + "\\s*<-\\s*function\\b",
+                aiMain + " <- function"
+        );
+        llmOut = llmOut.replaceAll(
+                "(?i)(?<![\\w\\.:])\\.?" + Pattern.quote(functionName + aiSuffix) + "\\s*\\(",
+                aiMain + "("
+        );
 
         /* Optional: if the main ever self-calls via its original R name (rare), rewrite too.
     * For example, if resolvedMain appears as a call token inside body.
@@ -327,14 +333,60 @@ llmOut = llmOut.replaceAll(
      *─────────────────────────────────────────────────────────────────────────*/
     private Optional<String> readFunctionCode(String rFuncName) {
         try {
-            String rCmd = "paste(deparse(" + rFuncName + "), collapse='\\n')";  // returns the code in the R session as txt for the LLM, e.g. r code for my.plot.volcano
-            String code = sb.getRConnection().eval(rCmd).asString();
-            return Optional.of(code);
+            RConnection rc = sb.getRConnection();
+            String nm = rFuncName; // expected R symbol name
+            String nmQ = rQuote(nm);
+
+            // 1) Does the function exist (anywhere on the search path)?
+            boolean exists = rc.eval("exists('" + nmQ + "', inherits=TRUE)").asInteger() == 1;
+
+            // 2) If missing, attempt lazy load from mapped script
+            if (!exists) {
+                String script = R_SCRIPT_MAP.get(nm);
+                if (script != null) {
+                    String spQ = rQuote(script);
+                    String lazyLoadR
+                            = "local({\n"
+                            + "  nm <- '" + nmQ + "'\n"
+                            + "  p  <- '" + spQ + "'\n"
+                            + "  # If 'p' is relative, prepend rpath; else use as-is\n"
+                            + "  full <- if (grepl('^(/|[A-Za-z]:)', p)) p else file.path(rpath, p)\n"
+                            + "  if (file.exists(full)) {\n"
+                            + "    if (grepl('\\\\.Rc$', full)) {\n"
+                            + "      try(compiler::loadcmp(full), silent=TRUE)\n"
+                            + "    } else {\n"
+                            + "      try(source(full, encoding='UTF-8'), silent=TRUE)\n"
+                            + "    }\n"
+                            + "  }\n"
+                            + "  exists(nm, inherits=TRUE)\n"
+                            + "})";
+                    exists = rc.eval(lazyLoadR).asInteger() == 1;
+                }
+            }
+
+            if (!exists) {
+                LOG.warning("Function not found even after lazy load: " + nm);
+                return Optional.empty();
+            }
+
+            // 3) Robust source capture (works for byte-compiled fns)
+            String dumpR
+                    = "local({ nm <- '" + nmQ + "'; paste(capture.output(dump(nm, file='')), collapse='\\n') })";
+            String code = rc.eval(dumpR).asString();
+            return Optional.ofNullable(code);
+
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "Failed to fetch R function from RConnection", ex);
             return Optional.empty();
         }
     }
+
+    private static String rQuote(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("'", "\\'");
+    }
+    private static final Map<String, String> R_SCRIPT_MAP = Map.ofEntries(
+            Map.entry(".plot.pca.pair.meta", "rscripts/MetaboAnalystR/R/util_pcapair.Rc")
+    );
 
     private void executeAICustomizedPlot(String originalCmd, String aiSuffix) {
         if (originalCmd == null || originalCmd.isBlank()) {
@@ -456,4 +508,113 @@ llmOut = llmOut.replaceAll(
         }
         return outFile;
     }
+
+    public void resetToDefault(String key) {
+        try {
+            // 0) Switch UI back to default rendering
+            sb.setGraphTypeOptAI("default");
+
+            // 1) Resolve plotType & R main function (same logic you use elsewhere)
+            String plotType = RPlotCustomizationBean.getGRAPHICS_CMD_TO_R_FUNC().get(key);
+            if (plotType == null && key != null) {
+                // best-effort contains-match
+                final String src = key.toLowerCase(Locale.ROOT);
+                String bestKey = null;
+                for (String k : RPlotCustomizationBean.getGRAPHICS_CMD_TO_R_FUNC().keySet()) {
+                    if (k != null && src.contains(k.toLowerCase(Locale.ROOT))) {
+                        if (bestKey == null || k.length() > bestKey.length()) {
+                            bestKey = k;
+                        }
+                    }
+                }
+                if (bestKey != null) {
+                    plotType = RPlotCustomizationBean.getGRAPHICS_CMD_TO_R_FUNC().get(bestKey);
+                }
+            }
+            if (plotType == null) {
+                sb.addMessage("warn", "Could not determine plot function to reset.");
+                return;
+            }
+
+            // 2) Compute AI symbol names to remove
+            final String aiSuffix = "AI";
+            final String mainBase = FUNCTION_MAPPINGS.getOrDefault(plotType, new FunctionMapping(plotType, null)).rFuncName;
+            final String mainAI = plotType + aiSuffix; // NOTE: you name the MAIN by UI name+AI
+            // Helper bases (from your HELPERS map if you have one)
+            List<String> helperBases = RPlotCustomizationBean.getHELPERS().getOrDefault(plotType, List.of());
+            // Also consider that helpers may be dotted names; remove both dotted/undotted AI variants
+            List<String> aiSymbols = new ArrayList<>();
+            aiSymbols.add(mainAI);
+            for (String hb : helperBases) {
+                String base = FUNCTION_MAPPINGS.getOrDefault(hb, new FunctionMapping(hb, null)).rFuncName;
+                if (base == null || base.isBlank()) {
+                    base = hb;
+                }
+                aiSymbols.add(base + aiSuffix);
+                if (!base.startsWith(".")) {
+                    aiSymbols.add("." + base + aiSuffix);
+                }
+            }
+
+            // 3) Remove AI symbols from the R session (don’t touch the originals)
+            RConnection rc = sb.getRConnection();
+            String vec = aiSymbols.stream()
+                    .map(s -> "'" + s.replace("'", "\\'") + "'")
+                    .reduce((a, b) -> a + "," + b).orElse("");
+            rc.voidEval(
+                    "local({ nm <- c(" + vec + "); "
+                    + "  nm <- nm[nm %in% ls(envir=.GlobalEnv, all.names=TRUE)]; "
+                    + "  if (length(nm)) rm(list=nm, envir=.GlobalEnv); "
+                    + "})"
+            );
+
+            // 4) Reload the original main from disk (if you have a mapping)
+            FunctionMapping fm = FUNCTION_MAPPINGS.get(plotType);
+            if (fm != null && fm.rScriptFile() != null) {
+                String fileQ = fm.rScriptFile().replace("'", "\\'");
+                // Use your lazy loader if available; otherwise load compiled or source
+                rc.voidEval(
+                        "if (exists('.load.scripts.on.demand')) "
+                        + "  try(.load.scripts.on.demand('" + fileQ + "'), silent=TRUE) "
+                        + "else {"
+                        + "  full <- if (grepl('^(/|[A-Za-z]:)', '" + fileQ + "')) '" + fileQ + "' else file.path(rpath, '" + fileQ + "');"
+                        + "  if (file.exists(full)) {"
+                        + "    if (grepl('\\\\.Rc$', full)) try(compiler::loadcmp(full), silent=TRUE) else try(source(full, encoding='UTF-8'), silent=TRUE);"
+                        + "  }"
+                        + "}"
+                );
+            }
+
+            // 5) Delete the saved AI script file (optional but recommended so “AI-generated” won’t reuse)
+            try {
+                Path outDir = Path.of(sb.getCurrentUser().getHomeDir());
+                Path aiFile = outDir.resolve(deriveAIScriptFileNameStable(plotType)); // e.g. PlotSAM.CmpdAI.R
+                Files.deleteIfExists(aiFile);
+            } catch (Exception ignore) {
+                // non-fatal: script might not exist
+            }
+
+            //replot
+            String rcmd = sb.getGraphicsMap().get(key);
+            try {
+                RCenter.recordRCommand(sb.getRConnection(), rcmd);
+                sb.getRConnection().voidEval(rcmd);
+            } catch (Exception ignore) {
+
+            }
+
+            sb.addMessage("info", "Restored default plotting function for: " + plotType);
+
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, "Reset failed", ex);
+            sb.addMessage("error", "Reset failed: " + ex.getMessage());
+        }
+    }
+
+    private String deriveAIScriptFileNameStable(String plotType) {
+        String safePlot = (plotType == null ? "UnknownPlot" : plotType)
+                .replaceAll("[^A-Za-z0-9._-]", "_");
+        return safePlot + "AI.R";          // e.g., PlotSAM.CmpdAI.R
+    }
+
 }

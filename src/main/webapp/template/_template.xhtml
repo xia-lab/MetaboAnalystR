@@ -434,9 +434,9 @@
                                                  oncomplete="PF('statusDialog').hide()"
                                                  actionListener="#{graphBean.graphBn_action()}"/>
                             </h:panelGrid>
-                                <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
-                                    <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
-                                </h:panelGrid>
+                            <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+                                <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
+                            </h:panelGrid>
                         </h:form>
                     </p:tab>
                     <p:tab title ="Colors &amp; Shapes" rendered="#{graphBean.renderStatus}">
@@ -586,11 +586,13 @@
                             </p:panelGrid>
                             <p:panelGrid style="width:100%" columns="2">
                                 <p:commandButton value="Reset"
+                                                 icon="pi pi-refresh"
                                                  style="display:block;margin:0 auto;"
-                                                 action="#{rPlotCustomizationBean.resetCustomization}"
+                                                 actionListener="#{rPlotCustomizationAgent.resetToDefault(sessionBean1.imageSource)}"
                                                  update=":myGraphPane:rPlotCustomizationForm"
                                                  onstart="$('#custProgressBar').show();"
                                                  oncomplete="$('#custProgressBar').hide();" />
+
 
                                 <p:commandButton value="Submit"
                                                  style="display:block;margin:0 auto;"

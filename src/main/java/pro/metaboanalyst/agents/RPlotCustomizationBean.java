@@ -90,28 +90,6 @@ public class RPlotCustomizationBean implements Serializable {
         this.aiResponse = aiResponse;
     }
 
-    /**
-     * public void applyCustomization() { try { if (prompt == null ||
-     * prompt.trim().isEmpty()) { sb.addMessage("error", "Please provide
-     * customization instructions"); return; }
-     *
-     * String source = sb.getImageSource(); plotType =
-     * GRAPHICS_CMD_TO_R_FUNC.get(source);
-     *
-     * if (plotType == null) { sb.addMessage("error", "Unsupported plot type for
-     * source: " + source); return; }
-     *
-     * // Get the R command from the session bean's graphics map String
-     * rCommand = sb.getGraphicsMap().get(source); if (rCommand == null) {
-     * sb.addMessage("error", "No R command found for source: " + source);
-     * return; }
-     *
-     * // Get the AI response String response =
-     * aiCustomizer.customizePlot(source, plotType, prompt); aiResponse =
-     * response; } catch (Exception e) { sb.addMessage("error", "Error applying
-     * customization: " + e.getMessage()); } }
-     *
-     */
     public void applyCustomization() {
         try {
             if (prompt == null || prompt.trim().isEmpty()) {
@@ -334,5 +312,13 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("PlotRF.VIP", List.of("PlotImpVar")),
             Map.entry("PlotQEA.Overview", List.of("PlotMSEA.Overview"))
     );
+
+    public static Map<String, String> getGRAPHICS_CMD_TO_R_FUNC() {
+        return GRAPHICS_CMD_TO_R_FUNC;
+    }
+
+    public static Map<String, List<String>> getHELPERS() {
+        return HELPERS;
+    }
 
 }
