@@ -314,14 +314,6 @@ function handleWorkflow(pngDataUrl) {
     }
 }
 
-function exportImage(type) {
-    var svg = document.getElementsByTagName("svg")[0]; //can only have one svg in the doc
-    UpSetJS.exportSVG(svg, {
-        title: "UpSet_plot",
-        type: type
-    })
-}
-
 function mergeColors(colors) {
     if (colors.length === 0) {
         return undefined;
@@ -369,4 +361,140 @@ function setupTheme() {
 
 }
 
- 
+function currentThemeColors() {
+    const light = $(parent.window.document).find("#formHidden\\:selectedTheme").val() === "light";
+    return {
+        bg: light ? "#ffffff" : "#040d19",
+        alt: light ? "#d3d3d3" : "#071426",
+        fg: light ? "#000000" : "#ffffff"
+    };
+}
+
+// --- EXPORT PIPELINE ----------------------------------------------------
+function inlineSvgWithBackground(srcSvg, bgColor) {
+  // 1) deep clone
+  const svg = srcSvg.cloneNode(true);
+
+  // 2) ensure width/height and viewBox
+  const w = parseFloat(srcSvg.getAttribute("width"))  || srcSvg.clientWidth  || srcSvg.getBoundingClientRect().width  || 1000;
+  const h = parseFloat(srcSvg.getAttribute("height")) || srcSvg.clientHeight || srcSvg.getBoundingClientRect().height || 750;
+  svg.setAttribute("width",  w);
+  svg.setAttribute("height", h);
+  if (!svg.getAttribute("viewBox")) {
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  }
+
+  // 3) zip BEFORE adding background (lists have same length/order)
+  const origElems  = srcSvg.querySelectorAll("*");
+  const cloneElems = svg.querySelectorAll("*");
+  const len = Math.min(origElems.length, cloneElems.length);
+
+  for (let i = 0; i < len; i++) {
+    const origEl  = origElems[i];
+    const cloneEl = cloneElems[i];
+    if (!origEl || !cloneEl) continue; // safety
+    // Only elements (nodeType 1)
+    if (origEl.nodeType !== 1 || cloneEl.nodeType !== 1) continue;
+
+    const cs = window.getComputedStyle(origEl);
+    // Copy only meaningful style bits to keep size reasonable
+    if (cs.fill)            cloneEl.setAttribute("fill", cs.fill);
+    if (cs.stroke)          cloneEl.setAttribute("stroke", cs.stroke);
+    if (cs.strokeWidth)     cloneEl.setAttribute("stroke-width", cs.strokeWidth);
+    if (cs.opacity)         cloneEl.setAttribute("opacity", cs.opacity);
+    if (cs.fontFamily)      cloneEl.setAttribute("font-family", cs.fontFamily);
+    if (cs.fontSize)        cloneEl.setAttribute("font-size", cs.fontSize);
+    if (cs.fontWeight)      cloneEl.setAttribute("font-weight", cs.fontWeight);
+    if (cs.textAnchor)      cloneEl.setAttribute("text-anchor", cs.textAnchor);
+  }
+
+  // 4) NOW inject a background rect as first child
+  const NS = "http://www.w3.org/2000/svg";
+  const bg = document.createElementNS(NS, "rect");
+  bg.setAttribute("x", 0);
+  bg.setAttribute("y", 0);
+  bg.setAttribute("width",  "100%");
+  bg.setAttribute("height", "100%");
+  bg.setAttribute("fill",   bgColor);
+  svg.insertBefore(bg, svg.firstChild);
+
+  return svg;
+}
+
+
+function downloadTextAsFile(text, name, type = "image/svg+xml;charset=utf-8") {
+    const blob = new Blob([text], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportUpSet(type = "png") {
+    const svgElem = document.querySelector("#venn-demo svg");
+    if (!svgElem) {
+        parent.PF('growlWidget').show([{severity: "error", summary: "ERROR", detail: "SVG element not found."}]);
+        return;
+    }
+    const {bg, fg} = currentThemeColors();
+
+    // We already set many element fills in render(), but ensure final SVG is fully inlined:
+    const svgClone = inlineSvgWithBackground(svgElem, bg);
+
+    if (type === "svg") {
+        const xml = new XMLSerializer().serializeToString(svgClone);
+        downloadTextAsFile(xml, "UpSet_plot.svg");
+        return;
+    }
+
+    // PNG path: render the inlined SVG onto a canvas with the theme bg
+    const xml = new XMLSerializer().serializeToString(svgClone);
+    const url = URL.createObjectURL(new Blob([xml], {type: "image/svg+xml;charset=utf-8"}));
+    const img = new Image();
+    img.onload = function () {
+        const w = svgClone.viewBox.baseVal.width || parseInt(svgClone.getAttribute("width")) || 1000;
+        const h = svgClone.viewBox.baseVal.height || parseInt(svgClone.getAttribute("height")) || 750;
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => {
+            const dl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = dl;
+            a.download = "UpSet_plot.png";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(dl);
+        }, "image/png");
+    };
+    img.onerror = () => {
+        URL.revokeObjectURL(url);
+        parent.PF('growlWidget').show([{severity: "error", summary: "ERROR", detail: "Failed to render SVG as image."}]);
+    };
+    img.src = url;
+}
+
+
+
+function exportImage(type) {
+    exportUpSet(type);
+
+    /*
+     var svg = document.getElementsByTagName("svg")[0]; //can only have one svg in the doc
+     UpSetJS.exportSVG(svg, {
+     title: "UpSet_plot",
+     type: type
+     })
+     * */
+
+}
