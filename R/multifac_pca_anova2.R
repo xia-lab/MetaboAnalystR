@@ -587,7 +587,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
                                width = NA, pcx, pcy, reg = 0.95, show = 1,
                                grey.scale = 0, cex.opt = "na",
                                meta = NULL, metaShape = NULL) {
-  ## ── point-size memory ----------------------------------------------
+  save.image("2dscore.RData");
   if (!exists("pca.cex", envir = .GlobalEnv)){
     pca.cex <<- 1
   }
@@ -851,8 +851,8 @@ GetShapeSchemaMeta<- function(my.cls, show.name = 0, grey.scale = 0) {
   grp.num  <- length(lvs)
   
   ## If user supplied a shapeVec (and all values are non-negative) → honour it
-  if (exists("shapeVec") && all(shapeVec >= 0)) {
-    shapes <- shapeVec[names(colVec) %in% lvs]
+  if (exists("shapeVec") && all(shapeVec >= 0) && isTRUE(any(names(shapeVec) %in% lvs))) {
+    shapes <- shapeVec[names(shapeVec) %in% lvs]
     
   } else {                                        # ---- auto-generate shapes
       ## 21–25 first, then cycle back to 1,2,3… if more groups

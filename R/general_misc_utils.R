@@ -656,13 +656,17 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
     colVec <- gsub("##", "#", colVec)
     na.inx <- colVec == "#NA";
     colVec[na.inx] <- cols[na.inx];
-    shapeVec[shapeVec == 0] <- 21;
 
     names(colVec) <- grpnms;
-    names(shapeVec) <- grpnms;
 
     colVec <<- colVec;
-    shapeVec <<- shapeVec;
+    if(all(shapeVec == 0, na.rm = TRUE)){
+
+    }else{
+        shapeVec[shapeVec == 0] <- 21;
+        names(shapeVec) <- grpnms;
+        shapeVec <<- shapeVec;
+    }
     return(.set.mSet(mSetObj));
 }
 
@@ -1472,10 +1476,10 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    pc.num,
                                    meta,
                                    metaShape = NULL){
-    if(!exists(".plotPCAPairSummaryMeta")){ 
+    if(!exists(".plot.pca.pair.meta")){ 
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.Rc"));
     }
-    return(.plotPCAPairSummaryMeta(mSetObj,
+    return(.plot.pca.pair.meta(mSetObj,
                                    imgName,
                                    format,
                                    dpi,

@@ -1,4 +1,4 @@
-.plotPCAPairSummaryMeta <- function(mSetObj = NA,
+.plot.pca.pair.meta <- function(mSetObj = NA,
                                     imgName,
                                     format = "png",
                                     dpi    = default.dpi,
