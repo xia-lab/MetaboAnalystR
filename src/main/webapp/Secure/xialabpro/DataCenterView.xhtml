@@ -75,16 +75,15 @@
             <p:growl id="msgs" showDetail="true" life="6000"/>
 
             <h2>Data Management</h2>
-            <p class="soft-note">
+            <p>
                 Upload one or more datasets (CSV/TSV/TXT or ZIP). Your uploaded files appear in the table below, where you can
                 download, edit metadata, or delete them.
             </p>
 
             <ui:include src="/template/_dataset_overlaypanel.xhtml" />
-
-
             <h:form id="dataTableForm">
-                <p:toolbar styleClass="surface-card shadow-1 p-2 mb-2">
+                <!--
+                <p:toolbar>
                     <p:toolbarGroup align="right">
                         <p:commandButton value="Refresh" icon="pi pi-refresh" update=":dataTableForm:dsTable :msgs" actionListener="#{datasetController.refresh}"/>
                         <p:spacer width="8"/>
@@ -98,6 +97,7 @@
                         </p:commandButton>
                     </p:toolbarGroup>
                 </p:toolbar>
+                -->
 
                 <p:dataTable id="dsTable"
                              var="ds"
