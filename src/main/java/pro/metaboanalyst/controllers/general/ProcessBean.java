@@ -332,6 +332,9 @@ public class ProcessBean implements Serializable {
         }
         msg = msg + "</table>";
         msgText = msg;
+
+        int res = RDataUtils.saveMsetObject(RC);
+
     }
 
     private boolean imputeInit = false;

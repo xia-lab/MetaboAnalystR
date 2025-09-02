@@ -964,7 +964,6 @@ public class RDataUtils {
         }
     }
 
-    //------------Sanity Check------------------
     public static int sanityCheckData(RConnection RC) {
         try {
             String rCommand = "SanityCheckData(NA)";
@@ -972,6 +971,28 @@ public class RDataUtils {
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
             LOGGER.error("sanityCheckData", rse);
+        }
+        return 0;
+    }
+
+    public static int saveMsetObject(RConnection RC) {
+        try {
+            String rCommand = "SaveMsetObject(NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception rse) {
+            LOGGER.error("saveMsetObject", rse);
+        }
+        return 0;
+    }
+
+    public static int getSampleNum(RConnection RC) {
+        try {
+            String rCommand = "GetSampleNum(NA)";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asInteger();
+        } catch (Exception rse) {
+            LOGGER.error("getSampleNum", rse);
         }
         return 0;
     }

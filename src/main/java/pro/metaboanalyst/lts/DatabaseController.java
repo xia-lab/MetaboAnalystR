@@ -1646,51 +1646,38 @@ public class DatabaseController implements Serializable {
     public static String insertDataset(String email,
             String node,
             String title,
+            String module,
+            String dataType,
             String filename,
             String type,
             long sizeBytes,
             int sampleNum) {
-        final String sql
-                = "INSERT INTO datasets (title, filename, type, size_bytes, email, node, samplenum) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id";
+        // Wrap into a single-file call
+        DatasetFile primary = new DatasetFile();
+        primary.setRole("data");
+        primary.setFilename(filename);
+        primary.setType(type);
+        primary.setSizeBytes(sizeBytes);
+        primary.setUploadedAt(null); // let DB default to now()
 
-        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, title);
-            ps.setString(2, filename);
-            ps.setString(3, type);        // e.g., "csv", "tsv", "txt", "zip"
-            ps.setLong(4, sizeBytes);     // store raw bytes; UI can format
-            ps.setString(5, email);       // citext in PG handles case-insensitivity
-            ps.setString(6, node);        // server/node identifier
-            ps.setInt(7, sampleNum);      // >= 0 (DB has CHECK constraint)
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    // PG JDBC maps UUID nicely:
-                    Object obj = rs.getObject(1);
-                    String idStr = (obj instanceof java.util.UUID)
-                            ? ((java.util.UUID) obj).toString()
-                            : String.valueOf(obj);
-                    return "Dataset inserted successfully. id=" + idStr;
-                } else {
-                    return "Dataset insertion failed.";
-                }
-            }
-        } catch (SQLException ex) {
-            System.err.println("SQLException in insertDataset: " + ex.getMessage());
-            return "Error inserting dataset - " + ex.getMessage();
-        }
+        return insertDatasetWithFiles(email, node, title, module, dataType, sampleNum, /*uploadedAt=*/ null, List.of(primary));
     }
 
+    /**
+     * New: insert a dataset with one or more physical files (data + metadata +
+     * etc.).
+     */
     public static String insertDatasetWithFiles(String email,
             String node,
             String title,
+            String module, // <-- new
+            String dataType, // <-- new
             int sampleNum,
             OffsetDateTime uploadedAt, // optional; null -> now()
             List<DatasetFile> files) {
         final String dsSql
-                = "INSERT INTO datasets (title, filename, type, size_bytes, uploaded_at, email, node, samplenum) "
-                + "VALUES (?, ?, ?, ?, COALESCE(?, now()), ?, ?, ?) RETURNING id";
+                = "INSERT INTO datasets (title, filename, type, size_bytes, uploaded_at, email, node, samplenum, module, data_type) "
+                + "VALUES (?, ?, ?, ?, COALESCE(?, now()), ?, ?, ?, ?, ?) RETURNING id";
 
         final String fileSql
                 = "INSERT INTO dataset_files (dataset_id, role, filename, type, size_bytes, uploaded_at) "
@@ -1709,7 +1696,7 @@ public class DatabaseController implements Serializable {
             con.setAutoCommit(false);
             UUID datasetId;
 
-            // 1) Insert dataset (legacy columns populated from first file)
+            // 1) Insert dataset (legacy columns populated from first file) + new columns
             try (PreparedStatement ps = con.prepareStatement(dsSql)) {
                 ps.setString(1, nvl(title, primary.getFilename())); // title fallback = filename
                 ps.setString(2, primary.getFilename());
@@ -1719,6 +1706,8 @@ public class DatabaseController implements Serializable {
                 ps.setString(6, email);
                 ps.setString(7, node);
                 ps.setInt(8, Math.max(0, sampleNum));
+                ps.setString(9, module);                            // <-- new bind
+                ps.setString(10, dataType);                         // <-- new bind
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
@@ -1738,7 +1727,7 @@ public class DatabaseController implements Serializable {
                         return "Error inserting dataset - each file must have role/filename/type.";
                     }
                     fps.setObject(1, datasetId);
-                    fps.setString(2, f.getRole());                 // << no normalization
+                    fps.setString(2, f.getRole());
                     fps.setString(3, f.getFilename());
                     fps.setString(4, nvl(f.getType(), "bin"));
                     fps.setLong(5, Math.max(0L, f.getSizeBytes()));
@@ -1752,13 +1741,10 @@ public class DatabaseController implements Serializable {
             return "Dataset inserted successfully. id=" + datasetId + " files=" + files.size();
 
         } catch (SQLException ex) {
-            // Nice messages for common constraint errors
             String sqlState = ex.getSQLState();
-            // 23514 = check constraint violation (e.g., role not in allowed set)
             if ("23514".equals(sqlState)) {
                 return "Error inserting dataset - invalid value violates a check constraint (e.g., role). Detail: " + ex.getMessage();
             }
-            // 23503 = foreign key violation (shouldn't happen here)
             if ("23503".equals(sqlState)) {
                 return "Error inserting dataset - foreign key issue: " + ex.getMessage();
             }
@@ -1767,11 +1753,16 @@ public class DatabaseController implements Serializable {
         }
     }
 
+    private static String nvl(String s, String def) {
+        return (s == null || s.trim().isEmpty()) ? def : s;
+    }
+
+    // In DatabaseClient (Postgres)
     // In DatabaseClient (Postgres)
     public static ArrayList<DatasetRow> getDatasetsForEmail(String email) {
         final String sql
                 = "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
-                + "       d.email, d.node, d.samplenum, "
+                + "       d.email, d.node, d.samplenum, d.module, d.data_type, "
                 + "       COALESCE(df.file_count, 0) AS file_count, "
                 + "       COALESCE(df.has_metadata, false) AS has_metadata "
                 + "FROM datasets d "
@@ -1780,8 +1771,7 @@ public class DatabaseController implements Serializable {
                 + "  FROM dataset_files GROUP BY dataset_id "
                 + ") df ON df.dataset_id = d.id "
                 + "WHERE d.email = ? "
-                + // ← no node filter
-                "ORDER BY d.uploaded_at DESC, d.node";
+                + "ORDER BY d.uploaded_at DESC, d.node";
 
         ArrayList<DatasetRow> out = new ArrayList<>();
         try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -1815,6 +1805,8 @@ public class DatabaseController implements Serializable {
                     d.setEmail(rs.getString("email"));
                     d.setNode(rs.getString("node"));
                     d.setSamplenum(rs.getInt("samplenum"));
+                    d.setModule(rs.getString("module"));       // <-- new
+                    d.setDataType(rs.getString("data_type"));  // <-- new
                     d.setFileCount(rs.getInt("file_count"));
                     d.setHasMetadata(rs.getBoolean("has_metadata"));
                     out.add(d);
@@ -1877,7 +1869,4 @@ public class DatabaseController implements Serializable {
         return files;
     }
 
-    private static String nvl(String s, String def) {
-        return (s == null || s.trim().isEmpty()) ? def : s;
-    }
 }

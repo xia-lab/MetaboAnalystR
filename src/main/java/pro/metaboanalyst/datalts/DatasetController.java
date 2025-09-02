@@ -159,7 +159,7 @@ public class DatasetController implements Serializable {
                     : files.get(0).getFilename();
 
             // ---- CALL YOUR SPECIALIZED INSERT FUNCTION (DB or API) ----
-            String resp = db.insertDataset(email, node, resolvedTitle, sampleNum, files);
+            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(), sampleNum, files);
 
             UUID datasetId = extractUUID(resp);
             if (datasetId == null) {
@@ -187,36 +187,6 @@ public class DatasetController implements Serializable {
                 .compile("([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})")
                 .matcher(msg);
         return m.find() ? java.util.UUID.fromString(m.group(1)) : null;
-    }
-
-    private static String toJson(Object obj) throws com.fasterxml.jackson.core.JsonProcessingException {
-        return new com.fasterxml.jackson.databind.ObjectMapper()
-                .findAndRegisterModules()
-                .writerWithDefaultPrettyPrinter()
-                .writeValueAsString(obj);
-    }
-
-    private static String sanitizeFilename(String name) {
-        // strip any path, keep only the last segment
-        name = name.replace('\\', '/');
-        int idx = name.lastIndexOf('/');
-        if (idx >= 0) {
-            name = name.substring(idx + 1);
-        }
-
-        // remove illegal chars; allow letters, digits, dot, dash, underscore, and space
-        name = name.replaceAll("[^A-Za-z0-9._\\- ]", "_").trim();
-        if (name.isEmpty()) {
-            name = "file.bin";
-        }
-        // limit length
-        if (name.length() > 180) {
-            String ext = extOf(name);
-            String base = ext.isEmpty() ? name : name.substring(0, name.length() - ext.length() - 1);
-            base = base.substring(0, Math.min(base.length(), 170));
-            name = ext.isEmpty() ? base : base + "." + ext;
-        }
-        return name;
     }
 
     private static Path uniquePath(Path dir, String fileName) throws IOException {
@@ -491,12 +461,27 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             sb.addMessage("Error", "No staged dataset to commit.");
             return null;
         }
+
         try {
+            Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+            Path msetFile = home.resolve("mSetObj_after_sanity.qs");
+            if (Files.exists(msetFile)) {
+                DatasetFile df = new DatasetFile();
+                df.setRole("supplement");
+                df.setFilename("mSetObj_after_sanity.qs");
+                df.setType("qs");
+                df.setSizeBytes(Files.size(msetFile));
+                df.setUploadedAt(OffsetDateTime.now());
+                stagedFiles.add(df);
+            }
+
             // 1) Insert (DB in Docker, API otherwise)
             String resp = db.insertDataset(
                     stagedDataset.getEmail(),
                     stagedDataset.getNode(),
                     stagedDataset.getTitle(),
+                    sb.getAnalType(),
+                    sb.getDataType(),
                     stagedDataset.getSamplenum(),
                     stagedFiles
             );
@@ -506,8 +491,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 return null;
             }
 
-            // 2) Copy physical files from their current location into dataset folder
-            List<java.nio.file.Path> sources = resolveSourcePathsForStaged();
+            // 2) Copy physical files into dataset folder
+            List<Path> sources = resolveSourcePathsForStaged();
             if (sources.size() != stagedFiles.size()) {
                 sb.addMessage("Error", "Cannot resolve source files for all staged entries.");
                 return null;
@@ -568,7 +553,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         final String node = ab.getToolLocation();
         final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
 
-        // choose primary (prefer role=data)
         DatasetFile primary = files.stream()
                 .filter(f -> "data".equalsIgnoreCase(f.getRole()))
                 .findFirst().orElse(files.get(0));
@@ -681,8 +665,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             sb.addMessage("Error", "No dataset selected to load.");
             return;
         }
-        this.selected = ds; // optional
-        // ... your load logic ...
+        this.selected = ds;
+        sb.doLogin("", "", false, false);
         sb.addMessage("Loaded", "Loaded dataset: " + ds.getFilename());
     }
 

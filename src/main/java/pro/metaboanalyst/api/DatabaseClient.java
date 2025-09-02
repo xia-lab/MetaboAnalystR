@@ -20,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.UUID;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
+import pro.metaboanalyst.controllers.general.SessionBean1;
+
 import pro.metaboanalyst.datalts.DatasetFile;
 import pro.metaboanalyst.lts.DatabaseController;
 import pro.metaboanalyst.datalts.DatasetRow;
@@ -35,6 +37,10 @@ public class DatabaseClient {
     @JsonIgnore
     @Inject
     private DatabaseController dbc;
+
+    @JsonIgnore
+    @Inject
+    private SessionBean1 sb;
 
     private static final Logger LOGGER = Logger.getLogger(DatabaseClient.class.getName());
     private final ApiClient apiClient;
@@ -453,29 +459,14 @@ public class DatabaseClient {
         }
     }
 
-// Backward-compatible wrapper: single primary file -> calls multi-file path
-    public String insertDataset(String email,
-            String node,
-            String title,
-            String filename,
-            String type,
-            long sizeBytes,
-            int sampleNum) {
-        DatasetFile primary = new DatasetFile();
-        primary.setRole("data");
-        primary.setFilename(filename);
-        primary.setType(type);
-        primary.setSizeBytes(sizeBytes);
-
-        return insertDataset(email, node, title, sampleNum, java.util.List.of(primary));
-    }
-
     /**
      * New: multi-file insert (data + metadata + etc.)
      */
     public String insertDataset(String email,
             String node,
             String title,
+            String module,
+            String dataType,
             int sampleNum,
             java.util.List<DatasetFile> files) {
         if (files == null || files.isEmpty()) {
@@ -484,7 +475,7 @@ public class DatabaseClient {
 
         if (ab.isInDocker()) {
             // Direct DB path
-            return DatabaseController.insertDatasetWithFiles(email, node, title, sampleNum, null, files);
+            return DatabaseController.insertDatasetWithFiles(email, node, title, module, dataType, sampleNum, null, files);
         } else {
             try {
                 // Build nested JSON payload
@@ -524,7 +515,7 @@ public class DatabaseClient {
      */
     public String insertDataset(DatasetRow ds) {
         return insertDataset(
-                ds.getEmail(), ds.getNode(), ds.getTitle(), ds.getSamplenum(),
+                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(), ds.getSamplenum(),
                 ds.getFiles() == null ? java.util.List.of() : ds.getFiles()
         );
     }

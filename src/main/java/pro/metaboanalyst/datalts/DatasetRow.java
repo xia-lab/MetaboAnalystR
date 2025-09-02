@@ -31,6 +31,8 @@ public class DatasetRow implements Serializable {
     private String email;            // datasets.email (citext)
     private String node;             // datasets.node
     private int samplenum;           // datasets.samplenum
+    private String module;         // stat,mf,roc,etc
+    private String dataType;         // table,list,etc
 
     // --- UI-only / optional fields (not in DB schema unless you add them) ---
     private String description;      // used by edit dialog
@@ -234,5 +236,22 @@ public class DatasetRow implements Serializable {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
                 .withZone(ZoneId.systemDefault());
         return fmt.format(uploadedAt);
+    }
+    
+    
+    public String getModule() {
+        return module;
+    }
+
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(String dataType) {
+        this.dataType = dataType;
     }
 }
