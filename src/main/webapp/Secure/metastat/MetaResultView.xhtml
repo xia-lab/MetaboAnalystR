@@ -95,12 +95,27 @@
         <p:dialog widgetVar="visDialog" dynamic="true" modal="true" appendTo="@(body)" 
                   header="Feature View"
                   hideEffect="explode" resizable="true" position="center top"> 
+            <h:panelGrid columns="3" style="text-align: center; float:right; margin-top:15px; margin-right:50px">
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('meta_ft')}" 
+                               update=":myGraphPane"
+                               oncomplete="PF('graphDialog').show()"
+                               title="Customize the graphics output">
+                    <i class="pi pi-palette" style="font-size: 1.4rem"></i>
+                </p:commandLink>
+                <p:spacer style="width: 20px"/>
+                <p:commandLink id="addToReport2" 
+                               actionListener="#{fireBaseController.addFeatureToReport()}" 
+                               title="Add to report">
+                    <i class="pi pi-file" style="font-size: 1.4rem"/>
+                </p:commandLink>
+            </h:panelGrid>  
             <h:panelGrid id="metaVisView" style="text-align: center; padding: 10px">
                 <p:graphicImage 
                     style="#{sessionBean1.cmpdImgSize}"
                     value="#{metaResBean.currentFeatureImg}" /> 
                 Values were scaled to facilitate cross-study comparisons.
             </h:panelGrid>
+
         </p:dialog> 
 
     </ui:define>

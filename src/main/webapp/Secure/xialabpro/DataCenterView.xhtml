@@ -7,18 +7,12 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/template/_template_workflow.xhtml">
 
-    <!-- ─────────────────────────────────────────────────────────────
-         Meta hooks & breadcrumb
-    ─────────────────────────────────────────────────────────────── -->
+
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Data Manager', '/Secure/xialabpro/DataManager.xhtml')}"/>
-        <!-- Ensure table is populated per email across ALL nodes on first render -->
         <f:event type="preRenderView" listener="#{datasetController.refresh}"/>
     </ui:define>
 
-    <!-- ─────────────────────────────────────────────────────────────
-         Page styles (keep minimal; leverage layout theme)
-    ─────────────────────────────────────────────────────────────── -->
     <ui:define name="mystyle">
         <style>
             .warnHighlight {
@@ -123,7 +117,7 @@
                                     update=":dataTableForm:dsTable :msgs"/>
                         </p:selectBooleanCheckbox>
                     </p:column>
-                    
+
                     <p:column headerText="Title" sortBy="#{ds.title}" filterBy="#{ds.title}" filterMatchMode="contains" styleClass="wide-column">
                         <h:panelGroup layout="block">
                             <p:commandLink value="#{ds.title}"
@@ -169,7 +163,7 @@
 
                         <p:spacer width="10"/>
                         <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
-                            <i class="pi pi-download icon-btn"></i>
+                            <i class="pi pi-download icon-btn" style="font-size: 1.4rem"></i>
                             <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
                             <p:fileDownload value="#{datasetController.downloadSelected}"/>
                             <p:tooltip for="downloadBn" value="Download original file"/>
@@ -177,9 +171,19 @@
 
                         <p:spacer width="10"/>
                         <p:commandLink id="deleteBn" title="Delete" onclick="PF('delDialog').show();">
-                            <i class="pi pi-trash icon-btn" style="color:orangered"></i>
+                            <i class="pi pi-trash icon-btn" style="color:orangered; font-size: 1.4rem"></i>
                             <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
                             <p:tooltip for="deleteBn" value="Delete this dataset"/>
+                        </p:commandLink>
+
+                        <p:spacer width="10"/>
+                        <p:commandLink id="loadBn"
+                                       title="Load"
+                                       process="@this @row"
+                                       update=":dataTableForm"
+                                       action="#{datasetController.load(ds)}">
+                            <i class="pi pi-caret-right icon-btn" style="color:#16a34a; font-size: 1.4rem"></i>
+                            <p:tooltip for="loadBn" value="Load this dataset"/>
                         </p:commandLink>
                     </p:column>
 

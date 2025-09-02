@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.lts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.enrich.IntegProcessBean;
@@ -80,7 +81,9 @@ import java.util.UUID;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
+import pro.metaboanalyst.controllers.meta.MetaResBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 import pro.metaboanalyst.spectra.TandemMSBean;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -126,6 +129,12 @@ public class FireBaseController implements Serializable {
 
     @Inject
     private DiagramView dv;
+
+    @Inject
+    private MetaResBean mrb;
+
+    @Inject
+    private DatasetController dc;
 
     private String shareableLink = "";
 
@@ -379,6 +388,13 @@ public class FireBaseController implements Serializable {
 
         ProjectModel selectedProject = createProjectFromMap(docData);
         pb.setSelectedProject(selectedProject);
+
+        if (dc.hasStagedDataset()) {
+            java.util.UUID dsId = dc.commitStagedDataset();
+            if (dsId != null) {
+                System.out.println("Committed staged dataset: " + dsId);
+            }
+        }
 
     }
 
@@ -1793,6 +1809,11 @@ public class FireBaseController implements Serializable {
 
     public void addFeatureToReport() {
         RDataUtils.addFeatureToReport(sb.getRConnection(), sb.getCurrentCmpdName(), sb.getCmpdSummaryNm());
+        sb.addMessage("info", "This feature has been added to report!");
+    }
+
+    public void addMetaFeatureToReport() {
+        RDataUtils.addFeatureToReport(sb.getRConnection(), mrb.getSelectedFeature().getName(), mrb.getCurrentFeatureImg());
         sb.addMessage("info", "This feature has been added to report!");
     }
 

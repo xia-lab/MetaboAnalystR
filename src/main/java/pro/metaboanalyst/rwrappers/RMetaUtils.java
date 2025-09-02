@@ -80,6 +80,8 @@ public class RMetaUtils {
             String rCommand = "PlotSelectedFeature(NA" + ", \"" + symb + "\", \"" + format + "\", " + dpi + ")";
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("meta_ft_" + symb, rCommand);
+            sb.addGraphicsCMD("meta_ft", rCommand);
+
             RC.voidEval(rCommand);
             String size = RGraphUtils.getCurrentCmpdImgSize(RC);
             sb.setCmpdImgSize(size);

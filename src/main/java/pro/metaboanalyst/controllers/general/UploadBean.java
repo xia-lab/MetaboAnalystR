@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.file.UploadedFile;
@@ -30,6 +31,7 @@ import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.datalts.DatasetController;
+import pro.metaboanalyst.datalts.DatasetFile;
 
 /**
  *
@@ -137,21 +139,18 @@ public class UploadBean implements Serializable {
             }
             sb.setDataUploaded();
 
-            // 3) Insert dataset (via API/DB) and save the physical file to dataset folder
+            // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
             String niceTitle = stripExt(fileName);
+            int samples = 10; // or inferSampleNumFromR(RC)
 
-            int samples = 10;//inferSampleNumFromR(RC);
+            List<UploadedFile> files = List.of(dataFile);
+            List<String> roles = List.of("data");
 
-            java.util.List<org.primefaces.model.file.UploadedFile> files = java.util.List.of(dataFile);
-            java.util.List<String> roles = java.util.List.of("data");
+            // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+            dc.stageDataset(niceTitle, samples, files, roles);
+            sb.addMessage("info", "Dataset staged in memory.");
 
-            java.util.UUID datasetId = dc.insertAndSaveDataset(niceTitle, samples, files, roles);
-
-            if (datasetId == null) {
-                return null;
-            }
-
-            return "Data check";
+            return "Data check"; // continue to your next view as before
 
         } catch (Exception e) {
             sb.addMessage("Error", "Exception occured: " + e.getMessage());
@@ -159,6 +158,21 @@ public class UploadBean implements Serializable {
             return null;
         }
     }
+
+// Small helper if not already present
+    private static String stripExt(String pathOrName) {
+        if (pathOrName == null) {
+            return "";
+        }
+        String name = pathOrName.replace('\\', '/'); // normalize
+        int slash = name.lastIndexOf('/');
+        if (slash >= 0) {
+            name = name.substring(slash + 1);
+        }
+        int dot = name.lastIndexOf('.');
+        return (dot > 0) ? name.substring(0, dot) : name;
+    }
+
     /*
      * Handle zip file examples (containing csv or txt files)
      */
@@ -230,6 +244,17 @@ public class UploadBean implements Serializable {
 
                     sb.setDataUploaded();
                     sb.initNaviTree("stat-peak");
+
+                    // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
+                    String niceTitle = stripExt(inPath);
+                    int samples = 10; // or inferSampleNumFromR(RC)
+
+                    List<UploadedFile> files = List.of(zipFile);
+                    List<String> roles = List.of("data");
+
+                    dc.stageDataset(niceTitle, samples, files, roles);
+                    sb.addMessage("info", "Dataset staged in memory.");
+
                     return zipDataType;
                 } else {
                     sb.addMessage("Error", RDataUtils.getErrMsg(RC));
@@ -372,28 +397,51 @@ public class UploadBean implements Serializable {
     Handle data for power analysis
      */
     public String uploadPilotData() {
-
-        if (dataFile.getSize() == 0) {
+        if (dataFile == null || dataFile.getSize() == 0) {
             sb.addMessage("Error", "File is empty");
             return null;
         }
 
-        boolean paired = false;
-        if (dataFormat.endsWith("p")) {
-            paired = true;
+        boolean paired = dataFormat != null && dataFormat.endsWith("p");
+
+        if (!sb.doLogin(dataType, "power", false, paired)) {
+            return null;
         }
-        if (sb.doLogin(dataType, "power", false, paired)) {
+
+        try {
             RConnection RC = sb.getRConnection();
+
+            // 1) Save upload to user's home dir (for R)
             String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-            if (RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
-                sb.setDataUploaded();
-                return "Data check";
-            } else {
-                sb.addMessage("Error:", RDataUtils.getErrMsg(RC));
+            if (fileName == null) {
+                sb.addMessage("Error", "Failed to save upload.");
                 return null;
             }
+
+            // 2) Let R read/validate
+            if (!RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
+                sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+                return null;
+            }
+            sb.setDataUploaded();
+
+            // 3) STAGE the dataset (no DB insert, no dataset-folder copy yet)
+            String niceTitle = stripExt(fileName);                    // e.g., "pilot_data"
+            int samples = 0; // or infer from R: inferSampleNumFromR(RC)
+
+            List<UploadedFile> files = List.of(dataFile);
+            List<String> roles = List.of("data");
+
+            dc.stageDataset(niceTitle, samples, files, roles);
+
+            sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
+            return "Data check";
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Exception occurred: " + e.getMessage());
+            LOGGER.error("uploadPilotData", e);
+            return null;
         }
-        return null;
     }
 
     public String handlePowerTestFileUpload() {
@@ -407,67 +455,108 @@ public class UploadBean implements Serializable {
     }
 
     public String uploadDoseData() {
-        //check if data is uploaded
-//        if (useExample) {
-//            return handleDoseTestFileUpload();
-//        }
-
-        if (dataFile == null) {
-            sb.addMessage("Error", "No data file is uploaded!");
+        // Basic checks
+        if (dataFile == null || dataFile.getSize() == 0) {
+            sb.addMessage("Error", "No data file is uploaded or file is empty!");
             return null;
         }
 
-        if (dataFile.getSize() == 0) {
-            sb.addMessage("Error", "File is empty!");
+        boolean paired = (dataFormat != null && dataFormat.endsWith("p"));
+
+        if (!sb.doLogin(dataType, "dose", false, paired)) {
             return null;
         }
 
-        boolean paired = false;
-        if (dataFormat.endsWith("p")) {
-            paired = true;
-        }
-        if (sb.doLogin(dataType, "dose", false, paired)) {
-            RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-            boolean read_res;
+        RConnection RC = sb.getRConnection();
+        try {
+            // 1) Save uploads to user's home dir (to have local paths)
+            String dataPath = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            if (dataPath == null) {
+                sb.addMessage("Error", "Failed to save data file.");
+                return null;
+            }
 
-            if (metaFile == null) {
-                if (dataClsOpt.equals("disc")) {
-                    read_res = RDataUtils.readTextDataDose(RC, fileName, dataFormat, "disc");
-                    drb.setContineousDoes(false);
-                } else {
-                    read_res = RDataUtils.readTextDataDose(RC, fileName, dataFormat, "cont");
-                    drb.setContineousDoes(true);
-                }
-                if (!read_res) {
-                    String err = RDataUtils.getErrMsg(RC);
-                    sb.addMessage("Error", err);
-                    return null;
-                }
-            } else {
-                String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-                if (metaName == null) {
-                    return null;
-                }
-                if (dataClsOpt.equals("disc")) {
-                    read_res = RDataUtils.readTextDataDoseWithMeta(RC, fileName, metaName, dataFormat, "disc");
-                    drb.setContineousDoes(false);
-                } else {
-                    read_res = RDataUtils.readTextDataDoseWithMeta(RC, fileName, metaName, dataFormat, "cont");
-                    drb.setContineousDoes(true);
-                }
-                if (!read_res) {
-                    String err = RDataUtils.getErrMsg(RC);
-                    sb.addMessage("Error", "Failed meta-data integrity check." + err);
+            String metaPath = null;
+            boolean hasMeta = metaFile != null && metaFile.getSize() > 0;
+            if (hasMeta) {
+                metaPath = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                if (metaPath == null) {
+                    sb.addMessage("Error", "Failed to save metadata file.");
                     return null;
                 }
             }
 
+            // 2) Let R read/validate
+            boolean ok;
+            if (!hasMeta) {
+                if ("disc".equalsIgnoreCase(dataClsOpt)) {
+                    ok = RDataUtils.readTextDataDose(RC, dataPath, dataFormat, "disc");
+                    drb.setContineousDoes(false);
+                } else {
+                    ok = RDataUtils.readTextDataDose(RC, dataPath, dataFormat, "cont");
+                    drb.setContineousDoes(true);
+                }
+            } else {
+                if ("disc".equalsIgnoreCase(dataClsOpt)) {
+                    ok = RDataUtils.readTextDataDoseWithMeta(RC, dataPath, metaPath, dataFormat, "disc");
+                    drb.setContineousDoes(false);
+                } else {
+                    ok = RDataUtils.readTextDataDoseWithMeta(RC, dataPath, metaPath, dataFormat, "cont");
+                    drb.setContineousDoes(true);
+                }
+            }
+            if (!ok) {
+                sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+                return null;
+            }
+
             sb.setDataUploaded();
+
+            // 3) STAGE (no DB insert, no dataset-folder copy)
+            String dataName = DataUtils.getJustFileName(dataPath);
+            String niceTitle = stripExt(dataName);
+            int samples = 0; // TODO: infer from R if desired
+
+            java.util.List<DatasetFile> files = new java.util.ArrayList<>();
+            java.util.List<java.nio.file.Path> srcPaths = new java.util.ArrayList<>();
+
+            // data file
+            java.nio.file.Path dp = java.nio.file.Paths.get(dataPath);
+            DatasetFile df = new DatasetFile();
+            df.setRole("data");
+            df.setFilename(dataName);
+            df.setType(extOf(dataName).isEmpty() ? "bin" : extOf(dataName));
+            df.setSizeBytes(java.nio.file.Files.size(dp));
+            df.setUploadedAt(java.time.OffsetDateTime.now());
+            files.add(df);
+            srcPaths.add(dp);
+
+            // metadata file (optional)
+            if (hasMeta) {
+                String metaName = DataUtils.getJustFileName(metaPath);
+                java.nio.file.Path mp = java.nio.file.Paths.get(metaPath);
+
+                DatasetFile mf = new DatasetFile();
+                mf.setRole("metadata");
+                mf.setFilename(metaName);
+                mf.setType(extOf(metaName).isEmpty() ? "bin" : extOf(metaName));
+                mf.setSizeBytes(java.nio.file.Files.size(mp));
+                mf.setUploadedAt(java.time.OffsetDateTime.now());
+                files.add(mf);
+                srcPaths.add(mp);
+            }
+
+            // stage from local paths
+            dc.stageDatasetFromPaths(niceTitle, samples, files, srcPaths);
+
+            sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
             return "Data check";
 
+        } catch (Exception e) {
+            sb.addMessage("Error", "Exception: " + e.getMessage());
+            LOGGER.error("uploadDoseData", e);
+            return null;
         }
-        return null;
     }
 
     public String handleDoseTestFileUpload() {
@@ -500,35 +589,89 @@ public class UploadBean implements Serializable {
             return null;
         }
 
-        if (sb.doLogin(dataType, "roc", false, false)) {
-            RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-            if (RDataUtils.readTextData(RC, fileName, dataFormat, "disc")) {
-                if (metaFile == null) {
-                    sb.setDataUploaded();
-                    return "Data check";
+        if (!sb.doLogin(dataType, "roc", false, false)) {
+            return null;
+        }
 
-                } else {
-                    String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
-                    if (metaName == null) {
-                        return null;
-                    }
-                    boolean res = RDataUtils.readMetaData(RC, metaName);
-                    if (!res) {
-                        String err = RDataUtils.getErrMsg(RC);
-                        sb.addMessage("Error", "Failed meta-data integrity check." + err);
-                        return null;
-                    }
-                    sb.setDataUploaded();
-                    mfb.setUniqueMetaList(null);
-                    return "Data check";
-                }
-            } else {
-                sb.addMessage("Error:", RDataUtils.getErrMsg(RC));
+        RConnection RC = sb.getRConnection();
+
+        try {
+            // 1) Save primary data file to user's home (local path for R + later commit)
+            String dataPath = DataUtils.uploadFile(sb, dataFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            if (dataPath == null) {
+                sb.addMessage("Error", "Failed to save data file.");
                 return null;
             }
+
+            // 2) R: read data
+            if (!RDataUtils.readTextData(RC, dataPath, dataFormat, "disc")) {
+                sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+                return null;
+            }
+
+            // 3) Optional metadata
+            String metaPath = null;
+            if (metaFile != null && metaFile.getSize() > 0) {
+                metaPath = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+                if (metaPath == null) {
+                    return null;
+                }
+                boolean ok = RDataUtils.readMetaData(RC, metaPath);
+                if (!ok) {
+                    sb.addMessage("Error", "Failed meta-data integrity check. " + RDataUtils.getErrMsg(RC));
+                    return null;
+                }
+                // your original side-effect
+                mfb.setUniqueMetaList(null);
+            }
+
+            sb.setDataUploaded();
+
+            // 4) STAGE (no DB insert, no dataset-folder copy)
+            String dataName = DataUtils.getJustFileName(dataPath);
+            String niceTitle = stripExt(dataName);
+            int samples = 0; // set if you want to infer
+
+            java.util.List<DatasetFile> files = new java.util.ArrayList<>();
+            java.util.List<java.nio.file.Path> srcPaths = new java.util.ArrayList<>();
+
+            // data file entry
+            java.nio.file.Path dp = java.nio.file.Paths.get(dataPath);
+            DatasetFile df = new DatasetFile();
+            df.setRole("data");
+            df.setFilename(dataName);
+            df.setType(extOf(dataName).isEmpty() ? "bin" : extOf(dataName));
+            df.setSizeBytes(java.nio.file.Files.size(dp));
+            df.setUploadedAt(java.time.OffsetDateTime.now());
+            files.add(df);
+            srcPaths.add(dp);
+
+            // metadata file entry (optional)
+            if (metaPath != null) {
+                String metaName = DataUtils.getJustFileName(metaPath);
+                java.nio.file.Path mp = java.nio.file.Paths.get(metaPath);
+
+                DatasetFile mf = new DatasetFile();
+                mf.setRole("metadata");
+                mf.setFilename(metaName);
+                mf.setType(extOf(metaName).isEmpty() ? "bin" : extOf(metaName));
+                mf.setSizeBytes(java.nio.file.Files.size(mp));
+                mf.setUploadedAt(java.time.OffsetDateTime.now());
+                files.add(mf);
+                srcPaths.add(mp);
+            }
+
+            // stage using local paths (since no UploadedFile needed here)
+            dc.stageDatasetFromPaths(niceTitle, samples, files, srcPaths);
+
+            sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
+            return "Data check";
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Exception: " + e.getMessage());
+            LOGGER.error("uploadRocData", e);
+            return null;
         }
-        return null;
     }
 
     public String handleRocTestFileUpload() {
@@ -594,21 +737,56 @@ public class UploadBean implements Serializable {
         }
 
         dataType = "mztab";
-        if (sb.doLogin(dataType, "stat", false, false)) {
-            RConnection RC = sb.getRConnection();
-            String fileName = DataUtils.uploadFile(sb, mzTabFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+        if (!sb.doLogin(dataType, "stat", false, false)) {
+            return null;
+        }
 
-            if (RDataUtils.readMzTabData(RC, fileName, identifier)) {
-                sb.setDataUploaded();
-                return "Data check";
-            } else {
-                sb.addMessage("Error:", RDataUtils.getErrMsg(RC));
+        RConnection RC = sb.getRConnection();
+        try {
+            // 1) Save to user's home dir (local path for R + later commit)
+            String filePath = DataUtils.uploadFile(sb, mzTabFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            if (filePath == null) {
+                sb.addMessage("Error", "Failed to save mzTab file.");
                 return null;
             }
-        }
-        return null;
-    }
 
+            // 2) R validation (use local path)
+            if (!RDataUtils.readMzTabData(RC, filePath, identifier)) {
+                sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+                return null;
+            }
+            sb.setDataUploaded();
+
+            // 3) STAGE (no DB insert / no file move yet)
+            String name = DataUtils.getJustFileName(filePath);
+            String niceTitle = stripExt(name);
+            java.nio.file.Path p = java.nio.file.Paths.get(filePath);
+
+            DatasetFile df = new DatasetFile();
+            df.setRole("data");
+            df.setFilename(name);
+            String ext = extOf(name);
+            df.setType(ext.isEmpty() ? "mztab" : ext);               // typically "mztab"
+            df.setSizeBytes(java.nio.file.Files.size(p));
+            df.setUploadedAt(java.time.OffsetDateTime.now());
+
+            // Stage using local path (no UploadedFile needed for commit)
+            dc.stageDatasetFromPaths(
+                    niceTitle,
+                    /*sampleNum*/ 0,
+                    java.util.Arrays.asList(df),
+                    java.util.Arrays.asList(p)
+            );
+
+            sb.addMessage("info", "mzTab dataset staged in memory. You can review and commit later.");
+            return "Data check";
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Exception: " + e.getMessage());
+            LOGGER.error("handleMzTabUpload", e);
+            return null;
+        }
+    }
     /*
      * Handle Metabolomics Workbench datasets
      */
@@ -624,67 +802,94 @@ public class UploadBean implements Serializable {
 
     public String handleMetWorkbenchData(String module) {
 
-        if (!nmdrStudyId.startsWith("ST")) {
+        // Basic sanity for MW study id (e.g., "ST001234")
+        if (nmdrStudyId == null || !nmdrStudyId.startsWith("ST")) {
             sb.addMessage("Error", "Invalid Study ID!");
             return null;
         }
 
-        if (module.equals("stat")) {
-            if (sb.doLogin("conc", "stat", false, false)) {
-                try {
-                    RConnection RC = sb.getRConnection();
-
-                    if (RDataUtils.getMetabolomicsWorkbenchData(RC, nmdrStudyId)) {
-                        if (RDataUtils.readMetabolomicsWorkbenchData(RC, nmdrStudyId, "rowu", "disc")) {
-                            sb.setDataUploaded();
-                            return "Data check";
-                        } else {
-                            String err = RDataUtils.getErrMsg(RC);
-                            sb.addMessage("Error", "Failed to read in the txt file." + err);
-                            return null;
-                        }
-                    } else {
-                        String err = RDataUtils.getErrMsg(RC);
-                        sb.addMessage("Error", "Failed to retrieve study from Metabolomics Workbench!" + err);
-                        return null;
-                    }
-                } catch (Exception e) {
-                    //e.printStackTrace();
-                    LOGGER.error("handleMetWorkbenchData-stat", e);
-                    return null;
-                }
-            }
-        } else if (module.equals("roc")) {
-            if (sb.doLogin("conc", "roc", false, false)) {
-                try {
-                    RConnection RC = sb.getRConnection();
-
-                    if (RDataUtils.getMetabolomicsWorkbenchData(RC, nmdrStudyId)) {
-                        if (RDataUtils.readMetabolomicsWorkbenchData(RC, nmdrStudyId, "rowu", "disc")) {
-                            sb.setDataUploaded();
-                            return "Data check";
-                        } else {
-                            String err = RDataUtils.getErrMsg(RC);
-                            sb.addMessage("Error", "Failed to read in the txt file." + err);
-                            return null;
-                        }
-                    } else {
-                        String err = RDataUtils.getErrMsg(RC);
-                        sb.addMessage("Error", "Failed to retrieve study from Metabolomics Workbench!" + err);
-                        return null;
-                    }
-                } catch (Exception e) {
-                    //e.printStackTrace();
-                    LOGGER.error("handleMetWorkbenchData-roc", e);
-                    return null;
-                }
-            }
+        // Decide login target by module
+        final String loginModule;
+        if ("stat".equalsIgnoreCase(module)) {
+            loginModule = "stat";
+        } else if ("roc".equalsIgnoreCase(module)) {
+            loginModule = "roc";
+        } else {
+            sb.addMessage("Error", "Unknown module: " + module);
+            return null;
         }
 
-        sb.addMessage("Error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
+        // For MW examples we treat as concentration data
+        if (!sb.doLogin("conc", loginModule, false, false)) {
+            sb.addMessage("Error", "Log in failed. Please check R/Rserve settings.");
+            return null;
+        }
 
-        return null;
+        try {
+            RConnection RC = sb.getRConnection();
+
+            // 1) Ask R to fetch the study from Metabolomics Workbench
+            if (!RDataUtils.getMetabolomicsWorkbenchData(RC, nmdrStudyId)) {
+                sb.addMessage("Error", "Failed to retrieve study from Metabolomics Workbench! " + RDataUtils.getErrMsg(RC));
+                return null;
+            }
+
+            // 2) Ask R to read the study into the current session
+            if (!RDataUtils.readMetabolomicsWorkbenchData(RC, nmdrStudyId, "rowu", "disc")) {
+                sb.addMessage("Error", "Failed to read the study file. " + RDataUtils.getErrMsg(RC));
+                return null;
+            }
+
+            sb.setDataUploaded();
+
+            // ---------- STAGE (no DB insert, no dataset-folder copy) ----------
+            // The MW helper uses a TXT export. We assume it’s saved under user's home with <STUDY>.txt
+            final String homeDir = sb.getCurrentUser().getHomeDir();
+            final String guessedName = nmdrStudyId + ".txt"; // matches your original error message wording
+            final java.nio.file.Path guessedPath = java.nio.file.Paths.get(homeDir, guessedName);
+
+            long size = 0L;
+            try {
+                if (java.nio.file.Files.exists(guessedPath)) {
+                    size = java.nio.file.Files.size(guessedPath);
+                }
+            } catch (Exception ignore) {
+            }
+
+            DatasetFile df = new DatasetFile();
+            df.setRole("data");
+            df.setFilename(guessedName);
+            df.setType("txt");
+            df.setSizeBytes(Math.max(0L, size));
+            df.setUploadedAt(java.time.OffsetDateTime.now());
+
+            if (java.nio.file.Files.exists(guessedPath)) {
+                dc.stageDatasetFromPaths(
+                        "MW " + nmdrStudyId, // title
+                        /*sampleNum*/ 0,
+                        java.util.List.of(df),
+                        java.util.List.of(guessedPath)
+                );
+            } else {
+                // Fallback: stage metadata, remember intended path for commit
+                dc.stageDatasetFromPaths(
+                        "MW " + nmdrStudyId,
+                        /*sampleNum*/ 0,
+                        java.util.List.of(df),
+                        java.util.List.of(guessedPath) // commit will verify and error if missing
+                );
+            }
+
+            sb.addMessage("info", "Metabolomics Workbench study staged in memory. You can review and commit later.");
+            return "Data check";
+
+        } catch (Exception e) {
+            LOGGER.error("handleMetWorkbenchData-" + module, e);
+            sb.addMessage("Error", "Exception: " + e.getMessage());
+            return null;
+        }
     }
+
 
     /*
      * Handle Metabolone XLSX datasheet
@@ -936,11 +1141,33 @@ public class UploadBean implements Serializable {
 
     }
 
-    private static String stripExt(String name) {
-        if (name == null) {
-            return "Dataset";
+    private static String sanitizeFilename(String name) {
+        // strip any path, keep only the last segment
+        name = name.replace('\\', '/');
+        int idx = name.lastIndexOf('/');
+        if (idx >= 0) {
+            name = name.substring(idx + 1);
         }
-        int i = name.lastIndexOf('.');
-        return (i > 0) ? name.substring(0, i) : name;
+
+        // remove illegal chars; allow letters, digits, dot, dash, underscore, and space
+        name = name.replaceAll("[^A-Za-z0-9._\\- ]", "_").trim();
+        if (name.isEmpty()) {
+            name = "file.bin";
+        }
+        // limit length
+        if (name.length() > 180) {
+            String ext = extOf(name);
+            String base = ext.isEmpty() ? name : name.substring(0, name.length() - ext.length() - 1);
+            base = base.substring(0, Math.min(base.length(), 170));
+            name = ext.isEmpty() ? base : base + "." + ext;
+        }
+        return name;
+    }
+
+    private static String extOf(String filename) {
+        int dot = (filename == null) ? -1 : filename.lastIndexOf('.');
+        return (dot > 0 && dot < filename.length() - 1)
+                ? filename.substring(dot + 1).toLowerCase(Locale.ROOT)
+                : "";
     }
 }

@@ -96,6 +96,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
+import java.util.Locale;
 import pro.metaboanalyst.lts.FunctionInfo;
 
 /**
@@ -378,7 +379,7 @@ public class DataUtils {
     public static void copyFileIfExists(String src, String dst) throws IOException {
         File in = new File(src);
         if (in.exists()) {
-            copyFile(in, new File(dst));          
+            copyFile(in, new File(dst));
         }
     }
 
@@ -2066,4 +2067,5 @@ public class DataUtils {
                     "Unsupported object type: " + obj.getClass());
         }
     }
+
 }

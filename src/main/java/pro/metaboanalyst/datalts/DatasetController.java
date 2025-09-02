@@ -4,6 +4,13 @@
  */
 package pro.metaboanalyst.datalts;
 
+import org.primefaces.model.StreamedContent;
+import org.primefaces.model.DefaultStreamedContent;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
@@ -130,7 +137,7 @@ public class DatasetController implements Serializable {
                     continue;
                 }
 
-                String safe = sanitizeFilename(uf.getFileName());
+                String safe = uf.getFileName();
                 String ext = extOf(safe);
 
                 DatasetFile df = new DatasetFile();
@@ -152,17 +159,14 @@ public class DatasetController implements Serializable {
                     : files.get(0).getFilename();
 
             // ---- CALL YOUR SPECIALIZED INSERT FUNCTION (DB or API) ----
-            // This is the exact wrapper you posted:
             String resp = db.insertDataset(email, node, resolvedTitle, sampleNum, files);
 
-            // Expect a plain-text success like "Dataset inserted successfully. id=<UUID> ..."
             UUID datasetId = extractUUID(resp);
             if (datasetId == null) {
                 sb.addMessage("Error", "Insert failed: " + resp);
                 return null;
             }
 
-            // ---- save the physical files under .../<email>/<datasetId>/ ----
             saveDatasetFiles(email, datasetId, uploaded, roles);
 
             sb.addMessage("info", "Dataset created: " + datasetId);
@@ -266,7 +270,7 @@ public class DatasetController implements Serializable {
             }
 
             String original = uf.getFileName();
-            String safeName = sanitizeFilename(original);
+            String safeName = original;
             String ext = extOf(safeName);
             Path target = uniquePath(projSubFolder, safeName);
 
@@ -305,16 +309,16 @@ public class DatasetController implements Serializable {
         }
         datasetTable = db.getDatasetsForEmail(email);
     }
-    
+
     public void syncSelectedDatasets() {
-    if (datasetTable == null) {
-        selectedDatasets = java.util.Collections.emptyList();
-        return;
+        if (datasetTable == null) {
+            selectedDatasets = java.util.Collections.emptyList();
+            return;
+        }
+        selectedDatasets = datasetTable.stream()
+                .filter(DatasetRow::isSelected)
+                .collect(java.util.stream.Collectors.toList());
     }
-    selectedDatasets = datasetTable.stream()
-            .filter(DatasetRow::isSelected)
-            .collect(java.util.stream.Collectors.toList());
-}
 
     /**
      * Used by the rowExpansion table:
@@ -348,8 +352,6 @@ public class DatasetController implements Serializable {
     public void setSelected(DatasetRow s) {
         this.selected = s;
     }
-    
-    
 
     /*
     DatasetFile data = new DatasetFile();
@@ -367,4 +369,321 @@ meta.setSizeBytes(2_345);
 String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                            "Cohort_A", 48, java.util.List.of(data, meta));
      */
+    // --- Staging store (session memory) ---
+    private DatasetRow stagedDataset;                 // metadata summary
+    private java.util.List<DatasetFile> stagedFiles = new java.util.ArrayList<>();
+
+    public DatasetRow getStagedDataset() {
+        return stagedDataset;
+    }
+
+    public java.util.List<DatasetFile> getStagedFiles() {
+        return stagedFiles;
+    }
+
+    public boolean hasStagedDataset() {
+        return stagedDataset != null && !stagedFiles.isEmpty();
+    }
+
+    public void clearStaged() {
+        stagedDataset = null;
+        stagedFiles.clear();
+    }
+
+    /**
+     * Stage the dataset in memory only (no DB insert, no file save). Roles are
+     * used exactly as provided.
+     */
+    public void stageDataset(String title,
+            int sampleNum,
+            java.util.List<org.primefaces.model.file.UploadedFile> uploaded,
+            java.util.List<String> roles) {
+        // Guards
+        if (uploaded == null || uploaded.isEmpty()) {
+            sb.addMessage("Error", "No files were uploaded.");
+            return;
+        }
+        if (roles == null || roles.size() != uploaded.size()) {
+            sb.addMessage("Error", "Roles list must match the number of files.");
+            return;
+        }
+
+        final String email = fub.getEmail();
+        final String node = ab.getToolLocation();
+        final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+
+        // Build file metadata (from upload headers only; no disk write)
+        java.util.List<DatasetFile> files = new java.util.ArrayList<>(uploaded.size());
+        for (int i = 0; i < uploaded.size(); i++) {
+            var uf = uploaded.get(i);
+            if (uf == null || uf.getFileName() == null) {
+                continue;
+            }
+
+            String safe = uf.getFileName();
+            String ext = extOf(safe);
+
+            DatasetFile df = new DatasetFile();
+            df.setRole(roles.get(i));                         // use roles exactly as passed
+            df.setFilename(safe);                             // intended saved name
+            df.setType(ext.isEmpty() ? "bin" : ext);
+            df.setSizeBytes(Math.max(0L, uf.getSize()));
+            df.setUploadedAt(now);
+            files.add(df);
+        }
+        if (files.isEmpty()) {
+            sb.addMessage("Error", "No valid uploaded files.");
+            return;
+        }
+
+        // Choose primary file for dataset-level summary (prefer role=data)
+        DatasetFile primary = files.stream()
+                .filter(f -> "data".equalsIgnoreCase(f.getRole()))
+                .findFirst()
+                .orElse(files.get(0));
+
+        // Resolve title
+        String resolvedTitle = (title != null && !title.isBlank()) ? title.trim() : primary.getFilename();
+
+        // Fill DatasetRow (id stays null until actual DB insert)
+        DatasetRow ds = new DatasetRow();
+        ds.setId(null);
+        ds.setEmail(email);
+        ds.setNode(node);
+        ds.setTitle(resolvedTitle);
+        ds.setFilename(primary.getFilename());
+        ds.setType(primary.getType());
+        ds.setSizeBytes(primary.getSizeBytes());
+        ds.setSamplenum(Math.max(0, sampleNum));
+        ds.setUploadedAt(now);
+
+        // Optional convenience fields if present in your model
+        try {
+            ds.setFileCount(files.size());
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setHasMetadata(files.stream().anyMatch(f -> "metadata".equalsIgnoreCase(f.getRole())));
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setFiles(files);
+        } catch (Throwable ignore) {
+        }
+
+        // Store in session (single instance)
+        this.stagedDataset = ds;
+        this.stagedFiles.clear();
+        this.stagedFiles.addAll(files);
+        this.currentDatasetRow = ds; // if you already use this pointer elsewhere
+
+        sb.addMessage("info", "Dataset staged in memory (not inserted).");
+    }
+
+    /**
+     * Commit the staged dataset: perform DB insert (via your wrapper) and save
+     * files to disk. NOTE: do NOT try to keep UploadedFile in session; pass it
+     * again here.
+     */
+// Commit without needing UploadedFile again
+    public java.util.UUID commitStagedDataset() {
+        if (!hasStagedDataset()) {
+            sb.addMessage("Error", "No staged dataset to commit.");
+            return null;
+        }
+        try {
+            // 1) Insert (DB in Docker, API otherwise)
+            String resp = db.insertDataset(
+                    stagedDataset.getEmail(),
+                    stagedDataset.getNode(),
+                    stagedDataset.getTitle(),
+                    stagedDataset.getSamplenum(),
+                    stagedFiles
+            );
+            java.util.UUID datasetId = extractUUID(resp);
+            if (datasetId == null) {
+                sb.addMessage("Error", "Insert failed: " + resp);
+                return null;
+            }
+
+            // 2) Copy physical files from their current location into dataset folder
+            List<java.nio.file.Path> sources = resolveSourcePathsForStaged();
+            if (sources.size() != stagedFiles.size()) {
+                sb.addMessage("Error", "Cannot resolve source files for all staged entries.");
+                return null;
+            }
+            copyStagedFilesToDatasetFolder(stagedDataset.getEmail(), datasetId, stagedFiles, sources);
+
+            sb.addMessage("info", "Dataset created: " + datasetId);
+            clearStaged();
+            return datasetId;
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Commit failed: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+// Try stagedSourcePaths first; else fall back to user's home dir + filename
+    private List<java.nio.file.Path> resolveSourcePathsForStaged() {
+        List<java.nio.file.Path> guessed = new ArrayList<>();
+        java.nio.file.Path home = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());
+        for (DatasetFile f : stagedFiles) {
+            java.nio.file.Path p = home.resolve(f.getFilename());
+            guessed.add(p);
+        }
+        return guessed;
+    }
+
+    private void copyStagedFilesToDatasetFolder(String email,
+            java.util.UUID datasetId,
+            List<DatasetFile> files,
+            List<java.nio.file.Path> sources) throws java.io.IOException {
+        java.nio.file.Path outDir = java.nio.file.Paths.get(
+                fb.getProjectPath(), "user_folders", email, datasetId.toString()
+        );
+        java.nio.file.Files.createDirectories(outDir);
+
+        for (int i = 0; i < files.size(); i++) {
+            java.nio.file.Path src = sources.get(i);
+            DatasetFile f = files.get(i);
+            java.nio.file.Path dst = outDir.resolve(f.getFilename());
+            if (!java.nio.file.Files.exists(src)) {
+                throw new java.io.IOException("Source file missing: " + src);
+            }
+            java.nio.file.Files.copy(src, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    public void stageDatasetFromPaths(String title,
+            int sampleNum,
+            java.util.List<DatasetFile> files,
+            java.util.List<java.nio.file.Path> sourcePaths) {
+        if (files == null || files.isEmpty() || sourcePaths == null || sourcePaths.size() != files.size()) {
+            sb.addMessage("Error", "Staging failed: files/paths mismatch.");
+            return;
+        }
+        final String email = fub.getEmail();
+        final String node = ab.getToolLocation();
+        final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+
+        // choose primary (prefer role=data)
+        DatasetFile primary = files.stream()
+                .filter(f -> "data".equalsIgnoreCase(f.getRole()))
+                .findFirst().orElse(files.get(0));
+
+        DatasetRow ds = new DatasetRow();
+        ds.setId(null);
+        ds.setEmail(email);
+        ds.setNode(node);
+        ds.setTitle((title != null && !title.isBlank()) ? title.trim() : primary.getFilename());
+        ds.setFilename(primary.getFilename());
+        ds.setType(primary.getType());
+        ds.setSizeBytes(primary.getSizeBytes());
+        ds.setSamplenum(Math.max(0, sampleNum));
+        ds.setUploadedAt(now);
+        try {
+            ds.setFileCount(files.size());
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setHasMetadata(files.stream().anyMatch(f -> "metadata".equalsIgnoreCase(f.getRole())));
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setFiles(files);
+        } catch (Throwable ignore) {
+        }
+
+        this.stagedDataset = ds;
+        this.stagedFiles.clear();
+        this.stagedFiles.addAll(files);
+
+        this.currentDatasetRow = ds;
+    }
+
+    public StreamedContent getDownloadSelected() {
+        try {
+            if (selected == null || selected.getId() == null || selected.getFilename() == null) {
+                sb.addMessage("Error", "No dataset/file selected to download.");
+                return null;
+            }
+
+            Path file = Paths.get(
+                    fb.getProjectPath(),
+                    "user_folders",
+                    fub.getEmail(),
+                    selected.getId().toString(),
+                    selected.getFilename()
+            );
+
+            if (!Files.exists(file)) {
+                sb.addMessage("Error", "File not found: " + selected.getFilename());
+                return null;
+            }
+
+            String contentType = Files.probeContentType(file);
+            if (contentType == null || contentType.isBlank()) {
+                contentType = guessMimeByExt(selected.getFilename()); // fallback
+            }
+
+            final Path f = file;
+            return DefaultStreamedContent.builder()
+                    .name(selected.getFilename())
+                    .contentType(contentType)
+                    .stream(() -> {
+                        try {
+                            return Files.newInputStream(f); // <-- RETURN the InputStream
+                        } catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
+                        }
+                    })
+                    .build();
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Download failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * very small fallback mapper when probeContentType() returns null
+     */
+    private static String guessMimeByExt(String name) {
+        String n = name == null ? "" : name.toLowerCase();
+        if (n.endsWith(".csv")) {
+            return "text/csv";
+        }
+        if (n.endsWith(".tsv") || n.endsWith(".txt")) {
+            return "text/plain";
+        }
+        if (n.endsWith(".zip")) {
+            return "application/zip";
+        }
+        if (n.endsWith(".json")) {
+            return "application/json";
+        }
+        if (n.endsWith(".xlsx")) {
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        }
+        if (n.endsWith(".xls")) {
+            return "application/vnd.ms-excel";
+        }
+        if (n.endsWith(".mztab")) {
+            return "text/plain";
+        }
+        return "application/octet-stream";
+    }
+
+    public void load(DatasetRow ds) {
+        if (ds == null) {
+            sb.addMessage("Error", "No dataset selected to load.");
+            return;
+        }
+        this.selected = ds; // optional
+        // ... your load logic ...
+        sb.addMessage("Loaded", "Loaded dataset: " + ds.getFilename());
+    }
+
 }
