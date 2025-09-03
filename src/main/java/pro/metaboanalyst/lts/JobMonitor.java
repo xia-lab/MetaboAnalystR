@@ -80,6 +80,12 @@ public class JobMonitor {
                 RConnection RC = new RConnection("127.0.0.1", 6311);
 
                 // Ensure the all_slurm_jobs.csv file exists
+                String rCMD = " if(!dir.exists(\"/data/glassfish/projects/data/\")){dir.create(\"/data/glassfish/projects/data/\", recursive = T)}";
+                try {
+                    RC.voidEval(rCMD);
+                } catch (RserveException ex1) {
+                    //java.util.logging.Logger.getLogger(RDataUtils.class.getName()).log(Level.SEVERE, null, ex1);
+                }
                 rCommand = "if(!file.exists(\"" + dataPath + "\")){"
                         + "write.csv(data.frame(jobid=0, emailed=T, email='', folder='', wfstatus='', wfBool=''), "
                         + "file = \"" + dataPath + "\", row.names = FALSE)}";

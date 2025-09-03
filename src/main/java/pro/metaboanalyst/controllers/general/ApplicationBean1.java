@@ -61,7 +61,7 @@ public class ApplicationBean1 implements Serializable {
     public static final int MAX_UPLOAD_SIZE = 50000000;
     public static int MAX_SPEC_SIZE = 214958080;
     public static int MAX_SPEC_NUM = 200;
-    
+
     private String versionCode = "2025R2";
 
     private boolean compiled = false;
@@ -123,7 +123,11 @@ public class ApplicationBean1 implements Serializable {
 
         } else if (Files.isRegularFile(Paths.get("/docker_marker"))) {
             System.out.println("domain_url=======> " + domain_url);
-            app_url = domain_url.replace("/MetaboAnalyst/", "");
+            if (domain_url.contains("/MetaboAnalyst/home.xhtml")) {
+                app_url = domain_url.replace("/MetaboAnalyst/home.xhtml", "");
+            } else {
+                app_url = domain_url.replace("/MetaboAnalyst/", "");
+            }
             System.out.println("Now the app url is xxx ===> " + app_url);
             inDocker = true;
             onProServer = false;

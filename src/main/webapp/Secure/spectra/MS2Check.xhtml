@@ -58,13 +58,13 @@
                   resizable="false"   
                   appendTo="@(body)">       
             <h:form>
-                <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
+                <h:panelGrid  style="width:500px; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
 
                     Your searching have included over 20 spectra. The searching job will be submitted and scheduled. Click <b>Confirm</b> to submit your job.. 
                     A project will be <b>saved</b> when the job starts, optionally, you can specify a name and description.
                     <h:panelGrid columns="2" style="width:100%">
                         <h:outputLabel value="Title"/>
-                        <p:inputText id="float-input" style="width:100%" value="#{fireBaseController.fireDocName}"/>
+                        <p:inputText id="float-input" style="width:285px" value="#{fireBaseController.fireDocName}"/>
                         <h:outputLabel value="Description"/>
                         <p:inputTextarea rows="10" cols="36" style="width:100%" value="#{fireBaseController.fireDocDescription}"/>
                     </h:panelGrid>
