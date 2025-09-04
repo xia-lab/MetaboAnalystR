@@ -482,6 +482,9 @@ public class DatabaseClient {
                 java.util.Map<String, Object> dataset = new java.util.LinkedHashMap<>();
                 dataset.put("email", email);
                 dataset.put("node", node);
+                dataset.put("module", module);
+                dataset.put("dataType", dataType);
+
                 dataset.put("title", title);
                 dataset.put("samplenum", sampleNum);
 

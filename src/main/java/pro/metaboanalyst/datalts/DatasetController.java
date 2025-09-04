@@ -11,11 +11,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,7 +23,6 @@ import java.util.UUID;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
-import pro.metaboanalyst.datalts.DatasetRow;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireProjectBean;
@@ -33,13 +30,9 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.utils.DataUtils;
 import java.io.*;
-import java.nio.file.*;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 import org.primefaces.model.file.UploadedFile;
-import pro.metaboanalyst.api.ApiClient;
 
 /**
  *
@@ -271,6 +264,8 @@ public class DatasetController implements Serializable {
      * Called by Refresh button and can be wired to preRenderView.
      */
     public void refresh() {
+        fbc.reloadUserInfo();
+
         String email = fub.getEmail();
         String node = ab.getToolLocation();
         if (email == null || email.isBlank()) {
@@ -665,9 +660,84 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             sb.addMessage("Error", "No dataset selected to load.");
             return;
         }
-        this.selected = ds;
-        sb.doLogin("", "", false, false);
-        sb.addMessage("Loaded", "Loaded dataset: " + ds.getFilename());
+
+        try {
+            // 0) Remember selection
+            this.selected = ds;
+
+            // 1) Login -> this typically (re)creates a fresh working folder for the session
+            sb.doLogin(ds.getModule(), ds.getDataType(), false, false);
+
+            // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
+            //    Source convention: <project>/user_folders/<email>/<datasetId>/
+            java.nio.file.Path srcDir = java.nio.file.Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString()
+            );
+
+            //    Destination: whatever folder doLogin prepared for this session/user
+            //    (if your API differs, adjust accordingly)
+            java.nio.file.Path dstDir = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());
+            java.nio.file.Files.createDirectories(dstDir);
+
+            // 3) Determine which files to copy
+            java.util.List<DatasetFile> filesToCopy = ds.getFiles();
+
+            int copied = 0;
+
+            if (filesToCopy != null && !filesToCopy.isEmpty()) {
+                // 4a) Copy only the registered files
+                for (DatasetFile f : filesToCopy) {
+                    if (f == null || f.getFilename() == null || f.getFilename().isBlank()) {
+                        continue;
+                    }
+                    java.nio.file.Path src = srcDir.resolve(f.getFilename());
+                    java.nio.file.Path dst = dstDir.resolve(f.getFilename());
+                    if (java.nio.file.Files.exists(src)) {
+                        java.nio.file.Files.createDirectories(dst.getParent());
+                        java.nio.file.Files.copy(src, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        copied++;
+                    }
+                }
+            } else {
+                // 4b) No file list available — copy all regular files in the dataset folder
+                if (java.nio.file.Files.isDirectory(srcDir)) {
+                    try (java.nio.file.DirectoryStream<java.nio.file.Path> stream
+                            = java.nio.file.Files.newDirectoryStream(srcDir)) {
+                        for (java.nio.file.Path p : stream) {
+                            if (java.nio.file.Files.isRegularFile(p)) {
+                                java.nio.file.Path dst = dstDir.resolve(p.getFileName().toString());
+                                java.nio.file.Files.copy(p, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                                copied++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5) Optional: also bring mSetObj.qs if present in the dataset folder (safety net)
+            java.nio.file.Path mset = srcDir.resolve("mSetObj.qs");
+            if (java.nio.file.Files.exists(mset)) {
+                java.nio.file.Files.copy(
+                        mset,
+                        dstDir.resolve("mSetObj.qs"),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            }
+
+            // 6) Notify + redirect to module selection
+            sb.addMessage("info", "Loaded dataset files into workspace (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
+            DataUtils.doRedirectWithGrowl(
+                    sb,
+                    "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
+                    "info",
+                    "Dataset loaded, please select a module to start analysis."
+            );
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Load failed: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 }

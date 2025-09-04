@@ -169,17 +169,19 @@
                             <p:tooltip for="downloadBn" value="Download original file"/>
                         </p:commandLink>
 
-                        <p:spacer width="10"/>
+                        <p:spacer width="30"/>
                         <p:commandLink id="deleteBn" title="Delete" onclick="PF('delDialog').show();">
                             <i class="pi pi-trash icon-btn" style="color:orangered; font-size: 1.4rem"></i>
                             <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
                             <p:tooltip for="deleteBn" value="Delete this dataset"/>
                         </p:commandLink>
 
-                        <p:spacer width="10"/>
+                        <p:spacer width="30"/>
                         <p:commandLink id="loadBn"
                                        title="Load"
                                        process="@this @row"
+                                       onstart="PF('statusDialog').show();" 
+                                       oncomplete="PF('statusDialog').hide();"
                                        update=":dataTableForm"
                                        action="#{datasetController.load(ds)}">
                             <i class="pi pi-caret-right icon-btn" style="color:#16a34a; font-size: 1.4rem"></i>
@@ -213,14 +215,6 @@
                 </p:dataTable>
             </h:form>
         </h:panelGrid>
-
-
-        <p:dialog widgetVar="statusDialog" header="Processing..." modal="true" closable="false" draggable="false" resizable="false" appendTo="@(body)">
-            <p:panel style="text-align:center; padding:12px;">
-                <i class="pi pi-spin pi-spinner" style="font-size:2rem"></i>
-                <div class="soft-note" style="margin-top:8px;">Please wait</div>
-            </p:panel>
-        </p:dialog>
 
         <p:dialog header="Upload Help" widgetVar="uploadHelp" modal="true" appendTo="@(body)">
             <h:panelGrid style="width:520px; line-height:1.5; font-size: 14px;">

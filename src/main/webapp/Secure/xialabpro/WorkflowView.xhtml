@@ -8,7 +8,7 @@
                 template="/template/_template_workflow.xhtml">
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
-        <f:event type="preRenderView" listener="#{workflowBean.loadAllWorkflows()}"></f:event> 
+        <f:event type="preRenderView" listener="#{workflowBean.checkAvailableModules()}"></f:event> 
     </ui:define>
     <ui:define name="myscript">
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 

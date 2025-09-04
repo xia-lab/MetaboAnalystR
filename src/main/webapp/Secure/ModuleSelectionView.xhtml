@@ -1,0 +1,632 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{workflowBean.setEditMode(false)}"/> 
+        <f:event type="preRenderView" listener="#{moduleController.checkAvailableModules()}"/> 
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Modules', '/Secure/ModuleSelectionView.xhtml')}"/> 
+    </ui:define>  
+    <ui:define name="mystyle"> 
+        <style type="text/css">
+            .ui-g div {
+                height:90px;
+                display: flex;
+                align-items: center;
+                font-size: 16px;
+                border-bottom: grey solid 1px;
+            }
+
+            .ui-g .mylabel {
+                display: block;
+                text-align: left;
+                border-right: grey solid 1px;
+                padding-left: 10px;
+                font-size: 16px;
+                padding-top: 12px;
+            }
+
+            .ui-g .mypane {
+                justify-content: center;
+                background-color: #374785;
+                border: 1px solid grey;
+                color: #dcdcdc;
+            }
+
+            .ui-g .mypane1 {
+                justify-content: center;
+                background-color: var(--cyan-600);
+                border-left: 1px solid grey;
+                border-right: 1px solid grey;
+                color: white;
+            }
+
+            .ui-g .mypane2 {
+                justify-content: center;
+                background-color: var(--teal-600);
+                border-left: 1px solid grey;
+                border-right: 1px solid grey;
+                color: white;
+            }
+
+            .ui-g .mypane3 {
+                justify-content: center;
+                background-color: var(--blue-600);
+                border-left: 1px solid grey;
+                border-right: 1px solid grey;
+                color: white;
+            }
+
+            .ui-g .mypane4 {
+                justify-content: center;
+                background-color: var(--orange-700);
+                border-left: 1px solid grey;
+                border-right: 1px solid grey;
+                color: white;
+            }
+
+            .ui-g .mypane5 {
+                justify-content: center;
+                background-color: var(--red-700);
+                border-left: 1px solid grey;
+                border-right: 1px solid grey;
+                color: white;
+            }
+
+            .ui-g .mypane:hover {
+                background-color: #823038;
+                cursor: pointer;
+            }
+
+            .ui-fieldset-content{
+                font-size: 13px;
+            }
+
+            a:hover {
+                cursor:pointer;
+            }
+
+            a.changeBlue:hover { /* change to blue on mouseover */
+                color: #FFAE20;
+                font-size: 110%;
+                text-decoration: underline;
+            }
+
+            .module-disabled {
+                pointer-events: none;        /* block mouse/touch clicks */
+                opacity: .45;                /* dim visual */
+                filter: grayscale(35%);      /* optional: tone it down */
+                cursor: not-allowed !important;
+            }
+            .module-disabled * {
+                pointer-events: none;
+            } /* block child events too */
+        </style>
+    </ui:define> 
+    <ui:define name="content">
+        <h:panelGrid style="padding:3% 5% 2% 5%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva">
+            <h:form id="selectForm">
+                    <div id="form_con" style="padding:1% 3% 1% 1%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva; min-height: 80vh !important">
+                        <div class="ui-g surface-section p-4" style="padding: 30px; line-height: 23px;">
+                            <div class="ui-g-2 ui-g-nopad" style="height:40px; border-right: grey solid 1px">
+                                <div class="ui-g-12" style="text-align: left; height:40px;"><b style="font-size: 16px">Input Data Type</b></div>
+                            </div>
+                            <div class="ui-g-10 ui-g-nopad" style="height:40px; text-align: left; padding-left: 20px">
+                                <font style="font-size: 16px"><b>Available Modules</b>
+                                    (click on a module to proceed, or scroll down to explore all 18 modules including
+                                    <a onclick='PF("utilDialog").show()' style="font-weight: bold"><u>utilities</u></a>) </font>
+                            </div>
+
+                            <div class="ui-g-2 ui-g-nopad">
+                                <div class="ui-g-12 mylabel">
+                                    LC-MS Spectra <br/>
+                                    <font style="color:grey; font-size: 13px">(mzML, mzXML or mzData)</font>
+                                </div>
+                            </div>
+                            <div class="ui-g-4"></div>
+
+                            <div class="ui-g-2 mypane1 mypane #{moduleController.visible('spectraProcessing') ? '' : 'module-disabled'}"
+                                 onclick="triggerSpectraUpload(); PF('statusDialog').show()"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('spectraProcessing')}"
+                                 tabindex="#{moduleController.visible('spectraProcessing') ? '0' : '-1'}">
+                                Spectra Processing <br/>
+                                [LC-MS w/wo MS2]
+                            </div>
+
+                            <div class="ui-g-4"></div>
+
+                            <div class="ui-g-2 ui-g-nopad">
+                                <div class="ui-g-12 mylabel">
+                                    MS Peaks<br/>
+                                    <font style="color:grey; font-size: 13px">(peak list or intensity table)</font>
+                                </div>
+                            </div>
+                            <div class="ui-g-2"></div>
+
+                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('peakAnnotation') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 14}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('peakAnnotation')}"
+                                 tabindex="#{moduleController.visible('peakAnnotation') ? '0' : '-1'}">
+                                Peak Annotation<br/>
+                                [MS2-DDA/DIA]
+                            </div>
+
+                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalAnalysis') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 0}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('functionalAnalysis')}"
+                                 tabindex="#{moduleController.visible('functionalAnalysis') ? '0' : '-1'}">
+                                Functional Analysis<br/>
+                                [LC-MS]
+                            </div>
+
+                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalMetaAnalysis') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 1}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('functionalMetaAnalysis')}"
+                                 tabindex="#{moduleController.visible('functionalMetaAnalysis') ? '0' : '-1'}">
+                                Functional Meta-analysis<br/>
+                                [LC-MS]
+                            </div>
+
+                            <div class="ui-g-2"></div>
+
+                            <div class="ui-g-2 ui-g-nopad">
+                                <div class="ui-g-12 mylabel">
+                                    Generic Format<br/>
+                                    <font style="color:grey; font-size: 13px">(.csv or .txt table files)</font>
+                                </div>
+                            </div>
+
+                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis1') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 6}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('statisticalAnalysis1')}"
+                                 tabindex="#{moduleController.visible('statisticalAnalysis1') ? '0' : '-1'}">
+                                Statistical Analysis<br/> 
+                                [one factor]
+                            </div>
+
+                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis2') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 7}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('statisticalAnalysis2')}"
+                                 tabindex="#{moduleController.visible('statisticalAnalysis2') ? '0' : '-1'}">
+                                Statistical Analysis <br/> 
+                                [metadata table]
+                            </div>
+
+                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('biomarkerAnalysis') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 8}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('biomarkerAnalysis')}"
+                                 tabindex="#{moduleController.visible('biomarkerAnalysis') ? '0' : '-1'}">
+                                Biomarker Analysis
+                            </div>
+
+                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('doseResponse') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 11}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('doseResponse')}"
+                                 tabindex="#{moduleController.visible('doseResponse') ? '0' : '-1'}">
+                                Dose Response Analysis
+                            </div>
+
+                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statMeta') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 9}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('statMeta')}"
+                                 tabindex="#{moduleController.visible('statMeta') ? '0' : '-1'}">
+                                Statistical Meta-analysis
+                            </div>
+
+                            <div class="ui-g-2 ui-g-nopad">
+                                <div class="ui-g-12 mylabel">
+                                    Annotated Features<br/>
+                                    <font style="color:grey; font-size: 13px">(metabolite list or  table)</font>
+                                </div>
+                            </div>
+                            <div class="ui-g-2"></div>
+
+                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('enrichment') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 2}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('enrichment')}"
+                                 tabindex="#{moduleController.visible('enrichment') ? '0' : '-1'}">
+                                Enrichment Analysis
+                            </div>
+
+                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('pathway') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 3}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('pathway')}"
+                                 tabindex="#{moduleController.visible('pathway') ? '0' : '-1'}">
+                                Pathway Analysis
+                            </div>
+
+                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('network') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 5}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('network')}"
+                                 tabindex="#{moduleController.visible('network') ? '0' : '-1'}">
+                                Network Analysis
+                            </div>
+
+                            <div class="ui-g-2"></div>
+
+                            <div class="ui-g-2 ui-g-nopad">
+                                <div class="ui-g-12 mylabel">
+                                    Link to Genomics &amp; Phenotypes<br/> 
+                                    <font style="color:grey; font-size: 13px">(metabolite list)</font>
+                                </div>
+                            </div>
+                            <div class="ui-g-4"></div>
+
+                            <div class="ui-g-2 mypane5 mypane #{moduleController.visible('causalAnalysis') ? '' : 'module-disabled'}"
+                                 onclick="openModule([{name: 'idx', value: 12}])"
+                                 role="button"
+                                 aria-disabled="#{!moduleController.visible('causalAnalysis')}"
+                                 tabindex="#{moduleController.visible('causalAnalysis') ? '0' : '-1'}">
+                                Causal Analysis <br/> [Mendelian randomization]
+                            </div>
+
+                            <div class="ui-g-4"></div>
+                        </div>
+
+                        <h:panelGrid columns="3" style="text-align:center; padding: 20px 10px 20px 10px; margin-top:20px; width:100%">
+                            <p:commandButton value="Saved Projects"
+                                             styleClass="ui-button-outlined ui-button-info"
+                                             style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                             action="ProjectView"/>
+                            <p:commandButton value="Data Center"
+                                             styleClass="ui-button-outlined ui-button-help"
+                                             style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                             disabled="#{!applicationBean1.onLocalServer}"
+                                             action="DataCenterView"/>
+                            <p:commandButton value="Create Workflows"
+                                             styleClass="ui-button-outlined ui-button-help"
+                                             style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                             action="WorkflowView"/>
+                        </h:panelGrid>
+                    </div>
+
+                    <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>
+                    <p:remoteCommand name="openModule"
+                                     actionListener="#{moduleController.openModuleRC}"
+                                     process="@this"
+                                     update="@none"
+                                     onstart="PF('statusDialog').show()"/>
+            </h:form>
+
+            <hr class="myhr"/>
+            <h:panelGrid styleClass="panelColumns" columns="3" style="width:100%; padding-left: 30px; padding-top:10px; line-height:23px; font-size:12px; text-align: left" cellpadding="5px">
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.goToSpectraUpload()}">Spectral Processing [LC-MS1 w/wo MS2]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module allows users to upload raw LC-MS spectra (mzML, mzXML or mzData) to be processed using our optimized workflow based 
+                            on <a href="https://doi.org/10.1038/s41467-024-48009-6" target="_blank">MetaboAnalystR 4.0</a> or <a href="https://www.nature.com/articles/s41467-023-39889-1" target="_blank">asari</a> algorithm. 
+                            Users can also include MS2 spectra (both DDA or SWATH-DIA are supported) for peak annotation.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(14)}">Peak Annotation [MS2-DIA/DDA]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module performs MS2 peak annotation based on a comprehensive list of public databases. 
+                            Users can either directly enter a two-column peak list containing m/z and intensity values (DDA); or 
+                            upload a .msp file produced by MZmine or MS-DIAL after the spectral deconvolution (SWATH-DIA).  
+                        </div>
+                    </fieldset>
+                </h:panelGrid> 
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(0)}">Functional Analysis [LC-MS1]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module accepts high-resolution LC-MS spectral peak data 
+                            to perform metabolic pathway enrichment analysis and visual exploration 
+                            based on the <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3701697/" target="_blank">mummichog</a> or 
+                            <a href="https://www.pnas.org/doi/10.1073/pnas.0506580102" target="_blank">GSEA</a> algorithms.  It currently supports 26 organisms 
+                            including Human, Mouse, Zebrafish, <i>C. elegans</i>, and other species. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(1)}">Functional Meta-analysis [LC-MS1]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module aims to identify robust <b>functional profiles</b> across multiple global metabolomics datasets via 
+                            two approaches: 1) integrating functional profiles from independent studies conducted under compatible LC-MS conditions; 
+                            or 2) pooling peaks from complementary instruments within the same studies.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(6)}">Statistical Analysis [one factor]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module offers various commonly used statistical and machine learning methods including 
+                            t-tests, ANOVA, PCA, PLS-DA and Orthogonal PLS-DA. It also provides clustering and visualization tools to create
+                            dendrograms and heatmaps as well as to classify data based on random forests and SVM. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>  
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(7)}">Statistical Analysis [metadata table]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module aims to detect associations between phenotypes and metabolomics features with considerations of 
+                            other experimental factors / covariates based on general linear models coupled with PCA and heatmaps for visualization. 
+                            More options are available for two-factors / time-series data.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(8)}">Biomarker Analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module performs various biomarker analyses based on receiver operating characteristic (ROC) curves for a single or 
+                            multiple biomarkers using well-established methods. It also allows users 
+                            to manually specify biomarker models and perform new sample prediction.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(9)}">Statistical Meta-analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module provides statistical methods to identify consistent features (metabolites or annotated peaks) through meta-analysis of 
+                            multiple feature abundance tables obtained under comparable conditions. It currently supports three meta-analysis approaches 
+                            based on p-values, vote counts or direct merging. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(11)}">Dose Response Analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module offers an efficient implementation of dose response analysis to quantify the relationship between the concentration of a chemical 
+                            and its effects in biological samples based on their metabolomics profiles. 
+                            It currently supports 10 curve fitting methods to calculate feature-level benchmark dose (BMD). 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(2)}">Enrichment Analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module performs metabolite set enrichment analysis (MSEA) for human and mammalian species based on several 
+                            libraries containing ~9000 groups of metabolite sets. Users can upload either 1) a list 
+                            of compounds, 2) a list of compounds with concentrations, or 3) a concentration table.  
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(3)}">Pathway Analysis (targeted) </a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module supports pathway analysis (integrating enrichment analysis and 
+                            pathway topology analysis) and visualization for 26 model organisms, including 
+                            Human, Mouse, Rat, Cow, Chicken, Zebrafish, <i>Arabidopsis thaliana</i>, Rice, Drosophila, 
+                            Malaria, <i>S. cerevisae</i>, <i>E.coli</i>, and others species. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>  
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(5)}">Network Explorer</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module allows users to 1) upload list(s) of metabolites, genes or KEGG orthologs, and then visually explore their 
+                            relationships in different biological networks; or 2) upload a data table to perform Debiased Sparse Partial Correlation 
+                            (DSPC) network analysis and visual exploration. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(4)}">Joint Pathway Analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:8px"> 
+                            This module performs integrated metabolic pathway analysis on results obtained from combined metabolomics and gene expression 
+                            studies conducted under the same experimental conditions. It currently supports metabolomics data generated from 25 model organisms,
+                            including the Human, Mouse and Rat.  
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(12)}">Causal Analysis [Mendelian randomization]</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            With growing metabolomic-genome-wide association studies (mGWAS), we can now perform causal analysis between those 
+                            SNP-tagged metabolites and disease outcomes by leveraging two-sample Mendelian randomization (2SMR). 
+                            Various SNP harmonization and MR diagnostics are provided. 
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="#{ctl.getModuleURL(10)}">Power Analysis</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This module allows users to upload datasets from small pilot studies or from other similar studies to calculate the 
+                            minimum number of samples required to detect a statistically significant difference between two populations, 
+                            based on a user-specified degree of confidence.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="/MetaboAnalyst/Secure/upload/ConvertView.xhtml">Compound ID Conversion</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This is a utility module dedicated for compound name mapping using our master compound database, which contains  
+                            10X more compounds (#240,272) than the functional database (#25,344 compounds that have annotations in pathways or metabolite sets) 
+                            that are used for pathway analysis or enrichment analysis.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="/MetaboAnalyst/Secure/upload/BatchUpload.xhtml">Batch Effect Correction</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This is a utility module dedicated for batch effect correction based on nine well-established methods 
+                            (ComBat, EigenMS, QC-RLSC, ANCOVA, RUV-random, RUV2, RUVseq, NOMIS and CCMN). 
+                            The default automated approach can return the results with least distance among batches.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+                <h:panelGrid style="width:400px">
+                    <fieldset class="surface-50 shadow-0 p-3 text-600">
+                        <legend class="ui-fieldset-legend ui-corner-all ui-state-default">
+                            <span class="pi pi-angle-double-right" style="display: inline-block; margin-bottom: -2px"/>
+                            <span><a class="changeBlue" href="/MetaboAnalyst/Secure/upload/ReplicatesUpload.xhtml">Merging Duplicate Records</a></span>
+                        </legend>
+                        <div class="ui-fieldset-content" style="padding:10px"> 
+                            This is an utility module dedicated to merging <b>sample or feature duplicates</b> in your metabolomics data table.
+                            These values can be merged by their simple arithmetic mean, minimum, maximum, medium, sum, or quantile.
+                            Kernel density estimation can be applied to smooth values when many duplicates (over 3) are provided.
+                        </div>
+                    </fieldset>
+                </h:panelGrid>
+            </h:panelGrid>
+
+            <p:commandButton onclick="PF('devDialog').show()" style="width:30px; background: transparent; border:none" value=""/>
+        </h:panelGrid>
+
+        <p:dialog header="Other Resources"
+                  widgetVar="utilDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="true"
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
+
+                    <p:outputLabel value="Internal Resources:" style="font-weight: bold"/>
+                    <h:panelGrid  style="padding-left: 20px; line-height: 24px; padding-bottom: 10px">
+                        <h:commandLink onclick="PF('utilDialog').hide(); PF('statusDialog').show()" action="#{ctl.setUtilOpt('convert')}">
+                            Compound ID Conversion
+                        </h:commandLink>
+
+                        <a href="#{ctl.getModuleURL(10)}"> Power Analysis</a>
+
+                        <h:commandLink onclick="PF('utilDialog').hide();
+                                PF('statusDialog').show()" action="#{ctl.setUtilOpt('batch')}">
+                            Batch Effect Correction
+                        </h:commandLink>
+
+                        <h:commandLink onclick="PF('utilDialog').hide();
+                                PF('statusDialog').show()" action="#{ctl.setUtilOpt('lipid')}">
+                            Lipidomics Profiling
+                        </h:commandLink>
+
+                        <h:commandLink onclick="PF('utilDialog').hide();
+                                PF('statusDialog').show()" action="#{ctl.setUtilOpt('replicates')}">
+                            Merging Duplicate Records
+                        </h:commandLink>
+                    </h:panelGrid>
+
+                    <p:outputLabel value="External Resources:" style="font-weight: bold"/>
+                    <h:panelGrid  style="padding-left: 20px; line-height: 28px; padding-bottom: 10px">
+                        <a href="https://xcmsonline.scripps.edu/" target="_blank">LC-MS Spectra Processing (XCMSOnline)</a>  <br/>
+                        <a href="http://gc-autofit.wishartlab.com/" target="_blank">GC-MS Spectra Annotation (GC-AutoFit)</a>  <br/>
+                        <a href="http://bayesil.ca/" target="_blank">NMR Spectra Annotation (Bayesil) </a>   <br/>
+                        <a href="http://lipidontology.com/" target="_blank">Ontology enrichment for lipidomic data (LION)</a>  
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="User Redirection"
+                  widgetVar="devDialog" 
+                  showEffect="fade" 
+                  hideEffect="fade" 
+                  modal="true"
+                  closable="true"
+                  draggable="false"
+                  resizable="false"   
+                  dynamic="true"
+                  appendTo="@(body)">       
+            <h:form>
+                <h:panelGrid  style="width:450px;  text-align: center; padding: 10px 20px 20px 30px; font-size: 13px">
+
+                    <h:panelGrid columns="2" style="text-align: left;">
+                        <h:outputLabel value="My ID"/> 
+                        <h:inputSecret value="#{applicationBean1.myID}" style="width: 150px"/>
+                        <h:outputLabel value="User Redirection Options (VMs)"/>
+                        <h:selectOneRadio layout="pageDirection" value="#{applicationBean1.vmOpt}" style="font:Arial,sans-serif; font-size: 13px;">
+                            <f:selectItem itemLabel="WWW Only" itemValue="0" /> 
+                            <f:selectItem itemLabel="dev only" itemValue="1" /> 
+                            <f:selectItem itemLabel="new only" itemValue="2" />
+                            <f:selectItem itemLabel="Maintain WWW" itemValue="4" />
+                            <f:selectItem itemLabel="Sharing Mode" itemValue="3" />  
+                        </h:selectOneRadio>                        
+                    </h:panelGrid>
+                    <p:commandButton value="Update"  
+                                     style="width:120px" 
+                                     onclick="PF('statusDialog').show()"
+                                     oncomplete="PF('statusDialog').hide()"
+                                     ajax="false" 
+                                     action="#{applicationBean1.updateRedirection()}"/>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

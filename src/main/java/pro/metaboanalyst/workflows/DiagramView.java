@@ -54,6 +54,7 @@ import pro.metaboanalyst.controllers.general.NormBean;
 import pro.metaboanalyst.controllers.general.ProcessBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.mnet.MnetLoadBean;
+import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
@@ -78,7 +79,9 @@ import pro.metaboanalyst.utils.DataUtils;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DiagramView implements Serializable {
 
-
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
 
     @JsonIgnore
     @Inject
@@ -658,6 +661,8 @@ public class DiagramView implements Serializable {
         }
         updateDiagramModel();
     }
+
+
 
     public void selectInputNode(String input) {
         if (model == null || model.getElements().isEmpty()) {
@@ -2946,5 +2951,65 @@ public class DiagramView implements Serializable {
                 moduleName = "";
         }
         return moduleName;
+    }
+    
+        /*
+     * dataType: list, conc, specbin, pktable, nmrpeak, mspeak, msspec
+     * analType: stat, pathora, pathqea, msetora, msetssp, msetqea, msetview, cmpdmap, peaksearch, smpmap
+     * */
+    public void checkAvailableModules() {
+        if (dc.getSelected() == null) {
+            return;
+        }
+
+        switch (dc.getSelected().getModule()) {
+            case "stat" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Feature List", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "dose" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Feature List", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "mf" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Feature List", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "roc" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Feature List", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "pathqea", "msetqea" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Feature List", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "pathqora", "msetora" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Data Table", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "mummichog" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Data Table", false);
+                toggleNodeVisibility("Multiple Tables", false);
+            }
+            case "metadata" -> {
+                toggleNodeVisibility("LC-MS Spectra", false);
+                toggleNodeVisibility("Data Table", false);
+                toggleNodeVisibility("Feature List", false);
+            }
+            case "raw" -> {
+                toggleNodeVisibility("Multiple Tables", false);
+                toggleNodeVisibility("Data Table", false);
+                toggleNodeVisibility("Feature List", false);
+            }
+            default -> {
+            }
+        }
     }
 }

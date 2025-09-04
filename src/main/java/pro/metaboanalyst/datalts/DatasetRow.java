@@ -254,4 +254,23 @@ public class DatasetRow implements Serializable {
     public void setDataType(String dataType) {
         this.dataType = dataType;
     }
+    
+    @Override
+public String toString() {
+    return "DatasetRow{" +
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", filename='" + filename + '\'' +
+            ", type='" + type + '\'' +
+            ", sizeBytes=" + sizeBytes +
+            ", uploadedAt=" + (uploadedAt != null ? uploadedAt.toString() : "null") +
+            ", email='" + email + '\'' +
+            ", node='" + node + '\'' +
+            ", samplenum=" + samplenum +
+            ", module='" + module + '\'' +
+            ", dataType='" + dataType + '\'' +
+            ", fileCount=" + fileCount +
+            ", hasMetadata=" + hasMetadata +
+            '}';
+}
 }
