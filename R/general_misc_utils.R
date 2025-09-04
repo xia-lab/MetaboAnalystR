@@ -1550,3 +1550,14 @@ rescale2NewRange <- function(qvec, a, b){
   }
   return(new.vec);
 }
+
+SaveMsetObject <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  qs::qsave(mSetObj, "mSetObj_after_sanity.qs");
+  return(1);
+}
+
+GetSampleNum <- function(){
+  mSetObj <- qs::qread("mSetObj_after_sanity.qs");
+  nrow(mSetObj$dataSet$meta.info);
+}
