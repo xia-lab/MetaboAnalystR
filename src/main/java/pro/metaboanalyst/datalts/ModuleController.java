@@ -6,7 +6,9 @@ import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -31,6 +33,13 @@ public class ModuleController implements Serializable {
     private DatasetController dc;
 
     private Map<String, Boolean> nodeVisibility = new HashMap<>();
+
+    private final List<String> untargetedDatas = Arrays.asList("spec", "specbin", "pktable", "nmrpeak", "mspeak");
+    private final List<String> regresAnals = Arrays.asList("pathway", "enrich");
+    private final List<String> compatibleDatas = Arrays.asList("conc", "spec", "specbin", "pktable", "nmrpeak", "mspeak", "mass_table");
+    private final List<String> compatibleAnals = Arrays.asList("stat", "roc", "raw", "power", "mummichog", "pathqea", "msetqea", "pathway", "enrich");
+    private final List<String> compatibleListAnals = Arrays.asList("pathora", "msetora", "pathway", "enrich");
+    private final List<String> targetedAnals = Arrays.asList("pathora", "pathqea", "msetora", "msetqea", "pathway", "enrich");
 
     public ModuleController() {
         // defaults: everything visible
@@ -82,11 +91,12 @@ public class ModuleController implements Serializable {
     }
 
     public void checkAvailableModules() {
-        if (dc.getSelected() == null) {
+        DatasetRow ds = dc.getSelected();
+        if (ds == null) {
             return;
         }
         disableAllModules();
-        switch (dc.getSelected().getModule()) {
+        switch (ds.getModule()) {
             case "stat" -> {
                 nodeVisibility.put("functionalAnalysis", true);
                 nodeVisibility.put("biomarkerAnalysis", true);
@@ -153,6 +163,12 @@ public class ModuleController implements Serializable {
             }
             default -> {
             }
+        }
+
+        if (untargetedDatas.contains(ds.getDataType())) {
+            nodeVisibility.put("functionalAnalysis", true);
+        } else {
+            nodeVisibility.put("functionalAnalysis", false);
         }
     }
 
