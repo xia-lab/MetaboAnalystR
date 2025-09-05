@@ -542,34 +542,43 @@ public class DatabaseClient {
                 return "other";
         }
     }
+    
+public ArrayList<DatasetRow> getDatasetsForEmail(String email, boolean includeFiles) {
+    ArrayList<DatasetRow> out = new ArrayList<>();
+    if (email == null || email.isBlank()) {
+        return out;
+    }
+    try {
+        if (ab.isInDocker()) {
+            // --- Direct DB path ---
+            List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email);
+            if (includeFiles && rows != null) {
+                for (DatasetRow d : rows) {
+                    UUID id = d.getId();
+                    if (id != null) {
+                        List<DatasetFile> files = DatabaseController.getDatasetFiles(id);
+                        d.setFiles(files);
+                    }
+                }
+            }
+            out.addAll(rows);
+            return out;
+        } else {
+            // --- Remote API path ---
+            String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
+            String json = apiClient.get("/database/datasets/by-email?email=" + q
+                    + "&includeFiles=" + includeFiles);
 
-    public ArrayList<DatasetRow> getDatasetsForEmail(String email) {
-        ArrayList<DatasetRow> out = new ArrayList<>();
-        if (email == null || email.isBlank()) {
+            ObjectMapper om = new ObjectMapper().findAndRegisterModules();
+            List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {});
+            out.addAll(list);
             return out;
         }
-
-        try {
-            if (ab.isInDocker()) {
-                // Direct Postgres path (your DAO we wrote earlier)
-                return DatabaseController.getDatasetsForEmail(email);
-            } else {
-                // Remote path: call your API and parse JSON into DatasetRow[]
-                String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
-                // Suggested endpoint: GET /database/datasets/by-email?email=<email>
-                String json = apiClient.get("/database/datasets/by-email?email=" + q);
-
-                ObjectMapper om = new ObjectMapper().findAndRegisterModules(); // handles OffsetDateTime
-                List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {
-                });
-                out.addAll(list);
-                return out;
-            }
-        } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
-            return out; // empty list on error (UI can show a growl)
-        }
+    } catch (Exception e) {
+        LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
+        return out; // empty list on error
     }
+}
 
     public List<DatasetFile> getDatasetFiles(UUID datasetId) {
         List<DatasetFile> out = new ArrayList<>();

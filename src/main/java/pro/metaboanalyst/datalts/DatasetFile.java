@@ -4,6 +4,8 @@
  */
 package pro.metaboanalyst.datalts;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -12,6 +14,7 @@ import java.util.UUID;
  *
  * @author zgy
  */
+@JsonIgnoreProperties(ignoreUnknown = true)   // <-- accept extra fields like "humanSize"
 public class DatasetFile implements Serializable {
 
     private UUID datasetId;
@@ -82,5 +85,4 @@ public class DatasetFile implements Serializable {
         this.uploadedAt = uploadedAt;
     }
 
-    
 }

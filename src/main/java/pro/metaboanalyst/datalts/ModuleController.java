@@ -8,11 +8,19 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import org.rosuda.REngine.Rserve.RConnection;
+import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.rwrappers.RDataUtils;
+import pro.metaboanalyst.utils.DataUtils;
 
 @SessionScoped
 @Named("moduleController")
 public class ModuleController implements Serializable {
+
+    @JsonIgnore
+    @Inject
+    private ApplicationBean1 ab;
 
     @JsonIgnore
     @Inject
@@ -21,6 +29,7 @@ public class ModuleController implements Serializable {
     @JsonIgnore
     @Inject
     private DatasetController dc;
+
     private Map<String, Boolean> nodeVisibility = new HashMap<>();
 
     public ModuleController() {
@@ -146,7 +155,7 @@ public class ModuleController implements Serializable {
             }
         }
     }
-    
+
     /*
     url1 = switch (num) {
             case 0 ->
@@ -180,8 +189,8 @@ public class ModuleController implements Serializable {
             default ->
                 "/Secure/upload/StatUploadView.xhtml";
         };
-    */
-        public void openModuleRC() {
+     */
+    public void openModuleRC() {
         var ctx = FacesContext.getCurrentInstance();
         try {
             String idxStr = ctx.getExternalContext().getRequestParameterMap().get("idx");
@@ -189,13 +198,51 @@ public class ModuleController implements Serializable {
 
             // If you want to check visibility server-side as well (defense-in-depth):
             // if (!visible(keyFromIdx(idx))) { return; }
-
             // reuse your existing navigation logic:
-            if(idx == 6){
-                
-            }else{
-                
+            boolean res = true;
+            DatasetRow ds = dc.getSelected();
+            System.out.println("ds.getFiles()length=====" + ds.getFiles());
+            String dataName = "";
+            String metaName = "";
+
+            for (DatasetFile f : ds.getFiles()) {
+                String fname = f.getFilename();
+                System.out.println(f.getRole() + "=============ds.getFiles()");
+                if ("data".equalsIgnoreCase(f.getRole())) {
+                    dataName = fname;
+                }
+                if ("metadata".equalsIgnoreCase(f.getRole())) {
+                    metaName = fname;
+                }
             }
+            if (res) {
+                RConnection RC = sb.getRConnection();
+                String analType = sb.getAnalType();
+                String naviType = analType;
+                if (idx == 6) {
+                    analType = "stat";
+                    naviType = "stat";
+                    RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
+
+                    res = RDataUtils.readTextDataReload(sb.getRConnection(), dataName);
+                } else if (idx == 8) {
+                    analType = "roc";
+                    naviType = "roc";
+                    RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
+
+                    res = RDataUtils.readTextDataReload(sb.getRConnection(), dataName);
+                    if (!metaName.equals("")) {
+                        boolean ok = RDataUtils.readMetaData(RC, metaName);
+                    }
+
+                }
+
+                sb.setAnalType(analType);
+                RDataUtils.loadRscriptsOnDemand(RC, analType);
+                sb.initNaviTree("roc");
+                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/process/SanityCheck.xhtml", "info", "Dataset loaded, please proceed with analysis!");
+            }
+
         } catch (Exception e) {
 
         }

@@ -3835,4 +3835,16 @@ public class RDataUtils {
             return 0;
         }
     }
+
+    public static boolean readTextDataReload(RConnection RC, String filePath) {
+        try {
+            String rCommand = "Read.TextDataReload(NA, \"" + filePath + "\");";
+            String rCommand2 = "Read.TextDataReload(NA, \"" + "Replacing_with_your_file_path" + "\");";
+            RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger() == 1);
+        } catch (Exception rse) {
+            LOGGER.error("readTextData", rse);
+            return false;
+        }
+    }
 }

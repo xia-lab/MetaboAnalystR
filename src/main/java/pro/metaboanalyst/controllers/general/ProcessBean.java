@@ -197,7 +197,6 @@ public class ProcessBean implements Serializable {
         metaDataSet = new ArrayList();
         dataSets = new ArrayList();
         try {
-            //System.out.println("==== sb.getAnalType()====> " + sb.getAnalType());
             switch (sb.getAnalType()) {
 
                 case "mummichog" -> {

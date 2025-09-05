@@ -272,7 +272,7 @@ public class DatasetController implements Serializable {
             datasetTable = new ArrayList<>();
             return;
         }
-        datasetTable = db.getDatasetsForEmail(email);
+        datasetTable = db.getDatasetsForEmail(email, true);
     }
 
     public void syncSelectedDatasets() {
@@ -666,7 +666,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             this.selected = ds;
 
             // 1) Login -> this typically (re)creates a fresh working folder for the session
-            sb.doLogin(ds.getModule(), ds.getDataType(), false, false);
+            sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
 
             // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
             //    Source convention: <project>/user_folders/<email>/<datasetId>/
@@ -700,7 +700,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     }
                 }
             } else {
-                // 4b) No file list available — copy all regular files in the dataset folder
+
                 if (java.nio.file.Files.isDirectory(srcDir)) {
                     try (java.nio.file.DirectoryStream<java.nio.file.Path> stream
                             = java.nio.file.Files.newDirectoryStream(srcDir)) {
@@ -713,16 +713,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                         }
                     }
                 }
-            }
-
-            // 5) Optional: also bring mSetObj.qs if present in the dataset folder (safety net)
-            java.nio.file.Path mset = srcDir.resolve("mSetObj.qs");
-            if (java.nio.file.Files.exists(mset)) {
-                java.nio.file.Files.copy(
-                        mset,
-                        dstDir.resolve("mSetObj.qs"),
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
-                );
             }
 
             // 6) Notify + redirect to module selection
