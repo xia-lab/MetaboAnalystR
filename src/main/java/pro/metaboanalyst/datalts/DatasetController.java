@@ -505,7 +505,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
     }
 
-// Try stagedSourcePaths first; else fall back to user's home dir + filename
     private List<java.nio.file.Path> resolveSourcePathsForStaged() {
         List<java.nio.file.Path> guessed = new ArrayList<>();
         java.nio.file.Path home = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());

@@ -144,6 +144,16 @@ public class FireBaseController implements Serializable {
 
     private String fireDocName = "";
     private String fireDocDescription = "";
+    
+    private boolean saveDataBoolean = true;
+
+    public boolean isSaveDataBoolean() {
+        return saveDataBoolean;
+    }
+
+    public void setSaveDataBoolean(boolean saveDataBoolean) {
+        this.saveDataBoolean = saveDataBoolean;
+    }
 
     public String getFireDocName() {
         return fireDocName;
@@ -389,7 +399,7 @@ public class FireBaseController implements Serializable {
         ProjectModel selectedProject = createProjectFromMap(docData);
         pb.setSelectedProject(selectedProject);
 
-        if (dc.hasStagedDataset()) {
+        if (dc.hasStagedDataset() && saveDataBoolean) {
             java.util.UUID dsId = dc.commitStagedDataset();
             if (dsId != null) {
                 System.out.println("Committed staged dataset: " + dsId);
