@@ -988,7 +988,7 @@ public class RDataUtils {
 
     public static int getSampleNum(RConnection RC) {
         try {
-            String rCommand = "GetSampleNum(NA)";
+            String rCommand = "GetSampleNum()";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {

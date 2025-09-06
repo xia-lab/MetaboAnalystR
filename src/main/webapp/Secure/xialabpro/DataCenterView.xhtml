@@ -170,7 +170,7 @@
                         </p:commandLink>
 
                         <p:spacer width="30"/>
-                        <p:commandLink id="deleteBn" title="Delete" onclick="PF('delDialog').show();">
+                        <p:commandLink id="deleteBn" title="Delete" oncomplete="PF('delDialog').show();" update=":delForm">
                             <i class="pi pi-trash icon-btn" style="color:orangered; font-size: 1.4rem"></i>
                             <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
                             <p:tooltip for="deleteBn" value="Delete this dataset"/>
@@ -247,14 +247,14 @@
         </p:dialog>
 
         <p:dialog widgetVar="delDialog" modal="true" header="Delete Dataset" appendTo="@(body)" closable="true">
-            <h:form>
+            <h:form id="delForm">
                 <h:panelGrid style="width:420px; line-height:1.6; font-size:14px;">
                     <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
                         <h:panelGroup>
                             <i class="pi pi-exclamation-triangle" style="font-size:42px;color:#f57c00"></i>
                         </h:panelGroup>
                         <h:panelGroup>
-                            This action will permanently delete <b>#{datasetController.selected.title}</b> (ID: #{datasetController.selected.id}).
+                            This action will permanently delete <b>#{datasetController.selected.title}</b>.
                             Proceed?
                         </h:panelGroup>
                     </h:panelGrid>

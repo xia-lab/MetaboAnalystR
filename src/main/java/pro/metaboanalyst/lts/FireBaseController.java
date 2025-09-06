@@ -400,6 +400,7 @@ public class FireBaseController implements Serializable {
         pb.setSelectedProject(selectedProject);
 
         if (dc.hasStagedDataset() && saveDataBoolean) {
+            dc.getStagedDataset().setSamplenum(RDataUtils.getSampleNum(sb.getRConnection()));
             java.util.UUID dsId = dc.commitStagedDataset();
             if (dsId != null) {
                 System.out.println("Committed staged dataset: " + dsId);
@@ -642,6 +643,7 @@ public class FireBaseController implements Serializable {
         String org = selectedProject.getOrg();
         String analType = selectedProject.getType();
         String dataType = selectedProject.getDataType();
+        System.out.println("loadProject===="+ dataType);
         String shareToken = selectedProject.getShareToken();
         boolean paired = selectedProject.isPaired();
         boolean regression = selectedProject.isRegression();
@@ -890,7 +892,8 @@ public class FireBaseController implements Serializable {
 
         String navitype = sb.getNaviType();
         sb.setNaviType("NA");
-        sb.buildCustomNaviTree();
+        //sb.buildCustomNaviTree();
+        sb.initNaviTree(navitype);
         DataUtils.doRedirect("/MetaboAnalyst/" + sb.getCurrentNaviUrl(), ab);
     }
 
@@ -898,9 +901,10 @@ public class FireBaseController implements Serializable {
 
         String navitype = sb.getNaviType();
         sb.setNaviType("NA");
-        sb.buildCustomNaviTree();
+        //sb.buildCustomNaviTree();
 
-        //sb.initNaviTree(navitype);
+        sb.initNaviTree(navitype);
+        
         if (naviString.startsWith("/")) {
             naviString = naviString.substring(1);
         }
@@ -963,7 +967,6 @@ public class FireBaseController implements Serializable {
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
         } else {
             pb.setActiveTabIndex(0);
-            //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
             setupProjectTable();
             projInit = true;
         }
@@ -1371,7 +1374,7 @@ public class FireBaseController implements Serializable {
             case "ipca_3d" ->
                 sb.setCurrentNaviUrl("/Secure/multifac/LivePCAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1");
             case "heatmap2" ->
-                sb.setCurrentNaviUrl("Secure/multifac/Heatmap2View.xhtml");
+                sb.setCurrentNaviUrl("/Secure/multifac/Heatmap2View.xhtml");
             case "opls_score2d" ->
                 sb.setCurrentNaviUrl("/Secure/analysis/OrthoPLSDAView.xhtml");
             case "opls_splot" ->

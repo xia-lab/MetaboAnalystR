@@ -89,6 +89,7 @@ public class DatasetController implements Serializable {
                 if (projectTypeObject != null && "workflow".equals(projectTypeObject.toString())) {
                     continue; // Skip this project and move to the next iteration
                 }
+                System.out.println(projectTypeObject.toString() + "===projecttype");
                 ProjectModel project = fbc.createProjectFromMap(myMap);
                 pb.getProjectTable().add(project);
             }
@@ -162,7 +163,7 @@ public class DatasetController implements Serializable {
 
             saveDatasetFiles(email, datasetId, uploaded, roles);
 
-            sb.addMessage("info", "Dataset created: " + datasetId);
+            sb.addMessage("info", "Dataset created: " + resolvedTitle);
             return datasetId;
 
         } catch (Exception e) {
@@ -494,7 +495,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             }
             copyStagedFilesToDatasetFolder(stagedDataset.getEmail(), datasetId, stagedFiles, sources);
 
-            sb.addMessage("info", "Dataset created: " + datasetId);
+            sb.addMessage("info", "Dataset created: " + stagedDataset.getTitle());
             clearStaged();
             return datasetId;
 
@@ -726,6 +727,15 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         } catch (Exception e) {
             sb.addMessage("Error", "Load failed: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    public void deleteSelected() {
+        boolean res = db.deleteDatasetFilesFolderOk(selected.getId(), fub.getEmail());
+        if (res) {
+            sb.addMessage("info", "Successfully deleted!");
+        } else {
+            sb.addMessage("warn", "Failed to delete!");
         }
     }
 

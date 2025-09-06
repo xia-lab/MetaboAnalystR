@@ -542,43 +542,44 @@ public class DatabaseClient {
                 return "other";
         }
     }
-    
-public ArrayList<DatasetRow> getDatasetsForEmail(String email, boolean includeFiles) {
-    ArrayList<DatasetRow> out = new ArrayList<>();
-    if (email == null || email.isBlank()) {
-        return out;
-    }
-    try {
-        if (ab.isInDocker()) {
-            // --- Direct DB path ---
-            List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email);
-            if (includeFiles && rows != null) {
-                for (DatasetRow d : rows) {
-                    UUID id = d.getId();
-                    if (id != null) {
-                        List<DatasetFile> files = DatabaseController.getDatasetFiles(id);
-                        d.setFiles(files);
-                    }
-                }
-            }
-            out.addAll(rows);
-            return out;
-        } else {
-            // --- Remote API path ---
-            String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
-            String json = apiClient.get("/database/datasets/by-email?email=" + q
-                    + "&includeFiles=" + includeFiles);
 
-            ObjectMapper om = new ObjectMapper().findAndRegisterModules();
-            List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {});
-            out.addAll(list);
+    public ArrayList<DatasetRow> getDatasetsForEmail(String email, boolean includeFiles) {
+        ArrayList<DatasetRow> out = new ArrayList<>();
+        if (email == null || email.isBlank()) {
             return out;
         }
-    } catch (Exception e) {
-        LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
-        return out; // empty list on error
+        try {
+            if (ab.isInDocker()) {
+                // --- Direct DB path ---
+                List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email);
+                if (includeFiles && rows != null) {
+                    for (DatasetRow d : rows) {
+                        UUID id = d.getId();
+                        if (id != null) {
+                            List<DatasetFile> files = DatabaseController.getDatasetFiles(id);
+                            d.setFiles(files);
+                        }
+                    }
+                }
+                out.addAll(rows);
+                return out;
+            } else {
+                // --- Remote API path ---
+                String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
+                String json = apiClient.get("/database/datasets/by-email?email=" + q
+                        + "&includeFiles=" + includeFiles);
+
+                ObjectMapper om = new ObjectMapper().findAndRegisterModules();
+                List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {
+                });
+                out.addAll(list);
+                return out;
+            }
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
+            return out; // empty list on error
+        }
     }
-}
 
     public List<DatasetFile> getDatasetFiles(UUID datasetId) {
         List<DatasetFile> out = new ArrayList<>();
@@ -605,6 +606,49 @@ public ArrayList<DatasetRow> getDatasetsForEmail(String email, boolean includeFi
             LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching dataset files for " + datasetId, e);
             return out; // empty list on error
         }
+    }
+
+    public Map<String, Object> deleteDatasetFilesFolder(UUID datasetId, String email) {
+        Map<String, Object> out = new HashMap<>();
+        if (datasetId == null || email == null || email.isBlank()) {
+            out.put("status", "error");
+            out.put("message", "datasetId/email required");
+            return out;
+        }
+
+        try {
+            if (ab.isInDocker()) {
+                // Direct DB/DAO path
+                String result = DatabaseController.deleteDatasetById(datasetId);
+                out.put("status", "OK".equals(result) ? "ok" : "error");
+                out.put("datasetId", datasetId.toString());
+                out.put("email", email);
+                out.put("folder", result);
+                return out;
+            } else {
+                // Remote API path
+                String url = "/database/datasets/" + datasetId + "/files?email="
+                        + URLEncoder.encode(email, StandardCharsets.UTF_8);
+                String json = apiClient.delete(url);
+
+                ObjectMapper om = new ObjectMapper().registerModule(new JavaTimeModule())
+                        .findAndRegisterModules();
+                return om.readValue(json, new TypeReference<Map<String, Object>>() {
+                });
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error deleting dataset files folder for " + datasetId, e);
+            out.put("status", "error");
+            out.put("message", e.getMessage());
+            return out;
+        }
+    }
+
+    public boolean deleteDatasetFilesFolderOk(UUID datasetId, String email) {
+        Map<String, Object> resp = deleteDatasetFilesFolder(datasetId, email);
+        Object s = resp.get("status");
+        System.out.println("String.valueOf(s)===" + String.valueOf(s));
+        return s != null && "ok".equalsIgnoreCase(String.valueOf(s));
     }
 
     private String toJson(Map<String, ?> map) {

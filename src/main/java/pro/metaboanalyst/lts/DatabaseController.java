@@ -1869,4 +1869,36 @@ public class DatabaseController implements Serializable {
         return files;
     }
 
+    public static String deleteDatasetById(java.util.UUID datasetId) {
+        final String delFiles = "DELETE FROM dataset_files WHERE dataset_id = ?";
+        final String delDataset = "DELETE FROM datasets WHERE id = ?";
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection()) {
+            con.setAutoCommit(false);
+            try (PreparedStatement ps1 = con.prepareStatement(delFiles); PreparedStatement ps2 = con.prepareStatement(delDataset)) {
+
+                // bind UUID directly
+                ps1.setObject(1, datasetId);
+                ps1.executeUpdate();
+
+                ps2.setObject(1, datasetId);
+                int n = ps2.executeUpdate();
+
+                if (n == 0) {
+                    con.rollback();
+                    return "No dataset found for id=" + datasetId;
+                }
+
+                con.commit();
+                return "OK";
+            } catch (Exception e) {
+                con.rollback();
+                return "Error deleting dataset: " + e.getMessage();
+            } finally {
+                con.setAutoCommit(true);
+            }
+        } catch (Exception ex) {
+            return "Error (connection): " + ex.getMessage();
+        }
+    }
 }
