@@ -144,7 +144,7 @@ public class FireBaseController implements Serializable {
 
     private String fireDocName = "";
     private String fireDocDescription = "";
-    
+
     private boolean saveDataBoolean = true;
 
     public boolean isSaveDataBoolean() {
@@ -643,7 +643,7 @@ public class FireBaseController implements Serializable {
         String org = selectedProject.getOrg();
         String analType = selectedProject.getType();
         String dataType = selectedProject.getDataType();
-        System.out.println("loadProject===="+ dataType);
+        System.out.println("loadProject====" + dataType);
         String shareToken = selectedProject.getShareToken();
         boolean paired = selectedProject.isPaired();
         boolean regression = selectedProject.isRegression();
@@ -688,7 +688,7 @@ public class FireBaseController implements Serializable {
         String bucketObjectName = "user_folders/" + userFolderName + "/" + folderName + ".zip";
         String localFilePath = fb.getProjectPath() + bucketObjectName;
         File f = new File(localFilePath);
-
+        System.out.println(localFilePath + "========================================abc");
         if (f.exists()) {
             DataUtils.extract(localFilePath, destDirPath);
         } else {
@@ -904,7 +904,7 @@ public class FireBaseController implements Serializable {
         //sb.buildCustomNaviTree();
 
         sb.initNaviTree(navitype);
-        
+
         if (naviString.startsWith("/")) {
             naviString = naviString.substring(1);
         }
@@ -1017,7 +1017,7 @@ public class FireBaseController implements Serializable {
                 Map<String, Object> myMap = myHashMap;
 
                 Object projectTypeObject = myMap.get("projecttype");
-                if (projectTypeObject != null && "workflow".equals(projectTypeObject.toString())) {
+                if (projectTypeObject != null && !"project".equals(projectTypeObject.toString())) {
                     continue; // Skip this project and move to the next iteration
                 }
                 ProjectModel project = createProjectFromMap(myMap);
@@ -1128,13 +1128,17 @@ public class FireBaseController implements Serializable {
 
         String bucketObjectName = "/user_folders/" + userFolderName + "/" + folderName + ".zip";
         String localFilePath = fb.getProjectPath() + bucketObjectName;
-
         File f = new File(localFilePath);
         if (f.exists()) {
             DataUtils.extract(localFilePath, destDirPath);
         } else {
+            bucketObjectName = "/user_folders/" + "guest" + "/" + folderName + ".zip";
+            localFilePath = fb.getProjectPath() + bucketObjectName;
+            f = new File(localFilePath);
+            if(!f.exists()){
             downloadObject(selectedProject.getHostname(), userFolderName, folderName, destDirPath + folderName + ".zip");
             DataUtils.extract(destDirPath + folderName + ".zip", destDirPath);
+            }
         }
         RCenter.loadHistory(sb.getRConnection());
 
