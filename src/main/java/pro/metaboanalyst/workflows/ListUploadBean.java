@@ -160,6 +160,7 @@ public class ListUploadBean implements Serializable {
         } else {
             SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
         }
+        int res = RDataUtils.saveMsetObject(sb.getRConnection());
 
         sb.setDataUploaded();
         wb.setOraList(oraList);

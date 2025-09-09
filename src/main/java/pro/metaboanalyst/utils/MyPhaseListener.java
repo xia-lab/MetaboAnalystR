@@ -582,6 +582,7 @@ public class MyPhaseListener implements PhaseListener {
                             + "<a href=\"" + shareLink + "\">click here</a>.\n");
 
                     dv.setShowNotif(true);
+                    sb.setDataNormed();
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         QuartzDbUtils.updateJobStatus(jobId, "COMPLETED");
@@ -653,6 +654,7 @@ public class MyPhaseListener implements PhaseListener {
                     if (res1) {
                         fub.setEmail(email);
                         dv.setWorkflowFinished(true);
+                        
                         DataUtils.copyFile(
                                 new File("/data/glassfish/projects/metaboanalyst/" + folderName + "/mSet.rda"),
                                 new File(sb.getCurrentUser().getHomeDir() + "/mSet.rda")

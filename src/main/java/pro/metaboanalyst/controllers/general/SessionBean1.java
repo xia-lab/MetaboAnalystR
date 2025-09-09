@@ -83,14 +83,6 @@ public class SessionBean1 implements Serializable {
 
     @JsonIgnore
     @Inject
-    private FireUserBean fub;
-
-    @JsonIgnore
-    @Inject
-    private FireBase fb;
-
-    @JsonIgnore
-    @Inject
     private MnetResBean mnb;
 
     @JsonIgnore
@@ -906,6 +898,9 @@ public class SessionBean1 implements Serializable {
                 TreeNode node = new DefaultTreeNode(key, naviTree); // Add to root
                 node.setSelectable(true); // Make it selectable (optional)
             }
+        }
+        if(naviTrack.keySet().isEmpty()){
+            initNaviTree(analType);
         }
     }
 
@@ -1794,6 +1789,7 @@ public class SessionBean1 implements Serializable {
         }
         if (isWorkflowMode()) {
             if (dv.isWorkflowFinished()) {
+                setDataNormed();
                 DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/DashboardView.xhtml", ab);
                 return;
             } else {

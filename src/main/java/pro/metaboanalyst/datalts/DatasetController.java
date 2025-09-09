@@ -33,6 +33,9 @@ import java.io.*;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.primefaces.model.file.UploadedFile;
+import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
+import pro.metaboanalyst.lts.HistoryBean;
+import pro.metaboanalyst.lts.StateSaver;
 
 /**
  *
@@ -49,7 +52,7 @@ public class DatasetController implements Serializable {
     @Inject
     private FireUserBean fub;
     @Inject
-    private FireBaseController fbc;
+    private FireBaseController fc;
     @Inject
     private FireBase fb;
     @Inject
@@ -61,13 +64,13 @@ public class DatasetController implements Serializable {
 
     public void initUserDatasets() {
 
-        fbc.reloadUserInfo();
+        fc.reloadUserInfo();
         if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
         } else {
             pb.setActiveTabIndex(0);
             //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
-            fbc.setupProjectTable();
+            fc.setupProjectTable();
         }
 
     }
@@ -90,7 +93,7 @@ public class DatasetController implements Serializable {
                     continue; // Skip this project and move to the next iteration
                 }
                 System.out.println(projectTypeObject.toString() + "===projecttype");
-                ProjectModel project = fbc.createProjectFromMap(myMap);
+                ProjectModel project = fc.createProjectFromMap(myMap);
                 pb.getProjectTable().add(project);
             }
             if (loadProjectBool) {
@@ -265,7 +268,7 @@ public class DatasetController implements Serializable {
      * Called by Refresh button and can be wired to preRenderView.
      */
     public void refresh() {
-        fbc.reloadUserInfo();
+        fc.reloadUserInfo();
 
         String email = fub.getEmail();
         String node = ab.getToolLocation();
@@ -452,6 +455,12 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
      * again here.
      */
 // Commit without needing UploadedFile again
+    @Inject
+    StateSaver stateSaver;
+
+    @Inject
+    private HistoryBean hb;
+
     public java.util.UUID commitStagedDataset() {
         if (!hasStagedDataset()) {
             sb.addMessage("Error", "No staged dataset to commit.");
@@ -467,6 +476,22 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 df.setFilename("mSetObj_after_sanity.qs");
                 df.setType("qs");
                 df.setSizeBytes(Files.size(msetFile));
+                df.setUploadedAt(OffsetDateTime.now());
+                stagedFiles.add(df);
+            }
+
+            stateSaver.saveState();
+
+            fc.saveJavaHistory();
+            String jh = hb.getJavaHistoryString();
+            saveJsonStringToFile(jh, sb.getCurrentUser().getOrigHomeDir() + File.separator + "java_history.json");
+            Path javaHistoryFile = home.resolve("java_history.json");
+            if (Files.exists(javaHistoryFile)) {
+                DatasetFile df = new DatasetFile();
+                df.setRole("javahistory");
+                df.setFilename("java_history.json");
+                df.setType("json");
+                df.setSizeBytes(Files.size(javaHistoryFile));
                 df.setUploadedAt(OffsetDateTime.now());
                 stagedFiles.add(df);
             }
@@ -715,6 +740,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 }
             }
 
+            File histFile = new File(sb.getCurrentUser().getHomeDir(), "java_history.json");
+            if (histFile.exists()) {
+                String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
+                int res1 = fc.loadJavaHistory(javaHistory);
+                System.out.println("javahistoryloaded=======");
+            }
+
             // 6) Notify + redirect to module selection
             sb.addMessage("info", "Loaded dataset files into workspace (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
             DataUtils.doRedirectWithGrowl(
@@ -739,4 +771,36 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
     }
 
+    public String stageListDataset(String niceTitleHint) {
+        try {
+            final String home = sb.getCurrentUser().getHomeDir();
+            final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.csv");
+            if (!java.nio.file.Files.exists(lp)) {
+                sb.addMessage("Error", "datalist.csv not found in your home directory.");
+                return null;
+            }
+
+            String fname = "datalist.csv";
+            String niceTitle = (niceTitleHint == null || niceTitleHint.isBlank())
+                    ? "List_" + java.time.LocalDate.now()
+                    : niceTitleHint;
+
+            pro.metaboanalyst.datalts.DatasetFile lf = new pro.metaboanalyst.datalts.DatasetFile();
+            lf.setRole("data");
+            lf.setFilename(fname);
+            lf.setType("csv");
+            lf.setSizeBytes(java.nio.file.Files.size(lp));
+            lf.setUploadedAt(java.time.OffsetDateTime.now());
+
+            java.util.List<pro.metaboanalyst.datalts.DatasetFile> files = java.util.List.of(lf);
+            java.util.List<java.nio.file.Path> src = java.util.List.of(lp);
+
+            stageDatasetFromPaths(niceTitle, /*samples*/ 0, files, src);
+            sb.addMessage("info", "List staged in memory. You can review and commit later.");
+            return "Name check";
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to stage list: " + e.getMessage());
+            return null;
+        }
+    }
 }

@@ -2068,4 +2068,26 @@ public class DataUtils {
         }
     }
 
+    public static String[] readListFileToNames(String path, String fileName) {
+        try {
+            // Default: assume datalist.csv is written into the user's working directory
+            Path p = Paths.get(path, fileName);
+
+            if (!Files.exists(p)) {
+                System.err.println("readListFileToNames: File not found -> " + p.toAbsolutePath());
+                return new String[0];
+            }
+
+            List<String> lines = Files.readAllLines(p);
+            return lines.stream()
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .toArray(String[]::new);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new String[0];
+        }
+    }
+    
 }

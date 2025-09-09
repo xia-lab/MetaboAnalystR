@@ -199,5 +199,31 @@ public class SearchUtils {
         }
         return null;
     }
+    
+    
+    public static void crossReferenceExactReload(SessionBean1 sb) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "CrossReferencingReload(NA);";
+            RC.voidEval(rCommand);
+            sb.recordRCommandFunctionInfo(rCommand, "Sanity Check");
+
+            RCenter.recordRCommand(RC, rCommand);
+        } catch (Exception e) {
+            LOGGER.error("crossReferenceExact", e);
+        }
+    }
+
+    public static void crossReferenceExactLipidReload(SessionBean1 sb, String query_type) {
+        try {
+            RConnection RC = sb.getRConnection();
+            String rCommand = "CrossReferencingReload(NA" + ", lipid = T);";
+            RC.voidEval(rCommand);
+            sb.recordRCommandFunctionInfo(rCommand, "Sanity Check");
+            RCenter.recordRCommand(RC, rCommand);
+        } catch (Exception e) {
+            LOGGER.error("crossReferenceExactLipid", e);
+        }
+    }
 
 }

@@ -3847,4 +3847,16 @@ public class RDataUtils {
             return false;
         }
     }
+
+    public static boolean readMzTabDataReload(RConnection RC, String filePath) {
+        try {
+            String rCommand = "Read.mzTabReload(NA, \"" + filePath + "\");";
+            String rCommand2 = "Read.mzTabReload(NA, \"" + "Replacing_with_your_file_path" + "\");";
+            RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger() == 1);
+        } catch (Exception rse) {
+            LOGGER.error("readMzTabData", rse);
+            return false;
+        }
+    }
 }

@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
 import jakarta.inject.Inject;
+import pro.metaboanalyst.datalts.DatasetController;
 
 /**
  *
@@ -33,6 +34,8 @@ public class EnrichUploadBean implements Serializable {
     ApplicationBean1 ab;
     @Inject
     SessionBean1 sb;
+    @Inject
+    private DatasetController dc;
     private static final Logger LOGGER = LogManager.getLogger(EnrichUploadBean.class);
 
     /*
@@ -83,7 +86,7 @@ public class EnrichUploadBean implements Serializable {
             sb.addMessage("error", "Please specify Feature Type!");
             return null;
         }
-         sb.setUploadType("list");
+        sb.setUploadType("list");
         String[] qVec = DataUtils.getQueryNames(msetOraList, null);
         RDataUtils.setMapData(sb.getRConnection(), qVec);
         if (featType.equals("lipid")) {
@@ -91,7 +94,8 @@ public class EnrichUploadBean implements Serializable {
         } else {
             SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
         }
-
+        int res = RDataUtils.saveMsetObject(sb.getRConnection());
+        dc.stageListDataset("datalist_" + sb.getAnalType());
         sb.setDataUploaded();
         return "Name check";
     }
@@ -516,14 +520,20 @@ public class EnrichUploadBean implements Serializable {
         if (null == getDefaultchemid()) {
             sb.addMessage("error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
             return null;
-        } else switch (getDefaultchemid()) {
-            case "HMDB" -> lblType = "hmdb";
-            case "KEGG" -> lblType = "kegg";
-            case "PUBCHEM" -> lblType = "pubchem";
-            case "CHEMICAL_NAME" -> lblType = "name";
-            default -> {
-                sb.addMessage("error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
-                return null;
+        } else {
+            switch (getDefaultchemid()) {
+                case "HMDB" ->
+                    lblType = "hmdb";
+                case "KEGG" ->
+                    lblType = "kegg";
+                case "PUBCHEM" ->
+                    lblType = "pubchem";
+                case "CHEMICAL_NAME" ->
+                    lblType = "name";
+                default -> {
+                    sb.addMessage("error", getDefaultchemid() + " is not supported for now! Please select another ID type for enrichment analysis.");
+                    return null;
+                }
             }
         }
 
@@ -541,5 +551,5 @@ public class EnrichUploadBean implements Serializable {
             return null;
         }
     }
-    
+
 }

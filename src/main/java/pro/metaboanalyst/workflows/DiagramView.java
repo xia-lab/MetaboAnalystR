@@ -2219,7 +2219,7 @@ public class DiagramView implements Serializable {
     }
 
     public boolean sendRawResume(String to, String jobId, String shareLink) throws JsonProcessingException, IOException, InterruptedException {
-
+        System.out.println("sendingrawresume=================================");
         String htmlMsg = "<!DOCTYPE html>\n"
                 + "<html>\n"
                 + "<body style=\"font-family: Arial; font-size: 12px;\">\n"

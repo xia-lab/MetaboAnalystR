@@ -14,6 +14,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
+import pro.metaboanalyst.rwrappers.SearchUtils;
 import pro.metaboanalyst.utils.DataUtils;
 
 @SessionScoped
@@ -95,82 +96,88 @@ public class ModuleController implements Serializable {
         if (ds == null) {
             return;
         }
+
         disableAllModules();
-        switch (ds.getModule()) {
-            case "stat" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
 
-            }
-            case "dose" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
-                if (dc.getSelected().isHasMetadata()) {
-                    nodeVisibility.put("statisticalAnalysis2", true);
-                }
-            }
-            case "mf" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
-                nodeVisibility.put("statisticalAnalysis2", true);
-            }
-            case "roc" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
-                if (dc.getSelected().isHasMetadata()) {
-                    nodeVisibility.put("statisticalAnalysis2", true);
-                }
-            }
-            case "pathqea", "msetqea" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
-                nodeVisibility.put("enrichment", false);
-                nodeVisibility.put("pathway", false);
-                if (dc.getSelected().isHasMetadata()) {
-                    nodeVisibility.put("statisticalAnalysis2", true);
-                }
-            }
-            case "pathqora", "msetora" -> {
-                nodeVisibility.put("enrichment", false);
-                nodeVisibility.put("pathway", false);
-            }
-            case "mummichog" -> {
-                nodeVisibility.put("functionalAnalysis", true);
-                nodeVisibility.put("biomarkerAnalysis", true);
-                nodeVisibility.put("statisticalAnalysis1", true);
-                nodeVisibility.put("doseResponse", true);
-                if (dc.getSelected().isHasMetadata()) {
-                    nodeVisibility.put("statisticalAnalysis2", true);
-                }
-            }
-            case "metadata" -> {
-                nodeVisibility.put("statMeta", true);
+        // ---- Facts about this dataset ----
+        final String dt = (ds.getDataType() == null) ? "" : ds.getDataType().toLowerCase();
+        final String mod = (ds.getModule() == null) ? "" : ds.getModule().toLowerCase();
+        final boolean hasMeta = ds.isHasMetadata();
+        final boolean isUntargeted = untargetedDatas.contains(dt);
 
+        // Buckets from your provided lists
+        final boolean isCompatible = compatibleAnals.contains(mod) || compatibleListAnals.contains(mod);
+        final boolean isListAnal = compatibleListAnals.contains(mod);                 // ORA (or generic that can fork to ORA)
+        final boolean isTargetedAnal = targetedAnals.contains(mod);                       // ORA/QEA/generics
+        final boolean isQEA = "pathqea".equals(mod) || "msetqea".equals(mod);    // explicit QEA
+        final boolean isGenericFunc = regresAnals.contains(mod);                         // "pathway" or "enrich" generic entry
+        final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod) || "power".equals(mod);
+        final boolean isMummichog = "mummichog".equals(mod);
+        final boolean isRaw = "raw".equals(mod);
+
+        // Helpers
+        java.util.function.Consumer<String> on = k -> nodeVisibility.put(k, true);
+        java.util.function.Consumer<String> off = k -> nodeVisibility.put(k, false);
+
+        Runnable enableStatsBundle = () -> {
+            on.accept("statisticalAnalysis1");
+            on.accept("biomarkerAnalysis");
+            if (hasMeta) {
+                on.accept("statisticalAnalysis2");
             }
-            case "raw" -> {
-                nodeVisibility.put("spectraProcessing", true);
-                nodeVisibility.put("peakAnnotation", true);
+            on.accept("doseResponse");
+        };
+
+        Runnable maybeEnableFunctional = () -> {
+            if (isUntargeted) {
+                on.accept("functionalAnalysis");
+            } else {
+                off.accept("functionalAnalysis");
             }
-            default -> {
-            }
+        };
+
+        if (!isCompatible && !isRaw && !isMummichog) {
+            // Unknown module key -> keep everything hidden conservatively
+            return;
         }
 
-        if (untargetedDatas.contains(ds.getDataType())) {
-            nodeVisibility.put("functionalAnalysis", true);
-        } else {
-            nodeVisibility.put("functionalAnalysis", false);
+        // ------------ Module-specific visibility ------------
+        if (isRaw) {
+            on.accept("spectraProcessing");
+            on.accept("peakAnnotation");
+            // no stats/functional until peak tables exist
+        } else if (isMummichog) {
+            // Untargeted network/annotation workflow
+            maybeEnableFunctional.run();
+            enableStatsBundle.run();
+        } else if (isListAnal) {
+            // ORA list-based: enrichment/pathway only
+            on.accept("enrichment");
+            on.accept("pathway");
+            off.accept("functionalAnalysis");
+        } else if (isQEA) {
+            // QEA data+meta: enrichment/pathway + stats bundle
+            on.accept("enrichment");
+            on.accept("pathway");
+            enableStatsBundle.run();
+            maybeEnableFunctional.run();
+        } else if (isCoreStats) {
+            // Core table analyses
+            enableStatsBundle.run();
+            maybeEnableFunctional.run();
+        } else if (isGenericFunc || isTargetedAnal) {
+            // Generic "pathway"/"enrich" entry or other targeted keys:
+            // Always show enrichment/pathway; if metadata is present we also expose stats bundle.
+            on.accept("enrichment");
+            on.accept("pathway");
+        }
+
+        // Final guard: functional tile only for untargeted data types
+        if (!isUntargeted) {
+            off.accept("functionalAnalysis");
         }
     }
+
 
     /*
     url1 = switch (num) {
@@ -207,60 +214,358 @@ public class ModuleController implements Serializable {
         };
      */
     public void openModuleRC() {
-        var ctx = FacesContext.getCurrentInstance();
+        FacesContext ctx = FacesContext.getCurrentInstance();
         try {
             String idxStr = ctx.getExternalContext().getRequestParameterMap().get("idx");
             int idx = Integer.parseInt(idxStr);
 
-            // If you want to check visibility server-side as well (defense-in-depth):
-            // if (!visible(keyFromIdx(idx))) { return; }
-            // reuse your existing navigation logic:
-            boolean res = true;
             DatasetRow ds = dc.getSelected();
-            System.out.println("ds.getFiles()length=====" + ds.getFiles());
-            String dataName = "";
-            String metaName = "";
+            if (ds == null) {
+                sb.addMessage("Error", "No dataset selected to load.");
+                return;
+            }
+            if (ds.getFiles() == null || ds.getFiles().isEmpty()) {
+                sb.addMessage("Error", "Selected dataset has no files.");
+                return;
+            }
 
+            // --- Gather filenames by role ---
+            String dataName = null, data2Name = null, metaName = null, listName = null, ms2Name = null, rawName = null;
             for (DatasetFile f : ds.getFiles()) {
-                String fname = f.getFilename();
-                System.out.println(f.getRole() + "=============ds.getFiles()");
-                if ("data".equalsIgnoreCase(f.getRole())) {
-                    dataName = fname;
-                }
-                if ("metadata".equalsIgnoreCase(f.getRole())) {
-                    metaName = fname;
+                String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
+                System.out.println(role + "====role");
+                switch (role) {
+                    case "data" ->
+                        dataName = f.getFilename();
+                    case "data2" ->
+                        data2Name = f.getFilename();
+                    case "metadata" ->
+                        metaName = f.getFilename();
+                    case "list" ->
+                        listName = f.getFilename();
+                    case "ms2" ->
+                        ms2Name = f.getFilename();
+                    case "raw" ->
+                        rawName = f.getFilename();
                 }
             }
-            if (res) {
-                RConnection RC = sb.getRConnection();
-                String analType = sb.getAnalType();
-                String naviType = analType;
-                if (idx == 6) {
+
+            // --- Map idx to desired module behavior ---
+            enum InputMode {
+                DATA_ONLY, DATA_PLUS_META, LIST_ONLY, JOINT_TWO_TABLES, MS2_ONLY, RAW_MODE, MGWAS_ONLY
+            }
+            String analType;
+            String naviType;
+            InputMode mode;
+
+            switch (idx) {
+                case 0 -> {
                     analType = "stat";
                     naviType = "stat";
-                    RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
-
-                    res = RDataUtils.readTextDataReload(sb.getRConnection(), dataName);
-                } else if (idx == 8) {
+                    mode = InputMode.DATA_ONLY;
+                }          // PeakUploadView (general table)
+                case 1 -> {
+                    analType = "pathway";
+                    naviType = "pathway";
+                    mode = InputMode.DATA_PLUS_META;
+                }      // MetaPathLoadView (QEA)
+                case 2 -> {
+                    analType = "enrich";
+                    naviType = "enrich";
+                    mode = (sb.getUploadType().equals("list") ? InputMode.LIST_ONLY : InputMode.DATA_ONLY);
+                } // EnrichUploadView
+                case 3 -> {
+                    analType = "pathway";
+                    naviType = "pathway";
+                    mode = (sb.getUploadType().equals("list") ? InputMode.LIST_ONLY : InputMode.DATA_ONLY);
+                } // PathUploadView
+                case 4 -> {
+                    analType = "pathinteg";
+                    naviType = "pathinteg";
+                    mode = InputMode.JOINT_TWO_TABLES;
+                }    // JointUploadView
+                case 5 -> {
+                    analType = "mummichog";
+                    naviType = "mnet";
+                    mode = InputMode.DATA_ONLY;
+                }           // MnetUploadView
+                case 6 -> {
+                    analType = "stat";
+                    naviType = "stat";
+                    mode = InputMode.DATA_ONLY;
+                }           // StatUploadView
+                case 7 -> {
+                    analType = "multifac";
+                    naviType = "multifac";
+                    mode = InputMode.DATA_PLUS_META;
+                }      // MultifacUploadView (time/meta module) 
+                case 8 -> {
                     analType = "roc";
                     naviType = "roc";
-                    RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
+                    mode = InputMode.DATA_ONLY;
+                }      // RocUploadView
+                case 9 -> {
+                    analType = "metadata";
+                    naviType = "meta";
+                    mode = (dataName != null ? InputMode.DATA_PLUS_META : InputMode.DATA_ONLY);
+                } // MetaLoadView
+                case 10 -> {
+                    analType = "power";
+                    naviType = "power";
+                    mode = InputMode.DATA_ONLY;
+                }      // PowerUploadView
+                case 11 -> {
+                    analType = "dose";
+                    naviType = "dose";
+                    mode = InputMode.DATA_ONLY;
+                }      // DoseUploadView
+                case 12 -> {
+                    analType = "mgwas";
+                    naviType = "mgwas";
+                    mode = InputMode.MGWAS_ONLY;
+                }    // MgwasUploadView
+                case 14 -> {
+                    analType = "ms2";
+                    naviType = "ms2";
+                    mode = InputMode.MS2_ONLY;
+                }            // MS2UploadView
+                default -> {
+                    analType = "stat";
+                    naviType = "stat";
+                    mode = InputMode.DATA_ONLY;
+                }
+            }
+            
 
-                    res = RDataUtils.readTextDataReload(sb.getRConnection(), dataName);
-                    if (!metaName.equals("")) {
-                        boolean ok = RDataUtils.readMetaData(RC, metaName);
+            final String dataType = sb.getDataType() == null ? "" : sb.getDataType().toLowerCase();
+
+            // Compatibility checks
+            if (!compatibleDatas.contains(dataType) && mode != InputMode.LIST_ONLY && mode != InputMode.MS2_ONLY) {
+                sb.addMessage("Error", "Data type “" + dataType + "” not compatible with this module.");
+                return;
+            }
+            if (analType.equals("mummichog") && !untargetedDatas.contains(dataType)) {
+                sb.addMessage("Error", "Mummichog requires untargeted peak data (spec/specbin/pktable/nmrpeak/mspeak).");
+                return;
+            }
+            
+            if(metaName != null && mode.equals(InputMode.DATA_ONLY)){
+                mode = InputMode.DATA_PLUS_META;
+            }
+
+            // Init R
+            RConnection RC = sb.getRConnection();
+            sb.setAnalType(analType);
+            RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
+
+            // smart loader: mzTab vs text
+            java.util.function.BiFunction<RConnection, String, Boolean> loadSmart = (rc, fname) -> {
+                if (fname == null) {
+                    return false;
+                }
+                final String lower = fname.toLowerCase();
+                if (lower.endsWith(".mztab") || "mztab".equalsIgnoreCase(ds.getType())) {
+                    return RDataUtils.readMzTabDataReload(rc, fname);
+                } else {
+                    return RDataUtils.readTextDataReload(rc, fname);
+                }
+            };
+
+            boolean ok = true;
+
+            switch (mode) {
+                case DATA_ONLY -> {
+                    if (dataName == null) {
+                        sb.addMessage("Error", "No data file (role=data).");
+                        return;
                     }
+                    ok = loadSmart.apply(RC, dataName);
+
+                    // optional meta for stat/roc/power/dose/multifac
+                    if (ok && (analType.equals("stat") || analType.equals("roc") || analType.equals("power")
+                            || analType.equals("dose") || analType.equals("multifac"))) {
+                        if (metaName != null && !metaName.isBlank()) {
+                            RDataUtils.readMetaData(RC, metaName);
+                        }
+                    }
+
+                    // Mummichog starts from peaks (like its upload bean)
+                    // (Bean uses analType "mummichog"; keep ours consistent). :contentReference[oaicite:5]{index=5}
+                }
+
+                case DATA_PLUS_META -> {
+                    // Pathway/Enrich: auto-detect ORA vs QEA
+
+                    // multifac/time, roc, power, dose, metadata …
+                    if (dataName != null) {
+                        ok = loadSmart.apply(RC, dataName);
+                    }
+                    if (!ok) {
+                        break;
+                    }
+                    if (metaName != null) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    } else if (analType.equals("roc") || analType.equals("power") || analType.equals("dose") || analType.equals("multifac")) {
+                        sb.addMessage("Warn", "No metadata found; some analyses may be limited.");
+                    }
+                    // Time/multifac upload bean logs into “mf” and reads data+meta; we mirror that by requiring meta when present. :contentReference[oaicite:9]{index=9}
 
                 }
 
-                sb.setAnalType(analType);
-                RDataUtils.loadRscriptsOnDemand(RC, analType);
-                sb.initNaviTree("roc");
-                DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/process/SanityCheck.xhtml", "info", "Dataset loaded, please proceed with analysis!");
+                case LIST_ONLY -> {
+
+                    // Align with beans: set upload type FIRST
+                    sb.setUploadType("list"); // like EnrichUploadBean/PathUploadBean.  // :contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}
+
+                    // Convert list file -> qVec and set map data in R
+                    String[] qVec = DataUtils.readListFileToNames(sb.getCurrentUser().getHomeDir(), "datalist.csv");
+                    if (qVec.length == 0) {
+                        sb.addMessage("Error", "Your list file appears to be empty.");
+                        return;
+                    }
+                    RDataUtils.setMapData(RC, qVec); // exactly like the upload beans.         // :contentReference[oaicite:4]{index=4} :contentReference[oaicite:5]{index=5}
+
+                    // Choose the cross-reference routine. If you track lipid vs met feature type in state,
+                    // reuse it here; otherwise default to the generic exact matcher (same as PathUploadBean).
+                    // Example using a flag you maintain elsewhere:
+                    boolean isLipid = "lipid".equalsIgnoreCase(sb.getFeatType());
+                    if (isLipid) {
+                        SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());          // :contentReference[oaicite:6]{index=6}
+                    } else {
+                        SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());               // :contentReference[oaicite:7]{index=7} :contentReference[oaicite:8]{index=8}
+                    }
+
+                    // Refine the analysis type to the ORA variant like the beans do
+                    if ("enrich".equals(analType)) {
+                        analType = "msetora";   // Enrich ORA
+                    } else {
+                        analType = "pathora";   // Pathway ORA
+                    }
+                    sb.setAnalType(analType);
+                }
+
+                case JOINT_TWO_TABLES -> {
+                    if (dataName == null || data2Name == null) {
+                        sb.addMessage("Error", "Expected two data files (role=data and role=data2).");
+                        return;
+                    }
+                    ok = loadSmart.apply(RC, dataName) && loadSmart.apply(RC, data2Name);
+                    if (ok && metaName != null) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                }
+
+                case MS2_ONLY -> {
+                    String toLoad = (ms2Name != null) ? ms2Name : dataName;
+                    if (toLoad == null) {
+                        sb.addMessage("Error", "Expected MS/MS or data table.");
+                        return;
+                    }
+                    ok = RDataUtils.readTextDataReload(RC, toLoad);
+                }
+
+                case RAW_MODE -> {
+                    if (rawName == null) {
+                        sb.addMessage("Error", "No raw file (role=raw).");
+                        return;
+                    }
+                    ok = RDataUtils.readTextDataReload(RC, rawName);
+                }
             }
 
-        } catch (Exception e) {
+            if (!ok) {
+                sb.addMessage("Error", "Failed to load the selected dataset for this module.");
+                return;
+            }
 
+            // Load scripts (per analType) & init nav tree
+            RDataUtils.loadRscriptsOnDemand(RC, sb.getAnalType());
+
+            // Some modules have their own loaders/pages, but “SanityCheck” is a safe landing.
+            // MetaPath/MetaLoad/Peak/Mnet beans implement their own upload workflows if used directly,
+            // but here we’re resuming from a saved dataset, so the analysis tree is sufficient. 
+            // (Refs: MetaPathLoadBean manages mixed ion files; MetaLoadBean handles metadata tables; PeakUploadBean runs mummichog; MnetLoadBean maps IDs.) 
+            // :contentReference[oaicite:12]{index=12} :contentReference[oaicite:13]{index=13} :contentReference[oaicite:14]{index=14} :contentReference[oaicite:15]{index=15}
+            // Choose a sensible nav root
+            sb.initNaviTree(
+                    switch (sb.getAnalType()) {
+                case "msetora" ->
+                    "enrich-ora";
+                case "msetqea" ->
+                    "enrich-qea";
+                case "pathora" ->
+                    "pathway-ora";
+                case "pathqea" ->
+                    "pathway-qea";
+                case "multifac" ->
+                    "multifac";
+                default ->
+                    naviType;
+            }
+            );
+
+            switch (mode) {
+                case DATA_ONLY -> {
+
+                    DataUtils.doRedirectWithGrowl(
+                            sb,
+                            "/" + ab.getAppName() + "/Secure/process/SanityCheck.xhtml",
+                            "info",
+                            "Dataset loaded, please proceed with analysis!"
+                    );
+                }
+
+                case DATA_PLUS_META -> {
+
+                    DataUtils.doRedirectWithGrowl(
+                            sb,
+                            "/" + ab.getAppName() + "/Secure/process/SanityCheck.xhtml",
+                            "info",
+                            "Dataset loaded, please proceed with analysis!"
+                    );
+                }
+
+                case LIST_ONLY -> {
+                    DataUtils.doRedirectWithGrowl(
+                            sb,
+                            "/" + ab.getAppName() + "/Secure/process/NameMapView.xhtml",
+                            "info",
+                            "Dataset loaded, please proceed with analysis!"
+                    );
+                }
+
+                case JOINT_TWO_TABLES -> {
+                    DataUtils.doRedirectWithGrowl(
+                            sb,
+                            "/" + ab.getAppName() + "/Secure/process/NameMapView.xhtml",
+                            "info",
+                            "Dataset loaded, please proceed with analysis!"
+                    );
+                }
+
+                case MS2_ONLY -> {
+
+                }
+
+                case RAW_MODE -> {
+
+                }
+
+                default -> {
+
+                }
+            }
+
+            DataUtils.doRedirectWithGrowl(
+                    sb,
+                    "/" + ab.getAppName() + "/Secure/process/SanityCheck.xhtml",
+                    "info",
+                    "Dataset loaded, please proceed with analysis!"
+            );
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Unable to open module: " + e.getMessage());
         }
     }
+
 }

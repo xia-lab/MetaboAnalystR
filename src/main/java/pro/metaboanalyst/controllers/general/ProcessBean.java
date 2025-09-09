@@ -19,6 +19,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
+import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.models.DataModel;
 import pro.metaboanalyst.models.NameMapBean;
 import pro.metaboanalyst.rwrappers.RCenter;
@@ -48,6 +49,9 @@ public class ProcessBean implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
+
+    @Inject
+    private DatasetController dc;
 
     private static final Logger LOGGER = LogManager.getLogger(GenericControllers.class);
     private String msgText;
@@ -432,12 +436,17 @@ public class ProcessBean implements Serializable {
             } else {
                 SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             }
+            int res = RDataUtils.saveMsetObject(sb.getRConnection());
+            //dc.stageListDataset("datalist_" + sb.getAnalType());
+
             return "Name check";
         }
         //dspc
         if (analType.equals("network")
                 & (sb.getCmpdIDType().equals("name") || sb.getCmpdIDType().equals("hmdb") || sb.getCmpdIDType().equals("kegg"))) {
             SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
+            int res = RDataUtils.saveMsetObject(sb.getRConnection());
+
             return "Name check";
         }
 
@@ -780,6 +789,8 @@ public class ProcessBean implements Serializable {
             } else {
                 SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
             }
+            int res = RDataUtils.saveMsetObject(sb.getRConnection());
+
             //return "Name check";
         }
 
