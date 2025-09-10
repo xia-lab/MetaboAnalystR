@@ -627,33 +627,15 @@ CreateDataProcdoc <- function(mSetObj=NA){
 
     cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
   }
-
-  if(is.null(mSet$msgSet$replace.msg))
-    mSet$msgSet$replace.msg <- "No data replacement was performed."
-
-  missingMsg <- paste("*", mSet$msgSet$replace.msg);
-  missingMsg <- paste0(missingMsg, collapse = "\\\n");
-
-  descr <- c("### - Missing value imputations\n\n",
-             "Too many zeroes or missing values will cause difficulties during downstream analysis.
-             MetaboAnalyst offers several different methods for this purpose. The default method replaces 
-             all the missing and zero values with a small values (1/5 of the minimum positive
-             values of each variable) assuming to be the detection limit. In addition, 
-             since zero values may cause problem for data normalization (i.e. log), they are also 
-             replaced with this small value. User can also specify other methods, such as replacing by mean/median,
-             K-Nearest Neighbours (KNN), Probabilistic PCA (PPCA), Bayesian PCA (BPCA) method, Singular Value Decomposition (SVD)
-             method to impute the missing values.\n",
-             missingMsg,
-             "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
   
   # the data filtering
   descr <- c("### - Data filtering\n\n",
-             "The purpose of the data filtering is to identify and remove variables that are unlikely to be informative.
-             There are three types of filtering criteria - <u>data repeatability filter</u> aims to exclude features cannot be measured reliably based on QC samples;
-            <u>data variance filter</u> aims to exclude features with little or no variance; while <u>data abundance filter</u> aims to exclude features with very 
-             low abundance (i.e. close to detection limits). No phenotype information are used in the filtering process. This step can usually improves the results.
-             Data filter is strongly recommended for datasets with large number of variables especially for untargeted metabolomics data.",
+             "Data filtering is crucial for improving data quality and statistical power by removing features that are unlikely to contribute to downstream", 
+              "analysis. MetaboAnalyst provides four complementary filters: low-quality filter, low-repeatability filter, low-variance filter and low-abundance filter.", 
+              "The <u>low-quality filter</u> removes features identified as background or contaminants (when blank samples are provided), or containing high proportions", 
+              "of missing values; <u>low-repeatability filter</u> removes features exhibiting high relative standard deviation (RSD) among QC replicates;", 
+              "<u>low-variance filter</u> discards near-constant features; and <u>low-abundance filter</u> excludes features with baseline-level intensities.", 
+              "Data filter is strongly recommended for datasets with large number of variables especially for untargeted metabolomics data.",
              "\n");
   cat(descr, file=rmdFile, append=TRUE);
   cat("\n\n", file=rmdFile, append=TRUE);
@@ -669,6 +651,25 @@ CreateDataProcdoc <- function(mSetObj=NA){
                 "\n\n");
     cat(descr, file=rmdFile, append=TRUE);
   }
+
+  if(is.null(mSet$msgSet$replace.msg))
+    mSet$msgSet$replace.msg <- "No missing value imputation was performed."
+
+  missingMsg <- paste("*", mSet$msgSet$replace.msg);
+  missingMsg <- paste0(missingMsg, collapse = "\\\n");
+
+  descr <- c("### - Missing value imputations\n\n",
+             "Too many zeroes or missing values will cause difficulties during downstream analysis.",
+              "MetaboAnalyst provides three imputation strategies – <u>left-censored data estimation</u>, <u>univariate statistical methods</u>, and <u>multivariate statistical methods</u>.", 
+              "The default approach assumes missing values are due to values falling below the detection limit (left-censored data). Users can replace missing", 
+              "values with their estimated detection limits (1/5 of the minimum positive value observed for each individual feature). A drawback of this method", 
+              "is the introduction of many identical, small constant values. The quantile regression imputation of left-censored data (QRILC) method models the", 
+              "low tail of each feature as log-normal and samples replacements, thereby preserving inherent variance without introducing downward bias. Users can", 
+              "also explore other univariate (min, mean, median) or multivariate (KNN, PCA, or Random Forest) methods which leverage correlations between features", 
+              "or samples to estimate the missing entries.",
+             missingMsg,
+             "\n");
+  cat(descr, file=rmdFile, append=TRUE, sep="\n");
 }
 
 GetNameMappingDoc <- function(){
@@ -729,15 +730,17 @@ CreateNORMdoc <- function(mSetObj=NA){
               " + Sample specific normalization (i.e. normalize by dry weight, volume)",
               " + Normalization by the sample sum",
               " + Normalization by the sample median",
-              " + Normalization by a reference sample (probabilistic quotient normalization)",
-              " + Normalization by a pooled or average sample from a particular group",
+              " + Normalization by a reference sample (probabilistic quotient normalization or PQN)",
+              " + Normalization by a pooled or average sample from a particular group (group PQN)",
               " + Normalization by a reference feature (i.e. creatinine, internal control)",
               " + Quantile normalization",
               
               "2. Data transformation:",
               " + Log transformation (base 10)",
+              " + Log transformation (base 2)",
               " + Square root transformation",
               " + Cube root transformation",
+              " + Variance stabilizing normalization (data-adaptive transformation)",
               
               "3. Data scaling:",
               " + Mean centering (mean-centered only)",

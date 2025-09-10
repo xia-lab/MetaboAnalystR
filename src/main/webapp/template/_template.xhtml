@@ -368,14 +368,14 @@
             </h:form>
         </p:dialog> 
         <p:dialog modal="true" id="graphDialogId" widgetVar="graphDialog" header="Graphics Center"
-                  style="width: 420px; height:420px;" 
+                  width="540"
                   appendTo="@(body)"
                   dynamic="true"
                   draggable="true" closable="true" resizable="true"
                   onShow="PrimeFaces.ajax.Request.handle({source: this.id, update: 'myGraphPane:formgraph myGraphPane:rPlotCustomizationForm'});">
 
-            <h:panelGrid style="padding: 10px;font-size: 13px;">
-                <p:tabView id="myGraphPane" style="width:100%; border: none;">
+      
+                <p:tabView id="myGraphPane" style="width:100%; border: none; font-size: 13px" class="surface-card shadow-1 p-0 text-800">
                     <p:ajax event="tabChange"
                             update=":myGraphPane"
                             oncomplete="PF('graphDialog').jq.position({
@@ -385,7 +385,7 @@
                             });"/>
                     <p:tab title ="Hi-res Images">
                         <h:form id="formgraph">
-                            <h:panelGrid columns="2" style="width:380px;" class="surface-card">
+                            <h:panelGrid columns="2" style="width:380px;">
                                 <h:panelGrid columns="2" style="padding-top: 10px; padding-left: 20px">
 
                                     <h:panelGroup layout="inline">
@@ -448,18 +448,17 @@
                                     <p:ajax event="change" update=":myGraphPane" />
                                 </p:selectOneMenu>  
                             </h:panelGrid>
-                            <h:panelGrid columns="2" style="width:380px;">
-                                <p:dataTable id="colTbl" style="padding-top: 8px; padding-right: 20px;" 
-                                             class="surface-card shadow-1 p-0 text-800"
+                            <h:panelGrid style="text-align: center">
+                                <p:dataTable id="colTbl" style="margin-bottom: 20px; width: 420px; text-align: left" 
                                              var="colorBean" value="#{sessionBean1.colorBeanLists}">  
-                                    <p:column headerText="Group" style="width:200px">  
+                                    <p:column headerText="Group" style="width:120px">  
                                         <h:outputLabel value="#{colorBean.grpName}" />  
                                     </p:column>  
-                                    <p:column headerText="Set Color" style="width:120px">  
+                                    <p:column headerText="Color" style="width:180px">  
                                         <p:colorPicker value="#{colorBean.colorPopup}"/>
                                     </p:column>  
-                                    <p:column headerText="Set Shape*" style="width:120px">  
-                                        <p:inputText style="width:60px" value="#{colorBean.shapeType}"/>
+                                    <p:column headerText="Shape*">  
+                                        <p:inputText style="width:100px" value="#{colorBean.shapeType}"/>
                                     </p:column> 
                                 </p:dataTable>
                                 <p:commandButton value="Submit" 
@@ -469,7 +468,7 @@
                             </h:panelGrid>
                             <h:panelGrid columns="2" style="text-align: left">
                                 <h:panelGrid style="width: 200px; line-height: 22px">
-                                    <h3>Note: </h3>   
+                                    <b style="font-size: 1.2em">Note: </b> <br/> 
                                     <ul style="margin-left: 0; padding-left: 0">
                                         <li>
                                             This setting only affects those graphics with group-specific color scheme
@@ -483,9 +482,9 @@
                                     </ul>
                                 </h:panelGrid>
                                 <h:panelGrid style="padding-left: 20px">
-                                    <h3>*Shape Code: </h3>
-                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/symbols.png" 
-                                         style="width: 200px"
+                                    <b style="font-size: 1.2em">*Shape Code: </b><br/><br/>
+                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/symbolsw.png" 
+                                         style="width: 220px"
                                          alt="Symbols"/>
                                 </h:panelGrid>
                             </h:panelGrid>
@@ -559,7 +558,7 @@
                     <p:tab title ="Customization">
                         <h:form id="rPlotCustomizationForm">
 
-                            <p:panelGrid columns="1"  style="width:440px;">
+                            <h:panelGrid style="width:100%;">
                                 <!-- Customization Instructions -->
                                 <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
                                 <p:inputTextarea id="customizationPrompt" 
@@ -570,49 +569,45 @@
                                                  - Change colors (e.g., 'Use a blue color scheme')
                                                  - Adjust text size (e.g., 'Make labels larger')
                                                  - Modify layout (e.g., 'Increase spacing between plots')
-                                                 - Change dimensions (e.g., 'Make the plot wider')
+                                                 - Change sizes (e.g., 'Make the plot wider')
                                                  - Add features (e.g., 'Add a grid to the background')" />
 
-                                <p:outputLabel for="previewPanel" value="Current figure:" style="font-weight:bold"/>
-                                <p:outputPanel id="previewPanel" style="text-align:center">
+                                <h:panelGrid style="width:100%; text-align: center; padding: 10px" columns="2">
+                                    <p:commandButton value="Reset"
+                                                     icon="pi pi-refresh"
+                                                     style="display:block;margin:0 auto;"
+                                                     actionListener="#{rPlotCustomizationAgent.resetToDefault(sessionBean1.imageSource)}"
+                                                     update=":myGraphPane:rPlotCustomizationForm"
+                                                     onstart="$('#custProgressBar').show();"
+                                                     oncomplete="$('#custProgressBar').hide();" />
+
+                                    <p:commandButton value="Submit"
+                                                     style="display:block;margin:0 auto;"
+                                                     action="#{rPlotCustomizationBean.applyCustomization}"
+                                                     update=":myGraphPane:rPlotCustomizationForm"
+                                                     onstart="$('#custProgressBar').show();"
+                                                     oncomplete="$('#custProgressBar').hide();" />
+                                </h:panelGrid>
+                                <p:divider align="center">
+                                    <span class="ui-tag">Preview</span>
+                                </p:divider>
+                                <p:scrollPanel mode="native" id="previewPanel" style="text-align:center; height:220px;">
                                     <h:outputLink value="#{rPlotCustomizationBean.previewImage}" target="_blank">
                                         <img onerror="this.style.display='none'"
                                              src="#{rPlotCustomizationBean.previewImage}"
-                                             width="240" height="160"
+                                             width="360"
                                              class="shadow-2 surface-border"
                                              alt="Preview"/>
                                     </h:outputLink>
-                                </p:outputPanel>
-                            </p:panelGrid>
-                            <p:panelGrid style="width:100%" columns="2">
-                                <p:commandButton value="Reset"
-                                                 icon="pi pi-refresh"
-                                                 style="display:block;margin:0 auto;"
-                                                 actionListener="#{rPlotCustomizationAgent.resetToDefault(sessionBean1.imageSource)}"
-                                                 update=":myGraphPane:rPlotCustomizationForm"
-                                                 onstart="$('#custProgressBar').show();"
-                                                 oncomplete="$('#custProgressBar').hide();" />
-
-
-                                <p:commandButton value="Submit"
-                                                 style="display:block;margin:0 auto;"
-                                                 action="#{rPlotCustomizationBean.applyCustomization}"
-                                                 update=":myGraphPane:rPlotCustomizationForm"
-                                                 onstart="$('#custProgressBar').show();"
-                                                 oncomplete="$('#custProgressBar').hide();" />
-                            </p:panelGrid>
-
-
+                                </p:scrollPanel>
+                            </h:panelGrid>
                         </h:form>
                     </p:tab>
-
-
                 </p:tabView> 
                 <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
                      class="indeterminate-progress-bar">
                     <div class="indeterminate-progress-bar__progress"></div>
                 </div>
-            </h:panelGrid>
         </p:dialog>
     </h:body>
 </html>
