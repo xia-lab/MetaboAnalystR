@@ -667,6 +667,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
               "low tail of each feature as log-normal and samples replacements, thereby preserving inherent variance without introducing downward bias. Users can", 
               "also explore other univariate (min, mean, median) or multivariate (KNN, PCA, or Random Forest) methods which leverage correlations between features", 
               "or samples to estimate the missing entries.",
+              "\n\n",
              missingMsg,
              "\n");
   cat(descr, file=rmdFile, append=TRUE, sep="\n");
