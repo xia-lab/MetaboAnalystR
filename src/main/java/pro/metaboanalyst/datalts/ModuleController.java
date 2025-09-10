@@ -38,7 +38,7 @@ public class ModuleController implements Serializable {
     private final List<String> untargetedDatas = Arrays.asList("spec", "specbin", "pktable", "nmrpeak", "mspeak");
     private final List<String> regresAnals = Arrays.asList("pathway", "enrich");
     private final List<String> compatibleDatas = Arrays.asList("conc", "spec", "specbin", "pktable", "nmrpeak", "mspeak", "mass_table");
-    private final List<String> compatibleAnals = Arrays.asList("stat", "roc", "raw", "power", "mummichog", "pathqea", "msetqea", "pathway", "enrich");
+    private final List<String> compatibleAnals = Arrays.asList("stat", "roc", "raw", "power", "mummichog", "pathqea", "msetqea", "pathway", "enrich", "dose");
     private final List<String> compatibleListAnals = Arrays.asList("pathora", "msetora", "pathway", "enrich");
     private final List<String> targetedAnals = Arrays.asList("pathora", "pathqea", "msetora", "msetqea", "pathway", "enrich");
 
@@ -111,7 +111,7 @@ public class ModuleController implements Serializable {
         final boolean isTargetedAnal = targetedAnals.contains(mod);                       // ORA/QEA/generics
         final boolean isQEA = "pathqea".equals(mod) || "msetqea".equals(mod);    // explicit QEA
         final boolean isGenericFunc = regresAnals.contains(mod);                         // "pathway" or "enrich" generic entry
-        final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod) || "power".equals(mod);
+        final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod)|| "multifac".equals(mod) || "dose".equals(mod);
         final boolean isMummichog = "mummichog".equals(mod);
         final boolean isRaw = "raw".equals(mod);
 
@@ -260,10 +260,10 @@ public class ModuleController implements Serializable {
 
             switch (idx) {
                 case 0 -> {
-                    analType = "stat";
-                    naviType = "stat";
+                    analType = "mummichog";
+                    naviType = "mummichog";
                     mode = InputMode.DATA_ONLY;
-                }          // PeakUploadView (general table)
+                }          // PeakUploadView (mummichog)
                 case 1 -> {
                     analType = "pathway";
                     naviType = "pathway";
@@ -285,7 +285,7 @@ public class ModuleController implements Serializable {
                     mode = InputMode.JOINT_TWO_TABLES;
                 }    // JointUploadView
                 case 5 -> {
-                    analType = "mummichog";
+                    analType = "mnet";
                     naviType = "mnet";
                     mode = InputMode.DATA_ONLY;
                 }           // MnetUploadView

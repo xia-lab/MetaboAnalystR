@@ -117,7 +117,7 @@ public class SessionBean1 implements Serializable {
     private User currentUser = null;
     @JsonIgnore
     private RConnection RC = null;
-    private String dataType = "unknown";
+    private String dataType = "conc";
     private String analType = "unknown";
     private boolean paired = false;
     private boolean regression = false;
@@ -204,7 +204,27 @@ public class SessionBean1 implements Serializable {
     private boolean enrNetSavedInit = false;
 
     private boolean missingDisabled = true;
+    private String dataClsOpt = "disc";
+    private String dataFormat = "rowu";
 
+    public String getDataClsOpt() {
+        return dataClsOpt;
+    }
+
+    public void setDataClsOpt(String dataClsOpt) {
+        this.dataClsOpt = dataClsOpt;
+    }
+
+    public String getDataFormat() {
+        return dataFormat;
+    }
+
+    public void setDataFormat(String dataFormat) {
+        this.dataFormat = dataFormat;
+    }
+
+    
+    
     public boolean isMissingDisabled() {
         return missingDisabled;
     }
@@ -433,7 +453,7 @@ public class SessionBean1 implements Serializable {
         try {
             addMessage("info", "Log in successful.");
         } catch (Exception e) {
-        
+
         }
         try {
             //WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
@@ -899,7 +919,7 @@ public class SessionBean1 implements Serializable {
                 node.setSelectable(true); // Make it selectable (optional)
             }
         }
-        if(naviTrack.keySet().isEmpty()){
+        if (naviTrack.keySet().isEmpty()) {
             initNaviTree(analType);
         }
     }
@@ -1086,10 +1106,10 @@ public class SessionBean1 implements Serializable {
 
     public void graphicsLnk_action(String code) {
         setImgDownloadTxt("");
-        if(code.contains("roc_univ_") || code.contains("roc_boxplot_")){
+        if (code.contains("roc_univ_") || code.contains("roc_boxplot_")) {
             imgSource = code + rab.getCurrentCmpd();
-        }else{
-                    imgSource = code;
+        } else {
+            imgSource = code;
 
         }
         //System.out.println("===========current img key: " + code);
@@ -1912,7 +1932,7 @@ public class SessionBean1 implements Serializable {
             System.out.println("Failed to keep user signed-in !!! @_@");
         }
     }
-    
+
     private String graphTypeOptAI = "default"; //default or AI
 
     public String getGraphTypeOptAI() {
@@ -1922,5 +1942,5 @@ public class SessionBean1 implements Serializable {
     public void setGraphTypeOptAI(String graphTypeOptAI) {
         this.graphTypeOptAI = graphTypeOptAI;
     }
-    
+
 }

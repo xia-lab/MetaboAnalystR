@@ -2089,5 +2089,18 @@ public class DataUtils {
             return new String[0];
         }
     }
-    
+
+    public static String stripExt(String pathOrName) {
+        if (pathOrName == null) {
+            return "";
+        }
+        String name = pathOrName.replace('\\', '/'); // normalize
+        int slash = name.lastIndexOf('/');
+        if (slash >= 0) {
+            name = name.substring(slash + 1);
+        }
+        int dot = name.lastIndexOf('.');
+        return (dot > 0) ? name.substring(0, dot) : name;
+    }
+
 }

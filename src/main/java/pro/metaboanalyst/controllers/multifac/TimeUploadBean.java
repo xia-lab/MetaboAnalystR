@@ -5,11 +5,13 @@
  */
 package pro.metaboanalyst.controllers.multifac;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.util.List;
 
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -20,6 +22,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
+import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
 /**
@@ -30,6 +33,11 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 public class TimeUploadBean implements Serializable {
 
     private static final Logger LOGGER = LogManager.getLogger(TimeUploadBean.class);
+
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
+
     @Inject
     WorkflowBean wb;
     @Inject
@@ -125,6 +133,18 @@ public class TimeUploadBean implements Serializable {
                     }
                     sb.setDataUploaded();
                     tb.reinitVariables();
+
+                    // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
+                    String niceTitle = DataUtils.stripExt(csvFile.getFileName());
+                    int samples = 10; // or inferSampleNumFromR(RC)
+
+                    List<UploadedFile> files = List.of(csvFile, metaFile);
+                    List<String> roles = List.of("data", "metadata");
+
+                    // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+                    dc.stageDataset(niceTitle, samples, files, roles);
+                    sb.addMessage("info", "Dataset staged in memory.");
+
                     return "Data check";
                 } else {
                     sb.addMessage("Error", RDataUtils.getErrMsg(RC));
@@ -352,7 +372,6 @@ public class TimeUploadBean implements Serializable {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             }
-            //System.out.println("var");
             tb.reinitVariables();
             return "Data check";
         } else {

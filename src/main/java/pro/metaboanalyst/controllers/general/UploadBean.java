@@ -140,7 +140,7 @@ public class UploadBean implements Serializable {
             sb.setDataUploaded();
 
             // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
-            String niceTitle = stripExt(fileName);
+            String niceTitle = DataUtils.stripExt(fileName);
             int samples = 10; // or inferSampleNumFromR(RC)
 
             List<UploadedFile> files = List.of(dataFile);
@@ -159,19 +159,6 @@ public class UploadBean implements Serializable {
         }
     }
 
-// Small helper if not already present
-    private static String stripExt(String pathOrName) {
-        if (pathOrName == null) {
-            return "";
-        }
-        String name = pathOrName.replace('\\', '/'); // normalize
-        int slash = name.lastIndexOf('/');
-        if (slash >= 0) {
-            name = name.substring(slash + 1);
-        }
-        int dot = name.lastIndexOf('.');
-        return (dot > 0) ? name.substring(0, dot) : name;
-    }
 
     /*
      * Handle zip file examples (containing csv or txt files)
@@ -246,7 +233,7 @@ public class UploadBean implements Serializable {
                     sb.initNaviTree("stat-peak");
 
                     // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
-                    String niceTitle = stripExt(inPath);
+                    String niceTitle = DataUtils.stripExt(inPath);
                     int samples = 10; // or inferSampleNumFromR(RC)
 
                     List<UploadedFile> files = List.of(zipFile);
@@ -426,7 +413,7 @@ public class UploadBean implements Serializable {
             sb.setDataUploaded();
 
             // 3) STAGE the dataset (no DB insert, no dataset-folder copy yet)
-            String niceTitle = stripExt(fileName);                    // e.g., "pilot_data"
+            String niceTitle = DataUtils.stripExt(fileName);                    // e.g., "pilot_data"
             int samples = 0; // or infer from R: inferSampleNumFromR(RC)
 
             List<UploadedFile> files = List.of(dataFile);
@@ -460,6 +447,9 @@ public class UploadBean implements Serializable {
             sb.addMessage("Error", "No data file is uploaded or file is empty!");
             return null;
         }
+        String dataFormat = sb.getDataFormat();
+        String dataClsOpt = sb.getDataClsOpt();
+        String dataType = sb.getDataType();
 
         boolean paired = (dataFormat != null && dataFormat.endsWith("p"));
 
@@ -511,45 +501,17 @@ public class UploadBean implements Serializable {
             }
 
             sb.setDataUploaded();
+            // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
+            String niceTitle = DataUtils.stripExt(dataFile.getFileName());
+            int samples = 10; // or inferSampleNumFromR(RC)
 
-            // 3) STAGE (no DB insert, no dataset-folder copy)
-            String dataName = DataUtils.getJustFileName(dataPath);
-            String niceTitle = stripExt(dataName);
-            int samples = 0; // TODO: infer from R if desired
+            List<UploadedFile> files = List.of(dataFile, metaFile);
+            List<String> roles = List.of("data", "metadata");
 
-            java.util.List<DatasetFile> files = new java.util.ArrayList<>();
-            java.util.List<java.nio.file.Path> srcPaths = new java.util.ArrayList<>();
+            // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+            dc.stageDataset(niceTitle, samples, files, roles);
+            sb.addMessage("info", "Dataset staged in memory.");
 
-            // data file
-            java.nio.file.Path dp = java.nio.file.Paths.get(dataPath);
-            DatasetFile df = new DatasetFile();
-            df.setRole("data");
-            df.setFilename(dataName);
-            df.setType(extOf(dataName).isEmpty() ? "bin" : extOf(dataName));
-            df.setSizeBytes(java.nio.file.Files.size(dp));
-            df.setUploadedAt(java.time.OffsetDateTime.now());
-            files.add(df);
-            srcPaths.add(dp);
-
-            // metadata file (optional)
-            if (hasMeta) {
-                String metaName = DataUtils.getJustFileName(metaPath);
-                java.nio.file.Path mp = java.nio.file.Paths.get(metaPath);
-
-                DatasetFile mf = new DatasetFile();
-                mf.setRole("metadata");
-                mf.setFilename(metaName);
-                mf.setType(extOf(metaName).isEmpty() ? "bin" : extOf(metaName));
-                mf.setSizeBytes(java.nio.file.Files.size(mp));
-                mf.setUploadedAt(java.time.OffsetDateTime.now());
-                files.add(mf);
-                srcPaths.add(mp);
-            }
-
-            // stage from local paths
-            dc.stageDatasetFromPaths(niceTitle, samples, files, srcPaths);
-
-            sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
             return "Data check";
 
         } catch (Exception e) {
@@ -626,44 +588,26 @@ public class UploadBean implements Serializable {
             }
 
             sb.setDataUploaded();
+// 3) STAGE the dataset (no DB insert, no dataset-folder copy yet)
+            String niceTitle = DataUtils.stripExt(dataFile.getFileName()); // e.g., "pilot_data"
+            int samples = 0; // or infer from R if you like
 
-            // 4) STAGE (no DB insert, no dataset-folder copy)
-            String dataName = DataUtils.getJustFileName(dataPath);
-            String niceTitle = stripExt(dataName);
-            int samples = 0; // set if you want to infer
+// Build files/roles dynamically to cover both cases
+            java.util.List<org.primefaces.model.file.UploadedFile> stagedFiles = new java.util.ArrayList<>();
+            java.util.List<String> stagedRoles = new java.util.ArrayList<>();
 
-            java.util.List<DatasetFile> files = new java.util.ArrayList<>();
-            java.util.List<java.nio.file.Path> srcPaths = new java.util.ArrayList<>();
+// always include primary data
+            stagedFiles.add(dataFile);
+            stagedRoles.add("data");
 
-            // data file entry
-            java.nio.file.Path dp = java.nio.file.Paths.get(dataPath);
-            DatasetFile df = new DatasetFile();
-            df.setRole("data");
-            df.setFilename(dataName);
-            df.setType(extOf(dataName).isEmpty() ? "bin" : extOf(dataName));
-            df.setSizeBytes(java.nio.file.Files.size(dp));
-            df.setUploadedAt(java.time.OffsetDateTime.now());
-            files.add(df);
-            srcPaths.add(dp);
-
-            // metadata file entry (optional)
-            if (metaPath != null) {
-                String metaName = DataUtils.getJustFileName(metaPath);
-                java.nio.file.Path mp = java.nio.file.Paths.get(metaPath);
-
-                DatasetFile mf = new DatasetFile();
-                mf.setRole("metadata");
-                mf.setFilename(metaName);
-                mf.setType(extOf(metaName).isEmpty() ? "bin" : extOf(metaName));
-                mf.setSizeBytes(java.nio.file.Files.size(mp));
-                mf.setUploadedAt(java.time.OffsetDateTime.now());
-                files.add(mf);
-                srcPaths.add(mp);
+// include metadata iff present and successfully read
+            if (metaFile != null && metaFile.getSize() > 0 && metaPath != null) {
+                stagedFiles.add(metaFile);
+                stagedRoles.add("metadata");
             }
 
-            // stage using local paths (since no UploadedFile needed here)
-            dc.stageDatasetFromPaths(niceTitle, samples, files, srcPaths);
-
+// stage
+            dc.stageDataset(niceTitle, samples, stagedFiles, stagedRoles);
             sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
             return "Data check";
 
@@ -757,26 +701,16 @@ public class UploadBean implements Serializable {
             }
             sb.setDataUploaded();
 
-            // 3) STAGE (no DB insert / no file move yet)
-            String name = DataUtils.getJustFileName(filePath);
-            String niceTitle = stripExt(name);
-            java.nio.file.Path p = java.nio.file.Paths.get(filePath);
+            // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
+            String niceTitle = DataUtils.stripExt(dataFile.getFileName());
+            int samples = 10; // or inferSampleNumFromR(RC)
 
-            DatasetFile df = new DatasetFile();
-            df.setRole("data");
-            df.setFilename(name);
-            String ext = extOf(name);
-            df.setType(ext.isEmpty() ? "mztab" : ext);               // typically "mztab"
-            df.setSizeBytes(java.nio.file.Files.size(p));
-            df.setUploadedAt(java.time.OffsetDateTime.now());
+            List<UploadedFile> files = List.of(dataFile, metaFile);
+            List<String> roles = List.of("data", "metadata");
 
-            // Stage using local path (no UploadedFile needed for commit)
-            dc.stageDatasetFromPaths(
-                    niceTitle,
-                    /*sampleNum*/ 0,
-                    java.util.Arrays.asList(df),
-                    java.util.Arrays.asList(p)
-            );
+            // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+            dc.stageDataset(niceTitle, samples, files, roles);
+            sb.addMessage("info", "Dataset staged in memory.");
 
             sb.addMessage("info", "mzTab dataset staged in memory. You can review and commit later.");
             return "Data check";

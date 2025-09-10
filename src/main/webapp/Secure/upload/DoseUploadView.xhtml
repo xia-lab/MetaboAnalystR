@@ -35,17 +35,17 @@
                     <h:panelGrid columns="2" style="width:580px">
 
                         <p:outputLabel style="font-weight: bold" value="Data Type:"/>
-                        <p:selectOneRadio value="#{uploader.dataType}">
+                        <p:selectOneRadio value="#{sessionBean1.dataType}">
                             <f:selectItems value="#{optBean.tableTypeOpts}"/>
                         </p:selectOneRadio>
 
                         <p:outputLabel style="font-weight: bold; padding-right: 20px" value="Dose Type: "/>
-                        <p:selectOneRadio value="#{uploader.dataClsOpt}">
+                        <p:selectOneRadio value="#{sessionBean1.dataClsOpt}">
                             <f:selectItems value="#{optBean.doseOpts}" />
                         </p:selectOneRadio>
                         
                         <p:outputLabel style="font-weight: bold" value="Format:"/>
-                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{uploader.dataFormat}">
+                        <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{sessionBean1.dataFormat}">
                             <f:selectItems value="#{optBean.csvFormatOpts}" />
                         </p:selectOneMenu>
                         <p:outputLabel style="font-weight: bold" value="Data File:"/>
