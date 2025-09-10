@@ -1331,10 +1331,9 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 ##
 ## perform unsupervised data filter based on common measures
 ##
-PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg = ""){
+PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 
-    nm <- NULL;
-
+    nm <- msg <- NULL;
 
     # first compute rank based on filter selected
     if (filter == "rsd"){
@@ -1369,14 +1368,14 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type, msg 
 
     remain.num <- ncol(int.mat)*(1-(filter.cutoff/100));
     remain <- rk <= remain.num;
-    msg <- paste(msg, "Feature filtering based on ", nm, " - removed <b>", sum(!remain), "</b>based on the cutoff.");
+    msg <- paste(msg, "Feature filtering based on ```", nm, "``` - removed <b>", sum(!remain), "</b>based on the cutoff.");
 
     # note, primary.user is a global variable set from web, TRUE for registered users or local MetaboAnalystR user
     if(!primary.user){
         max.allow <- .get.max.allow(anal.type);  
         if(sum(remain) > max.allow){
             remain <- rk <= max.allow;
-            msg <- paste(msg, paste("Further reduced to <b>", max.allow, "</b> features based on <b>", nm, "</b>"));   
+            msg <- paste(msg, paste("Further reduced to <b>", max.allow, "</b> features based on ```", nm, "```."));   
     }
   }
     # save a copy for user 

@@ -634,13 +634,13 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       if (mSetObj$analSet$type %in% "mummichog") {
         msg <- paste0(
           "Removed <b>", sum(!keep, na.rm=T),
-          "</b> features based on QC RSD values. ",
+          "</b> features based on ```QC RSD values```. ",
           "QC samples are excluded from downstream functional analysis."
         )
       } else {
         msg <- paste0(
           "Removed <b>", sum(!keep,na.rm=T),
-          "</b> features based on QC RSD values. ",
+          "</b> features based on ```QC RSD values```. ",
           "QC samples are still kept. You can remove them later."
         )
       }
@@ -694,8 +694,8 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     n.feat.after  <- ncol(int.mat)
     n.feat.removed <- n.feat.before - n.feat.after
     msg.blank <- paste0(
-      "Blank subtraction: removed ", n.blank.samples, " blank sample(s) ",
-      "and filtered out ", n.feat.removed, " feature(s) ",
+      "```Blank subtraction```: removed <b>", n.blank.samples, "</b> blank sample(s) ",
+      "and filtered out <b>", n.feat.removed, "</b> feature(s) ",
       "(threshold = ", blank.threshold, "%)."
     )
 
@@ -714,13 +714,13 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   
   # called regardless user option to enforce feature number cap
   #if(var.cutoff > 0){ 
-  filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type, msg);
+  filt.res <- PerformFeatureFilter(int.mat, var.filter, var.cutoff, mSetObj$analSet$type);
   int.mat <- filt.res$data;
   msg <- c(msg, filt.res$msg);
   #}
   
   if(int.cutoff > 0){ 
-    filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type, msg);
+    filt.res <- PerformFeatureFilter(int.mat, int.filter, int.cutoff, mSetObj$analSet$type);
     int.mat <- filt.res$data;
     msg <- c(msg, filt.res$msg);
   }
