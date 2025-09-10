@@ -96,7 +96,6 @@ public class ModuleController implements Serializable {
         if (ds == null) {
             return;
         }
-
         disableAllModules();
 
         // ---- Facts about this dataset ----
@@ -105,15 +104,18 @@ public class ModuleController implements Serializable {
         final boolean hasMeta = ds.isHasMetadata();
         final boolean isUntargeted = untargetedDatas.contains(dt);
 
+        System.out.println(mod + "===========================mod");
+
         // Buckets from your provided lists
         final boolean isCompatible = compatibleAnals.contains(mod) || compatibleListAnals.contains(mod);
         final boolean isListAnal = compatibleListAnals.contains(mod);                 // ORA (or generic that can fork to ORA)
         final boolean isTargetedAnal = targetedAnals.contains(mod);                       // ORA/QEA/generics
         final boolean isQEA = "pathqea".equals(mod) || "msetqea".equals(mod);    // explicit QEA
         final boolean isGenericFunc = regresAnals.contains(mod);                         // "pathway" or "enrich" generic entry
-        final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod)|| "multifac".equals(mod) || "dose".equals(mod);
+        final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod) || "mf".equals(mod) || "dose".equals(mod);
         final boolean isMummichog = "mummichog".equals(mod);
         final boolean isRaw = "raw".equals(mod);
+        System.out.println(isCoreStats + "===========================isCoreStats");
 
         // Helpers
         java.util.function.Consumer<String> on = k -> nodeVisibility.put(k, true);
@@ -136,13 +138,12 @@ public class ModuleController implements Serializable {
             }
         };
 
-        if (!isCompatible && !isRaw && !isMummichog) {
-            // Unknown module key -> keep everything hidden conservatively
-            return;
-        }
-
         // ------------ Module-specific visibility ------------
-        if (isRaw) {
+        if (isCoreStats) {
+            // Core table analyses
+            enableStatsBundle.run();
+            maybeEnableFunctional.run();
+        }else if (isRaw) {
             on.accept("spectraProcessing");
             on.accept("peakAnnotation");
             // no stats/functional until peak tables exist
@@ -161,11 +162,7 @@ public class ModuleController implements Serializable {
             on.accept("pathway");
             enableStatsBundle.run();
             maybeEnableFunctional.run();
-        } else if (isCoreStats) {
-            // Core table analyses
-            enableStatsBundle.run();
-            maybeEnableFunctional.run();
-        } else if (isGenericFunc || isTargetedAnal) {
+        }  else if (isGenericFunc || isTargetedAnal) {
             // Generic "pathway"/"enrich" entry or other targeted keys:
             // Always show enrichment/pathway; if metadata is present we also expose stats bundle.
             on.accept("enrichment");
@@ -295,8 +292,8 @@ public class ModuleController implements Serializable {
                     mode = InputMode.DATA_ONLY;
                 }           // StatUploadView
                 case 7 -> {
-                    analType = "multifac";
-                    naviType = "multifac";
+                    analType = "mf";
+                    naviType = "mf";
                     mode = InputMode.DATA_PLUS_META;
                 }      // MultifacUploadView (time/meta module) 
                 case 8 -> {
@@ -335,7 +332,6 @@ public class ModuleController implements Serializable {
                     mode = InputMode.DATA_ONLY;
                 }
             }
-            
 
             final String dataType = sb.getDataType() == null ? "" : sb.getDataType().toLowerCase();
 
@@ -348,8 +344,8 @@ public class ModuleController implements Serializable {
                 sb.addMessage("Error", "Mummichog requires untargeted peak data (spec/specbin/pktable/nmrpeak/mspeak).");
                 return;
             }
-            
-            if(metaName != null && mode.equals(InputMode.DATA_ONLY)){
+
+            if (metaName != null && mode.equals(InputMode.DATA_ONLY)) {
                 mode = InputMode.DATA_PLUS_META;
             }
 
@@ -383,7 +379,7 @@ public class ModuleController implements Serializable {
 
                     // optional meta for stat/roc/power/dose/multifac
                     if (ok && (analType.equals("stat") || analType.equals("roc") || analType.equals("power")
-                            || analType.equals("dose") || analType.equals("multifac"))) {
+                            || analType.equals("dose") || analType.equals("mf"))) {
                         if (metaName != null && !metaName.isBlank()) {
                             RDataUtils.readMetaData(RC, metaName);
                         }

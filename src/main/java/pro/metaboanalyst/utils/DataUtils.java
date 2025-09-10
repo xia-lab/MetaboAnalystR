@@ -92,6 +92,7 @@ import jakarta.enterprise.inject.spi.AnnotatedField;
 
 /* ------------- Java reflection + collections -------------- */
 import java.lang.reflect.Field;
+import java.nio.file.NoSuchFileException;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -2101,6 +2102,56 @@ public class DataUtils {
         }
         int dot = name.lastIndexOf('.');
         return (dot > 0) ? name.substring(0, dot) : name;
+    }
+
+
+public static Path materializeToHome(SessionBean1 sb, String resource) throws Exception {
+        final Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+        Files.createDirectories(home);
+
+        // Normalize a common typo like "https:/host/..." -> "https://host/..."
+        if (resource.startsWith("https:/") && !resource.startsWith("https://")) {
+            resource = resource.replaceFirst("^https:/+", "https://");
+        } else if (resource.startsWith("http:/") && !resource.startsWith("http://")) {
+            resource = resource.replaceFirst("^http:/+", "http://");
+        }
+
+        // If it's an HTTP(S) URL: download it
+        if (resource.startsWith("http://") || resource.startsWith("https://")) {
+            URI uri = URI.create(resource);
+            String fileName = Paths.get(uri.getPath()).getFileName().toString();
+            Path dest = home.resolve(fileName);
+
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
+            HttpRequest req = HttpRequest.newBuilder(uri).GET().build();
+            HttpResponse<Path> resp = client.send(req, HttpResponse.BodyHandlers.ofFile(dest));
+            if (resp.statusCode() / 100 != 2) {
+                throw new RuntimeException("Failed to download " + resource + " (HTTP " + resp.statusCode() + ")");
+            }
+            return dest;
+        }
+
+        // Else: treat as local path or classpath-style
+        Path src = Paths.get(resource);
+        if (Files.exists(src)) {
+            Path dest = home.resolve(src.getFileName().toString());
+            if (!dest.equals(src)) {
+                Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return dest;
+        }
+
+        // Optionally, resolve from classpath if you use it (comment out if not needed)
+        // try (InputStream in = getClass().getClassLoader().getResourceAsStream(resource)) {
+        //     if (in != null) {
+        //         Path dest = home.resolve(Paths.get(resource).getFileName().toString());
+        //         Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        //         return dest;
+        //     }
+        // }
+        throw new NoSuchFileException(resource);
     }
 
 }

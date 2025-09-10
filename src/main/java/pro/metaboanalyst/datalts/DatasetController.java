@@ -36,6 +36,7 @@ import org.primefaces.model.file.UploadedFile;
 import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.HistoryBean;
 import pro.metaboanalyst.lts.StateSaver;
+import pro.metaboanalyst.rwrappers.RDataUtils;
 
 /**
  *
@@ -446,7 +447,96 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedFiles.addAll(files);
         this.currentDatasetRow = ds; // if you already use this pointer elsewhere
 
-        sb.addMessage("info", "Dataset staged in memory (not inserted).");
+        sb.addMessage("info", "Dataset staged in memory.");
+    }
+
+    public void stageDatasetFromStrings(String title,
+            int sampleNum,
+            java.util.List<String> fileNames,
+            java.util.List<String> roles) {
+        // Guards
+        if (fileNames == null || fileNames.isEmpty()) {
+            sb.addMessage("Error", "No file names provided.");
+            return;
+        }
+        if (roles == null || roles.size() != fileNames.size()) {
+            sb.addMessage("Error", "Roles list must match the number of file names.");
+            return;
+        }
+
+        final String email = fub.getEmail();
+        final String node = ab.getToolLocation();
+        final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+
+        java.util.List<DatasetFile> files = new java.util.ArrayList<>(fileNames.size());
+        for (int i = 0; i < fileNames.size(); i++) {
+            String fname = fileNames.get(i);
+            if (fname == null || fname.isBlank()) {
+                continue;
+            }
+
+            String ext = extOf(fname);
+
+            DatasetFile df = new DatasetFile();
+            df.setRole(roles.get(i));
+            df.setFilename(fname.trim());
+            df.setType(ext.isEmpty() ? "bin" : ext);
+            df.setSizeBytes(0L); // unknown size when only filename given
+            df.setUploadedAt(now);
+            files.add(df);
+        }
+
+        if (files.isEmpty()) {
+            sb.addMessage("Error", "No valid filenames.");
+            return;
+        }
+
+        // Choose primary file (prefer role=data, then list, else first)
+        DatasetFile primary = files.stream()
+                .filter(f -> "data".equalsIgnoreCase(f.getRole()))
+                .findFirst()
+                .orElseGet(()
+                        -> files.stream()
+                        .filter(f -> "list".equalsIgnoreCase(f.getRole()))
+                        .findFirst()
+                        .orElse(files.get(0))
+                );
+
+        // Resolve title
+        String resolvedTitle = (title != null && !title.isBlank()) ? title.trim() : primary.getFilename();
+
+        // Build DatasetRow
+        DatasetRow ds = new DatasetRow();
+        ds.setId(null);
+        ds.setEmail(email);
+        ds.setNode(node);
+        ds.setTitle(resolvedTitle);
+        ds.setFilename(primary.getFilename());
+        ds.setType(primary.getType());
+        ds.setSizeBytes(primary.getSizeBytes());
+        ds.setSamplenum(Math.max(0, sampleNum));
+        ds.setUploadedAt(now);
+
+        try {
+            ds.setFileCount(files.size());
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setHasMetadata(files.stream().anyMatch(f -> "metadata".equalsIgnoreCase(f.getRole())));
+        } catch (Throwable ignore) {
+        }
+        try {
+            ds.setFiles(files);
+        } catch (Throwable ignore) {
+        }
+
+        // Save to controller state
+        this.stagedDataset = ds;
+        this.stagedFiles.clear();
+        this.stagedFiles.addAll(files);
+        this.currentDatasetRow = ds;
+
+        sb.addMessage("info", "Dataset staged in memory");
     }
 
     /**
@@ -469,7 +559,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
         try {
             Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+
+            // --- Ensure/attach mSetObj_after_sanity.qs ---
             Path msetFile = home.resolve("mSetObj_after_sanity.qs");
+            if (!Files.exists(msetFile)) {
+                // Ask R to save; then re-resolve size
+                RDataUtils.saveMsetObject(sb.getRConnection());
+            }
             if (Files.exists(msetFile)) {
                 DatasetFile df = new DatasetFile();
                 df.setRole("supplement");
@@ -478,10 +574,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 df.setSizeBytes(Files.size(msetFile));
                 df.setUploadedAt(OffsetDateTime.now());
                 stagedFiles.add(df);
+            } else {
+                sb.addMessage("warn", "mSetObj_after_sanity.qs was not found after save request; continuing.");
             }
 
             stateSaver.saveState();
 
+            // --- Ensure/attach java_history.json ---
             fc.saveJavaHistory();
             String jh = hb.getJavaHistoryString();
             saveJsonStringToFile(jh, sb.getCurrentUser().getOrigHomeDir() + File.separator + "java_history.json");
@@ -494,9 +593,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 df.setSizeBytes(Files.size(javaHistoryFile));
                 df.setUploadedAt(OffsetDateTime.now());
                 stagedFiles.add(df);
+            } else {
+                sb.addMessage("warn", "java_history.json not found; continuing.");
             }
 
-            // 1) Insert (DB in Docker, API otherwise)
+            // ---------- IMPORTANT: Insert ALL staged files (including supplement & javahistory) ----------
+            java.util.List<DatasetFile> dbFiles = new java.util.ArrayList<>(stagedFiles);
+
             String resp = db.insertDataset(
                     stagedDataset.getEmail(),
                     stagedDataset.getNode(),
@@ -504,7 +607,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     sb.getAnalType(),
                     sb.getDataType(),
                     stagedDataset.getSamplenum(),
-                    stagedFiles
+                    dbFiles
             );
             java.util.UUID datasetId = extractUUID(resp);
             if (datasetId == null) {
@@ -512,13 +615,25 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 return null;
             }
 
-            // 2) Copy physical files into dataset folder
-            List<Path> sources = resolveSourcePathsForStaged();
+            // 2) Copy physical files into dataset folder (ALL staged files)
+            java.util.List<Path> sources = resolveSourcePathsForStaged();
             if (sources.size() != stagedFiles.size()) {
                 sb.addMessage("Error", "Cannot resolve source files for all staged entries.");
                 return null;
             }
             copyStagedFilesToDatasetFolder(stagedDataset.getEmail(), datasetId, stagedFiles, sources);
+
+            // Optional: if you display a "file count" in UI, compute a NON-counting view here
+            // (just for UI state; DB already has all files).
+            int displayCount = (int) stagedFiles.stream()
+                    .map(DatasetFile::getRole)
+                    .map(r -> r == null ? "" : r.toLowerCase())
+                    .filter(r -> !r.equals("supplement") && !r.equals("javahistory"))
+                    .count();
+            try {
+                stagedDataset.setFileCount(displayCount);
+            } catch (Throwable ignore) {
+            }
 
             sb.addMessage("info", "Dataset created: " + stagedDataset.getTitle());
             clearStaged();

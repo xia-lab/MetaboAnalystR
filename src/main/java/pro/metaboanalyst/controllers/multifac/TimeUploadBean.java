@@ -11,6 +11,10 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.faces.model.SelectItem;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -165,18 +169,19 @@ public class TimeUploadBean implements Serializable {
         String fileName;
         String testMetaFile;
         String tsDesign;
+
         switch (timeDataOpt) {
             case "pkcovid" -> {
                 tsDataType = "pktable";
                 tsDesign = "multi";
-                tsFormat = "colmf";//colts
+                tsFormat = "colmf";
                 fileName = ab.getResourceByAPI("covid_metabolomics_data.csv");
                 testMetaFile = ab.getResourceByAPI("covid_metadata_multiclass.csv");
             }
             case "tce" -> {
                 tsDataType = "pktable";
                 tsDesign = "multi";
-                tsFormat = "colmf";//colts
+                tsFormat = "colmf";
                 fileName = ab.getResourceByAPI("TCE_feature_table.csv");
                 testMetaFile = ab.getResourceByAPI("TCE_metadata.csv");
             }
@@ -189,8 +194,8 @@ public class TimeUploadBean implements Serializable {
             }
             case "time2" -> {
                 tsDataType = "pktable";
-                tsDesign = "time";  //indicate whether this is actual time series
-                tsFormat = "colu"; // not ts here is for metadata module
+                tsDesign = "time";
+                tsFormat = "colu";
                 fileName = ab.getResourceByAPI("cress_time.csv");
                 testMetaFile = ab.getResourceByAPI("cress_time_meta.csv");
             }
@@ -199,11 +204,9 @@ public class TimeUploadBean implements Serializable {
                 tsDesign = "multi";
                 tsFormat = "colmf";
                 boolean useQC = true;
-                if (ab.isOnZgyPc() && !useQC) {
-                    fileName = ab.getResourceByAPI("ewaste_data.csv");
-                } else {
-                    fileName = ab.getResourceByAPI("ewaste_data_QC.csv");
-                }
+                fileName = ab.isOnZgyPc() && !useQC
+                        ? ab.getResourceByAPI("ewaste_data.csv")
+                        : ab.getResourceByAPI("ewaste_data_QC.csv");
                 testMetaFile = ab.getResourceByAPI("ewaste_metadata.csv");
             }
             default -> {
@@ -214,37 +217,53 @@ public class TimeUploadBean implements Serializable {
                 testMetaFile = ab.getResourceByAPI("cress_time1_meta.csv");
             }
         }
+
         if (!wb.isReloadingWorkflow()) {
             if (!sb.doLogin(tsDataType, "mf", false, false)) {
                 sb.addMessage("Error", "Analysis start failed!");
                 return null;
             }
         }
+
         try {
             RConnection RC = sb.getRConnection();
             sb.setTsDesign(tsDesign);
             RDataUtils.setDesignType(RC, tsDesign);
-            if (RDataUtils.readTextDataTs(RC, fileName, tsFormat)) {
-                sb.setDataUploaded();
-                boolean res = RDataUtils.readMetaData(RC, testMetaFile);
-                if (!res) {
-                    sb.addMessage("Error", RDataUtils.getErrMsg(RC));
-                    return null;
-                }
-                //System.out.println("var");
-                tb.reinitVariables();
-                return "Data check";
-            } else {
+
+            // --- NEW: bring both files into the user's home dir (download/copy as needed)
+            Path destData = DataUtils.materializeToHome(sb, fileName);
+            Path destMeta = DataUtils.materializeToHome(sb, testMetaFile);
+
+            // Read from local home paths
+            if (!RDataUtils.readTextDataTs(RC, destData.toString(), tsFormat)) {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             }
-        } catch (Exception e) {
-            // e.printStackTrace();
-            LOGGER.error("handleTestDataUpload", e);
-        }
+            sb.setDataUploaded();
 
-        sb.addMessage("Error", "Log in failed. Please check errors in your R codes or the Rserve permission setting!");
-        return null;
+            boolean res = RDataUtils.readMetaData(RC, destMeta.toString());
+            if (!res) {
+                sb.addMessage("Error", RDataUtils.getErrMsg(RC));
+                return null;
+            }
+
+            // Stage using base names (commit will resolve under home)
+            String dataBase = destData.getFileName().toString();
+            String metaBase = destMeta.getFileName().toString();
+            String niceTitle = DataUtils.stripExt(dataBase);
+
+            java.util.List<String> names = java.util.List.of(dataBase, metaBase);
+            java.util.List<String> roles = java.util.List.of("data", "metadata");
+            dc.stageDatasetFromStrings(niceTitle, 0, names, roles);
+
+            tb.reinitVariables();
+            return "Data check";
+
+        } catch (Exception e) {
+            LOGGER.error("handleTestDataUpload", e);
+            sb.addMessage("Error", "Failed to prepare test data: " + e.getMessage());
+            return null;
+        }
     }
 
     public UploadedFile getMetabolonFile() {
