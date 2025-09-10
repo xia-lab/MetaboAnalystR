@@ -497,7 +497,9 @@ public class GenericControllers implements Serializable {
         RConnection RC = sb.getRConnection();
 
         if (RC == null || !isRConnectionValid(RC)) {
-            LOGGER.error("RConnection is null or invalid in getCmdVec");
+            if(!ab.isInDocker()){
+                LOGGER.error("RConnection is null or invalid in getCmdVec");
+            }    
             return myCmds;
         }
 

@@ -590,7 +590,7 @@ public class MyPhaseListener implements PhaseListener {
                     }
                 }
             } else {
-                DataUtils.doRedirectWithGrowl(sb, "/ExpressAnalyst/home.xhtml", "error", "Failed to load project!");
+                DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/home.xhtml", "error", "Failed to load project!");
             }
         } catch (Exception e) {
             LOGGER.error("handleFireBaseProjectLoad", e);

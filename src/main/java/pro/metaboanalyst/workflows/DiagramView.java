@@ -2012,7 +2012,7 @@ public class DiagramView implements Serializable {
 
     public String obtainInputImageUrl(String name) {
         String imgUrl = "";
-        if (ab.isOnLocalServer()) {
+        if (ab.isOnLocalServer() || ab.isInDocker()) {
             switch (name) {
                 case "LC-MS Spectra" -> {
                     imgUrl = "/resources/images/raw_spectra.png";
