@@ -484,7 +484,7 @@ RemoveMissingByPercent <- function(mSetObj = NA,
 
   ## 4 · Log a concise message ------------------------------------------
   rule.txt <- ifelse(grpWise, "(group-wise rule)", "(overall rule)")
-  msg      <- sprintf("%d variables were removed for threshold %.2f%% %s",
+  msg      <- sprintf("Missing value filtering: %d variables were removed for threshold %.2f%% %s",
                       rm.cnt, 100 * percent, rule.txt)
   mSetObj$msgSet$miss.filter.msg <- c(msg)
   

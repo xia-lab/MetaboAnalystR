@@ -447,6 +447,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
                           lbl.type="disc", nmdr = FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$data.file.path <- filePath;
   mSetObj$dataSet$cls.type <- lbl.type;
   mSetObj$dataSet$format <- format;
  
@@ -1203,10 +1204,12 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
 #'
 Setup.MapData <- function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj$dataSet$cmpd <- qvec;
-  return(.set.mSet(mSetObj));
+  mSetObj$dataSet$cmpd <- qvec;  
+  # Export as one-column CSV (no header, plain values)
+  write.csv(qvec, file = "datalist.csv", row.names = FALSE, col.names = FALSE, quote = FALSE)
+  
+  return(.set.mSet(mSetObj))
 }
-
 # this is only for SSP: for those with conc above threshold
 Update.MapData <- function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
@@ -1610,4 +1613,26 @@ GetContainsBlank <- function(mSetObj = NA) {
     return(0L)
   }
   return(as.integer(isTRUE(mSetObj$dataSet$containsBlank)))
+}
+
+
+Read.TextDataReload <- function(mSetObj=NA, filePath){
+  
+  #data config saved
+  mSetTemp <- qs::qread("mSetObj_after_sanity.qs");
+
+  lbl.type <- mSetTemp$dataSet$cls.type;
+  format <- mSetTemp$dataSet$format;
+
+  Read.TextData(NA, filePath, format, lbl.type, FALSE)
+}
+
+Read.mzTabReload <- function(mSetObj=NA, filename) {
+  if(file.exists("mSetObj_after_sanity.qs")){
+  mSetTemp <- qs::qread("mSetObj_after_sanity.qs");
+  identifier <-  mSetTemp$dataSet$mztab.idtype;
+}else{
+  identifier <-"name";
+}
+  return(Read.mzTab(mSetObj=NA, filename, identifier));
 }

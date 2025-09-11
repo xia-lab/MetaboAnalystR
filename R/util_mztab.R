@@ -1,7 +1,7 @@
 my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
 
   mSetObj <- .get.mSet(mSetObj);
-  
+  mSetObj$dataSet$mztab.idtype <- identifier;
   msg <- NULL;
   
   # read maximum number of columns in file

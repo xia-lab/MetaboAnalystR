@@ -11,7 +11,7 @@
         sub.dir <- paste0(sub.dir, "/");
     }
     if(.on.public.web){
-        lib.path <- paste0(rpath, "libs/", sub.dir, filenm);
+        lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
         print(paste("loading library:", lib.path));
         return(qs::qread(lib.path));
     }

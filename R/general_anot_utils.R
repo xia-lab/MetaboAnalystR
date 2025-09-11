@@ -682,3 +682,17 @@ doCompoundMapping<-function(cmpd.vec, q.type){
   }
   return(dat);
 }
+
+CrossReferencingReload <- function(mSetObj=NA, q.type="NA", hmdb=T, pubchem=T, 
+                             chebi=F, kegg=T, metlin=F, lipid=F){
+  if(file.exists("mSetObj_after_sanity.qs")){
+
+  mSetTemp <- qs::qread("mSetObj_after_sanity.qs");
+
+  q.type <- mSetTemp$dataSet$q.type;
+  }else{
+      q.type <- "name";
+  }
+  return(CrossReferencing(mSetObj, q.type, hmdb, pubchem, 
+                             chebi, kegg, metlin, lipid));
+}
