@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -55,7 +54,6 @@ import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.context.Flash;
 import jakarta.faces.event.PhaseId;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -65,8 +63,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -152,6 +148,15 @@ public class DataUtils {
         rcmd = rcmd.replace(", ", "\",\"");
         rcmd = rcmd.replace("]", "\")");
         return rcmd;
+    }
+
+    public static String replaceMarkup(String input) {
+        // Replace the opening backticks with <b>
+        String result = input.replace("```", "<b>");
+        // Replace the closing backticks with </b>
+        result = result.replace("```", "</b>");
+
+        return result;
     }
 
     // create a tempature user accoutn if user log in as a guest will not remember, only session only
