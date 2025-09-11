@@ -267,12 +267,12 @@ public class ModuleController implements Serializable {
                     mode = InputMode.DATA_PLUS_META;
                 }      // MetaPathLoadView (QEA)
                 case 2 -> {
-                    analType = "enrich";
+                    analType = (sb.getUploadType().equals("list") ? "msetora" : "msetqea");
                     naviType = "enrich";
                     mode = (sb.getUploadType().equals("list") ? InputMode.LIST_ONLY : InputMode.DATA_ONLY);
                 } // EnrichUploadView
                 case 3 -> {
-                    analType = "pathway";
+                    analType = (sb.getUploadType().equals("list") ? "pathora" : "pathqea");
                     naviType = "pathway";
                     mode = (sb.getUploadType().equals("list") ? InputMode.LIST_ONLY : InputMode.DATA_ONLY);
                 } // PathUploadView

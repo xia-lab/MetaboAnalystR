@@ -58,7 +58,7 @@
                             <h:panelGrid columns="2" style="margin-bottom: 20px;">
                                 <h:panelGrid columns="2" style="width:760px; height: 120px; padding:10px 40px 20px 30px;">
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="Group Label:"/>
-                                    <p:selectOneRadio value="#{pathLoader.clsOpt}">
+                                    <p:selectOneRadio value="#{sessionBean1.dataClsOpt}">
                                         <f:selectItems value="#{optBean.clsOpts}" />
                                     </p:selectOneRadio>          
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="ID Type:"/>
@@ -66,7 +66,7 @@
                                         <f:selectItems value="#{optBean.pathCmpdIDOpts}" />
                                     </p:selectOneMenu>
                                     <p:outputLabel style="font-size:12px; font-weight: bold" value="Data Format:"/>
-                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{pathLoader.dataFormat}">
+                                    <p:selectOneMenu styleClass="menu" panelStyleClass="panel" style="width:165px" value="#{sessionBean1.dataFormat}">
                                         <f:selectItems value="#{optBean.tableFormatOpts}" />
                                     </p:selectOneMenu>
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File:"/>

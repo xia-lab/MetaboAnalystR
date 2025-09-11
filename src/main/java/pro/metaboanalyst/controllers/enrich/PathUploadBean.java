@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
 import jakarta.inject.Inject;
+import pro.metaboanalyst.datalts.DatasetController;
 
 /**
  *
@@ -29,6 +30,8 @@ import jakarta.inject.Inject;
 @Named("pathLoader")
 public class PathUploadBean implements Serializable {
 
+    @Inject
+    private DatasetController dc;
     @Inject
     ApplicationBean1 ab;
     @Inject
@@ -86,7 +89,8 @@ public class PathUploadBean implements Serializable {
                 RDataUtils.setMapData(RC, qVec);
                 SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
                 sb.setDataUploaded();
-
+                int res = RDataUtils.saveMsetObject(sb.getRConnection());
+                dc.stageListDataset("datalist_" + sb.getAnalType());
                 return "Name check";
             }
         }
@@ -208,28 +212,40 @@ public class PathUploadBean implements Serializable {
             return null;
         }
         try {
-
             if (csvFile == null) {
                 sb.addMessage("Error", "Please upload your file!");
                 return null;
             }
-
             if (csvFile.getSize() == 0) {
                 sb.addMessage("Error", "File is empty!");
                 return null;
             }
 
+            // 1) Save to user's home
             String fileName = DataUtils.getJustFileName(csvFile.getFileName());
-            DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            String savedPath = DataUtils.uploadFile(sb, csvFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
+            if (savedPath == null) {
+                sb.addMessage("Error", "Failed to save file.");
+                return null;
+            }
+
+            // 2) Mark uploaded in session
             sb.setDataUploaded();
-            //sb.setCmpdIDType(qeaCmpdIDType);
-            return processPathQeaData(fileName, dataFormat, clsOpt);
+
+            // 3) STAGE (filenames only; commit will resolve them under home dir)
+            String niceTitle = DataUtils.stripExt(fileName);
+            java.util.List<String> names = java.util.List.of(fileName);
+            java.util.List<String> roles = java.util.List.of("data");
+            dc.stageDatasetFromStrings(niceTitle, /*sampleNum*/ 0, names, roles);
+            sb.setUploadType("table");
+
+            // 4) Continue with your existing processing
+            return processPathQeaData(fileName, sb.getDataFormat(), sb.getDataClsOpt());
+
         } catch (Exception e) {
-            //e.printStackTrace();
             LOGGER.error("pathQeaBn_action", e);
             return null;
         }
-
     }
 
     private String processPathQeaData(String fileName, String dataFormat, String lblType) {
