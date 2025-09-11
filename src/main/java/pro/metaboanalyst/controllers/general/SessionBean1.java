@@ -223,8 +223,6 @@ public class SessionBean1 implements Serializable {
         this.dataFormat = dataFormat;
     }
 
-    
-    
     public boolean isMissingDisabled() {
         return missingDisabled;
     }
@@ -913,7 +911,9 @@ public class SessionBean1 implements Serializable {
     public void buildCustomNaviTree() {
         // Iterate over the keys from naviTrack
         naviTree = new DefaultTreeNode("Root", null); // Initialize the root
+
         for (String key : naviTrack.keySet()) {
+            System.out.println("Keyset====" + key);
             if (!key.equals("Workflows") && !key.equals("Modules")) {
                 TreeNode node = new DefaultTreeNode(key, naviTree); // Add to root
                 node.setSelectable(true); // Make it selectable (optional)

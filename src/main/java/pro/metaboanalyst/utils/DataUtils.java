@@ -1163,12 +1163,10 @@ public class DataUtils {
             ZipEntry entry;
             while ((entry = zin.getNextEntry()) != null) {
                 String name = entry.getName();
-                System.out.println("  ↳ entry: " + name);
 
                 // ── handle directories ───────────────────────────────────────────
                 if (entry.isDirectory()) {
                     mkdirs(outdir, name);
-                    System.out.println("    [mkdir] " + new File(outdir, name).getAbsolutePath());
                     continue;
                 }
 
@@ -1176,11 +1174,9 @@ public class DataUtils {
                 String dir = dirpart(name);
                 if (dir != null) {
                     mkdirs(outdir, dir);
-                    System.out.println("    [mkdir] " + new File(outdir, dir).getAbsolutePath());
                 }
 
                 // ── extract file ─────────────────────────────────────────────────
-                System.out.println("    [file]  " + new File(outdir, name).getAbsolutePath());
                 extractFile2(zin, outdir, name);
             }
 

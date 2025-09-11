@@ -662,8 +662,6 @@ public class DiagramView implements Serializable {
         updateDiagramModel();
     }
 
-
-
     public void selectInputNode(String input) {
         if (model == null || model.getElements().isEmpty()) {
             init();
@@ -1509,10 +1507,10 @@ public class DiagramView implements Serializable {
                 fcb.saveJavaHistory();
                 String jh = hb.getJavaHistoryString();
                 jh = jh.replace(":\"[{\"", ":[{\\\"");
-                saveJsonStringToFile(jh, sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
-
                 String folderName = params.getFolderName();
                 DataUtils.createAndCopyFolder(sb.getCurrentUser().getHomeDir(), sb.getCurrentUser().getHomeDir() + "/" + folderName);
+                saveJsonStringToFile(jh, sb.getCurrentUser().getHomeDir() + File.separator  + folderName + File.separator +"java_history.json");
+
                 workflowIndex++;
 
             }
@@ -2952,8 +2950,8 @@ public class DiagramView implements Serializable {
         }
         return moduleName;
     }
-    
-        /*
+
+    /*
      * dataType: list, conc, specbin, pktable, nmrpeak, mspeak, msspec
      * analType: stat, pathora, pathqea, msetora, msetssp, msetqea, msetview, cmpdmap, peaksearch, smpmap
      * */

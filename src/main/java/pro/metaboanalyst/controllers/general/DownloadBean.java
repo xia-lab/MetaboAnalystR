@@ -1278,7 +1278,9 @@ public class DownloadBean implements Serializable {
         //Change path
         sb.getCurrentUser().setHomeDir(sb.getCurrentUser().getOrigHomeDir() + "/" + subFolder);
         sb.getCurrentUser().setRelativeDir(sb.getCurrentUser().getOrigRelativeDir() + "/" + subFolder);
-
+        
+        System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
+        
         currentSubFolder = subFolder;
         wb.setCurrentSubFolder(subFolder);
         setupDownloadTable("");
@@ -1286,9 +1288,9 @@ public class DownloadBean implements Serializable {
 
         RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getHomeDir() + "/");
         RCenter.setResourceDir(sb.getRConnection(), ab.getRealPath());
-
-        String javaHistory = fbc.readJsonStringFromFile(sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
-        int res1 = fbc.loadJavaHistory(javaHistory);
+        
+        //String javaHistory = fbc.readJsonStringFromFile(sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
+        //int res1 = fbc.loadJavaHistory(javaHistory);
         for (String module : wb.getModuleNames()) {
             RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), module);
         }

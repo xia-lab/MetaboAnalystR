@@ -85,7 +85,7 @@ function initPathwayViewer() {
         async: false,
         cache: false,
         success: function (result) {
-            //console.log(result);
+            console.log(result);
             var res = result.split("||");
             paView = res[0];
             setLeftImageMap(res[1]);

@@ -182,7 +182,7 @@ public class AjaxCallServlet extends HttpServlet {
             int canvasDimY = Integer.parseInt(request.getParameter("height"));
             String nodeTipInfo = RGraphUtils.plotKEGGPath(sb, pathName, canvasDimX + "", canvasDimY + "", "png", "NULL");
 
-            String pathPrefix = prefix + "/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator;
+            String pathPrefix = prefix + sb.getCurrentUser().getRelativeDir() + File.separator;
             String imgURL = pathPrefix + pathName + ".png";
 
             String urlCode = "pathImgURL=\'" + imgURL + "\';";
@@ -190,9 +190,9 @@ public class AjaxCallServlet extends HttpServlet {
             res = urlCode + "\n" + "pathPrefix=\'" + pathPrefix + "\';\n" + nodeTipInfo;
 
         } else if (funcName.equalsIgnoreCase("getImageMap")) {
-
-            String leftImgURL = prefix + "/resources/users" + File.separator
-                    + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + sb.getCurrentImage("path_view") + "dpi150.png";
+                     
+            String leftImgURL = prefix + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("path_view") + "dpi150.png";
+            System.out.println(leftImgURL);
             String urlCode = "leftImgURL=\"" + leftImgURL + "\"";
 
             String imgMapInfo = RGraphUtils.getOverviewImgMap(sb.getRConnection());
