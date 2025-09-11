@@ -659,15 +659,29 @@ CreateDataProcdoc <- function(mSetObj=NA){
   cat("\n\n", file=rmdFile, append=TRUE);
   
   filt.msg <- mSetObj$msgSet$filter.msg;
+  miss.filt.msg <- mSetObj$msgSet$miss.filter.msg
+
   if(is.null(filt.msg)){
     cat("No data filtering was performed.\n\n", file=rmdFile, append=TRUE, sep="\n");
   }else{
+
+    if(!is.null(miss.filt.msg)){
+    miss.filt.msg <- paste("*", miss.filt.msg);
+    miss.filt.msg  <- paste0(miss.filt.msg , collapse = "\\\n");
+    descr <- c("\n",
+                miss.filt.msg,
+                "\n\n");
+    cat(descr, file=rmdFile, append=TRUE);
+    }
+
     filt.msg <- paste("*", filt.msg);
     filt.msg <- paste0(filt.msg, collapse = "\\\n");
     descr <- c("\n",
                 filt.msg,
                 "\n\n");
     cat(descr, file=rmdFile, append=TRUE);
+
+
   }
 }
 
