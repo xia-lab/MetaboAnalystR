@@ -78,7 +78,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
   pvec <- histvec <- rep("NA", length(KEGGgraph::nodes(g)));
   names(tooltip) <- names(fillcolvec) <- names(histvec) <- names(pvec) <- KEGGgraph::nodes(g);
   
-  if(mSetObj$analSet$type == "pathora"){
+  if(!is.null(mSetObj$analSet$ora.hits)){
     if(!is.null(mSetObj$analSet$ora.hits)){
       fillcolvec[mSetObj$analSet$ora.hits[[path.id]]] <- "red";
       if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$ora.filtered.mset)){
@@ -89,6 +89,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
     if(!is.null(mSetObj$analSet$qea.hits)){
       hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
       # now plotting summary graphs for each compounds
+      print(head(mSetObj$dataSet$norm.path));
       for(i in 1:length(hit.cmpds)){
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;
@@ -106,12 +107,14 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
           if(max(nchar(levels(mSetObj$dataSet$cls))) > 6){
             cls.lbls <- as.factor(abbreviate(as.character(cls.lbls), 6));
           }
+
           boxplot(mSetObj$dataSet$norm.path[, cmpd]~cls.lbls, 
                 main=cmpd.label,
                 col=unique(GetColorSchema(cls.lbls)), ylab=y.label, xlab = "", las=2);
         }else{
           # Rgraphviz::plot(mSetObj$dataSet$norm.path[, cmpd], 
           # should be base plot? 
+
             plot(mSetObj$dataSet$norm.path[, cmpd], mSetObj$dataSet$cls, 
                 pch=19, col="forestgreen", main=cmpd.label, xlab="Index", ylab=y.label);
           abline(lm(mSetObj$dataSet$cls~mSetObj$dataSet$norm.path[, cmpd]), col="red")
@@ -278,7 +281,15 @@ PlotPathSummary<-function(mSetObj=NA,
   mSetObj <- .get.mSet(mSetObj);
 
   jointGlobal <- FALSE;
-  if(mSetObj$analSet$type == "pathora"){
+  type <- mSetObj$analSet$type;
+  if(!type %in% c("pathora", "pathqea", "pathinteg")){
+    if(!is.null(mSetObj$analSet$ora.mat)){
+        type <- "pathora";
+    }else if(!is.null(mSetObj$analSet$qea.mat)){
+        type <- "pathqea";
+    }
+  }
+  if(type == "pathora"){
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
     names(x) <- names(y) <- rownames(mSetObj$analSet$ora.mat);
@@ -289,7 +300,7 @@ PlotPathSummary<-function(mSetObj=NA,
 
     mSetObj$analSet$path.ora.mat <- mSetObj$analSet$ora.mat;
     rownames(mSetObj$analSet$path.ora.mat)<-GetORA.pathNames(mSetObj);
-  } else if(mSetObj$analSet$type == "pathqea") {
+  } else if(type == "pathqea") {
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
     names(x) <- names(y) <- rownames(mSetObj$analSet$qea.mat);
@@ -299,7 +310,7 @@ PlotPathSummary<-function(mSetObj=NA,
     }
     mSetObj$analSet$path.qea.mat <- mSetObj$analSet$qea.mat
     rownames(mSetObj$analSet$path.qea.mat)<-GetQEA.pathNames(mSetObj);
-  } else if (mSetObj$analSet$type == "pathinteg") { # this is integrative analysis
+  } else if (type == "pathinteg") { # this is integrative analysis
     
     jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
     if(jointGlobal) {

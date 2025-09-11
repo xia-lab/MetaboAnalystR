@@ -206,6 +206,10 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
     return(my.qea.kegg());
   }
   
+  if(!exists("current.msetlib")){
+      current.msetlib <<- qs::qread("current.msetlib.qs");
+  }
+
   current.mset <- current.msetlib$member;
   # make a clean metabolite set based on reference metabolome filtering
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
@@ -611,7 +615,7 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
   
   hits <- NULL;
   
-  if(mSetObj$analSet$type=="msetora" || mSetObj$analSet$type=="msetssp"){
+  if(!is.null(mSetObj$analSet$ora.hits)){
     hits <- mSetObj$analSet$ora.hits;
   }else{
     hits <- mSetObj$analSet$qea.hits;
