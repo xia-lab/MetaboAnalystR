@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
@@ -92,7 +91,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
-import java.util.Locale;
 import pro.metaboanalyst.lts.FunctionInfo;
 
 /**
@@ -152,11 +150,14 @@ public class DataUtils {
 
     public static String replaceMarkup(String input) {
         // Replace the opening backticks with <b>
-        String result = input.replace("```", "<b>");
-        // Replace the closing backticks with </b>
-        result = result.replace("```", "</b>");
+        String regex = "```(.*?)```";
 
-        return result;
+        // Replacement string uses a backreference to the captured group
+        String replacement = "<b>$1</b>";
+
+        // Use replaceAll to replace all paired occurrences
+        return input.replaceAll(regex, replacement);
+
     }
 
     // create a tempature user accoutn if user log in as a guest will not remember, only session only
