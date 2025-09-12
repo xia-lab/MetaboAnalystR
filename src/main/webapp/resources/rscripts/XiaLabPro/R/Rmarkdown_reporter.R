@@ -1284,3 +1284,48 @@ AddFeatureImages <- function(mSetObj=NA) {
     cat(html_content, file = rmdFile, append = TRUE, sep="\n")
   }
 }
+
+CreateNetworkDoc <- function(mSetObj = NA){
+  # pull current state
+  mSetObj  <- .get.mSet(mSetObj)
+  paramSet <- mSetObj$paramSet;
+  imgSet   <- mSetObj$imgSet;
+
+  # skip if network step never ran
+  if (is.null(imgSet$reportSet$network)) {
+      invisible()
+  }
+
+  link <- GetSharingLink(mSetObj)
+
+  reportLinks <- getReportLinks(link, "network")
+  cat(reportLinks, file = rmdFile, append = TRUE)
+  cat("\n\n", file = rmdFile, append = TRUE)
+
+  # short description
+  descr <- c("### - Enrichment network\n\n",
+    "Enrichment networks integrate enrichment results with network visualization to show",
+    "how significant metabolite/pathway sets relate via shared members.\n",
+    "Node size reflects matched-gene counts; node color reflects significance;",
+    "edges reflect overlap between sets.\n\n"
+  )
+  cat(descr, file = rmdFile, append = TRUE)
+
+  # include the saved screenshot if present (same chunk style as your example)
+  if (!is.null(imgSet$reportSet$network) && file.exists(imgSet$reportSet$network)) {
+    figChunk <- c(
+      paste0(
+        "```{r figure_enrichment_network, echo=FALSE, fig.align='center', fig.pos='H', ",
+        "fig.cap='Figure ", getFigCount(), ": Enrichment Network', ",
+        "fig.lp='", imgSet$reportSet$network, "', ",
+        "out.width='", getFigWidth(mSetObj, width = '720px', widthPct = '100%'), "'}"
+      ),
+      "knitr::include_graphics(mSetObj$imgSet$reportSet$network)",
+      "```",
+      "\n\n"
+    )
+    cat(figChunk, file = rmdFile, append = TRUE, sep = "\n")
+  }
+
+  invisible()
+}

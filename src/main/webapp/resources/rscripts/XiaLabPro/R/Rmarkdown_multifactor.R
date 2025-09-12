@@ -213,6 +213,31 @@ CreateiPCAdoc <- function(mSetObj=NA){
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
 
+if (!is.null(mSetObj$imgSet$pca_score2d_meta) &&
+    file.exists(mSetObj$imgSet$pca_score2d_meta)) {
+
+  # Add cross-links (uses your existing helper)
+  reportLinks <- getReportLinks(link, "pca_score2d_meta", "pca_score2d_meta")
+  cat(reportLinks, file = rmdFile, append = TRUE)
+  cat("\n\n", file = rmdFile, append = TRUE)
+
+  # Knit chunk that embeds the saved PNG
+  fig2d <- c(
+    paste0(
+      "```{r figure_pca2d_meta, echo=FALSE, fig.pos='H', fig.cap='Figure ",
+      getFigCount(),
+      ". PCA 2D scores plot.', ",
+      "fig.lp='", mSetObj$imgSet$pca_score2d_meta, "', ",
+      "out.width='", getFigWidth(mSetObj,width="720px", widthPct="100%"), "'}"
+    ),
+    "knitr::include_graphics(mSetObj$imgSet$pca_score2d_meta)",
+    "```",
+    "\n\n"
+  )
+  cat(fig2d, file = rmdFile, append = TRUE, sep = "\n")
+  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+}
+
   if(!is.null(mSetObj$imgSet$reportSet$ipca_3d) && file.exists(mSetObj$imgSet$reportSet$ipca_3d)){
     
     reportLinks <- getReportLinks(link, "ipca_3d");

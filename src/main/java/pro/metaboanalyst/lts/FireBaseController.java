@@ -1135,9 +1135,9 @@ public class FireBaseController implements Serializable {
             bucketObjectName = "/user_folders/" + "guest" + "/" + folderName + ".zip";
             localFilePath = fb.getProjectPath() + bucketObjectName;
             f = new File(localFilePath);
-            if(!f.exists()){
-            downloadObject(selectedProject.getHostname(), userFolderName, folderName, destDirPath + folderName + ".zip");
-            DataUtils.extract(destDirPath + folderName + ".zip", destDirPath);
+            if (!f.exists()) {
+                downloadObject(selectedProject.getHostname(), userFolderName, folderName, destDirPath + folderName + ".zip");
+                DataUtils.extract(destDirPath + folderName + ".zip", destDirPath);
             }
         }
         RCenter.loadHistory(sb.getRConnection());
@@ -1415,8 +1415,10 @@ public class FireBaseController implements Serializable {
                 sb.setCurrentNaviUrl("/Secure/analysis/PCAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=2");
             case "pca_biplot" ->
                 sb.setCurrentNaviUrl("/Secure/analysis/PCAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=5");
-            case "pca_pair_meta" ->
+            case "pca_score2d_meta" ->
                 sb.setCurrentNaviUrl("/Secure/multifac/LivePCAView.xhtml");
+            case "pca_score_meta" ->
+                sb.setCurrentNaviUrl("/Secure/analysis/LivePCAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1");
             case "heatmap_mummichog" -> {
                 if (sb.getReportJsonMap().containsKey("heatmap_mummichog")) {
                     mab.setHeatmapName(sb.getReportJsonMap().get("heatmap_mummichog"));

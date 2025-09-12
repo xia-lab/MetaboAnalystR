@@ -21,6 +21,8 @@ CreatePathRnwReport <- function(mSetObj, usrName){
   }
   CreatePathAnalDoc(mSetObj);
   CreatePathResultDoc(mSetObj);
+  CreateNetworkDoc(mSetObj);
+
     AddFeatureImages(mSetObj);
 
   CreateRHistAppendix();

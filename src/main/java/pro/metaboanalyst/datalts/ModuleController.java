@@ -34,7 +34,7 @@ public class ModuleController implements Serializable {
     private DatasetController dc;
 
     private Map<String, Boolean> nodeVisibility = new HashMap<>();
-
+//OK: roc, mf, stat, pathqea, pathora, msetora
     private final List<String> untargetedDatas = Arrays.asList("spec", "specbin", "pktable", "nmrpeak", "mspeak");
     private final List<String> regresAnals = Arrays.asList("pathway", "enrich");
     private final List<String> compatibleDatas = Arrays.asList("conc", "spec", "specbin", "pktable", "nmrpeak", "mspeak", "mass_table");
@@ -143,7 +143,7 @@ public class ModuleController implements Serializable {
             // Core table analyses
             enableStatsBundle.run();
             maybeEnableFunctional.run();
-        }else if (isRaw) {
+        } else if (isRaw) {
             on.accept("spectraProcessing");
             on.accept("peakAnnotation");
             // no stats/functional until peak tables exist
@@ -160,13 +160,17 @@ public class ModuleController implements Serializable {
             // QEA data+meta: enrichment/pathway + stats bundle
             on.accept("enrichment");
             on.accept("pathway");
+            on.accept("network");
+
             enableStatsBundle.run();
             maybeEnableFunctional.run();
-        }  else if (isGenericFunc || isTargetedAnal) {
+        } else if (isGenericFunc || isTargetedAnal) {
             // Generic "pathway"/"enrich" entry or other targeted keys:
             // Always show enrichment/pathway; if metadata is present we also expose stats bundle.
             on.accept("enrichment");
             on.accept("pathway");
+            on.accept("network");
+
         }
 
         // Final guard: functional tile only for untargeted data types
@@ -227,7 +231,7 @@ public class ModuleController implements Serializable {
             }
 
             // --- Gather filenames by role ---
-            String dataName = null, data2Name = null, metaName = null, listName = null, ms2Name = null, rawName = null;
+            String dataName = null, data2Name = null, metaName = null, listName = null,listGeneName = null, ms2Name = null, rawName = null;
             for (DatasetFile f : ds.getFiles()) {
                 String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
                 System.out.println(role + "====role");
@@ -240,6 +244,8 @@ public class ModuleController implements Serializable {
                         metaName = f.getFilename();
                     case "list" ->
                         listName = f.getFilename();
+                    case "listgene" ->
+                        listGeneName = f.getFilename();
                     case "ms2" ->
                         ms2Name = f.getFilename();
                     case "raw" ->
@@ -273,7 +279,7 @@ public class ModuleController implements Serializable {
                 } // EnrichUploadView
                 case 3 -> {
                     analType = (sb.getUploadType().equals("list") ? "pathora" : "pathqea");
-                    naviType = "pathway";
+                    naviType = (sb.getUploadType().equals("list") ? "pathway-ora" : "pathway-qea");
                     mode = (sb.getUploadType().equals("list") ? InputMode.LIST_ONLY : InputMode.DATA_ONLY);
                 } // PathUploadView
                 case 4 -> {

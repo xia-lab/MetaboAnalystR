@@ -30,6 +30,8 @@ CreateEnrichRmdReport<-function(mSetObj, usrName){
   if(mSetObj$analSet$type == "msetora"){
     CreateEnrichORAdoc(mSetObj);
   }
+
+  CreateNetworkDoc(mSetObj);
   AddFeatureImages(mSetObj);
 
   CreateRHistAppendix();

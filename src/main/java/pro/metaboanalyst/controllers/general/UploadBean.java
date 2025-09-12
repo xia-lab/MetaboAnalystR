@@ -588,25 +588,20 @@ public class UploadBean implements Serializable {
             }
 
             sb.setDataUploaded();
-// 3) STAGE the dataset (no DB insert, no dataset-folder copy yet)
             String niceTitle = DataUtils.stripExt(dataFile.getFileName()); // e.g., "pilot_data"
             int samples = 0; // or infer from R if you like
 
-// Build files/roles dynamically to cover both cases
             java.util.List<org.primefaces.model.file.UploadedFile> stagedFiles = new java.util.ArrayList<>();
             java.util.List<String> stagedRoles = new java.util.ArrayList<>();
 
-// always include primary data
             stagedFiles.add(dataFile);
             stagedRoles.add("data");
 
-// include metadata iff present and successfully read
             if (metaFile != null && metaFile.getSize() > 0 && metaPath != null) {
                 stagedFiles.add(metaFile);
                 stagedRoles.add("metadata");
             }
-
-// stage
+            
             dc.stageDataset(niceTitle, samples, stagedFiles, stagedRoles);
             sb.addMessage("info", "Dataset staged in memory. You can review and commit later.");
             return "Data check";

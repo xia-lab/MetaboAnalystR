@@ -25,6 +25,8 @@ CreateMummichogRmdReport<-function(mSetObj, usrName){
   }
 
   CreateMummichogAnalysisDoc(mSetObj);
+  CreateNetworkDoc(mSetObj);
+
   AddFeatureImages(mSetObj);
   CreateRHistAppendix();
   CreateFooter();
