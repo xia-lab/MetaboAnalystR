@@ -368,246 +368,184 @@
             </h:form>
         </p:dialog> 
         <p:dialog modal="true" id="graphDialogId" widgetVar="graphDialog" header="Graphics Center"
-                  width="540"
+                  width="560"
+                  height="540"
                   appendTo="@(body)"
                   dynamic="true"
                   draggable="true" closable="true" resizable="true"
                   onShow="PrimeFaces.ajax.Request.handle({source: this.id, update: 'myGraphPane:formgraph myGraphPane:rPlotCustomizationForm'});">
 
-      
-                <p:tabView id="myGraphPane" style="width:100%; border: none; font-size: 13px" class="surface-card shadow-1 p-0 text-800">
-                    <p:ajax event="tabChange"
-                            update=":myGraphPane"
-                            oncomplete="PF('graphDialog').jq.position({
-                            my: 'center center',
-                            at: 'center center',
-                            of: window
-                            });"/>
-                    <p:tab title ="Hi-res Images">
-                        <h:form id="formgraph">
-                            <h:panelGrid columns="2" style="width:380px;">
-                                <h:panelGrid columns="2" style="padding-top: 10px; padding-left: 20px">
+            <p:tabView id="myGraphPane" style="width:100%; border: none; font-size: 13px" class="surface-card shadow-1 p-0 text-800">
+                <p:ajax event="tabChange" update=":myGraphPane"/>
+                <p:tab title ="Resolution">
+                    <h:form id="formgraph">
+                        <h:panelGrid style="width:100%;">
+                            <h:panelGrid columns="2" style="padding-top: 10px; padding-left: 20px">
 
-                                    <h:panelGroup layout="inline">
-                                        <h:outputText id="typeLbl" value="Type:"/>
-                                        <h:outputLink id="typeHelp" style="margin-left:6px; cursor:help;" onclick="return false;">
-                                            <i class="pi pi-info-circle" style="font-size:1rem;"></i>
-                                        </h:outputLink>
-                                    </h:panelGroup>
+                                <h:panelGroup layout="block" style="width:100px">
+                                    <h:outputLabel value="Type:"/>
+                                    <h:outputLink id="typeHelp" style="margin-left:6px; cursor:help;" onclick="return false;">
+                                        <i class="pi pi-info-circle" style="font-size:1rem;"></i>
+                                    </h:outputLink>
+                                </h:panelGroup>
 
-                                    <p:selectOneMenu id="themeOpts" value="#{sessionBean1.graphTypeOptAI}">
-                                        <f:selectItem itemValue="default" itemLabel="Default"/>
-                                        <f:selectItem itemValue="ai"      itemLabel="AI-generated"/>
-                                    </p:selectOneMenu>
+                                <p:selectOneRadio id="themeOpts" value="#{sessionBean1.graphTypeOptAI}">
+                                    <f:selectItem itemValue="default" itemLabel="Default image"/>
+                                    <f:selectItem itemValue="ai"      itemLabel="AI-generated"/>
+                                </p:selectOneRadio>
 
-                                    <h:outputLabel value="Format:"/>
-                                    <p:selectOneMenu value="#{sessionBean1.formatOpt}">
-                                        <f:selectItem itemLabel="PNG" itemValue="png"/> 
-                                        <f:selectItem itemLabel="TIFF" itemValue="tiff"/> 
-                                        <f:selectItem itemLabel="PDF" itemValue="pdf"/> 
-                                        <f:selectItem itemLabel="SVG" itemValue="svg"/> 
-                                        <f:selectItem itemLabel="PostScript" itemValue="ps"/> 
-                                    </p:selectOneMenu> 
-                                    <h:outputLabel value="Resolution:"/>
-                                    <p:selectOneMenu value="#{sessionBean1.dpiOpt}">
-                                        <f:selectItem itemLabel="96 DPI" itemValue="96"/>  
-                                        <f:selectItem itemLabel="150 DPI" itemValue="150"/>  
-                                        <f:selectItem itemLabel="300 DPI" itemValue="300"/>  
-                                    </p:selectOneMenu> 
-                                    <h:outputLabel value="Size:"/>
-                                    <p:selectOneMenu value="#{sessionBean1.sizeOpt}">
-                                        <f:selectItem itemLabel="Default" itemValue="NA"/>  
-                                        <f:selectItem itemLabel="7 inches" itemValue="7"/>  
-                                        <f:selectItem itemLabel="12 inches" itemValue="12"/>  
-                                    </p:selectOneMenu>
-                                    <p:tooltip for="typeHelp" styleClass="helpTip" position="right" showEffect="fade" hideEffect="fade">
-                                        <p>
-                                            Note: a customized function must be generated first in the
-                                            <strong>Customization</strong> tab. After saving, choose
-                                            <em>AI-generated</em> to use it; otherwise the default plot is used.
-                                        </p>
-                                    </p:tooltip>
-                                </h:panelGrid>
+                                <h:outputLabel value="Resolution:"/>
+                                <p:selectOneRadio value="#{sessionBean1.dpiOpt}">
+                                    <f:selectItem itemLabel="96 DPI" itemValue="96"/>  
+                                    <f:selectItem itemLabel="150 DPI" itemValue="150"/>  
+                                    <f:selectItem itemLabel="300 DPI" itemValue="300"/>  
+                                </p:selectOneRadio> 
+
+                                <h:outputLabel value="Format:"/>
+                                <p:selectOneMenu value="#{sessionBean1.formatOpt}">
+                                    <f:selectItem itemLabel="PNG" itemValue="png"/> 
+                                    <f:selectItem itemLabel="TIFF" itemValue="tiff"/> 
+                                    <f:selectItem itemLabel="PDF" itemValue="pdf"/> 
+                                    <f:selectItem itemLabel="SVG" itemValue="svg"/> 
+                                    <f:selectItem itemLabel="PostScript" itemValue="ps"/> 
+                                </p:selectOneMenu> 
+
+                                <h:outputLabel value="Size:"/>
+                                <p:selectOneMenu value="#{sessionBean1.sizeOpt}">
+                                    <f:selectItem itemLabel="Default" itemValue="NA"/>  
+                                    <f:selectItem itemLabel="7 inches" itemValue="7"/>  
+                                    <f:selectItem itemLabel="12 inches" itemValue="12"/>  
+                                </p:selectOneMenu>
+                                <p:tooltip for="typeHelp" styleClass="helpTip" position="right" showEffect="fade" hideEffect="fade">
+                                    <p>
+                                        Note: a customized function must be generated first in the
+                                        <strong>Customization</strong> tab. After saving, choose
+                                        <em>AI-generated</em> to use it; otherwise the default plot is used.
+                                    </p>
+                                </p:tooltip>
+                            </h:panelGrid>
+
+                            <h:panelGrid style="width:100%; text-align: center; padding-top: 10px; padding-bottom: 20px">
                                 <p:commandButton value="Submit" 
+                                                 style="margin:10px"
                                                  update=":myGraphPane:formgraph:glink"
                                                  onclick="PF('statusDialog').show()" 
                                                  oncomplete="PF('statusDialog').hide()"
                                                  actionListener="#{graphBean.graphBn_action()}"/>
-                            </h:panelGrid>
-                            <h:panelGrid style="width:400px; text-align: center; padding-top: 10px; padding-bottom: 20px">
+
+                                <p:divider align="center">
+                                    <span class="ui-tag">Download Link</span>
+                                </p:divider>
                                 <h:outputText id="glink" escape="false" value="#{sessionBean1.imgDownloadTxt}"/>  
                             </h:panelGrid>
-                        </h:form>
-                    </p:tab>
-                    <p:tab title ="Colors &amp; Shapes" rendered="#{graphBean.renderStatus}">
-                        <h:form>
-                            <h:panelGrid columns="2" rendered="#{sessionBean1.analType eq 'mf'}">
-                                <h:outputLabel value="Experimental Factor:"/>
-                                <p:selectOneMenu value="#{sessionBean1.expFac}">  
-                                    <f:selectItems value="#{multifacBean.boxMetaOpts}"/>  
-                                    <p:ajax event="change" update=":myGraphPane" />
-                                </p:selectOneMenu>  
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Colors &amp; Shapes" rendered="#{graphBean.renderStatus}">
+                    <h:form>
+                        <h:panelGrid columns="2" rendered="#{sessionBean1.analType eq 'mf'}">
+                            <h:outputLabel value="Experimental Factor:"/>
+                            <p:selectOneMenu value="#{sessionBean1.expFac}">  
+                                <f:selectItems value="#{multifacBean.boxMetaOpts}"/>  
+                                <p:ajax event="change" update=":myGraphPane" />
+                            </p:selectOneMenu>  
+                        </h:panelGrid>
+                        <h:panelGrid style="text-align: center; width: 100%; ">
+                            <p:dataTable id="colTbl" style="margin-bottom: 20px; width: 500px !important; text-align: left" 
+                                         var="colorBean" value="#{sessionBean1.colorBeanLists}">  
+                                <p:column headerText="Group" style="width:30%">  
+                                    <h:outputLabel value="#{colorBean.grpName}" />  
+                                </p:column>  
+                                <p:column headerText="Color" style="width:40%">  
+                                    <p:colorPicker value="#{colorBean.colorPopup}"/>
+                                </p:column>  
+                                <p:column headerText="Shape*" style="width:30%">  
+                                    <p:inputText style="width:80px" value="#{colorBean.shapeType}"/>
+                                </p:column> 
+                            </p:dataTable>
+                            <p:commandButton value="Submit" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"
+                                             actionListener="#{graphBean.updateColorScheme()}"/>    
+                        </h:panelGrid>
+                        <h:panelGrid columns="2" style="text-align: left">
+                            <h:panelGrid style="width: 200px; line-height: 22px">
+                                <b style="font-size: 1.2em">Note: </b> <br/> 
+                                <ul style="margin-left: 0; padding-left: 0">
+                                    <li>
+                                        This setting only affects those graphics with group-specific color scheme
+                                    </li>
+                                    <li>
+                                        The <b>shape</b> option currently only affects <u>scores plots</u> in PCA and PLS-DA. 
+                                    </li>
+                                    <li>
+                                        Use shape code <b>0</b> will set it to default shapes. 
+                                    </li>
+                                </ul>
                             </h:panelGrid>
-                            <h:panelGrid style="text-align: center">
-                                <p:dataTable id="colTbl" style="margin-bottom: 20px; width: 420px; text-align: left" 
-                                             var="colorBean" value="#{sessionBean1.colorBeanLists}">  
-                                    <p:column headerText="Group" style="width:120px">  
-                                        <h:outputLabel value="#{colorBean.grpName}" />  
-                                    </p:column>  
-                                    <p:column headerText="Color" style="width:180px">  
-                                        <p:colorPicker value="#{colorBean.colorPopup}"/>
-                                    </p:column>  
-                                    <p:column headerText="Shape*">  
-                                        <p:inputText style="width:100px" value="#{colorBean.shapeType}"/>
-                                    </p:column> 
-                                </p:dataTable>
-                                <p:commandButton value="Submit" 
-                                                 onclick="PF('statusDialog').show()" 
-                                                 oncomplete="PF('statusDialog').hide()"
-                                                 actionListener="#{graphBean.updateColorScheme()}"/>    
+                            <h:panelGrid style="padding-left: 20px">
+                                <b style="font-size: 1.2em">*Shape Code: </b><br/><br/>
+                                <img src="#{facesContext.externalContext.requestContextPath}/resources/images/symbolsw.png" 
+                                     style="width: 220px"
+                                     alt="Symbols"/>
                             </h:panelGrid>
-                            <h:panelGrid columns="2" style="text-align: left">
-                                <h:panelGrid style="width: 200px; line-height: 22px">
-                                    <b style="font-size: 1.2em">Note: </b> <br/> 
-                                    <ul style="margin-left: 0; padding-left: 0">
-                                        <li>
-                                            This setting only affects those graphics with group-specific color scheme
-                                        </li>
-                                        <li>
-                                            The <b>shape</b> option currently only affects <u>scores plots</u> in PCA and PLS-DA. 
-                                        </li>
-                                        <li>
-                                            Use shape code <b>0</b> will set it to default shapes. 
-                                        </li>
-                                    </ul>
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 20px">
-                                    <b style="font-size: 1.2em">*Shape Code: </b><br/><br/>
-                                    <img src="#{facesContext.externalContext.requestContextPath}/resources/images/symbolsw.png" 
-                                         style="width: 220px"
-                                         alt="Symbols"/>
-                                </h:panelGrid>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+
+                <p:tab title ="Customization">
+                    <h:form id="rPlotCustomizationForm">
+
+                        <h:panelGrid style="width:100%;">
+                            <!-- Customization Instructions -->
+                            <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
+                            <p:inputTextarea id="customizationPrompt" 
+                                             value="#{rPlotCustomizationBean.prompt}"
+                                             rows="7" 
+                                             style="width:90%"
+                                             placeholder="Describe how you want to customize the plot. For example:
+                                             - Change colors (e.g., 'Use a blue color scheme')
+                                             - Adjust text size (e.g., 'Make labels larger')
+                                             - Modify layout (e.g., 'Increase spacing between plots')
+                                             - Change sizes (e.g., 'Make the plot wider')
+                                             - Add features (e.g., 'Add a grid to the background')" />
+
+                            <h:panelGrid style="width:100%; text-align: center; padding: 10px" columns="2">
+                                <p:commandButton value="Reset"
+                                                 icon="pi pi-refresh"
+                                                 style="display:block;margin:0 auto;"
+                                                 actionListener="#{rPlotCustomizationAgent.resetToDefault(sessionBean1.imageSource)}"
+                                                 update=":myGraphPane:rPlotCustomizationForm"
+                                                 onstart="$('#custProgressBar').show();"
+                                                 oncomplete="$('#custProgressBar').hide();" />
+
+                                <p:commandButton value="Submit"
+                                                 style="display:block;margin:0 auto;"
+                                                 action="#{rPlotCustomizationBean.applyCustomization}"
+                                                 update=":myGraphPane:rPlotCustomizationForm"
+                                                 onstart="$('#custProgressBar').show();"
+                                                 oncomplete="$('#custProgressBar').hide();" />
                             </h:panelGrid>
-                        </h:form>
-                    </p:tab>
-                    <!--
-                    <p:tab title="Styling">
-                        <h:form id="styleForm">
-
-                            <p:panelGrid id="styleGrid" columns="4"
-                                         styleClass="ui-noborder ui-grid-responsive"
-                                         columnClasses="styleCell">
-
-                                <p:commandLink update=":myGraphPane"
-                                               action="#{graphStyleBean.selectStyle('0')}"
-                                               styleClass="#{graphStyleBean.selectedStyle eq '0'
-                                  ? 'style-icon-selected' : 'style-icon'}">
-         <img onerror="this.style.display='none'"
-              src="#{graphStyleBean.iconPath('0')}"
-              width="60" height="60" alt="Default"/>
-     </p:commandLink>
-
-     <p:commandLink update=":myGraphPane"
-                    action="#{graphStyleBean.selectStyle('1')}"
-                    styleClass="#{graphStyleBean.selectedStyle eq '1'
-                                  ? 'style-icon-selected' : 'style-icon'}">
-         <img onerror="this.style.display='none'"
-              src="#{graphStyleBean.iconPath('1')}"
-              width="60" height="60" alt="Dark"/>
-     </p:commandLink>
-
-     <p:commandLink update=":myGraphPane"
-                    action="#{graphStyleBean.selectStyle('2')}"
-                    styleClass="#{graphStyleBean.selectedStyle eq '2'
-                                  ? 'style-icon-selected' : 'style-icon'}">
-         <img onerror="this.style.display='none'"
-              src="#{graphStyleBean.iconPath('2')}"
-              width="60" height="60" alt="Color-blind"/>
-     </p:commandLink>
-
-     <p:commandLink update=":myGraphPane"
-                    action="#{graphStyleBean.selectStyle('3')}"
-                    styleClass="#{graphStyleBean.selectedStyle eq '3'
-                                  ? 'style-icon-selected' : 'style-icon'}">
-         <img onerror="this.style.display='none'"
-              src="#{graphStyleBean.iconPath('3')}"
-              width="60" height="60" alt="Publication"/>
-     </p:commandLink>
-
- </p:panelGrid>
-
- <p:outputLabel value="Preview:" style="font-weight:bold; display:block; margin-top:8px"/>
- <p:outputPanel id="previewPanel" style="text-align:center">
-     <img onerror="this.style.display='none'"
-          src="#{graphStyleBean.previewImage}"
-          width="240" height="160"
-          class="shadow-2 surface-border" alt="Preview"/>
- </p:outputPanel>
- <h:panelGroup layout="block" style="text-align:center; margin-top:10px">
-
-     <p:commandLink ajax="false" styleClass="shadow-2 surface-border">
-         Download
-         <p:fileDownload value="#{graphStyleBean.previewContent}" />
-     </p:commandLink>
- </h:panelGroup>
-
-</h:form>
-</p:tab>
-                    -->
-
-                    <p:tab title ="Customization">
-                        <h:form id="rPlotCustomizationForm">
-
-                            <h:panelGrid style="width:100%;">
-                                <!-- Customization Instructions -->
-                                <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
-                                <p:inputTextarea id="customizationPrompt" 
-                                                 value="#{rPlotCustomizationBean.prompt}"
-                                                 rows="7" 
-                                                 style="width:100%"
-                                                 placeholder="Describe how you want to customize the plot. For example:
-                                                 - Change colors (e.g., 'Use a blue color scheme')
-                                                 - Adjust text size (e.g., 'Make labels larger')
-                                                 - Modify layout (e.g., 'Increase spacing between plots')
-                                                 - Change sizes (e.g., 'Make the plot wider')
-                                                 - Add features (e.g., 'Add a grid to the background')" />
-
-                                <h:panelGrid style="width:100%; text-align: center; padding: 10px" columns="2">
-                                    <p:commandButton value="Reset"
-                                                     icon="pi pi-refresh"
-                                                     style="display:block;margin:0 auto;"
-                                                     actionListener="#{rPlotCustomizationAgent.resetToDefault(sessionBean1.imageSource)}"
-                                                     update=":myGraphPane:rPlotCustomizationForm"
-                                                     onstart="$('#custProgressBar').show();"
-                                                     oncomplete="$('#custProgressBar').hide();" />
-
-                                    <p:commandButton value="Submit"
-                                                     style="display:block;margin:0 auto;"
-                                                     action="#{rPlotCustomizationBean.applyCustomization}"
-                                                     update=":myGraphPane:rPlotCustomizationForm"
-                                                     onstart="$('#custProgressBar').show();"
-                                                     oncomplete="$('#custProgressBar').hide();" />
-                                </h:panelGrid>
-                                <p:divider align="center">
-                                    <span class="ui-tag">Preview</span>
-                                </p:divider>
-                                <p:scrollPanel mode="native" id="previewPanel" style="text-align:center; height:220px;">
-                                    <h:outputLink value="#{rPlotCustomizationBean.previewImage}" target="_blank">
-                                        <img onerror="this.style.display='none'"
-                                             src="#{rPlotCustomizationBean.previewImage}"
-                                             width="360"
-                                             class="shadow-2 surface-border"
-                                             alt="Preview"/>
-                                    </h:outputLink>
-                                </p:scrollPanel>
-                            </h:panelGrid>
-                        </h:form>
-                    </p:tab>
-                </p:tabView> 
-                <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
-                     class="indeterminate-progress-bar">
-                    <div class="indeterminate-progress-bar__progress"></div>
-                </div>
+                            <p:divider align="center">
+                                <span class="ui-tag">Preview</span>
+                            </p:divider>
+                            <p:scrollPanel mode="native" id="previewPanel" style="text-align:center; height:220px;">
+                                <h:outputLink value="#{rPlotCustomizationBean.previewImage}" target="_blank">
+                                    <img onerror="this.style.display='none'"
+                                         src="#{rPlotCustomizationBean.previewImage}"
+                                         width="360"
+                                         class="shadow-2 surface-border"
+                                         alt="Preview"/>
+                                </h:outputLink>
+                            </p:scrollPanel>
+                        </h:panelGrid>
+                    </h:form>
+                </p:tab>
+            </p:tabView> 
+            <div id="custProgressBar" style="display:none; margin-bottom:8px;" 
+                 class="indeterminate-progress-bar">
+                <div class="indeterminate-progress-bar__progress"></div>
+            </div>
         </p:dialog>
     </h:body>
 </html>
