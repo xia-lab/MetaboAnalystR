@@ -184,6 +184,7 @@ public class WorkflowView implements Serializable {
                     case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak" -> {
                         sb.addNaviTrack("Data check", "/Secure/process/SanityCheck.xhtml");
                         ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                        pb.performSanityCheck();
                         pb.skipButton_action_default();
                         if (!sb.isMissingDisabled()) {
                             boolean resBool = checkWorkflowContained("performMissingImpute");

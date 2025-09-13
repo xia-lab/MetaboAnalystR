@@ -35,6 +35,8 @@ import pro.metaboanalyst.spectra.SpectraControlBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.primefaces.PrimeFaces;
+import org.rosuda.REngine.Rserve.RConnection;
+import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.rwrappers.RCenter;
@@ -160,8 +162,9 @@ public class MyPhaseListener implements PhaseListener {
                     handleVerifiedRequest(event);
                 case ACTIVATE_REQUEST ->
                     handleActivationRequest(event);
-                case RESUME_RAW ->
+                case RESUME_RAW -> {
                     handleResumeRawRequest(event);
+                }
                 case FINISH_RAW ->
                     handleFinishRawRequest(event);
                 case EXECUTE_WORKFLOWJOB ->
@@ -269,13 +272,14 @@ public class MyPhaseListener implements PhaseListener {
             String jobId = request.getParameter("jobId");
             String email = request.getParameter("email");
             System.out.println("handleResumeRawRequest_folderName===" + folderName);
-
             boolean res = dv.resumeRawProject(folderName, jobId, email);
             if (res) {
                 FireUserBean fu = getBeanByName("fireUserBean", FireUserBean.class);
                 fu.setEmail(email);
 
                 RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
+
+                PrimeFaces.current().executeScript("PF('rawWorkflowProgressDialog').hide()");
 
                 fbc.setFireDocName("Workflow Project");
                 boolean saveRes = fbc.saveProject("project");
@@ -654,7 +658,7 @@ public class MyPhaseListener implements PhaseListener {
                     if (res1) {
                         fub.setEmail(email);
                         dv.setWorkflowFinished(true);
-                        
+
                         DataUtils.copyFile(
                                 new File("/data/glassfish/projects/metaboanalyst/" + folderName + "/mSet.rda"),
                                 new File(sb.getCurrentUser().getHomeDir() + "/mSet.rda")
@@ -673,4 +677,14 @@ public class MyPhaseListener implements PhaseListener {
         }
     }
 
+    private static void respondJson(FacesContext ctx, HttpServletResponse resp, int status, String json)
+            throws IOException {
+        resp.reset();
+        resp.setStatus(status);
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        resp.getWriter().write(json);
+        resp.getWriter().flush();
+        ctx.responseComplete(); // <- prevents JSF from rendering a page
+    }
 }

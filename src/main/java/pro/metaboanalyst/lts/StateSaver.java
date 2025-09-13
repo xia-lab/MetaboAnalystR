@@ -48,6 +48,7 @@ import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.controllers.mummichog.PeakUploadBean;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 import pro.metaboanalyst.spectra.TandemMSBean;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -73,6 +74,7 @@ public class StateSaver implements Serializable {
 
     public void saveState() {
 
+    PeakUploadBean pub = bean(PeakUploadBean.class);
     SessionBean1 sb = bean(SessionBean1.class);
     
     HistoryBean hb = bean(HistoryBean.class);
@@ -185,7 +187,7 @@ public class StateSaver implements Serializable {
                         case "mummichog":
                         case "mass_table":
                         case "mass_all":
-
+                            hb.getJavaHistory().put("NA.dummy.PeakUploadBean", DataUtils.convertObjToJson(pub));
                             hb.getJavaHistory().put("NA.dummy.MummiAnalBean", DataUtils.convertObjToJson(mab));
                             break;
 

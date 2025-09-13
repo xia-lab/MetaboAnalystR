@@ -5,8 +5,6 @@
 package pro.metaboanalyst.lts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.annotation.PostConstruct;
-import jakarta.ejb.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -32,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
+import pro.metaboanalyst.workflows.QuartzDbUtils;
 
 /**
  *
@@ -140,25 +139,45 @@ public class JobMonitor {
                             continue;
                         }
 
+                        // ── NEW: read wfstatus from CSV for this job (default to "UNCOMPLETE" if missing/NA/empty)
+                        String wfStatusCsv;
+                        try {
+                            rCmd = "dt <- read.csv('" + dataPath + "', header=TRUE);"
+                                    + "x <- as.character(dt$wfstatus[dt$jobid==" + jid + "]);"
+                                    + "if (length(x)==0 || is.na(x[1]) || nchar(x[1])==0) 'UNCOMPLETE' else x[1]";
+                            wfStatusCsv = RC.eval(rCmd).asString();
+                        } catch (Exception e) {
+                            Logger.getLogger(JobMonitor.class.getName())
+                                    .log(Level.WARNING, "Failed to read wfstatus for job " + jid, e);
+                            wfStatusCsv = "UNCOMPLETE";
+                        }
+                        System.out.println("==== current wfstatus in CSV for job " + jid + " => " + wfStatusCsv);
+
                         if (!wfBool) {
                             res = sendReminderEmail(job_status, jid, job_email);
 
                         } else {
+                            
 
-                            if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
-                                    & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
-                                res = sendPostRequest("vip2", folderName, jid, job_email);
-                                //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip2", folderName);
-                            } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
-                                res = sendPostRequest("vip", folderName, jid, job_email);
-                                //sendResumeEmailTest("RAW_COMPLETED", jid, job_email, "vip", folderName);
-                            } else if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
-                                // Qiang's local for testing purpose
-                                System.out.println("before sendPostRequest Qiang's local <=========");
-                                res = sendPostRequest("localhost", folderName, jid, job_email);
-                            }
+                                if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
+                                        & Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
+                                    sendPostRequest("vip2", folderName, jid, job_email);
+                                    res=true;
+                                } else if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))) {
+                                    res = sendPostRequest("vip", folderName, jid, job_email);
+                                } else if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
+                                    // Qiang's local for testing purpose
+                                    System.out.println("before sendPostRequest Qiang's local <=========");
+                                    res = sendPostRequest("localhost", folderName, jid, job_email);
+                                }
+
+                                rCommand = "dt <- read.csv(\"" + dataPath + "\", header = TRUE);"
+                                        + "idx <- dt$jobid==" + jid + ";"
+                                        + "if (any(idx)) dt$wfstatus[idx] <- \"WORKFLOW_PROGRESS\";"
+                                        + "write.csv(dt, file = \"" + dataPath + "\", row.names = FALSE)";
+                                RC.voidEval(rCommand);
+                            
                         }
-
                     }
 
                     if (res) {
@@ -179,6 +198,30 @@ public class JobMonitor {
             }
         } catch (RserveException | REXPMismatchException ex) {
             Logger.getLogger(JobMonitor.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public static String readWfStatusOnceByFolder(String folderName) {
+        RConnection rc = null;
+        try {
+            rc = new RConnection("127.0.0.1", 6311);
+            String DATA_PATH = "/data/glassfish/projects/data/all_slurm_jobs.csv";
+
+            // Read wfstatus for the given folder; return "" if NA/missing
+            String read
+                    = "dt <- read.csv('" + DATA_PATH + "', header=TRUE);\n"
+                    + "x <- dt$wfstatus[dt$folder == '" + folderName + "'];\n"
+                    + "if (length(x)==0 || is.na(x[1])) '' else as.character(x[1])";
+            String wf = rc.eval(read).asString();
+            return (wf == null || "NA".equals(wf)) ? "" : wf;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        } finally {
+            if (rc != null) try {
+                rc.close();
+            } catch (Exception ignore) {
+            }
         }
     }
 

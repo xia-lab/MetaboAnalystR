@@ -7,6 +7,7 @@ package pro.metaboanalyst.controllers.mummichog;
 
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -22,10 +23,12 @@ import org.apache.logging.log4j.Logger;
  *
  * @author jianguox
  */
-@RequestScoped
+@SessionScoped
 @Named("peakLoader")
 public class PeakUploadBean implements Serializable {
 
+    @Inject
+    PeakUploadFileBean pfb;
     @Inject
     ApplicationBean1 ab;
     @Inject
@@ -34,8 +37,6 @@ public class PeakUploadBean implements Serializable {
     @Inject
     MummiAnalBean mb;
 
-    private UploadedFile peakFile;
-    private UploadedFile peakFileTable;
     private double instrumentOpt = 5;
     private int permNum = 100;
     private String msModeOpt = "negative";
@@ -104,14 +105,6 @@ public class PeakUploadBean implements Serializable {
         }
     }
 
-    public UploadedFile getPeakFileTable() {
-        return peakFileTable;
-    }
-
-    public void setPeakFileTable(UploadedFile peakFileTable) {
-        this.peakFileTable = peakFileTable;
-    }
-
     public String getDataFormat() {
         return dataFormat;
     }
@@ -176,14 +169,6 @@ public class PeakUploadBean implements Serializable {
 
     public void setOrgOpt(String orgOpt) {
         this.orgOpt = orgOpt;
-    }
-
-    public UploadedFile getPeakFile() {
-        return peakFile;
-    }
-
-    public void setPeakFile(UploadedFile peakFile) {
-        this.peakFile = peakFile;
     }
 
     private String examplePeakList = "ibd";
@@ -363,8 +348,8 @@ public class PeakUploadBean implements Serializable {
         if (dataType.equals("table")) {
             loginOpt = "mass_table";
             setDataType("table");
-        }else{
-           sb.setUploadType("list");
+        } else {
+            sb.setUploadType("list");
         }
 
         if (!sb.doLogin(loginOpt, "mummichog", false, false)) {
@@ -374,8 +359,10 @@ public class PeakUploadBean implements Serializable {
 
         String fileName;
         if (dataType.equals("table")) {
-            peakFile = peakFileTable;
+            pfb.setPeakFile(pfb.getPeakFileTable());
+            
         }
+        UploadedFile peakFile= pfb.getPeakFile();
         try {
             if (peakFile == null || peakFile.getSize() == 0) {
                 sb.addMessage("Error", "File is empty!");

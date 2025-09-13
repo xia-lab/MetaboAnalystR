@@ -83,6 +83,7 @@ import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
 import pro.metaboanalyst.controllers.meta.MetaResBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.controllers.mummichog.PeakUploadBean;
 import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 import pro.metaboanalyst.spectra.TandemMSBean;
@@ -135,6 +136,9 @@ public class FireBaseController implements Serializable {
 
     @Inject
     private DatasetController dc;
+
+    @Inject
+    private PeakUploadBean pub;
 
     private String shareableLink = "";
 
@@ -529,6 +533,7 @@ public class FireBaseController implements Serializable {
                         case "mummichog":
                         case "mass_table":
                         case "mass_all":
+                            hb.getJavaHistory().put("NA.dummy.PeakUploadBean", DataUtils.convertObjToJson(pub));
 
                             hb.getJavaHistory().put("NA.dummy.MummiAnalBean", DataUtils.convertObjToJson(mab));
                             break;

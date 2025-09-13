@@ -266,7 +266,7 @@ CreatePCASlides <- function(mSetObj = NA) {
     cat(slideContent, file = rmdFile, append = TRUE)
 
     # PCA 2D Scores Plot
-    slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca.score2d, sprintf("PCA 2D scores plot showing the distribution of samples in the space defined by the first two principal components."))
+    slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca_score2d, sprintf("PCA 2D scores plot showing the distribution of samples in the space defined by the first two principal components."))
     cat(slideContent, file = rmdFile, append = TRUE)
 
     # PCA biplot

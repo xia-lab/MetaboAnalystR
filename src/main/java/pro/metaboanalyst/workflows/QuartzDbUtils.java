@@ -26,8 +26,6 @@ public class QuartzDbUtils {
             Logger.getLogger(QuartzDbUtils.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        // Or if you use a direct driver approach:
-        // (Not recommended for production due to pooling concerns)
         String url = "jdbc:postgresql://localhost:5432/quartzdb";
         return DriverManager.getConnection(url, "quartz", "quartz_xialab_$Omics!");
     }
@@ -66,7 +64,7 @@ public class QuartzDbUtils {
             if (rowsUpdated == 0) {
                 // No row found for that jobId
                 System.out.println("No row found to update for jobId=" + jobId);
-            }
+            } 
 
         } catch (SQLException e) {
             e.printStackTrace();

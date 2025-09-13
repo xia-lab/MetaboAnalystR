@@ -1509,7 +1509,7 @@ public class DiagramView implements Serializable {
                 jh = jh.replace(":\"[{\"", ":[{\\\"");
                 String folderName = params.getFolderName();
                 DataUtils.createAndCopyFolder(sb.getCurrentUser().getHomeDir(), sb.getCurrentUser().getHomeDir() + "/" + folderName);
-                saveJsonStringToFile(jh, sb.getCurrentUser().getHomeDir() + File.separator  + folderName + File.separator +"java_history.json");
+                saveJsonStringToFile(jh, sb.getCurrentUser().getHomeDir() + File.separator + folderName + File.separator + "java_history.json");
 
                 workflowIndex++;
 
@@ -1725,6 +1725,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
+                System.out.println("homedir============" + sb.getCurrentUser().getHomeDir());
                 if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
@@ -2212,7 +2213,7 @@ public class DiagramView implements Serializable {
         RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getHomeDir());
         sb.setCurrentNaviUrl("/Secure/xialabpro/DashboardView.xhtml");
         sb.setAnalType("roc");
-
+        System.out.println("resumeRawProject=====FINISHED");
         return true;
     }
 
@@ -2776,7 +2777,6 @@ public class DiagramView implements Serializable {
             if (entry.getValue() != null && entry.getValue()) {
                 if (!successExecutionMap.getOrDefault(entry.getKey(), true)) {
                     executionMap.put(entry.getKey(), false);
-
                 } else {
                     executionMap.put(entry.getKey(), true);
                 }

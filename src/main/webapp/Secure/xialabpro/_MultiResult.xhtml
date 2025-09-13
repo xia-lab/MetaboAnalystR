@@ -140,7 +140,7 @@
                             </f:facet>
                             <p:commandLink value="#{summary.runId}" 
                                            actionListener="#{downloader.loadDetails(summary)}"
-                                           update="form2"
+                                           update="detailsDialogForm"
                                            oncomplete="PF('detailsDialog').show();" />
                         </p:column>
                         <p:column style="text-align:center;width:125px;">
@@ -397,6 +397,9 @@
     </h:panelGrid>
     
     <p:dialog id="detailsDialog" widgetVar="detailsDialog" header="Workflow Details" modal="true" resizable="false" width="500">
+        <h:form id="detailsDialogForm">
+            
+
         <p:outputPanel style="padding: 15px; text-align: left; font-size: 14px;">
 
             <!-- Display Detail Text -->
@@ -404,6 +407,7 @@
                 <h:outputText value="#{downloader.selectedWorkflowParams.detailTextHtml}" escape="false" />
             </p:outputPanel>
         </p:outputPanel>
+        </h:form>
     </p:dialog>
 
     <!-- Keep the annotation dialog if you still need it -->

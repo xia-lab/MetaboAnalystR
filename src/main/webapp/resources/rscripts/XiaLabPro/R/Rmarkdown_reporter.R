@@ -21,8 +21,12 @@ PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
         if (module != "raw") {
             print("LOADING RLOAD=========");
             print(getwd());
-            load('Rload.RData')
+            load("Rload.RData")
+            mSetObj <- .get.mSet(mSetObj);
         }
+    }else{
+  mSetObj <- .get.mSet(mSetObj);
+
     }
     if(!is.null(mSetObj$dataSet$meta.info)){
     print(head(mSetObj$dataSet$meta.info))

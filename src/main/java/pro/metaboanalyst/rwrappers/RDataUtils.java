@@ -1712,7 +1712,7 @@ public class RDataUtils {
     // final sanity check to set up dataSet$proc; return feature number
     public static int performSanityClosure(RConnection RC) {
         try {
-            String rCommand = "PerformSanityClosure (NA);";
+            String rCommand = "PerformSanityClosure(NA);";
             RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asInteger();
         } catch (Exception e) {

@@ -204,7 +204,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$fc, 
                     "', out.width = '75%', out.height='650px'}"),
-                "if (mSetObj$paramSet$report.format == 'html') {",
+                "if (mSetObj$paramSet$report.format == 'html'  && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotFC(NA, '', 'png', 72, NA, interactive=T)",
                 "} else {",
                 "  knitr::include_graphics(mSetObj$imgSet$fc)",
@@ -253,7 +253,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                       ". Significant features selected by T-tests. The p values are transformed by -log10 so that the more significant features are higher on the graph.',", 
                       " fig.lp='", mSetObj$imgSet$tt, 
                       "', out.width = '75%', out.height = '650px'}"),
-                "if (mSetObj$paramSet$report.format == 'html') {",
+                "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotTT(NA, '', 'png', 72, NA, interactive=T)",
                 "} else {",
                 "  knitr::include_graphics(mSetObj$imgSet$tt)",
@@ -306,7 +306,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$volcano, 
                     "', out.width = '", getFigWidth(mSetObj), "', out.height='650px'}"),
-                "if (mSetObj$paramSet$report.format == 'html') {",
+                "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotVolcano(NA, '', mSet$analSet$volcano.plot.config$plotLbl, mSet$analSet$volcano.plot.config$plotTheme, 'png', 72, NA, interactive=T)",
                 "} else {",
                 "  knitr::include_graphics(mSetObj$imgSet$volcano)",
@@ -383,7 +383,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
              mSetObj$analSet$aov$raw.thresh, ".', ",
              "fig.lp='fig:", "anova', ", # Customize the label pointer as needed
              "out.width='", getFigWidth(mSetObj), "'}"),
-      "if (mSetObj$paramSet$report.format == 'html') {",
+      "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
       "  PlotANOVA(NA, interactive=T)",
       "} else {",
       "  knitr::include_graphics(mSetObj$imgSet$anova)",
@@ -450,7 +450,7 @@ CreateCorrDoc <- function(mSetObj=NA){
     cat(reportLinks, file=rmdFile, append=TRUE);
     cat("\n\n", file=rmdFile, append=TRUE);
     fig <- "";
-    if (mSetObj$paramSet$report.format == 'html'){
+    if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm)<1000){
         fig <- c(paste0("```{r figure_corr1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count<<-fig.count+1, 
                         ". Correlation Heatmaps.', ",
                         " fig.lp='", 
@@ -610,7 +610,7 @@ CreatePCAdoc <- function(mSetObj=NA){
   
   # pca scree
   link <- GetSharingLink(mSetObj)
-  reportLinks <- getReportLinks(link, "pca_score2d", "pca_score2f");
+  reportLinks <- getReportLinks(link, "pca_score2d", "pca_score2d");
 
   cat(reportLinks, file=rmdFile, append=TRUE);
   cat("\n\n", file=rmdFile, append=TRUE);
@@ -618,9 +618,9 @@ CreatePCAdoc <- function(mSetObj=NA){
   fig3 <- c(paste0("```{r figure_pca3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_2s, 
                   ". Scores plot between the selected PCs. The explained variances are shown in brackets.', ",
                   " fig.lp='", 
-                  mSetObj$imgSet$pca.score2d, 
+                  mSetObj$imgSet$pca_score2d, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$pca.score2d)",
+           "knitr::include_graphics(mSetObj$imgSet$pca_score2d)",
            "```",
            "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");

@@ -87,7 +87,7 @@
                                     <p:outputLabel value="Data File:"/>
                                     <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
                                 </h:panelGroup>
-                                <p:fileUpload value="#{peakLoader.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                <p:fileUpload value="#{peakFileLoader.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
                             </h:panelGrid>
                             <h:panelGrid style="padding: 10px; text-align: center; width: 780px">
                                 <p:commandButton value="Submit" ajax="false" 
@@ -252,7 +252,7 @@ m.z             p.value                 t.score     mode
                                 </p:selectOneMenu>
 
                                 <p:outputLabel value="Data File:"/>
-                                <p:fileUpload value="#{peakLoader.peakFileTable}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                <p:fileUpload value="#{peakFileLoader.peakFileTable}" mode="simple" skinSimple="true" style="line-height: 18px"/>
                             </h:panelGrid>
                             <h:panelGrid style="padding: 10px; text-align: center; width: 780px">
                                 <p:commandButton value="Submit" ajax="false" 

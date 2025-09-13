@@ -214,9 +214,8 @@ public class DownloadBean implements Serializable {
             return; // Skip ajax requests.
         }
 
-        sb.buildCustomNaviTree();
-
         if (!tableInit) {
+            sb.buildCustomNaviTree();
 
             if (wb.getCalledWorkflows().contains("ORA")) {
                 if (mstb.getOraBeans() == null) {
@@ -494,16 +493,16 @@ public class DownloadBean implements Serializable {
                     downloads[i] = new ResultBean(fileNMA, fileNMB, fileNMALink, fileNMBLink);
                 }
             } else {
-*/
-                for (int i = 0; i < rowNum; i++) {
-                    fileNMA = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
-                    if (i == rowNum - 1 && added) {
-                        fileNMB = "";
-                    } else {
-                        fileNMB = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
-                    }
-                    downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
+             */
+            for (int i = 0; i < rowNum; i++) {
+                fileNMA = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
+                if (i == rowNum - 1 && added) {
+                    fileNMB = "";
+                } else {
+                    fileNMB = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
                 }
+                downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
+            }
             //}
         }
 
@@ -916,7 +915,7 @@ public class DownloadBean implements Serializable {
                         || name.endsWith(".png")
                         || (name.endsWith(".R") & !name.endsWith("ExecuteRawSpec.R"))
                         || name.endsWith(".json")
-                        || name.endsWith(".pdf") 
+                        || name.endsWith(".pdf")
                         || name.endsWith("msn_result.zip");
             } else {
                 return name.endsWith(".csv")
@@ -1278,9 +1277,9 @@ public class DownloadBean implements Serializable {
         //Change path
         sb.getCurrentUser().setHomeDir(sb.getCurrentUser().getOrigHomeDir() + "/" + subFolder);
         sb.getCurrentUser().setRelativeDir(sb.getCurrentUser().getOrigRelativeDir() + "/" + subFolder);
-        
+
         System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
-        
+
         currentSubFolder = subFolder;
         wb.setCurrentSubFolder(subFolder);
         setupDownloadTable("");
@@ -1288,7 +1287,7 @@ public class DownloadBean implements Serializable {
 
         RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getHomeDir() + "/");
         RCenter.setResourceDir(sb.getRConnection(), ab.getRealPath());
-        
+
         //String javaHistory = fbc.readJsonStringFromFile(sb.getCurrentUser().getHomeDir() + File.separator + "java_history.json");
         //int res1 = fbc.loadJavaHistory(javaHistory);
         for (String module : wb.getModuleNames()) {
@@ -1325,6 +1324,8 @@ public class DownloadBean implements Serializable {
         System.out.println(selectedSummary.getPcaImage() + "======isFilterUnmapped");
         WorkflowParameters opt = wb.getWorkflowParameterByFolderName(selectedSummary.getRunId());
         selectedWorkflowParams = opt;
+                System.out.println(selectedWorkflowParams.getDetailTextHtml() + "======text");
+
     }
 
     private int getAnalysisOrderIndex(String figure) {
