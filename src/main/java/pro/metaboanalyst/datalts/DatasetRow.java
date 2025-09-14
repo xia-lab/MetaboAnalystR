@@ -186,8 +186,9 @@ public class DatasetRow implements Serializable {
     }
 
     public int getSamplenum() {
-        return samplenum;
+        return samplenum ;
     }
+    
 
     public void setSamplenum(int samplenum) {
         this.samplenum = samplenum;
@@ -213,6 +214,10 @@ public class DatasetRow implements Serializable {
     private boolean hasMetadata;   // derived
 
     public int getFileCount() {
+        return fileCount;
+    }
+    
+        public int getFileCountAdjusted() {
         return fileCount;
     }
 
