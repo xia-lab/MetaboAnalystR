@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -38,7 +37,6 @@ import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.Date;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
@@ -55,7 +53,6 @@ import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.context.Flash;
 import jakarta.faces.event.PhaseId;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -65,8 +62,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -97,7 +92,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
-import java.util.Locale;
 import pro.metaboanalyst.lts.FunctionInfo;
 
 /**
@@ -153,6 +147,18 @@ public class DataUtils {
         rcmd = rcmd.replace(", ", "\",\"");
         rcmd = rcmd.replace("]", "\")");
         return rcmd;
+    }
+
+    public static String replaceMarkup(String input) {
+        // Replace the opening backticks with <b>
+        String regex = "```(.*?)```";
+
+        // Replacement string uses a backreference to the captured group
+        String replacement = "<b>$1</b>";
+
+        // Use replaceAll to replace all paired occurrences
+        return input.replaceAll(regex, replacement);
+
     }
 
     // create a tempature user accoutn if user log in as a guest will not remember, only session only

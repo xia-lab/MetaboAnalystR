@@ -21,7 +21,7 @@
               position="center center" onShow="PF('uploadDialog').initPosition()"
               hideEffect="explode" resizable="true">          
 
-        <p:tabView widgetVar="tabWidget" id="ac" style="width:100%; border: none; font-size: 13px;" >
+        <p:tabView widgetVar="tabWidget" id="ac" style="width:100%; border: none; font-size: 13px;" class="surface-card shadow-1 p-0 text-800">
             <p:tab title ="Upload">
                 <h:form id="uploadform" enctype="multipart/form-data">
 
@@ -29,7 +29,7 @@
                         <p:remoteCommand name="validateFiles" actionListener="#{uploadBean.checkIntegrity}"/>
                         <div>
                             <p>
-                                <b>Drag-and-drop</b> your gene expression tables (max 10 files, maximum 200MB per file).  
+                                <b>Drag-and-drop</b> your data tables (max 10 files, maximum 200MB per file).  
                                 Once the upload is completed, process them one by one use the table below.
                                 Please make sure they share same meta-data groups (i.e. Control and Infected in each dataset).
                                 You can also <b>Try Examples</b> on the bottom of the page. 

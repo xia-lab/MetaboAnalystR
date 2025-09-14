@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
-import org.omnifaces.util.Faces;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.workflows.WorkflowView;
 import pro.metaboanalyst.workflows.JavaRecord;
@@ -1866,6 +1865,8 @@ public class SessionBean1 implements Serializable {
 
     public void addMessage(String type, String msg) {
         String pre;
+        //note msg could contain ''' markup, replace with <b>
+        msg = DataUtils.replaceMarkup(msg);
         if (type.equalsIgnoreCase("error")) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", msg));
@@ -1886,7 +1887,7 @@ public class SessionBean1 implements Serializable {
         notice.add(pre + msg + "</font>");
         PrimeFaces.current().ajax().update("globalGrowl");
     }
-
+     
     //relay center
     public void recordRCommandFunctionInfo(String rCmd, String functionName) {
         jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);

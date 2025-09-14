@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ai.xialab</groupId>
     <artifactId>MetaboAnalyst-Pro</artifactId>
-    <version>4.08</version>
+    <version>4.10</version>
     <packaging>war</packaging>
     <name>MetaboAnalyst</name>
     <properties>
@@ -25,14 +25,19 @@
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
-            <version>15.0.5</version>
+            <version>15.0.7</version>
             <classifier>jakarta</classifier>
         </dependency>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>10.0.0</version>
+            <version>11.0.0</version>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.2</version> 
         </dependency>
         <dependency>
             <groupId>org.omnifaces</groupId>

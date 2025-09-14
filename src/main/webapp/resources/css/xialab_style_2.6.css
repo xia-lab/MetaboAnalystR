@@ -353,10 +353,8 @@ body .ui-dialog .ui-dialog-titlebar {
 }
 
 body .ui-dialog .ui-dialog-content {
-    background: var(--surface-100);
-    color:var(--surface-900) !important;
-    border:1px solid var(--surface-400) !important;
-    border-width: 0 1px 1px 1px;
+    padding: 1.5rem 1.5rem 2rem 1.5rem;
+    color:var(--surface-800) !important;
 }
 
 /* unvisited link */
