@@ -525,11 +525,11 @@ doGeneIDMapping <- function(q.vec, org, type){
     hit.inx <- match(q.vec, db.map[, "accession"]);
   }
   
-  if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
+  #if(org %in% c("bta", "dre", "gga", "hsa", "mmu", "osa", "rno")){
     entrezs=db.map[hit.inx, "gene_id"];
-  }else{
-    entrezs=db.map[hit.inx, "symbol"];
-  }
+  #}else{
+  #  entrezs=db.map[hit.inx, "symbol"];
+  #}
   
   rm(db.map, q.vec); gc();
   dbDisconnect(con);
@@ -568,7 +568,8 @@ doGeneEntryMapping <- function(q.vec, org, type){
     # unknown ID type
   }
 
-  kegg_entries <- db.map[hit.inx, "KEGG_entry"];
+  #kegg_entries <- db.map[hit.inx, "KEGG_entry"];
+  kegg_entries <- db.map[hit.inx, "GeneID"];
   rm(db.map, q.vec); gc();
   dbDisconnect(con);
   return(kegg_entries);

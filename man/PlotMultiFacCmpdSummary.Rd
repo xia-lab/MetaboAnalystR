@@ -11,7 +11,7 @@ PlotMultiFacCmpdSummary(
   meta2,
   version,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA
 )
 }

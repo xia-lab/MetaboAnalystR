@@ -7,7 +7,7 @@
 SaintyCheckMSPfile(
   mSetObj = NA,
   filename = "",
-  format_type = "mzmine",
+  format_type = "msp",
   keepAllspec = FALSE
 )
 }
@@ -16,9 +16,9 @@ SaintyCheckMSPfile(
 
 \item{filename}{filename with path}
 
-\item{format_type}{format type, can be 'mzmine' or 'msdial'}
+\item{format_type}{format type, can be 'mgf' or 'msp'}
 
-\item{keepAllspec}{if you want to search all spectra from your local, turn keepAllspec to TRUE. it is FALSE by default.}
+\item{keepAllspec}{if you want to search all spectra from your local, set keepAllspec to TRUE. it is FALSE by default.}
 }
 \description{
 SaintyCheckMSPfile

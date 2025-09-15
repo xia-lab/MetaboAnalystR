@@ -11,7 +11,7 @@ Description: This package contains the R functions and libraries underlying the 
 Depends: R (>= 4.0), methods
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Imports: 
     RBGL, RColorBrewer, RSQLite, Cairo, Rcpp (>= 1.0.5), ggplot2, BiocParallel, progress, Rserve, rlang, 
     jsonlite, plyr, purrr, data.table, vctrs, qs, pROC, caret, crmn, dplyr, edgeR, fgsea, glasso, gplots, igraph, impute,

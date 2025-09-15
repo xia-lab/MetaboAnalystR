@@ -8,7 +8,7 @@ PlotStaticCorrHeatMap(
   mSetObj = NA,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA,
   target,
   cor.method,

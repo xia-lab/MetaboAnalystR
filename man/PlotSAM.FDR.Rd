@@ -4,7 +4,7 @@
 \alias{PlotSAM.FDR}
 \title{Plot SAM Delta Plot}
 \usage{
-PlotSAM.FDR(mSetObj = NA, imgName, format = "png", dpi = 72, width = NA)
+PlotSAM.FDR(mSetObj = NA, imgName, format = "png", dpi, width = NA)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object}

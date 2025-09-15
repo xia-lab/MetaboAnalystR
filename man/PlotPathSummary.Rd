@@ -9,7 +9,7 @@ PlotPathSummary(
   show.grid,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA,
   xlim = NA,
   ylim = NA

@@ -11,7 +11,7 @@ SAM.Anal(
   varequal = TRUE,
   delta = 0,
   imgName,
-  dpi = 72
+  dpi = default.dpi
 )
 }
 \arguments{

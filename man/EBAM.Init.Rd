@@ -13,7 +13,7 @@ EBAM.Init(
   delta,
   imgA0,
   imgSig,
-  dpi = 72
+  dpi = default.dpi
 )
 }
 \arguments{

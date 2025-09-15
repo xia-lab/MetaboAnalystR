@@ -9,8 +9,9 @@ PlotEnrichDotPlot(
   enrichType = "ora",
   imgName,
   format = "png",
-  dpi = 72,
-  width = NA
+  dpi = default.dpi,
+  width = NA,
+  maxNameLen = 40
 )
 }
 \arguments{

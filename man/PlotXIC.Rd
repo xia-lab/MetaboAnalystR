@@ -4,7 +4,7 @@
 \alias{PlotXIC}
 \title{PlotXIC}
 \usage{
-PlotXIC(featureNum, format = "png", dpi = 72, width = NA)
+PlotXIC(featureNum, format = "png", dpi = default.dpi, width = NA)
 }
 \arguments{
 \item{featureNum}{featureNum}

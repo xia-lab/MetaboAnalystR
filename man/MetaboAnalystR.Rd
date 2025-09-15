@@ -2,6 +2,7 @@
 % Please edit documentation in R/generic_c_utils.R
 \docType{package}
 \name{MetaboAnalystR}
+\alias{MetaboAnalystR-package}
 \alias{MetaboAnalystR}
 \title{MetaboAnalystR: A package for computating the notorious bar statistic.}
 \description{
@@ -12,3 +13,20 @@ The MetaboAnalystR package provides a pipeline for metabolomics processing.
 The MetaboAnalystR functions ...
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item Report bugs at \url{https://github.com/xia-lab/MetaboAnalystR/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
+
+Authors:
+\itemize{
+  \item Jianguo Xia \email{jeff.xia@mcgill.ca}
+  \item Jasmine Chong \email{jasmine.chong@mail.mcgill.ca}
+}
+
+}

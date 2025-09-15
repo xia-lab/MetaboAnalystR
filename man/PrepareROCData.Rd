@@ -4,7 +4,7 @@
 \alias{PrepareROCData}
 \title{Prepare data for ROC analysis}
 \usage{
-PrepareROCData(mSetObj = NA)
+PrepareROCData(mSetObj = NA, sel.meta = "NA", factor1 = "NA", factor2 = "NA")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

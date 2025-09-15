@@ -9,10 +9,11 @@ PlotEnrichPieChart(
   enrichType,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = 8,
   maxClass = 15,
-  colPal = "Set1"
+  colPal = "Set1",
+  includeOthers = TRUE
 )
 }
 \arguments{

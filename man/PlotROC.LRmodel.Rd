@@ -8,7 +8,7 @@ PlotROC.LRmodel(
   mSetObj = NA,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   show.conf = FALSE,
   sp.bin = 0.01
 )

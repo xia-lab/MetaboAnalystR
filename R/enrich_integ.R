@@ -233,7 +233,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     # saving 
     gene.sbls <- doAllGeneIDMapping(rownames(mSetObj$dataSet$pathinteg.imps$gene.mat), mSetObj$org, "entrez");
     fast.write.csv(cbind(Name=gene.sbls, mSetObj$dataSet$pathinteg.imps$gene.mat), file="MetaboAnalyst_result_genes.csv");
-    save(cmpd.mat, gene.mat, file = "cmpd_gene_mat___227.rda")
+
     # used by both integ
     impMat <- rbind(cmpd.mat, gene.mat);
 
@@ -245,7 +245,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
       uniq.len <- current.kegglib$cmpd.counts + current.kegglib$gene.counts;
     }
   }
-  save(impMat, file = "impMat___239.rda")
+
   ora.vec <- rownames(impMat);
   impMat <- data.frame(Name=ora.vec, logFC=as.numeric(impMat[,1]));
   rownames(impMat) <- ora.vec;
@@ -269,7 +269,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     saveRDS(toSend, "tosend.rds")
     return(my.integ.kegg());
   }
-  save(ora.vec, file = "ora.vec___263.rda")
+
   my.res <- .performPathEnrich(ora.vec, uniq.count, uniq.len, enrich, topo);
   hits.path <- my.res$hits.path;
   hits.query <- my.res$hits.query;
@@ -932,7 +932,7 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
             post.style<-no.poststyle;
           }
           hit <-gene.db[hit.inx[i], ,drop=F];
-save(hit, file = "hit__925.rda")
+
           html.res[i, ]<-c(paste(pre.style, qvec[i], post.style, sep=""),
                            paste(ifelse(match.state[i]==0 || is.na(hit$GeneID),"-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>",hit$GeneID,"</a>", sep="")),  sep=""),
                            paste(ifelse(match.state[i]==0 || is.na(hit$Gene_Symbol), "-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>", hit$Gene_Symbol,"</a>", sep="")), sep=""),
@@ -949,7 +949,7 @@ save(hit, file = "hit__925.rda")
         mSetObj$dataSet$gene.map.table <- csv.res;
 
         fast.write.csv(csv.res, file="gene_name_map.csv", row.names=F);
-save(html.res, file = "html.res__942.rda")
+
         if(.on.public.web){
           .set.mSet(mSetObj)  
           return(as.vector(html.res));

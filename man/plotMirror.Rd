@@ -10,7 +10,7 @@ plotMirror(
   precMZ,
   ppm,
   imageNM = "",
-  dpi = 300,
+  dpi = default.dpi,
   format = "png",
   width = 8,
   height = 8,

@@ -25,6 +25,10 @@ deviation, "mad" which is the median absolute deviation, or "iqr" which is the i
 
 \item{int.cutoff}{int.cutoff value, numeric}
 
+\item{blank.subtraction}{blank.subtraction boolean value}
+
+\item{blank.threshold}{blank.threshold value}
+
 \item{filter.cutoff}{percent to be filtered, for example, 5 (5\%)}
 }
 \description{
