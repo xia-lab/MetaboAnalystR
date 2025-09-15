@@ -1,6 +1,6 @@
 Package: MetaboAnalystR
 Title: An R Package for Comprehensive Analysis of Metabolomics Data
-Version: 4.0.0
+Version: 4.2.0
 Authors@R: c(person("Jianguo", "Xia", email = "jeff.xia@mcgill.ca", role = "aut"), 
              person("Jasmine", "Chong", email = "jasmine.chong@mail.mcgill.ca", role=c("aut")), 
              person("Zhiqiang", "Pang", email = "zhiqiang.pang@mail.mcgill.ca", role=c("aut", "cre")))
