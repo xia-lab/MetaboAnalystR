@@ -1944,4 +1944,5 @@ public class SessionBean1 implements Serializable {
         this.graphTypeOptAI = graphTypeOptAI;
     }
 
+    
 }

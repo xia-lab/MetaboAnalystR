@@ -42,22 +42,25 @@ public class RPlotCustomizationBean implements Serializable {
     private String plotType = "";
     private String prompt;
     private String aiResponse;
-    private String welcomeMsg = "<p>Describe how you want to customize the plot. For example:</p>\n"
-            + "\n"
-            + "<ul>\n"
-            + "  <li>Change colors (e.g., <code>Use a blue color scheme</code>)</li>\n"
-            + "  <li>Adjust text size (e.g., <code>Make labels larger</code>)</li>\n"
-            + "  <li>Modify layout (e.g., <code>Increase spacing between plots</code>)</li>\n"
-            + "  <li>Change dimensions (e.g., <code>Make the plot wider</code>)</li>\n"
-            + "  <li>Add features (e.g., <code>Add a grid to the background</code>)</li>\n"
-            + "</ul>";
 
+
+    public String getPlaceholder() {
+        return String.join("\n",
+                "Describe how you want to customize the plot.",
+                "- Change colors (e.g., 'Use a blue color scheme')",
+                "- Adjust text size (e.g., 'Make labels larger')",
+                "- Modify layout (e.g., 'Increase spacing between plots')",
+                "- Change sizes (e.g., 'Make the plot wider')",
+                "- Add features (e.g., 'Add a grid to the background')"
+        );
+    }
+    
     private List<Message> messages;
 
     public List<Message> getMessages() {
         if (messages == null) {
             messages = new ArrayList<>();
-            messages.add(new Message("Assistant", welcomeMsg));
+            messages.add(new Message("Assistant", ""));
         }
         return messages;
     }
@@ -66,13 +69,6 @@ public class RPlotCustomizationBean implements Serializable {
         this.messages = messages;
     }
 
-    public String getWelcomeMsg() {
-        return welcomeMsg;
-    }
-
-    public void setWelcomeMsg(String welcomeMsg) {
-        this.welcomeMsg = welcomeMsg;
-    }
 
     public String getPrompt() {
         return prompt;

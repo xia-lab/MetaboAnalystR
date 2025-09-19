@@ -383,7 +383,7 @@
             </h:form>
         </p:dialog> 
         <p:dialog modal="true" id="graphDialogId" widgetVar="graphDialog" header="Graphics Center"
-                  width="560"
+                  width="590"
                   height="540"
                   appendTo="@(body)"
                   dynamic="true"
@@ -443,7 +443,7 @@
                             <h:panelGrid style="width:100%; text-align: center; padding-top: 10px; padding-bottom: 20px">
                                 <p:commandButton value="Submit" 
                                                  style="margin:10px"
-                                                 update=":myGraphPane:formgraph:glink"
+                                                 update=":myGraphPane:formgraph"
                                                  onclick="PF('statusDialog').show()" 
                                                  oncomplete="PF('statusDialog').hide()"
                                                  actionListener="#{graphBean.graphBn_action()}"/>
@@ -525,20 +525,15 @@
                     <h:form id="rPlotCustomizationForm">
 
                         <h:panelGrid style="width:100%;">
-                            <!-- Customization Instructions -->
                             <p:outputLabel for="customizationPrompt" value="Enter your instructions:" style="font-weight:bold" />
                             <p:inputTextarea id="customizationPrompt" 
                                              value="#{rPlotCustomizationBean.prompt}"
                                              rows="7" 
                                              style="width:90%"
                                              styleClass="ph-pre"
+                                             placeholder="#{rPlotCustomizationBean.placeholder}" 
+                                             />
 
-                                             placeholder="Describe how you want to customize the plot.&#10;
-                                             - Change colors (e.g., 'Use a blue color scheme')&#10;
-                                             - Adjust text size (e.g., 'Make labels larger')&#10;
-                                             - Modify layout (e.g., 'Increase spacing between plots')&#10;
-                                             - Change sizes (e.g., 'Make the plot wider')&#10;
-                                             - Add features (e.g., 'Add a grid to the background')" />
                             <h:panelGrid style="width:100%; text-align: center; padding: 10px" columns="2">
                                 <p:commandButton value="Reset"
                                                  icon="pi pi-refresh"
