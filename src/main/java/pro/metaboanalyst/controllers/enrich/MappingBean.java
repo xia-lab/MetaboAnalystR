@@ -206,8 +206,13 @@ public class MappingBean implements Serializable {
                 "enrichparam";
             case "pathora" ->
                 "pathparam";
-            default ->
-                "Normalization";
+            default -> {  //table input
+                if (!sb.isMissingDisabled()) {
+                    yield "Data filter";
+                } else {
+                    yield "Normalization";
+                }
+            }
         };
     }
 
