@@ -30,6 +30,16 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.utils.DataUtils;
 import java.io.*;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.primefaces.model.file.UploadedFile;
@@ -259,6 +269,7 @@ public class DatasetController implements Serializable {
     }
 
     private List<DatasetRow> datasetTable = new ArrayList<>();
+
     private List<DatasetRow> selectedDatasets = new ArrayList<>();
     private DatasetRow selected;
 
@@ -804,65 +815,84 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             // 0) Remember selection
             this.selected = ds;
 
-            // 1) Login -> this typically (re)creates a fresh working folder for the session
+            // 1) Login -> (re)creates a fresh working folder for the session
             sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
 
             // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
-            //    Source convention: <project>/user_folders/<email>/<datasetId>/
-            java.nio.file.Path srcDir = java.nio.file.Paths.get(
+            Path srcDir = Paths.get(
                     fb.getProjectPath(), "user_folders",
                     ds.getEmail(), ds.getId().toString()
-            );
+            ).normalize();
 
-            //    Destination: whatever folder doLogin prepared for this session/user
-            //    (if your API differs, adjust accordingly)
-            java.nio.file.Path dstDir = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());
-            java.nio.file.Files.createDirectories(dstDir);
+            Path srcZip = Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString() + ".zip"
+            ).normalize();
 
-            // 3) Determine which files to copy
-            java.util.List<DatasetFile> filesToCopy = ds.getFiles();
+            Path dstDir = Paths.get(sb.getCurrentUser().getHomeDir()).normalize();
+            Files.createDirectories(dstDir);
 
             int copied = 0;
+            boolean restoredFromZip = false;
 
-            if (filesToCopy != null && !filesToCopy.isEmpty()) {
-                // 4a) Copy only the registered files
-                for (DatasetFile f : filesToCopy) {
-                    if (f == null || f.getFilename() == null || f.getFilename().isBlank()) {
-                        continue;
-                    }
-                    java.nio.file.Path src = srcDir.resolve(f.getFilename());
-                    java.nio.file.Path dst = dstDir.resolve(f.getFilename());
-                    if (java.nio.file.Files.exists(src)) {
-                        java.nio.file.Files.createDirectories(dst.getParent());
-                        java.nio.file.Files.copy(src, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                        copied++;
-                    }
-                }
+            // 3) Always copy whole dataset folder when it exists; ignore ds.getFiles()
+            if (Files.isDirectory(srcDir)) {
+                // 4a) Copy everything (recursively)
+                copied = copyDirectoryRecursive(srcDir, dstDir);
+
+            } else if (Files.isRegularFile(srcZip)) {
+                // 4b) Fallback: local ZIP exists -> unzip into workspace
+                unzipInto(srcZip, dstDir);
+                restoredFromZip = true;
+                copied = countRegularFiles(dstDir);
+
             } else {
+                // 4c) Last resort: download from SAME server endpoint, then unzip
+                // Build https://<node>.metaboanalyst.ca/<AppName> from ds.getNode()
+                String node = ds.getNode();
+                if (node == null || node.isBlank()) {
+                    throw new IllegalArgumentException("Dataset node is missing.");
+                }
+                node = node.trim().replaceAll("\\.+$", ""); // strip trailing dots
 
-                if (java.nio.file.Files.isDirectory(srcDir)) {
-                    try (java.nio.file.DirectoryStream<java.nio.file.Path> stream
-                            = java.nio.file.Files.newDirectoryStream(srcDir)) {
-                        for (java.nio.file.Path p : stream) {
-                            if (java.nio.file.Files.isRegularFile(p)) {
-                                java.nio.file.Path dst = dstDir.resolve(p.getFileName().toString());
-                                java.nio.file.Files.copy(p, dst, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                                copied++;
-                            }
-                        }
+                String baseUrl = "https://" + node + ".metaboanalyst.ca/";
+                
+
+                Path tempZip = Files.createTempFile(dstDir, "dataset-", ".zip");
+                try {
+                    downloadDatasetObjectFromBaseUrl(
+                            baseUrl,
+                            ds.getEmail(),
+                            ds.getId().toString(),
+                            tempZip.toString(),
+                            null // bearer token if/when you secure the endpoint
+                    );
+                    unzipInto(tempZip, dstDir);
+                    restoredFromZip = true;
+                    copied = countRegularFiles(dstDir);
+                } finally {
+                    try {
+                        Files.deleteIfExists(tempZip);
+                    } catch (Exception ignore) {
                     }
                 }
             }
 
+            // 5) Load any java_history.json if present
             File histFile = new File(sb.getCurrentUser().getHomeDir(), "java_history.json");
             if (histFile.exists()) {
-                String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
-                int res1 = fc.loadJavaHistory(javaHistory);
-                System.out.println("javahistoryloaded=======");
+                try {
+                    String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
+                    int res1 = fc.loadJavaHistory(javaHistory);
+                    System.out.println("javahistoryloaded======= " + res1);
+                } catch (Exception hx) {
+                    System.err.println("Failed to load java_history.json: " + hx.getMessage());
+                }
             }
 
             // 6) Notify + redirect to module selection
-            sb.addMessage("info", "Loaded dataset files into workspace (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
+            String mode = restoredFromZip ? "restored" : "loaded";
+            sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
             DataUtils.doRedirectWithGrowl(
                     sb,
                     "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
@@ -873,6 +903,69 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         } catch (Exception e) {
             sb.addMessage("Error", "Load failed: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /* ---------------- helpers ---------------- */
+    private int copyDirectoryRecursive(Path srcDir, Path dstDir) throws IOException {
+        final int[] count = {0};
+        try (var walk = Files.walk(srcDir)) {
+            for (Path p : (Iterable<Path>) walk::iterator) {
+                if (Files.isDirectory(p)) {
+                    continue;
+                }
+                Path rel = srcDir.relativize(p);
+                Path dst = dstDir.resolve(rel).normalize();
+                Files.createDirectories(dst.getParent());
+                Files.copy(p, dst, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
+                count[0]++;
+            }
+        }
+        return count[0];
+    }
+
+    private void unzipInto(Path zipFile, Path dstDir) throws IOException {
+        try (java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(new BufferedInputStream(Files.newInputStream(zipFile)))) {
+            java.util.zip.ZipEntry entry;
+            byte[] buffer = new byte[64 * 1024];
+            while ((entry = zis.getNextEntry()) != null) {
+                // Skip directories
+                if (entry.isDirectory()) {
+                    Path dir = dstDir.resolve(entry.getName()).normalize();
+                    if (!dir.startsWith(dstDir)) {
+                        zis.closeEntry();
+                        continue; // guard
+                    }
+                    Files.createDirectories(dir);
+                    zis.closeEntry();
+                    continue;
+                }
+                Path out = dstDir.resolve(entry.getName()).normalize();
+                if (!out.startsWith(dstDir)) { // guard against traversal
+                    zis.closeEntry();
+                    continue;
+                }
+                Files.createDirectories(out.getParent());
+                try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+                    int r;
+                    while ((r = zis.read(buffer)) != -1) {
+                        os.write(buffer, 0, r);
+                    }
+                }
+                zis.closeEntry();
+            }
+        }
+    }
+
+    private int countRegularFiles(Path root) throws IOException {
+        try (var walk = Files.walk(root)) {
+            int cnt = 0;
+            for (Path p : (Iterable<Path>) walk::iterator) {
+                if (Files.isRegularFile(p)) {
+                    cnt++;
+                }
+            }
+            return cnt;
         }
     }
 
@@ -917,4 +1010,153 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             return null;
         }
     }
+
+    public List<DatasetRow> getDatasetTableExample() {
+        List<DatasetRow> datasetTableExample = new ArrayList<>();
+
+        /*
+            UUID.fromString("11111111-2222-4aaa-8bbb-cccccccccccc"),
+    UUID.fromString("11111111-3333-4ddd-9eee-ffffffffffff"),
+    UUID.fromString("11111111-4444-4111-abcd-1234567890ab"),
+    UUID.fromString("11111111-5555-4f0f-b999-aaaaaaaaaaaa"),
+    UUID.fromString("11111111-6666-4abc-8def-bbbbbbbbbbbb")
+         */
+        // Example 1
+        DatasetRow ds1 = new DatasetRow();
+        ds1.setId(UUID.fromString("11111111-00e3-4838-95ab-fec9d1d149e1"));
+        ds1.setTitle("Concentration Table");
+        ds1.setFilename("human_cachexia.csv");
+        ds1.setType("csv");
+        ds1.setSizeBytes(1523400L);
+        ds1.setUploadedAt(OffsetDateTime.now().minusDays(2));
+        ds1.setEmail("example");
+        ds1.setNode("vip2");
+        ds1.setSamplenum(77);
+        ds1.setModule("stat");
+        ds1.setDataType("conc");
+        ds1.setDescription("Metabolomics dataset from experiment A");
+        ds1.setTags(List.of("metabolomics", "experimentA"));
+        ds1.setFileCount(1);
+        ds1.setHasMetadata(true);
+
+        List<DatasetFile> ds1Files = new ArrayList<>();
+        {
+            DatasetFile f1 = new DatasetFile();
+            f1.setRole("data");
+            f1.setFilename("human_cachexia.csv"); // main table
+            f1.setType("csv");
+            f1.setSizeBytes(1_450_000L);
+            ds1Files.add(f1);
+
+        }
+        ds1.setFiles(ds1Files);
+        ds1.setFileCount(ds1Files.size());
+
+        datasetTableExample.add(ds1);
+
+        return datasetTableExample;
+    }
+
+    public void downloadDatasetObject(String serverLocation, String email, String datasetId, String destFilePath) {
+        // serverLocation examples:
+        //   "www"  -> https://www.metaboanalyst.ca/MetaboAnalyst/...
+        //   "asia" -> https://asia.metaboanalyst.ca/MetaboAnalyst/...
+        // If you want to pass a full base URL, see the overloaded method below.
+        String baseUrl = "https://" + serverLocation + ".metaboanalyst.ca/";
+        downloadDatasetObjectFromBaseUrl(baseUrl, email, datasetId, destFilePath, null);
+    }
+
+    /**
+     * Overload that allows a full base URL (useful for dev/staging or
+     * non-standard hosts), and an optional Bearer token for internal auth (pass
+     * null if not used).
+     *
+     * Example baseUrl: https://www.metaboanalyst.ca/MetaboAnalyst
+     * https://10.0.2.17:8443/MetaboAnalyst
+     */
+    public void downloadDatasetObjectFromBaseUrl(String baseUrl, String email, String datasetId, String destFilePath, String bearerToken) {
+        File tempFile = null;
+        try {
+            // Ensure baseUrl has no trailing slash. It should already include your app context (e.g., https://www.metaboanalyst.ca/MetaboAnalyst)
+            String base = baseUrl.replaceAll("/+$", "");
+            // New servlet endpoint:
+            String urlString = base + "/download/dataset"
+                    + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                    + "&datasetId=" + URLEncoder.encode(datasetId, StandardCharsets.UTF_8);
+
+            System.out.println("[downloadDataset] URL: " + urlString);
+
+            HttpClient client = HttpClient.newBuilder()
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .connectTimeout(Duration.ofSeconds(20))
+                    .build();
+
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(urlString))
+                    .timeout(Duration.ofMinutes(45)) // allow large on-the-fly zips
+                    .header("Accept", "application/zip")
+                    .header("Accept-Encoding", "identity") // avoid gzip of binary stream
+                    .GET();
+
+            if (bearerToken != null && !bearerToken.isBlank()) {
+                reqBuilder.header("Authorization", "Bearer " + bearerToken);
+            }
+
+            HttpRequest request = reqBuilder.build();
+
+            // Prepare destination (temp file alongside final for atomic move)
+            Path destPath = Paths.get(destFilePath);
+            Path destDir = destPath.getParent();
+            if (destDir != null) {
+                Files.createDirectories(destDir);
+            }
+
+            tempFile = File.createTempFile("dataset-download-", ".part",
+                    destDir != null ? destDir.toFile() : null);
+            tempFile.deleteOnExit();
+
+            HttpResponse<InputStream> resp = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            int code = resp.statusCode();
+
+            if (code != 200) {
+                String err = "HTTP " + code;
+                try (InputStream es = resp.body()) {
+                    byte[] buf = es.readNBytes(4096);
+                    if (buf != null && buf.length > 0) {
+                        err += " - " + new String(buf, StandardCharsets.UTF_8);
+                    }
+                } catch (Exception ignore) {
+                }
+                throw new IOException("Remote server returned non-200 status: " + err);
+            }
+
+            try (InputStream in = resp.body()) {
+                Files.copy(in, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            long size = tempFile.length();
+            if (size <= 0) {
+                throw new IOException("Downloaded file is empty.");
+            }
+
+            try {
+                Files.move(tempFile.toPath(), destPath, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ex) {
+                Files.move(tempFile.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            System.out.println("[downloadDataset] Saved to: " + destPath + " (" + size + " bytes)");
+
+        } catch (Exception e) {
+            System.err.println("[downloadDataset] Failed: " + e.getMessage());
+            e.printStackTrace();
+            if (tempFile != null && tempFile.exists()) {
+                try {
+                    Files.deleteIfExists(tempFile.toPath());
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+
 }

@@ -20,10 +20,17 @@ import jakarta.faces.event.PhaseEvent;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.event.PhaseListener;
 import jakarta.inject.Named;
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.project.ProjectBean;
@@ -99,6 +106,8 @@ public class MyPhaseListener implements PhaseListener {
     private static final String LoginVerified = "verified"; //ok
     private static final String LOGIN_EXTERNAL = "loginExternal";//ok
     private static final String DOWNLOAD_PROJECT = "fetchProject";//ok
+    private static final String DOWNLOAD_DATASET = "downloadDataset";//ok
+
     private static final String RESUME_RAW = "resumeRawProject";//ok
     private static final String FINISH_RAW = "finishRawProject";//ok
 
@@ -145,6 +154,8 @@ public class MyPhaseListener implements PhaseListener {
         //System.out.println("Setting default view /home.xhtml");
         //}
         if (funcNm != null) {
+                        System.out.println("=========================== for funcNm: " + funcNm);
+
             switch (funcNm) {
                 case LOGIN_EXTERNAL ->
                     handleLoginExternalRequest(event);
@@ -164,6 +175,9 @@ public class MyPhaseListener implements PhaseListener {
                     handleActivationRequest(event);
                 case RESUME_RAW -> {
                     handleResumeRawRequest(event);
+                }
+                case DOWNLOAD_DATASET -> {
+                    handleDatasetDownloadRequest(event);
                 }
                 case FINISH_RAW ->
                     handleFinishRawRequest(event);
@@ -674,6 +688,179 @@ public class MyPhaseListener implements PhaseListener {
         } catch (Exception e) {
             LOGGER.error("handlePartialRequest", e);
             context.getApplication().getNavigationHandler().handleNavigation(context, "*", "logout");
+        }
+    }
+
+    public void handleDatasetDownloadRequest(PhaseEvent event) {
+        long t0 = System.currentTimeMillis();
+        FacesContext context = event.getFacesContext();
+        HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
+        HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
+
+        FireBase fb = getBeanByName("fireBase", FireBase.class);
+
+        String email = request.getParameter("email");
+        String datasetId = request.getParameter("datasetId");
+        dbg("DOWNLOAD_DATASET: start, email=" + email + ", datasetId=" + datasetId
+                + ", respCommitted=" + response.isCommitted() + ", phase=" + event.getPhaseId());
+
+        try {
+            if (email == null || email.isBlank() || datasetId == null || datasetId.isBlank()) {
+                dbg("DOWNLOAD_DATASET: missing params; sending 400");
+                if (!response.isCommitted()) {
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing parameters");
+                }
+                return;
+            }
+
+            Path datasetRoot = Paths.get(fb.getProjectPath(), "user_folders", email, datasetId).normalize();
+            dbg("Resolved datasetRoot=" + datasetRoot + " (existsDir=" + Files.isDirectory(datasetRoot) + ")");
+
+            if (!Files.isDirectory(datasetRoot)) {
+                dbg("DOWNLOAD_DATASET: folder not found; sending 404");
+                if (!response.isCommitted()) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Folder not found");
+                }
+                return;
+            }
+
+            // Count files to zip (optional but useful)
+            int totalFiles = countRegularFiles(datasetRoot);
+            dbg("DOWNLOAD_DATASET: will stream zip of " + totalFiles + " file(s)");
+
+            String zipName = datasetId + ".zip";
+
+            // Set headers BEFORE accessing the output stream
+            if (!response.isCommitted()) {
+                response.setContentType("application/zip");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + zipName + "\"");
+                dbg("Headers set: Content-Type=application/zip, Content-Disposition=" + zipName);
+            } else {
+                dbg("WARNING: response already committed before headers!");
+            }
+
+            // Stream ZIP on-the-fly
+            byte[] buf = new byte[64 * 1024];
+            long bytesTotal = 0;
+            int entries = 0;
+
+            try (ZipOutputStream zos = new ZipOutputStream(new BufferedOutputStream(response.getOutputStream()))) {
+                try (var walk = Files.walk(datasetRoot)) {
+                    for (Path p : (Iterable<Path>) walk::iterator) {
+                        if (Files.isDirectory(p)) {
+                            continue;
+                        }
+
+                        String name = p.getFileName().toString();
+                        if (name.equals(".DS_Store") || name.startsWith("._")) {
+                            continue;
+                        }
+
+                        Path rel = datasetRoot.relativize(p);
+                        String entryName = rel.toString().replace(File.separatorChar, '/');
+
+                        ZipEntry entry = new ZipEntry(entryName);
+                        try {
+                            entry.setTime(Files.getLastModifiedTime(p).toMillis());
+                        } catch (Exception ignore) {
+                        }
+                        zos.putNextEntry(entry);
+
+                        long before = bytesTotal;
+                        try (InputStream in = new BufferedInputStream(Files.newInputStream(p))) {
+                            int r;
+                            while ((r = in.read(buf)) != -1) {
+                                zos.write(buf, 0, r);
+                                bytesTotal += r;
+                            }
+                        }
+                        zos.closeEntry();
+                        entries++;
+
+                        dbg("ZIPPED: " + entryName + " (+" + (bytesTotal - before) + " bytes)");
+                    }
+                }
+                zos.finish();
+                zos.flush();
+            }
+
+            // Force commit and stop JSF
+            try {
+                response.flushBuffer();
+            } catch (Exception fbex) {
+                dbg("flushBuffer exception: " + fbex);
+            }
+            dbg("DOWNLOAD_DATASET: done, entries=" + entries + ", bytesTotal=" + bytesTotal
+                    + ", elapsed=" + (System.currentTimeMillis() - t0) + "ms, respCommitted=" + response.isCommitted());
+            context.responseComplete();
+        } catch (Exception e) {
+            dbg("ERROR in DOWNLOAD_DATASET: " + e);
+            // Only safe to change headers if not committed
+            try {
+                if (!response.isCommitted()) {
+                    response.reset();
+                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Download failed: " + e.getMessage());
+                    dbg("Sent 500 after error (response was not committed)");
+                } else {
+                    dbg("Response already committed; closing output stream after error");
+                    try {
+                        response.getOutputStream().close();
+                    } catch (Exception ignore) {
+                    }
+                }
+            } catch (IOException ioe) {
+                dbg("Secondary IOException while handling error: " + ioe);
+            }
+            e.printStackTrace();
+        } finally {
+            dbg("DOWNLOAD_DATASET: finally reached, respCommitted=" + response.isCommitted()
+                    + ", elapsed=" + (System.currentTimeMillis() - t0) + "ms");
+        }
+    }
+
+    /* ===== helpers ===== */
+    private static void dbg(String msg) {
+        String th = Thread.currentThread().getName();
+        System.out.println("[DBG " + java.time.LocalTime.now() + "][" + th + "] " + msg);
+    }
+
+    private static int countRegularFiles(Path root) throws IOException {
+        int cnt = 0;
+        try (var walk = Files.walk(root)) {
+            for (Path p : (Iterable<Path>) walk::iterator) {
+                if (Files.isRegularFile(p)) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    /* ------------------------ Helpers ------------------------ */
+    private static final Pattern EMAIL_SAFE = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+$");
+    private static final Pattern FOLDER_SAFE = Pattern.compile("^[A-Za-z0-9._/-]{1,200}$");
+
+    private String sanitizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        email = email.trim();
+        return EMAIL_SAFE.matcher(email).matches() ? email : null;
+    }
+
+    private String sanitizeFolder(String folder) {
+        if (folder == null) {
+            return null;
+        }
+        folder = folder.trim();
+        return FOLDER_SAFE.matcher(folder).matches() ? folder : null;
+    }
+
+    private String urlEncode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return s;
         }
     }
 

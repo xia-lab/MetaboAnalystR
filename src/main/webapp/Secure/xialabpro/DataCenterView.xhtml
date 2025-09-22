@@ -121,88 +121,151 @@
             </p>
 
             <ui:include src="/template/_dataset_overlaypanel.xhtml" />
-            <h:form id="dataTableForm">
-                <!--
-                <p:toolbar>
-                    <p:toolbarGroup align="right">
-                        <p:commandButton value="Refresh" icon="pi pi-refresh" update=":dataTableForm:dsTable :msgs" actionListener="#{datasetController.refresh}"/>
-                        <p:spacer width="8"/>
-                        <p:commandButton value="Delete Selected" icon="pi pi-trash" styleClass="ui-button-danger"
-                                         onclick="PF('bulkDelDialog').show();return false;"
-                                         disabled="#{empty datasetController.selectedDatasets}"/>
-                        <p:spacer width="8"/>
-                        <p:commandButton type="button" value="Export CSV" icon="pi pi-file"
-                                         onclick="PrimeFaces.monitorDownload(start, stop);" styleClass="ui-button-outlined">
-                            <p:dataExporter type="csv" target=":dataTableForm:dsTable" fileName="datasets"/>
-                        </p:commandButton>
-                    </p:toolbarGroup>
-                </p:toolbar>
-                -->
+            <p:tabView widgetVar="tabWidget" id="acTab" style="width:100%; border: none; font-size: 13px;" >
+                <p:tab title ="Example Dataset">
+                    <h:form id="dataTableExampleForm">
 
-                <h:panelGroup id="cardsGrid" layout="block" styleClass="cards-grid">
-                    <ui:repeat value="#{datasetController.datasetTable}" var="ds">
-                        <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
+                        <h:panelGroup id="cardsGrid" layout="block" styleClass="cards-grid">
+                            <ui:repeat value="#{datasetController.datasetTableExample}" var="ds">
+                                <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
 
-                            <!-- title link to edit -->
-                            <div style="margin-bottom:.25rem;">
-                                <p:commandLink value="#{ds.description}" styleClass="title-link"
-                                               update=":editForm"
-                                               oncomplete="PF('editDialog').show();">
-                                    <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                </p:commandLink>
-                            </div>
+                                    <!-- title link to edit -->
+                                    <div style="margin-bottom:.25rem;">
+                                        <p:commandLink value="#{ds.description}" styleClass="title-link"
+                                                       update=":editForm"
+                                                       oncomplete="PF('editDialog').show();">
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                        </p:commandLink>
+                                    </div>
 
-                            <div class="ds-meta">
-                                <div><b>File:</b> #{ds.filename}</div>
-                                <div><b>Size:</b> #{ds.humanSize}</div>
-                                <div>
-                                    <b>Files:</b> #{ds.fileCountAdjusted}
-                                    <h:panelGroup rendered="#{ds.hasMetadata}">
-                                        <span class="badge badge-info" style="margin-left:6px;">meta</span>
-                                    </h:panelGroup>
-                                </div>
-                                <div><b>Samples:</b> #{ds.samplenum}</div>
-                                <div><b>Uploaded:</b> #{ds.uploadedAtStr}</div>
-                            </div>
+                                    <div class="ds-meta">
+                                        <div><b>File:</b> #{ds.filename}</div>
+                                        <div><b>Size:</b> #{ds.humanSize}</div>
+                                        <div>
+                                            <b>Files:</b> #{ds.fileCountAdjusted}
+                                            <h:panelGroup rendered="#{ds.hasMetadata}">
+                                                <span class="badge badge-info" style="margin-left:6px;">meta</span>
+                                            </h:panelGroup>
+                                        </div>
+                                        <div><b>Samples:</b> #{ds.samplenum}</div>
+                                        <div><b>Uploaded:</b> #{ds.uploadedAtStr}</div>
+                                    </div>
 
-                            <div class="card-actions" style="margin-top:.75rem; display:flex; align-items:center;">
-                                <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
-                                    <i class="pi pi-download"></i>
-                                    <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                    <p:fileDownload value="#{datasetController.downloadSelected}"/>
-                                    <p:tooltip for="downloadBn" value="Download primary file"/>
-                                </p:commandLink>
+                                    <div class="card-actions" style="margin-top:.75rem; display:flex; align-items:center;">
+                                        <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
+                                            <i class="pi pi-download"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:fileDownload value="#{datasetController.downloadSelected}"/>
+                                            <p:tooltip for="downloadBn" value="Download primary file"/>
+                                        </p:commandLink>
 
-                                <span class="spacer"/>
+                                        <span class="spacer"/>
 
-                                <p:commandLink id="filesBn" title="Files" update=":filesForm" oncomplete="PF('filesDialog').show();">
-                                    <i class="pi pi-folder-open"></i>
-                                    <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                    <p:tooltip for="filesBn" value="Show all files in this dataset"/>
-                                </p:commandLink>
+                                        <p:commandLink id="filesBn" title="Files" update=":filesForm" oncomplete="PF('filesDialog').show();">
+                                            <i class="pi pi-folder-open"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:tooltip for="filesBn" value="Show all files in this dataset"/>
+                                        </p:commandLink>
 
-                                <span class="spacer"/>
+                                        <span class="spacer"/>
 
-                                <p:commandLink id="loadBn" title="Load"
-                                               onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                               update=":dataTableForm"
-                                               action="#{datasetController.load(ds)}">
-                                    <i class="pi pi-caret-right" style="color:#16a34a;"></i>
-                                    <p:tooltip for="loadBn" value="Load this dataset"/>
-                                </p:commandLink>
+                                        <p:commandLink id="loadBn" title="Load"
+                                                       onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                       update=":acTab:dataTableExampleForm"
+                                                       action="#{datasetController.load(ds)}">
+                                            <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                            <p:tooltip for="loadBn" value="Load this dataset"/>
+                                        </p:commandLink>
 
-                                <span class="spacer"/>
+                                        <span class="spacer"/>
 
-                                <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
-                                    <i class="pi pi-trash" style="color:orangered;"></i>
-                                    <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                    <p:tooltip for="deleteBn" value="Delete this dataset"/>
-                                </p:commandLink>
-                            </div>
-                        </p:fieldset>
-                    </ui:repeat>
-                </h:panelGroup>
-            </h:form>
+                                        <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
+                                            <i class="pi pi-trash" style="color:orangered;"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:tooltip for="deleteBn" value="Delete this dataset"/>
+                                        </p:commandLink>
+                                    </div>
+                                </p:fieldset>
+                            </ui:repeat>
+                        </h:panelGroup>
+                    </h:form>
+
+                </p:tab>
+                <p:tab title ="User Dataset">
+                    <h:form id="dataTableForm">
+
+                        <h:panelGroup id="cardsGrid" layout="block" styleClass="cards-grid">
+                            <ui:repeat value="#{datasetController.datasetTable}" var="ds">
+                                <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
+
+                                    <!-- title link to edit -->
+                                    <div style="margin-bottom:.25rem;">
+                                        <p:commandLink value="#{ds.description}" styleClass="title-link"
+                                                       update=":editForm"
+                                                       oncomplete="PF('editDialog').show();">
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                        </p:commandLink>
+                                    </div>
+
+                                    <div class="ds-meta">
+                                        <div><b>ID:</b> #{ds.id}</div>
+
+                                        <div><b>File:</b> #{ds.filename}</div>
+                                        <div><b>Size:</b> #{ds.humanSize}</div>
+                                        <div>
+                                            <b>Files:</b> #{ds.fileCountAdjusted}
+                                            <h:panelGroup rendered="#{ds.hasMetadata}">
+                                                <span class="badge badge-info" style="margin-left:6px;">meta</span>
+                                            </h:panelGroup>
+                                        </div>
+                                        <div><b>Samples:</b> #{ds.samplenum}</div>
+                                        <div><b>Uploaded:</b> #{ds.uploadedAtStr}</div>
+                                    </div>
+
+                                    <div class="card-actions" style="margin-top:.75rem; display:flex; align-items:center;">
+                                        <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
+                                            <i class="pi pi-download"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:fileDownload value="#{datasetController.downloadSelected}"/>
+                                            <p:tooltip for="downloadBn" value="Download primary file"/>
+                                        </p:commandLink>
+
+                                        <span class="spacer"/>
+
+                                        <p:commandLink id="filesBn" title="Files" update=":filesForm" oncomplete="PF('filesDialog').show();">
+                                            <i class="pi pi-folder-open"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:tooltip for="filesBn" value="Show all files in this dataset"/>
+                                        </p:commandLink>
+
+                                        <span class="spacer"/>
+
+                                        <p:commandLink id="loadBn" title="Load"
+                                                       onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                       update=":acTab:dataTableForm"
+                                                       action="#{datasetController.load(ds)}">
+                                            <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                            <p:tooltip for="loadBn" value="Load this dataset"/>
+                                        </p:commandLink>
+
+                                        <span class="spacer"/>
+
+                                        <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
+                                            <i class="pi pi-trash" style="color:orangered;"></i>
+                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:tooltip for="deleteBn" value="Delete this dataset"/>
+                                        </p:commandLink>
+                                    </div>
+                                </p:fieldset>
+                            </ui:repeat>
+                        </h:panelGroup>
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Data Upload">
+
+                </p:tab>
+            </p:tabView>
+
 
         </h:panelGrid>
         <p:dialog header="Files in Dataset" widgetVar="filesDialog" modal="true" appendTo="@(body)" resizable="true" width="720">
