@@ -301,14 +301,6 @@ public class DatasetController implements Serializable {
                 .collect(java.util.stream.Collectors.toList());
     }
 
-    /**
-     * Used by the rowExpansion table:
-     * <p:dataTable value="#{dataManagerBean.getFiles(ds.id)}" ...>
-     */
-    public List<DatasetFile> getFiles(UUID datasetId) {
-        return fileCache.computeIfAbsent(datasetId, db::getDatasetFiles);
-    }
-
     // -------- getters/setters used by the page --------
     public List<DatasetRow> getDatasetTable() {
         return datasetTable;
@@ -856,7 +848,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 node = node.trim().replaceAll("\\.+$", ""); // strip trailing dots
 
                 String baseUrl = "https://" + node + ".metaboanalyst.ca/";
-                
 
                 Path tempZip = Files.createTempFile(dstDir, "dataset-", ".zip");
                 try {
@@ -884,7 +875,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 try {
                     String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
                     int res1 = fc.loadJavaHistory(javaHistory);
-                    System.out.println("javahistoryloaded======= " + res1);
+                    sb.getNaviTrack().clear();
+                    sb.setNaviType("NA");
                 } catch (Exception hx) {
                     System.err.println("Failed to load java_history.json: " + hx.getMessage());
                 }
@@ -1027,14 +1019,14 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setTitle("Concentration Table");
         ds1.setFilename("human_cachexia.csv");
         ds1.setType("csv");
-        ds1.setSizeBytes(1523400L);
+        ds1.setSizeBytes(32461L);
         ds1.setUploadedAt(OffsetDateTime.now().minusDays(2));
         ds1.setEmail("example");
         ds1.setNode("vip2");
         ds1.setSamplenum(77);
         ds1.setModule("stat");
         ds1.setDataType("conc");
-        ds1.setDescription("Metabolomics dataset from experiment A");
+        ds1.setDescription("Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. Phenotype: N-cachexic; Y-control");
         ds1.setTags(List.of("metabolomics", "experimentA"));
         ds1.setFileCount(1);
         ds1.setHasMetadata(true);
@@ -1045,7 +1037,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             f1.setRole("data");
             f1.setFilename("human_cachexia.csv"); // main table
             f1.setType("csv");
-            f1.setSizeBytes(1_450_000L);
+            f1.setSizeBytes(32461L);
             ds1Files.add(f1);
 
         }
@@ -1054,6 +1046,77 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
         datasetTableExample.add(ds1);
 
+        /////////////////////////////////////
+        ds1 = new DatasetRow();
+        ds1.setId(UUID.fromString("2292bf17-3ce9-43f1-81ea-6735b4cb7b96"));
+        ds1.setTitle("Peaks with metadata table");
+        ds1.setFilename("covid_metabolomics_data.csv");
+        ds1.setType("csv");
+        ds1.setSizeBytes(1468006L);
+        ds1.setUploadedAt(OffsetDateTime.now().minusDays(2));
+        ds1.setEmail("example");
+        ds1.setNode("vip2");
+        ds1.setSamplenum(59);
+        ds1.setModule("mf");
+        ds1.setDataType("pktable");
+        ds1.setDescription("LC-MS peak intensity data table and meta-data of 20 healthy and 39 COVID-19 patient samples; ");
+        ds1.setTags(List.of("metabolomics", "experimentA"));
+        ds1.setFileCount(1);
+        ds1.setHasMetadata(true);
+
+        ds1Files = new ArrayList<>();
+        {
+            DatasetFile f1 = new DatasetFile();
+            f1.setRole("data");
+            f1.setFilename("covid_metabolomics_data.csv"); // main table
+            f1.setType("csv");
+            f1.setSizeBytes(1468006L);
+            ds1Files.add(f1);
+
+            DatasetFile f2 = new DatasetFile();
+            f2.setRole("metadata");
+            f2.setFilename("covid_metadata_multiclass.csv"); // main table
+            f2.setType("csv");
+            f2.setSizeBytes(1468006L);
+            ds1Files.add(f2);
+        }
+        ds1.setFiles(ds1Files);
+        ds1.setFileCount(ds1Files.size());
+
+        datasetTableExample.add(ds1);
+
+        ////////////////////////////////////////////////////////
+        ds1 = new DatasetRow();
+        ds1.setId(UUID.fromString("9a105202-0de6-4e24-b42e-dcf10b6ca562"));
+        ds1.setTitle("List of Metabolites");
+        ds1.setFilename("datalist.csv");
+        ds1.setType("csv");
+        ds1.setSizeBytes(226L);
+        ds1.setUploadedAt(OffsetDateTime.now().minusDays(2));
+        ds1.setEmail("example");
+        ds1.setNode("vip2");
+        ds1.setSamplenum(0);
+        ds1.setModule("pathora");
+        ds1.setDataType("list");
+        ds1.setDescription("An example of metabolite list for testing purpose");
+        ds1.setTags(List.of("metabolomics", "experimentA"));
+        ds1.setFileCount(1);
+        ds1.setHasMetadata(true);
+
+        ds1Files = new ArrayList<>();
+        {
+            DatasetFile f1 = new DatasetFile();
+            f1.setRole("data");
+            f1.setFilename("datalist.csv"); // main table
+            f1.setType("csv");
+            f1.setSizeBytes(226L);
+            ds1Files.add(f1);
+
+        }
+        ds1.setFiles(ds1Files);
+        ds1.setFileCount(ds1Files.size());
+
+        datasetTableExample.add(ds1);
         return datasetTableExample;
     }
 
@@ -1157,6 +1220,132 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 }
             }
         }
+    }
+
+    // In DatasetController
+// --- UI model for the dialog ---
+    private List<DatasetFile> filesModel = new ArrayList<>();
+    private long filesTotalBytes = 0;
+
+    public List<DatasetFile> getFilesModel() {
+        return filesModel;
+    }
+
+    public long getFilesTotalBytes() {
+        return filesTotalBytes;
+    }
+
+    public String getFilesTotalHuman() {
+        return DatasetRow.humanReadable(filesTotalBytes);
+    }
+
+    /**
+     * Populate the Files dialog table for the given dataset. Call this before
+     * showing PF('filesDialog').show().
+     */
+    public void populateFilesForDialog(DatasetRow ds) {
+        if (ds == null) {
+            sb.addMessage("Error", "No dataset selected.");
+            return;
+        }
+        this.selected = ds;
+
+        filesModel = new ArrayList<>();
+        filesTotalBytes = 0L;
+
+        try {
+            // 1) If DatasetRow already has files, use them (and enrich size/mtime if missing)
+            List<DatasetFile> predefined = ds.getFiles();
+            if (predefined != null && !predefined.isEmpty()) {
+                // Enrich from disk if possible (size/mtime), otherwise keep as-is
+                Path root = Paths.get(fb.getProjectPath(), "user_folders", ds.getEmail(), ds.getId().toString()).normalize();
+                if (Files.isDirectory(root) && root.startsWith(Paths.get(fb.getProjectPath(), "user_folders").normalize())) {
+                    for (DatasetFile f : predefined) {
+                        if (f == null || f.getFilename() == null || f.getFilename().isBlank()) {
+                            continue;
+                        }
+                        Path p = root.resolve(f.getFilename()).normalize();
+                        if (!p.startsWith(root)) {
+                            continue; // guard
+                        }
+                        try {
+                            if (Files.isRegularFile(p)) {
+                                long sz = Files.size(p);
+                                f.setSizeBytes(sz);
+                                filesTotalBytes += sz;
+                            }
+                        } catch (Exception ignore) {
+                        }
+                        filesModel.add(f);
+                    }
+                } else {
+                    // No disk access; just use the predefined list
+                    for (DatasetFile f : predefined) {
+                        if (f == null || f.getFilename() == null || f.getFilename().isBlank()) {
+                            continue;
+                        }
+                        if (f.getSizeBytes() > 0) {
+                            filesTotalBytes += f.getSizeBytes();
+                        }
+                        filesModel.add(f);
+                    }
+                }
+            } else {
+                // 2) No predefined list -> scan the dataset folder on disk
+                Path userFolders = Paths.get(fb.getProjectPath(), "user_folders").normalize();
+                Path root = userFolders.resolve(ds.getEmail()).resolve(ds.getId().toString()).normalize();
+
+                if (!root.startsWith(userFolders)) {
+                    sb.addMessage("Error", "Illegal dataset path.");
+                    return;
+                }
+
+                if (Files.isDirectory(root)) {
+                    try (var walk = Files.walk(root)) {
+                        for (Path p : (Iterable<Path>) walk::iterator) {
+                            if (Files.isDirectory(p)) {
+                                continue;
+                            }
+
+                            String name = p.getFileName().toString();
+                            if (name.equals(".DS_Store") || name.startsWith("._")) {
+                                continue;
+                            }
+
+                            Path rel = root.relativize(p);
+                            long sz = Files.size(p);
+                            long lm = Files.getLastModifiedTime(p).toMillis();
+
+                            DatasetFile f = new DatasetFile();
+                            f.setFilename(rel.toString().replace(File.separatorChar, '/'));
+                            f.setSizeBytes(sz);
+
+                            filesModel.add(f);
+                            filesTotalBytes += sz;
+                        }
+                    }
+                    // keep UI tidy: sort by folder/name
+                    filesModel.sort(java.util.Comparator.comparing(DatasetFile::getFilename, String.CASE_INSENSITIVE_ORDER));
+                    // update derived count on the row, if you want
+                    ds.setFileCount(filesModel.size());
+                } else {
+                    sb.addMessage("Warn", "Dataset folder not found on server.");
+                }
+            }
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to list files: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // in DatasetController (@ViewScoped or @SessionScoped)
+    public void onFilesClick() {
+        if (selected == null) {
+            sb.addMessage("Error", "No dataset selected.");
+            return;
+        }
+        populateFilesForDialog(selected);   // fills filesModel and totals
     }
 
 }
