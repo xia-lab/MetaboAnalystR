@@ -587,7 +587,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
                                width = NA, pcx, pcy, reg = 0.95, show = 1,
                                grey.scale = 0, cex.opt = "na",
                                meta = NULL, metaShape = NULL) {
-  save.image("2dscore.RData");
+  # save.image("2dscore.RData");
   if (!exists("pca.cex", envir = .GlobalEnv)){
     pca.cex <<- 1
   }
