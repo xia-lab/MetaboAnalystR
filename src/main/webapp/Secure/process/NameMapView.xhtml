@@ -25,9 +25,12 @@
                     <LI>For <b>compound name</b>, you should click the <b>View</b> link to perform <b>approximate search</b> and manually select the correct match if found;</LI>
                     <LI>For <b>KEGG ID</b>, it is possible to have multiple hits, you should click the <b>View</b> link to manually select the correct match if found;</LI>
                 </UL>  
-                <p:dataTable id="mapTbl" style="width:100%; font-size: 12px" var="map" 
+
+                <p:dataTable id="mapTbl" paginator="true" style="width:100%; font-size: 12px; line-height: 21px; " 
+                             rows="25" rowsPerPageTemplate="25,50,100" 
                              class="surface-card shadow-1 p-0 text-800"
-                             rowIndexVar="rowInx" value="#{mapBean.nameMapResult}">  
+                             var="map" rowIndexVar="rowInx" 
+                             value="#{mapBean.nameMapResult}">  
                     <p:column headerText="Query">  
                         <h:outputText escape="false" value="#{map.query}"/>
                     </p:column>  
