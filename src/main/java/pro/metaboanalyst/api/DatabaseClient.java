@@ -467,6 +467,8 @@ public class DatabaseClient {
             String title,
             String module,
             String dataType,
+                        String toolName,
+
             int sampleNum,
             java.util.List<DatasetFile> files) {
         if (files == null || files.isEmpty()) {
@@ -475,7 +477,7 @@ public class DatabaseClient {
 
         if (ab.isInDocker()) {
             // Direct DB path
-            return DatabaseController.insertDatasetWithFiles(email, node, title, module, dataType, sampleNum, null, files);
+            return DatabaseController.insertDatasetWithFiles(email, node, title, module, dataType, "metaboanalyst", sampleNum, null, files);
         } else {
             try {
                 // Build nested JSON payload
@@ -486,6 +488,8 @@ public class DatabaseClient {
                 dataset.put("dataType", dataType);
 
                 dataset.put("title", title);
+                dataset.put("toolname", toolName);
+
                 dataset.put("samplenum", sampleNum);
 
                 java.util.List<java.util.Map<String, Object>> fileList = new java.util.ArrayList<>();
@@ -518,7 +522,7 @@ public class DatabaseClient {
      */
     public String insertDataset(DatasetRow ds) {
         return insertDataset(
-                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(), ds.getSamplenum(),
+                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(),"metaboanalyst", ds.getSamplenum(),
                 ds.getFiles() == null ? java.util.List.of() : ds.getFiles()
         );
     }
@@ -543,7 +547,7 @@ public class DatabaseClient {
         }
     }
 
-    public ArrayList<DatasetRow> getDatasetsForEmail(String email, boolean includeFiles) {
+    public ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname, boolean includeFiles) {
         ArrayList<DatasetRow> out = new ArrayList<>();
         if (email == null || email.isBlank()) {
             return out;
@@ -551,7 +555,7 @@ public class DatabaseClient {
         try {
             if (ab.isInDocker()) {
                 // --- Direct DB path ---
-                List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email);
+                List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email, toolname);
                 if (includeFiles && rows != null) {
                     for (DatasetRow d : rows) {
                         UUID id = d.getId();
@@ -561,22 +565,30 @@ public class DatabaseClient {
                         }
                     }
                 }
-                out.addAll(rows);
+                if (rows != null) {
+                    out.addAll(rows);
+                }
                 return out;
             } else {
                 // --- Remote API path ---
-                String q = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
-                String json = apiClient.get("/database/datasets/by-email?email=" + q
-                        + "&includeFiles=" + includeFiles);
+                String qEmail = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
+                String qTool = URLEncoder.encode(toolname, StandardCharsets.UTF_8.name());
+                String url = "/database/datasets/by-email?email=" + qEmail
+                        + "&toolname=" + qTool
+                        + "&includeFiles=" + includeFiles;
+
+                String json = apiClient.get(url);
 
                 ObjectMapper om = new ObjectMapper().findAndRegisterModules();
                 List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {
                 });
-                out.addAll(list);
+                if (list != null) {
+                    out.addAll(list);
+                }
                 return out;
             }
         } catch (Exception e) {
-            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email", e);
+            LOGGER.log(java.util.logging.Level.SEVERE, "Error fetching datasets for email/toolname", e);
             return out; // empty list on error
         }
     }

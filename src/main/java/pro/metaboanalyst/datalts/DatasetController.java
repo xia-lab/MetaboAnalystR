@@ -167,7 +167,7 @@ public class DatasetController implements Serializable {
                     : files.get(0).getFilename();
 
             // ---- CALL YOUR SPECIALIZED INSERT FUNCTION (DB or API) ----
-            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(), sampleNum, files);
+            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(),"metaboanalyst", sampleNum, files);
 
             UUID datasetId = extractUUID(resp);
             if (datasetId == null) {
@@ -288,7 +288,7 @@ public class DatasetController implements Serializable {
             datasetTable = new ArrayList<>();
             return;
         }
-        datasetTable = db.getDatasetsForEmail(email, true);
+        datasetTable = db.getDatasetsForEmail(email, "metaboanalyst", true);
     }
 
     public void syncSelectedDatasets() {
@@ -608,6 +608,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     stagedDataset.getTitle(),
                     sb.getAnalType(),
                     sb.getDataType(),
+                    "metaboanalyst",
                     stagedDataset.getSamplenum(),
                     dbFiles
             );

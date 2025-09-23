@@ -1660,7 +1660,7 @@ public class DatabaseController implements Serializable {
         primary.setSizeBytes(sizeBytes);
         primary.setUploadedAt(null); // let DB default to now()
 
-        return insertDatasetWithFiles(email, node, title, module, dataType, sampleNum, /*uploadedAt=*/ null, List.of(primary));
+        return insertDatasetWithFiles(email, node, title, module, dataType, "metaboanalyst", sampleNum, null, List.of(primary));
     }
 
     /**
@@ -1670,14 +1670,20 @@ public class DatabaseController implements Serializable {
     public static String insertDatasetWithFiles(String email,
             String node,
             String title,
-            String module, // <-- new
-            String dataType, // <-- new
+            String module, // unchanged
+            String dataType, // unchanged
+            String toolName,
             int sampleNum,
-            OffsetDateTime uploadedAt, // optional; null -> now()
+            OffsetDateTime uploadedAt,
             List<DatasetFile> files) {
+
         final String dsSql
-                = "INSERT INTO datasets (title, filename, type, size_bytes, uploaded_at, email, node, samplenum, module, data_type) "
-                + "VALUES (?, ?, ?, ?, COALESCE(?, now()), ?, ?, ?, ?, ?) RETURNING id";
+                = "INSERT INTO datasets "
+                + "(title, filename, type, size_bytes, uploaded_at, email, node, samplenum, toolname, module, data_type) "
+                + // <-- toolname added
+                "VALUES (?, ?, ?, ?, COALESCE(?, now()), ?, ?, ?, ?, ?, ?) "
+                + // <-- +1 placeholder
+                "RETURNING id";
 
         final String fileSql
                 = "INSERT INTO dataset_files (dataset_id, role, filename, type, size_bytes, uploaded_at) "
@@ -1696,18 +1702,19 @@ public class DatabaseController implements Serializable {
             con.setAutoCommit(false);
             UUID datasetId;
 
-            // 1) Insert dataset (legacy columns populated from first file) + new columns
+            // 1) Insert dataset (legacy columns from first file) + new columns
             try (PreparedStatement ps = con.prepareStatement(dsSql)) {
-                ps.setString(1, nvl(title, primary.getFilename())); // title fallback = filename
+                ps.setString(1, nvl(title, primary.getFilename()));          // title fallback = filename
                 ps.setString(2, primary.getFilename());
                 ps.setString(3, nvl(primary.getType(), "bin"));
                 ps.setLong(4, Math.max(0L, primary.getSizeBytes()));
-                ps.setObject(5, uploadedAt);                        // null -> COALESCE(now())
+                ps.setObject(5, uploadedAt);                                  // null -> COALESCE(now())
                 ps.setString(6, email);
                 ps.setString(7, node);
                 ps.setInt(8, Math.max(0, sampleNum));
-                ps.setString(9, module);                            // <-- new bind
-                ps.setString(10, dataType);                         // <-- new bind
+                ps.setString(9, toolName);                                    // <-- NEW bind for toolname
+                ps.setString(10, module);
+                ps.setString(11, dataType);
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
@@ -1731,7 +1738,7 @@ public class DatabaseController implements Serializable {
                     fps.setString(3, f.getFilename());
                     fps.setString(4, nvl(f.getType(), "bin"));
                     fps.setLong(5, Math.max(0L, f.getSizeBytes()));
-                    fps.setObject(6, f.getUploadedAt());           // null -> COALESCE(now())
+                    fps.setObject(6, f.getUploadedAt());                      // null -> COALESCE(now())
                     fps.addBatch();
                 }
                 fps.executeBatch();
@@ -1759,10 +1766,15 @@ public class DatabaseController implements Serializable {
 
     // In DatabaseClient (Postgres)
     // In DatabaseClient (Postgres)
-    public static ArrayList<DatasetRow> getDatasetsForEmail(String email) {
+    public static ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname) {
+        final ArrayList<DatasetRow> out = new ArrayList<>();
+        if (email == null || email.isBlank() || toolname == null || toolname.isBlank()) {
+            return out; // require both email and toolname
+        }
+
         final String sql
                 = "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
-                + "       d.email, d.node, d.samplenum, d.module, d.data_type, "
+                + "       d.email, d.node, d.samplenum, d.toolname, d.module, d.data_type, "
                 + "       COALESCE(df.file_count, 0) AS file_count, "
                 + "       COALESCE(df.has_metadata, false) AS has_metadata "
                 + "FROM datasets d "
@@ -1770,13 +1782,14 @@ public class DatabaseController implements Serializable {
                 + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
                 + "  FROM dataset_files GROUP BY dataset_id "
                 + ") df ON df.dataset_id = d.id "
-                + "WHERE d.email = ? "
-                + "ORDER BY d.uploaded_at DESC, d.node";
+                + "WHERE d.email = ? AND d.toolname = ? "
+                + // <-- filter by toolname
+                "ORDER BY d.uploaded_at DESC, d.node";
 
-        ArrayList<DatasetRow> out = new ArrayList<>();
         try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, email);
+            ps.setString(2, toolname);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -1797,16 +1810,21 @@ public class DatabaseController implements Serializable {
                         d.setUploadedAt(rs.getObject("uploaded_at", java.time.OffsetDateTime.class));
                     } catch (Exception ignore) {
                         if (rs.getTimestamp("uploaded_at") != null) {
-                            d.setUploadedAt(rs.getTimestamp("uploaded_at").toInstant()
-                                    .atOffset(java.time.OffsetDateTime.now().getOffset()));
+                            d.setUploadedAt(
+                                    rs.getTimestamp("uploaded_at").toInstant()
+                                            .atOffset(java.time.OffsetDateTime.now().getOffset())
+                            );
                         }
                     }
 
                     d.setEmail(rs.getString("email"));
                     d.setNode(rs.getString("node"));
                     d.setSamplenum(rs.getInt("samplenum"));
-                    d.setModule(rs.getString("module"));       // <-- new
-                    d.setDataType(rs.getString("data_type"));  // <-- new
+                    // Use whichever setter your POJO provides:
+                    // d.setToolname(rs.getString("toolname"));
+                    d.setToolName(rs.getString("toolname"));
+                    d.setModule(rs.getString("module"));
+                    d.setDataType(rs.getString("data_type"));
                     d.setFileCount(rs.getInt("file_count"));
                     d.setHasMetadata(rs.getBoolean("has_metadata"));
                     out.add(d);

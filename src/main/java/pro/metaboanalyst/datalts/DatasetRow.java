@@ -33,6 +33,7 @@ public class DatasetRow implements Serializable {
     private int samplenum;           // datasets.samplenum
     private String module;         // stat,mf,roc,etc
     private String dataType;         // table,list,etc
+    private String toolName;         // table,list,etc
 
     // --- UI-only / optional fields (not in DB schema unless you add them) ---
     private String description;      // used by edit dialog
@@ -51,6 +52,14 @@ public class DatasetRow implements Serializable {
     }
     
     public DatasetRow() {
+    }
+
+    public String getToolName() {
+        return toolName;
+    }
+
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
     }
 
     // ---------- Convenience ----------
