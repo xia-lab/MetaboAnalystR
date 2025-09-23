@@ -1,0 +1,24 @@
+:root{
+  --ds-pad: 1rem;
+  --ds-toolbar-h: 56px;
+  --ds-card-min-h: 300px;
+}
+
+.cards-grid{ align-items: stretch; }
+.cards-grid > *{ height: 100%; }
+
+.ds-card{ position: relative !important; min-height: var(--ds-card-min-h) !important; padding: var(--ds-pad) !important; padding-bottom: calc(var(--ds-pad) + var(--ds-toolbar-h)) !important; }
+
+.ds-card .ui-fieldset-content{ overflow: auto !important; padding: 0 !important; }
+
+.ds-card .dataset-toolbar,
+.ds-card .ui-toolbar.dataset-toolbar{ position: absolute !important; left: var(--ds-pad) !important; right: var(--ds-pad) !important; bottom: var(--ds-pad) !important; margin: 0 !important; padding: .5rem 1rem !important; background: var(--surface-card, #fff) !important; border-top: 1px solid rgba(0,0,0,.06) !important; box-shadow: 0 -2px 12px rgba(0,0,0,.06) !important; z-index: 1; }
+
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-left > *,
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-right > *{ margin-right: .75rem; }
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-left > *:last-child,
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-right > *:last-child{ margin-right: 0; }
+.ui-toolbar.dataset-toolbar i { 
+  font-size: 1.25em !important; 
+  vertical-align: middle;
+}

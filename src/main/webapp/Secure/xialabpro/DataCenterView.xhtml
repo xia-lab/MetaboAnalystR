@@ -14,6 +14,8 @@
     </ui:define>
 
     <ui:define name="mystyle">
+        <h:outputStylesheet library="css" name="dataset-cards.css"/>
+
         <style>
             .warnHighlight {
                 color: #d32f2f !important;
@@ -98,37 +100,7 @@
                 display:inline-block;
                 width:16px;
             }
-
-            /* make the fieldset act as positioning context */
-            .ds-card {
-                position: relative;
-                padding-bottom: 64px; /* reserve space for the footer (adjust height) */
-            }
-
-            /* footer sits at the bottom of the fieldset */
-            .ds-card .dataset-toolbar {
-                position: absolute;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                padding: .5rem 1rem;
-                background: var(--surface-card, #fff);
-                border-top: 1px solid rgba(0,0,0,.06);
-                box-shadow: 0 -2px 12px rgba(0,0,0,.06);
-                z-index: 1; /* above card content */
-            }
-
-            /* tidy spacing inside toolbar */
-            .dataset-toolbar .ui-toolbar-group-left > *,
-            .dataset-toolbar .ui-toolbar-group-right > * {
-                margin-right: .75rem;
-            }
-            .dataset-toolbar .ui-toolbar-group-left > *:last-child,
-            .dataset-toolbar .ui-toolbar-group-right > *:last-child {
-                margin-right: 0;
-            }
-
-
+            
         </style>
         <script type="text/javascript">
             // Optional helpers for downloads (used by exporter/template buttons)
@@ -162,11 +134,7 @@
 
                                     <!-- title link to edit -->
                                     <div style="margin-bottom:.25rem;">
-                                        <p:commandLink value="#{ds.description}" styleClass="title-link"
-                                                       update=":editForm"
-                                                       oncomplete="PF('editDialog').show();">
-                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                        </p:commandLink>
+                                        <h:outputText value="#{ds.description}"/>
                                     </div>
 
                                     <div class="ds-meta">

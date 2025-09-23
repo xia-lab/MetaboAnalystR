@@ -1026,7 +1026,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setSamplenum(77);
         ds1.setModule("stat");
         ds1.setDataType("conc");
-        ds1.setDescription("Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR. Phenotype: N-cachexic; Y-control");
+        ds1.setDescription("Urinary metabolite concentrations from 77 cancer patients measured by 1H NMR.");
         ds1.setTags(List.of("metabolomics", "experimentA"));
         ds1.setFileCount(1);
         ds1.setHasMetadata(true);
