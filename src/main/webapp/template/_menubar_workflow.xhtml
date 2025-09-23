@@ -13,29 +13,29 @@
                     onclick="document.getElementById('safeLogoutBtn').click()"
                     icon="pi pi-fw pi-home"/> 
 
-        <p:menuitem icon="pi pi-fw pi-sitemap" 
+        <p:menuitem icon="pi pi-fw pi-th-large" 
                     value="Modules"
                     onclick="document.getElementById('safeLogoutBtnModule').click()"
                     title="Go to module view"/>
 
-        <p:menuitem icon="pi pi-fw pi-database" 
+        <p:menuitem icon="pi pi-fw pi-cog" 
                     value="Projects"
                     action = "ProjectView"
                     title="View/resume/create projects"/>
 
-        <p:menuitem icon="pi pi-fw pi-table" 
-                    value="Data Center"
+        <p:menuitem icon="pi pi-fw pi-database" 
+                    value="Datasets"
                     action="DataCenterView"
                     title="Upload/view/select your data for analysis"/>
 
-        <p:menuitem icon="pi pi-fw pi-sync" 
+        <p:menuitem icon="pi pi-fw pi-sitemap" 
                     value="Workflows"
                     action ="WorkflowView"
                     title="Create/Run workflow"/>
 
         <p:menuitem icon="pi pi-fw pi-chart-line" 
                     value="Dashboard"
-                    title="View/download results in current project folder"
+                    title="Explore current analysis results"
                     action="#{sessionBean1.goToResultPage()}"/>
     </p:menubar>
 

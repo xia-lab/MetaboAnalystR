@@ -53,13 +53,13 @@
                                 value="Save"
                                 action="#{fireBaseController.toggleOnDirectQuit('stay')}" 
                                 oncomplete="PF('fireSaveDialog').show()"
-                                title="Save current project"/>
+                                title="Save current project/workflow/data"/>
                     <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
                     <p:separator/>
 
                     <p:menuitem id="m_download" icon="pi pi-fw pi-chart-line" 
                                 value="Dashboard"
-                                title="View/download results in current project folder"
+                                title="Explore current analysis result"
                                 action="#{sessionBean1.goToResultPage()}"/>
                     <p:separator/>
 
@@ -98,20 +98,20 @@
                                 oncomplete="$('#sidebar-form\\:downloadButtonPptx').click(); PF('statusDialog').hide();"/>
                     <p:separator/>
 
-                    <p:menuitem id="m_view" icon="pi pi-fw pi-database" 
+                    <p:menuitem id="m_view" icon="pi pi-fw pi-cog" 
                                 value="Projects"
                                 action = "ProjectView"
                                 title="View/resume/create projects"/>
                     <p:separator/>
 
-                    <p:menuitem id="m_data" icon="pi pi-fw pi-table" 
-                                value=" Data "
+                    <p:menuitem id="m_data" icon="pi pi-fw pi-database" 
+                                value="Datasets"
                                 action="DataCenterView"
                                 title="View/edit/upload your data"/>
                     <p:separator/>
 
-                    <p:menuitem id="m_workflow" icon="pi pi-fw pi-sync" 
-                                value="Workflow"
+                    <p:menuitem id="m_workflow" icon="pi pi-fw pi-sitemap" 
+                                value="Workflows"
                                 action ="WorkflowView"
                                 title="Create/Run workflow"/>
                     <p:separator/>
