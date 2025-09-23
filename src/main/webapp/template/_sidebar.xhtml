@@ -47,11 +47,7 @@
 
                 <d:menu widgetVar="diamondMenuWidget" style="text-align: center; margin-top: 10px">
 
-                    <p:menuitem id="m_data" icon="pi pi-fw pi-paperclip" 
-                                value=" Data "
-                                onclick="PF('dataDialog').show()" 
-                                title="View/edit your data"/>
-                    <p:separator/>
+
 
                     <p:menuitem id="m_save" icon="pi pi-fw pi-save" 
                                 value="Save"
@@ -61,8 +57,8 @@
                     <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
                     <p:separator/>
 
-                    <p:menuitem id="m_download" icon="pi pi-fw pi-folder" 
-                                value="Results"
+                    <p:menuitem id="m_download" icon="pi pi-fw pi-chart-line" 
+                                value="Dashboard"
                                 title="View/download results in current project folder"
                                 action="#{sessionBean1.goToResultPage()}"/>
                     <p:separator/>
@@ -106,6 +102,12 @@
                                 value="Projects"
                                 action = "ProjectView"
                                 title="View/resume/create projects"/>
+                    <p:separator/>
+
+                    <p:menuitem id="m_data" icon="pi pi-fw pi-table" 
+                                value=" Data "
+                                action="DataCenterView"
+                                title="View/edit/upload your data"/>
                     <p:separator/>
 
                     <p:menuitem id="m_workflow" icon="pi pi-fw pi-sync" 

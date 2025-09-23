@@ -145,14 +145,13 @@
         <h:panelGrid styleClass="my-content-panel">
             <p:growl id="msgs" showDetail="true" life="6000"/>
 
-            <h2>Data Management</h2>
+            <h2>Data Center</h2>
             <p>
-                Upload one or more datasets (CSV/TSV/TXT or ZIP). Your uploaded files appear in the table below, where you can
+                Upload one or more datasets (.csv, .txt or .zip). Your uploaded files appear in the table below, where you can
                 download, edit metadata, or delete them.
             </p>
 
-            <ui:include src="/template/_dataset_overlaypanel.xhtml" />
-            <p:tabView widgetVar="tabWidget" id="acTab" style="width:100%; border: none; font-size: 13px;" >
+            <p:tabView widgetVar="tabWidget" id="ac" style="margin: 20px; width:90%; border: none; font-size: 13px; line-height: 23px; min-height: 70vh" >
                 <p:tab title ="Example Dataset">
                     <h:form id="dataTableExampleForm">
 
@@ -199,7 +198,7 @@
                                         <f:facet name="right">
                                             <p:commandLink id="loadBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab:dataTableForm"
+                                                           update=":ac:dataTableForm"
                                                            action="#{datasetController.load(ds)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
@@ -273,7 +272,7 @@
                                         <f:facet name="right">
                                             <p:commandLink id="loadBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab:dataTableForm"
+                                                           update=":ac:dataTableForm"
                                                            action="#{datasetController.load(ds)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
@@ -295,13 +294,51 @@
                         </h:panelGroup>
                     </h:form>
                 </p:tab>
-                <p:tab title ="Data Upload">
 
+                <p:tab title ="Data Upload">
+                    <h:form id="uploadform" enctype="multipart/form-data">
+
+                        <div style="padding: 20px; line-height: 23px; width:90%;">
+                            <p:remoteCommand name="validateFiles" actionListener="#{uploadBean.checkIntegrity}"/>
+
+                            <p>
+                                <b>Drag-and-drop</b> your data below (maximum 200MB per file). 
+                             
+                            </p>
+
+                            <p:fileUpload listener="#{uploader.handleFileUploadMulti}"
+                                          sequential="true"
+                                          update=":ac:uploadform"
+                                          auto="false" 
+                                          label="Choose" 
+                                          mode="advanced" 
+                                          style="width:75%; margin: 20px; line-height: 18px"
+                                          multiple="true" 
+                                          oncomplete="handleMultiFileUploadRequest(PF('importFile'), validateFiles);"
+                                          widgetVar="importFile">
+                                <p:validateFile sizeLimit="#{applicationBean1.FILE_SIZE_BYTE}"
+                                                fileLimit="10"           
+                                                allowTypes="/(\.|\/)(csv|txt|zip)$/"/>
+                            </p:fileUpload>
+
+                        </div>
+                        <div style="text-align: center; width:75%;">
+                            <p:commandButton value="Done!" onclick="PF('uploadDialog').hide()"/>
+                        </div>
+                    </h:form>
                 </p:tab>
             </p:tabView>
-
-
         </h:panelGrid>
+
+        <p:dialog widgetVar="dataPanelDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
+                  width="800px" hideEffect="explode" resizable="true">
+            <p>
+                Your uploaded data are shown below for manual inspection. It represents the computer's view of your data. 
+                The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
+            </p>
+            <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
+        </p:dialog>
+
         <p:dialog header="Files in Dataset" widgetVar="filesDialog" modal="true" appendTo="@(body)" resizable="true" width="720">
             <h:form id="filesForm">
                 <p:dataTable value="#{datasetController.selected.getFiles()}" var="f" rows="10">
