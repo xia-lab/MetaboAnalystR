@@ -351,7 +351,6 @@ public class DownloadBean implements Serializable {
                 }
             }
 
-            System.out.println("= setupGalleryStat === key ---> " + key);
             if (picture.contains("_demo")) {
                 galleryImages.add(new GalleryImage(fcu.obtainLegend(key) + " (visit to update)", path, "/MetaboAnalyst" + interactiveUrl));
             } else {
@@ -422,13 +421,15 @@ public class DownloadBean implements Serializable {
 
         // Process files in the main folder
         File folder = new File(mainFolderPath);
-        DataUtils.deleteFile(usr, "Download.zip");
-        File[] listOfFiles = folder.listFiles(new OnlyExt(true));
 
+        File[] listOfFiles = folder.listFiles(new OnlyExt(true));
+        System.out.println(listOfFiles.length + "======listOfFiles.length");
         if (listOfFiles == null || listOfFiles.length == 0) {
             downloads = new ResultBean[1];
             downloads[0] = new ResultBean("Empty Folder", "", null, null);
         } else {
+            DataUtils.deleteFile(usr, "Download.zip");
+            System.out.println("CreatingZip=====" + mainFolderPath);
             DataUtils.createZipFile(listOfFiles, "Download.zip", mainFolderPath);
 
             ArrayList<String> fileNames = new ArrayList<>();
@@ -494,15 +495,17 @@ public class DownloadBean implements Serializable {
                 }
             } else {
              */
-            for (int i = 0; i < rowNum; i++) {
-                fileNMA = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
-                if (i == rowNum - 1 && added) {
-                    fileNMB = "";
-                } else {
-                    fileNMB = "<a target='_blank' href='/MetaboAnalyst/resources/users/" + usrName + "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
+
+                for (int i = 0; i < rowNum; i++) {
+                    fileNMA = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir()+ "/"  + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
+                    if (i == rowNum - 1 && added) {
+                        fileNMB = "";
+                    } else {
+                        fileNMB = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir()+ "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
+                    }
+                    downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
                 }
-                downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
-            }
+
             //}
         }
 
@@ -1279,6 +1282,7 @@ public class DownloadBean implements Serializable {
         sb.getCurrentUser().setRelativeDir(sb.getCurrentUser().getOrigRelativeDir() + "/" + subFolder);
 
         System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
+        System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
 
         currentSubFolder = subFolder;
         wb.setCurrentSubFolder(subFolder);
@@ -1324,7 +1328,7 @@ public class DownloadBean implements Serializable {
         System.out.println(selectedSummary.getPcaImage() + "======isFilterUnmapped");
         WorkflowParameters opt = wb.getWorkflowParameterByFolderName(selectedSummary.getRunId());
         selectedWorkflowParams = opt;
-                System.out.println(selectedWorkflowParams.getDetailTextHtml() + "======text");
+        System.out.println(selectedWorkflowParams.getDetailTextHtml() + "======text");
 
     }
 
