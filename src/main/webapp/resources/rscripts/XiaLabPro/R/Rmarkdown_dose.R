@@ -67,7 +67,7 @@ CreateDoseIntr <- function(){
 CreateDoseParametersDoc <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-    link <- GetSharingLink(mSetObj)
+  link <- GetSharingLink(mSetObj)
 
   descr <- c("\n\n<hr/>",
              "\n\n## 3. Identification of potential features associated with dose\n\n",
