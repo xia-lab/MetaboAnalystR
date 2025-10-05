@@ -136,3 +136,4 @@ gmw_kegg,kegg,Galleria mellonella (greater wax moth),[KEGG],Insects,133,Galleria
 gmx_kegg,kegg,Glycine max (soybean),[KEGG],Plants,134,Glycine max (soybean) [KEGG]
 lrg_kegg,kegg,Lacticaseibacillus rhamnosus GG,[KEGG],Prokaryotes,135,Lacticaseibacillus rhamnosus GG [KEGG]
 saa_kegg,kegg,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA),[KEGG],Prokaryotes,136,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA) [KEGG]
+csav_kegg,kegg,Cannabis sativa (hemp),[KEGG],Plants,137,Cannabis sativa (hemp) [KEGG]
