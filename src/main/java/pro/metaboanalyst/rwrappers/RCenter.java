@@ -347,20 +347,18 @@ public class RCenter {
         }
     }
 
-public static void saveRLoadImg(RConnection RC) {
-    try {
-RC.voidEval(
-    "obj <- ls(envir = .GlobalEnv, all.names = TRUE)\n" +
-    "obj <- obj[!vapply(obj, function(n) is.function(get(n, envir = .GlobalEnv)), logical(1))]\n" +
-    "save(list = obj, file = 'Rload.RData', envir = .GlobalEnv)\n"
-);
+    public static void saveRLoadImg(RConnection RC) {
+        try {
+            RC.voidEval(
+                    "obj <- ls(envir = .GlobalEnv, all.names = TRUE)\n"
+                    + "obj <- obj[!vapply(obj, function(n) is.function(get(n, envir = .GlobalEnv)), logical(1))]\n"
+                    + "save(list = obj, file = 'Rload.RData', envir = .GlobalEnv)\n"
+            );
 
-    } catch (Exception e) {
-        LOGGER.error("saveRLoadImg", e);
+        } catch (Exception e) {
+            LOGGER.error("saveRLoadImg", e);
+        }
     }
-}
-
-
 
     public static void LoadRLoadImg(RConnection RC, String ImageNm) { // NOTE: this function is used to load Batch image ONLY!!!
         try {
@@ -393,7 +391,6 @@ RC.voidEval(
             LOGGER.error("setReportImgMap", rse);
         }
     }
-
 
     public static void deleteProjectById(
             String scriptPath,
@@ -1018,6 +1015,36 @@ RC.voidEval(
         } catch (Exception e) {
             //e.printStackTrace();
             LOGGER.error("setResourceDir", e);
+        }
+    }
+
+    public static void saveRLoadImgCustom(RConnection RC, String fileName) {
+        try {
+            // Fallback + simple escaping for R string
+            String fn = (fileName == null || fileName.isBlank())
+                    ? "RloadSanity.RData"
+                    : fileName;
+
+            // Normalize path & escape quotes for R
+            String rFile = fn.replace("\\", "/").replace("\"", "\\\"");
+
+            String rCmd = String.format("""
+                all_objects <- ls()
+                non_function_objects <- all_objects[!sapply(mget(all_objects, .GlobalEnv), is.function)]
+                if (length(non_function_objects) == 0) non_function_objects <- character(0)
+
+                # ensure parent directory exists (if a path was provided)
+                .dir <- dirname("%s")
+                if (!identical(.dir, ".") && !dir.exists(.dir)) {
+                  dir.create(.dir, recursive = TRUE, showWarnings = FALSE)
+                }
+
+                save(list = non_function_objects, file = "%s")
+                """, rFile, rFile);
+
+            RC.voidEval(rCmd);
+        } catch (Exception e) {
+            LOGGER.error("saveRLoadImgCustom", e);
         }
     }
 

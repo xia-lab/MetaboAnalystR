@@ -1633,7 +1633,7 @@ public class WorkflowView implements Serializable {
 
         dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
         HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
-        dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName, ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
+        dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName+".json", ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
         if (msgBool) {
             sb.addMessage("info", "Workflow has been successfully saved!");
         }

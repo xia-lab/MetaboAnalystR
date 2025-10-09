@@ -1764,8 +1764,73 @@ public class DatabaseController implements Serializable {
         return (s == null || s.trim().isEmpty()) ? def : s;
     }
 
-    // In DatabaseClient (Postgres)
-    // In DatabaseClient (Postgres)
+    public static String updateDatasetAndFiles(
+            UUID datasetId,
+            String title,
+            String toolName,
+            String module,
+            String dataType,
+            int sampleNum,
+            OffsetDateTime uploadedAt,
+            List<DatasetFile> files
+    ) {
+        final String dsUpd = """
+        UPDATE datasets
+        SET title = ?, toolname = ?, module = ?, data_type = ?, samplenum = ?, uploaded_at = COALESCE(?, uploaded_at)
+        WHERE id = ?
+    """;
+
+        final String fileUpsert = """
+        INSERT INTO dataset_files (dataset_id, role, filename, type, size_bytes, uploaded_at)
+        VALUES (?, ?, ?, ?, ?, COALESCE(?, now()))
+        ON CONFLICT (dataset_id, role, filename)
+        DO UPDATE SET
+            type = EXCLUDED.type,
+            size_bytes = EXCLUDED.size_bytes,
+            uploaded_at = COALESCE(EXCLUDED.uploadedAt, dataset_files.uploaded_at)
+    """;
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection()) {
+            con.setAutoCommit(false);
+
+            try (PreparedStatement ps = con.prepareStatement(dsUpd)) {
+                ps.setString(1, title);
+                ps.setString(2, toolName);
+                ps.setString(3, module);
+                ps.setString(4, dataType);
+                ps.setInt(5, Math.max(0, sampleNum));
+                ps.setObject(6, uploadedAt);
+                ps.setObject(7, datasetId);
+                if (ps.executeUpdate() == 0) {
+                    con.rollback();
+                    return "No dataset updated (id not found).";
+                }
+            }
+
+            try (PreparedStatement fps = con.prepareStatement(fileUpsert)) {
+                for (DatasetFile f : files) {
+                    if (f.getRole() == null || f.getFilename() == null || f.getType() == null) {
+                        con.rollback();
+                        return "Each file must have role/filename/type.";
+                    }
+                    fps.setObject(1, datasetId);
+                    fps.setString(2, f.getRole());
+                    fps.setString(3, f.getFilename());
+                    fps.setString(4, f.getType());
+                    fps.setLong(5, Math.max(0L, f.getSizeBytes()));
+                    fps.setObject(6, f.getUploadedAt());
+                    fps.addBatch();
+                }
+                fps.executeBatch();
+            }
+
+            con.commit();
+            return "Dataset updated successfully. id=" + datasetId + " filesUpserted=" + files.size();
+        } catch (SQLException ex) {
+            return "Error updating dataset - " + ex.getMessage();
+        }
+    }
+
     public static ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname) {
         final ArrayList<DatasetRow> out = new ArrayList<>();
         if (email == null || email.isBlank() || toolname == null || toolname.isBlank()) {
@@ -1919,4 +1984,62 @@ public class DatabaseController implements Serializable {
             return "Error (connection): " + ex.getMessage();
         }
     }
+
+    public static String deleteWorkflow(String id) {
+        Connection con = null;
+        PreparedStatement checkStmt = null;
+        PreparedStatement deleteStmt = null;
+        ResultSet res = null;
+
+        try {
+            // Get a connection from the connection pool
+            con = DatabaseConnectionPool.getDataSource().getConnection();
+
+            // Check if a workflow entry with the provided id exists
+            String checkQuery = "SELECT id FROM workflow WHERE id = ?";
+            checkStmt = con.prepareStatement(checkQuery);
+            checkStmt.setInt(1, Integer.parseInt(id));
+            res = checkStmt.executeQuery();
+
+            if (!res.next()) {
+                // If no workflow with the id exists, return an error message
+                return "No workflow entry found with the provided id.";
+            }
+
+            // Delete the workflow entry
+            String deleteQuery = "DELETE FROM workflow WHERE id = ?";
+            deleteStmt = con.prepareStatement(deleteQuery);
+            deleteStmt.setInt(1, Integer.parseInt(id));
+
+            // Execute the delete statement
+            int deleteCount = deleteStmt.executeUpdate();
+
+            // Return success message if the deletion was successful
+            return deleteCount > 0 ? "Workflow entry deleted successfully." : "Workflow deletion failed.";
+
+        } catch (SQLException ex) {
+            // Handle any SQL exceptions
+            System.out.println("SQLException occurred: " + ex.getMessage());
+            return "Error deleting workflow entry - " + ex.getMessage();
+        } finally {
+            // Close all resources in the finally block
+            try {
+                if (res != null) {
+                    res.close();
+                }
+                if (checkStmt != null) {
+                    checkStmt.close();
+                }
+                if (deleteStmt != null) {
+                    deleteStmt.close();
+                }
+                if (con != null) {
+                    con.close(); // Return connection back to the pool
+                }
+            } catch (SQLException ex) {
+                System.out.println("Error when closing resources: " + ex.getMessage());
+            }
+        }
+    }
+
 }

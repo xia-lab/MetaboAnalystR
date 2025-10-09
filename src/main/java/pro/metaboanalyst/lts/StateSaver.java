@@ -61,7 +61,8 @@ import pro.metaboanalyst.workflows.WorkflowView;
 @SessionScoped
 @Named("stateSaver")
 public class StateSaver implements Serializable {
-
+    @Inject
+    private FireBaseController fb;
 
     @PostConstruct
     private void init() {
@@ -205,7 +206,11 @@ public class StateSaver implements Serializable {
         }
 
         try {
-            wfv.generateWorkflowJson();
+            if (fb.isSaveWorkflowBoolean()) {
+                wb.setName(fb.getFireDocName());
+                wb.setDescription(fb.getFireDocDescription());
+                wfv.generateWorkflowJson();
+            }
         } catch (IOException ex) {
             Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -2873,7 +2873,9 @@ public class DiagramView implements Serializable {
 
             }
             case "pathora" -> {
-                // …pathora logic…
+                url = "/Secure/workflow/upload/AnotListUploadView.xhtml";
+                                workflowType = "Compound Table";
+
             }
             default ->
                 wb.setReturnType("individual");

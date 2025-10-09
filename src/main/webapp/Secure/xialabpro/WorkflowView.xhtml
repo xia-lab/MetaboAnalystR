@@ -7,9 +7,12 @@
                 xmlns:p="http://primefaces.org/ui"
                 template="/template/_template_workflow.xhtml">
     <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{workflowBean.loadAllWorkflowsPrerender()}"></f:event> 
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
     </ui:define>
     <ui:define name="myscript">
+        <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/workflow.css" />
+
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
         <script type="text/javascript">
             window.onload = function () {
@@ -39,390 +42,357 @@
             };
         </script>
     </ui:define>
-    <ui:define name="mystyle">    
-        <style>
-            .ui-diagram-element {
-                background-color: #EFEEEC;
-                padding: 0px;
-                width: 9em;
-                height: 9em;
-                text-align: center;
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
-                user-select: none;
-            }
 
-            .ui-diagram-element:hover {
-                background-color: #C7C6C4;
-            }
-
-            .selected {
-                border: 3px solid blue; /* Highlight the entire node */
-                width: inherit; /* Make sure it covers the full node */
-                height: 9em;
-                box-sizing: border-box; /* Include borders in the dimensions */
-            }
-
-            .nodecls{
-                background-color: #90EE90;
-                color: black;
-            }
-
-            .inputcls{
-                width: 10em !important;
-                background-color: #ADD8E6;
-                color: black;
-            }
-
-            .proccls{
-                background-color: #f6dbd1;
-                color: black;
-            }
-
-            .repcls {
-                background-color: orange;
-                color: black;
-                width: 60px; /* Equal width and height */
-                height: 60px;
-                padding: 0px;
-                border-radius: 50%; /* Makes it a circle */
-                display: flex; /* Centers the content inside */
-                justify-content: center; /* Horizontally centers text */
-                align-items: center; /* Vertically centers text */
-                text-align: center; /* Aligns text for consistency */
-                font-size: 14px; /* Adjust font size if needed */
-            }
-
-            .ui-diagram-element.repcls.disabled {
-                opacity: 0.5;
-                pointer-events: none;
-            }
-
-            .ui-diagram-element.nodecls.disabled {
-                opacity: 0.5;
-                pointer-events: none;
-            }
-
-            .ui-diagram-element.proccls.disabled {
-                opacity: 0.5;
-                pointer-events: none;
-            }
-
-            .checkmark-container {
-                position: absolute;
-                top: 5px;
-                right: 5px;
-                z-index: 1000; /* Ensure it's above other elements */
-                color: green;
-                font-size: 18px;
-            }
-
-            .indeterminate-progress-bar2 {
-                z-index:100000000;
-                background-color: #d1d5db;
-                border-radius: 9999px;
-
-                height: 6px;
-                top:0px;
-                width:100%;
-                position: absolute;
-                overflow: hidden;
-            }
-
-            .indeterminate-progress-bar__progress2 {
-                background-color: #f6523b;
-                position: absolute;
-                bottom: 0;
-                top: 0;
-                width: 100%;
-
-                animation-duration: 2s;
-                animation-iteration-count: infinite;
-                animation-name: indeterminate-progress-bar;
-
-                animation-timing-function: ease-in-out;
-            }
-
-            @keyframes indeterminate-progress-bar {
-                from {
-                    left: -50%;
-                }
-                to {
-                    left: 100%;
-                }
-            }
-
-            #sigma-parent {
-                float: left;
-                width: 100%;
-                height: 100%;
-                position: relative;
-                background: var(--surface-card);
-                border: none;
-            }
-
-            #sigma-example {
-                position: absolute;
-                width: 100%;
-                height: 100%;
-            }
-
-            .ui-dataview .ui-dataview-header {
-                display: none !important;
-            }
-
-            .ui-tabs-header {
-                height:30px;
-            }
-
-            .ui-tabs-nav {
-                height:34px;
-            }
-
-            .loading {
-                background-image: url('(link unavailable)');
-                background-size: 20px 20px;
-                background-position: center;
-                padding-left: 20px !important;
-            }
-
-            .myiconsize .pi {
-                font-size: 1.6rem;
-
-            }
-            /*animation dots*/
-            .dots span {
-                animation: blink 1.5s infinite;
-                font-size: 16px; /* Adjust font size for dots */
-            }
-
-            .dots span:nth-child(1) {
-                animation-delay: 0s;
-            }
-
-            .dots span:nth-child(2) {
-                animation-delay: 0.3s;
-            }
-
-            .dots span:nth-child(3) {
-                animation-delay: 0.6s;
-            }
-
-            @keyframes blink {
-                0% {
-                    opacity: 0;
-                }
-                50% {
-                    opacity: 1;
-                }
-                100% {
-                    opacity: 0;
-                }
-            }
-
-        </style>
-    </ui:define>
     <ui:define name="content">
+        <h:form id="formHidden1">
+            <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
+            <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
+            <h:inputHidden id="dataType" value="#{sessionBean1.dataType}" />
+            <h:inputHidden id="funcArr" value="#{workflowBean.calledWorkflows}" />
+            <h:inputHidden id="funcArrErr" value="#{workflowBean.calledWorkflowsError}" />
+            <h:inputHidden id="libOpt" value="#{pathBean.libOpt}" />
+            <h:inputHidden id="netVisMode" value="#{sessionBean1.visMode}" />
+            <h:inputHidden id="naviType" value="#{sessionBean1.naviType}" />
+            <h:inputHidden id="loggedIn" value="#{sessionBean1.loggedIn}" />
+        </h:form>
         <h:panelGrid style="padding: 40px 30px 20px 40px; width:100%">
-            <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
-                <div id="progressBar" class="indeterminate-progress-bar2">
-                    <div class="indeterminate-progress-bar__progress2"></div>
-                </div>
-            </h:panelGroup>
-            <p:outputLabel style="font-size:1.6em !important; font-weight: bold" value="Workflow Management"/>
-            <h:form id="formHidden1">
-                <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
-                <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
-                <h:inputHidden id="dataType" value="#{sessionBean1.dataType}" />
-                <h:inputHidden id="funcArr" value="#{workflowBean.calledWorkflows}" />
-                <h:inputHidden id="funcArrErr" value="#{workflowBean.calledWorkflowsError}" />
-                <h:inputHidden id="libOpt" value="#{pathBean.libOpt}" />
-                <h:inputHidden id="netVisMode" value="#{sessionBean1.visMode}" />
-                <h:inputHidden id="naviType" value="#{sessionBean1.naviType}" />
-                <h:inputHidden id="loggedIn" value="#{sessionBean1.loggedIn}" />
-            </h:form>
-            <p>
-                You can perform automated data analysis without manual operation (except data upload) by creating workflow(s). 
-                For a given data input, you can perform <b>multiple compatible modules</b>, or find the optimal parameters by 
-                comparing results from <b>multiple workflows</b>. 
-
-                Click on a box to select an analysis unit; click again to de-select; Click <b>RUN!</b> to execute the workflow(s); 
-                After completion, click <b>Dashboard</b> view analysis results. 
+            <h2>Workflow Management</h2>
+            <p style="font-size: 1.1em">
+                Perform automated data analysis without manual operation (except data upload) by creating workflow(s). 
+                Click on a box to select an analysis unit; click it again to de-select; Click <b>RUN!</b> to execute the workflow(s); 
+                Upon completion, you will receive email notice to view analysis results in the <b>Dashboard</b>. 
             </p>
+            <h:panelGroup style="font-size: 1.1em; float:right">
+                Current dataset:
+                <span class="px-2 py-1 border-round text-sm"
+                      style="background: #{datasetController.selected ne null ? '#DCFCE7' : '#FFE4E6'};
+                      color: #{datasetController.selected ne null ? '#166534' : '#9F1239'}">
+                    #{datasetController.selected ne null ? datasetController.selected.filename : 'None'}
+                </span>
+            </h:panelGroup>
 
-            <h:panelGrid columns="2" style="width:100%">
+            <p:tabView id="acTab" widgetVar="tabWidget" style="width:100%; border:none; font-size:13px;" dynamic="true" cache="false" activeIndex="#{workflowBean.activeIndex}">
+                <p:tab title="Example Workflows">
+                    <h:form id="wfForm">
+                        <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
+                            <ui:repeat value="#{workflowBean.defaultWorkflowList}" var="wf">
+                                <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
+                                            styleClass="wf-card surface-card shadow-1 p-3">
 
-                <h:panelGroup>
-                    Current input: <p:outputLabel style="font-weight: bold" value="#{diagramView.input}"/>
-                </h:panelGroup>
-                <h:panelGrid style="text-align: right; width: 100%;">
+                                    <!-- Short description opens view dialog -->
+                                    <div style="margin-bottom:.4rem;">
+                                        <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
+                                                       update=":wfViewForm"
+                                                       oncomplete="PF('wfViewDlg').show();">
+                                            <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                        </p:commandLink>
+                                    </div>
 
-                    <h:panelGroup layout="block" 
-                                  style="display: flex;
-                                  justify-content: space-between;
-                                  align-items: center;
-                                  margin: 1rem 0;">
+                                    <!-- Meta -->
+                                    <div class="wf-meta">
+                                        <div><b>Module:</b> #{wf['module']}</div>
+                                        <h:panelGroup rendered="#{not empty wf['filename']}">
+                                            <div><b>File:</b> #{wf['filename']}</div>
+                                        </h:panelGroup>
+                                    </div>
 
-                        <!-- Left side: Poll Form -->
-                        <h:form id="pollForm" style="display: flex; align-items: center; margin-left: 2rem;">
+                                    <p:spacer/>
+                                    <p:spacer/>
+                                    <p:toolbar styleClass="dataset-toolbar">
+                                        <f:facet name="left">
+                                            <!-- FOLDER = Download -->
+                                            <p:commandLink id="dlWf" title="Download workflow" ajax="false"
+                                                           onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                <i class="pi pi-folder-open"></i>
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                <p:fileDownload value="#{workflowBean.downloadSelectedExample}"/>
+                                            </p:commandLink>
+                                            <p:tooltip for="dlWf" value="Download workflow file"/>
+                                            <!-- EXPLORE = View details -->
+                                            <p:commandLink id="viewWf" title="View details"
+                                                           action="#{workflowBean.goToWorkflowDetails}">
+                                                <i class="pi pi-compass"></i>
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                            </p:commandLink>
+                                            <p:tooltip for="viewWf" value="View details"/>
+                                        </f:facet>
 
-                            <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell designForm" stop="#{jobExecution.stopStatusCheck}" widgetVar="pollWidget" />
+                                        <f:facet name="right">
+                                            <p:commandLink id="runWf" title="Start workflow"
+                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                           update=":acTab"
+                                                           action="#{workflowBean.startFromTemplate(wf)}">
+                                                <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                            </p:commandLink>
+                                            <p:tooltip for="runWf" value="Start from template"/>
+                                        </f:facet>
+                                    </p:toolbar>
+                                </p:fieldset>
+                            </ui:repeat>
+                        </h:panelGroup>
+                    </h:form>
+                </p:tab>
 
-                            <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
-                                <span>
-                                    <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
-                                    <span class="dots">
-                                        <span>.</span>
-                                        <span>.</span>
-                                        <span>.</span>
-                                    </span>
-                                </span>
-                            </h:panelGroup>
+                <!-- =================== Tab 2: User Workflows =================== -->
+                <p:tab title="User Workflows">
+                    <h:form id="wfForm2">
+                        <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
+                            <!-- workflowList: ArrayList<HashMap<String,Object>> -->
+                            <ui:repeat value="#{workflowBean.workflowList}" var="wf">
+                                <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
+                                            styleClass="wf-card surface-card shadow-1 p-3">
 
-                            <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
-                                <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
-                            </h:panelGroup>
+                                    <div style="margin-bottom:.4rem;">
+                                        <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
+                                                       update=":wfViewForm"
+                                                       oncomplete="PF('wfViewDlg').show();">
+                                            <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                        </p:commandLink>
+                                    </div>
 
+                                    <div class="wf-meta">
+                                        <div><b>Module:</b> #{wf['module']}</div>
+                                        <h:panelGroup rendered="#{not empty wf['created_at']}">
+                                            <div><b>Last Updated:</b> #{wf['created_at']}</div>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{not empty wf['filename']}">
+                                            <div><b>File:</b> #{wf['filename']}</div>
+                                        </h:panelGroup>
+                                    </div>
+                                    <p:spacer/>
+                                    <p:spacer/>
 
+                                    <p:toolbar styleClass="dataset-toolbar">
+                                        <f:facet name="left">
+                                            <!-- NEW: Delete workflow -->
+                                            <p:commandLink id="delWf" title="Delete workflow"
+                                                           update=":wfDelForm"
+                                                           oncomplete="PF('wfDelDlg').show();">
+                                                <i class="pi pi-trash"></i>
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                            </p:commandLink>
+                                            <p:tooltip for="delWf" value="Delete this workflow"/>
 
-                        </h:form>
+                                            <p:commandLink id="dlWf" title="Download workflow" ajax="false"
+                                                           onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                <i class="pi pi-folder-open"></i>
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                <p:fileDownload value="#{workflowBean.downloadSelected}"/>
+                                            </p:commandLink>
+                                            <p:tooltip for="dlWf" value="Download workflow file"/>
+                                            <!-- EXPLORE = View details -->
+                                            <p:commandLink id="viewWf" title="View details"
+                                                           update=":wfViewForm"
+                                                           oncomplete="PF('wfViewDlg').show();">
+                                                <i class="pi pi-compass"></i>
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                            </p:commandLink>
+                                            <p:tooltip for="viewWf" value="View details"/>
+                                        </f:facet>
 
-                        <!-- Right side: Action Buttons -->
-                        <h:form id="ac" style="display: flex; gap: 20px; align-items: center;">
+                                        <f:facet name="right">
+                                            <p:commandLink id="runWf" title="Start workflow"
+                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                           update=":acTab"
+                                                           action="#{workflowBean.startFromTemplate(wf)}">
+                                                <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                            </p:commandLink>
+                                            <p:tooltip for="runWf" value="Start from template"/>
+                                        </f:facet>
+                                    </p:toolbar>
 
-                            <p:commandButton id="startBn" title="Start Analysis" 
-                                             icon="pi pi-play"
-                                             value="RUN!"
-                                             rendered="#{!specLoader.spectraUploaded}"
-                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
-                                             actionListener="#{diagramView.submitWorkflowJob}" 
-                                             onclick="PF('statusDialog').show()"
-                                             update="formHidden1 :ac :designForm :pollForm :formWorkflowInfo"
-                                             oncomplete="PF('statusDialog').hide(); reattachEvents();" />
+                                </p:fieldset>
+                            </ui:repeat>
+                        </h:panelGroup>
+                    </h:form>
+                </p:tab>
+                <p:tab title ="Processing">
 
-                            <p:commandButton id="startBn2" title="Start Analysis" 
-                                             icon="pi pi-play"
-                                             value="RUN!"
-                                             rendered="#{specLoader.spectraUploaded}"
-                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
-                                             actionListener="#{diagramView.submitWorkflowJob}" 
-                                             onclick="PF('statusDialog').show()"
-                                             update="formHidden1 :ac :designForm :pollForm "
-                                             oncomplete="PF('statusDialog').hide(); reattachEvents(); PF('progressDialog').show()" />
-
-                            <p:commandButton id="checkBn" title="Check details of job" 
-                                             icon="pi pi-sync"
-                                             value="Progress"
-                                             rendered="#{specLoader.spectraUploaded}"
-                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
-                                             onclick="PF('progressDialog').show()"/>
-
-                            <p:commandButton value="Reset" 
-                                             icon="pi pi-refresh"
-                                             style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
-                                             onclick="PF('resetDialog').show()" />
-                            <!--onclick="PF('resetDialog').show()"-->
-
-                            <p:commandButton value="Dashboard" immediate="true" 
-                                             icon="pi pi-forward"
-                                             style="font-weight: bold; font-size:1.2rem; width: 140px; height: 42px;"
-                                             action="#{diagramView.goToResultPage}" ajax="false" />
-                        </h:form>
-
+                    <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                        <div id="progressBar" class="indeterminate-progress-bar2">
+                            <div class="indeterminate-progress-bar__progress2"></div>
+                        </div>
                     </h:panelGroup>
+                    <p:outputLabel style="font-size:1.6em !important; font-weight: bold" value="Workflow Management"/>
 
 
+                    <h:panelGrid columns="2" style="width:100%">
 
-                </h:panelGrid>
-            </h:panelGrid>
-            <p:outputPanel id="viewerPanel" style="width: 100%; min-height: 70vh; min-width: 1500px; position: relative; line-height: 18px">
-                <div style="position: absolute; padding-top: 10px;  width: 100%; text-align: left; top: 1em; height: 15em; background-color: var(--cyan-300);">
-                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Input Preparation"/>
-                </div>
-                <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 16em; height: 15em;
-                     background-color: var(--blue-300); border-top: medium #202020 groove;">
-                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Processing Units"/>
-                </div>
-                <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 31em; height: 15em;
-                     background-color: var(--indigo-300); border-top: medium #202020 groove">
-                    <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Analysis Modules"/>
-                </div>
+                        <h:panelGroup>
+                            Current input: <p:outputLabel style="font-weight: bold" value="#{diagramView.input}"/>
+                        </h:panelGroup>
+                        <h:panelGrid style="text-align: right; width: 100%;">
 
-                <h:form id="designForm" style="height: 100%;">
-                    <p:remoteCommand 
-                        name="checkPagesToVisit" 
-                        actionListener="#{diagramView.checkPagesToVisit}" 
-                        oncomplete="console.log('Remote command executed successfully');"
-                        onerror="console.error('Error during remote command execution');"
-                        />
-                    <p:remoteCommand name="handleElementDoubleClick" actionListener="#{diagramView.onElementDoubleClick}" update="designForm" oncomplete="reattachEvents()"/>
-                    <p:remoteCommand name="handleElementClick" actionListener="#{diagramView.onElementClick}" update="designForm" oncomplete="reattachEvents()"/>
-                    <p:remoteCommand name="removeConnection" action="#{diagramView.removeConnection}" update="designForm" oncomplete="reattachEvents()">
-                        <f:param name="sourceId" />
-                        <f:param name="targetId" />
-                    </p:remoteCommand>
-                    <p:remoteCommand name="handleNodeAction" 
-                                     actionListener="#{diagramView.onProcClick}" 
-                                     update="designForm">
-                        <f:param name="nodeId" />
-                    </p:remoteCommand>
+                            <h:panelGroup layout="block" 
+                                          style="display: flex;
+                                          justify-content: space-between;
+                                          align-items: center;
+                                          margin: 1rem 0;">
 
-                    <!-- Diagram -->
-                    <p:diagram value="#{diagramView.model}" widgetVar="networkDiagram" 
-                               style="height: 70vh; position: relative;" styleClass="ui-widget-content" var="el">
-                        <f:facet name="element"  class="diagram-node">
-                            <!-- Node Content -->
-                            <div style="text-align: center;" class="myiconsize #{diagramView.isNodeSelected(el.id) ? 'selected' : ''}">
-                                <div style="padding:7px" >
+                                <!-- Left side: Poll Form -->
+                                <h:form id="pollForm" style="display: flex; align-items: center; margin-left: 2rem;">
 
-                                    <h:outputText rendered="#{el.data.type eq 'input'}" value="#{el.data.name}" style="display:block;margin-top:3px;" />
-                                    <h:outputText rendered="#{el.data.type ne 'input'}" value="#{el.data.name}" style="display:block;margin-top:1em;" />
+                                    <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell :acTab:designForm" stop="#{jobExecution.stopStatusCheck}" widgetVar="pollWidget" />
 
-                                    <!-- Top-Right Checkmark -->
-
-                                    <h:panelGroup styleClass="checkmark-container" rendered="#{diagramView.isNodeExecuted(el.data.id)}">
-                                        <span style="position: absolute; top: 0px; right: 0px; color: green; font-size: 30px;">&#10003;</span>
+                                    <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                                        <span>
+                                            <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
+                                            <span class="dots">
+                                                <span>.</span>
+                                                <span>.</span>
+                                                <span>.</span>
+                                            </span>
+                                        </span>
                                     </h:panelGroup>
 
-                                    <h:panelGroup styleClass="xmark-container" rendered="#{!diagramView.isNodeFailed(el.data.id)}">
-                                        <span style="position: absolute; top: 0px; right: 0px; color: red; font-size: 30px;">&#10007;</span>
+                                    <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
+                                        <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
                                     </h:panelGroup>
 
-                                    <!-- Clickable Icon -->
-                                    <h:panelGroup rendered="#{el.data.type eq 'input'}" styleClass="center-icon">
-                                        <img src="#{facesContext.externalContext.requestContextPath}/#{el.data.image}" 
-                                             style="height: 60px;"></img>
-                                    </h:panelGroup>
-                                    <h:panelGroup rendered="#{el.data.type eq 'proc'}" styleClass="center-icon">
-                                        <p:commandButton title="Adjust parameters"
-                                                         icon="pi pi-cog"
-                                                         style="padding: 0; border: none; background: none"
-                                                         onclick="handleNodeAction([{name: 'nodeId', value: '#{el.data.name}'}]);
-                                                                 event.stopPropagation();
-                                                                 return false;">
-                                        </p:commandButton>
-                                    </h:panelGroup>
 
-                                    <h:panelGroup rendered="#{el.data.type eq 'anal'}" styleClass="center-icon">
-                                        <p:commandButton title="View Detail"
-                                                         icon="pi pi-share-alt"
-                                                         update="designForm"
-                                                         style="padding: 0; border: none; background: none;"
-                                                         onclick="event.stopPropagation(); return false;">
-                                            <!-- Display Image Inside the Button -->
-                                            <f:param name="nodeId" value="#{el.data.name}" />
-                                        </p:commandButton>
-                                    </h:panelGroup>
 
-                                </div>
+                                </h:form>
 
-                            </div>
-                        </f:facet>
-                        <p:ajax event="connect" listener="#{diagramView.onConnect}" oncomplete="reattachEvents()"/>
-                        <p:ajax event="disconnect" listener="#{diagramView.onDisconnect}" oncomplete="reattachEvents()"/>
-                        <p:ajax event="connectionChange" listener="#{diagramView.onConnectionChange}" oncomplete="reattachEvents()"/>
-                    </p:diagram>
-                </h:form>
-            </p:outputPanel>
+                                <!-- Right side: Action Buttons -->
+                                <h:form id="ac" style="display: flex; gap: 20px; align-items: center;">
+
+                                    <p:commandButton id="startBn" title="Start Analysis" 
+                                                     icon="pi pi-play"
+                                                     value="RUN!"
+                                                     rendered="#{!specLoader.spectraUploaded}"
+                                                     style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                                     actionListener="#{diagramView.submitWorkflowJob}" 
+                                                     onclick="PF('statusDialog').show()"
+                                                     update="formHidden1 :ac :acTab:designForm :pollForm :formWorkflowInfo"
+                                                     oncomplete="PF('statusDialog').hide(); reattachEvents();" />
+
+                                    <p:commandButton id="startBn2" title="Start Analysis" 
+                                                     icon="pi pi-play"
+                                                     value="RUN!"
+                                                     rendered="#{specLoader.spectraUploaded}"
+                                                     style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                                     actionListener="#{diagramView.submitWorkflowJob}" 
+                                                     onclick="PF('statusDialog').show()"
+                                                     update="formHidden1 :ac :acTab:designForm :pollForm "
+                                                     oncomplete="PF('statusDialog').hide(); reattachEvents(); PF('progressDialog').show()" />
+
+                                    <p:commandButton id="checkBn" title="Check details of job" 
+                                                     icon="pi pi-sync"
+                                                     value="Progress"
+                                                     rendered="#{specLoader.spectraUploaded}"
+                                                     style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                                     onclick="PF('progressDialog').show()"/>
+
+                                    <p:commandButton value="Reset" 
+                                                     icon="pi pi-refresh"
+                                                     style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
+                                                     onclick="PF('resetDialog').show()" />
+                                    <!--onclick="PF('resetDialog').show()"-->
+
+                                    <p:commandButton value="Dashboard" immediate="true" 
+                                                     icon="pi pi-forward"
+                                                     style="font-weight: bold; font-size:1.2rem; width: 140px; height: 42px;"
+                                                     action="#{diagramView.goToResultPage}" ajax="false" />
+                                </h:form>
+
+                            </h:panelGroup>
+
+
+
+                        </h:panelGrid>
+                    </h:panelGrid>
+                    <p:outputPanel id="viewerPanel" style="width: 100%; min-height: 70vh; min-width: 1500px; position: relative; line-height: 18px">
+                        <div style="position: absolute; padding-top: 10px;  width: 100%; text-align: left; top: 1em; height: 15em; background-color: var(--cyan-300);">
+                            <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Input Preparation"/>
+                        </div>
+                        <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 16em; height: 15em;
+                             background-color: var(--blue-300); border-top: medium #202020 groove;">
+                            <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Processing Units"/>
+                        </div>
+                        <div style="position: absolute; padding-top: 10px; width: 100%; text-align: left; top: 31em; height: 15em;
+                             background-color: var(--indigo-300); border-top: medium #202020 groove">
+                            <h:outputLabel style="padding-left: 20px; font-weight: bold;font-size:1.1rem;" value="Analysis Modules"/>
+                        </div>
+
+                        <h:form id="designForm" style="height: 100%;">
+                            <p:remoteCommand 
+                                name="checkPagesToVisit" 
+                                actionListener="#{diagramView.checkPagesToVisit}" 
+                                oncomplete="console.log('Remote command executed successfully');"
+                                onerror="console.error('Error during remote command execution');"
+                                />
+                            <p:remoteCommand name="handleElementDoubleClick" actionListener="#{diagramView.onElementDoubleClick}" update=":acTab:designForm" oncomplete="reattachEvents()"/>
+                            <p:remoteCommand name="handleElementClick" actionListener="#{diagramView.onElementClick}" update=":acTab:designForm" oncomplete="reattachEvents()"/>
+                            <p:remoteCommand name="removeConnection" action="#{diagramView.removeConnection}" update=":acTab:designForm" oncomplete="reattachEvents()">
+                                <f:param name="sourceId" />
+                                <f:param name="targetId" />
+                            </p:remoteCommand>
+                            <p:remoteCommand name="handleNodeAction" 
+                                             actionListener="#{diagramView.onProcClick}" 
+                                             update=":acTab:designForm">
+                                <f:param name="nodeId" />
+                            </p:remoteCommand>
+
+                            <!-- Diagram -->
+                            <p:diagram value="#{diagramView.model}" widgetVar="networkDiagram" 
+                                       style="height: 70vh; position: relative;" styleClass="ui-widget-content" var="el">
+                                <f:facet name="element"  class="diagram-node">
+                                    <!-- Node Content -->
+                                    <div style="text-align: center;" class="myiconsize #{diagramView.isNodeSelected(el.id) ? 'selected' : ''}">
+                                        <div style="padding:7px" >
+
+                                            <h:outputText rendered="#{el.data.type eq 'input'}" value="#{el.data.name}" style="display:block;margin-top:3px;" />
+                                            <h:outputText rendered="#{el.data.type ne 'input'}" value="#{el.data.name}" style="display:block;margin-top:1em;" />
+
+                                            <!-- Top-Right Checkmark -->
+
+                                            <h:panelGroup styleClass="checkmark-container" rendered="#{diagramView.isNodeExecuted(el.data.id)}">
+                                                <span style="position: absolute; top: 0px; right: 0px; color: green; font-size: 30px;">&#10003;</span>
+                                            </h:panelGroup>
+
+                                            <h:panelGroup styleClass="xmark-container" rendered="#{!diagramView.isNodeFailed(el.data.id)}">
+                                                <span style="position: absolute; top: 0px; right: 0px; color: red; font-size: 30px;">&#10007;</span>
+                                            </h:panelGroup>
+
+                                            <!-- Clickable Icon -->
+                                            <h:panelGroup rendered="#{el.data.type eq 'input'}" styleClass="center-icon">
+                                                <img src="#{facesContext.externalContext.requestContextPath}/#{el.data.image}" 
+                                                     style="height: 60px;"></img>
+                                            </h:panelGroup>
+                                            <h:panelGroup rendered="#{el.data.type eq 'proc'}" styleClass="center-icon">
+                                                <p:commandButton title="Adjust parameters"
+                                                                 icon="pi pi-cog"
+                                                                 style="padding: 0; border: none; background: none"
+                                                                 onclick="handleNodeAction([{name: 'nodeId', value: '#{el.data.name}'}]);
+                                                                         event.stopPropagation();
+                                                                         return false;">
+                                                </p:commandButton>
+                                            </h:panelGroup>
+
+                                            <h:panelGroup rendered="#{el.data.type eq 'anal'}" styleClass="center-icon">
+                                                <p:commandButton title="View Detail"
+                                                                 icon="pi pi-share-alt"
+                                                                 update=":acTab:designForm"
+                                                                 style="padding: 0; border: none; background: none;"
+                                                                 onclick="event.stopPropagation(); return false;">
+                                                    <!-- Display Image Inside the Button -->
+                                                    <f:param name="nodeId" value="#{el.data.name}" />
+                                                </p:commandButton>
+                                            </h:panelGroup>
+
+                                        </div>
+
+                                    </div>
+                                </f:facet>
+                                <p:ajax event="connect" listener="#{diagramView.onConnect}" oncomplete="reattachEvents()"/>
+                                <p:ajax event="disconnect" listener="#{diagramView.onDisconnect}" oncomplete="reattachEvents()"/>
+                                <p:ajax event="connectionChange" listener="#{diagramView.onConnectionChange}" oncomplete="reattachEvents()"/>
+                            </p:diagram>
+                        </h:form>
+                    </p:outputPanel>
+
+                </p:tab>
+            </p:tabView>
 
         </h:panelGrid>
 
@@ -490,7 +460,7 @@
                     <p:commandButton value="Confirm" 
                                      style="width:120px; font-size: 14px;" 
                                      actionListener="#{diagramView.resetWorkflow()}" 
-                                     update="formHidden1 :ac :designForm" 
+                                     update="formHidden1 :ac :acTab:designForm" 
                                      onclick="PF('resetDialog').hide();
                                              PF('statusDialog').show();" 
                                      oncomplete="PF('statusDialog').hide(); reattachEvents();" />
@@ -1080,7 +1050,7 @@
         <p:dialog id="rawWorkflowFinishDialogId" widgetVar="rawWorkflowFinishDialog" header="Workflow Status" modal="true" closable="true" width="510">
             <h:form id="finishDialogForm">
                 <h:panelGrid columns="1" style="margin: 10px;">
-                                        <p:spacer height="30px" />
+                    <p:spacer height="30px" />
 
                     <h:panelGrid columns="2">
                         <p:outputLabel value="Your workflow processing job (ID: #{diagramView.jobId}) status has become " />
@@ -1098,7 +1068,51 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog>
+        <p:dialog header="Workflow Details" widgetVar="wfViewDlg" modal="true" appendTo="@(body)" resizable="true" width="720">
+            <h:form id="wfViewForm">
+                <h:panelGrid columns="2" columnClasses="col-label,col-value" style="width:100%; line-height:1.6;">
+                    <h:outputText value="Name:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['name']}"/>
 
+                    <h:outputText value="Description:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['description']}"/>
 
+                    <h:outputText value="Module:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['module']}"/>
+
+                    <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['filename']}">
+                        <h:outputText value="File:"/>
+                        <h:outputText value="#{workflowBean.selectedWorkflow['filename']}"/>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['created_at']}">
+                        <h:outputText value="Saved:"/>
+                        <h:outputText value="#{workflowBean.selectedWorkflow['created_at']}"/>
+                    </h:panelGroup>
+                </h:panelGrid>
+
+                <div style="text-align:right; margin-top:10px;">
+                    <p:commandButton value="Close" onclick="PF('wfViewDlg').hide();return false;"/>
+                </div>
+            </h:form>
+        </p:dialog>
+<p:dialog header="Delete Workflow" widgetVar="wfDelDlg" modal="true" appendTo="@(body)" resizable="false" width="520">
+            <h:form id="wfDelForm">
+                <h:panelGrid style="width:100%; line-height:1.6; font-size:14px;">
+                    <p>
+                        This action will permanently delete
+                        <b>#{workflowBean.selectedWorkflow['name']}</b>.
+                        Continue?
+                    </p>
+                    <h:panelGrid columns="2" style="width:100%; line-height:1.6;">
+                        <p:commandButton value="Cancel" onclick="PF('wfDelDlg').hide();return false;"/>
+                        <p:commandButton value="Delete" styleClass="ui-button-danger"
+                                         onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('wfDelDlg').hide();"
+                                         update=":acTab:wfForm :acTab:wfForm2"
+                                         actionListener="#{workflowBean.deleteSelected}"/>
+                    </h:panelGrid>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
     </ui:define>
 </ui:composition>

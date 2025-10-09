@@ -386,6 +386,25 @@ public class DatabaseClient {
         }
     }
 
+    public String deleteWorkflowById(String id) {
+        if (ab.isInDocker()) {
+            // If running on Docker, call the database method directly
+            return DatabaseController.deleteWorkflow(id);
+        } else {
+            try {
+                // Create the payload with the id
+                Map<String, String> payload = new HashMap<>();
+                payload.put("id", String.valueOf(id));  // Converting int to String
+
+                // Make the POST request to the deleteWorkflow endpoint
+                return apiClient.post("/database/workflow/delete", toJson(payload));
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error deleting workflow", e);
+                return "Error deleting workflow: " + e.getMessage();
+            }
+        }
+    }
+
     public ArrayList<HashMap<String, Object>> getAllWorkflows(String tool, String email) {
         if (ab.isInDocker()) {
             // If running on Docker, call the database method directly and assume db.getAllWorkflows(tool)
@@ -460,6 +479,81 @@ public class DatabaseClient {
     }
 
     /**
+     * Incremental dataset update: updates top-level fields and UPSERTS files. -
+     * Existing files not listed remain untouched. - Files in 'files' are
+     * inserted or updated (server-side ON CONFLICT DO UPDATE).
+     */
+    public String updateDataset(
+            java.util.UUID datasetId,
+            String email,
+            String node,
+            String title,
+            String module,
+            String dataType,
+            String toolName,
+            int sampleNum,
+            java.util.List<DatasetFile> files
+    ) {
+        if (datasetId == null) {
+            return "Error updating dataset: datasetId is required.";
+        }
+        if (files == null) {
+            files = java.util.Collections.emptyList(); // allow metadata-only updates
+        }
+
+        if (ab.isInDocker()) {
+            try {
+                // Direct DB path (expects per-file UPSERT in DAO)
+                return DatabaseController.updateDatasetAndFiles(
+                        datasetId, title, toolName, module, dataType, sampleNum, null, files
+                );
+            } catch (Exception e) {
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error updating dataset (DB path)", e);
+                return "Error updating dataset: " + e.getMessage();
+            }
+        } else {
+            try {
+                // Build nested JSON payload
+                java.util.Map<String, Object> dataset = new java.util.LinkedHashMap<>();
+                dataset.put("id", datasetId.toString());
+                dataset.put("email", email);     // optional: for auth checks
+                dataset.put("node", node);       // optional: for scoping
+                dataset.put("title", title);
+                dataset.put("module", module);
+                dataset.put("dataType", dataType);
+                dataset.put("toolname", toolName);
+                dataset.put("samplenum", sampleNum);
+
+                java.util.List<java.util.Map<String, Object>> fileList = new java.util.ArrayList<>();
+                for (DatasetFile f : files) {
+                    if (f == null) {
+                        continue;
+                    }
+                    java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("role", safeRole(f.getRole()));            // keep same validator as insert
+                    m.put("filename", f.getFilename());
+                    m.put("type", nvl(f.getType(), "bin"));
+                    m.put("sizeBytes", Math.max(0L, f.getSizeBytes()));
+                    if (f.getUploadedAt() != null) {
+                        m.put("uploadedAt", f.getUploadedAt().toString());
+                    }
+                    fileList.add(m);
+                }
+
+                java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+                payload.put("dataset", dataset);
+                payload.put("files", fileList);
+
+                // Matches your insert route style
+                return apiClient.post("/database/datasets/update", toJson(payload));
+            } catch (Exception e) {
+                LOGGER.log(java.util.logging.Level.SEVERE, "Error updating dataset", e);
+                return "Error updating dataset: " + e.getMessage();
+            }
+        }
+    }
+
+    /**
      * New: multi-file insert (data + metadata + etc.)
      */
     public String insertDataset(String email,
@@ -467,8 +561,7 @@ public class DatabaseClient {
             String title,
             String module,
             String dataType,
-                        String toolName,
-
+            String toolName,
             int sampleNum,
             java.util.List<DatasetFile> files) {
         if (files == null || files.isEmpty()) {
@@ -522,7 +615,7 @@ public class DatabaseClient {
      */
     public String insertDataset(DatasetRow ds) {
         return insertDataset(
-                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(),"metaboanalyst", ds.getSamplenum(),
+                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(), "metaboanalyst", ds.getSamplenum(),
                 ds.getFiles() == null ? java.util.List.of() : ds.getFiles()
         );
     }

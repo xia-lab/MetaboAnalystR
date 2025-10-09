@@ -4,6 +4,7 @@
  */
 package pro.metaboanalyst.datalts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.DefaultStreamedContent;
 
@@ -29,6 +30,7 @@ import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.utils.DataUtils;
+import pro.metaboanalyst.models.SheetRow;
 import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -43,10 +45,15 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
 import org.primefaces.model.file.UploadedFile;
+import org.rosuda.REngine.Rserve.RConnection;
 import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.HistoryBean;
 import pro.metaboanalyst.lts.StateSaver;
+import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
+import org.primefaces.extensions.component.sheet.Sheet;
+import org.primefaces.extensions.event.SheetEvent;
+import org.primefaces.extensions.model.sheet.SheetUpdate;
 
 /**
  *
@@ -70,7 +77,10 @@ public class DatasetController implements Serializable {
     private ApplicationBean1 ab;
     @Inject
     private FireProjectBean pb;
-
+    @Inject
+    private HistoryBean hb;
+    @Inject
+    StateSaver stateSaver;
     private DatasetRow currentDatasetRow;
 
     public void initUserDatasets() {
@@ -167,7 +177,7 @@ public class DatasetController implements Serializable {
                     : files.get(0).getFilename();
 
             // ---- CALL YOUR SPECIALIZED INSERT FUNCTION (DB or API) ----
-            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(),"metaboanalyst", sampleNum, files);
+            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(), "metaboanalyst", sampleNum, files);
 
             UUID datasetId = extractUUID(resp);
             if (datasetId == null) {
@@ -456,7 +466,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     public void stageDatasetFromStrings(String title, int sampleNum,
             java.util.List<String> fileNames,
             java.util.List<String> roles) {
-        // ...guards unchanged...
 
         final String email = fub.getEmail();
         final String node = ab.getToolLocation();
@@ -547,12 +556,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
      * again here.
      */
 // Commit without needing UploadedFile again
-    @Inject
-    StateSaver stateSaver;
-
-    @Inject
-    private HistoryBean hb;
-
     public java.util.UUID commitStagedDataset() {
         if (!hasStagedDataset()) {
             sb.addMessage("Error", "No staged dataset to commit.");
@@ -563,21 +566,21 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             Path home = Paths.get(sb.getCurrentUser().getHomeDir());
 
             // --- Ensure/attach mSetObj_after_sanity.qs ---
-            Path msetFile = home.resolve("mSetObj_after_sanity.qs");
+            Path msetFile = home.resolve("RloadSanity.RData");
             if (!Files.exists(msetFile)) {
                 // Ask R to save; then re-resolve size
-                RDataUtils.saveMsetObject(sb.getRConnection());
+                RCenter.saveRLoadImgCustom(sb.getRConnection(), "RloadSanity.RData");
             }
             if (Files.exists(msetFile)) {
                 DatasetFile df = new DatasetFile();
                 df.setRole("supplement");
-                df.setFilename("mSetObj_after_sanity.qs");
+                df.setFilename("RloadSanity.RData");
                 df.setType("qs");
                 df.setSizeBytes(Files.size(msetFile));
                 df.setUploadedAt(OffsetDateTime.now());
                 stagedFiles.add(df);
             } else {
-                sb.addMessage("warn", "mSetObj_after_sanity.qs was not found after save request; continuing.");
+                sb.addMessage("warn", "RloadSanity.RData was not found after save request; continuing.");
             }
 
             stateSaver.saveState();
@@ -798,10 +801,126 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         return "application/octet-stream";
     }
 
-    public void load(DatasetRow ds) {
+    public void loadDefault(DatasetRow ds) {
+        boolean res = load(ds);
+        String url = "";
+        if (res) {
+            switch ((String) ds.getModule()) {
+                case "onedata" -> {
+                    url = "/Secure/expression/SummaryView.xhtml";
+                }
+                case "genelist" -> {
+                    url = "/Secure/list/ListSummary.xhtml";
+                }
+                case "metadata" -> {
+                    url = "/Secure/metastat/MetaQCView.xhtml";
+                }
+                default -> {
+                    url = "/Secure/raw/SeqSanityCheck.xhtml";
+                }
+            }
+            boolean res2 = handleDataset(ds);
+
+            DataUtils.doRedirectWithGrowl(
+                    sb,
+                    "/" + ab.getAppName() + url,
+                    "info",
+                    "Dataset loaded, you can proceed with analysis."
+            );
+        }
+    }
+
+    public boolean handleDataset(DatasetRow ds) {
+        try {
+            if (ds.getFiles() == null || ds.getFiles().isEmpty()) {
+                sb.addMessage("Error", "Selected dataset has no files.");
+                return false;
+            }
+
+            // --- Gather filenames by role ---
+            String dataName = "", data2Name = "", metaName = "", listName = "", listGeneName = "", ms2Name = "", rawName = "";
+            for (DatasetFile f : ds.getFiles()) {
+                String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
+                System.out.println(role + "====role");
+                switch (role) {
+                    case "data" ->
+                        dataName = f.getFilename();
+                    case "data2" ->
+                        data2Name = f.getFilename();
+                    case "metadata" -> {
+                        metaName = f.getFilename();
+
+                    }
+                    case "raw" ->
+                        rawName = f.getFilename();
+                }
+            }
+
+            // --- Map idx to desired module behavior ---
+            enum InputMode {
+                DATA_ONLY, DATA_PLUS_META, LIST_ONLY, JOINT_TWO_TABLES, MS2_ONLY, RAW_MODE, MGWAS_ONLY
+            }
+
+            final String dataType = sb.getDataType() == null ? "" : sb.getDataType().toLowerCase();
+
+            // Init R
+            RConnection RC = sb.getRConnection();
+            sb.setAnalType(ds.getModule());
+            //RDataUtils.initRData(RC, "T", "data/");
+            boolean ok = true;
+
+            switch (sb.getAnalType()) {
+                case "onedata" -> {
+
+                }
+
+                case "genelist" -> {
+                    String geneList = loadGeneListFromUserHome();
+                    //lsb.setGeneList(geneList);
+                    //up.mapGeneListData();
+                }
+
+                case "metadata" -> {
+
+                }
+                case "raw" -> {
+
+                }
+            }
+
+            if (!ok) {
+                sb.addMessage("Error", "Failed to load the selected dataset for this module.");
+                return false;
+            }
+
+            RDataUtils.loadRscriptsOnDemand(RC, sb.getAnalType());
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Unable to open module: " + e.getMessage());
+        }
+
+        return true;
+    }
+
+    public void loadWorkflow(DatasetRow ds) {
+        boolean res = load(ds);
+
+        if (res) {
+            boolean res2 = handleDataset(ds);
+
+            DataUtils.doRedirectWithGrowl(
+                    sb,
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml",
+                    "info",
+                    "Dataset loaded, please select a workflow and start analysis."
+            );
+        }
+    }
+
+    public boolean load(DatasetRow ds) {
         if (ds == null) {
             sb.addMessage("Error", "No dataset selected to load.");
-            return;
+            return false;
         }
 
         try {
@@ -877,7 +996,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
                     int res1 = fc.loadJavaHistory(javaHistory);
                     sb.getNaviTrack().clear();
-                    sb.setNaviType("NA");
+                    //sb.setNaviType("NA");
                 } catch (Exception hx) {
                     System.err.println("Failed to load java_history.json: " + hx.getMessage());
                 }
@@ -886,17 +1005,14 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             // 6) Notify + redirect to module selection
             String mode = restoredFromZip ? "restored" : "loaded";
             sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
-            DataUtils.doRedirectWithGrowl(
-                    sb,
-                    "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
-                    "info",
-                    "Dataset loaded, please select a module to start analysis."
-            );
-
         } catch (Exception e) {
             sb.addMessage("Error", "Load failed: " + e.getMessage());
             e.printStackTrace();
+            return false;
+
         }
+        return true;
+
     }
 
     /* ---------------- helpers ---------------- */
@@ -972,27 +1088,28 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public String stageListDataset(String niceTitleHint) {
+        System.out.println("stageListDataset");
         try {
             final String home = sb.getCurrentUser().getHomeDir();
-            final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.csv");
+            final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.txt");
             if (!java.nio.file.Files.exists(lp)) {
-                sb.addMessage("Error", "datalist.csv not found in your home directory.");
+                sb.addMessage("Error", "datalist.txt not found in your home directory.");
                 return null;
             }
 
-            String fname = "datalist.csv";
+            String fname = "datalist.txt";
             String niceTitle = (niceTitleHint == null || niceTitleHint.isBlank())
                     ? "List_" + java.time.LocalDate.now()
                     : niceTitleHint;
 
-            pro.metaboanalyst.datalts.DatasetFile lf = new pro.metaboanalyst.datalts.DatasetFile();
+            DatasetFile lf = new DatasetFile();
             lf.setRole("data");
             lf.setFilename(fname);
-            lf.setType("csv");
+            lf.setType("txt");
             lf.setSizeBytes(java.nio.file.Files.size(lp));
             lf.setUploadedAt(java.time.OffsetDateTime.now());
 
-            java.util.List<pro.metaboanalyst.datalts.DatasetFile> files = java.util.List.of(lf);
+            java.util.List<DatasetFile> files = java.util.List.of(lf);
             java.util.List<java.nio.file.Path> src = java.util.List.of(lp);
 
             stageDatasetFromPaths(niceTitle, /*samples*/ 0, files, src);
@@ -1007,13 +1124,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     public List<DatasetRow> getDatasetTableExample() {
         List<DatasetRow> datasetTableExample = new ArrayList<>();
 
-        /*
-            UUID.fromString("11111111-2222-4aaa-8bbb-cccccccccccc"),
-    UUID.fromString("11111111-3333-4ddd-9eee-ffffffffffff"),
-    UUID.fromString("11111111-4444-4111-abcd-1234567890ab"),
-    UUID.fromString("11111111-5555-4f0f-b999-aaaaaaaaaaaa"),
-    UUID.fromString("11111111-6666-4abc-8def-bbbbbbbbbbbb")
-         */
         // Example 1
         DatasetRow ds1 = new DatasetRow();
         ds1.setId(UUID.fromString("11111111-00e3-4838-95ab-fec9d1d149e1"));
@@ -1108,7 +1218,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         {
             DatasetFile f1 = new DatasetFile();
             f1.setRole("data");
-            f1.setFilename("datalist.csv"); // main table
+            f1.setFilename("datalist.txt"); // main table
             f1.setType("csv");
             f1.setSizeBytes(226L);
             ds1Files.add(f1);
@@ -1118,6 +1228,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setFileCount(ds1Files.size());
 
         datasetTableExample.add(ds1);
+
         return datasetTableExample;
     }
 
@@ -1347,6 +1458,887 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             return;
         }
         populateFilesForDialog(selected);   // fills filesModel and totals
+    }
+
+    public void stageExampleDataset(String title, int sampleNum,
+            java.util.List<String> filePaths,
+            java.util.List<String> roles) {
+        if (filePaths == null || roles == null || filePaths.size() != roles.size()) {
+            sb.addMessage("Error", "File paths and roles must be provided in equal length.");
+            return;
+        }
+
+        final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
+        final java.nio.file.Path home = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());
+
+        java.util.List<DatasetFile> files = new java.util.ArrayList<>(filePaths.size());
+        java.util.List<java.nio.file.Path> paths = new java.util.ArrayList<>(filePaths.size());
+
+        for (int i = 0; i < filePaths.size(); i++) {
+            String fname = java.nio.file.Paths.get(filePaths.get(i)).getFileName().toString();
+            String role = roles.get(i);
+
+            java.nio.file.Path p = home.resolve(fname);
+            long size = 0L;
+            try {
+                if (java.nio.file.Files.exists(p)) {
+                    size = java.nio.file.Files.size(p);
+                }
+            } catch (Exception ignore) {
+            }
+
+            DatasetFile df = new DatasetFile();
+            df.setRole(role);
+            df.setFilename(fname);
+            df.setType(extOf(fname));
+            df.setSizeBytes(Math.max(0L, size));
+            df.setUploadedAt(now);
+
+            files.add(df);
+            paths.add(p);
+        }
+
+        if (files.isEmpty()) {
+            sb.addMessage("Error", "No valid files for staging.");
+            return;
+        }
+
+        // Prefer data → list → first
+        DatasetFile primary = files.stream()
+                .filter(f -> "data".equalsIgnoreCase(f.getRole()))
+                .findFirst()
+                .orElseGet(() -> files.stream()
+                .filter(f -> "list".equalsIgnoreCase(f.getRole()))
+                .findFirst()
+                .orElse(files.get(0)));
+
+        String resolvedTitle = (title != null && !title.isBlank())
+                ? title.trim()
+                : primary.getFilename();
+
+        DatasetRow ds = new DatasetRow();
+        ds.setEmail(fub.getEmail());
+        ds.setNode(ab.getToolLocation());
+        ds.setTitle(resolvedTitle);
+        ds.setFilename(primary.getFilename());
+        ds.setType(primary.getType());
+        ds.setSizeBytes(primary.getSizeBytes());
+        ds.setSamplenum(Math.max(0, sampleNum));
+        ds.setUploadedAt(now);
+        ds.setFileCount(files.size());
+        ds.setHasMetadata(files.stream().anyMatch(f -> "metadata".equalsIgnoreCase(f.getRole())));
+        ds.setFiles(files);
+
+        this.stagedDataset = ds;
+        this.stagedFiles.clear();
+        this.stagedFiles.addAll(files);
+        this.currentDatasetRow = ds;
+
+        sb.addMessage("info", "Example dataset staged in memory.");
+    }
+
+    private String loadGeneListFromUserHome() {
+        try {
+            String home = sb.getCurrentUser().getOrigHomeDir();
+            java.nio.file.Path p = java.nio.file.Paths.get(home, "datalist.txt");
+            if (java.nio.file.Files.exists(p)) {
+                return java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8);
+            }
+        } catch (Exception ex) {
+            sb.addMessage("warn", "Could not load datalist.txt: " + ex.getMessage());
+        }
+        return null;
+    }
+    private String editorMode;                 // "table" or "text"
+    private String editorTitle;                // file display name
+    private String editorText;                 // for text/metadata files
+    private java.util.List<String> editorCols; // for table files
+    private java.util.List<java.util.List<String>> editorRows;
+
+    public String getEditorMode() {
+        return editorMode;
+    }
+
+    public String getEditorTitle() {
+        return editorTitle;
+    }
+
+    public String getEditorText() {
+        return editorText;
+    }
+
+    public java.util.List<String> getEditorCols() {
+        return editorCols;
+    }
+
+    public java.util.List<java.util.List<String>> getEditorRows() {
+        return editorRows;
+    }
+
+    /**
+     * Load dataset contents into the session workspace (same logic as load()),
+     * then open a chosen file for the editor dialog.
+     *
+     * @param ds dataset to load
+     * @param preferRole optional: "metadata" or "data" to pick which file to
+     * open; null = best effort
+     * @return true if prepared successfully
+     */
+    public boolean loadForEditor(DatasetRow ds, String preferRole) {
+        try {
+            this.selected = ds;
+
+            // 1) Ensure working folder
+            String module = (ds.getModule() != null && !ds.getModule().isBlank())
+                    ? ds.getModule() : sb.getAnalType();
+            sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
+
+            // 2) Resolve storage (src) and workspace (dst)
+            Path srcDir = Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString()
+            ).normalize();
+
+            Path srcZip = Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString() + ".zip"
+            ).normalize();
+
+            Path dstDir = Paths.get(sb.getCurrentUser().getHomeDir()).normalize();
+            Files.createDirectories(dstDir);
+
+            boolean restoredFromZip = false;
+
+            // 3) Restore workspace
+            if (Files.isDirectory(srcDir)) {
+                copyDirectoryRecursive(srcDir, dstDir);
+            } else if (Files.isRegularFile(srcZip)) {
+                unzipInto(srcZip, dstDir);
+                restoredFromZip = true;
+            } else {
+                // Remote fallback
+                String node = ds.getNode();
+                if (node == null || node.isBlank()) {
+                    throw new IllegalArgumentException("Dataset node is missing.");
+                }
+                node = node.trim().replaceAll("\\.+$", "");
+                String baseUrl = "https://" + node + ".metaboanalyst.ca/";
+
+                Path tempZip = Files.createTempFile(dstDir, "dataset-", ".zip");
+                try {
+                    downloadDatasetObjectFromBaseUrl(
+                            baseUrl,
+                            ds.getEmail(),
+                            ds.getId().toString(),
+                            tempZip.toString(),
+                            null
+                    );
+                    unzipInto(tempZip, dstDir);
+                    restoredFromZip = true;
+                } finally {
+                    try {
+                        Files.deleteIfExists(tempZip);
+                    } catch (Exception ignore) {
+                    }
+                }
+            }
+
+            // =========================
+            // 4) Resolve Data & Metadata files
+            // =========================
+            DatasetFile dataDf = chooseByRole(ds, "data");
+            DatasetFile metaDf = chooseByRole(ds, "metadata");
+
+            // Fallback: if no explicit "data" file, use ds.filename as data
+            String dataDisplay = (dataDf != null && dataDf.getFilename() != null && !dataDf.getFilename().isBlank())
+                    ? dataDf.getFilename()
+                    : ds.getFilename();
+
+            if (dataDisplay == null || dataDisplay.isBlank()) {
+                sb.addMessage("Error", "No data file name available for the editor.");
+                return false;
+            }
+
+            Path dataPath = resolveLocal(dstDir, dataDisplay);
+            if (!Files.exists(dataPath) || !Files.isRegularFile(dataPath)) {
+                sb.addMessage("Error", "Data file not found in workspace: " + dataDisplay);
+                return false;
+            }
+
+            Path metaPath = null;
+            if (metaDf != null && metaDf.getFilename() != null && !metaDf.getFilename().isBlank()) {
+                Path p = resolveLocal(dstDir, metaDf.getFilename());
+                if (Files.exists(p) && Files.isRegularFile(p)) {
+                    metaPath = p; // enable metadata tab
+                }
+            }
+
+            // =========================
+            // 5) Prepare editor models
+            // =========================
+            // Reset (Data tab)
+            dataCols = new java.util.ArrayList<>();
+            dataRows = new java.util.ArrayList<>();
+
+            // Detect data file mode
+            String dataExt = extOf(dataPath.getFileName().toString());
+            boolean dataIsTabular = dataExt.matches("(?i)csv|tsv|txt");
+
+            if (dataIsTabular) {
+                final int maxRows = 10;
+                char sep = dataExt.equalsIgnoreCase("tsv") ? '\t' : detectCsvSeparator(dataPath);
+                readTablePreview(dataPath, sep, maxRows, dataCols, dataRows);
+            } else {
+                // treat as text but still show in text area only if you add a Data text area
+                // for sheet demo, make it one-column "preview"
+                dataCols.add("Content");
+                java.util.List<String> r = new java.util.ArrayList<>();
+                r.add(readTextWithCap(dataPath, 2 * 1024 * 1024));
+                dataRows.add(r);
+            }
+            buildDataSheetModel(); // pads, creates SheetRow list + map
+
+            // Reset (Metadata tab)
+            hasMetadataTab = false;
+            metaMode = null;
+            metaCols = new java.util.ArrayList<>();
+            metaRows = new java.util.ArrayList<>();
+            editorMetaText = null;
+
+            if (metaPath != null) {
+                hasMetadataTab = true;
+                String metaExt = extOf(metaPath.getFileName().toString());
+                boolean metaIsTabular = metaExt.matches("(?i)csv|tsv|txt");
+                boolean metaIsText = metaExt.matches("(?i)json|yaml|yml|toml|ini|txt");
+
+                if (metaIsTabular) {
+                    metaMode = "table";
+                    char msep = metaExt.equalsIgnoreCase("tsv") ? '\t' : detectCsvSeparator(metaPath);
+                    readTableAll(metaPath, msep, metaCols, metaRows);
+                    buildMetaSheetModel();
+                } else if (metaIsText) {
+                    metaMode = "text";
+                    editorMetaText = readTextWithCap(metaPath, 2 * 1024 * 1024);
+                } else {
+                    // Unknown type: fall back to text
+                    metaMode = "text";
+                    editorMetaText = readTextWithCap(metaPath, 2 * 1024 * 1024);
+                }
+            }
+
+            // Optional: pick which tab opens by default
+            editorActiveIndex = 0; // 0 = Data, 1 = Metadata
+            // If preferRole explicitly asks for metadata and we have it, switch:
+            if ("metadata".equalsIgnoreCase(String.valueOf(preferRole)) && hasMetadataTab) {
+                editorActiveIndex = 1;
+            }
+
+            String mode = restoredFromZip ? "restored" : "loaded";
+            sb.addMessage("info", "Workspace " + mode + ". Opening Data: “" + dataPath.getFileName() + "”"
+                    + (hasMetadataTab ? ("; Metadata: “" + metaPath.getFileName() + "”.") : "."));
+            return true;
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Open in editor failed: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Read ALL rows from a CSV/TSV into (outCols, outRows).
+     */
+    private void readTableAll(Path p, char sep,
+            java.util.List<String> outCols,
+            java.util.List<java.util.List<String>> outRows) throws IOException {
+        try (java.io.BufferedReader br = Files.newBufferedReader(p)) {
+            String header = br.readLine();
+            if (header == null) {
+                return;
+            }
+            String[] cols = splitLine(header, sep);
+            java.util.Collections.addAll(outCols, cols);
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] cells = splitLine(line, sep);
+                java.util.List<String> row = new java.util.ArrayList<>(cols.length);
+                for (int i = 0; i < cols.length; i++) {
+                    row.add(i < cells.length ? cells[i] : "");
+                }
+                outRows.add(row);
+            }
+        }
+    }
+
+    private String readTextWithCap(Path p, int capBytes) throws IOException {
+        long size = Files.size(p);
+        if (size <= capBytes) {
+            return Files.readString(p);
+        }
+        try (InputStream in = Files.newInputStream(p); java.io.Reader r = new java.io.InputStreamReader(in); java.io.BufferedReader br = new java.io.BufferedReader(r)) {
+            StringBuilder sbuf = new StringBuilder(capBytes + 1024);
+            int read, total = 0;
+            char[] buf = new char[8192];
+            while ((read = br.read(buf)) != -1 && total < capBytes) {
+                int toAppend = Math.min(read, capBytes - total);
+                sbuf.append(buf, 0, toAppend);
+                total += toAppend;
+            }
+            sbuf.append("\n\n… (truncated)");
+            return sbuf.toString();
+        }
+    }
+
+    private char detectCsvSeparator(Path p) throws IOException {
+        // simple heuristic: count commas vs tabs in first non-empty line
+        try (java.io.BufferedReader br = Files.newBufferedReader(p)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                int commas = countChar(line, ',');
+                int tabs = countChar(line, '\t');
+                if (tabs > commas) {
+                    return '\t';
+                }
+                return ',';
+            }
+        }
+        return ','; // default
+    }
+
+    private static int countChar(String s, char c) {
+        int n = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == c) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /**
+     * Minimal CSV/TSV preview reader
+     */
+    private void readTablePreview(Path p, char sep, int maxRows,
+            java.util.List<String> outCols,
+            java.util.List<java.util.List<String>> outRows) throws IOException {
+        try (java.io.BufferedReader br = Files.newBufferedReader(p)) {
+            String header = br.readLine();
+            if (header == null) {
+                return;
+            }
+            String[] cols = splitLine(header, sep);
+            java.util.Collections.addAll(outCols, cols);
+
+            String line;
+            int rows = 0;
+            while (rows < maxRows && (line = br.readLine()) != null) {
+                String[] cells = splitLine(line, sep);
+                java.util.List<String> row = new java.util.ArrayList<>(cols.length);
+                for (int i = 0; i < cols.length; i++) {
+                    row.add(i < cells.length ? cells[i] : "");
+                }
+                outRows.add(row);
+                rows++;
+            }
+        }
+    }
+
+    private static String[] splitLine(String line, char sep) {
+        // Very simple split; for production you may swap to Apache Commons CSV for proper quoting.
+        if (sep == '\t') {
+            return line.split("\t", -1);
+        }
+        // naive CSV (no quote handling):
+        return line.split(",", -1);
+    }
+
+    private List<SheetRow> sheetRows;                // exposed to <pe:sheet>
+
+    public List<SheetRow> getSheetRows() {
+        return sheetRows;
+    }
+
+    public void onSheetChangeData(SheetEvent event) {
+        Sheet sheet = event.getSheet();
+        int applied = 0;
+        for (SheetUpdate u : sheet.getUpdates()) {
+            Integer r = dataRowIndexById.get(String.valueOf(u.getRowKey()));
+            int c = u.getColIndex(); // from your SheetUpdate class
+            if (r != null && r >= 0 && r < dataRows.size()) {
+                List<String> row = dataRows.get(r);
+                while (c >= row.size()) {
+                    row.add("");
+                }
+                row.set(c, u.getNewValue() != null ? u.getNewValue().toString() : "");
+                applied++;
+            }
+        }
+        sheet.commitUpdates();
+        sb.addMessage("info", applied + " cell(s) updated in Data.");
+    }
+
+    public void onSheetChangeMeta(SheetEvent event) {
+        if (!"table".equals(metaMode)) {
+            return;
+        }
+        Sheet sheet = event.getSheet();
+        int applied = 0;
+        for (SheetUpdate u : sheet.getUpdates()) {
+            Integer r = metaRowIndexById.get(String.valueOf(u.getRowKey()));
+            int c = u.getColIndex();
+            if (r != null && r >= 0 && r < metaRows.size()) {
+                List<String> row = metaRows.get(r);
+                while (c >= row.size()) {
+                    row.add("");
+                }
+                row.set(c, u.getNewValue() != null ? u.getNewValue().toString() : "");
+                applied++;
+            }
+        }
+        sheet.commitUpdates();
+        sb.addMessage("info", applied + " cell(s) updated in Metadata.");
+    }
+
+    // Tabs
+    private int editorActiveIndex = 0; // 0=Data, 1=Metadata
+    private boolean hasMetadataTab;
+    private String metaMode;           // "table" or "text"
+
+// Data table model
+    private List<String> dataCols = new ArrayList<>();
+    private List<List<String>> dataRows = new ArrayList<>();
+    private List<SheetRow> dataSheetRows = new ArrayList<>();
+    private Map<String, Integer> dataRowIndexById = new HashMap<>();
+
+// Metadata models
+    private List<String> metaCols = new ArrayList<>();
+    private List<List<String>> metaRows = new ArrayList<>();
+    private List<SheetRow> metaSheetRows = new ArrayList<>();
+    private Map<String, Integer> metaRowIndexById = new HashMap<>();
+    private String editorMetaText; // for JSON/YAML/TXT
+
+    public int getEditorActiveIndex() {
+        return editorActiveIndex;
+    }
+
+    public boolean isHasMetadataTab() {
+        return hasMetadataTab;
+    }
+
+    public String getMetaMode() {
+        return metaMode;
+    }
+
+    public List<String> getDataCols() {
+        return dataCols;
+    }
+
+    public List<SheetRow> getDataSheetRows() {
+        return dataSheetRows;
+    }
+
+    public List<String> getMetaCols() {
+        return metaCols;
+    }
+
+    public List<SheetRow> getMetaSheetRows() {
+        return metaSheetRows;
+    }
+
+    public String getEditorMetaText() {
+        return editorMetaText;
+    }
+
+    public void setEditorMetaText(String s) {
+        this.editorMetaText = s;
+    }
+
+    /**
+     * Choose first file with given role (case-insensitive).
+     */
+    private DatasetFile chooseByRole(DatasetRow ds, String role) {
+        java.util.List<DatasetFile> files = ds.getFiles();
+        if (files == null) {
+            return null;
+        }
+        for (DatasetFile f : files) {
+            if (f != null && f.getRole() != null && role.equalsIgnoreCase(f.getRole())) {
+                return f;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve a local path inside dstDir; allow basename fallback.
+     */
+    private Path resolveLocal(Path dstDir, String displayName) {
+        Path p = dstDir.resolve(displayName).normalize();
+        if (!Files.exists(p)) {
+            p = dstDir.resolve(Paths.get(displayName).getFileName().toString()).normalize();
+        }
+        return p;
+    }
+
+    private void buildDataSheetModel() {
+        int cols = dataCols.size();
+        dataSheetRows = new ArrayList<>();
+        dataRowIndexById = new HashMap<>();
+        for (int i = 0; i < dataRows.size(); i++) {
+            List<String> row = dataRows.get(i);
+            while (row.size() < cols) {
+                row.add("");
+            }
+            var sr = new SheetRow(String.valueOf(i), row);
+            dataSheetRows.add(sr);
+            dataRowIndexById.put(sr.getId(), i);
+        }
+    }
+
+    private void buildMetaSheetModel() {
+        if (!"table".equals(metaMode)) {
+            return;
+        }
+        int cols = metaCols.size();
+        metaSheetRows = new ArrayList<>();
+        metaRowIndexById = new HashMap<>();
+        for (int i = 0; i < metaRows.size(); i++) {
+            List<String> row = metaRows.get(i);
+            while (row.size() < cols) {
+                row.add("");
+            }
+            var sr = new SheetRow(String.valueOf(i), row);
+            metaSheetRows.add(sr);
+            metaRowIndexById.put(sr.getId(), i);
+        }
+    }
+
+    public void saveEditedFile() {
+        try {
+            if (selected == null) {
+                sb.addMessage("Error", "No dataset is loaded.");
+                return;
+            }
+
+            // Ensure account + node
+            String email = (selected.getEmail() == null || selected.getEmail().isBlank())
+                    ? fub.getEmail() : selected.getEmail();
+            selected.setEmail(email);
+
+            String currentNode = ab.getToolLocation();
+            selected.setNode(currentNode);
+
+            UUID datasetId = selected.getId();
+            if (datasetId == null) {
+                sb.addMessage("warn", "Edits saved locally, but dataset has no DB id; skipping DB update.");
+                return;
+            }
+
+            // Resolve names (Data is read-only; we won't write it)
+            String metaName = resolveRoleFilename(selected, "metadata"); // may be null
+            if (!hasMetadataTab || metaName == null || metaName.isBlank()) {
+                sb.addMessage("info", "No metadata to save (data table is read-only).");
+                return;
+            }
+
+            // Workspace
+            Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+            Files.createDirectories(home);
+
+            // --- METADATA ONLY ---
+            Path metaPath = home.resolve(Paths.get(metaName).getFileName().toString());
+            if ("table".equals(metaMode) && metaRows != null) {
+                char metaSep = pickSeparatorByExt(metaName, home, metaPath);
+                // write header + rows so header isn't lost next load
+                writeTableWithHeader(metaPath, metaSep, metaCols, metaRows);
+            } else if ("text".equals(metaMode) && editorMetaText != null) {
+                writeTextToFile(editorMetaText, metaPath);
+            } else {
+                sb.addMessage("warn", "Unknown metadata mode; nothing saved.");
+                return;
+            }
+
+            // Copy only metadata file into canonical storage
+            Path outDir = Paths.get(fb.getProjectPath(), "user_folders", email, datasetId.toString());
+            Files.createDirectories(outDir);
+
+            Path src = metaPath;
+            if (!Files.exists(src)) {
+                sb.addMessage("Error", "Metadata file was not written to workspace.");
+                return;
+            }
+            Path dst = outDir.resolve(src.getFileName().toString());
+            Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
+
+            // Prepare DB update (metadata only)
+            List<DatasetFile> editedFilesForDb = new ArrayList<>(1);
+            DatasetFile mf = new DatasetFile();
+            mf.setDatasetId(datasetId);
+            mf.setRole("metadata");
+            mf.setFilename(dst.getFileName().toString());
+            mf.setType(extOf(mf.getFilename()));
+            mf.setSizeBytes(Files.size(dst));
+            mf.setUploadedAt(OffsetDateTime.now());
+            editedFilesForDb.add(mf);
+
+            String title = (selected.getTitle() != null) ? selected.getTitle() : "";
+            String module = (selected.getModule() != null) ? selected.getModule() : sb.getAnalType();
+            String dataType = (selected.getDataType() != null) ? selected.getDataType() : sb.getDataType();
+            int sampleNum = selected.getSamplenum(); // Data tab is read-only, leave as-is
+
+            // Update DB (incremental upsert) and node
+            String result = db.updateDataset(
+                    datasetId,
+                    email,
+                    currentNode,
+                    title,
+                    module,
+                    dataType,
+                    "metaboanalyst",
+                    sampleNum,
+                    editedFilesForDb
+            );
+
+            if (result != null && result.toLowerCase(Locale.ROOT).startsWith("error")) {
+                sb.addMessage("warn", "Metadata saved, but DB update failed: " + result);
+            } else {
+                sb.addMessage("info", "Metadata saved and database updated (node '" + currentNode + "').");
+            }
+
+        } catch (Exception ex) {
+            sb.addMessage("Error", "Save failed: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Write a CSV/TSV table with header (cols) + rows.
+     */
+    private void writeTableWithHeader(Path out, char sep,
+            List<String> cols,
+            List<List<String>> rows) throws IOException {
+        try (BufferedWriter bw = Files.newBufferedWriter(out)) {
+            // header
+            for (int i = 0; i < cols.size(); i++) {
+                if (i > 0) {
+                    bw.write(sep);
+                }
+                String cell = cols.get(i) == null ? "" : cols.get(i);
+                boolean mustQuote = cell.indexOf(sep) >= 0 || cell.indexOf('"') >= 0 || cell.indexOf('\n') >= 0 || cell.indexOf('\r') >= 0;
+                if (mustQuote) {
+                    bw.write('"');
+                    bw.write(cell.replace("\"", "\"\""));
+                    bw.write('"');
+                } else {
+                    bw.write(cell);
+                }
+            }
+            bw.newLine();
+            // data rows
+            for (List<String> row : rows) {
+                for (int i = 0; i < cols.size(); i++) {
+                    if (i > 0) {
+                        bw.write(sep);
+                    }
+                    String cell = (row != null && i < row.size() && row.get(i) != null) ? row.get(i) : "";
+                    boolean mustQuote = cell.indexOf(sep) >= 0 || cell.indexOf('"') >= 0 || cell.indexOf('\n') >= 0 || cell.indexOf('\r') >= 0;
+                    if (mustQuote) {
+                        bw.write('"');
+                        bw.write(cell.replace("\"", "\"\""));
+                        bw.write('"');
+                    } else {
+                        bw.write(cell);
+                    }
+                }
+                bw.newLine();
+            }
+        }
+    }
+
+    /**
+     * Find the first file in ds.files with the given role (case-insensitive).
+     */
+    public String resolveRoleFilename(DatasetRow ds, String role) {
+        try {
+            List<DatasetFile> fs = ds.getFiles();
+            if (fs == null) {
+                return null;
+            }
+            for (DatasetFile f : fs) {
+                if (f != null && f.getRole() != null && role.equalsIgnoreCase(f.getRole())) {
+                    return f.getFilename();
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+        return null;
+    }
+
+    /**
+     * Pick separator from extension or by sniffing an existing file in home.
+     */
+    private char pickSeparatorByExt(String fileName, Path home, Path targetPath) {
+        String ext = extOf(fileName);
+        if ("tsv".equalsIgnoreCase(ext)) {
+            return '\t';
+        }
+        if ("csv".equalsIgnoreCase(ext)) {
+            return ',';
+        }
+        // Try sniffing if file exists; fallback to comma
+        try {
+            Path p = Files.exists(targetPath) ? targetPath : home.resolve(fileName);
+            if (Files.exists(p)) {
+                return detectCsvSeparator(p);
+            }
+        } catch (Exception ignore) {
+        }
+        return ','; // default
+    }
+
+    /**
+     * Write rows with proper CSV/TSV quoting.
+     */
+    private void writeRowsToDelimited(Path out, char sep, List<List<String>> rows) throws IOException {
+        try (java.io.BufferedWriter bw = java.nio.file.Files.newBufferedWriter(out)) {
+            for (List<String> row : rows) {
+                if (row == null) {
+                    bw.newLine();
+                    continue;
+                }
+                StringBuilder sbuf = new StringBuilder();
+                for (int i = 0; i < row.size(); i++) {
+                    if (i > 0) {
+                        sbuf.append(sep);
+                    }
+                    String cell = row.get(i);
+                    if (cell == null) {
+                        cell = "";
+                    }
+                    boolean mustQuote = cell.indexOf(sep) >= 0 || cell.indexOf('"') >= 0 || cell.indexOf('\n') >= 0 || cell.indexOf('\r') >= 0;
+                    if (mustQuote) {
+                        sbuf.append('"').append(cell.replace("\"", "\"\"")).append('"');
+                    } else {
+                        sbuf.append(cell);
+                    }
+                }
+                bw.write(sbuf.toString());
+                bw.newLine();
+            }
+        }
+    }
+
+    /**
+     * Write plain text (UTF-8).
+     */
+    private void writeTextToFile(String text, Path out) throws IOException {
+        Files.writeString(out, text != null ? text : "", java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    public static boolean deleteDatasetObjectAtBaseUrl(
+            String baseUrl,
+            String email,
+            String datasetId,
+            String fileOrNull,
+            boolean hard,
+            String bearerToken
+    ) throws IOException, InterruptedException {
+
+        Objects.requireNonNull(baseUrl, "baseUrl");
+        Objects.requireNonNull(email, "email");
+        Objects.requireNonNull(datasetId, "datasetId");
+
+        String base = baseUrl.replaceAll("/+$", "");
+        String url = base + "/dataset/delete";
+
+        // Build x-www-form-urlencoded body
+        StringBuilder form = new StringBuilder()
+                .append("email=").append(enc(email))
+                .append("&datasetId=").append(enc(datasetId))
+                .append("&hard=").append(hard);
+        if (fileOrNull != null && !fileOrNull.isBlank()) {
+            form.append("&file=").append(enc(fileOrNull));
+        }
+
+        HttpClient client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(15))
+                .build();
+
+        HttpRequest.Builder rb = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .timeout(Duration.ofSeconds(30))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(form.toString()));
+
+        if (bearerToken != null && !bearerToken.isBlank()) {
+            rb.header("Authorization", "Bearer " + bearerToken);
+        }
+
+        HttpRequest req = rb.build();
+        HttpResponse<InputStream> resp = client.send(req, HttpResponse.BodyHandlers.ofInputStream());
+        int code = resp.statusCode();
+        String body = readSmallBody(resp.body());
+
+        if (code != 200) {
+            throw new IOException("DELETE failed: HTTP " + code + (body.isEmpty() ? "" : (" - " + body)));
+        }
+
+        // Simple check (no JSON lib): {"status":"ok", ...}
+        boolean ok = body.contains("\"status\"") && body.contains("\"ok\"");
+        if (!ok) {
+            throw new IOException("DELETE returned non-ok payload: " + body);
+        }
+        return true;
+    }
+
+    // -------- convenience wrappers --------
+    public static boolean deleteWholeDatasetSoft(String baseUrl, String email, String datasetId, String bearerToken)
+            throws IOException, InterruptedException {
+        return deleteDatasetObjectAtBaseUrl(baseUrl, email, datasetId, null, false, bearerToken);
+    }
+
+    public static boolean deleteWholeDatasetHard(String baseUrl, String email, String datasetId, String bearerToken)
+            throws IOException, InterruptedException {
+        return deleteDatasetObjectAtBaseUrl(baseUrl, email, datasetId, null, true, bearerToken);
+    }
+
+    private static String enc(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    }
+
+    private static String readSmallBody(InputStream in) throws IOException {
+        if (in == null) {
+            return "";
+        }
+        byte[] buf = in.readAllBytes(); // fine for small JSON replies
+        return new String(buf, StandardCharsets.UTF_8).trim();
+    }
+
+    public void applyHeaderEdits() {
+        buildDataSheetModel();
+    }
+
+    public void applyMetaHeaderEdits() {
+        if ("table".equals(metaMode)) {
+            buildMetaSheetModel();
+        }
+    }
+
+    // Consider anything with email "example" as an example dataset
+    public boolean isSelectedExample() {
+        return selected != null
+                && selected.getEmail() != null
+                && "example".equalsIgnoreCase(selected.getEmail());
+    }
+
+// Save is allowed only if metadata tab exists AND it's not an example dataset
+    public boolean isCanSave() {
+        return hasMetadataTab && !isSelectedExample();
     }
 
 }

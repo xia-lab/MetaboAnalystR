@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/template/_template_workflow.xhtml">
+
+    <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{navi.registerPage('Workflow Details', '/Secure/WorkflowDetails.xhtml')}"></f:event>     
+    </ui:define>
+
+    <ui:define name="myscript">
+        <script>
+            function initWorkflowJson() {
+                if (typeof loadWorkflowJson === 'function') {
+                    loadWorkflowJson(); // call the remote command
+                }
+            }
+            window.addEventListener('load', initWorkflowJson);
+        </script>
+
+        <style>
+            .wf-grid .col-label {
+                font-weight: 600;
+                color: var(--surface-700);
+                width: 12rem;
+                white-space: nowrap;
+            }
+            @media (max-width: 640px) {
+                .wf-grid .col-label {
+                    width: 8rem;
+                }
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="wfViewForm">
+            <p:remoteCommand name="loadWorkflowJson"
+                             actionListener="#{workflowBean.loadSelectedWorkflowJson}"
+                             onstart="PF('statusDialog').show();"
+                             oncomplete="loadNaviTree()"/>
+            <p:remoteCommand name="loadNaviTree"
+                             actionListener="#{sessionBean1.buildCustomNaviTreeWithOverview()}"
+                             oncomplete="PF('statusDialog').hide();"
+                             update="wfViewForm treeForm"/>
+            <!-- Header -->
+            <p:toolbar styleClass="surface-card p-3 mb-3 shadow-1 border-round">
+                <p:toolbarGroup align="left" styleClass="flex align-items-center gap-2">
+                    <span class="text-xl font-semibold">Workflow Details</span>
+                    <p:divider layout="vertical"/>
+                    <span class="text-600 text-sm">Review and edit parameters</span>
+                </p:toolbarGroup>
+
+                <p:toolbarGroup align="right" styleClass="flex align-items-center gap-2">
+                    <span class="text-sm text-600">Current dataset:</span>
+                    <p:tag value="#{datasetController.selected ne null ? datasetController.selected.filename : 'None'}"
+                           severity="#{datasetController.selected ne null ? 'success' : 'danger'}"
+                           styleClass="text-sm"/>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <!-- Card with details -->
+            <p:card styleClass="shadow-1 border-round" style="margin-bottom:1rem;">
+                <f:facet name="title">
+                    <span class="text-lg">
+                        #{empty workflowBean.selectedWorkflow['name'] ? 'Unnamed Workflow' : workflowBean.selectedWorkflow['name']}
+                    </span>
+                </f:facet>
+
+                <p:panelGrid columns="2"
+                             styleClass="wf-grid p-fluid w-full"
+                             columnClasses="col-label,col-value"
+                             layout="grid"
+                             style="line-height:1.8;">
+                    <h:outputText value="Name:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['name']}" styleClass="text-900"/>
+
+                    <h:outputText value="Description:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['description']}" styleClass="text-700" escape="false"/>
+
+                    <h:outputText value="Module:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['module']}" styleClass="text-900"/>
+
+                    <h:outputText value="Saved:" rendered="#{not empty workflowBean.selectedWorkflow['created_at']}"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['created_at']}" styleClass="text-900" rendered="#{not empty workflowBean.selectedWorkflow['created_at']}"/>
+                </p:panelGrid>
+            </p:card>
+        </h:form>
+        
+        <p:card>
+            <f:facet name="title">
+                <span class="text-lg">
+                    Key parameters
+                </span>
+            </f:facet>
+            <ui:include src="/Secure/workflow/process/_ParamsView.xhtml" />
+
+            <p:accordionPanel widgetVar="basic">
+                <p:tab title="Parameters: Study Design">
+                    <ui:include src="/Secure/workflow/process/_StudyDesign.xhtml" />
+                </p:tab>
+                <p:tab title="Parameters: Sig. features">
+                    <ui:include src="/Secure/workflow/process/_SigFeatures.xhtml" />
+                </p:tab>
+            </p:accordionPanel>
+        </p:card>
+
+    </ui:define>
+    <ui:define name="myfooter">
+        <h:form id="southform">
+            <h:panelGrid columns="2" style="width:100%; text-align: center; border-top: orange 2px groove; padding-top: 6px; padding-bottom: 4px">
+                <p:commandButton value="Previous" style="width:120px;font-size:14px !important;"
+                                 icon="pi pi-angle-double-left" 
+                                 styleClass="prevBn"
+                                 action="#{workflowBean.goToWorkflowOverview}" />
+
+                <p:commandButton value="Proceed" style="width:120px;font-size:14px !important;"
+                                 onclick="PF('statusDialog').show();"
+                                 icon="pi pi-angle-double-right" 
+                                 styleClass="procBn"
+                                 action="#{workflowBean.startFromDetails()}"/>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+</ui:composition>

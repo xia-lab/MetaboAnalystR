@@ -13,9 +13,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,9 +27,12 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.NormBean;
@@ -44,8 +51,6 @@ import pro.metaboanalyst.utils.DataUtils;
 @SessionScoped
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkflowBean implements Serializable {
-
-
 
     @JsonIgnore
     @Inject
@@ -85,6 +90,14 @@ public class WorkflowBean implements Serializable {
     @JsonIgnore
     @Inject
     private NormBean normBean;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowView wf;
+
+    @JsonIgnore
+    @Inject
+    private DatasetController ds;
 
     @JsonIgnore
     private ArrayList<HashMap<String, Object>> workflowList;
@@ -537,10 +550,7 @@ public class WorkflowBean implements Serializable {
         }
         System.out.println(workflowList.size() + "===workflowList");
     }
-*/
-    
-
-
+     */
     public void loadDefaultWorkflows() {
         if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
             return; // Skip ajax requests.
@@ -686,6 +696,41 @@ public class WorkflowBean implements Serializable {
         dv.restoreDiagramState(destDirPath + selectedWorkflow.get("filename") + "_overview.json");
         sb.addMessage("Info", "Workflow loaded successfully!");
         return "Workflow loaded successfully!";
+    }
+
+    public void loadAllWorkflowsPrerender() {
+        if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
+            return; // Skip ajax requests.
+        }
+        loadAllWorkflows();
+    }
+
+    public void loadAllWorkflows() {
+
+        fbc.reloadUserInfo();
+
+        workflowList = dbc.getAllWorkflows(ab.getAppName(), fub.getEmail());
+
+        for (HashMap<String, Object> workflow : workflowList) {
+            workflow.put("type", "Custom");
+            System.out.println("Keys: " + workflow.keySet());
+
+        }
+
+        defaultWorkflowList = loadDefaultWorkflows("/" + ab.getRealPath() + "/pro/default_workflows.json");
+
+        // Add all elements from defaultWorkflowList to the beginning of workList
+        if (workflowList == null) {
+            workflowList = new ArrayList<>();
+        }
+
+        //defaultWorkflowList = filterWorkflowsByProperty(defaultWorkflowList, "module", sb.getNaviType());
+        if (selectedWorkflow == null || selectedWorkflow.isEmpty()) {
+            if (!workflowList.isEmpty()) {
+                selectedWorkflow = workflowList.get(0);
+            }
+        }
+        System.out.println(workflowList.size() + "===workflowList");
     }
 
     public ArrayList<HashMap<String, Object>> loadDefaultWorkflows(String jsonFilePath) {
@@ -1189,6 +1234,392 @@ public class WorkflowBean implements Serializable {
                 } // else: silently ignore or throw, depending on your policy
             }
         }
+    }
+
+    public void startFromDetails() {
+        try {
+            calledWorkflows.add("Data Preparation");
+
+            final String module = (String) selectedWorkflow.get("module");
+            final String input = resolveInputForModule(module);
+
+            initializeDiagramForInput(input);
+
+            reloadingWorkflow = true;
+            wf.generateWorkflowJson();   // only in "details"
+            postLoadCommon();
+
+            DataUtils.doRedirectWithGrowl(sb,
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
+                    "info",
+                    "Workflow loaded successfully! You can proceed to run the workflow.");
+        } catch (Exception ex) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "startFromDetails failed", ex);
+            sb.addMessage("Error", "Failed to start from details: " + ex.getMessage());
+        }
+    }
+
+    public void startFromTemplate(HashMap<String, Object> wfTemplate) {
+        try {
+            selectedWorkflow = wfTemplate;
+            activeIndex = 2;
+
+            if (sb.getCurrentUser() == null) {
+                sb.addMessage("Warn", "Please start an analysis session first!");
+                return;
+            }
+
+            // 1) Prepare workflow.json
+            final String fileName = (String) selectedWorkflow.get("filename");
+            final Path destPath = prepareTemplateWorkflowJson(fileName);
+
+            // 2) Load function infos
+            Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
+            setFunctionInfos(functionInfos);
+
+            // 3) UI
+            calledWorkflows.add("Data Preparation");
+            final String module = (String) selectedWorkflow.get("module");
+            final String input = resolveInputForModule(module);
+
+            initializeDiagramForInput(input);
+
+            reloadingWorkflow = true;
+            postLoadCommon();
+
+            DataUtils.doRedirectWithGrowl(sb,
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
+                    "info",
+                    "Workflow loaded successfully! You can proceed to run the workflow.");
+        } catch (Exception ex) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "startFromTemplate failed", ex);
+            sb.addMessage("Error", "Failed to prepare workflow template: " + ex.getMessage());
+        }
+    }
+
+    // === HELPERS ===
+    /**
+     * Central mapping: module -> input block label
+     */
+    private String resolveInputForModule(String module) {
+        if (module == null) {
+            return "Generic Table";
+        }
+
+        // Use a compact map; duplicates share the same target
+        final Map<String, String> map = Map.ofEntries(
+                Map.entry("stat", "Generic Table"),
+                Map.entry("roc", "Generic Table"),
+                Map.entry("dose", "Generic Table"),
+                Map.entry("mf", "Generic Table"),
+                Map.entry("metadata", "Generic Tables"),
+                Map.entry("pathqea", "Compound Table"),
+                Map.entry("msetqea", "Compound Table"),
+                Map.entry("msetora", "Compound Table"),
+                Map.entry("pathora", "Compound Table"),
+                Map.entry("mass_all", "Peak Table"),
+                Map.entry("metapaths", "Peak Tables"),
+                Map.entry("mass_table", "Peak List"),
+                Map.entry("raw", "LC-MS Spectra"),
+                Map.entry("network", "Gene List")
+        );
+
+        return map.getOrDefault(module, "Generic Table");
+    }
+
+    /**
+     * Apply input to the diagram: select proper node and disable unavailable
+     * analytics.
+     */
+    private void initializeDiagramForInput(String input) {
+        dv.selectInputNode(input);
+        dv.disableAnalNodes(input);
+        String nodeName = dv.convertToBlockName(input);
+        dv.selectNode(nodeName, true);
+    }
+
+    /**
+     * Shared tail: set active tab, infer meta/data names, etc.
+     */
+    private void postLoadCommon() {
+        activeIndex = 2;
+
+        // attach metadata/data names if available
+        final String metaNm = ds.resolveRoleFilename(ds.getSelected(), "metadata");
+        if (metaNm != null) {
+            setMetaName(metaNm);
+        }
+        setDataName(ds.resolveRoleFilename(ds.getSelected(), "data"));
+    }
+
+    /**
+     * Copy template into user's working folder as workflow.json (user folder
+     * overrides example).
+     */
+    private Path prepareTemplateWorkflowJson(String fileName) throws IOException {
+        Objects.requireNonNull(fileName, "Template filename is required");
+
+        final String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
+        final Path destPath = Paths.get(destDirPath, "workflow.json");
+
+        final String userPath = fbb.getProjectPath() + "/user_folders/" + fub.getEmail() + "/" + fileName;
+        final String examplePath = ab.getResourceDir() + "/pro/" + fileName;
+
+        LOGGER.info(() -> "userPath====" + userPath);
+        LOGGER.info(() -> "examplePath====" + examplePath);
+
+        File srcFile = new File(userPath);
+        if (!srcFile.exists()) {
+            srcFile = new File(examplePath);
+        }
+        if (!srcFile.exists()) {
+            throw new IOException("Workflow template not found in either user folder or example directory.");
+        }
+
+        Files.createDirectories(destPath.getParent());
+        Files.copy(srcFile.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
+        return destPath;
+    }
+
+    public void deleteSelected() {
+        String res = dbc.deleteWorkflowById("" + selectedWorkflow.get("id"));
+        sb.addMessage("info", res);
+        loadAllWorkflows();
+    }
+
+    public StreamedContent getDownloadSelected() {
+        try {
+            if (selectedWorkflow == null) {
+                sb.addMessage("Error", "No workflow selected.");
+                return null;
+            }
+
+            // Resolve the stored JSON (same location you used in startFromTemplate)
+            String fileInBucket = (String) selectedWorkflow.get("filename"); // e.g. "my_workflow.json"
+            if (fileInBucket == null || fileInBucket.isBlank()) {
+                sb.addMessage("Error", "Selected workflow has no filename.");
+                return null;
+            }
+
+            // e.g. <projectPath>/user_folders/<email>/<filename>
+            Path wfPath = Paths.get(
+                    fbb.getProjectPath(), "user_folders", fub.getEmail(), fileInBucket
+            ).normalize();
+
+            if (!Files.exists(wfPath)) {
+                sb.addMessage("Error", "File not found: " + wfPath.getFileName());
+                return null;
+            }
+
+            String downloadName = fileInBucket; // use original filename
+            String contentType = Files.probeContentType(wfPath);
+            if (contentType == null) {
+                // JSON is safest guess here; browsers will still prompt “Save as”
+                contentType = "application/json";
+            }
+
+            // Important: stream supplier must reopen each time; don't keep a single open stream
+            return DefaultStreamedContent.builder()
+                    .name(downloadName)
+                    .contentType(contentType)
+                    .stream(() -> {
+                        try {
+                            return Files.newInputStream(wfPath);
+                        } catch (Exception ex) {
+                            // If something goes wrong mid-download, log and surface a friendly message
+                            Logger.getLogger(WorkflowBean.class.getName())
+                                    .log(Level.SEVERE, "downloadSelected/open", ex);
+                            sb.addMessage("Error", "Unable to open the workflow for download.");
+                            return InputStream.nullInputStream();
+                        }
+                    })
+                    .build();
+
+        } catch (Exception e) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "downloadSelected", e);
+            sb.addMessage("Error", "Unable to prepare download: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public StreamedContent getDownloadSelectedExample() {
+        try {
+            if (selectedWorkflow == null) {
+                sb.addMessage("Error", "No workflow selected.");
+                return null;
+            }
+
+            // Resolve the stored JSON (same location you used in startFromTemplate)
+            String fileInBucket = (String) selectedWorkflow.get("filename") + ".json"; // e.g. "my_workflow.json"
+
+            // e.g. <projectPath>/user_folders/<email>/<filename>
+            Path wfPath = Paths.get(sb.getCurrentUser().getRelativeDir() + "/" + fileInBucket
+            ).normalize();
+
+            if (!Files.exists(wfPath)) {
+                sb.addMessage("Error", "File not found: " + wfPath.getFileName());
+                return null;
+            }
+
+            String downloadName = fileInBucket; // use original filename
+            String contentType = Files.probeContentType(wfPath);
+            if (contentType == null) {
+                // JSON is safest guess here; browsers will still prompt “Save as”
+                contentType = "application/json";
+            }
+
+            // Important: stream supplier must reopen each time; don't keep a single open stream
+            return DefaultStreamedContent.builder()
+                    .name(downloadName)
+                    .contentType(contentType)
+                    .stream(() -> {
+                        try {
+                            return Files.newInputStream(wfPath);
+                        } catch (Exception ex) {
+                            // If something goes wrong mid-download, log and surface a friendly message
+                            Logger.getLogger(WorkflowBean.class.getName())
+                                    .log(Level.SEVERE, "downloadSelected/open", ex);
+                            sb.addMessage("Error", "Unable to open the workflow for download.");
+                            return InputStream.nullInputStream();
+                        }
+                    })
+                    .build();
+
+        } catch (Exception e) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "downloadSelected", e);
+            sb.addMessage("Error", "Unable to prepare download: " + e.getMessage());
+            return null;
+        }
+    }
+    private static final Logger LOGGER = Logger.getLogger(WorkflowBean.class.getName());
+    private String selectedWorkflowJson = "// Loading workflow JSON…";
+
+    public void loadSelectedWorkflowJson() {
+        try {
+            if (sb.getCurrentUser() == null) {
+                selectedWorkflowJson = "// Please start an analysis session first.";
+                sb.addMessage("Warn", "Please start an analysis session first!");
+                return;
+            }
+
+            Path jsonPath = resolveWorkflowJsonPath(); // tries both approaches + home
+
+            if (jsonPath == null || !Files.exists(jsonPath)) {
+                selectedWorkflowJson = "// Workflow JSON not found in any known location.";
+                sb.addMessage("Warn", "Workflow JSON not found.");
+                return;
+            }
+
+            // Pretty-print JSON
+            Map<String, FunctionInfo> funcs = DataUtils.loadFunctionInfosFromFile(jsonPath + "");
+            setFunctionInfos(funcs);
+            selectedWorkflowJson = readAndPrettyPrintJson(jsonPath);
+
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Error loading workflow JSON", ex);
+            selectedWorkflowJson = "// Error loading JSON:\n" + ex.getMessage();
+            sb.addMessage("Error", "Failed to load workflow JSON: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Resolve JSON by checking (1) project storage, (2) example storage, (3)
+     * user home copy.
+     */
+    private Path resolveWorkflowJsonPath() {
+        String userHomeDir = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
+        Path homeJson = Paths.get(userHomeDir, "workflow.json").normalize();
+
+        // If already present in home, prefer that (fast path)
+        if (Files.exists(homeJson)) {
+            return homeJson;
+        }
+
+        // We need a filename to try centralized locations
+        String filename = null;
+        if (selectedWorkflow != null) {
+            Object fn = selectedWorkflow.get("filename");
+            if (fn instanceof String && !((String) fn).isBlank()) {
+                filename = (String) fn;
+            }
+        }
+        if (filename == null) {
+            // Nothing to resolve, just return null
+            return null;
+        }
+
+        // 1) Primary (project storage): <projectPath>/user_folders/<email>/<filename>
+        Path projectPath = null;
+        try {
+            if (fbb != null && fub != null && fub.getEmail() != null) {
+                String bucketObjectName = "/user_folders/" + fub.getEmail() + "/" + filename;
+                projectPath = Paths.get(fbb.getProjectPath() + bucketObjectName).normalize();
+                if (Files.exists(projectPath)) {
+                    // Optionally copy to home for consistency
+                    copyToHome(projectPath, homeJson);
+                    return homeJson; // return the canonical home copy
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.FINE, "Project storage check failed", e);
+        }
+
+        // 2) Example (resource) storage: <ab.getResourceDir()>/pro/<filename>
+        try {
+            Path examplePath = Paths.get(ab.getResourceDir(), "pro", filename).normalize();
+            if (Files.exists(examplePath)) {
+                copyToHome(examplePath, homeJson);
+                return homeJson;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.FINE, "Example storage check failed", e);
+        }
+
+        // 3) Final fallback: if home was created by other means between checks
+        return Files.exists(homeJson) ? homeJson : null;
+    }
+
+    private void copyToHome(Path src, Path homeJson) {
+        try {
+            Files.createDirectories(homeJson.getParent());
+            Files.copy(src, homeJson, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Failed to copy workflow JSON to home: " + homeJson, ex);
+            // If copy fails, we can still read from src directly if desired.
+            // In this implementation we prefer a single canonical location, so we just warn.
+        }
+    }
+
+    private String readAndPrettyPrintJson(Path path) throws IOException {
+        String raw = Files.readString(path, StandardCharsets.UTF_8);
+        ObjectMapper om = new ObjectMapper();
+        Object parsed = om.readValue(raw, Object.class);
+        return om.writerWithDefaultPrettyPrinter().writeValueAsString(parsed);
+    }
+
+    /**
+     * Bind to
+     * <pre>/<textarea> viewer */
+    public String getSelectedWorkflowJson() {
+        return selectedWorkflowJson;
+    }
+
+    public String goToWorkflowDetails() {
+        return "WorkflowDetails";
+    }
+
+    public String goToWorkflowOverview() {
+        activeIndex = 0;
+        return "WorkflowView";
+    }
+
+    public String goToWorkflowExec() {
+        activeIndex = 2;
+        return "WorkflowView";
     }
 
 }

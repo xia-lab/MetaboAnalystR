@@ -76,6 +76,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import pro.metaboanalyst.api.DatabaseClient;
@@ -150,6 +151,15 @@ public class FireBaseController implements Serializable {
     private String fireDocDescription = "";
 
     private boolean saveDataBoolean = true;
+    private boolean saveWorkflowBoolean = false;
+
+    public boolean isSaveWorkflowBoolean() {
+        return saveWorkflowBoolean;
+    }
+
+    public void setSaveWorkflowBoolean(boolean saveWorkflowBoolean) {
+        this.saveWorkflowBoolean = saveWorkflowBoolean;
+    }
 
     public boolean isSaveDataBoolean() {
         return saveDataBoolean;
@@ -452,111 +462,7 @@ public class FireBaseController implements Serializable {
     @Inject
     private WorkflowView wfv;
 
-    public void saveState() {
-        // Save basic state
-
-        hb.getJavaHistory().put("NA.dummy.SessionBean1", DataUtils.convertObjToJson(sb));
-        hb.getJavaHistory().put("NA.dummy.MsetBean", DataUtils.convertObjToJson(mstb));
-        hb.getJavaHistory().put("NA.dummy.UtilsBean", DataUtils.convertObjToJson(utb));
-        hb.getJavaHistory().put("NA.dummy.WorkflowBean", DataUtils.convertObjToJson(wb));
-        hb.getJavaHistory().put("NA.dummy.DiagramView", DataUtils.convertObjToJson(dv));
-
-        List<String> modules = new ArrayList();
-        if (wb.getModuleNames().isEmpty()) {
-            modules.add(sb.getAnalType());
-        } else {
-            modules = wb.getModuleNames();
-        }
-        // Save state based on data type
-        for (String module : modules) {
-            // Determine the analysis type
-            String analTypePrefix = module.length() >= 4 ? module.substring(0, 4) : module;
-            System.out.println("analTypePrefix===" + module);
-            System.out.println("naviType===" + sb.getNaviType());
-
-            switch (analTypePrefix) {
-                case "raw" -> {
-
-                    hb.getJavaHistory().put("NA.dummy.SpectraParamBean", DataUtils.convertObjToJson(spmb));
-                    hb.getJavaHistory().put("NA.dummy.SpectraProcessBean", DataUtils.convertObjToJson(sppb));
-                    hb.getJavaHistory().put("NA.dummy.SpectraControlBean", DataUtils.convertObjToJson(spcb));
-                }
-                case "mset" -> {
-
-                    hb.getJavaHistory().put("NA.dummy.IntegProcessBean", DataUtils.convertObjToJson(itpb));
-                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(itrb));
-                }
-
-                case "path" -> {
-
-                    hb.getJavaHistory().put("NA.dummy.PathBean", DataUtils.convertObjToJson(patb));
-                    hb.getJavaHistory().put("NA.dummy.IntegResBean", DataUtils.convertObjToJson(itrb));
-                }
-
-                default -> {
-                    // Handle specific analysis types
-                    switch (module) {
-                        case "metapaths":
-
-                            hb.getJavaHistory().put("NA.dummy.MetaPathLoadBean", DataUtils.convertObjToJson(mplb));
-                            hb.getJavaHistory().put("NA.dummy.MetaPathStatBean", DataUtils.convertObjToJson(mpsb));
-                            break;
-
-                        case "metadata":
-
-                            hb.getJavaHistory().put("NA.dummy.MetaLoadBean", DataUtils.convertObjToJson(mlb));
-                            break;
-                        case "dose":
-
-                            hb.getJavaHistory().put("NA.dummy.DoseResponseBean", DataUtils.convertObjToJson(drb));
-                            hb.getJavaHistory().put("NA.dummy.MultifacBean", DataUtils.convertObjToJson(mfb));
-                            break;
-                        case "roc":
-
-                            hb.getJavaHistory().put("NA.dummy.RocAnalBean", DataUtils.convertObjToJson(rab));
-                            break;
-
-                        case "power":
-
-                            hb.getJavaHistory().put("NA.dummy.PowerAnalBean", DataUtils.convertObjToJson(pab));
-                            break;
-
-                        case "mf":
-                            hb.getJavaHistory().put("NA.dummy.MultifacBean", DataUtils.convertObjToJson(mfb));
-                            break;
-
-                        case "network":
-
-                            hb.getJavaHistory().put("NA.dummy.MnetResBean", DataUtils.convertObjToJson(mnrb));
-                            break;
-
-                        case "mummichog":
-                        case "mass_table":
-                        case "mass_all":
-                            hb.getJavaHistory().put("NA.dummy.PeakUploadBean", DataUtils.convertObjToJson(pub));
-
-                            hb.getJavaHistory().put("NA.dummy.MummiAnalBean", DataUtils.convertObjToJson(mab));
-                            break;
-
-                        case "tandemMS":
-
-                            hb.getJavaHistory().put("NA.dummy.TandemMSBean", DataUtils.convertObjToJson(tmsb));
-                            break;
-
-                        default:
-                            // Handle other cases if needed
-                            break;
-                    }
-                }
-            }
-        }
-
-        try {
-            wfv.generateWorkflowJson();
-        } catch (IOException ex) {
-            Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+   
 
     public void saveJavaHistory() {
         ObjectMapper mapper = new ObjectMapper();
@@ -978,7 +884,25 @@ public class FireBaseController implements Serializable {
 
     }
 
+    private static String readSecret(Path path) {
+        try {
+            // Read whole file, trim trailing newlines/spaces
+            return Files.readString(path, StandardCharsets.UTF_8).trim();
+        } catch (Exception e) {
+            // Don't log the secret; just explain what's wrong
+            LOGGER.warn("Unable to read password from {}", path, e);
+            return "";
+        }
+    }
+
     public void toModuleView() throws IOException {
+        if (ab.isOnZgyPc()) {
+            fub.setEmail("guangyan.zhou@xialab.ca");
+            fub.setPassword(readSecret(Path.of("/home/zgy/NetBeansProjects/password.txt")));
+            fub.doUserLogin();
+            DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/ModuleView.xhtml", ab);
+            return;
+        }
 
         if (ab.isOnLocalServer()) {
             DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml", ab);

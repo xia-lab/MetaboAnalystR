@@ -5,7 +5,9 @@
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui"
-                template="/template/_template_workflow.xhtml">
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                template="/template/_template_workflow.xhtml"
+                xmlns:c="jakarta.tags.core">
 
 
     <ui:define name="metaInfo">
@@ -15,6 +17,7 @@
 
     <ui:define name="mystyle">
         <h:outputStylesheet library="css" name="dataset-cards.css"/>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/datacenter.js"></script> 
 
         <style>
             .warnHighlight {
@@ -100,7 +103,7 @@
                 display:inline-block;
                 width:16px;
             }
-            
+
         </style>
         <script type="text/javascript">
             // Optional helpers for downloads (used by exporter/template buttons)
@@ -117,13 +120,15 @@
         <h:panelGrid styleClass="my-content-panel">
             <p:growl id="msgs" showDetail="true" life="6000"/>
 
-            <h2>Data Center</h2>
+            <h2>Data Management</h2>
             <p>
-                Upload one or more datasets (.csv, .txt or .zip). Your uploaded files appear in the table below, where you can
-                download, edit metadata, or delete them.
+                Your saved dataset files appear in the table below, where you can use them to start new analysis or workflow.
             </p>
-
-            <p:tabView widgetVar="tabWidget" id="ac" style="margin: 20px; width:90%; border: none; font-size: 13px; line-height: 23px; min-height: 70vh" >
+            <!--
+            <ui:include src="/template/_dataset_overlaypanel.xhtml" />
+            -->
+            <p:tabView widgetVar="tabWidget" id="acTab" style="margin: 20px; width:90%; border: none; font-size: 13px; line-height: 23px; min-height: 70vh" >
+                
                 <p:tab title ="Example Dataset">
                     <h:form id="dataTableExampleForm">
 
@@ -131,7 +136,6 @@
                             <ui:repeat value="#{datasetController.datasetTableExample}" var="ds">
                                 <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
 
-                                    <!-- title link to edit -->
                                     <div style="margin-bottom:.25rem;">
                                         <h:outputText value="#{ds.description}"/>
                                     </div>
@@ -147,42 +151,50 @@
 
                                     <p:toolbar styleClass="dataset-toolbar">
                                         <f:facet name="left">
-                                            <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
-                                                <i class="pi pi-download"></i>
-                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                                <p:fileDownload value="#{datasetController.downloadSelected}"/>
+                                            <p:commandLink id="editBn" title="Explore"
+                                                           update=":editorForm"
+                                                           onstart="PF('statusDialog').show();"
+                                                           oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
+                                                           actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">
+                                                <i class="pi pi-compass"/>
                                             </p:commandLink>
 
-                                            <p:commandLink id="filesBn"
+
+                                            <p:commandLink id="filesBn" 
                                                            title="Files"
                                                            process="@this"
                                                            update=":filesForm"
-                                                           oncomplete="PF('filesDialog').show();"
+                                                           onstart="PF('statusDialog').show();"
+                                                           oncomplete="PF('filesDialog').show();PF('statusDialog').hide();"
                                                            action="#{datasetController.populateFilesForDialog(ds)}">
-                                                <i class="pi pi-folder-open"></i>
+                                                <i class="pi pi-folder -open"></i>
                                             </p:commandLink>
+
                                         </f:facet>
 
                                         <f:facet name="right">
                                             <p:commandLink id="loadBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":ac:dataTableForm"
-                                                           action="#{datasetController.load(ds)}">
+                                                           update=":acTab:dataTableForm"
+                                                           action="#{datasetController.loadDefault(ds)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
-
-                                            <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
-                                                <i class="pi pi-trash" style="color:orangered;"></i>
-                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:commandLink id="loadWorkflowBn" title="Load"
+                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                           update=":acTab:dataTableForm"
+                                                           action="#{datasetController.loadWorkflow(ds)}">
+                                                <i class="pi pi-sitemap" style="color:#16a34a;"></i>
                                             </p:commandLink>
                                         </f:facet>
                                     </p:toolbar>
 
                                     <!-- Tooltips -->
-                                    <p:tooltip for="downloadBn" value="Download primary file"/>
+                                    <p:tooltip for="editBn" value="View / edit file"/>
+
                                     <p:tooltip for="filesBn" value="Show all files in this dataset"/>
                                     <p:tooltip for="loadBn" value="Load this dataset"/>
-                                    <p:tooltip for="deleteBn" value="Delete this dataset"/>
+                                    <p:tooltip for="loadWorkflowBn" value="Load this dataset and select a workflow"/>
+
                                 </p:fieldset>
                             </ui:repeat>
                         </h:panelGroup>
@@ -222,10 +234,16 @@
 
                                     <p:toolbar styleClass="dataset-toolbar">
                                         <f:facet name="left">
-                                            <p:commandLink id="downloadBn" title="Download" ajax="false" onclick="PrimeFaces.monitorDownload(start, stop);">
-                                                <i class="pi pi-download"></i>
+                                            <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
+                                                <i class="pi pi-trash" style="color:orangered;"></i>
                                                 <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                                <p:fileDownload value="#{datasetController.downloadSelected}"/>
+                                            </p:commandLink>
+                                            <p:commandLink id="editBn" title="Explore"
+                                                           update=":editorForm"
+                                                           onstart="PF('statusDialog').show();"
+                                                           oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
+                                                           actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">
+                                                <i class="pi pi-compass"/>
                                             </p:commandLink>
                                             <p:commandLink id="filesBn"
                                                            title="Files"
@@ -240,30 +258,32 @@
                                         <f:facet name="right">
                                             <p:commandLink id="loadBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":ac:dataTableForm"
-                                                           action="#{datasetController.load(ds)}">
+                                                           update=":acTab:dataTableForm"
+                                                           action="#{datasetController.loadDefault(ds)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
-
-                                            <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
-                                                <i class="pi pi-trash" style="color:orangered;"></i>
-                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            <p:commandLink id="loadWorkflowBn" title="Load"
+                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                           update=":acTab:dataTableForm"
+                                                           action="#{datasetController.loadWorkflow(ds)}">
+                                                <i class="pi pi-sitemap" style="color:#16a34a;"></i>
                                             </p:commandLink>
+
                                         </f:facet>
                                     </p:toolbar>
 
                                     <!-- Tooltips -->
-                                    <p:tooltip for="downloadBn" value="Download primary file"/>
                                     <p:tooltip for="filesBn" value="Show all files in this dataset"/>
                                     <p:tooltip for="loadBn" value="Load this dataset"/>
+                                    <p:tooltip for="loadWorkflowBn" value="Load this dataset and select a workflow"/>
+
                                     <p:tooltip for="deleteBn" value="Delete this dataset"/>
                                 </p:fieldset>
                             </ui:repeat>
                         </h:panelGroup>
                     </h:form>
                 </p:tab>
-
-                <p:tab title ="Data Upload">
+                <p:tab title ="Data Upload" rendered="false">
                     <h:form id="uploadform" enctype="multipart/form-data">
 
                         <div style="padding: 20px; line-height: 23px; width:90%;">
@@ -271,12 +291,11 @@
 
                             <p>
                                 <b>Drag-and-drop</b> your data below (maximum 200MB per file). 
-                             
                             </p>
 
-                            <p:fileUpload listener="#{uploader.handleFileUploadMulti}"
+                            <p:fileUpload listener="#{uploadBean.handleFileUploadMulti}"
                                           sequential="true"
-                                          update=":ac:uploadform"
+                                          update=":acTab:uploadform"
                                           auto="false" 
                                           label="Choose" 
                                           mode="advanced" 
@@ -296,17 +315,9 @@
                     </h:form>
                 </p:tab>
             </p:tabView>
+
+
         </h:panelGrid>
-
-        <p:dialog widgetVar="dataPanelDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
-                  width="800px" hideEffect="explode" resizable="true">
-            <p>
-                Your uploaded data are shown below for manual inspection. It represents the computer's view of your data. 
-                The first column is the row number. For large data, a max of 10 columns and 100 rows will be displayed. 
-            </p>
-            <iframe id="iframeId" frameborder="0" width="100%" height="600" src="#{facesContext.externalContext.requestContextPath}/Secure/viewer/_data_viewer.html"></iframe>
-        </p:dialog>
-
         <p:dialog header="Files in Dataset" widgetVar="filesDialog" modal="true" appendTo="@(body)" resizable="true" width="720">
             <h:form id="filesForm">
                 <p:dataTable value="#{datasetController.selected.getFiles()}" var="f" rows="10">
@@ -398,6 +409,87 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog>
+        <p:dialog header="View / Edit File"
+                  widgetVar="editorDlg"
+                  modal="true" resizable="true" width="920" appendTo="@(body)"
+                  dynamic="true" focus="none"
+                  onShow="onEditorDialogShow()">
+
+
+            <h:form id="editorForm">
+                <p:tabView id="editorTabs">
+                    <p:ajax event="tabChange" update="@this" oncomplete="onEditorTabChange()"/>
+
+                    <!-- ========== DATA TAB (READ ONLY) ========== -->
+                    <p:tab title="Data">
+                        <pe:sheet id="dataSheet"
+                                  widgetVar="dataSheetW"
+                                  value="#{datasetController.dataSheetRows}" var="r"
+                                  rowKey="#{r.id}"
+                                  height="420"
+                                  minCols="#{datasetController.dataCols.size()}"
+                                  showRowHeaders="true"
+                                  readOnly="true"> <!-- everything read-only -->
+                            <c:forEach items="#{datasetController.dataCols}" var="col" varStatus="s">
+                                <pe:sheetcolumn headerText="#{col}"
+                                                value="#{r.cells[s.index]}"
+                                                readOnly="true"/>
+                            </c:forEach>
+                        </pe:sheet>
+                    </p:tab>
+
+
+                    <!-- ========== METADATA TAB (EDITABLE, first col locked) ========== -->
+                    <p:tab title="Metadata" rendered="#{datasetController.hasMetadataTab}">
+                        <h:panelGroup>
+                            <!-- Editable headers (except first col) -->
+                            <h:panelGrid columns="#{datasetController.metaCols.size()}" style="margin-bottom:8px; width:100%;">
+                                <ui:repeat value="#{datasetController.metaCols}" var="mh" varStatus="ms">
+                                    <p:inputText value="#{datasetController.metaCols[ms.index]}"
+                                                 style="width:100%"
+                                                 disabled="#{ms.index == 0}"> <!-- lock first col header -->
+                                        <p:ajax event="blur"
+                                                listener="#{datasetController.applyMetaHeaderEdits}"
+                                                update="editorForm:metaSheet :msgs"/>
+                                    </p:inputText>
+                                </ui:repeat>
+                            </h:panelGrid>
+
+                            <pe:sheet id="metaSheet"
+                                      widgetVar="metaSheetW"
+                                      value="#{datasetController.metaSheetRows}" var="mr"
+                                      rowKey="#{mr.id}"
+                                      height="420"
+                                      minCols="#{datasetController.metaCols.size()}"
+                                      showRowHeaders="true"
+                                      readOnly="false"> <!-- allow edits -->
+                                <p:ajax event="change"
+                                        listener="#{datasetController.onSheetChangeMeta}"
+                                        update=":msgs"/>
+                                <c:forEach items="#{datasetController.metaCols}" var="mcol" varStatus="ms">
+                                    <pe:sheetcolumn headerText="#{mcol}"
+                                                    value="#{mr.cells[ms.index]}"
+                                                    readOnly="#{ms.index == 0}"/> <!-- lock first col -->
+                                </c:forEach>
+                            </pe:sheet>
+                        </h:panelGroup>
+                    </p:tab>
+
+                </p:tabView>
+
+                <h:panelGrid columns="2" style="width:100%; text-align:center; margin-top:8px;">
+                    <p:commandButton value="Save"
+                                     actionListener="#{datasetController.saveEditedFile}"
+                                     update="@form :msgs"
+                                     onstart="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide(); PF('editorDlg').hide();"
+                                     disabled="#{!datasetController.canSave}"
+                                     title="#{datasetController.hasMetadataTab ? 'Save metadata changes' : 'No metadata available to save'}"/>
+                    <p:commandButton value="Close" onclick="PF('editorDlg').hide();return false;"/>
+                </h:panelGrid>
+            </h:form>
+        </p:dialog>
+
 
 
     </ui:define>

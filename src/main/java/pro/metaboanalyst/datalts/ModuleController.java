@@ -483,12 +483,6 @@ public class ModuleController implements Serializable {
             // Load scripts (per analType) & init nav tree
             RDataUtils.loadRscriptsOnDemand(RC, sb.getAnalType());
 
-            // Some modules have their own loaders/pages, but “SanityCheck” is a safe landing.
-            // MetaPath/MetaLoad/Peak/Mnet beans implement their own upload workflows if used directly,
-            // but here we’re resuming from a saved dataset, so the analysis tree is sufficient. 
-            // (Refs: MetaPathLoadBean manages mixed ion files; MetaLoadBean handles metadata tables; PeakUploadBean runs mummichog; MnetLoadBean maps IDs.) 
-            // :contentReference[oaicite:12]{index=12} :contentReference[oaicite:13]{index=13} :contentReference[oaicite:14]{index=14} :contentReference[oaicite:15]{index=15}
-            // Choose a sensible nav root
             sb.initNaviTree(
                     switch (sb.getAnalType()) {
                 case "msetora" ->

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -2154,6 +2155,25 @@ public static Path materializeToHome(SessionBean1 sb, String resource) throws Ex
         //     }
         // }
         throw new NoSuchFileException(resource);
+    }
+
+
+    public static Map<String, FunctionInfo> loadFunctionInfosFromFile(String filePath) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            // Read the JSON file into a Map<String, FunctionInfo>
+            Map<String, FunctionInfo> functionInfos = mapper.readValue(
+                    new File(filePath),
+                    new TypeReference<Map<String, FunctionInfo>>() {
+            }
+            );
+            System.out.println("FunctionInfos loaded successfully from " + filePath);
+            return functionInfos;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Failed to load FunctionInfos from file.");
+            return null;
+        }
     }
 
 }

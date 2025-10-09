@@ -114,7 +114,7 @@
                                  rendered="#{applicationBean1.dockerAuthed}"
                                  styleClass ="btnBckg2"
                                  style="font-size:14px !important"
-                                 onclick=" PF('notLoginDialog').show();"
+                                     action="#{fireBaseController.toModuleView()}" 
                                  />
                 <p:commandButton value="Click to Authenticate" 
                                  rendered="#{!applicationBean1.dockerAuthed}"

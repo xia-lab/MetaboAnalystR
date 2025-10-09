@@ -350,7 +350,11 @@ public class ApplicationBean1 implements Serializable {
     public void setVmOpt(int vmOpt) {
         this.vmOpt = vmOpt;
     }
-
+    
+    public String getResourceDir() {
+        return resourcePath;
+    }
+    
     //dispactch between cloud and dev
     //odd to cloud, even to dev
     private int jobCount = 0;

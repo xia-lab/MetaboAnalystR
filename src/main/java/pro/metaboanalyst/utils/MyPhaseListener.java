@@ -154,7 +154,7 @@ public class MyPhaseListener implements PhaseListener {
         //System.out.println("Setting default view /home.xhtml");
         //}
         if (funcNm != null) {
-                        System.out.println("=========================== for funcNm: " + funcNm);
+            System.out.println("=========================== for funcNm: " + funcNm);
 
             switch (funcNm) {
                 case LOGIN_EXTERNAL ->
@@ -606,6 +606,12 @@ public class MyPhaseListener implements PhaseListener {
                         QuartzDbUtils.updateJobStatus(jobId, "COMPLETED");
                         dv.sendRawResume(email, jobId, shareLink);
                     }
+
+                    FacesContext fc = FacesContext.getCurrentInstance();
+                    var ec = fc.getExternalContext();
+                    ec.getFlash().setKeepMessages(true);
+                    ec.getFlash().put("justCompletedWorkflow", Boolean.TRUE);
+                    ec.invalidateSession();
                 }
             } else {
                 DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/home.xhtml", "error", "Failed to load project!");

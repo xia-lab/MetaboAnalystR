@@ -381,8 +381,13 @@
                     <p:inputText id="float-input" style="width:100%" value="#{fireBaseController.fireDocName}"/>
                     <h:outputLabel value="Description"/>
                     <p:inputTextarea rows="10" cols="36" value="#{fireBaseController.fireDocDescription}"/>
-                    <h:outputLabel value="Save dataset:"/>
-                    <p:selectBooleanCheckbox value ="#{fireBaseController.saveDataBoolean}" style="line-height: 18px"/>
+                    <h:outputLabel value="Save:"/>
+                    <h:panelGrid columns="2" style="width:100%">
+                        <p:selectBooleanCheckbox value="#{fireBaseController.saveDataBoolean}" 
+                                                 itemLabel="Dataset"/>
+                        <p:selectBooleanCheckbox value="#{fireBaseController.saveWorkflowBoolean}" 
+                                                 itemLabel="Workflow"/>
+                    </h:panelGrid>
                 </h:panelGrid>
                 <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
                     <p:commandButton value="Save"
