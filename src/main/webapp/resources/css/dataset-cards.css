@@ -125,3 +125,80 @@
 .cards-grid{ align-items: stretch; }
 .cards-grid > *{ height: 100%; }
 
+
+/* Card container */
+.wf-card{
+  position: relative !important;
+  min-height: var(--wf-card-min-h) !important;
+  padding: var(--wf-pad) !important;
+  padding-bottom: calc(var(--wf-pad) + var(--wf-toolbar-h)) !important;
+}
+
+/* Scrollable body area */
+.wf-card .ui-fieldset-content{
+  overflow: auto !important;
+  padding: 0 !important;
+}
+
+/* Sticky toolbar anchored to bottom */
+.wf-card .dataset-toolbar,
+.wf-card .ui-toolbar.dataset-toolbar{
+  position: absolute !important;
+  left: var(--wf-pad) !important;
+  right: var(--wf-pad) !important;
+  bottom: var(--wf-pad) !important;
+  margin: 0 !important;
+  padding: .35rem .55rem !important;    /* a touch tighter than ds-card */
+  background: var(--surface-card, #fff) !important;
+  border-top: 1px solid rgba(0,0,0,.06) !important;
+  box-shadow: 0 -2px 10px rgba(0,0,0,.05) !important;
+  z-index: 1;
+  min-height: var(--wf-toolbar-h);
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+/* Same compact icon layout as ds-card */
+.wf-card .ui-toolbar.dataset-toolbar .ui-toolbar-group-left,
+.wf-card .ui-toolbar.dataset-toolbar .ui-toolbar-group-right{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wf-card .ui-toolbar.dataset-toolbar .ui-commandlink{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;                          /* slightly smaller than ds-card */
+  height: 30px;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform .06s ease, background-color .12s ease;
+}
+
+.wf-card .ui-toolbar.dataset-toolbar i{
+  font-size: 1.05rem !important;
+  line-height: 1;
+  vertical-align: middle;
+  color: inherit;
+}
+
+.wf-card .ui-toolbar.dataset-toolbar .ui-commandlink:hover{
+  background: rgba(0,0,0,.05);
+}
+.wf-card .ui-toolbar.dataset-toolbar .ui-commandlink:active{
+  transform: scale(0.985);
+}
+
+/* Optional: keep touch targets reasonable on touch devices */
+@media (pointer: coarse){
+  .wf-card .ui-toolbar.dataset-toolbar .ui-commandlink{
+    width: 34px;
+    height: 34px;
+  }
+  .wf-card .ui-toolbar.dataset-toolbar i{
+    font-size: 1.15rem !important;
+  }
+}

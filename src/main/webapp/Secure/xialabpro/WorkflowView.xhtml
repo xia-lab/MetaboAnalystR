@@ -80,9 +80,8 @@
                         <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
                             <ui:repeat value="#{workflowBean.defaultWorkflowList}" var="wf">
                                 <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="wf-card surface-card shadow-1 p-3">
+                                            styleClass="ds-card surface-card shadow-1 p-3">
 
-                                    <!-- Short description opens view dialog -->
                                     <div style="margin-bottom:.4rem;">
                                         <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
                                                        update=":wfViewForm"
@@ -91,7 +90,6 @@
                                         </p:commandLink>
                                     </div>
 
-                                    <!-- Meta -->
                                     <div class="wf-meta">
                                         <div><b>Module:</b> #{wf['module']}</div>
                                         <h:panelGroup rendered="#{not empty wf['filename']}">
@@ -143,7 +141,7 @@
                             <!-- workflowList: ArrayList<HashMap<String,Object>> -->
                             <ui:repeat value="#{workflowBean.workflowList}" var="wf">
                                 <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="wf-card surface-card shadow-1 p-3">
+                                            styleClass="ds-card surface-card shadow-1 p-3">
 
                                     <div style="margin-bottom:.4rem;">
                                         <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
