@@ -1246,7 +1246,7 @@ public class WorkflowBean implements Serializable {
             initializeDiagramForInput(input);
 
             reloadingWorkflow = true;
-            wf.generateWorkflowJson();   // only in "details"
+            wf.generateWorkflowJson("project", false);   // only in "details"
             postLoadCommon();
 
             DataUtils.doRedirectWithGrowl(sb,
@@ -1278,6 +1278,8 @@ public class WorkflowBean implements Serializable {
             Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
             setFunctionInfos(functionInfos);
 
+            wf.checkWorkflowContained("restoreWorkflowState");
+
             // 3) UI
             calledWorkflows.add("Data Preparation");
             final String module = (String) selectedWorkflow.get("module");
@@ -1287,6 +1289,14 @@ public class WorkflowBean implements Serializable {
 
             reloadingWorkflow = true;
             postLoadCommon();
+
+            if (getWorkflowOptions().isEmpty()) {
+                dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
+            } else {
+                for (String moduleName : moduleNames) {
+                    dv.selectNode(dv.convertToBlockName(moduleName), true);
+                }
+            }
 
             DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
@@ -1365,7 +1375,7 @@ public class WorkflowBean implements Serializable {
         final Path destPath = Paths.get(destDirPath, "workflow.json");
 
         final String userPath = fbb.getProjectPath() + "/user_folders/" + fub.getEmail() + "/" + fileName;
-        final String examplePath = ab.getResourceDir() + "/pro/" + fileName;
+        final String examplePath = ab.getResourceDir() + "/pro/example_workflows/" + fileName;
 
         LOGGER.info(() -> "userPath====" + userPath);
         LOGGER.info(() -> "examplePath====" + examplePath);

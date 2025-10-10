@@ -1,0 +1,195 @@
+{
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "ProcessBean.skipButton_action_default",
+    "description" : "Sanity check function",
+    "parameters" : {
+      "sessionBean1.dataType" : "pktable",
+      "sessionBean1.multiGroup" : false,
+      "sessionBean1.cmpdIDType" : "na",
+      "sessionBean1.analType" : "mf",
+      "sessionBean1.integChecked" : true,
+      "sessionBean1.smallSmplSize" : false,
+      "sessionBean1.featType" : "none"
+    },
+    "rCommands" : [ ]
+  },
+  "performMissingImpute" : {
+    "name" : "performMissingImpute",
+    "function" : "processBean.performMissingImpute",
+    "description" : "Performs missing value imputation and metadata handling",
+    "parameters" : {
+      "processBean.missingImputeOpt" : "leftCensor",
+      "processBean.missingPercent" : 50,
+      "processBean.replaceVarOpt" : "mean",
+      "processBean.imputeAlgOpt" : "knn_var",
+      "processBean.removeMissing" : false
+    },
+    "rCommands" : [ ]
+  },
+  "Filtering" : {
+    "name" : "Filtering",
+    "function" : "procBean.filterButton_action",
+    "description" : "Executes QC filtering and variable filtering based on user settings.",
+    "parameters" : {
+      "procBean.qcCutoff" : 20,
+      "procBean.intFilterOpt" : "mean",
+      "procBean.filterCutoff" : 5,
+      "procBean.IntFilterCutoff" : 0,
+      "procBean.varFilterOpt" : "iqr",
+      "procBean.doQCFiltering" : "No"
+    },
+    "rCommands" : [ ]
+  },
+  "Normalization" : {
+    "name" : "Normalization",
+    "function" : "normBean.performDataNormalization",
+    "description" : "Perform data normalization.",
+    "parameters" : {
+      "normBean.refVar" : null,
+      "normBean.transNormOpt" : "LogNorm",
+      "normBean.refGrp" : null,
+      "normBean.scaleNormOpt" : "NULL",
+      "normBean.includeRatio" : false,
+      "normBean.ratioNumOpt" : 20,
+      "normBean.refSmpl" : null,
+      "normBean.specNormSpecifed" : false,
+      "normBean.rowNormOpt" : "NULL"
+    },
+    "rCommands" : [ "PlotNormSummary(NA, \"norm_1_\", \"png\", 150, width=NA)", "PlotSampleNormSummary(NA, \"snorm_1_\", \"png\", 150, width=NA)" ]
+  },
+  "Random Forest2" : {
+    "name" : "Random Forest2",
+    "function" : "mrfBean.rfBn_action_time",
+    "description" : "Executes and times a Random Forest analysis.",
+    "parameters" : {
+      "mrfBean.rfMeta" : "Time",
+      "mrfBean.tryNum" : "7",
+      "mrfBean.treeNum" : "500",
+      "mrfBean.rfRandom" : "1",
+      "mrfBean.predictedMeta" : "[]"
+    },
+    "rCommands" : [ "meta.vec.rf <- c(\"\")", "PlotRF.ClassifyMeta(NA, \"rf_cls_meta_0_\", \"png\", 150, width=NA)", "PlotRF.VIPMeta(NA, \"rf_imp_meta_0_\", \"png\", 150, width=NA)" ]
+  },
+  "RF.AnalMeta(NA, 500,-1,1, \"Time\")" : {
+    "name" : "RF.AnalMeta(NA, 500,-1,1, \"Time\")",
+    "function" : "RF.AnalMeta(NA, 500,-1,1, \"Time\")",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "meta.vec.rf <- c(\"\")" ]
+  },
+  "ASCA" : {
+    "name" : "ASCA",
+    "function" : "ascaBean.mdlBtn_action",
+    "description" : "Performs ASCA",
+    "parameters" : {
+      "ascaBean.lvlThresh" : 0.9,
+      "ascaBean.mdlANum" : 1,
+      "ascaBean.useGreyCol" : false,
+      "ascaBean.mdlABNum" : 2,
+      "ascaBean.permNum" : 20,
+      "ascaBean.mdlBNum" : 1,
+      "ascaBean.mdlResNum" : 2,
+      "ascaBean.alphaThresh" : 0.05
+    },
+    "rCommands" : [ "Perform.ASCA(NA, 1, 1, 2, 2)" ]
+  },
+  "Multifactor anova" : {
+    "name" : "Multifactor anova",
+    "function" : "aov2Bean.initPCA3D",
+    "description" : "Performs PCA (Principal Component Analysis) visualization in 3D",
+    "parameters" : {
+      "aov2Bean.pthresh" : 0.05,
+      "aov2Bean.phenOpt" : "between",
+      "aov2Bean.selectedMetasAnova" : [ "Subject", null ],
+      "aov2Bean.pvalOpt" : "fdr"
+    },
+    "rCommands" : [ "ANOVA2.Anal(NA, 0.05, \"fdr\", \"time0\", \"between\", 500)" ]
+  },
+  "corBtn_action" : {
+    "name" : "corBtn_action",
+    "function" : "mCorrBean.corBtn_action",
+    "description" : "Performs correlation analysis based on the provided metadata and features.",
+    "parameters" : {
+      "mCorrBean.covMetas" : "[]",
+      "mCorrBean.covFeatures" : null,
+      "mCorrBean.ptnDistMeasure" : "pearson",
+      "mCorrBean.ptnMetaCov" : null,
+      "mCorrBean.covType" : "none",
+      "mCorrBean.ptnMeta" : "Time",
+      "mCorrBean.ptnFeature" : "",
+      "mCorrBean.tgtType" : "metaNm"
+    },
+    "rCommands" : [ "FeatureCorrelationMeta(NA, \"pearson\", \"metaNm\", \"Time\")" ]
+  },
+  "Linear Models" : {
+    "name" : "Linear Models",
+    "function" : "lmBean.covScatterButton_action",
+    "description" : "Performs linear modeling with covariate adjustment",
+    "parameters" : {
+      "lmBean.covPThresh" : "0.05",
+      "lmBean.referenceGroupFromAnalysisMeta" : "--- NA ---",
+      "lmBean.analysisMeta" : "Time",
+      "lmBean.contrastFromAnalysisMeta" : "anova",
+      "lmBean.blockFac" : "NA",
+      "lmBean.covStyleOpt" : "default",
+      "lmBean.adjustedMeta" : [ ]
+    },
+    "rCommands" : [ "adj.vec <- c(\"\")", "CovariateScatter.Anal(NA, \"covariate_plot_0_dpi150.png\", \"png\", \"Time\", \"--- NA ---\", \"NA\" , 0.05, \"fdr\", \"anova\")", "PlotCovariateMap(NA, \"default\", \"covariate_plot_0_dpi150.png\", \"png\", 150)" ]
+  },
+  "Heatmap2" : {
+    "name" : "Heatmap2",
+    "function" : "hm2Bean.hm2b_action",
+    "description" : "Performs Heatmap visualization of multifactor data",
+    "parameters" : {
+      "hm2Bean.fontSizeCol" : "8",
+      "hm2Bean.smplSortOpt" : [ "Time" ],
+      "hm2Bean.topThresh" : 25,
+      "hm2Bean.smplSortOptList" : [ "Time" ],
+      "hm2Bean.fontSizeRow" : "8",
+      "hm2Bean.selectedMetas" : [ "Time", "Subject" ],
+      "hm2Bean.maxFeatureNum" : 5000,
+      "hm2Bean.useTopFeature" : false
+    },
+    "rCommands" : [ "meta.vec.hm2 <- c(\"Time\",\"Subject\")", "sort.vec.hm2 <- c(\"Time\")", "PlotHeatMap2(NA, \"heatmap2_0_\", \"norm\", \"row\", \"png\", 150, width=NA, \"euclidean\",\"ward.D\",\"bwn\", 8,8, 10.0,0.015,10, 10, \"mean\",25, F,  F, T, T, T, F, 5000)" ]
+  },
+  "PCA" : {
+    "name" : "PCA",
+    "function" : "PCA",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PCA.Anal(NA)", "PCA.Anal(NA)", "PlotPCAScree(NA, \"pca_scree_0_\", \"png\", 150, width=NA, 5)", "PlotPCA2DScore(NA, \"pca_score2d_0_\", \"png\", 150, width=NA, 1,2,0.95,0,0, \"na\")", "PlotPCALoading(NA, \"pca_loading_0_\", \"png\", 150, width=NA, 1,2);", "PlotPCABiplot(NA, \"pca_biplot_0_\", \"png\", 150, width=NA, 1,2,10)", "PlotPCA3DScore(NA, \"pca_score3d_0_\", \"json\", 1,2,3)", "PlotPCA3DLoading(NA, \"pca_loading3d_0_\", \"json\", 1,2,3)" ]
+  },
+  "Metadata Heatmap" : {
+    "name" : "Metadata Heatmap",
+    "function" : "mhmBean.metaOverviewBn_action",
+    "description" : "Performs meta-data heatmap clustering.",
+    "parameters" : {
+      "mhmBean.metaClusterOpt" : "ward.D",
+      "mhmBean.metaDistOpt" : "euclidean",
+      "mhmBean.corOpt" : "pearson",
+      "mhmBean.metaColorOpt" : "bwm",
+      "mhmBean.metaViewOpt" : "overview",
+      "mhmBean.metaClusterSelOpt" : "both",
+      "mhmBean.drawBordersMeta" : "false",
+      "mhmBean.includeRowNamesMeta" : "true"
+    },
+    "rCommands" : [ ]
+  },
+  "Volcano" : {
+    "name" : "Volcano",
+    "function" : "univBean.vcButton_action",
+    "description" : "Performs volcano plot analysis based on user settings.",
+    "parameters" : {
+      "univBean.vcFcThresh" : 2.0,
+      "univBean.labelOpt" : "all",
+      "univBean.nonParVcTt" : "false",
+      "univBean.vcPThresh" : 0.1,
+      "univBean.vcPvalType" : "raw",
+      "univBean.cmpType" : 0,
+      "univBean.nonpar" : "false",
+      "univBean.equalVar" : "TRUE"
+    },
+    "rCommands" : [ ]
+  }
+}

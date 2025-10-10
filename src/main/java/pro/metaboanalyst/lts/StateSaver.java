@@ -204,15 +204,5 @@ public class StateSaver implements Serializable {
                 }
             }
         }
-
-        try {
-            if (fb.isSaveWorkflowBoolean()) {
-                wb.setName(fb.getFireDocName());
-                wb.setDescription(fb.getFireDocDescription());
-                wfv.generateWorkflowJson();
-            }
-        } catch (IOException ex) {
-            Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 }

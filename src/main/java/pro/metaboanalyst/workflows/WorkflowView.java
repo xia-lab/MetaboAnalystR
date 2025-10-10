@@ -1025,12 +1025,12 @@ public class WorkflowView implements Serializable {
 
     }
 
-    private boolean checkWorkflowContained(String functionType) {
+    public boolean checkWorkflowContained(String functionType) {
         FunctionInfo functionInfo = wb.getFunctionInfos().get(functionType);
 
         if (functionInfo != null) {
             try {
-                System.out.println("FunctionInfo found: " + functionInfo);
+                System.out.println("FunctionInfo found: " + functionType);
                 if (wb.getReloadingParameters().equals("saved") || !wb.isReloadingWorkflow()) {
                     FunctionInvoker.callSetters(functionInfo);
                 }
@@ -1598,11 +1598,14 @@ public class WorkflowView implements Serializable {
         return "";
     }
 
-    public void generateWorkflowJson() throws IOException {
-        generateWorkflowJson(wb.getName(), wb.getDescription(), true);
+    public void generateWorkflowJson(String projectType, boolean insert) throws IOException {
+        generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, insert, true);
     }
+    @JsonIgnore
+    @Inject
+    private JavaRecord jrd;
 
-    public void generateWorkflowJson(String wName, String wDescription, boolean msgBool) throws IOException {
+    public void generateWorkflowJson(String wName, String wDescription, String projectType, boolean insert, boolean msgBool) throws IOException {
         if (wb.getFunctionInfos() == null || wb.getFunctionInfos().isEmpty()) {
             if (msgBool) {
                 sb.addMessage("Error", "Workflow is empty!");
@@ -1612,28 +1615,31 @@ public class WorkflowView implements Serializable {
             return;
         }
 
+        jrd.record_workflowState(wb);
         String path = sb.getCurrentUser().getHomeDir() + "/workflow.json";
         FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), path);
-        File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + fub.getEmail());
-        if (!projSubFolder.exists()) {
-            boolean result = projSubFolder.mkdirs();
-            if (result) {
-                System.out.println("Directory created successfully.");
+        if (insert && !projectType.equals("workflow")) {
+            File projSubFolder = new File(fb.getProjectPath() + "/user_folders/" + fub.getEmail());
+            if (!projSubFolder.exists()) {
+                boolean result = projSubFolder.mkdirs();
+                if (result) {
+                    System.out.println("Directory created successfully.");
+                } else {
+                    sb.addMessage("Error", "Saving workflow failed, project folder doesn't exist!");
+                    return;
+                }
             } else {
-                sb.addMessage("Error", "Saving workflow failed, project folder doesn't exist!");
-                return;
+                System.out.println("Directory already exists.");
             }
-        } else {
-            System.out.println("Directory already exists.");
+
+            String fileName = File.createTempFile("workflow_" + sb.getAnalType(), "").getName();
+            FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileName + ".json");
+            String fileNameOverview = fileName + "_overview";
+
+            dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
+            HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
+            dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName + ".json", ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
         }
-
-        String fileName = File.createTempFile("workflow_" + sb.getAnalType(), "").getName();
-        FunctionInvoker.saveFunctionInfosToFile(wb.getFunctionInfos(), fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileName + ".json");
-        String fileNameOverview = fileName + "_overview";
-
-        dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
-        HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
-        dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName+".json", ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
         if (msgBool) {
             sb.addMessage("info", "Workflow has been successfully saved!");
         }

@@ -666,6 +666,8 @@ public class DiagramView implements Serializable {
         if (model == null || model.getElements().isEmpty()) {
             init();
         }
+        this.input = input;
+
         workflowFinished = false;
         switch (input) {
             case "LC-MS Spectra" -> {
@@ -2874,7 +2876,7 @@ public class DiagramView implements Serializable {
             }
             case "pathora" -> {
                 url = "/Secure/workflow/upload/AnotListUploadView.xhtml";
-                                workflowType = "Compound Table";
+                workflowType = "Compound Table";
 
             }
             default ->

@@ -802,89 +802,320 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public void loadDefault(DatasetRow ds) {
-        boolean res = load(ds);
-        String url = "";
-        if (res) {
-            switch ((String) ds.getModule()) {
-                case "onedata" -> {
-                    url = "/Secure/expression/SummaryView.xhtml";
+        if (ds == null) {
+            sb.addMessage("Error", "No dataset selected to load.");
+            return;
+        }
+
+        try {
+            // 0) Remember selection
+            this.selected = ds;
+
+            // 1) Login -> (re)creates a fresh working folder for the session
+            sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
+
+            // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
+            Path srcDir = Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString()
+            ).normalize();
+
+            Path srcZip = Paths.get(
+                    fb.getProjectPath(), "user_folders",
+                    ds.getEmail(), ds.getId().toString() + ".zip"
+            ).normalize();
+
+            Path dstDir = Paths.get(sb.getCurrentUser().getHomeDir()).normalize();
+            Files.createDirectories(dstDir);
+
+            int copied = 0;
+            boolean restoredFromZip = false;
+
+            // 3) Always copy whole dataset folder when it exists; ignore ds.getFiles()
+            if (Files.isDirectory(srcDir)) {
+                // 4a) Copy everything (recursively)
+                copied = copyDirectoryRecursive(srcDir, dstDir);
+
+            } else if (Files.isRegularFile(srcZip)) {
+                // 4b) Fallback: local ZIP exists -> unzip into workspace
+                unzipInto(srcZip, dstDir);
+                restoredFromZip = true;
+                copied = countRegularFiles(dstDir);
+
+            } else {
+                // 4c) Last resort: download from SAME server endpoint, then unzip
+                // Build https://<node>.metaboanalyst.ca/<AppName> from ds.getNode()
+                String node = ds.getNode();
+                if (node == null || node.isBlank()) {
+                    throw new IllegalArgumentException("Dataset node is missing.");
                 }
-                case "genelist" -> {
-                    url = "/Secure/list/ListSummary.xhtml";
-                }
-                case "metadata" -> {
-                    url = "/Secure/metastat/MetaQCView.xhtml";
-                }
-                default -> {
-                    url = "/Secure/raw/SeqSanityCheck.xhtml";
+                node = node.trim().replaceAll("\\.+$", ""); // strip trailing dots
+
+                String baseUrl = "https://" + node + ".metaboanalyst.ca/";
+
+                Path tempZip = Files.createTempFile(dstDir, "dataset-", ".zip");
+                try {
+                    downloadDatasetObjectFromBaseUrl(
+                            baseUrl,
+                            ds.getEmail(),
+                            ds.getId().toString(),
+                            tempZip.toString(),
+                            null // bearer token if/when you secure the endpoint
+                    );
+                    unzipInto(tempZip, dstDir);
+                    restoredFromZip = true;
+                    copied = countRegularFiles(dstDir);
+                } finally {
+                    try {
+                        Files.deleteIfExists(tempZip);
+                    } catch (Exception ignore) {
+                    }
                 }
             }
-            boolean res2 = handleDataset(ds);
 
+            // 5) Load any java_history.json if present
+            File histFile = new File(sb.getCurrentUser().getHomeDir(), "java_history.json");
+            if (histFile.exists()) {
+                try {
+                    String javaHistory = fc.readJsonStringFromFile(histFile.getAbsolutePath());
+                    int res1 = fc.loadJavaHistory(javaHistory);
+                    sb.getNaviTrack().clear();
+                    sb.setNaviType("NA");
+                } catch (Exception hx) {
+                    System.err.println("Failed to load java_history.json: " + hx.getMessage());
+                }
+            }
+
+            // 6) Notify + redirect to module selection
+            String mode = restoredFromZip ? "restored" : "loaded";
+            sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
             DataUtils.doRedirectWithGrowl(
                     sb,
-                    "/" + ab.getAppName() + url,
+                    "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
                     "info",
-                    "Dataset loaded, you can proceed with analysis."
+                    "Dataset loaded, please select a module to start analysis."
             );
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Load failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     public boolean handleDataset(DatasetRow ds) {
         try {
+            if (ds == null) {
+                sb.addMessage("Error", "No dataset selected.");
+                return false;
+            }
             if (ds.getFiles() == null || ds.getFiles().isEmpty()) {
                 sb.addMessage("Error", "Selected dataset has no files.");
                 return false;
             }
 
             // --- Gather filenames by role ---
-            String dataName = "", data2Name = "", metaName = "", listName = "", listGeneName = "", ms2Name = "", rawName = "";
+            String dataName = null, data2Name = null, metaName = null, listName = null, listGeneName = null, ms2Name = null, rawName = null;
             for (DatasetFile f : ds.getFiles()) {
                 String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
-                System.out.println(role + "====role");
                 switch (role) {
                     case "data" ->
                         dataName = f.getFilename();
                     case "data2" ->
                         data2Name = f.getFilename();
-                    case "metadata" -> {
+                    case "metadata" ->
                         metaName = f.getFilename();
-
-                    }
+                    case "list" ->
+                        listName = f.getFilename();
+                    case "listgene" ->
+                        listGeneName = f.getFilename();
+                    case "ms2" ->
+                        ms2Name = f.getFilename();
                     case "raw" ->
                         rawName = f.getFilename();
                 }
             }
 
-            // --- Map idx to desired module behavior ---
-            enum InputMode {
-                DATA_ONLY, DATA_PLUS_META, LIST_ONLY, JOINT_TWO_TABLES, MS2_ONLY, RAW_MODE, MGWAS_ONLY
-            }
+            // --- Decide analysis type from dataset/module (fallback to existing) ---
+            String analType = (ds.getModule() != null && !ds.getModule().isBlank())
+                    ? ds.getModule()
+                    : (sb.getAnalType() != null ? sb.getAnalType() : "stat");
+            sb.setAnalType(analType);
 
             final String dataType = sb.getDataType() == null ? "" : sb.getDataType().toLowerCase();
 
-            // Init R
+            // --- Init R session for this analysis ---
             RConnection RC = sb.getRConnection();
-            sb.setAnalType(ds.getModule());
-            //RDataUtils.initRData(RC, "T", "data/");
+            RDataUtils.initDataObjects(RC, sb.getDataType(), analType, sb.isPaired());
+
+            // --- Smart loader: choose mzTab vs text by filename/type ---
+            java.util.function.BiFunction<RConnection, String, Boolean> loadSmart = (rc, fname) -> {
+                if (fname == null) {
+                    return false;
+                }
+                String lower = fname.toLowerCase();
+                if (lower.endsWith(".mztab") || "mztab".equalsIgnoreCase(ds.getType())) {
+                    return RDataUtils.readMzTabDataReload(rc, fname);
+                } else {
+                    return RDataUtils.readTextDataReload(rc, fname);
+                }
+            };
+
             boolean ok = true;
 
-            switch (sb.getAnalType()) {
-                case "onedata" -> {
+            // --- Module-specific behavior (aligned with openModuleRC) ---
+            switch (analType) {
 
+                // Data-only modules; metadata optional (will be read if present)
+                case "stat":
+                case "roc":
+                case "power":
+                case "dose":
+                case "mnet":
+                case "mummichog": {
+                    if (dataName == null) {
+                        sb.addMessage("Error", "No data file (role=data).");
+                        return false;
+                    }
+                    ok = loadSmart.apply(RC, dataName);
+                    if (!ok) {
+                        break;
+                    }
+
+                    // optional metadata for these
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                    break;
                 }
 
-                case "genelist" -> {
-                    String geneList = loadGeneListFromUserHome();
-                    //lsb.setGeneList(geneList);
-                    //up.mapGeneListData();
+                // Pathway / Enrich QEA-like (table-based). Metadata optional.
+                case "pathway":
+                case "pathqea":
+                case "msetqea": {
+                    if (dataName == null) {
+                        sb.addMessage("Error", "No data file (role=data) for pathway/QEA.");
+                        return false;
+                    }
+                    ok = loadSmart.apply(RC, dataName);
+                    if (!ok) {
+                        break;
+                    }
+
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                    break;
                 }
 
-                case "metadata" -> {
-
+                // List-only ORA variants
+                case "msetora":
+                case "pathora": {
+                    // Prefer explicit list file if provided; otherwise datalist.txt in home
+                    String listFile = (listName != null && !listName.isBlank()) ? listName : "datalist.txt";
+                    String home = sb.getCurrentUser().getHomeDir();
+                    java.nio.file.Path lp = java.nio.file.Paths.get(home, java.nio.file.Paths.get(listFile).getFileName().toString());
+                    if (!java.nio.file.Files.exists(lp)) {
+                        sb.addMessage("Error", "List file not found in workspace: " + listFile);
+                        return false;
+                    }
+                    String[] qVec = pro.metaboanalyst.utils.DataUtils.readListFileToNames(home, lp.getFileName().toString());
+                    if (qVec == null || qVec.length == 0) {
+                        sb.addMessage("Error", "The list file appears to be empty: " + lp.getFileName());
+                        return false;
+                    }
+                    RDataUtils.setMapData(RC, qVec);
+                    ok = true;
+                    break;
                 }
-                case "raw" -> {
 
+                // Joint two-table integration (e.g., pathinteg)
+                case "pathinteg": {
+                    if (dataName == null || data2Name == null) {
+                        sb.addMessage("Error", "Expected two data files (role=data and role=data2) for integration.");
+                        return false;
+                    }
+                    ok = loadSmart.apply(RC, dataName) && loadSmart.apply(RC, data2Name);
+                    if (!ok) {
+                        break;
+                    }
+
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                    break;
+                }
+
+                // Time / multifactor module expects data; metadata is recommended
+                case "mf": {
+                    if (dataName == null) {
+                        sb.addMessage("Error", "No data file (role=data) for multifactor analysis.");
+                        return false;
+                    }
+                    ok = loadSmart.apply(RC, dataName);
+                    if (!ok) {
+                        break;
+                    }
+
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    } else {
+                        sb.addMessage("Warn", "No metadata found; multifactor/time analyses may be limited.");
+                    }
+                    break;
+                }
+
+                // Metadata-focused module: load data if present; read metadata if available
+                case "metadata": {
+                    if (dataName != null) {
+                        ok = loadSmart.apply(RC, dataName);
+                        if (!ok) {
+                            break;
+                        }
+                    } else {
+                        ok = true; // allow metadata-only workflows
+                    }
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                    break;
+                }
+
+                // MS/MS only (or fallback to data)
+                case "ms2": {
+                    String toLoad = (ms2Name != null && !ms2Name.isBlank()) ? ms2Name : dataName;
+                    if (toLoad == null) {
+                        sb.addMessage("Error", "Expected an MS/MS or data table to load.");
+                        return false;
+                    }
+                    ok = RDataUtils.readTextDataReload(RC, toLoad);
+                    break;
+                }
+
+                // Raw mode expects a raw file
+                case "raw": {
+                    if (rawName == null) {
+                        sb.addMessage("Error", "No raw file (role=raw).");
+                        return false;
+                    }
+                    ok = RDataUtils.readTextDataReload(RC, rawName);
+                    break;
+                }
+
+                // Default: treat like generic data-only + optional meta
+                default: {
+                    if (dataName == null) {
+                        sb.addMessage("Error", "No data file (role=data).");
+                        return false;
+                    }
+                    ok = loadSmart.apply(RC, dataName);
+                    if (!ok) {
+                        break;
+                    }
+
+                    if (metaName != null && !metaName.isBlank()) {
+                        ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                    }
+                    break;
                 }
             }
 
@@ -893,13 +1124,15 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 return false;
             }
 
+            // Load scripts for this analysis and return
             RDataUtils.loadRscriptsOnDemand(RC, sb.getAnalType());
+            return true;
 
         } catch (Exception e) {
             sb.addMessage("Error", "Unable to open module: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-
-        return true;
     }
 
     public void loadWorkflow(DatasetRow ds) {
@@ -1847,15 +2080,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
     }
 
-    private static String[] splitLine(String line, char sep) {
-        // Very simple split; for production you may swap to Apache Commons CSV for proper quoting.
-        if (sep == '\t') {
-            return line.split("\t", -1);
-        }
-        // naive CSV (no quote handling):
-        return line.split(",", -1);
-    }
-
     private List<SheetRow> sheetRows;                // exposed to <pe:sheet>
 
     public List<SheetRow> getSheetRows() {
@@ -2179,28 +2403,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     /**
-     * Pick separator from extension or by sniffing an existing file in home.
-     */
-    private char pickSeparatorByExt(String fileName, Path home, Path targetPath) {
-        String ext = extOf(fileName);
-        if ("tsv".equalsIgnoreCase(ext)) {
-            return '\t';
-        }
-        if ("csv".equalsIgnoreCase(ext)) {
-            return ',';
-        }
-        // Try sniffing if file exists; fallback to comma
-        try {
-            Path p = Files.exists(targetPath) ? targetPath : home.resolve(fileName);
-            if (Files.exists(p)) {
-                return detectCsvSeparator(p);
-            }
-        } catch (Exception ignore) {
-        }
-        return ','; // default
-    }
-
-    /**
      * Write rows with proper CSV/TSV quoting.
      */
     private void writeRowsToDelimited(Path out, char sep, List<List<String>> rows) throws IOException {
@@ -2341,4 +2543,203 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         return hasMetadataTab && !isSelectedExample();
     }
 
+    private DatasetFile selectedFile;
+
+    public DatasetFile getSelectedFile() {
+        return selectedFile;
+    }
+
+    public void setSelectedFile(DatasetFile selectedFile) {
+        this.selectedFile = selectedFile;
+    }
+
+    /**
+     * Used by
+     * <p:fileDownload value="#{datasetController.downloadSelectedFile}"/>.
+     * Tries the user_folders/<email>/<datasetId>/ path first, then falls back
+     * to ab.getResourceDir() + "/pro/" + filename.
+     */
+    public org.primefaces.model.StreamedContent getDownloadSelectedFile() {
+        try {
+            // --- Guards ---
+            if (selected == null || selected.getId() == null) {
+                sb.addMessage("Error", "No dataset is selected.");
+                return null;
+            }
+            if (selectedFile == null || selectedFile.getFilename() == null || selectedFile.getFilename().isBlank()) {
+                sb.addMessage("Error", "No file is selected to download.");
+                return null;
+            }
+
+            final String ownerEmail = selected.getEmail();
+            if (ownerEmail == null || ownerEmail.isBlank()) {
+                sb.addMessage("Error", "Dataset owner email is missing.");
+                return null;
+            }
+
+            final String fileName = selectedFile.getFilename();
+
+            // --- 1) User dataset folder ---
+            java.nio.file.Path primaryPath = java.nio.file.Paths.get(
+                    fb.getProjectPath(), "user_folders", ownerEmail,
+                    selected.getId().toString(), fileName
+            ).normalize();
+
+            if (java.nio.file.Files.exists(primaryPath)) {
+                return buildFileStreamedContent(primaryPath, fileName);
+            }
+
+            // --- 2) Local example resource: <resourceDir>/pro/<fileName> ---
+            java.nio.file.Path examplePath = java.nio.file.Paths.get(
+                    ab.getResourceDir(), "pro", fileName
+            ).normalize();
+
+            if (java.nio.file.Files.exists(examplePath)) {
+                return buildFileStreamedContent(examplePath, fileName);
+            }
+
+            // --- 3) Remote via API: ab.getResourceByAPI(fileName) ---
+            String apiUrl = null;
+            try {
+                apiUrl = ab.getResourceByAPI(fileName); // e.g., https://www.xialab.ca/api/download/metaboanalyst/human_cachexia.csv
+            } catch (Throwable t) {
+                // swallow and treat as missing
+            }
+
+            if (apiUrl != null && !apiUrl.isBlank()) {
+                final String finalApiUrl = apiUrl;
+                return org.primefaces.model.DefaultStreamedContent.builder()
+                        .name(fileName)
+                        .contentType(guessMimeByExt(fileName)) // fallback; will refine from connection below
+                        .stream(() -> {
+                            try {
+                                java.net.URL url = new java.net.URL(finalApiUrl);
+                                java.net.URLConnection conn = url.openConnection();
+                                conn.setConnectTimeout(10_000);
+                                conn.setReadTimeout(60_000);
+
+                                // Try to use server-declared content type if available
+                                String ct = conn.getContentType();
+                                if (ct != null && !ct.isBlank()) {
+                                    // PrimeFaces ignores changes after build(), so this is informational only.
+                                    // If you want to strictly use server CT, duplicate builder with known CT.
+                                }
+
+                                return new java.io.BufferedInputStream(conn.getInputStream());
+                            } catch (java.io.IOException ex) {
+                                throw new java.io.UncheckedIOException(ex);
+                            }
+                        })
+                        .build();
+            }
+
+            // If all fail:
+            sb.addMessage("Error", "File not found in dataset, example resources, or API: " + fileName);
+            return null;
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Download failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private org.primefaces.model.StreamedContent buildFileStreamedContent(java.nio.file.Path path, String fileName)
+            throws java.io.IOException {
+
+        String contentType = java.nio.file.Files.probeContentType(path);
+        if (contentType == null || contentType.isBlank()) {
+            contentType = guessMimeByExt(fileName);
+        }
+        final java.nio.file.Path f = path;
+
+        return org.primefaces.model.DefaultStreamedContent.builder()
+                .name(fileName)
+                .contentType(contentType)
+                .stream(() -> {
+                    try {
+                        return java.nio.file.Files.newInputStream(f);
+                    } catch (java.io.IOException ex) {
+                        throw new java.io.UncheckedIOException(ex);
+                    }
+                })
+                .build();
+    }
+
+    /* =========================
+ * 1) Robust line parser
+ * ========================= */
+    private static List<String> parseDelimitedLine(String line, char sep) {
+        List<String> out = new ArrayList<>();
+        if (line == null) {
+            out.add("");
+            return out;
+        }
+        StringBuilder cell = new StringBuilder();
+        boolean inQuotes = false;
+        int len = line.length();
+
+        for (int i = 0; i < len; i++) {
+            char ch = line.charAt(i);
+
+            if (inQuotes) {
+                if (ch == '"') {
+                    // Lookahead for escaped quote
+                    if (i + 1 < len && line.charAt(i + 1) == '"') {
+                        cell.append('"'); // escaped quote
+                        i++;              // skip the second quote
+                    } else {
+                        inQuotes = false; // closing quote
+                    }
+                } else {
+                    cell.append(ch);
+                }
+            } else {
+                if (ch == '"') {
+                    inQuotes = true; // opening quote
+                } else if (ch == sep) {
+                    out.add(cell.toString());
+                    cell.setLength(0);
+                } else {
+                    cell.append(ch);
+                }
+            }
+        }
+        out.add(cell.toString());
+        return out;
+    }
+
+    /* ==========================================
+ * 3) Replace splitLine(...) everywhere
+ * ========================================== */
+    private static String[] splitLine(String line, char sep) {
+        // Use robust parser above (handles quotes & escapes)
+        List<String> cells = parseDelimitedLine(line, sep);
+        return cells.toArray(new String[0]);
+    }
+
+    private char pickSeparatorByExt(String fileName, Path home, Path targetPath) {
+        String ext = extOf(fileName);
+        if ("tsv".equalsIgnoreCase(ext)) {
+            return '\t';
+        }
+        if ("csv".equalsIgnoreCase(ext)) {
+            return ',';
+        }
+
+        // Try to sniff from an existing file
+        try {
+            Path p = (targetPath != null && Files.exists(targetPath))
+                    ? targetPath
+                    : (home != null ? home.resolve(Paths.get(fileName).getFileName().toString()) : null);
+
+            if (p != null && Files.exists(p)) {
+                return detectCsvSeparator(p);  // uses the robust detector you added
+            }
+        } catch (Exception ignore) {
+            // fall through to default
+        }
+
+        // Default
+        return ',';
+    }
 }

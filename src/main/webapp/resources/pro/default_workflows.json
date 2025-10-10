@@ -10,7 +10,8 @@
         "other": "NA",
         "module": "stat",
         "type": "default",
-        "image": "stat.png"
+        "image": "stat.png",
+        "filename": "workflow_stat.json"
     }
     ,
     {
@@ -24,7 +25,8 @@
         "other": "NA",
         "module": "mf",
         "type": "default",
-        "image": "mf.png"
+        "image": "mf.png",
+        "filename": "workflow_mf.json"
     },
     {
         "id": 3,
@@ -37,7 +39,8 @@
         "other": "NA",
         "module": "roc",
         "type": "default",
-        "image": "roc.png"
+        "image": "roc.png",
+        "filename": "workflow_roc.json"
     },
     {
         "id": 4,

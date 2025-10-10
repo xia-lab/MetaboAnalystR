@@ -8,7 +8,8 @@
                 template="/template/_template_workflow.xhtml">
 
     <ui:define name="metaInfo">
-        <f:event type="preRenderView" listener="#{navi.registerPage('Workflow Details', '/Secure/WorkflowDetails.xhtml')}"></f:event>     
+        <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflow Details', '/Secure/WorkflowDetails.xhtml')}"/> 
+
     </ui:define>
 
     <ui:define name="myscript">
@@ -41,11 +42,14 @@
             <p:remoteCommand name="loadWorkflowJson"
                              actionListener="#{workflowBean.loadSelectedWorkflowJson}"
                              onstart="PF('statusDialog').show();"
-                             oncomplete="loadNaviTree()"/>
+                             oncomplete="PF('statusDialog').hide();"/>
+            <!--                 oncomplete="loadNaviTree()"
+            
             <p:remoteCommand name="loadNaviTree"
                              actionListener="#{sessionBean1.buildCustomNaviTreeWithOverview()}"
                              oncomplete="PF('statusDialog').hide();"
                              update="wfViewForm treeForm"/>
+            -->
             <!-- Header -->
             <p:toolbar styleClass="surface-card p-3 mb-3 shadow-1 border-round">
                 <p:toolbarGroup align="left" styleClass="flex align-items-center gap-2">
@@ -89,7 +93,7 @@
                 </p:panelGrid>
             </p:card>
         </h:form>
-        
+
         <p:card>
             <f:facet name="title">
                 <span class="text-lg">
@@ -97,15 +101,6 @@
                 </span>
             </f:facet>
             <ui:include src="/Secure/workflow/process/_ParamsView.xhtml" />
-
-            <p:accordionPanel widgetVar="basic">
-                <p:tab title="Parameters: Study Design">
-                    <ui:include src="/Secure/workflow/process/_StudyDesign.xhtml" />
-                </p:tab>
-                <p:tab title="Parameters: Sig. features">
-                    <ui:include src="/Secure/workflow/process/_SigFeatures.xhtml" />
-                </p:tab>
-            </p:accordionPanel>
         </p:card>
 
     </ui:define>

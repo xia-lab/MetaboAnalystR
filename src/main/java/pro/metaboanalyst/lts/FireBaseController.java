@@ -421,6 +421,15 @@ public class FireBaseController implements Serializable {
             }
         }
 
+        try {
+            wb.setName(getFireDocName());
+            wb.setDescription(getFireDocDescription());
+            wfv.generateWorkflowJson(type, saveWorkflowBoolean);
+
+        } catch (IOException ex) {
+            Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     @Inject
@@ -461,8 +470,6 @@ public class FireBaseController implements Serializable {
     private TandemMSBean tmsb;
     @Inject
     private WorkflowView wfv;
-
-   
 
     public void saveJavaHistory() {
         ObjectMapper mapper = new ObjectMapper();
@@ -616,7 +623,7 @@ public class FireBaseController implements Serializable {
         }
         loadJavaHistory(javaHistory);
         System.out.println("wb.isReloadingWorkflow()===" + wb.isReloadingWorkflow());
-        if (wb.isReloadingWorkflow()) {
+        if (wb.isReloadingWorkflow() || type.equals("workflow")) {
             File ftest = new File(sb.getCurrentUser().getOrigHomeDir() + File.separator + "workflow.json");
             if (ftest.exists()) {
                 Map<String, FunctionInfo> functionInfos = FunctionInvoker.loadFunctionInfosFromFile(destDirPath + "workflow.json");

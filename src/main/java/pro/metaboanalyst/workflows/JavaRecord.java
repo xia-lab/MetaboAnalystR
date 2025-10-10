@@ -129,7 +129,7 @@ public class JavaRecord {
         functionInfo.addParameter("univBean.equalVar", vb.getEqualVar());
         functionInfo.addParameter("univBean.vcPvalType", vb.getVcPvalType());
         functionInfo.addParameter("univBean.labelOpt", vb.getLabelOpt());
-        System.out.println("record_vcButton_action");
+        System.out.println("record_vcButton_action======================================");
 
         wb.getCalledWorkflows().add("Univariate");
         wb.getCalledWorkflows().add("Volcano");
@@ -142,7 +142,7 @@ public class JavaRecord {
         // Extract information directly from VolcanoBean
         functionInfo.addParameter("univBean.aovPThresh", vb.getAovPThresh());
         functionInfo.addParameter("univBean.nonParam", vb.isNonParam() ? "True" : "False");
-        System.out.println("record_vcButton_action");
+        System.out.println("record_aovButton_action==================================");
 
         wb.getCalledWorkflows().add("Univariate");
         wb.getCalledWorkflows().add("ANOVA");
@@ -1027,5 +1027,17 @@ public class JavaRecord {
 
         functionInfo.addParameter("metaLoadBean.adjustBatch", metaLoadBean.isAdjustBatch());
         wb.addFunctionInfo("performBatchCorrection", functionInfo);
+    }
+
+    public void record_workflowState(WorkflowBean workflowBean) {
+        FunctionInfo functionInfo = new FunctionInfo(
+                "restoreWorkflowState",
+                "workflowBean.restoreState",
+                "Restore workflow state"
+        );
+
+        functionInfo.addParameter("workflowBean.moduleNames", workflowBean.getModuleNames());
+        functionInfo.addParameter("workflowBean.workflowOptions", workflowBean.getWorkflowOptions());
+        wb.addFunctionInfo("restoreWorkflowState", functionInfo);
     }
 }

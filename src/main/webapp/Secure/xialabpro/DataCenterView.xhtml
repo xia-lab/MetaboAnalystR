@@ -152,7 +152,7 @@
                                     <p:toolbar styleClass="dataset-toolbar">
                                         <f:facet name="left">
                                             <p:commandLink id="editBn" title="Explore"
-                                                           update=":editorForm"
+                                                           update=":editorForm :dataTableForm"
                                                            onstart="PF('statusDialog').show();"
                                                            oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
                                                            actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">
@@ -239,7 +239,7 @@
                                                 <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
                                             </p:commandLink>
                                             <p:commandLink id="editBn" title="Explore"
-                                                           update=":editorForm"
+                                                           update=":editorForm :dataTableForm"
                                                            onstart="PF('statusDialog').show();"
                                                            oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
                                                            actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">

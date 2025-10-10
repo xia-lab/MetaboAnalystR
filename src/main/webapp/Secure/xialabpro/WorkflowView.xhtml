@@ -11,7 +11,7 @@
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
     </ui:define>
     <ui:define name="myscript">
-        <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/workflow.css" />
+        <link type="text/css" rel="stylesheet" href="#{facesContext.externalContext.requestContextPath}/resources/css/workflow.css" />
 
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
         <script type="text/javascript">
@@ -182,8 +182,7 @@
                                             <p:tooltip for="dlWf" value="Download workflow file"/>
                                             <!-- EXPLORE = View details -->
                                             <p:commandLink id="viewWf" title="View details"
-                                                           update=":wfViewForm"
-                                                           oncomplete="PF('wfViewDlg').show();">
+                                                           action="#{workflowBean.goToWorkflowDetails}">
                                                 <i class="pi pi-compass"></i>
                                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                             </p:commandLink>

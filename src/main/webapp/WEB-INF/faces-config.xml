@@ -67,7 +67,12 @@
             <from-outcome>WorkflowView</from-outcome>
             <to-view-id>/Secure/xialabpro/WorkflowView.xhtml</to-view-id>
             <redirect/>
-        </navigation-case>  
+        </navigation-case>
+                <navigation-case>
+            <from-outcome>WorkflowDetails</from-outcome>
+            <to-view-id>/Secure/xialabpro/WorkflowDetails.xhtml</to-view-id>
+            <redirect/>
+        </navigation-case>    
         <navigation-case>
             <from-outcome>DashboardView</from-outcome>
             <to-view-id>/Secure/xialabpro/DashboardView.xhtml</to-view-id>

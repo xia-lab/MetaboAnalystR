@@ -1,0 +1,67 @@
+{
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "ProcessBean.skipButton_action_default",
+    "description" : "Sanity check function",
+    "parameters" : {
+      "sessionBean1.dataType" : "disc",
+      "sessionBean1.multiGroup" : false,
+      "sessionBean1.cmpdIDType" : "na",
+      "sessionBean1.analType" : "roc",
+      "sessionBean1.integChecked" : true,
+      "sessionBean1.smallSmplSize" : true,
+      "sessionBean1.featType" : "none"
+    },
+    "rCommands" : [ ]
+  },
+  "Filtering" : {
+    "name" : "Filtering",
+    "function" : "procBean.filterButton_action",
+    "description" : "Executes QC filtering and variable filtering based on user settings.",
+    "parameters" : {
+      "procBean.qcCutoff" : 20,
+      "procBean.intFilterOpt" : "mean",
+      "procBean.filterCutoff" : 5,
+      "procBean.IntFilterCutoff" : 0,
+      "procBean.varFilterOpt" : "iqr",
+      "procBean.doQCFiltering" : "No"
+    },
+    "rCommands" : [ ]
+  },
+  "Normalization" : {
+    "name" : "Normalization",
+    "function" : "normBean.performDataNormalization",
+    "description" : "Perform data normalization.",
+    "parameters" : {
+      "normBean.refVar" : null,
+      "normBean.transNormOpt" : "NULL",
+      "normBean.refGrp" : null,
+      "normBean.scaleNormOpt" : "NULL",
+      "normBean.includeRatio" : false,
+      "normBean.ratioNumOpt" : 20,
+      "normBean.refSmpl" : null,
+      "normBean.specNormSpecifed" : false,
+      "normBean.rowNormOpt" : "NULL"
+    },
+    "rCommands" : [ "PlotNormSummary(NA, \"norm_0_\", \"png\", 150, width=NA)", "PlotSampleNormSummary(NA, \"snorm_0_\", \"png\", 150, width=NA)" ]
+  },
+  "performDefaultUnivAnalysis" : {
+    "name" : "performDefaultUnivAnalysis",
+    "function" : "rocAnalBean.performDefaultUnivAnalysis",
+    "description" : "Perform default univariate ROC analysis",
+    "parameters" : { },
+    "rCommands" : [ ]
+  },
+  "Multivariate ROC" : {
+    "name" : "Multivariate ROC",
+    "function" : "rocAnalBean.performExploreAnalysis",
+    "description" : "Perform Multivariate ROC based exploratory analysis.",
+    "parameters" : {
+      "rocAnalBean.analMode" : "explore",
+      "rocAnalBean.lvNum" : 2,
+      "rocAnalBean.featRankOpt" : "svm",
+      "rocAnalBean.clsMethodOpt" : "svm"
+    },
+    "rCommands" : [ ]
+  }
+}

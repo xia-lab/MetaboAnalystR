@@ -1,0 +1,206 @@
+{
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "ProcessBean.skipButton_action_default",
+    "description" : "Sanity check function",
+    "parameters" : {
+      "sessionBean1.dataType" : "disc",
+      "sessionBean1.multiGroup" : false,
+      "sessionBean1.cmpdIDType" : "na",
+      "sessionBean1.analType" : "stat",
+      "sessionBean1.integChecked" : true,
+      "sessionBean1.smallSmplSize" : true,
+      "sessionBean1.featType" : "none"
+    },
+    "rCommands" : [ ]
+  },
+  "Filtering" : {
+    "name" : "Filtering",
+    "function" : "procBean.filterButton_action",
+    "description" : "Executes QC filtering and variable filtering based on user settings.",
+    "parameters" : {
+      "procBean.qcCutoff" : 20,
+      "procBean.intFilterOpt" : "mean",
+      "procBean.filterCutoff" : 5,
+      "procBean.IntFilterCutoff" : 0,
+      "procBean.varFilterOpt" : "iqr",
+      "procBean.doQCFiltering" : "No"
+    },
+    "rCommands" : [ ]
+  },
+  "Normalization" : {
+    "name" : "Normalization",
+    "function" : "normBean.performDataNormalization",
+    "description" : "Perform data normalization.",
+    "parameters" : {
+      "normBean.refVar" : null,
+      "normBean.transNormOpt" : "LogNorm",
+      "normBean.refGrp" : null,
+      "normBean.scaleNormOpt" : "NULL",
+      "normBean.includeRatio" : false,
+      "normBean.ratioNumOpt" : 20,
+      "normBean.refSmpl" : null,
+      "normBean.specNormSpecifed" : false,
+      "normBean.rowNormOpt" : "NULL"
+    },
+    "rCommands" : [ "PlotNormSummary(NA, \"norm_0_\", \"png\", 150, width=NA)", "PlotSampleNormSummary(NA, \"snorm_0_\", \"png\", 150, width=NA)" ]
+  },
+  "Volcano" : {
+    "name" : "Volcano",
+    "function" : "univBean.vcButton_action",
+    "description" : "Performs volcano plot analysis based on user settings.",
+    "parameters" : {
+      "univBean.vcFcThresh" : 2.0,
+      "univBean.labelOpt" : "all",
+      "univBean.nonParVcTt" : "false",
+      "univBean.vcPThresh" : 0.1,
+      "univBean.vcPvalType" : "raw",
+      "univBean.cmpType" : 0,
+      "univBean.nonpar" : "false",
+      "univBean.equalVar" : "TRUE"
+    },
+    "rCommands" : [ ]
+  },
+  "T-test" : {
+    "name" : "T-test",
+    "function" : "univBean.ttButton_action",
+    "description" : "Performs fold change analysis.",
+    "parameters" : {
+      "univBean.ttPvalType" : "fdr",
+      "univBean.nonParTt" : false,
+      "univBean.pairedTtAnal" : "FALSE",
+      "univBean.equalVar" : "TRUE",
+      "univBean.ttPThresh" : 0.05
+    },
+    "rCommands" : [ ]
+  },
+  "Correlation Heatmap" : {
+    "name" : "Correlation Heatmap",
+    "function" : "univBean.corrBtn_action",
+    "description" : "Performs feature correlation heatmap analysis.",
+    "parameters" : {
+      "univBean.noClust" : "false",
+      "univBean.fixRange" : "false",
+      "univBean.unit" : 10,
+      "univBean.corDirection" : "col",
+      "univBean.hmDistMeasure" : "pearson",
+      "univBean.fontSize" : 6,
+      "univBean.colContrast" : "bwm",
+      "univBean.corrThresh" : 0.0
+    },
+    "rCommands" : [ ]
+  },
+  "Random Forest" : {
+    "name" : "Random Forest",
+    "function" : "Random Forest",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "RF.Anal(NA, 500,7,1)", "PlotRF.Classify(NA, \"rf_cls_0_\", \"png\", 150, width=NA)", "PlotRF.VIP(NA, \"rf_imp_0_\", \"png\", 150, width=NA)", "PlotRF.Outlier(NA, \"rf_outlier_0_\", \"png\", 150, width=NA)" ]
+  },
+  "SOM" : {
+    "name" : "SOM",
+    "function" : "SOM",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "SOM.Anal(NA, 1,3,\"linear\",\"gaussian\")", "PlotSOM(NA, \"som_0_\", \"png\", 150, width=NA, \"default\", \"T\")", "PlotClustPCA(NA, \"som_pca_0_\", \"png\", 150, width=NA, \"default\", \"som\", \"T\")" ]
+  },
+  "K-means" : {
+    "name" : "K-means",
+    "function" : "K-means",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "Kmeans.Anal(NA, 3)", "PlotKmeans(NA, \"km_0_\", \"png\", 150, width=NA, \"default\", \"T\")", "PlotClustPCA(NA, \"km_pca_0_\", \"png\", 150, width=NA, \"default\", \"km\", \"T\")" ]
+  },
+  "Heatmap" : {
+    "name" : "Heatmap",
+    "function" : "Heatmap",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PlotHeatMap(NA, \"heatmap_0_\", \"png\", 150, width=NA, \"norm\", \"row\", \"euclidean\", \"ward.D\",\"bwm\", 9,9, 10.0,0.02,10, 10, T, T, NULL, T, F, T, T,  T,T,5000)" ]
+  },
+  "Dendrogram" : {
+    "name" : "Dendrogram",
+    "function" : "Dendrogram",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PlotHCTree(NA, \"tree_0_\", \"png\", 150, width=NA, \"euclidean\", \"ward.D\")" ]
+  },
+  "OrthoPLSDA" : {
+    "name" : "OrthoPLSDA",
+    "function" : "OrthoPLSDA",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "OPLSR.Anal(NA, reg=TRUE)", "PlotOPLS2DScore(NA, \"opls_score2d_0_\", \"png\", 150, width=NA, 1,2,0.95,0,0, \"na\")", "PlotOPLS.Splot(NA, \"opls_splot_0_\", \"all\", \"png\", 150, width=NA);", "PlotOPLS.Imp(NA, \"opls_imp_0_\", \"png\", 150, width=NA, \"vip\", \"tscore\", 15,FALSE)", "PlotOPLS.MDL(NA, \"opls_mdl_0_\", \"png\", 150, width=NA)" ]
+  },
+  "sPLSDA" : {
+    "name" : "sPLSDA",
+    "function" : "sPLSDA",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "SPLSR.Anal(NA, 5, 10, \"same\", \"Mfold\", 5, F)", "PlotSPLSPairSummary(NA, \"spls_pair_0_\", \"png\", 150, width=NA, 5)", "PlotSPLS2DScore(NA, \"spls_score2d_0_\", \"png\", 150, width=NA, 1,2,0.95,0,0,\"na\")", "PlotSPLS3DScore(NA, \"spls_score3d_0_\", \"json\")", "PlotSPLSLoading(NA, \"spls_loading_0_\", \"png\", 150, width=NA, 1,\"overview\");", "PlotSPLS3DLoading(NA, \"spls_loading3d_0_\", \"json\", 1,2,3)" ]
+  },
+  "PLSDA" : {
+    "name" : "PLSDA",
+    "function" : "PLSDA",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PLSR.Anal(NA, reg=TRUE)", "PlotPLSPairSummary(NA, \"pls_pair_0_\", \"png\", 150, width=NA, 5)", "PlotPLS2DScore(NA, \"pls_score2d_0_\", \"png\", 150, width=NA, 1,2,0.95,0,0, \"na\")", "PlotPLS3DScoreImg(NA, \"pls_score3d_0_\", \"png\", 150, width=NA, 1,2,3, 40)", "PlotPLSLoading(NA, \"pls_loading_0_\", \"png\", 150, width=NA, 1, 2);", "PlotPLS3DLoading(NA, \"pls_loading3d_0_\", \"json\", 1,2,3)", "PlotPLS.Imp(NA, \"pls_imp_0_\", \"png\", 150, width=NA, \"vip\", \"Comp. 1\", 15,FALSE)", "PlotPLSBiplot(NA, \"pls_biplot_0_\", \"png\", 150, width=NA, 1,2,10)" ]
+  },
+  "PCA" : {
+    "name" : "PCA",
+    "function" : "PCA",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PCA.Anal(NA)", "PlotPCAScree(NA, \"pca_scree_0_\", \"png\", 150, width=NA, 5)", "PlotPCA2DScore(NA, \"pca_score2d_0_\", \"png\", 150, width=NA, 1,2,0.95,0,0, \"na\")", "PlotPCALoading(NA, \"pca_loading_0_\", \"png\", 150, width=NA, 1,2);", "PlotPCABiplot(NA, \"pca_biplot_0_\", \"png\", 150, width=NA, 1,2,10)", "PlotPCA3DScore(NA, \"pca_score3d_0_\", \"json\", 1,2,3)", "PlotPCA3DLoading(NA, \"pca_loading3d_0_\", \"json\", 1,2,3)" ]
+  },
+  "EBAM" : {
+    "name" : "EBAM",
+    "function" : "EBAM",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "EBAM.Init(NA, FALSE, TRUE, FALSE, -99.0, 0.9, \"ebam_view_0_\", \"ebam_imp_0_\", 150)", "PlotEBAM.Cmpd(NA, \"ebam_imp_0_\", \"png\", 150, width=NA)" ]
+  },
+  "SAM" : {
+    "name" : "SAM",
+    "function" : "SAM",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "SAM.Anal(NA, \"d.stat\", FALSE, TRUE, 0.0, \"sam_imp_0_\")", "PlotSAM.Cmpd(NA, \"sam_imp_0_\", \"png\", 150, width=NA)", ".save.sam.anal(NA)", "PlotSAM.FDR(NA, \"sam_view_0_\", \"png\", 150, width=NA)" ]
+  },
+  "computeDspcNet" : {
+    "name" : "computeDspcNet",
+    "function" : "sessionBean1.computeDspcNet",
+    "description" : "Compute DSPC Network",
+    "parameters" : { },
+    "rCommands" : [ ]
+  },
+  "Pattern Search" : {
+    "name" : "Pattern Search",
+    "function" : "univBean.ptnBtn_action",
+    "description" : "Performs Pattern Search, also known as Pattern Hunter analysis",
+    "parameters" : {
+      "univBean.ptnTemplate" : null,
+      "univBean.ptnDistMeasure" : "pearson",
+      "univBean.usrPtn" : null,
+      "univBean.ptnFeature" : "2-Hydroxybutyrate"
+    },
+    "rCommands" : [ "FeatureCorrelation(NA, \"pearson\", \"2-Hydroxybutyrate\")", "PlotCorr(NA, \"ptn_0_\", \"feature\", \"png\", 150, width=NA)" ]
+  },
+  "corBtn_action" : {
+    "name" : "corBtn_action",
+    "function" : "corBtn_action",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "PlotCorr(NA, \"ptn_0_\", \"feature\", \"png\", 150, width=NA)" ]
+  },
+  "ANOVA" : {
+    "name" : "ANOVA",
+    "function" : "univBean.aovButton_action",
+    "description" : "Performs ANOVA based on user settings.",
+    "parameters" : {
+      "univBean.nonParam" : "False",
+      "univBean.aovPThresh" : "0.05"
+    },
+    "rCommands" : [ ]
+  }
+}
