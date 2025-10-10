@@ -4,7 +4,8 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
                      nproc=0,
                      gseaParam=1,
                      BPPARAM=NULL) {
-  
+  mSetObj <<- mSetObj;
+  save.image("fgsea.RData");
   # Warning message for ties in stats
   ties <- sum(duplicated(stats[stats != 0]))
   if (ties != 0) {
@@ -57,7 +58,22 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   if(mSetObj$dataSet$paramSet$mumRT){
     pathwaysSizes <- sapply(pathwaysFiltered, length)
   }else{
-    pathway2mzSizes <- sapply(pathways, function(z) { length(intersect(as.numeric(unique(unlist(mSetObj$cpd2mz_dict[z]))), unique(matched_res[,1])))} )
+.get_mz_for_cpds <- function(ids, dict) {
+  if (is.null(ids) || length(ids) == 0) return(numeric(0))
+  ids <- unique(as.character(unlist(ids, use.names = FALSE)))  # <- ensure character vector
+  ids <- ids[ids %in% names(dict)]                             # keep only keys present
+  if (!length(ids)) return(numeric(0))
+  unlist(dict[ids], use.names = FALSE)
+}
+
+matched_mz <- unique(suppressWarnings(as.numeric(matched_res[, 1])))
+
+pathway2mzSizes <- vapply(pathways, function(p) {
+  mz <- suppressWarnings(as.numeric(unique(.get_mz_for_cpds(p, mSetObj$cpd2mz_dict))))
+  mz <- mz[!is.na(mz)]
+  if (!length(mz)) return(0L)
+  length(intersect(mz, matched_mz))
+}, integer(1))
     oldpathwaysSizes <- sapply(pathwaysFiltered, length)
     pathwaysSizes <- pmin(pathway2mzSizes, oldpathwaysSizes)
   }
