@@ -11,6 +11,8 @@
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
     </ui:define>
     <ui:define name="myscript">
+        <h:outputStylesheet library="css" name="dataset-cards.css"/>
+
         <link type="text/css" rel="stylesheet" href="#{facesContext.externalContext.requestContextPath}/resources/css/workflow.css" />
 
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
@@ -41,6 +43,7 @@
 
             };
         </script>
+       
     </ui:define>
 
     <ui:define name="content">
@@ -1095,7 +1098,7 @@
                 </div>
             </h:form>
         </p:dialog>
-<p:dialog header="Delete Workflow" widgetVar="wfDelDlg" modal="true" appendTo="@(body)" resizable="false" width="520">
+        <p:dialog header="Delete Workflow" widgetVar="wfDelDlg" modal="true" appendTo="@(body)" resizable="false" width="520">
             <h:form id="wfDelForm">
                 <h:panelGrid style="width:100%; line-height:1.6; font-size:14px;">
                     <p>

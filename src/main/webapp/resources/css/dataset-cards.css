@@ -1,24 +1,127 @@
 :root{
-  --ds-pad: 1rem;
-  --ds-toolbar-h: 56px;
-  --ds-card-min-h: 300px;
+  --ds-pad: 0.75rem;
+  --ds-toolbar-h: 42px;   /* was 56px */
+  --ds-card-min-h: 280px; /* was 300px */
 }
 
+/* Stretch cards to equal height within the grid */
 .cards-grid{ align-items: stretch; }
 .cards-grid > *{ height: 100%; }
 
-.ds-card{ position: relative !important; min-height: var(--ds-card-min-h) !important; padding: var(--ds-pad) !important; padding-bottom: calc(var(--ds-pad) + var(--ds-toolbar-h)) !important; }
-
-.ds-card .ui-fieldset-content{ overflow: auto !important; padding: 0 !important; }
-
-.ds-card .dataset-toolbar,
-.ds-card .ui-toolbar.dataset-toolbar{ position: absolute !important; left: var(--ds-pad) !important; right: var(--ds-pad) !important; bottom: var(--ds-pad) !important; margin: 0 !important; padding: .5rem 1rem !important; background: var(--surface-card, #fff) !important; border-top: 1px solid rgba(0,0,0,.06) !important; box-shadow: 0 -2px 12px rgba(0,0,0,.06) !important; z-index: 1; }
-
-.ui-toolbar.dataset-toolbar .ui-toolbar-group-left > *,
-.ui-toolbar.dataset-toolbar .ui-toolbar-group-right > *{ margin-right: .75rem; }
-.ui-toolbar.dataset-toolbar .ui-toolbar-group-left > *:last-child,
-.ui-toolbar.dataset-toolbar .ui-toolbar-group-right > *:last-child{ margin-right: 0; }
-.ui-toolbar.dataset-toolbar i { 
-  font-size: 1.25em !important; 
-  vertical-align: middle;
+/* Card container: reserve space for sticky toolbar */
+.ds-card{
+  position: relative !important;
+  min-height: var(--ds-card-min-h) !important;
+  padding: var(--ds-pad) !important;
+  padding-bottom: calc(var(--ds-pad) + var(--ds-toolbar-h)) !important;
 }
+
+/* Fieldset content behaves like scrollable body area */
+.ds-card .ui-fieldset-content{
+  overflow: auto !important;
+  padding: 0 !important;
+}
+
+/* Sticky toolbar anchored to the bottom of the card */
+.ds-card .dataset-toolbar,
+.ds-card .ui-toolbar.dataset-toolbar{
+  position: absolute !important;
+  left: var(--ds-pad) !important;
+  right: var(--ds-pad) !important;
+  bottom: var(--ds-pad) !important;
+  margin: 0 !important;
+  padding: .4rem .6rem !important;      /* tighter padding */
+  background: var(--surface-card, #fff) !important;
+  border-top: 1px solid rgba(0,0,0,.06) !important;
+  box-shadow: 0 -2px 10px rgba(0,0,0,.05) !important;
+  z-index: 1;
+  min-height: var(--ds-toolbar-h);
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;                            /* was 1rem */
+}
+
+/* Make toolbar groups flex rows with consistent spacing */
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-left,
+.ui-toolbar.dataset-toolbar .ui-toolbar-group-right{
+  display: flex;
+  align-items: center;
+  gap: 8px;                              /* was 12px */
+}
+
+/* Smaller clickable area for links */
+.ui-toolbar.dataset-toolbar .ui-commandlink{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;                           /* was 40px */
+  height: 32px;                          /* was 40px */
+  border-radius: 8px;
+  text-decoration: none;
+  transition: transform .06s ease, background-color .12s ease;
+}
+
+/* Icons slightly smaller */
+.ui-toolbar.dataset-toolbar i{
+  font-size: 1.1rem !important;          /* was 1.35rem */
+  line-height: 1;
+  vertical-align: middle;
+  color: inherit;
+}
+
+/* Hover/active feedback (subtle) */
+.ui-toolbar.dataset-toolbar .ui-commandlink:hover{
+  background: rgba(0,0,0,.05);
+}
+.ui-toolbar.dataset-toolbar .ui-commandlink:active{
+  transform: scale(0.985);
+}
+
+/* Compact on very small widths */
+@media (max-width: 520px){
+  .ui-toolbar.dataset-toolbar{
+    padding: .35rem .5rem !important;
+    gap: .4rem;
+  }
+  .ui-toolbar.dataset-toolbar .ui-commandlink{
+    width: 30px;
+    height: 30px;
+  }
+  .ui-toolbar.dataset-toolbar i{
+    font-size: 1.05rem !important;
+  }
+}
+
+/* Touch devices: keep a bit larger but still tighter than before */
+@media (pointer: coarse){
+  .ui-toolbar.dataset-toolbar .ui-commandlink{
+    width: 36px;                         /* was 44px */
+    height: 36px;
+  }
+  .ui-toolbar.dataset-toolbar i{
+    font-size: 1.2rem !important;        /* was 1.45rem */
+  }
+}
+
+/* GRID LAYOUT — put this back */
+.cards-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columns */
+  gap: 1rem;
+}
+
+/* Responsive breakpoints (optional) */
+@media (max-width: 1400px){
+  .cards-grid{ grid-template-columns: repeat(3, 1fr); } /* keep 3 if you want */
+}
+@media (max-width: 1000px){
+  .cards-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px){
+  .cards-grid{ grid-template-columns: 1fr; }
+}
+
+/* You can keep your existing rules below */
+.cards-grid{ align-items: stretch; }
+.cards-grid > *{ height: 100%; }
+
