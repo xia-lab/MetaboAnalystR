@@ -326,14 +326,11 @@
         <p:dialog header="View / Edit File"
                   widgetVar="editorDlg"
                   modal="true" resizable="true" width="920" appendTo="@(body)"
-                  dynamic="true" focus="none"
-                  onShow="onEditorDialogShow()">
+                  dynamic="true" focus="none">
 
 
             <h:form id="editorForm">
                 <p:tabView id="editorTabs">
-                    <p:ajax event="tabChange" update="@this" oncomplete="onEditorTabChange()"/>
-
                     <!-- ========== DATA TAB (READ ONLY) ========== -->
                     <p:tab title="Data">
                         <pe:sheet id="dataSheet"

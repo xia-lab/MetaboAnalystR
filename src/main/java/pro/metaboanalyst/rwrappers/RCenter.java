@@ -360,9 +360,9 @@ public class RCenter {
         }
     }
 
-    public static void LoadRLoadImg(RConnection RC, String ImageNm) { // NOTE: this function is used to load Batch image ONLY!!!
+    public static void LoadRLoadImg(RConnection RC, String ImageNm) { 
         try {
-            String rCommand = "load(\"Rload_batch.RData\")";
+            String rCommand = "load(\"" + ImageNm + "\")";
             RC.voidEval(rCommand);
         } catch (Exception e) {
             LOGGER.error("LoadRLoadImg", e);

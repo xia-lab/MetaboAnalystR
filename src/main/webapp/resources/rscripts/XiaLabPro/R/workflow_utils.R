@@ -1,6 +1,7 @@
 
 SummarizeNormResults <- function(mSetObj = NA, par1) {
-  #save.image("sum.RData");
+  print(par1);
+  save.image("sum.RData");
   mSetObj <- .get.mSet(mSetObj)
   
   # Check if selectedNormOpts has been defined

@@ -1234,6 +1234,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     System.err.println("Failed to load java_history.json: " + hx.getMessage());
                 }
             }
+            RCenter.LoadRLoadImg(sb.getRConnection(), "RloadSanity.RData");
 
             // 6) Notify + redirect to module selection
             String mode = restoredFromZip ? "restored" : "loaded";
@@ -2393,6 +2394,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 return null;
             }
             for (DatasetFile f : fs) {
+                System.out.println("f.getRole()====" + f.getRole());
                 if (f != null && f.getRole() != null && role.equalsIgnoreCase(f.getRole())) {
                     return f.getFilename();
                 }

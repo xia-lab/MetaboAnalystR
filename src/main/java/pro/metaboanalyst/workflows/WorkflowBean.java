@@ -45,6 +45,8 @@ import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.models.SampleBean;
+import pro.metaboanalyst.rwrappers.RCenter;
+import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 
 @Named("workflowBean")
@@ -1242,12 +1244,19 @@ public class WorkflowBean implements Serializable {
 
             final String module = (String) selectedWorkflow.get("module");
             final String input = resolveInputForModule(module);
+            postLoadCommon();
 
             initializeDiagramForInput(input);
 
-            reloadingWorkflow = true;
+            reloadingWorkflow = false;
             wf.generateWorkflowJson("project", false);   // only in "details"
-            postLoadCommon();
+            if (moduleNames.isEmpty()) {
+                dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
+            } else {
+                for (String moduleName : moduleNames) {
+                    dv.selectNode(dv.convertToBlockName(moduleName), true);
+                }
+            }
 
             DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
@@ -1270,11 +1279,9 @@ public class WorkflowBean implements Serializable {
                 return;
             }
 
-            // 1) Prepare workflow.json
             final String fileName = (String) selectedWorkflow.get("filename");
             final Path destPath = prepareTemplateWorkflowJson(fileName);
 
-            // 2) Load function infos
             Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
             setFunctionInfos(functionInfos);
 
@@ -1284,13 +1291,13 @@ public class WorkflowBean implements Serializable {
             calledWorkflows.add("Data Preparation");
             final String module = (String) selectedWorkflow.get("module");
             final String input = resolveInputForModule(module);
+            postLoadCommon();
 
             initializeDiagramForInput(input);
 
             reloadingWorkflow = true;
-            postLoadCommon();
 
-            if (getWorkflowOptions().isEmpty()) {
+            if (moduleNames.isEmpty()) {
                 dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
             } else {
                 for (String moduleName : moduleNames) {
@@ -1362,6 +1369,21 @@ public class WorkflowBean implements Serializable {
             setMetaName(metaNm);
         }
         setDataName(ds.resolveRoleFilename(ds.getSelected(), "data"));
+
+        Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+
+        // --- Ensure/attach mSetObj_after_sanity.qs ---
+        Path msetFile = home.resolve("RloadSanity.RData");
+        if (!Files.exists(msetFile)) {
+            sb.setDataType(RDataUtils.getDataType(sb.getRConnection()));
+            sb.setDataFormat(RDataUtils.getDataFormat(sb.getRConnection()));
+            //sb.setRegression("cont".equalsIgnoreCase(RDataUtils.getLblType(sb.getRConnection())));
+        }
+
+        setDataType(sb.getDataType());
+        setDataFormat(sb.getDataFormat());
+        //setLblType(sb.isRegression() ? "cont" : "disc");
+
     }
 
     /**
@@ -1370,7 +1392,9 @@ public class WorkflowBean implements Serializable {
      */
     private Path prepareTemplateWorkflowJson(String fileName) throws IOException {
         Objects.requireNonNull(fileName, "Template filename is required");
-
+        if (sb.getCurrentUser().getName() == null) {
+            sb.addMessage("warn", "Please select a dataset in 'Data Center' first.");
+        }
         final String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
         final Path destPath = Paths.get(destDirPath, "workflow.json");
 
@@ -1512,7 +1536,7 @@ public class WorkflowBean implements Serializable {
         try {
             if (sb.getCurrentUser() == null) {
                 selectedWorkflowJson = "// Please start an analysis session first.";
-                sb.addMessage("Warn", "Please start an analysis session first!");
+                sb.addMessage("Warn", "Please select a dataset before starting a workflow!");
                 return;
             }
 
@@ -1580,7 +1604,7 @@ public class WorkflowBean implements Serializable {
 
         // 2) Example (resource) storage: <ab.getResourceDir()>/pro/<filename>
         try {
-            Path examplePath = Paths.get(ab.getResourceDir(), "pro", filename).normalize();
+            Path examplePath = Paths.get(ab.getResourceDir(), "pro/example_workflows/", filename).normalize();
             if (Files.exists(examplePath)) {
                 copyToHome(examplePath, homeJson);
                 return homeJson;
@@ -1618,7 +1642,13 @@ public class WorkflowBean implements Serializable {
         return selectedWorkflowJson;
     }
 
-    public String goToWorkflowDetails() {
+    public String goToWorkflowDetails() throws IOException {
+
+        final String fileName = (String) selectedWorkflow.get("filename");
+        final Path destPath = prepareTemplateWorkflowJson(fileName);
+
+        Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
+        setFunctionInfos(functionInfos);
         return "WorkflowDetails";
     }
 

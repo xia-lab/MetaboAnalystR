@@ -3045,7 +3045,7 @@ public class RDataUtils {
 
             String rCommand = "SummarizeNormResults(NA, \"" + selectedContrast + "\")";
             RC.eval(rCommand);
-
+            RCenter.recordRCommand(RC, rCommand);
             // 2) Now retrieve mSetObj$summaryNormResults
             REXP result = RC.eval("mSet$summaryNormResults");
 
@@ -3848,6 +3848,18 @@ public class RDataUtils {
         }
     }
 
+    public static boolean readTextDataTsReload(RConnection RC, String filePath) {
+        try {
+            String rCommand = "Read.TextDataTsReload(NA, \"" + filePath + "\");";
+            String rCommand2 = "Read.TextDataTsReload(NA, \"" + "Replacing_with_your_file_path" + "\");";
+            RCenter.recordRCommand(RC, rCommand);
+            return (RC.eval(rCommand).asInteger() == 1);
+        } catch (Exception rse) {
+            LOGGER.error("readTextData", rse);
+            return false;
+        }
+    }
+
     public static boolean readMzTabDataReload(RConnection RC, String filePath) {
         try {
             String rCommand = "Read.mzTabReload(NA, \"" + filePath + "\");";
@@ -3859,4 +3871,39 @@ public class RDataUtils {
             return false;
         }
     }
+    
+    //////////for reloading dataset
+    public static String getDataType(RConnection RC) {
+        try {
+            String rCommand = "GetDataType(NA);";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asString();
+        } catch (Exception rse) {
+            LOGGER.error("getDataType", rse);
+            return null;
+        }
+    }
+
+    public static String getDataFormat(RConnection RC) {
+        try {
+            String rCommand = "GetDataFormat(NA);";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asString();
+        } catch (Exception rse) {
+            LOGGER.error("getDataFormat", rse);
+            return null;
+        }
+    }
+    
+        public static String getLblType(RConnection RC) {
+        try {
+            String rCommand = "GetLblType(NA);";
+            RCenter.recordRCommand(RC, rCommand);
+            return RC.eval(rCommand).asString();
+        } catch (Exception rse) {
+            LOGGER.error("getDataFormat", rse);
+            return null;
+        }
+    }
+        //////////////
 }

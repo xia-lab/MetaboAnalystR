@@ -994,6 +994,12 @@ public class SessionBean1 implements Serializable {
         this.regression = regression;
     }
 
+    public boolean isRegression() {
+        return regression;
+    }
+    
+    
+
     public boolean isPaired() {
         return paired;
     }
@@ -1873,7 +1879,7 @@ public class SessionBean1 implements Serializable {
             pre = "<font color='red'>[ERROR]: ";
             noticeSize = noticeSize + 1;
             PrimeFaces.current().ajax().update("formBell");
-        } else if (type.equalsIgnoreCase("warn")) {
+        } else if (type.equalsIgnoreCase("warn") || type.equalsIgnoreCase("warning") ) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", msg));
             pre = "<font color='orange'>[WARNING]: ";

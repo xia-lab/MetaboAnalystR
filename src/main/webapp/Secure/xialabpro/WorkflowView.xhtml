@@ -91,7 +91,7 @@
                                     </div>
 
                                     <div class="wf-meta">
-                                        <div><b>Module:</b> #{wf['module']}</div>
+                                        <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
                                         <h:panelGroup rendered="#{not empty wf['filename']}">
                                             <div><b>File:</b> #{wf['filename']}</div>
                                         </h:panelGroup>
@@ -110,9 +110,9 @@
                                             </p:commandLink>
                                             <p:tooltip for="dlWf" value="Download workflow file"/>
                                             <!-- EXPLORE = View details -->
-                                            <p:commandLink id="viewWf" title="View details"
+                                            <p:commandLink id="viewWf" title="View and update parameters"
                                                            action="#{workflowBean.goToWorkflowDetails}">
-                                                <i class="pi pi-compass"></i>
+                                                <i class="pi pi-cog"></i>
                                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                             </p:commandLink>
                                             <p:tooltip for="viewWf" value="View details"/>
@@ -152,7 +152,7 @@
                                     </div>
 
                                     <div class="wf-meta">
-                                        <div><b>Module:</b> #{wf['module']}</div>
+                                        <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
                                         <h:panelGroup rendered="#{not empty wf['created_at']}">
                                             <div><b>Last Updated:</b> #{wf['created_at']}</div>
                                         </h:panelGroup>
@@ -182,9 +182,9 @@
                                             </p:commandLink>
                                             <p:tooltip for="dlWf" value="Download workflow file"/>
                                             <!-- EXPLORE = View details -->
-                                            <p:commandLink id="viewWf" title="View details"
+                                            <p:commandLink id="viewWf" title="View and update parameters"
                                                            action="#{workflowBean.goToWorkflowDetails}">
-                                                <i class="pi pi-compass"></i>
+                                                <i class="pi pi-cog"></i>
                                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                             </p:commandLink>
                                             <p:tooltip for="viewWf" value="View details"/>

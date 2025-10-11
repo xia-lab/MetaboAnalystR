@@ -142,12 +142,14 @@ public class DataUtils {
         }
     }
 
-    public static String convertArrayToVecInR(String[] myVec) {
-        String rcmd = Arrays.toString(myVec);
-        rcmd = rcmd.replace("[", "c(\"");
-        rcmd = rcmd.replace(", ", "\",\"");
-        rcmd = rcmd.replace("]", "\")");
-        return rcmd;
+    public static String convertArrayToVecInR(String[] arr) {
+        if (arr == null || arr.length == 0) {
+            return "character(0)";
+        }
+        String joined = java.util.Arrays.stream(arr)
+                .map(s -> s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\""))
+                .collect(java.util.stream.Collectors.joining("\",\""));
+        return "c(\"" + joined + "\")";
     }
 
     public static String replaceMarkup(String input) {
@@ -2107,8 +2109,7 @@ public class DataUtils {
         return (dot > 0) ? name.substring(0, dot) : name;
     }
 
-
-public static Path materializeToHome(SessionBean1 sb, String resource) throws Exception {
+    public static Path materializeToHome(SessionBean1 sb, String resource) throws Exception {
         final Path home = Paths.get(sb.getCurrentUser().getHomeDir());
         Files.createDirectories(home);
 
@@ -2156,7 +2157,6 @@ public static Path materializeToHome(SessionBean1 sb, String resource) throws Ex
         // }
         throw new NoSuchFileException(resource);
     }
-
 
     public static Map<String, FunctionInfo> loadFunctionInfosFromFile(String filePath) {
         ObjectMapper mapper = new ObjectMapper();

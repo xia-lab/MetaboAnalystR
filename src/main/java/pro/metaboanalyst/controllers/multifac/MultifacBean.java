@@ -212,6 +212,7 @@ public class MultifacBean implements Serializable {
     public void setSelectedMetaData(String selectedMetaData) {
         this.selectedMetaData = selectedMetaData;
     }
+
     @JsonIgnore
     public String[] getMetaOpt() {
         if (metaOpts == null) {
@@ -222,7 +223,7 @@ public class MultifacBean implements Serializable {
         }
         return metaOpts;
     }
-    
+
     @JsonIgnore
     public String[] getDiscMetaOpts() {
         if (discMetaOpts == null) {
@@ -252,7 +253,7 @@ public class MultifacBean implements Serializable {
     public void setRawCovThresh(double rawCovThresh) {
         this.rawCovThresh = rawCovThresh;
     }
-    
+
     @JsonIgnore
     public String getAov2Img() {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("aov2") + "dpi150.png";
@@ -278,12 +279,12 @@ public class MultifacBean implements Serializable {
         mbImage = TimeSeries.plotMBTimeProfile(sb, sb.getCurrentCmpdName(), count, "png", 150 + "");
         count++;
     }
-    
+
     @JsonIgnore
     public String getMEBACmpdImg() {
         return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + mbImage;
     }
-    
+
     @JsonIgnore
     public SelectItem[] getAnalysisMetaOpts() {
         if (isMultiMeta()) {
@@ -308,9 +309,9 @@ public class MultifacBean implements Serializable {
 
         return analysisMetaOpts;
     }
-    
+
     @JsonIgnore
-    
+
     public SelectItem[] getDiscreteMetaOpts() {
 
         if (discreteMetaOpts == null) {
@@ -343,7 +344,6 @@ public class MultifacBean implements Serializable {
 
         return discreteMetaOpts;
     }
-
 
     public void updateMetaData() {
 
@@ -388,7 +388,7 @@ public class MultifacBean implements Serializable {
     public void setBoxMetaOpts(SelectItem[] boxMetaOpts) {
         this.boxMetaOpts = boxMetaOpts;
     }
-    
+
     @JsonIgnore
     public String[] getIncludedMetaData() {
         if (includedMetaData == null) {
@@ -524,7 +524,7 @@ public class MultifacBean implements Serializable {
     public void setDefaultText(String defaultText) {
         this.defaultText = defaultText;
     }
-    
+
     @JsonIgnore
     public SelectItem[] getAnalysisMetaOptsAnova() {
         if (analysisMetaOptsAnova == null) {
@@ -557,7 +557,7 @@ public class MultifacBean implements Serializable {
     public void setUniqueMetaNames(List<SampleBean> uniqueMetaNames) {
         this.uniqueMetaNames = uniqueMetaNames;
     }
-    
+
     @JsonIgnore
     public List<SelectItem> getUniqueMetaList() {
         if (uniqueMetaList == null) {
@@ -734,7 +734,6 @@ public class MultifacBean implements Serializable {
         this.disableTwofac = disableTwofac;
     }
 
-
     public void prepUniqueMetaList(String metacol) {
         String[] allMetas = RDataUtils.getMetaDataCol(sb.getRConnection(), metacol);
         uniqueMetaStrings = new ArrayList<>();
@@ -743,6 +742,7 @@ public class MultifacBean implements Serializable {
             uniqueMetaStrings.add(grp);
             uniqueMetaList.add(new SelectItem(grp, grp));
         }
+
     }
 
     @JsonIgnore

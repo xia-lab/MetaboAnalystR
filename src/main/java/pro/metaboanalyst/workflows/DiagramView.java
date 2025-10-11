@@ -17,6 +17,9 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1442,10 +1445,12 @@ public class DiagramView implements Serializable {
         //adjustParams(procs);
         wb.setModuleNames(naviTypes);
         List<String> moduleNms = wb.getModuleNames();
-        System.out.println("moduleNms.contains(\"raw\")=====" + moduleNms.contains("raw"));
+
+        if(moduleNms.size() > 1){
+            wb.setReloadingWorkflow(false);
+        }
+
         if (moduleNms.contains("raw")) {
-            //naviTypes.removeIf(element -> element.equals("raw"));
-            //wb.setModuleNames(naviTypes);
             jeb.setStopStatusCheck(false);
             executeModule("raw", "Spectra Processing");
             return false;
@@ -1620,6 +1625,7 @@ public class DiagramView implements Serializable {
                     if (RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName())) {
                         sb.setDataUploaded();
                         steps = new ArrayList<>(Arrays.asList(
+                                "Sanity Check",
                                 "Metadata Check",
                                 "Filtering",
                                 "Normalization",
@@ -1794,6 +1800,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
+
                 if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
@@ -2360,6 +2367,7 @@ public class DiagramView implements Serializable {
     }
 
     public void selectNode(String elementName, boolean isSelected) {
+        System.out.println("selectNode=====" + elementName);
         // Clean up the element name (remove checkmark and trim spaces)
 
         // Find the element in the diagram model
@@ -2922,6 +2930,7 @@ public class DiagramView implements Serializable {
 
     public String convertToBlockName(String code) {
         String moduleName;
+        System.out.println("converttoblockname====" + code);
         switch (code) {
             case "raw" ->
                 moduleName = "Spectra Processing";
