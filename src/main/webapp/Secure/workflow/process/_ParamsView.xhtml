@@ -5,6 +5,11 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
 
+    <style>
+        .ui-overlaypanel-content{
+            max-width:800px !important;
+        }
+    </style>
     <h:panelGrid style="padding: 0px 10px 20px 20px; width:95%">
         <p>
             You can run up to three parallel workflows to identify optimal parameters based on simple metrics below:  
@@ -19,27 +24,37 @@
             </ul> 
         </p>                  
         <h:form id="formParam">
+            <p:growl id="growl" showDetail="true" life="3500"/>
 
-            <!-- Main Comparison Selection -->
-            <h:panelGrid columns="5" styleClass="nopadding" style="align-items: center;">
-                <h:outputLabel value="Main comparison of interest:" style="font-weight: bold; font-size:1.1em; margin-right: 10px;" />
+            <!-- PARAMETERS: full-width -->
+            <div class="surface-card shadow-1 border-round p-3 mb-3">
+                <div class="flex align-items-center justify-content-between mb-2">
+                    <span class="text-xl font-semibold">Configure Parameters</span>
+                    <div class="flex gap-2">
+                        <p:commandButton id="addBtn" value="Add" icon="pi pi-plus"
+                                         process="@form"
+                                         update=":formParam :hisTab:cmdPane"
+                                         onstart="PF('statusDialog').show();"
+                                         onsuccess="PF('statusDialog').hide();"
+                                         onerror="PF('statusDialog').hide();"
+                                         actionListener="#{workflowBean.addParamOpts()}" />
+                        <p:commandButton id="resetBtn" value="Reset" icon="pi pi-refresh"
+                                         styleClass="p-button-secondary"
+                                         process="@this"
+                                         update=":formParam :hisTab:cmdPane"
+                                         onstart="PF('statusDialog').show();"
+                                         onsuccess="PF('statusDialog').hide();"
+                                         onerror="PF('statusDialog').hide();"
+                                         actionListener="#{workflowBean.resetWorkflowOptions()}" />
+                        <!-- Toggle Overlay Button -->
+                        <p:commandButton id="optionsBtn"
+                                         value="Added Parameters (#{workflowBean.workflowOptions.size()})"
+                                         icon="pi pi-list"
+                                         type="button"/>
+                    </div>
+                </div>
 
-                <p:selectOneMenu styleClass="menu" value="#{workflowBean.selectedGrp1}">
-                    <f:selectItems value="#{multifacBean.uniqueMetaList}"/>
-                </p:selectOneMenu>  
-
-                <h:outputLabel value="versus" style="margin: 0 10px;" />                 
-
-                <p:selectOneMenu styleClass="menu" value="#{workflowBean.selectedGrp2}">
-                    <f:selectItems value="#{multifacBean.uniqueMetaList}"/>
-                </p:selectOneMenu>  
-
-            </h:panelGrid> 
-            <hr class="style-one"/>
-            <h:panelGrid columns="3">            
-
-                <p:accordionPanel >
-
+                <p:accordionPanel multiple="true" activeIndex="0" style="width:100%;">
                     <p:tab title="Filtering">
                         <ui:include src="/Secure/workflow/process/_FilterView.xhtml" />
                     </p:tab>
@@ -49,54 +64,54 @@
                     <p:tab title="Normalization">
                         <ui:include src="/Secure/workflow/process/_NormalizationView.xhtml" />
                     </p:tab>
-                </p:accordionPanel>              
+                </p:accordionPanel>
 
-                <h:panelGrid style="margin-left: 40px; margin-right: 40px">
-                    <p:commandButton style="width: 100px;" value="Add >>" 
-                                     onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()" 
-                                     update=":ac :formParam :hisTab:cmdPane"
-                                     actionListener="#{workflowBean.addParamOpts()}" />
+                <p:tooltip for="addBtn" value="Append current settings to the workflow queue"/>
+                <p:tooltip for="resetBtn" value="Clear all staged options"/>
+                <p:tooltip for="optionsBtn" value="Show added workflow options"/>
+            </div>
 
-                    <p:spacer style="height: 40px"/>
+            <!-- OVERLAY PANEL: Added Options -->
+            <p:overlayPanel id="optsOP" widgetVar="optsOP" for="optionsBtn"
+                            dismissable="true"
+                            showCloseIcon="true" appendTo="@(body)" my="right top" at="right bottom">
+                <style>
+                    /* keep the panel tidy; scroll content if tall */
+                    #formParam\\:optsOP .op-body{
+                        max-height: 420px;
+                        overflow:auto;
+                        padding: .25rem;
+                    }
+                </style>
 
-                    <p:commandButton style="width: 100px;" value="Reset" 
-                                     onclick="PF('statusDialog').show()" 
-                                     oncomplete="PF('statusDialog').hide()" 
-                                     update=":ac :formParam :hisTab:cmdPane"
-                                     actionListener="#{workflowBean.resetWorkflowOptions()}" />
-                </h:panelGrid>
+                <div class="op-body">
 
-
-                <h:panelGrid style="flex: 1; margin-top:0; align-self: flex-start;">
-                    <h:outputText value="Added Workflow Options:" style="font-size:16px; font-weight:bold; margin-bottom:10px;" />
-                    <p:spacer style="height: 20px"/>
-                    <p:dataTable id="workflowOptionsTable"
-                                 var="option"
+                    <p:dataTable id="workflowOptionsTable" var="option"
                                  value="#{workflowBean.workflowOptions}"
+                                 emptyMessage="No options added yet."
                                  styleClass="options-table"
-                                 style="width:100%;"
-                                 class="surface-card p-0 text-800">
-                        <p:column headerText="Name" width="120px">
-                            <h:outputText value="#{option.folderName}" />
+                                 rows="8" rowsPerPageTemplate="8,16,32">
+                        <p:column headerText="Name" width="18rem">
+                            <h:outputText value="#{option.folderName}"/>
                         </p:column>
 
-                        <p:column headerText="Parameters" width="300px">
-                            <h:outputText 
-                                value="#{option.detailText}" />
+                        <p:column headerText="Parameters">
+                            <h:outputText value="#{option.detailText}"/>
                         </p:column>
 
-                        <p:column headerText="Delete" style="width:50px; text-align:center;">
+                        <p:column headerText="Actions" style="width:7rem; text-align:right;">
                             <p:commandButton icon="pi pi-trash" 
                                              styleClass="p-button-rounded p-button-danger p-mr-2"
                                              action="#{workflowBean.deleteOption(option)}"
                                              update="workflowOptionsTable" />
                         </p:column>
                     </p:dataTable>
-                </h:panelGrid>
+                </div>
+            </p:overlayPanel>
 
-            </h:panelGrid>
+
         </h:form>
+
         <p:dialog widgetVar="smplNormDialog" dynamic="true" modal="true" appendTo="@(body)" height="460"
                   hideEffect="explode" resizable="true">
             <h:form>
