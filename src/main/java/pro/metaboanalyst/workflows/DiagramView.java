@@ -1446,7 +1446,7 @@ public class DiagramView implements Serializable {
         wb.setModuleNames(naviTypes);
         List<String> moduleNms = wb.getModuleNames();
 
-        if(moduleNms.size() > 1){
+        if (moduleNms.size() > 1) {
             wb.setReloadingWorkflow(false);
         }
 
@@ -1610,8 +1610,10 @@ public class DiagramView implements Serializable {
     public boolean executeModule(String name, String origName) {
         boolean okBool = true;
         ArrayList<String> steps = new ArrayList<>();
+        RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
+
         switch (name) {
             case "mf" -> {
 
