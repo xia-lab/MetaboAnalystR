@@ -637,7 +637,7 @@ public class MyPhaseListener implements PhaseListener {
 
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
-                if (wfb.getWorkflowOptions() != null && !wfb.getWorkflowOptions().isEmpty()) {
+                if (wfb.getRunPlans().size() > 1) {
                     DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Workflow completed!");
                 } else {
                     DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml?callFunc=checkPagesToVisit", ab);

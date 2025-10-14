@@ -8,6 +8,8 @@
                 template="/template/_template_workflow.xhtml">
 
     <ui:define name="metaInfo">
+        <f:event type="preRenderView" listener="#{workflowBean.setEditMode(true)}"/> 
+
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflow Details', '/Secure/WorkflowDetails.xhtml')}"/> 
 
     </ui:define>
@@ -95,13 +97,22 @@
                 </p:card>
             </h:form>
 
-            <p:card>
+            <p:card rendered="#{workflowBean.displayParams}">
                 <f:facet name="title">
                     <span class="text-lg">
                         Key parameters
                     </span>
                 </f:facet>
                 <ui:include src="/Secure/workflow/process/_ParamsView.xhtml" />
+            </p:card>
+
+            <p:card rendered="#{workflowBean.displayEnrichParams}">
+                <f:facet name="title">
+                    <span class="text-lg">
+                        Key parameters
+                    </span>
+                </f:facet>
+                <ui:include src="/Secure/enrichment/_EnrichParamFrag.xhtml" />
             </p:card>
         </h:panelGrid>
     </ui:define>

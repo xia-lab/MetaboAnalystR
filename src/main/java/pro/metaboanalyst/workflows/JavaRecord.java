@@ -1038,6 +1038,8 @@ public class JavaRecord {
 
         functionInfo.addParameter("workflowBean.moduleNames", workflowBean.getModuleNames());
         functionInfo.addParameter("workflowBean.workflowOptions", workflowBean.getWorkflowOptions());
+        functionInfo.addParameter("workflowBean.runPlans", workflowBean.getRunPlans());
+
         wb.addFunctionInfo("restoreWorkflowState", functionInfo);
     }
 }

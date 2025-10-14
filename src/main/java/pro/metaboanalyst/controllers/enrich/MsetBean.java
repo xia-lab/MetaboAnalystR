@@ -245,7 +245,6 @@ public class MsetBean implements Serializable {
 
         jrd.record_submitBtn_action(this);
         if (sb.getAnalType().equals("msetqea")) {
-            System.out.println("doGlobal===================");
             return doGlobalTest();
         } else {
             return doHyperGeom();

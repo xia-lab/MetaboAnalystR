@@ -97,6 +97,8 @@ public class EnrichUploadBean implements Serializable {
         int res = RDataUtils.saveMsetObject(sb.getRConnection());
         dc.stageListDataset("datalist_" + sb.getAnalType());
         sb.setDataUploaded();
+        sb.setFeatType(featType);
+
         return "Name check";
     }
 

@@ -54,6 +54,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.extensions.component.sheet.Sheet;
 import org.primefaces.extensions.event.SheetEvent;
 import org.primefaces.extensions.model.sheet.SheetUpdate;
+import pro.metaboanalyst.rwrappers.SearchUtils;
 
 /**
  *
@@ -724,6 +725,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedDataset = ds;
         this.stagedFiles.clear();
         this.stagedFiles.addAll(files);
+        System.out.println("staged========");
+        System.out.println("stagedFiles========" + stagedFiles.size());
 
         this.currentDatasetRow = ds;
     }
@@ -1010,8 +1013,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 // List-only ORA variants
                 case "msetora":
                 case "pathora": {
-                    // Prefer explicit list file if provided; otherwise datalist.txt in home
-                    String listFile = (listName != null && !listName.isBlank()) ? listName : "datalist.txt";
+                    // Prefer explicit list file if provided; otherwise datalist.csv in home
+                    String listFile = (listName != null && !listName.isBlank()) ? listName : "datalist.csv";
                     String home = sb.getCurrentUser().getHomeDir();
                     java.nio.file.Path lp = java.nio.file.Paths.get(home, java.nio.file.Paths.get(listFile).getFileName().toString());
                     if (!java.nio.file.Files.exists(lp)) {
@@ -1024,6 +1027,11 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                         return false;
                     }
                     RDataUtils.setMapData(RC, qVec);
+                    if (sb.getFeatType().equals("lipid")) {
+                        SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());
+                    } else {
+                        SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());
+                    }
                     ok = true;
                     break;
                 }
@@ -1325,13 +1333,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         System.out.println("stageListDataset");
         try {
             final String home = sb.getCurrentUser().getHomeDir();
-            final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.txt");
+            final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.csv");
             if (!java.nio.file.Files.exists(lp)) {
-                sb.addMessage("Error", "datalist.txt not found in your home directory.");
+                sb.addMessage("Error", "datalist.csv not found in your home directory.");
                 return null;
             }
 
-            String fname = "datalist.txt";
+            String fname = "datalist.csv";
             String niceTitle = (niceTitleHint == null || niceTitleHint.isBlank())
                     ? "List_" + java.time.LocalDate.now()
                     : niceTitleHint;
@@ -1422,7 +1430,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             f2.setRole("metadata");
             f2.setFilename("covid_metadata_multiclass.csv"); // main table
             f2.setType("csv");
-            f2.setSizeBytes(1468006L);
+            f2.setSizeBytes(2598L);
             ds1Files.add(f2);
         }
         ds1.setFiles(ds1Files);
@@ -1452,7 +1460,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         {
             DatasetFile f1 = new DatasetFile();
             f1.setRole("data");
-            f1.setFilename("datalist.txt"); // main table
+            f1.setFilename("datalist.csv"); // main table
             f1.setType("csv");
             f1.setSizeBytes(226L);
             ds1Files.add(f1);
@@ -1774,12 +1782,12 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     private String loadGeneListFromUserHome() {
         try {
             String home = sb.getCurrentUser().getOrigHomeDir();
-            java.nio.file.Path p = java.nio.file.Paths.get(home, "datalist.txt");
+            java.nio.file.Path p = java.nio.file.Paths.get(home, "datalist.csv");
             if (java.nio.file.Files.exists(p)) {
                 return java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8);
             }
         } catch (Exception ex) {
-            sb.addMessage("warn", "Could not load datalist.txt: " + ex.getMessage());
+            sb.addMessage("warn", "Could not load datalist.csv: " + ex.getMessage());
         }
         return null;
     }

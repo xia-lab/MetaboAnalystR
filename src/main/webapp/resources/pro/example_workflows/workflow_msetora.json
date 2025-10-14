@@ -1,0 +1,45 @@
+{
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "Sanity Check",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "CrossReferencing(NA, \"name\");" ]
+  },
+  "Enrichment" : {
+    "name" : "Enrichment",
+    "function" : "msetBean.submitBtn_action",
+    "description" : "Perform enrichment analysis ORA or QEA",
+    "parameters" : {
+      "msetBean.doMsetFilter" : "true",
+      "msetBean.minMsetNum" : "2",
+      "msetBean.libOpt" : "all",
+      "msetBean.msetOpt" : "smpdb_pathway"
+    },
+    "rCommands" : [ "CalculateHyperScore(NA)", "PlotORA(NA, \"ora_0_\", \"net\", \"png\", 150, width=NA)", "PlotEnrichDotPlot(NA, \"ora\", \"ora_dot_0_\", \"png\", 150, width=NA)" ]
+  },
+  "paBn_proceed" : {
+    "name" : "paBn_proceed",
+    "function" : "paBn_proceed",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "SetMetabolomeFilter(NA, F);" ]
+  },
+  "InitLibrary" : {
+    "name" : "InitLibrary",
+    "function" : "InitLibrary",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "pvalue <- GetDefaultPvalCutoff(NA)" ]
+  },
+  "restoreWorkflowState" : {
+    "name" : "restoreWorkflowState",
+    "function" : "workflowBean.restoreState",
+    "description" : "Restore workflow state",
+    "parameters" : {
+      "workflowBean.moduleNames" : [ ],
+      "workflowBean.workflowOptions" : [ ]
+    },
+    "rCommands" : [ ]
+  }
+}

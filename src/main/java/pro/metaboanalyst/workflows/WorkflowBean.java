@@ -20,17 +20,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
+
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.Collectors;
+import java.util.Objects; 
+
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import pro.metaboanalyst.api.DatabaseClient;
@@ -1241,6 +1250,7 @@ public class WorkflowBean implements Serializable {
     public void startFromDetails() {
         try {
             calledWorkflows.add("Data Preparation");
+            editMode = false;
 
             final String module = (String) selectedWorkflow.get("module");
             final String input = resolveInputForModule(module);
@@ -1257,7 +1267,6 @@ public class WorkflowBean implements Serializable {
                     dv.selectNode(dv.convertToBlockName(moduleName), true);
                 }
             }
-
             DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
                     "info",
@@ -1334,8 +1343,8 @@ public class WorkflowBean implements Serializable {
                 Map.entry("metadata", "Generic Tables"),
                 Map.entry("pathqea", "Compound Table"),
                 Map.entry("msetqea", "Compound Table"),
-                Map.entry("msetora", "Compound Table"),
-                Map.entry("pathora", "Compound Table"),
+                Map.entry("msetora", "Metabolite List"),
+                Map.entry("pathora", "Metabolite List"),
                 Map.entry("mass_all", "Peak Table"),
                 Map.entry("metapaths", "Peak Tables"),
                 Map.entry("mass_table", "Peak List"),
@@ -1649,6 +1658,7 @@ public class WorkflowBean implements Serializable {
 
         Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
         setFunctionInfos(functionInfos);
+        editMode = true;
         return "WorkflowDetails";
     }
 
@@ -1662,4 +1672,176 @@ public class WorkflowBean implements Serializable {
         return "WorkflowView";
     }
 
+    public boolean isDisplayParams() {
+        String input = resolveInputForModule((String) selectedWorkflow.get("module"));
+        System.out.println(input + "==========input");
+        if (input.equals("Generic Table") || input.equals("Peak Table") || input.equals("Compound Table") || input.equals("LC-MS Spectra")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isDisplayEnrichParams() {
+        String input = (String) selectedWorkflow.get("module");
+        System.out.println("input========" + input);
+        if (input.equals("msetora") || input.equals("qeaora")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private List<RunPlan> runPlans = new ArrayList<>();
+
+    public List<RunPlan> getRunPlans() {
+        return runPlans;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void setRunPlans(Object rawRunPlans) {
+        if (rawRunPlans == null) {
+            this.runPlans = new ArrayList<>();
+            return;
+        }
+
+        // Normalize input → Collection<?>
+        Collection<?> in;
+        if (rawRunPlans instanceof Collection) {
+            in = (Collection<?>) rawRunPlans;
+        } else if (rawRunPlans instanceof Object[]) {
+            in = Arrays.asList((Object[]) rawRunPlans);
+        } else {
+            // Single item case: try to wrap
+            in = List.of(rawRunPlans);
+        }
+
+        // Fast path: if they are all RunPlan already, just collect (but re-order deterministically)
+        boolean allRunPlans = in.stream().allMatch(o -> o instanceof RunPlan);
+        if (allRunPlans) {
+            this.runPlans = in.stream()
+                    .map(o -> (RunPlan) o)
+                    .sorted(RUNPLAN_COMPARATOR)
+                    .collect(Collectors.toList());
+            return;
+        }
+
+        // Else convert from LinkedHashMap / mixed content
+        populateRunPlans(in);
+    }
+
+    private static final Comparator<RunPlan> RUNPLAN_COMPARATOR = Comparator
+            .comparing((RunPlan rp) -> nullSafe(rp.getModuleName()))
+            .thenComparing(rp -> nullSafe(rp.getParams() != null ? rp.getParams().getFolderName() : null))
+            .thenComparing(rp -> nullSafe(rp.getOrigNaviType()));
+
+    private static String nullSafe(String s) {
+        return s == null ? "~zzz_null~" : s;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void populateRunPlans(Collection<?> deserialized) {
+        List<RunPlan> converted = new ArrayList<>();
+
+        for (Object item : deserialized) {
+            if (item instanceof RunPlan) {
+                converted.add((RunPlan) item);
+                continue;
+            }
+
+            if (item instanceof Map) {
+                Map<String, Object> m = (Map<String, Object>) item;
+
+                // Expect keys: "moduleName", "origNaviType", "params"
+                String moduleName = safeGetString(m.get("moduleName"));
+                String origNaviType = safeGetString(m.get("origNaviType"));
+
+                WorkflowParameters params = null;
+                Object p = m.get("params");
+                if (p != null) {
+                    params = convertToWorkflowParameters(p);
+                }
+
+                converted.add(new RunPlan(params, moduleName, origNaviType));
+            }
+            // else: ignore unknown shapes
+        }
+
+        // Deterministic ordering
+        converted.sort(RUNPLAN_COMPARATOR);
+        this.runPlans = converted;
+    }
+    // Accepts either an actual WorkflowParameters or a Map (LinkedHashMap) representation
+
+    @SuppressWarnings("unchecked")
+    private WorkflowParameters convertToWorkflowParameters(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+
+        if (obj instanceof WorkflowParameters) {
+            return (WorkflowParameters) obj;
+        }
+
+        if (obj instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) obj;
+
+            boolean removeMissing = safeGetBool(map.get("removeMissing"));
+            String missingImputeOpt = safeGetString(map.get("missingImputeOpt"));
+            String replaceVarOpt = safeGetString(map.get("replaceVarOpt"));
+            String imputeAlgOpt = safeGetString(map.get("imputeAlgOpt"));
+
+            boolean doQCFiltering = safeGetBool(map.get("doQCFiltering"));
+            int qcCutoff = safeGetInt(map.get("qcCutoff"));
+            String varFilterOpt = safeGetString(map.get("varFilterOpt"));
+            int filterCutoff = safeGetInt(map.get("filterCutoff"));
+            String intFilterOpt = safeGetString(map.get("intFilterOpt"));
+            int intFilterCutoff = safeGetInt(map.get("intFilterCutoff"));
+
+            String rowNormOpt = safeGetString(map.get("rowNormOpt"));
+            String transNormOpt = safeGetString(map.get("transNormOpt"));
+            String scaleNormOpt = safeGetString(map.get("scaleNormOpt"));
+            String folderName = safeGetString(map.get("folderName"));
+
+            return new WorkflowParameters(
+                    removeMissing, missingImputeOpt, replaceVarOpt, imputeAlgOpt,
+                    doQCFiltering, qcCutoff, varFilterOpt, filterCutoff,
+                    intFilterOpt, intFilterCutoff, rowNormOpt, transNormOpt, scaleNormOpt, folderName
+            );
+        }
+
+        // Unknown shape → return null; caller decides whether to add plan without params
+        return null;
+    }
+
+    /* ---------- Primitive extraction helpers ---------- */
+    private static String safeGetString(Object o) {
+        return (o == null) ? null : String.valueOf(o);
+    }
+
+    private static boolean safeGetBool(Object o) {
+        if (o instanceof Boolean) {
+            return (Boolean) o;
+        }
+        if (o instanceof String) {
+            return Boolean.parseBoolean((String) o);
+        }
+        if (o instanceof Number) {
+            return ((Number) o).intValue() != 0;
+        }
+        return false;
+    }
+
+    private static int safeGetInt(Object o) {
+        if (o instanceof Number) {
+            return ((Number) o).intValue();
+        }
+        if (o instanceof String) {
+            try {
+                return Integer.parseInt(((String) o).trim());
+            } catch (Exception ignored) {
+            }
+        }
+        return 0;
+    }
 }

@@ -22,11 +22,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.primefaces.PrimeFaces;
@@ -1410,7 +1414,7 @@ public class DiagramView implements Serializable {
         }
     }
 
-    public boolean startWorkflow() {
+    public boolean startWorkflowOld() {
         if (!sb.isLoggedIn()) {
             sb.addMessage("warn", "Please prepare your data first by clicking on the upload icon!");
             return false;
@@ -1849,14 +1853,12 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "List",
                         "Annotation_List",
                         "ORA"
                 ));
-                //}
             }
 
             case "pathora" -> {
@@ -2881,12 +2883,12 @@ public class DiagramView implements Serializable {
             }
             case "msetora" -> {
                 url = "/Secure/workflow/upload/ListUploadView.xhtml";
-                workflowType = "Compound Table";
+                workflowType = "Metabolite List";
 
             }
             case "pathora" -> {
                 url = "/Secure/workflow/upload/AnotListUploadView.xhtml";
-                workflowType = "Compound Table";
+                workflowType = "Metabolite List";
 
             }
             default ->
@@ -2952,9 +2954,9 @@ public class DiagramView implements Serializable {
                 moduleName = "Statistical Meta-analysis";
             case "dose" ->
                 moduleName = "Dose Response Analysis";
-            case "mset" ->
+            case "msetora", "msetqea", "msetssp", "mset" ->
                 moduleName = "Enrichment Analysis";
-            case "path" ->
+            case "pathora", "pathqea" ->
                 moduleName = "Pathway Analysis";
             case "network" ->
                 moduleName = "Network Analysis";
@@ -3025,4 +3027,260 @@ public class DiagramView implements Serializable {
             }
         }
     }
+    private static final Logger LOGGER = Logger.getLogger(DiagramView.class.getName());
+
+    // === Convert Set<WorkflowParameters> to a deterministic List ===
+    // Deterministic order for Set<WorkflowParameters>
+    private static List<WorkflowParameters> orderedWorkflowOptions(Set<WorkflowParameters> set) {
+        if (set == null || set.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<WorkflowParameters> list = new ArrayList<>(set);
+        list.sort(Comparator.comparing(wp -> Optional.ofNullable(wp.getFolderName()).orElse("~zzz_null~")));
+        return list;
+    }
+
+    /**
+     * Build RunPlans (Cartesian product of ordered WF options x module list).
+     * If there are no WF options, builds one plan per module with params ==
+     * null.
+     */
+    private List<RunPlan> buildRunPlans(List<String> moduleNms, List<String> origNaviTypes, List<WorkflowParameters> wfOptsOrdered) {
+        List<RunPlan> plans = new ArrayList<>();
+        boolean hasWF = wfOptsOrdered != null && !wfOptsOrdered.isEmpty();
+
+        if (hasWF) {
+            for (WorkflowParameters p : wfOptsOrdered) {
+                for (int i = 0; i < moduleNms.size(); i++) {
+                    plans.add(new RunPlan(p, moduleNms.get(i), origNaviTypes.get(i)));
+                }
+            }
+        } else {
+            for (int i = 0; i < moduleNms.size(); i++) {
+                plans.add(new RunPlan(null, moduleNms.get(i), origNaviTypes.get(i)));
+            }
+        }
+        return plans;
+    }
+
+    /* ---------- Multi-combo mode (creates subfolders) ---------- */
+    private Map<String, Boolean> runAllPlansMulti(List<RunPlan> runPlans, List<String> moduleNms) {
+        Map<String, Boolean> comboSuccessMap = new LinkedHashMap<>();
+        String userHome = sb.getCurrentUser().getHomeDir();
+
+        int idx = 0;
+        for (RunPlan rp : runPlans) {
+            // Isolation between combos
+            if (idx > 0) {
+                List<String> exts = List.of(".json", ".png");
+                DataUtils.removeFilesByExtensions(userHome, exts);
+                sb.getImgMap().clear();
+            }
+
+            if (rp.getParams() != null) {
+                updatingParams(rp.getParams());
+            }
+
+            boolean result;
+            try {
+                result = executeModule(rp.getModuleName(), rp.getOrigNaviType());
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "executeModule failed: " + rp.comboKey(), ex);
+                result = false;
+            }
+
+            comboSuccessMap.put(rp.comboKey(), result);
+            successExecutionMap.put(rp.getOrigNaviType(), result);
+
+            // If "stat" not selected anywhere, run PCA/Volcano for this combo
+            if (!moduleNms.contains("stat")) {
+                try {
+                    RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), "stat");
+                    wfv.executeWorkflow("PCA");
+                    wfv.executeWorkflow("Volcano");
+                } catch (Exception ex) {
+                    LOGGER.log(Level.SEVERE, "PCA/Volcano failed: " + rp.comboKey(), ex);
+                }
+            }
+
+            // Save R images & history into combo subfolder
+            try {
+                RCenter.saveRLoadImg(sb.getRConnection());
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "saveRLoadImg failed: " + rp.comboKey(), ex);
+            }
+
+            fcb.saveJavaHistory();
+            String jh = hb.getJavaHistoryString().replace(":\"[{\"", ":[{\\\"");
+
+            String comboFolder = rp.folderName();
+            DataUtils.createAndCopyFolder(userHome, userHome + "/" + comboFolder);
+            try {
+                saveJsonStringToFile(jh, userHome + File.separator + comboFolder + File.separator + "java_history.json");
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "saveJsonStringToFile failed: " + rp.comboKey(), ex);
+            }
+
+            idx++;
+        }
+        wb.setRunPlans(runPlans);
+        return comboSuccessMap;
+    }
+
+    /* ---------- Legacy single-run mode (no subfolder) ---------- */
+    private boolean runSinglePlanLegacy(RunPlan rp, List<String> moduleNms) {
+        // No cleanup, no per-combo subfolder; mimic old single-run behavior
+        if (rp.getParams() != null) {
+            updatingParams(rp.getParams());
+        }
+
+        boolean ok;
+        try {
+            ok = executeModule(rp.getModuleName(), rp.getOrigNaviType());
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "executeModule failed (single plan): " + rp.getModuleName(), ex);
+            ok = false;
+        }
+
+        successExecutionMap.put(rp.getOrigNaviType(), ok);
+
+        // If "stat" not selected anywhere, run PCA/Volcano once
+        if (!moduleNms.contains("stat")) {
+            try {
+                RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), "stat");
+                wfv.executeWorkflow("PCA");
+                wfv.executeWorkflow("Volcano");
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "PCA/Volcano failed (single plan)", ex);
+            }
+        }
+
+        // Save R images & history into current working directory (no subfolder)
+        try {
+            RCenter.saveRLoadImg(sb.getRConnection());
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "saveRLoadImg failed (single plan)", ex);
+        }
+
+        fcb.saveJavaHistory();
+        String jh = hb.getJavaHistoryString().replace(":\"[{\"", ":[{\\\"");
+        try {
+            // Keep same location as legacy code (e.g., userHome/java_history.json or wherever you used)
+            String userHome = sb.getCurrentUser().getHomeDir();
+            saveJsonStringToFile(jh, userHome + File.separator + "java_history.json");
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "saveJsonStringToFile failed (single plan)", ex);
+        }
+
+        return ok;
+    }
+
+    /* ---------- MAIN ENTRY ---------- */
+    public boolean startWorkflow() {
+        if (!sb.isLoggedIn()) {
+            sb.addMessage("warn", "Please prepare your data first by clicking on the upload icon!");
+            return false;
+        }
+
+        lastExecutedSteps = new LinkedHashSet<>();
+        List<String> naviTypes = new ArrayList<>();
+        List<String> origNaviTypes = new ArrayList<>();
+        List<String> procs = new ArrayList<>();
+
+        // Gather selected nodes
+        for (Map.Entry<String, Boolean> entry : selectionMap.entrySet()) {
+            String nodeName = entry.getKey();
+            boolean isSelected = Boolean.TRUE.equals(entry.getValue());
+            if (!isSelected) {
+                continue;
+            }
+
+            String naviType = settingAnalType(nodeName);
+            if (!naviType.isEmpty()) {
+                naviTypes.add(naviType);
+                origNaviTypes.add(nodeName);
+            } else if (secondLevelNodes.contains(nodeName)) {
+                procs.add(nodeName);
+            }
+        }
+
+        // Persist modules and deduplicate (preserve order)
+        wb.setModuleNames(naviTypes);
+        List<String> moduleNms = new ArrayList<>(new LinkedHashSet<>(wb.getModuleNames()));
+
+        if (moduleNms.size() > 1) {
+            wb.setReloadingWorkflow(false);
+        }
+
+        // Early raw path
+        if (moduleNms.contains("raw")) {
+            jeb.setStopStatusCheck(false);
+            executeModule("raw", "Spectra Processing");
+            return false;
+        }
+
+        if (moduleNms.isEmpty()) {
+            sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
+            return false;
+        }
+
+        // Build run plans
+        Set<WorkflowParameters> wfOptsSet = wb.getWorkflowOptions(); // Set<>
+        List<WorkflowParameters> wfOptsOrdered = orderedWorkflowOptions(wfOptsSet);
+        List<RunPlan> runPlans = buildRunPlans(moduleNms, origNaviTypes, wfOptsOrdered);
+        if (runPlans.isEmpty()) {
+            sb.addMessage("warn", "Nothing to run—please select options or modules.");
+            return false;
+        }
+        wb.setRunPlans(runPlans); // if you want to store them
+
+        boolean anySuccess;
+        if (runPlans.size() == 1) {
+            // === Legacy single-run behavior (NO subfolders) ===
+            anySuccess = runSinglePlanLegacy(runPlans.get(0), moduleNms);
+        } else {
+            // === Multi-combo behavior (subfolders per combo) ===
+            Map<String, Boolean> comboSuccessMap = runAllPlansMulti(runPlans, moduleNms);
+            anySuccess = comboSuccessMap.values().stream().anyMatch(Boolean::booleanValue);
+            wb.setResultPageDisplay("multi");
+
+        }
+
+        workflowFinished = anySuccess;
+
+        // Reconcile selection -> execution map for UI
+        for (Map.Entry<String, Boolean> entry : selectionMap.entrySet()) {
+            if (Boolean.TRUE.equals(entry.getValue())) {
+                boolean ok = successExecutionMap.getOrDefault(entry.getKey(), true);
+                executionMap.put(entry.getKey(), ok);
+            }
+        }
+
+        // Pages & demo images
+        List<String> pagesToVisit = new ArrayList<>();
+        for (String nm : lastExecutedSteps) {
+            pagesToVisit = obtainPagesToVisit(pagesToVisit, nm);
+            String demoImage = obtainDemoImage(nm);
+            if (!demoImage.isEmpty()) {
+                DataUtils.copyFileToFolder(demoImage, sb.getCurrentUser().getHomeDir() + "/");
+            }
+        }
+
+        // Notifications (skip on known servers)
+        if (!(ab.isOnProServer() || ab.isOnQiangPc())) {
+            sb.getNotice().add(DataUtils.obtainTimestampText());
+            sb.getNotice().add("Your workflow processing job has become <b>COMPLETED</b>.");
+            setShowNotif(true);
+        }
+
+        if (!pagesToVisit.isEmpty()) {
+            String pagesJson = new Gson().toJson(pagesToVisit);
+            // PrimeFaces.current().executeScript("startNavigation(" + pagesJson + ");");
+            return true;
+        } else {
+            sb.addMessage("info", "Execution Finished! Click 'Dashboard' button to view results.");
+            return true;
+        }
+    }
+
 }

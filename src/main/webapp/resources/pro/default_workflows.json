@@ -41,6 +41,21 @@
         "type": "default",
         "image": "roc.png",
         "filename": "workflow_roc.json"
+    },
+    {
+        "id": 4,
+        "name": "Enrichment Analysis (list)",
+        "description": "Detect enriched or perturbed functions (metabolite sets or pathways) from a list of compounds (targeted metabolomics).",
+        "input": "Compound list with associated statistics (e.g., p-values, fold changes) or compound concentration table (Quantitative Enrichment Analysis)",
+        "analysisGoal": "Identify enriched pathways, processes, or ontological categories related to the input features.",
+        "analysisMethods": "Over-representation analysis and single sample profiling is based on Fisher's exact test or hypergeometric test; Quantitative Enrichment Analysis is based on GlobalTest or GlobalAncova.",
+        "output": "Enriched pathways and visualizations including pathway bar plots, dot plots, and enrichment maps.",
+        "other": "Supporting multiple metabolite set libraries based on pathways, disease signatures, chemical structures as well as self-defined metabolite sets.",
+        "module": "msetora",
+        "type": "default",
+        "image": "mset.png",
+        "filename": "workflow_msetora.json"
+
     }
 
 ]

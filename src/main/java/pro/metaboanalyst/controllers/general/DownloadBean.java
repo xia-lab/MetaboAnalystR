@@ -66,6 +66,7 @@ import pro.metaboanalyst.utils.FigureCaptionUtils;
 import pro.metaboanalyst.workflows.RunSummary;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import pro.metaboanalyst.workflows.WorkflowParameters;
+import pro.metaboanalyst.workflows.RunPlan;
 
 /**
  *
@@ -239,8 +240,8 @@ public class DownloadBean implements Serializable {
                 if (!wb.getCurrentSubFolder().equals("NA")) {
                     loadResults(wb.getCurrentSubFolder());
                 } else {
-                    String[] folderNames = wb.getWorkflowOptions().stream()
-                            .map(WorkflowParameters::getFolderName)
+                    String[] folderNames = wb.getRunPlans().stream()
+                            .map(RunPlan::folderName)
                             .toArray(String[]::new);
                     loadResults(folderNames[0]);
                 }
@@ -496,15 +497,15 @@ public class DownloadBean implements Serializable {
             } else {
              */
 
-                for (int i = 0; i < rowNum; i++) {
-                    fileNMA = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir()+ "/"  + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
-                    if (i == rowNum - 1 && added) {
-                        fileNMB = "";
-                    } else {
-                        fileNMB = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir()+ "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
-                    }
-                    downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
+            for (int i = 0; i < rowNum; i++) {
+                fileNMA = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir() + "/" + fileNames.get(i) + "'>" + fileNames.get(i) + "</a>";
+                if (i == rowNum - 1 && added) {
+                    fileNMB = "";
+                } else {
+                    fileNMB = "<a target='_blank' href='/MetaboAnalyst" + sb.getCurrentUser().getRelativeDir() + "/" + fileNames.get(rowNum + i) + "'>" + fileNames.get(rowNum + i) + "</a>";
                 }
+                downloads[i] = new ResultBean(fileNMA, fileNMB, "", "");
+            }
 
             //}
         }
@@ -1141,8 +1142,8 @@ public class DownloadBean implements Serializable {
     public void populateRunSummaries() {
         // Step 1: Fetch the summary from R
         String selectedContrast = wb.getSelectedGrp1() + " vs. " + wb.getSelectedGrp2();
-        String[] folderNames = wb.getWorkflowOptions().stream()
-                .map(WorkflowParameters::getFolderName)
+        String[] folderNames = wb.getRunPlans().stream()
+                .map(RunPlan::folderName)
                 .toArray(String[]::new);
 
         Map<String, Object> summaryNormResults = RDataUtils.getSummaryNormResults(sb.getRConnection(), selectedContrast, folderNames);

@@ -38,9 +38,7 @@
             <p>
                 Your saved dataset files appear in the table below, where you can use them to start new analysis or workflow.
             </p>
-            <!--
-            <ui:include src="/template/_dataset_overlaypanel.xhtml" />
-            -->
+
             <p:tabView widgetVar="tabWidget" id="acTab" style="margin: 20px; width:90%; border: none; font-size: 13px; line-height: 23px; min-height: 70vh" >
                 
                 <p:tab title ="Example Dataset">
@@ -186,7 +184,6 @@
                                         </f:facet>
                                     </p:toolbar>
 
-                                    <!-- Tooltips -->
                                     <p:tooltip for="filesBn" value="Show all files in this dataset"/>
                                     <p:tooltip for="loadBn" value="Load this dataset"/>
                                     <p:tooltip for="loadWorkflowBn" value="Load this dataset and select a workflow"/>
