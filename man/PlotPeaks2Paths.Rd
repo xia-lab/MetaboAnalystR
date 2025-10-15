@@ -8,7 +8,7 @@ PlotPeaks2Paths(
   mSetObj = NA,
   imgName = "",
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = 9,
   labels = "default",
   num_annot = 5,

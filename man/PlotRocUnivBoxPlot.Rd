@@ -9,7 +9,7 @@ PlotRocUnivBoxPlot(
   feat.nm,
   version,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   isOpt,
   isQuery
 )

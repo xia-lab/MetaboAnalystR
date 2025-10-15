@@ -10,7 +10,7 @@ PlotMetpaPath(
   width = NA,
   height = NA,
   format = "png",
-  dpi = NULL
+  dpi = default.dpi
 )
 }
 \arguments{

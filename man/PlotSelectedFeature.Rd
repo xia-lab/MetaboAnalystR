@@ -4,7 +4,7 @@
 \alias{PlotSelectedFeature}
 \title{Create a box-plot of a feature's expression pattern across the different datasets}
 \usage{
-PlotSelectedFeature(mSetObj = NA, gene.id, format = "png", dpi = 72)
+PlotSelectedFeature(mSetObj = NA, gene.id, format = "png", dpi = default.dpi)
 }
 \arguments{
 \item{mSetObj}{Input name of the created mSet Object.}

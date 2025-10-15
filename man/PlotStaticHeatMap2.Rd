@@ -10,7 +10,7 @@ PlotStaticHeatMap2(
   dataOpt = "norm",
   scaleOpt = "row",
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA,
   smplDist = "pearson",
   clstDist = "average",

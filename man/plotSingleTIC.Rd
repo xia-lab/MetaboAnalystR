@@ -4,7 +4,13 @@
 \alias{plotSingleTIC}
 \title{plotSingleTIC}
 \usage{
-plotSingleTIC(filename, imageNumber, format = "png", dpi = 72, width = NA)
+plotSingleTIC(
+  filename,
+  imageNumber,
+  format = "png",
+  dpi = default.dpi,
+  width = NA
+)
 }
 \arguments{
 \item{filename}{filename}

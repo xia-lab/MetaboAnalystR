@@ -3537,75 +3537,80 @@ GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
 }
 
 GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
-
+  message(msetNm); message("msetnm==================")
+  # save.image("pathset.RData")
   mSetObj <- .get.mSet(mSetObj)
-  inx     <- which(mSetObj$pathways$name == msetNm)
-  mset    <- mSetObj$pathways$cpds[[ inx ]]      # vector of KEGG (or custom) IDs
 
-  ## -----------------------------------------------------------------
-  ##  Name lookup table  (compound_db.qs, same as elsewhere)
-  ## -----------------------------------------------------------------
-  cmpd.db   <- .get.my.lib("compound_db.qs")
-  kegg2name <- setNames(cmpd.db$name, cmpd.db$kegg_id)
-
-  ## For every entry in mset, show common name if present, else the ID
-  display <- ifelse(is.na(kegg2name[mset]) |
-                      kegg2name[mset] == ""  |
-                      kegg2name[mset] == "NA",
-                    mset,                      # keep original ID
-                    kegg2name[mset])           # mapped common name
-
-  ## -----------------------------------------------------------------
-  ##  Gather all / significant hits  (unchanged logic)
-  ## -----------------------------------------------------------------
-  mum.version <- mSetObj$paramSet$version
-  hasRT       <- mSetObj$paramSet$mumRT
-
-  if (identical(mum.version, "v2") && isTRUE(hasRT)) {
-    hits.all <- unique(unlist(mSetObj$ecpd_cpd_dict))
-  } else {
-    hits.all <- unique(mSetObj$total_matched_cpds)
+  inx <- which(mSetObj$pathways$name == msetNm)
+  if (length(inx) != 1L) {
+    stop("Pathway name '", msetNm, "' not found or not unique in mSetObj$pathways$name.")
   }
 
-  anal.type0 <- mSetObj$paramSet$anal.type
+  # --- 1) Normalize mset (character vector of KEGG IDs) -----------------
+  raw_mset <- mSetObj$pathways$cpds[[inx]]
+  mset_ids <- unique(as.character(unlist(raw_mset, use.names = FALSE)))  # <- fix
+  if (!length(mset_ids)) {
+    return(cbind(msetNm, ""))  # empty pathway
+  }
+
+  # --- 2) Name lookup table ---------------------------------------------
+  cmpd.db <- .get.my.lib("compound_db.qs")  # expects columns: kegg_id, name
+  if (is.null(cmpd.db) || !all(c("kegg_id", "name") %in% colnames(cmpd.db))) {
+    stop("compound_db.qs is missing or lacks columns 'kegg_id' and 'name'.")
+  }
+  cmpd.db$kegg_id <- as.character(cmpd.db$kegg_id)
+  cmpd.db$name    <- as.character(cmpd.db$name)
+  kegg2name <- stats::setNames(cmpd.db$name, cmpd.db$kegg_id)
+
+  # Map to common names where available; else fall back to the ID
+  mapped <- kegg2name[mset_ids]
+  display <- ifelse(is.na(mapped) | mapped == "" | mapped == "NA", mset_ids, mapped)
+
+  # --- 3) Collect hits ---------------------------------------------------
+  mum.version <- mSetObj$paramSet$version
+  hasRT       <- isTRUE(mSetObj$paramSet$mumRT)
+  anal.type0  <- mSetObj$paramSet$anal.type
+
+  # ensure all hits are character vectors of KEGG IDs
+  if (identical(mum.version, "v2") && hasRT) {
+    hits.all <- unique(as.character(unlist(mSetObj$ecpd_cpd_dict, use.names = FALSE)))
+  } else {
+    hits.all <- unique(as.character(unlist(mSetObj$total_matched_cpds, use.names = FALSE)))
+  }
+  hits.all <- hits.all[!is.na(hits.all)]
 
   if (anal.type0 %in% c("mummichog", "integ_peaks")) {
-
-    if (identical(mum.version, "v2") && isTRUE(hasRT)) {
-      hits.sig <- mSetObj$input_ecpdlist
-      hits.sig <- unlist(mSetObj$ecpd_cpd_dict[ match(hits.sig,
-                                                      names(mSetObj$ecpd_cpd_dict)) ])
+    if (identical(mum.version, "v2") && hasRT) {
+      hits.sig <- as.character(unlist(mSetObj$input_ecpdlist, use.names = FALSE))
+      hits.sig <- as.character(unlist(mSetObj$ecpd_cpd_dict[ match(hits.sig, names(mSetObj$ecpd_cpd_dict)) ], use.names = FALSE))
     } else {
-      hits.sig <- mSetObj$input_cpdlist
+      hits.sig <- as.character(unlist(mSetObj$input_cpdlist, use.names = FALSE))
     }
+    hits.sig <- unique(hits.sig[!is.na(hits.sig)])
 
-    refs <- mset %in% hits.all
-    sigs <- mset %in% hits.sig
+    refs <- mset_ids %in% hits.all
+    sigs <- mset_ids %in% hits.sig
 
     red.inx  <- which(sigs)
     blue.inx <- which(refs & !sigs)
-
-  } else {                                        # other analysis types
-    refs     <- mset %in% hits.all
+  } else {
+    refs     <- mset_ids %in% hits.all
     red.inx  <- which(refs)
     blue.inx <- integer(0)
   }
 
-  ## -----------------------------------------------------------------
-  ##  Colour the display names
-  ## -----------------------------------------------------------------
+  # --- 4) Colorize display names ----------------------------------------
   nms <- display
-  nms[red.inx]  <- paste0("<font color=\"red\"><b>",  nms[red.inx],  "</b></font>")
-  nms[blue.inx] <- paste0("<font color=\"blue\"><b>", nms[blue.inx], "</b></font>")
+  if (length(red.inx))  nms[red.inx]  <- paste0('<font color="red"><b>',  nms[red.inx],  "</b></font>")
+  if (length(blue.inx)) nms[blue.inx] <- paste0('<font color="blue"><b>', nms[blue.inx], "</b></font>")
 
-  ## If the pathway is huge, show only those that were in hits.all
+  # If very large, keep only referenced ones
   if (length(nms) > 200) {
     nms <- nms[refs]
   }
 
   cbind(msetNm, paste(unique(nms), collapse = "; "))
 }
-
 
 GetMummiResMatrix <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

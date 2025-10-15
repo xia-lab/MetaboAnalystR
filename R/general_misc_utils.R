@@ -641,6 +641,7 @@ extractTopFeatures <- function(mat, topN = 1000, ratioFilOpt = "sum"){
 #'@export
 # col.vec should already been created
 UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
+
     mSetObj <- .get.mSet(mSetObj);
     grpnms <- levels(current.cls);
 
@@ -678,14 +679,18 @@ GetShapeSchema <- function(my.cls, show.name=0, grey.scale=0){
   if(exists("shapeVec") && all(shapeVec >= 0)){
     # double check in case user excluded some groups
     shapes <- shapeVec[names(colVec) %in% levels(my.cls)];
+
+    if(all(shapeVec == 0)){
+       shapes <- rep(21, grp.num);
+    }
   }else{
       if(show.name | grey.scale){
       shapes <- 1:grp.num;
     }else{
       shapes <- rep(21, grp.num);
     }
-    names(shapes) <- lvs;
   }
+  names(shapes) <- lvs;
   return(shapes);
 }
 

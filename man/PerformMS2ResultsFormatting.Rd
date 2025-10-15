@@ -7,7 +7,7 @@ This function is used to format the results from other tools into the generic fo
 Currently,we are supporting the compatibility for four commonly used open-source tools: MS-FINDER, and SIRIUS
 The first parameter file_path should be a valid file of the result.
 User need to specify the type in the 2nd argument, type. This argument can be msfinder, or sirius
-The 3rd column}
+The 3rd argument is the MS1 peak list}
 \usage{
 PerformMS2ResultsFormatting(file_path, type, MS1_features_list = NA)
 }
@@ -24,5 +24,5 @@ This function is used to format the results from other tools into the generic fo
 Currently,we are supporting the compatibility for four commonly used open-source tools: MS-FINDER, and SIRIUS
 The first parameter file_path should be a valid file of the result.
 User need to specify the type in the 2nd argument, type. This argument can be msfinder, or sirius
-The 3rd column
+The 3rd argument is the MS1 peak list
 }

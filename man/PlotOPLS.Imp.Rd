@@ -9,7 +9,7 @@ PlotOPLS.Imp(
   mSetObj = NA,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA,
   type = "vip",
   feat.nm = "tscore",

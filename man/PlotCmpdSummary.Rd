@@ -13,7 +13,7 @@ PlotCmpdSummary(
   meta2 = "NA",
   count = 0,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA
 )
 }

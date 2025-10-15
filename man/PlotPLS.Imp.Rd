@@ -8,7 +8,7 @@ PlotPLS.Imp(
   mSetObj = NA,
   imgName,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA,
   type,
   feat.nm,

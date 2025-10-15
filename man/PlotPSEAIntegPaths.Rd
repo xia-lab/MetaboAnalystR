@@ -8,7 +8,7 @@ PlotPSEAIntegPaths(
   mSetObj = NA,
   imgName = "",
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = 9,
   labels = "default",
   labels.x = 5,

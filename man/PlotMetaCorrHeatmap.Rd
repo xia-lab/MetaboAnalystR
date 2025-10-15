@@ -10,7 +10,10 @@ PlotMetaCorrHeatmap(
   imgName,
   format = "png",
   dpi = 96,
-  width = NA
+  width = NA,
+  cor.method = "univariate",
+  colorGradient = "default",
+  interactive = FALSE
 )
 }
 \arguments{

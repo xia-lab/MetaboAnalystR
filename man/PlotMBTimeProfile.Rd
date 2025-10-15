@@ -9,7 +9,7 @@ PlotMBTimeProfile(
   cmpdNm,
   version,
   format = "png",
-  dpi = 72,
+  dpi = default.dpi,
   width = NA
 )
 }

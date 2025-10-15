@@ -13,7 +13,7 @@ PlotInmexGraph(
   bg.color = NULL,
   line.color = NULL,
   format = "png",
-  dpi = NULL
+  dpi = default.dpi
 )
 }
 \arguments{

@@ -4,7 +4,7 @@
 \alias{plotMSfeature}
 \title{plotMSfeature}
 \usage{
-plotMSfeature(FeatureNM, format = "png", dpi = 72, width = NA)
+plotMSfeature(FeatureNM, format = "png", dpi = default.dpi, width = NA)
 }
 \arguments{
 \item{FeatureNM}{FeatureNM}
