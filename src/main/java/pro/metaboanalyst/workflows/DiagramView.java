@@ -1857,7 +1857,7 @@ public class DiagramView implements Serializable {
                 steps = new ArrayList<>(Arrays.asList(
                         "List",
                         "Annotation_List",
-                        "ORA"
+                        "Enrichment"
                 ));
             }
 

@@ -64,6 +64,7 @@ import pro.metaboanalyst.models.FeatureBean;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.rwrappers.RMetaPathUtils;
+import pro.metaboanalyst.rwrappers.SearchUtils;
 
 /**
  * @author zgy
@@ -118,7 +119,6 @@ public class WorkflowView implements Serializable {
     @JsonIgnore
     @Inject
     private DiagramView dv;
-    
 
     private int activeIndex = 0;
 
@@ -171,6 +171,28 @@ public class WorkflowView implements Serializable {
 
             try {
                 switch (func) {
+                    case "List" -> {
+                        // Align with beans: set upload type FIRST
+                        sb.setUploadType("list"); // like EnrichUploadBean/PathUploadBean.  // :contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}
+
+                        // Convert list file -> qVec and set map data in R
+                        String[] qVec = DataUtils.readListFileToNames(sb.getCurrentUser().getHomeDir(), "datalist.csv");
+                        if (qVec.length == 0) {
+                            sb.addMessage("Error", "Your list file appears to be empty.");
+                            return 0;
+                        }
+                        RDataUtils.setMapData(sb.getRConnection(), qVec); // exactly like the upload beans.         // :contentReference[oaicite:4]{index=4} :contentReference[oaicite:5]{index=5}
+
+                        // Choose the cross-reference routine. If you track lipid vs met feature type in state,
+                        // reuse it here; otherwise default to the generic exact matcher (same as PathUploadBean).
+                        // Example using a flag you maintain elsewhere:
+                        boolean isLipid = "lipid".equalsIgnoreCase(sb.getFeatType());
+                        if (isLipid) {
+                            SearchUtils.crossReferenceExactLipid(sb, sb.getCmpdIDType());          // :contentReference[oaicite:6]{index=6}
+                        } else {
+                            SearchUtils.crossReferenceExact(sb, sb.getCmpdIDType());               // :contentReference[oaicite:7]{index=7} :contentReference[oaicite:8]{index=8}
+                        }
+                    }
                     case "Missing Values" -> {
                         ProcessBean pb = (ProcessBean) getBeanInstance("pb");
                         boolean resBool = checkWorkflowContained("performMissingImpute");
@@ -452,11 +474,11 @@ public class WorkflowView implements Serializable {
                         //System.out.println(sb.getAnalType() + "=======QEA");
                         mb.submitBtn_action();
                     }
-                    case "ORA" -> {
+                    case "ORA", "Enrichment" -> {
 
                         boolean resBool = checkWorkflowContained(func);
                         if (!resBool && wb.isReloadingWorkflow()) {
-                            return 2;
+                        //    return 2;
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/OraView.xhtml");
