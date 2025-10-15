@@ -65,6 +65,10 @@ RF.AnalMeta <- function(mSetObj = NA,
                         selectedMeta) {
   # save.image("rf.RData");
   mSetObj  <- .get.mSet(mSetObj)
+
+  if(!selectedMeta %in% names(mSetObj$dataSet$meta.types)){
+    selectedMeta <- names(mSetObj$dataSet$meta.types)[1];
+  }
   metaType <- mSetObj$dataSet$meta.types[selectedMeta]
   
   meta.info <- mSetObj$dataSet$meta.info
@@ -498,17 +502,23 @@ CovariateScatter.Anal <- function(mSetObj,
   library(limma)
   library(dplyr)
   
-  imgName <<- imgName;
-  format<- "png";
-  analysis.var<<- analysis.var; 
-  ref <<- ref;
-  block <<- block;
-  thresh<<- thresh;
-  pval.type<<- pval.type;
-  contrast.cls <<- contrast.cls;
+  #imgName <<- imgName;
+  #format<- "png";
+  ##analysis.var<<- analysis.var; 
+  #ref <<- ref;
+  #block <<- block;
+  #thresh<<- thresh;
+  #pval.type<<- pval.type;
+  #contrast.cls <<- contrast.cls;
   #save.image("cov.RData");
   cov.vec <- "NA";
   # get inputs
+
+
+  if(!analysis.var %in% names(mSetObj$dataSet$meta.types)){
+    analysis.var <- names(mSetObj$dataSet$meta.types)[1];
+  }
+
   if(!exists('adj.vec')){
     adj.bool = F;
     adj.vec = "NA"
@@ -524,6 +534,8 @@ CovariateScatter.Anal <- function(mSetObj,
       vars <- analysis.var;
     }
   }
+
+  
   
   mSetObj <- .get.mSet(mSetObj);
   

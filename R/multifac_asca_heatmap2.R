@@ -538,7 +538,8 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
 Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+  print(meta.vec.asca);
+  print("====meta.vec.asca");
   if(!exists('meta.vec.asca')){
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
   }else{

@@ -1619,20 +1619,41 @@ GetContainsBlank <- function(mSetObj = NA) {
 Read.TextDataReload <- function(mSetObj=NA, filePath){
   
   #data config saved
-  mSetTemp <- qs::qread("mSetObj_after_sanity.qs");
+  mSetObj <- .get.mSet(mSetObj)
 
-  lbl.type <- mSetTemp$dataSet$cls.type;
-  format <- mSetTemp$dataSet$format;
+  lbl.type <- mSetObj$dataSet$cls.type;
+  format <- mSetObj$dataSet$format;
 
   Read.TextData(NA, filePath, format, lbl.type, FALSE)
 }
 
 Read.mzTabReload <- function(mSetObj=NA, filename) {
-  if(file.exists("mSetObj_after_sanity.qs")){
-  mSetTemp <- qs::qread("mSetObj_after_sanity.qs");
-  identifier <-  mSetTemp$dataSet$mztab.idtype;
-}else{
-  identifier <-"name";
-}
+  mSetObj <- .get.mSet(mSetObj)
+
+  identifier <-  mSetObj$dataSet$mztab.idtype;
+
   return(Read.mzTab(mSetObj=NA, filename, identifier));
+}
+
+GetDataType<- function(mSetObj=NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  val <-  mSetObj$dataSet$type;
+
+  return(val);
+}
+
+GetDataFormat<- function(mSetObj=NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  val <- mSetObj$dataSet$format;
+
+  return(val);
+}
+
+GetLblType<- function(mSetObj=NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  val <-  mSetObj$dataSet$cls.type;
+
+  return(val);
 }

@@ -64,7 +64,13 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
                        p.cor="fdr", designType="time0", phenOpt="between", topN=200){
   mSetObj <- .get.mSet(mSetObj);
   #save.image("aov2.RData");
-  if(length(meta.vec.aov) == 0){
+  meta.info <- mSetObj$dataSet$meta.info
+
+  meta.vec.aov <- meta.vec.aov[!is.na(meta.vec.aov) & nzchar(meta.vec.aov)]
+
+  valid_cols <- intersect(meta.vec.aov, colnames(meta.info))
+
+  if (length(meta.vec.aov) == 0L || length(valid_cols) == 0L) {
     sel.meta.df <- mSetObj$dataSet$meta.info[, c(1,2)]
     meta.vec.aov <- colnames(sel.meta.df)[c(1,2)];
   }else{
@@ -643,7 +649,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   ## ── graphics device -------------------------------------------------
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
   w <- ifelse(is.na(width) || width == 0, 9, width); h <- w - 1
-  mSetObj$imgSet$pca.score2d <- imgName
+  mSetObj$imgSet$pca_score2d_meta <- imgName
   
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
@@ -718,7 +724,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     ell.all   <- ellipse::ellipse(groupVar, centre = groupMean,
                                   level = reg, npoints = 200)
     
-    blues <- colorRampPalette(brewer.pal(9, "Blues"))(20)
+    blues <- colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20)
     numv  <- as.numeric(as.character(colourVar))
     cols  <- blues[cut(numv, breaks = 20, labels = FALSE)]
     
@@ -791,7 +797,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     
     ## draw the gradient (100 stops → smooth)
     nCol  <- 100
-    grad  <- colorRampPalette(brewer.pal(9, "Blues"))(nCol)
+    grad  <- colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(nCol)
     yseq  <- seq(bar_y0, bar_y1, length.out = nCol + 1)
     for (i in 1:nCol)
       rect(bar_x0, yseq[i], bar_x1, yseq[i + 1],
@@ -815,7 +821,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   } else if (isCont) {                          # 3 · colour-cont only
     barW   <- dx * 0.6
     nCol   <- 100
-    grad   <- colorRampPalette(brewer.pal(9, "Blues"))(nCol)
+    grad   <- colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(nCol)
     
     fullH  <- usr[4] - usr[3]            # total plotting height
     barH   <- fullH * 0.33               # want one‑third

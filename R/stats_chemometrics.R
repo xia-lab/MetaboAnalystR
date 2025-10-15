@@ -273,7 +273,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
   h <- w-1; # margin big
   
-  mSetObj$imgSet$pca.score2d <- imgName;
+  mSetObj$imgSet$pca_score2d <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op<-par(mar=c(5,5,3,8));

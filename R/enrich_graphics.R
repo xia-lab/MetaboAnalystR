@@ -800,6 +800,11 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
 
   pvalue <- pvals;
   id <- names(pvalue);
+
+    if(!exists("current.msetlib")){
+        current.msetlib <<- qs::qread("current.msetlib.qs");
+
+   }
   geneSets <- current.msetlib$member;
   n <- length(pvalue);
   w <- matrix(NA, nrow=n, ncol=n);
