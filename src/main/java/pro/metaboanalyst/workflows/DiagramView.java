@@ -1617,7 +1617,9 @@ public class DiagramView implements Serializable {
         RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
-
+        if(wb.getLblType().equals("")){
+            wb.setLblType(sb.getDataClsOpt());
+        }
         switch (name) {
             case "mf" -> {
 
@@ -1771,7 +1773,7 @@ public class DiagramView implements Serializable {
                             "Annotation_Table",
                             "Filtering",
                             "Normalization",
-                            "paBn_proceed_qea",
+                            "paBn_action",
                             "paBn_heatmap",
                             "Results_Table"
                     ));
@@ -1875,7 +1877,7 @@ public class DiagramView implements Serializable {
                         "List",
                         "Annotation_List",
                         "Name check_List",
-                        "paBn_proceed_ora",
+                        "paBn_action",
                         "Results_List"
                 ));
             }

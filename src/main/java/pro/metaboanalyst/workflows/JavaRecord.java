@@ -678,10 +678,10 @@ public class JavaRecord {
         wb.addFunctionInfo("performPeaks2Fun", functionInfo);
     }
 
-    public void record_paBn_proceed(PathBean bean) {
+    public void record_paBn_action(PathBean bean) {
         FunctionInfo functionInfo = new FunctionInfo(
-                "paBn_proceed",
-                "pathBean.paBn_proceed",
+                "paBn_action",
+                "pathBean.paBn_action",
                 "Determines the processing flow based on analysis options for pathway analysis."
         );
 
@@ -696,7 +696,28 @@ public class JavaRecord {
         functionInfo.addParameter("pathBean.oraStatCode", bean.getOraStatCode());
 
         // Here, fp is assumed to be a system-wide accessible object for handling function information
-        wb.addFunctionInfo("paBn_proceed", functionInfo);
+        wb.addFunctionInfo("paBn_action", functionInfo);
+    }
+    
+        public void record_paBn_heatmap(PathBean bean) {
+        FunctionInfo functionInfo = new FunctionInfo(
+                "paBn_heatmap",
+                "pathBean.paBn_heatmap",
+                "Determines the processing flow based on analysis options for pathway analysis."
+        );
+
+        // Log relevant parameters and the current state
+        functionInfo.addParameter("pathBean.analOption", bean.getAnalOption());
+        functionInfo.addParameter("pathBean.libOpt", bean.getLibOpt());
+        functionInfo.addParameter("pathBean.libVersion", bean.getLibVersion());
+        functionInfo.addParameter("pathBean.refLibOpt", bean.getRefLibOpt());
+        functionInfo.addParameter("pathBean.showGrid", String.valueOf(bean.isShowGrid()));
+        functionInfo.addParameter("pathBean.topoCode", bean.getTopoCode());
+        functionInfo.addParameter("pathBean.qeaStatCode", bean.getQeaStatCode());
+        functionInfo.addParameter("pathBean.oraStatCode", bean.getOraStatCode());
+
+        // Here, fp is assumed to be a system-wide accessible object for handling function information
+        wb.addFunctionInfo("paBn_heatmap", functionInfo);
     }
 
     public void record_doMnetworkAnalysis(String visMode) {

@@ -1,0 +1,84 @@
+{
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "ProcessBean.skipButton_action_default",
+    "description" : "Sanity check function",
+    "parameters" : {
+      "sessionBean1.dataType" : "conc",
+      "sessionBean1.multiGroup" : false,
+      "sessionBean1.cmpdIDType" : "name",
+      "sessionBean1.analType" : "pathqea",
+      "sessionBean1.integChecked" : true,
+      "sessionBean1.smallSmplSize" : false,
+      "sessionBean1.featType" : "none"
+    },
+    "rCommands" : [ "CrossReferencing(NA, \"name\");" ]
+  },
+  "Normalization" : {
+    "name" : "Normalization",
+    "function" : "normBean.performDataNormalization",
+    "description" : "Perform data normalization.",
+    "parameters" : {
+      "normBean.refVar" : null,
+      "normBean.transNormOpt" : "LogNorm",
+      "normBean.refGrp" : null,
+      "normBean.scaleNormOpt" : "NULL",
+      "normBean.includeRatio" : false,
+      "normBean.ratioNumOpt" : 20,
+      "normBean.refSmpl" : null,
+      "normBean.specNormSpecifed" : false,
+      "normBean.rowNormOpt" : "NULL"
+    },
+    "rCommands" : [ "PlotNormSummary(NA, \"norm_0_\", \"png\", 150, width=NA)", "PlotSampleNormSummary(NA, \"snorm_0_\", \"png\", 150, width=NA)" ]
+  },
+  "paBn_action" : {
+    "name" : "paBn_action",
+    "function" : "pathBean.paBn_action",
+    "description" : "Determines the processing flow based on analysis options for pathway analysis.",
+    "parameters" : {
+      "pathBean.libVersion" : "current",
+      "pathBean.topoCode" : "rbc",
+      "pathBean.oraStatCode" : "hyperg",
+      "pathBean.libOpt" : "hsa",
+      "pathBean.analOption" : "scatter",
+      "pathBean.showGrid" : "false",
+      "pathBean.qeaStatCode" : "gt",
+      "pathBean.refLibOpt" : "all"
+    },
+    "rCommands" : [ "SetKEGG.PathLib(NA, \"hsa\", \"current\")", "SetMetabolomeFilter(NA, F);", "CalculateQeaScore(NA, \"rbc\", \"gt\")", "CalculateQeaScore(NA, \"rbc\", \"gt\")" ]
+  },
+  "Enrichment" : {
+    "name" : "Enrichment",
+    "function" : "Enrichment",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "SetMetabolomeFilter(NA, F);" ]
+  },
+  "paBn_heatmap" : {
+    "name" : "paBn_heatmap",
+    "function" : "pathBean.paBn_heatmap",
+    "description" : "Determines the processing flow based on analysis options for pathway analysis.",
+    "parameters" : {
+      "pathBean.libVersion" : "current",
+      "pathBean.topoCode" : "rbc",
+      "pathBean.oraStatCode" : "hyperg",
+      "pathBean.libOpt" : "hsa",
+      "pathBean.analOption" : "heatmap",
+      "pathBean.showGrid" : "false",
+      "pathBean.qeaStatCode" : "gt",
+      "pathBean.refLibOpt" : "all"
+    },
+    "rCommands" : [ "SetKEGG.PathLib(NA, \"hsa\", \"current\")", "SetMetabolomeFilter(NA, F);", "ComputePathHeatmap(NA, \"hsa\", \"metaboanalyst_heatmap_5.json\", \"pathqea\")" ]
+  },
+  "restoreWorkflowState" : {
+    "name" : "restoreWorkflowState",
+    "function" : "workflowBean.restoreState",
+    "description" : "Restore workflow state",
+    "parameters" : {
+      "workflowBean.moduleNames" : [ ],
+      "workflowBean.workflowOptions" : [ ],
+      "workflowBean.runPlans" : [ ]
+    },
+    "rCommands" : [ ]
+  }
+}

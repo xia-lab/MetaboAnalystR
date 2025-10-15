@@ -204,7 +204,7 @@ public class WorkflowView implements Serializable {
                     case "Save Project" -> {
                         fbc.saveProject("workflow");
                     }
-                    case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak" -> {
+                    case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak", "Sanity Check_Table" -> {
                         sb.addNaviTrack("Data check", "/Secure/process/SanityCheck.xhtml");
                         ProcessBean pb = (ProcessBean) getBeanInstance("pb");
                         pb.setSanityChecked(false);
@@ -219,12 +219,15 @@ public class WorkflowView implements Serializable {
                         }
                     }
                     case "Filtering", "Filtering_Table", "Filtering Intensity" -> {
+                        if(sb.isMissingDisabled()){
+                            return 1;
+                        }
                         ProcessBean pb = (ProcessBean) getBeanInstance("pb");
                         if (pb != null) {
                             boolean resBool = checkWorkflowContained("Filtering");
-                            if (!resBool && wb.isReloadingWorkflow()) {
-                                return 2;
-                            }
+                            //if (!resBool && wb.isReloadingWorkflow()) {
+                            //    return 2;
+                            //}
                             pb.filterButton_action();
 
                             if (!pb.isFiltered()) {
@@ -478,7 +481,7 @@ public class WorkflowView implements Serializable {
 
                         boolean resBool = checkWorkflowContained(func);
                         if (!resBool && wb.isReloadingWorkflow()) {
-                        //    return 2;
+                            //    return 2;
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/OraView.xhtml");
@@ -547,9 +550,9 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("Heatmap (Pathway)", "/Secure/viewer/HeatmapView.xhtml");
 
                     }
-                    case "paBn_proceed_ora", "paBn_proceed_qea" -> {
+                    case "paBn_proceed_ora", "paBn_proceed_qea" , "paBn_action"-> {
                         PathBean pab = (PathBean) getBeanInstance("pab");
-                        boolean resBool = checkWorkflowContained("paBn_proceed");
+                        boolean resBool = checkWorkflowContained("paBn_action");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
@@ -1017,8 +1020,9 @@ public class WorkflowView implements Serializable {
                         mpb.setupNameMaps();
 
                     }
-                    case "Annotation_Conc" -> {
+                    case "Annotation_Conc", "Annotation_Table" -> {
                         sb.addNaviTrack("Name check", "/Secure/process/NameMapView.xhtml");
+                        mpb.setupNameMaps();
                         refactoredName = "Annotation";
                     }
                     case "Comp. with Reference" -> {

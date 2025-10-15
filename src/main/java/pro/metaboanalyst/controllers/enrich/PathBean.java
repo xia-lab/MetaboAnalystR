@@ -194,14 +194,8 @@ public class PathBean implements Serializable {
     }
 
     public String paBn_proceed() {
-        if (wb.isEditMode()) {
-            sb.addMessage("Info", "Parameters have been updated!");
-
-            jrd.record_paBn_proceed(this);
-            return null;
-        }
+        System.out.println("priiiiiiiiiiiiiiiiiiiint====" + wb.isEditMode());
         String type = sb.getAnalType();
-        jrd.record_paBn_proceed(this);
 
         if (type.equals("pathqea")) {
             wb.getCalledWorkflows().add("paBn_proceed_qea");
@@ -216,6 +210,12 @@ public class PathBean implements Serializable {
     }
 
     public String paBn_action() {
+        if (wb.isEditMode()) {
+            sb.addMessage("Info", "Parameters have been updated!");
+
+            jrd.record_paBn_action(this);
+            return null;
+        }
 
         RConnection RC = sb.getRConnection();
         if (RDataUtils.setPathLib(sb, libOpt, libVersion)) {
@@ -280,6 +280,7 @@ public class PathBean implements Serializable {
                 sb.addMessage("Error", "There is something wrong with the pathway enrichment analysis: " + msg);
                 return null;
             }
+            jrd.record_paBn_action(this);
             return nextpage;
         } else {
             String msg = RDataUtils.getErrMsg(RC);
@@ -309,6 +310,8 @@ public class PathBean implements Serializable {
             setHeatmapName(fileNm);
             if (REnrichUtils.computePathHeatmap(sb, libOpt, fileNm, type)) {
                 sb.setHeatmapType("pathway");
+                            jrd.record_paBn_heatmap(this);
+
                 return "Heatmap view";
             } else {
                 String msg = RDataUtils.getErrMsg(RC);
@@ -326,7 +329,7 @@ public class PathBean implements Serializable {
     @JsonIgnore
     public PABean[] getPaBeans() {
         if (paBeans == null) {
-            paBn_action();
+             paBn_action();
         }
         return paBeans;
     }
