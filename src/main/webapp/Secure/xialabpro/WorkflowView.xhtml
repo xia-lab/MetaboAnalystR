@@ -9,6 +9,8 @@
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{workflowBean.loadAllWorkflowsPrerender()}"></f:event> 
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
+        <f:viewParam name="reset" value="#{datasetController.resetFlag}" />
+
     </ui:define>
     <ui:define name="myscript">
         <h:outputStylesheet library="css" name="dataset-cards.css"/>
@@ -42,12 +44,30 @@
                 }
 
             };
+
+            (function () {
+                window.onload = function () {
+                    var shouldRun = #{datasetController.resetFlag ? 'true' : 'false'};
+                    console.log(shouldRun);
+                    console.log("shouldRun====");
+                    var key = "afterResetRun";
+                    if (shouldRun) {
+                        setTimeout(function () {
+                                afterResetCmd();
+                        }, 200);
+                    }
+                };
+            })();
         </script>
-       
+
     </ui:define>
 
     <ui:define name="content">
         <h:form id="formHidden1">
+            <p:remoteCommand name="afterResetCmd"
+                             process="@this"
+                             update=":acTab"
+                             actionListener="#{datasetController.afterResetInit}" />
             <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
             <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
             <h:inputHidden id="dataType" value="#{sessionBean1.dataType}" />
@@ -73,8 +93,8 @@
                     #{datasetController.selected ne null ? datasetController.selected.filename : 'None'}
                 </span>
             </h:panelGroup>
-
-            <p:tabView id="acTab" widgetVar="tabWidget" style="width:100%; border:none; font-size:13px;" dynamic="true" cache="false" activeIndex="#{workflowBean.activeIndex}">
+            <!-- -->
+            <p:tabView id="acTab" widgetVar="tabWidget" style="width:100%; border:none; font-size:13px;" dynamic="false" cache="true" activeIndex="#{workflowBean.activeIndex}">
                 <p:tab title="Example Workflows">
                     <h:form id="wfForm">
                         <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
@@ -374,7 +394,8 @@
                                                                  icon="pi pi-share-alt"
                                                                  update=":acTab:designForm"
                                                                  style="padding: 0; border: none; background: none;"
-                                                                 onclick="event.stopPropagation(); return false;">
+                                                                 onclick="event.stopPropagation();
+                                                                         return false;">
                                                     <!-- Display Image Inside the Button -->
                                                     <f:param name="nodeId" value="#{el.data.name}" />
                                                 </p:commandButton>
@@ -459,11 +480,10 @@
 
                     <p:commandButton value="Confirm" 
                                      style="width:120px; font-size: 14px;" 
-                                     actionListener="#{diagramView.resetWorkflow()}" 
-                                     update="formHidden1 :ac :acTab:designForm" 
-                                     onclick="PF('resetDialog').hide();
-                                             PF('statusDialog').show();" 
-                                     oncomplete="PF('statusDialog').hide(); reattachEvents();" />
+                                     action="#{diagramView.resetWorkflow()}" 
+                                     ajax="false"     
+                                     onclick="PF('resetDialog').hide();PF('statusDialog').show();" 
+                                     oncomplete="PF('statusDialog').hide();" />
                 </div>
             </h:form>
         </p:dialog>
@@ -1092,7 +1112,8 @@
                 </h:panelGrid>
 
                 <div style="text-align:right; margin-top:10px;">
-                    <p:commandButton value="Close" onclick="PF('wfViewDlg').hide();return false;"/>
+                    <p:commandButton value="Close" onclick="PF('wfViewDlg').hide();
+                            return false;"/>
                 </div>
             </h:form>
         </p:dialog>

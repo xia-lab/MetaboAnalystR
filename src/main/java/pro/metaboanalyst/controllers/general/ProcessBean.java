@@ -49,7 +49,8 @@ public class ProcessBean implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
-
+    
+    @JsonIgnore
     @Inject
     private DatasetController dc;
 

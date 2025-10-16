@@ -38,7 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.Collectors;
-import java.util.Objects; 
+import java.util.Objects;
 
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
@@ -213,10 +213,6 @@ public class WorkflowBean implements Serializable {
 
     private String resultPageDisplay = "default";
 
-    public int getActiveIndex() {
-        return activeIndex;
-    }
-
     //if reload saved workflow
     public void settingActiveIndex(int activeIndex) {
         if (activeIndex == 1 || activeIndex == 2) {
@@ -226,6 +222,10 @@ public class WorkflowBean implements Serializable {
             }
         }
         this.activeIndex = activeIndex;
+    }
+
+    public int getActiveIndex() {
+        return activeIndex;
     }
 
     public void setActiveIndex(int activeIndex) {

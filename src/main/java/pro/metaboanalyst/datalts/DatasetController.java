@@ -5,6 +5,7 @@
 package pro.metaboanalyst.datalts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.PostConstruct;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.DefaultStreamedContent;
 
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.HistoryBean;
 import pro.metaboanalyst.lts.StateSaver;
+import pro.metaboanalyst.models.StickyDTO;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.extensions.component.sheet.Sheet;
@@ -64,6 +67,7 @@ import pro.metaboanalyst.rwrappers.SearchUtils;
 @Named("datasetController")
 public class DatasetController implements Serializable {
 
+    private DatasetRow selected;
     @Inject
     private DatabaseClient db;
     @Inject
@@ -82,7 +86,8 @@ public class DatasetController implements Serializable {
     private HistoryBean hb;
     @Inject
     StateSaver stateSaver;
-    private DatasetRow currentDatasetRow;
+
+    private List<DatasetRow> datasetTableExample = new ArrayList<>();
 
     public void initUserDatasets() {
 
@@ -282,7 +287,6 @@ public class DatasetController implements Serializable {
     private List<DatasetRow> datasetTable = new ArrayList<>();
 
     private List<DatasetRow> selectedDatasets = new ArrayList<>();
-    private DatasetRow selected;
 
     // optional cache for row-expansion
     private final Map<UUID, List<DatasetFile>> fileCache = new HashMap<>();
@@ -459,7 +463,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedDataset = ds;
         this.stagedFiles.clear();
         this.stagedFiles.addAll(files);
-        this.currentDatasetRow = ds; // if you already use this pointer elsewhere
 
         sb.addMessage("info", "Dataset staged in memory.");
     }
@@ -546,7 +549,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedDataset = ds;
         this.stagedFiles.clear();
         this.stagedFiles.addAll(files);
-        this.currentDatasetRow = ds;
 
         sb.addMessage("info", "Dataset staged in memory.");
     }
@@ -728,7 +730,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         System.out.println("staged========");
         System.out.println("stagedFiles========" + stagedFiles.size());
 
-        this.currentDatasetRow = ds;
     }
 
     public StreamedContent getDownloadSelected() {
@@ -1159,6 +1160,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public boolean load(DatasetRow ds) {
+        System.out.println("selected====" + ds.getFilename());
         if (ds == null) {
             sb.addMessage("Error", "No dataset selected to load.");
             return false;
@@ -1242,8 +1244,11 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     System.err.println("Failed to load java_history.json: " + hx.getMessage());
                 }
             }
-            RCenter.LoadRLoadImg(sb.getRConnection(), "RloadSanity.RData");
 
+            File histFile2 = new File(sb.getCurrentUser().getHomeDir(), "RloadSanity.RData");
+            if (histFile2.exists()) {
+                RCenter.LoadRLoadImg(sb.getRConnection(), "RloadSanity.RData");
+            }
             // 6) Notify + redirect to module selection
             String mode = restoredFromZip ? "restored" : "loaded";
             sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
@@ -1364,7 +1369,9 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public List<DatasetRow> getDatasetTableExample() {
-        List<DatasetRow> datasetTableExample = new ArrayList<>();
+        if (!datasetTableExample.isEmpty()) {
+            return datasetTableExample;
+        }
 
         // Example 1
         DatasetRow ds1 = new DatasetRow();
@@ -1774,23 +1781,10 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedDataset = ds;
         this.stagedFiles.clear();
         this.stagedFiles.addAll(files);
-        this.currentDatasetRow = ds;
 
         sb.addMessage("info", "Example dataset staged in memory.");
     }
 
-    private String loadGeneListFromUserHome() {
-        try {
-            String home = sb.getCurrentUser().getOrigHomeDir();
-            java.nio.file.Path p = java.nio.file.Paths.get(home, "datalist.csv");
-            if (java.nio.file.Files.exists(p)) {
-                return java.nio.file.Files.readString(p, java.nio.charset.StandardCharsets.UTF_8);
-            }
-        } catch (Exception ex) {
-            sb.addMessage("warn", "Could not load datalist.csv: " + ex.getMessage());
-        }
-        return null;
-    }
     private String editorMode;                 // "table" or "text"
     private String editorTitle;                // file display name
     private String editorText;                 // for text/metadata files
@@ -2752,4 +2746,102 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         // Default
         return ',';
     }
+
+    // ---- Export just the identifier (safer & smaller)
+    public StickyDTO exportSticky() {
+        StickyDTO dto = new StickyDTO();
+        if (selected != null && selected.getId() != null) {
+            System.out.println("Export===============================" + dto.getSelectedDatasetId());
+
+            dto.setSelectedDatasetId(selected.getId());
+        }
+        return dto;
+    }
+    private boolean resetFlag=false;
+
+    public boolean isResetFlag() {
+        return resetFlag;
+    }
+
+    public void setResetFlag(boolean resetFlag) {
+        this.resetFlag = resetFlag;
+    }
+    
+    // ---- Import from DTO (called after new session is created)
+    @PostConstruct
+    public void init() {
+        // pick up sticky that LogoutHelper put into the new session
+        Object o = FacesContext.getCurrentInstance().getExternalContext()
+                .getSessionMap().remove("STICKY_AFTER_LOGOUT");
+        if (o instanceof StickyDTO dto && dto.getSelectedDatasetId() != null) {
+            refresh();
+            this.selected = findById(dto.getSelectedDatasetId());
+            System.out.println("Selected===============================" + dto.getSelectedDatasetId());
+            this.resetFlag = true;                 // boolean with getter
+
+        }
+    }
+
+    // Called by remoteCommand on next request
+    public void afterResetInit() {
+        if (selected != null) {
+            boolean ok = load(selected);          // your existing method (no streaming)
+            if (ok) {
+                handleDataset(selected);      // your existing method (no streaming)
+            }
+        }
+        resetFlag=false;
+    }
+
+    // In DatasetController
+    public DatasetRow findById(java.util.UUID id) {
+        if (id == null) {
+            return null;
+        }
+
+        // 0) Fast path: current selection
+        if (selected != null && id.equals(selected.getId())) {
+            return selected;
+        }
+
+        // 1) Search the main loaded table
+        if (datasetTable != null && !datasetTable.isEmpty()) {
+            for (DatasetRow r : datasetTable) {
+                if (r != null && id.equals(r.getId())) {
+                    return r;
+                }
+            }
+        }
+
+        // 2) Also check the "selectedDatasets" convenience list if you use it
+        if (getDatasetTableExample() != null && !datasetTableExample.isEmpty()) {
+            for (DatasetRow r : datasetTableExample) {
+                if (r != null && id.equals(r.getId())) {
+                    return r;
+                }
+            }
+        }
+
+        // 3) As a last resort, try a one-time refresh if user is logged in,
+        // then search again (kept very local—no DB service needed).
+        try {
+            String email = (fub != null) ? fub.getEmail() : null;
+            if (email != null && !email.isBlank()) {
+                refresh(); // repopulates datasetTable from db.getDatasetsForEmail(...)
+                if (datasetTable != null && !datasetTable.isEmpty()) {
+                    for (DatasetRow r : datasetTable) {
+                        if (r != null && id.equals(r.getId())) {
+                            return r;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+            // keep it silent; just return null if not found
+        }
+
+        // Not found locally
+        return null;
+    }
+
 }

@@ -76,6 +76,7 @@ import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
+import pro.metaboanalyst.models.JobInfo;
 
 /**
  *
@@ -161,6 +162,14 @@ public class DiagramView implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
+
+    @JsonIgnore
+    @Inject
+    private JobTimerService jsv;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowJobTimerService wsv;
 
     @JsonIgnore
     private DefaultDiagramModel model;
@@ -1617,7 +1626,7 @@ public class DiagramView implements Serializable {
         RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
-        if(wb.getLblType().equals("")){
+        if (wb.getLblType().equals("")) {
             wb.setLblType(sb.getDataClsOpt());
         }
         switch (name) {
@@ -2497,10 +2506,12 @@ public class DiagramView implements Serializable {
         return url;
     }
 
-    public void resetWorkflow() {
+    public String resetWorkflow() {
         resetDiagram();
-        sb.doLogout(0);
-        sb.addMessage("info", "Workflow has been reset. You can upload your data again.");
+        sb.doLogoutKeepDataset(0);
+
+        return "WorkflowView";
+
     }
 
     //workflow
@@ -2531,120 +2542,75 @@ public class DiagramView implements Serializable {
 
     public void submitWorkflowOther() {
 
+        // 0) Collect selected modules
         List<String> naviTypes = new ArrayList<>();
-
-        for (Map.Entry<String, Boolean> entry : selectionMap.entrySet()) {
-            String nodeName = entry.getKey();
-            boolean isSelected = entry.getValue();
-
-            if (isSelected) {
-                // Map nodeName to naviType
-                String naviType = settingAnalType(nodeName);
-                if (!naviType.isEmpty()) {
-                    naviTypes.add(naviType);
+        for (Map.Entry<String, Boolean> e : selectionMap.entrySet()) {
+            if (Boolean.TRUE.equals(e.getValue())) {
+                String nt = settingAnalType(e.getKey());
+                if (nt != null && !nt.isEmpty()) {
+                    naviTypes.add(nt);
                 }
             }
         }
-
-        String[] moduleNms = naviTypes.toArray(new String[0]);
-
-        if (moduleNms.length == 0) {
+        if (naviTypes.isEmpty()) {
             sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
             return;
         }
 
-        //FireBaseController fb = (FireBaseController) DataUtils.findBean("fireBaseController");
-        //FireUserBean fu = (FireUserBean) DataUtils.findBean("fireUserBean");
-        if (!sb.isLoggedIn()) {
+        // 1) Basic session checks
+        if (!sb.isLoggedIn() || sb.getCurrentUser() == null) {
             sb.addMessage("warn", "Please prepare your data first by clicking on the upload icon!");
             return;
         }
-        if (sb.getCurrentUser() == null) {
-            sb.addMessage("warn", "Your session is expired. Please prepare your data first by clicking on the upload icon!");
-            return;
-        }
 
-        String user_id = sb.getCurrentUser().getName();
-
-        String jobNM = "job_" + user_id;
-        String triggerName = "trigger_" + user_id;
-        String triggerGroup = "workflow_metaboanalyst";
-
+        // 2) Ensure project is saved
         boolean saveSuccess = false;
-
         try {
             saveSuccess = fcb.saveProject("share");
         } catch (Exception ex) {
             Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, "Error saving project", ex);
         }
-
-        // Ensure saveProject is successful
         if (!saveSuccess) {
             sb.addMessage("warn", "Failed to save project!");
             return;
         }
-        String type = "other";
-        if (selectionMap.getOrDefault("LC-MS Spectra", false)) {
-            type = "raw";
+
+        // 3) Derive job metadata
+        final String userId = sb.getCurrentUser().getName();
+        final String jobId = userId;
+        final String token = sb.getShareToken();                 // used for redirect later
+        final String email = fub.getEmail();
+        final String appName = ab.getAppName();
+        final String node = ab.getToolLocation();
+        final String type = selectionMap.getOrDefault("LC-MS Spectra", false) ? "raw" : "other";
+        final String folder = sb.getCurrentUser().getHomeDir();
+        final String baseUrl = ab.getBaseUrlDyn();
+        // 4) Obtain services (use @Inject if you can; CDI fallback shown)
+
+        // 5) Prevent duplicate running job for this user
+        JobTimerService.Status existing = jsv.getStatus(jobId);
+        if (existing == JobTimerService.Status.IN_PROGRESS) {
+            sb.addMessage("warn", "Please wait for your last workflow to finish before submitting again!");
+            return;
         }
 
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put("token", sb.getShareToken());
-        jobDataMap.put("appName", ab.getAppName());
-        jobDataMap.put("node", ab.getToolLocation());
-
-        jobDataMap.put("email", fub.getEmail());
-        jobDataMap.put("type", type);
-        jobDataMap.put("folderName", sb.getCurrentUser().getHomeDir());
-        jobDataMap.put("jobId", jobNM);
-        jobDataMap.put("baseUrl", ab.getBaseUrlDyn());
-
+        // 6) Prime UI status
         jeb.setStopStatusCheck(false);
         jeb.setStatusMsg("Job is running...");
-        jeb.setCurrentJobId(jobNM);
+        jeb.setCurrentJobId(jobId);
         jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         updateNoticeStartWorkflow();
+        System.out.println("token]]]]]]]]]]]]]]]]]]]]]]====" + token);
+        // 7) Create the job payload and remember token (for finish redirect in poll)
+        JobInfo info = new JobInfo(jobId, token, email, appName, node, type, folder, baseUrl);
+        // If your JobTimerService has a token registry, remember it now:
+        // jobTimers.rememberToken(jobId, token);
 
-        JobDetail job = newJob(WorkflowJob.class)
-                .withIdentity(jobNM, triggerGroup)
-                .storeDurably(true)
-                .usingJobData(jobDataMap)
-                .build();
+        // 8) Schedule via TimerService (persistent, fires immediately)
+        jsv.rememberToken(jobId, token);
+        wsv.schedule(info);
 
-        Trigger trigger = newTrigger()
-                .withIdentity(triggerName, triggerGroup)
-                .startNow()
-                .withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(1))
-                .build();
-
-        Scheduler scheduler = js.getScheduler();
-        JobKey jobKey = new JobKey(jobNM, triggerGroup);
-
-        try {
-            if (scheduler.checkExists(jobKey)) {
-                sb.addMessage("warn", "Please wait for your last workflow to finish before submitting again!");
-                return;
-            }
-        } catch (SchedulerException ex) {
-            Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
-            if (!scheduler.isStarted()) {
-                js.initScheduler();
-            }
-        } catch (SchedulerException ex) {
-            Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {
-            scheduler.scheduleJob(job, trigger);
-        } catch (SchedulerException ex) {
-            Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        jeb.setCurrentJobId(jobNM);
-        jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
+        // 9) Show progress dialog & notify
         PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
         sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.");
     }

@@ -1338,6 +1338,25 @@ public class DataUtils {
             LOGGER.error("doRedirect", ioe);
         }
     }
+    
+        public static void doRedirectWithGrowlTest(SessionBean1 sb, String url, String messageType, String message) {
+        try {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            Flash flash = facesContext.getExternalContext().getFlash();
+
+            // Store the message in the flash scope
+            flash.put("growlMessage", message);
+            flash.put("growlMessageType", messageType);  // New: store the message type
+
+            // Perform the redirect
+            facesContext.getExternalContext().redirect(url);
+            sb.addMessage(messageType, message);
+                FacesContext.getCurrentInstance().responseComplete(); // ← stop JSF lifecycle
+
+        } catch (IOException ioe) {
+            LOGGER.error("doRedirect", ioe);
+        }
+    }
 
     public static void doRedirect(String url, ApplicationBean1 ab) {
         FacesContext context = FacesContext.getCurrentInstance();

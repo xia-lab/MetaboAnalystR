@@ -96,50 +96,57 @@ public class JobExecution implements Serializable {
     public void setStatusMsg(String statusMsg) {
         this.statusMsg = statusMsg;
     }
+// Inject your persistent timer service
+    @Inject
+    private JobTimerService jobTimers;
 
     public void checkJobStatus() {
         if (sb.getCurrentUser() == null) {
             return;
         }
-        if (sb.getAnalType().equals("raw")) {
-            run();
-        } else {
-            String user_id = sb.getCurrentUser().getName();
-            String jobId = "job_" + user_id; // same as above
 
-            String sql = "SELECT status FROM workflow_job_status WHERE job_id = ?";
-            try (Connection conn = QuartzDbUtils.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-                stmt.setString(1, jobId);
-                ResultSet rs = (ResultSet) stmt.executeQuery();
-                if (rs.next()) {
-                    String status = rs.getString("status");
-                    switch (status) {
-                        case "IN_PROGRESS" -> statusMsg = "Job is running...";
-                        case "COMPLETED" -> {
-                            statusMsg = "<span style='color: green'>Job has finished!</span>";
-                            QuartzDbUtils.updateJobStatus(jobId, "FINISHED");
-                            stopStatusCheck = true;
-                            String token = QuartzDbUtils.getTokenByJobId(jobId);
-                            String url = DataUtils.constructNavigationURL(ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab);
-                            DataUtils.doRedirect(url, ab);
-                        }
-                        case "FAILED", "ERROR" -> statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
-                        case "FINISHED" -> {
-                            statusMsg = "<span style='color: green'>Job has finished!</span>";
-                            stopStatusCheck = true;
-                        }
-                        default -> statusMsg = "Job status: " + status;
-                    }
-                } else {
-                    // No entry in the table yet
-                    statusMsg = "No record for jobId: " + jobId + " (job not started or status not updated yet).";
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                statusMsg = "Error querying job status from DB.";
-            }
-            System.out.println("statusMsg==" + statusMsg);
+        // Keep your special RAW path if needed
+        if ("raw".equalsIgnoreCase(sb.getAnalType())) {
+            run();
+            return;
         }
+
+        final String userId = sb.getCurrentUser().getName();
+        final JobTimerService.Status st = jobTimers.getStatus(userId);
+
+        if (st == null) {
+            statusMsg = "No job found for job_" + userId + " (not started or not initialized yet).";
+            return;
+        }
+        String jobId = userId;
+
+        switch (st) {
+            case IN_PROGRESS -> {
+                statusMsg = "Job is running...";
+            }
+            case COMPLETED -> {
+                statusMsg = "<span style='color: green'>Job has finished!</span>";
+                stopStatusCheck = true;
+
+                // Build the finish URL (same as before, but redirect on the CLIENT)
+                String token = jobTimers.getTokenByJobId(jobId);  // ← fetch what you stored
+                String url = DataUtils.constructNavigationURL(
+                        ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab
+                );
+
+                // IMPORTANT: client-side redirect during Ajax poll
+                PrimeFaces.current().executeScript("window.location.href='" + url + "';");
+            }
+            case FAILED -> {
+                statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
+                stopStatusCheck = true;
+            }
+            default -> {
+                statusMsg = "Job status: " + st;
+            }
+        }
+
+        System.out.println("statusMsg==" + statusMsg);
     }
 
     public void run() {
@@ -175,7 +182,7 @@ public class JobExecution implements Serializable {
             rCommand = "dt <- read.csv(\"" + dataPath + "\", header = TRUE); "
                     + "as.character(dt[!dt$emailed, 'email'])";
             String jobEmails[] = RC.eval(rCommand).asStrings();
-            
+
             rCommand = "dt <- read.csv(\"" + dataPath + "\", header = TRUE); "
                     + "as.character(dt[!dt$wfBool, 'email'])";
             String jobWfBools[] = RC.eval(rCommand).asStrings();
@@ -189,7 +196,7 @@ public class JobExecution implements Serializable {
                 jobFolderMap.put(jobIDs[i], folderNms[i]);
                 jobStatusMap.put(jobIDs[i], jobStatuses[i] != null ? jobStatuses[i] : "UNKNOWN");
                 jobEmailMap.put(jobIDs[i], jobEmails[i]);
-               jobWfBoolMap.put(jobIDs[i], jobWfBools[i]);
+                jobWfBoolMap.put(jobIDs[i], jobWfBools[i]);
 
             }
 
@@ -199,7 +206,7 @@ public class JobExecution implements Serializable {
                 String folderName = jobFolderMap.get(jid);
                 String status = jobStatusMap.get(jid);
                 String email = jobEmailMap.get(jid);
-                                String wfBool = jobWfBoolMap.get(jid);
+                String wfBool = jobWfBoolMap.get(jid);
 
                 // Ensure the job is associated with the current user's folder
                 if (!currentUserFolder.equals(folderName)) {

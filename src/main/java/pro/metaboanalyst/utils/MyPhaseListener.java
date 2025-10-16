@@ -19,9 +19,11 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.PhaseEvent;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.event.PhaseListener;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
+import java.io.ObjectInputFilter.Status;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +53,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.QuartzDbUtils;
 import pro.metaboanalyst.workflows.WorkflowBean;
-
+import pro.metaboanalyst.workflows.JobTimerService;
 /**
  *
  * @author Jeff
@@ -578,7 +580,7 @@ public class MyPhaseListener implements PhaseListener {
         SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
         FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
         DiagramView dv = getBeanByName("diagramView", DiagramView.class);
-
+        JobTimerService jobTimerService = getBeanByName("jobTimerService", JobTimerService.class);
         try {
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
@@ -603,7 +605,7 @@ public class MyPhaseListener implements PhaseListener {
                     sb.setDataNormed();
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
-                        QuartzDbUtils.updateJobStatus(jobId, "COMPLETED");
+                        jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
                         dv.sendRawResume(email, jobId, shareLink);
                     }
 

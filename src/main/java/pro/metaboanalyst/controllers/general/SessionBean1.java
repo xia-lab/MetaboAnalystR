@@ -39,6 +39,8 @@ import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
+import pro.metaboanalyst.datalts.DatasetController;
+import pro.metaboanalyst.models.StickyDTO;
 import pro.metaboanalyst.workflows.WorkflowView;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -91,6 +93,10 @@ public class SessionBean1 implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
+
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
 
     //****************user defined methods**************
     //USED TO BE FINAL, REMOVED FINAL AND ADDED SETTER FUNCTION FOR DESERIALIZATION FROM JSON
@@ -997,8 +1003,6 @@ public class SessionBean1 implements Serializable {
     public boolean isRegression() {
         return regression;
     }
-    
-    
 
     public boolean isPaired() {
         return paired;
@@ -1879,7 +1883,7 @@ public class SessionBean1 implements Serializable {
             pre = "<font color='red'>[ERROR]: ";
             noticeSize = noticeSize + 1;
             PrimeFaces.current().ajax().update("formBell");
-        } else if (type.equalsIgnoreCase("warn") || type.equalsIgnoreCase("warning") ) {
+        } else if (type.equalsIgnoreCase("warn") || type.equalsIgnoreCase("warning")) {
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", msg));
             pre = "<font color='orange'>[WARNING]: ";
@@ -1893,7 +1897,7 @@ public class SessionBean1 implements Serializable {
         notice.add(pre + msg + "</font>");
         PrimeFaces.current().ajax().update("globalGrowl");
     }
-     
+
     //relay center
     public void recordRCommandFunctionInfo(String rCmd, String functionName) {
         jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
@@ -1950,5 +1954,54 @@ public class SessionBean1 implements Serializable {
         this.graphTypeOptAI = graphTypeOptAI;
     }
 
-    
+    public void doLogoutKeepDataset(int returnHome) {
+        if (loggedIn) {
+            if (RC != null) {
+                if (ab.isOnLocalServer()) {
+                    RCenter.showMemoryUsage(RC);
+                }
+                RC.close();
+            }
+            loggedIn = false;
+
+            // ---- preserve only what we need (selected dataset id)
+            StickyDTO sticky = dc.exportSticky();
+
+            // reset other state you want cleared (optional)
+            reset2DefaultState();
+
+            // real logout + handoff sticky to new session
+            logoutAndPreserve(sticky);
+
+            if (returnHome == 1) {
+                DataUtils.doRedirect(ab.getDomainURL(), ab);
+            } else {
+                FacesContext.getCurrentInstance().getExternalContext()
+                        .getSessionMap().put("MA6_PRO_user", true);
+            }
+
+            keepUserInfo();
+        } else {
+            // your existing already-logged-out branch...
+        }
+    }
+
+    public static void logoutAndPreserve(StickyDTO dto) {
+        var fc = FacesContext.getCurrentInstance();
+        var ext = fc.getExternalContext();
+        var req = (jakarta.servlet.http.HttpServletRequest) ext.getRequest();
+
+        // 1) kill old session
+        var old = req.getSession(false);
+        if (old != null) {
+            old.invalidate();
+        }
+
+        // 2) new clean session
+        var fresh = req.getSession(true);
+
+        // 3) hand off sticky to the new session for @PostConstruct to pick up
+        fresh.setAttribute("STICKY_AFTER_LOGOUT", dto);
+    }
+
 }

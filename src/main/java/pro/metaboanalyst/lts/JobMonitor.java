@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import pro.metaboanalyst.workflows.QuartzDbUtils;
 
 /**
  *
