@@ -514,6 +514,8 @@ CovariateScatter.Anal <- function(mSetObj,
   cov.vec <- "NA";
   # get inputs
 
+  mSetObj <- .get.mSet(mSetObj);
+
 
   if(!analysis.var %in% names(mSetObj$dataSet$meta.types)){
     analysis.var <- names(mSetObj$dataSet$meta.types)[1];
@@ -535,10 +537,7 @@ CovariateScatter.Anal <- function(mSetObj,
     }
   }
 
-  
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
+    
   covariates <- mSetObj$dataSet$meta.info
   var.types <- mSetObj[["dataSet"]][["meta.types"]]
   feature_table <- t(mSetObj$dataSet$norm);
