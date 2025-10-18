@@ -125,6 +125,7 @@ public class TimeUploadBean implements Serializable {
                     return null;
                 }
                 if (RDataUtils.readTextDataTs(RC, fileName, tsFormat)) {
+                    sb.setDataFormat(tsFormat);
                     String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                     if (metaName == null) {
                         return null;

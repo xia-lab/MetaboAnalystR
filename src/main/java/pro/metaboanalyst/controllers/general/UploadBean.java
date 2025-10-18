@@ -138,7 +138,8 @@ public class UploadBean implements Serializable {
                 return null;
             }
             sb.setDataUploaded();
-
+            sb.setDataFormat(dataFormat);
+            sb.setDataType(dataType);
             // 3) STAGE ONLY (no DB insert, no dataset-folder save yet)
             String niceTitle = DataUtils.stripExt(fileName);
             int samples = 10; // or inferSampleNumFromR(RC)

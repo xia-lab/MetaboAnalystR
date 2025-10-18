@@ -43,6 +43,8 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.spectra.SpectraControlBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.omnifaces.cdi.Push;
+import org.omnifaces.cdi.PushContext;
 import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
@@ -51,9 +53,10 @@ import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.workflows.DiagramView;
-import pro.metaboanalyst.workflows.QuartzDbUtils;
+import pro.metaboanalyst.workflows.JobExecution;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import pro.metaboanalyst.workflows.JobTimerService;
+
 /**
  *
  * @author Jeff
@@ -580,6 +583,8 @@ public class MyPhaseListener implements PhaseListener {
         SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
         FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
         DiagramView dv = getBeanByName("diagramView", DiagramView.class);
+        //JobExecution je = getBeanByName("jobExecution", JobExecution.class);
+
         JobTimerService jobTimerService = getBeanByName("jobTimerService", JobTimerService.class);
         try {
             String tokenId = request.getParameter("tokenId");
@@ -606,6 +611,7 @@ public class MyPhaseListener implements PhaseListener {
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
+                        //je.checkJobStatus();
                         dv.sendRawResume(email, jobId, shareLink);
                     }
 
@@ -613,6 +619,7 @@ public class MyPhaseListener implements PhaseListener {
                     var ec = fc.getExternalContext();
                     ec.getFlash().setKeepMessages(true);
                     ec.getFlash().put("justCompletedWorkflow", Boolean.TRUE);
+
                     ec.invalidateSession();
                 }
             } else {
@@ -636,7 +643,7 @@ public class MyPhaseListener implements PhaseListener {
         try {
             String tokenId = request.getParameter("tokenId");
             boolean res = fbc.loadProject(tokenId, "workflow");
-
+            System.out.println(res + "===workflowfinish");
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
                 if (wfb.getRunPlans().size() > 1) {

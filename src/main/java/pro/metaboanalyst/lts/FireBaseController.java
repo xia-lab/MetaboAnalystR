@@ -431,6 +431,23 @@ public class FireBaseController implements Serializable {
         }
 
     }
+    
+
+    
+    public boolean saveDataAndGoToWorkflow() {
+        if (dc.hasStagedDataset()) {
+            dc.getStagedDataset().setSamplenum(RDataUtils.getSampleNum(sb.getRConnection()));
+            java.util.UUID dsId = dc.commitStagedDataset();
+            if (dsId != null) {
+                System.out.println("Committed staged dataset: " + dsId);
+            }
+            dc.loadWorkflow(dc.findById(dsId), false);
+            return true;
+        }else{
+            sb.addMessage("warn", "Failed to load the current dataset.");
+            return false;
+        }
+    }
 
     @Inject
     private SpectraProcessBean sppb;

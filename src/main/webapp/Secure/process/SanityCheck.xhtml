@@ -39,9 +39,9 @@
                         <h:outputLabel value="#{procBean.msgText}" escape="false"/>
                     </h:panelGrid>
                     <p:commandButton styleClass="btnCirc ui-button-help"
-                                     rendered="false"
-                                     action = "WorkflowView"
+                                     rendered="#{datasetController.hasStagedDataset()}"
                                      style="margin-left: 80px; font-weight: bold; font-size: 15px"
+                                 actionListener="#{fireBaseController.saveDataAndGoToWorkflow()}"
                                      value="Workflow"/>
 
                 </h:panelGrid>

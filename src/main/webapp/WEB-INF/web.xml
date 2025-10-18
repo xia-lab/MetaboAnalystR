@@ -65,6 +65,10 @@
         <param-name>primefaces.SUBMIT</param-name>
         <param-value>partial</param-value>
     </context-param>
+    <context-param>
+        <param-name>org.omnifaces.SOCKET_ENDPOINT_ENABLED</param-name>
+        <param-value>true</param-value>
+    </context-param>
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>

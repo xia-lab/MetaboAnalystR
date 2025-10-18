@@ -100,6 +100,7 @@ public class JobTimerService {
     }
 
     public Status getStatus(String jobId) {
+            System.out.println("[JobTimerService] getStatus() (mem) jobId=" + jobId);
         Status s = statuses.get(jobId);
         if (s != null) {
             // noisy but useful when debugging polling

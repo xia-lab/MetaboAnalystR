@@ -59,7 +59,7 @@ public class WorkflowJobTimerService {
     private void executeWorkflow(JobInfo info) {
         String jobId = info.getJobId();
         try {
-            LOG.info("Executing WorkflowJob via TimerService: " + jobId);
+            System.out.println("Executing WorkflowJob via TimerService: " + jobId);
 
             boolean ok = DataUtils.sendPostRequest(
                 info.getNode(),
@@ -74,14 +74,14 @@ public class WorkflowJobTimerService {
             );
 
             if (ok) {
-                LOG.info("WorkflowJob completed: " + jobId);
-                jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
+                 //System.out.println("WorkflowJob completed: " + jobId);
+                //jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
             } else {
-                LOG.warning("WorkflowJob failed (sendPostRequest returned false): " + jobId);
-                jobTimerService.updateJobStatus(jobId, JobTimerService.Status.FAILED);
+                 //System.out.println("WorkflowJob failed (sendPostRequest returned false): " + jobId);
+                //jobTimerService.updateJobStatus(jobId, JobTimerService.Status.FAILED);
             }
         } catch (Exception e) {
-            LOG.severe("WorkflowJob exception for " + jobId + ": " + e.getMessage());
+             System.out.println("WorkflowJob exception for " + jobId + ": " + e.getMessage());
             jobTimerService.updateJobStatus(jobId, JobTimerService.Status.FAILED);
         }
     }

@@ -461,6 +461,16 @@ public class DiagramView implements Serializable {
     @JsonIgnore
     private List<Element> allElements = new ArrayList<>();
 
+    private static String toSafeId(String label) {
+        // collapse non-alphanumerics into underscores, trim edges, lower-case
+        String id = label.toLowerCase().replaceAll("[^a-z0-9]+", "_");
+        // ids can’t start with a digit per some CSS selector quirks; prefix if needed
+        if (id.isEmpty() || Character.isDigit(id.charAt(0))) {
+            id = "n_" + id;
+        }
+        return label;
+    }
+
     @PostConstruct
     public void init() {
         FacesContext.getCurrentInstance().getPartialViewContext().getRenderIds().add("designForm");
@@ -483,9 +493,10 @@ public class DiagramView implements Serializable {
 
         int firstLevelXPosition = 15; // Starting X position for second-level nodes
         for (String node : firstLevelNodes) {
+            String id = toSafeId(node);
 
             Element element = new Element(new NetworkElement(node, node, obtainInputImageUrl(node), "input", false), firstLevelXPosition + "em", "4em");
-            element.setId(node);
+            element.setId(id);
             element.setStyleClass("inputcls");
             element.setTitle(node);
             element.setDraggable(false);
@@ -501,8 +512,10 @@ public class DiagramView implements Serializable {
 
         int secondLevelXPosition = 10; // Starting X position for second-level nodes
         for (String node : secondLevelNodes) {
+            String id = toSafeId(node);
+
             Element secondLevelElement = new Element(new NetworkElement(node, node, "icon.png", "proc", false), secondLevelXPosition + "em", "19.5em");
-            secondLevelElement.setId(node);
+            secondLevelElement.setId(id);
 
             secondLevelElement.setStyleClass("proccls");
             secondLevelElement.setTitle(node);
@@ -520,8 +533,10 @@ public class DiagramView implements Serializable {
 
         int thirdLevelXPosition = 2; // Starting X position for third-level nodes
         for (String node : thirdLevelNodes) {
+            String id = toSafeId(node);
+
             Element thirdLevelElement = new Element(new NetworkElement(node, node, "icon.png", "anal", false), thirdLevelXPosition + "em", "35em");
-            thirdLevelElement.setId(node);
+            thirdLevelElement.setId(id);
 
             thirdLevelElement.setStyleClass("nodecls");
             thirdLevelElement.setTitle(node);
@@ -538,6 +553,8 @@ public class DiagramView implements Serializable {
             selectionMap.put(element.getId(), false);
             executionMap.put(element.getId(), false);
         }
+        
+        
     }
 
     public void resetDiagram() {
@@ -1040,7 +1057,7 @@ public class DiagramView implements Serializable {
                 .getExternalContext().getRequestParameterMap().get("clickedElement");
         if (clickedElement != null) {
             //handleElementSelect(clickedElement, true);
-            Element currentElement = model.findElement(clickedElement);
+            Element currentElement = model.findElement(toSafeId(clickedElement));
             System.out.println("dbl");
             if (currentElement != null) {
                 if (currentElement.getStyleClass().contains("proccls")) {
@@ -2386,7 +2403,7 @@ public class DiagramView implements Serializable {
         // Clean up the element name (remove checkmark and trim spaces)
 
         // Find the element in the diagram model
-        Element currentElement = model.findElement(elementName);
+        Element currentElement = model.findElement(toSafeId(elementName));
 
         if (currentElement != null) {
             // Retrieve current properties of the element

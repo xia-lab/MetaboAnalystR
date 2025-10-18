@@ -22,6 +22,7 @@
             pro.metaboanalyst.utils.MyPhaseListener
         </phase-listener>
     </lifecycle>
+    
     <navigation-rule>
         <from-view-id>*</from-view-id>   
         <navigation-case>

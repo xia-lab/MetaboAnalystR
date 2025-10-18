@@ -94,7 +94,7 @@
                                             <p:commandLink id="loadWorkflowBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab:dataTableForm"
-                                                           action="#{datasetController.loadWorkflow(ds)}">
+                                                           action="#{datasetController.loadWorkflow(ds, true)}">
                                                 <i class="pi pi-sitemap" style="color:#16a34a;"></i>
                                             </p:commandLink>
                                         </f:facet>
@@ -177,7 +177,7 @@
                                             <p:commandLink id="loadWorkflowBn" title="Load"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab:dataTableForm"
-                                                           action="#{datasetController.loadWorkflow(ds)}">
+                                                           action="#{datasetController.loadWorkflow(ds, true)}">
                                                 <i class="pi pi-sitemap" style="color:#16a34a;"></i>
                                             </p:commandLink>
 

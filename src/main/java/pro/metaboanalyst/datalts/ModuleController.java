@@ -231,7 +231,7 @@ public class ModuleController implements Serializable {
             }
 
             // --- Gather filenames by role ---
-            String dataName = null, data2Name = null, metaName = null, listName = null,listGeneName = null, ms2Name = null, rawName = null;
+            String dataName = null, data2Name = null, metaName = null, listName = null, listGeneName = null, ms2Name = null, rawName = null;
             for (DatasetFile f : ds.getFiles()) {
                 String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
                 System.out.println(role + "====role");
@@ -563,5 +563,4 @@ public class ModuleController implements Serializable {
             sb.addMessage("Error", "Unable to open module: " + e.getMessage());
         }
     }
-
 }

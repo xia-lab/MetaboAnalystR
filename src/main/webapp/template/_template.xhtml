@@ -5,7 +5,10 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
       lang="en">
-
+    <f:metadata> 
+        <ui:insert name="metaInfo"> 
+        </ui:insert>
+    </f:metadata> 
     <h:head>
         <f:facet name="first">
             <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
@@ -193,10 +196,7 @@
         </script>
         <h:outputScript name="js/layout.js" library="diamond-layout"/>
         <h:outputScript name="js/prism.js" library="diamond-layout"/>
-        <f:metadata> 
-            <ui:insert name="metaInfo"> 
-            </ui:insert>
-        </f:metadata> 
+
         <style>
             .glow {
                 text-shadow: 2px 2px 4px #000000;

@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.omnifaces.cdi.Push;
+import org.omnifaces.cdi.PushContext;
 import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
@@ -96,12 +98,22 @@ public class JobExecution implements Serializable {
     public void setStatusMsg(String statusMsg) {
         this.statusMsg = statusMsg;
     }
+
+    @Inject
+    @Push(channel = "/job")
+    PushContext push;
+
+    public void notifyDone(String jobId, String url) {
+        push.send(url, jobId); // targets /job/<jobId>
+    }
+
 // Inject your persistent timer service
     @Inject
     private JobTimerService jobTimers;
 
     public void checkJobStatus() {
-        if (sb.getCurrentUser() == null) {
+        System.out.println("checkjob1");
+        if (sb.getCurrentUser() == null || stopStatusCheck) {
             return;
         }
 
@@ -113,12 +125,14 @@ public class JobExecution implements Serializable {
 
         final String userId = sb.getCurrentUser().getName();
         final JobTimerService.Status st = jobTimers.getStatus(userId);
+        System.out.println("checkjob2");
 
         if (st == null) {
             statusMsg = "No job found for job_" + userId + " (not started or not initialized yet).";
             return;
         }
         String jobId = userId;
+        System.out.println("checkjob3" + "======" + st);
 
         switch (st) {
             case IN_PROGRESS -> {
@@ -133,9 +147,18 @@ public class JobExecution implements Serializable {
                 String url = DataUtils.constructNavigationURL(
                         ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab
                 );
+                System.out.println("finishworkflowjob======================" + url);
+                // Use client-side redirect for Ajax requests
+                //DataUtils.doRedirect(url, ab);
+                PrimeFaces.current().executeScript("console.log('" + url + "')");
 
-                // IMPORTANT: client-side redirect during Ajax poll
-                PrimeFaces.current().executeScript("window.location.href='" + url + "';");
+                //PrimeFaces.current().executeScript("window.location.href='" + url + "';");
+                PrimeFaces.current().executeScript(
+                        "try{ clearInterval(window.pollTimer); }catch(e){}"
+                        + "console.log('job complete');"
+                        + // (optional) now do navigation or show a dialog — avoid diagram.refresh() here
+                        "window.location.replace('" + url.replace("'", "\\'") + "');"
+                );
             }
             case FAILED -> {
                 statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";

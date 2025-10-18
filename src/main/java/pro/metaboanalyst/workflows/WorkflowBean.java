@@ -741,7 +741,7 @@ public class WorkflowBean implements Serializable {
                 selectedWorkflow = workflowList.get(0);
             }
         }
-        System.out.println(workflowList.size() + "===workflowList");
+
     }
 
     public ArrayList<HashMap<String, Object>> loadDefaultWorkflows(String jsonFilePath) {
@@ -1844,4 +1844,132 @@ public class WorkflowBean implements Serializable {
         }
         return 0;
     }
+
+// Classify data types into input kinds
+    private enum InputKind {
+        GENERIC_TABLE, COMPOUND_TABLE, PEAK_TABLE, PEAK_LIST, LCMS_SPECTRA, METABOLITE_LIST
+    }
+
+    private boolean hasSelectedDataset() {
+        try {
+            return ds.getSelected() != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private String currentDatasetDataTypeSafe() {
+        if (!hasSelectedDataset()) {
+            return "";
+        }
+        String dt = String.valueOf(ds.getSelected().getDataType());
+        return dt == null ? "" : dt.trim().toLowerCase();
+    }
+
+    private String currentDatasetModuleSafe() {
+        if (!hasSelectedDataset()) {
+            return "";
+        }
+        String m = String.valueOf(ds.getSelected().getModule());
+        return m == null ? "" : m.trim().toLowerCase();
+    }
+
+    private InputKind kindForDataType(String dt) {
+        switch (dt) {
+            case "conc":
+                return InputKind.COMPOUND_TABLE;
+            case "pktable":
+            case "mspeak":
+            case "nmrpeak":
+                return InputKind.PEAK_TABLE;
+            case "mass_table":
+                return InputKind.PEAK_LIST;
+            case "spec":
+            case "specbin":
+                return InputKind.LCMS_SPECTRA;
+            case "metabolite_list":
+            case "list":
+                return InputKind.METABOLITE_LIST;
+            default:
+                return InputKind.GENERIC_TABLE;
+        }
+    }
+
+    private boolean isModuleCompatibleForDataset(String wfModule, String dsModule, InputKind kind) {
+        if (wfModule == null) {
+            return true; // permissive default
+        }
+        String m = wfModule.trim().toLowerCase();
+
+        // Core by input kind
+        switch (m) {
+            case "raw":
+                return kind == InputKind.LCMS_SPECTRA;
+            case "mummichog":
+                return kind == InputKind.PEAK_TABLE || kind == InputKind.PEAK_LIST;
+            case "pathqea":
+            case "msetqea":
+                return kind == InputKind.COMPOUND_TABLE;
+            case "pathora":
+            case "msetora":
+                return kind == InputKind.METABOLITE_LIST;
+            case "pathway":
+            case "enrich":
+                return kind == InputKind.COMPOUND_TABLE
+                        || kind == InputKind.METABOLITE_LIST
+                        || kind == InputKind.PEAK_LIST;
+            case "stat":
+            case "roc":
+            case "dose":
+            case "mf":
+            case "power":
+                return kind == InputKind.GENERIC_TABLE
+                        || kind == InputKind.COMPOUND_TABLE
+                        || kind == InputKind.PEAK_TABLE;
+            default:
+                return true;
+        }
+    }
+
+// === Public API for Facelets ===
+// If no dataset selected => TRUE (no disabling). Otherwise compare with ds.selected's dataType & module.
+    public boolean workflowCompatible(Map<String, Object> wf) {
+        if (wf == null) {
+            return true;
+        }
+        if (!hasSelectedDataset()) {
+            return true; // <-- your requested behavior
+        }
+        String dsDt = currentDatasetDataTypeSafe();
+        String dsMod = currentDatasetModuleSafe();
+        InputKind kind = kindForDataType(dsDt);
+
+        String wfModule = wf.get("module") == null ? null : wf.get("module").toString();
+        return isModuleCompatibleForDataset(wfModule, dsMod, kind);
+    }
+
+    public String incompatReason(Map<String, Object> wf) {
+        if (wf == null || !hasSelectedDataset()) {
+            return "";
+        }
+        String module = (wf.get("module") == null ? "" : wf.get("module").toString().toLowerCase());
+        switch (module) {
+            case "raw":
+                return "Requires LC–MS Spectra";
+            case "mummichog":
+                return "Requires Peak Table or Peak List";
+            case "pathqea":
+            case "msetqea":
+                return "Requires Compound Table";
+            case "pathora":
+            case "msetora":
+                return "Requires Metabolite List";
+            case "pathway":
+            case "enrich":
+                return "Requires Compound Table or List";
+            default:
+                return "Incompatible with current dataset type";
+        }
+    }
+
 }

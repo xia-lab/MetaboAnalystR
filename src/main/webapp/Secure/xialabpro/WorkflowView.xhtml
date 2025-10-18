@@ -5,7 +5,8 @@
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui"
-                template="/template/_template_workflow.xhtml">
+                template="/template/_template_workflow.xhtml"
+                xmlns:o="http://omnifaces.org/ui">
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{workflowBean.loadAllWorkflowsPrerender()}"></f:event> 
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Workflows', '/Secure/xialabpro/WorkflowView.xhtml')}"/> 
@@ -53,17 +54,25 @@
                     var key = "afterResetRun";
                     if (shouldRun) {
                         setTimeout(function () {
-                                afterResetCmd();
+                            afterResetCmd();
                         }, 200);
                     }
                 };
             })();
+            const POLL_MS = 5000;
+            const pollTimer = setInterval(() => {
+                try {
+                    pingJob();
+                } catch (e) {
+                }
+            }, POLL_MS);
         </script>
 
     </ui:define>
 
     <ui:define name="content">
         <h:form id="formHidden1">
+
             <p:remoteCommand name="afterResetCmd"
                              process="@this"
                              update=":acTab"
@@ -81,9 +90,19 @@
         <h:panelGrid style="padding: 40px 30px 20px 40px; width:100%">
             <h2>Workflow Management</h2>
             <p style="font-size: 1.1em">
-                Perform automated data analysis without manual operation (except data upload) by creating workflow(s). 
-                Click on a box to select an analysis unit; click it again to de-select; Click <b>RUN!</b> to execute the workflow(s); 
-                Upon completion, you will receive email notice to view analysis results in the <b>Dashboard</b>. 
+                Run end-to-end analyses as reusable workflows by picking a template or one of your saved workflows.
+                <ul>
+                    <li>
+                        To create your workflow, go through an analysis with your data and when saving it, check the "Worklow" checkbox.
+                    </li>
+                    <li>
+                        To customize key parameters, click on the <i class="pi pi-cog"></i> icon. 
+
+                    </li>
+
+                </ul>
+
+
             </p>
             <h:panelGroup style="font-size: 1.1em; float:right">
                 Current dataset:
@@ -100,7 +119,7 @@
                         <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
                             <ui:repeat value="#{workflowBean.defaultWorkflowList}" var="wf">
                                 <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="ds-card surface-card shadow-1 p-3">
+                                            styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}">
 
                                     <div style="margin-bottom:.4rem;">
                                         <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
@@ -140,12 +159,14 @@
 
                                         <f:facet name="right">
                                             <p:commandLink id="runWf" title="Start workflow"
+                                                           disabled="#{!workflowBean.workflowCompatible(wf)}"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab"
                                                            action="#{workflowBean.startFromTemplate(wf)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
-                                            <p:tooltip for="runWf" value="Start from template"/>
+                                            <p:tooltip for="runWf"
+                                                       value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
                                         </f:facet>
                                     </p:toolbar>
                                 </p:fieldset>
@@ -161,7 +182,7 @@
                             <!-- workflowList: ArrayList<HashMap<String,Object>> -->
                             <ui:repeat value="#{workflowBean.workflowList}" var="wf">
                                 <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="ds-card surface-card shadow-1 p-3">
+                                            styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}">
 
                                     <div style="margin-bottom:.4rem;">
                                         <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
@@ -212,12 +233,14 @@
 
                                         <f:facet name="right">
                                             <p:commandLink id="runWf" title="Start workflow"
+                                                           disabled="#{!workflowBean.workflowCompatible(wf)}"
                                                            onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab"
                                                            action="#{workflowBean.startFromTemplate(wf)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
-                                            <p:tooltip for="runWf" value="Start from template"/>
+                                            <p:tooltip for="runWf"
+                                                       value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
                                         </f:facet>
                                     </p:toolbar>
 
@@ -233,8 +256,9 @@
                             <div class="indeterminate-progress-bar__progress2"></div>
                         </div>
                     </h:panelGroup>
-                    <p:outputLabel style="font-size:1.6em !important; font-weight: bold" value="Workflow Management"/>
-
+                    <p style="font-size: 1.1em">
+                        When ready, click on "RUN!". You will receive an email when it is finished. Open the <b>Dashboard</b> to view results. 
+                    </p>
 
                     <h:panelGrid columns="2" style="width:100%">
 
@@ -251,9 +275,12 @@
 
                                 <!-- Left side: Poll Form -->
                                 <h:form id="pollForm" style="display: flex; align-items: center; margin-left: 2rem;">
-
+                                    <p:remoteCommand name="pingJob"
+                                                     actionListener="#{jobExecution.checkJobStatus}"
+                                                     update=":formHidden1 :formWorkflowInfo :formBell :acTab:designForm"/>
+                                    <!--
                                     <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell :acTab:designForm" stop="#{jobExecution.stopStatusCheck}" widgetVar="pollWidget" />
-
+                                    -->
                                     <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
                                         <span>
                                             <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
@@ -302,12 +329,12 @@
                                                      rendered="#{specLoader.spectraUploaded}"
                                                      style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
                                                      onclick="PF('progressDialog').show()"/>
-
+                                    <!--
                                     <p:commandButton value="Reset" 
                                                      icon="pi pi-refresh"
                                                      style="font-weight: bold; font-size:1.2rem; width: 120px; height: 42px;"
                                                      onclick="PF('resetDialog').show()" />
-                                    <!--onclick="PF('resetDialog').show()"-->
+                                    onclick="PF('resetDialog').show()"-->
 
                                     <p:commandButton value="Dashboard" immediate="true" 
                                                      icon="pi pi-forward"
@@ -482,7 +509,8 @@
                                      style="width:120px; font-size: 14px;" 
                                      action="#{diagramView.resetWorkflow()}" 
                                      ajax="false"     
-                                     onclick="PF('resetDialog').hide();PF('statusDialog').show();" 
+                                     onclick="PF('resetDialog').hide();
+                                             PF('statusDialog').show();" 
                                      oncomplete="PF('statusDialog').hide();" />
                 </div>
             </h:form>
@@ -1126,7 +1154,8 @@
                         Continue?
                     </p>
                     <h:panelGrid columns="2" style="width:100%; line-height:1.6;">
-                        <p:commandButton value="Cancel" onclick="PF('wfDelDlg').hide();return false;"/>
+                        <p:commandButton value="Cancel" onclick="PF('wfDelDlg').hide();
+                                return false;"/>
                         <p:commandButton value="Delete" styleClass="ui-button-danger"
                                          onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('wfDelDlg').hide();"
                                          update=":acTab:wfForm :acTab:wfForm2"

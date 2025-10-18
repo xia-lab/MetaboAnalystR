@@ -645,7 +645,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             }
 
             sb.addMessage("info", "Dataset created: " + stagedDataset.getTitle());
-            clearStaged();
+            //clearStaged();
             return datasetId;
 
         } catch (Exception e) {
@@ -1144,8 +1144,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
     }
 
-    public void loadWorkflow(DatasetRow ds) {
-        boolean res = load(ds);
+    public void loadWorkflow(DatasetRow ds, boolean login) {
+        boolean res = load(ds, login);
 
         if (res) {
             boolean res2 = handleDataset(ds);
@@ -1159,7 +1159,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
     }
 
-    public boolean load(DatasetRow ds) {
+    public boolean load(DatasetRow ds, boolean login) {
         System.out.println("selected====" + ds.getFilename());
         if (ds == null) {
             sb.addMessage("Error", "No dataset selected to load.");
@@ -1170,9 +1170,9 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             // 0) Remember selection
             this.selected = ds;
 
-            // 1) Login -> (re)creates a fresh working folder for the session
+            if(login){
             sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
-
+            }
             // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
             Path srcDir = Paths.get(
                     fb.getProjectPath(), "user_folders",
@@ -2785,7 +2785,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     // Called by remoteCommand on next request
     public void afterResetInit() {
         if (selected != null) {
-            boolean ok = load(selected);          // your existing method (no streaming)
+            boolean ok = load(selected, true);          // your existing method (no streaming)
             if (ok) {
                 handleDataset(selected);      // your existing method (no streaming)
             }
