@@ -63,7 +63,7 @@
 
                     <p:toolbarGroup align="right" styleClass="flex align-items-center gap-2">
                         <span class="text-sm text-600">Current dataset:</span>
-                        <p:tag value="#{datasetController.selected ne null ? datasetController.selected.filename : 'None, please go to "Data Center" to select one.'}"
+                        <p:tag value="#{datasetController.selected ne null ? datasetController.selected.filename : 'None'}"
                                severity="#{datasetController.selected ne null ? 'success' : 'danger'}"
                                styleClass="text-sm"/>
                     </p:toolbarGroup>

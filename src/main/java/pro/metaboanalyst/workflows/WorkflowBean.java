@@ -1181,9 +1181,9 @@ public class WorkflowBean implements Serializable {
         if (folderName == null || folderName.isEmpty()) {
             throw new IllegalArgumentException("Folder name must not be null or empty");
         }
-        for (WorkflowParameters param : workflowOptions) {
-            if (folderName.equals(param.getFolderName())) {
-                return param;
+        for (RunPlan param : runPlans) {
+            if (folderName.equals(param.folderName())) {
+                return param.getParams();
             }
         }
         return null; // Return null if no match is found

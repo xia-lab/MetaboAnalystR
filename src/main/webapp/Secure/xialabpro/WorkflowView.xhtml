@@ -105,12 +105,10 @@
 
             </p>
             <h:panelGroup style="font-size: 1.1em; float:right">
-                Current dataset:
-                <span class="px-2 py-1 border-round text-sm"
-                      style="background: #{datasetController.selected ne null ? '#DCFCE7' : '#FFE4E6'};
-                      color: #{datasetController.selected ne null ? '#166534' : '#9F1239'}">
-                    #{datasetController.selected ne null ? datasetController.selected.filename : 'None'}
-                </span>
+                <span class="text-sm text-600">Current dataset:</span>
+                <p:tag value="#{datasetController.selected ne null ? datasetController.selected.filename : 'None'}"
+                       severity="#{datasetController.selected ne null ? 'success' : 'danger'}"
+                       styleClass="text-sm"/>
             </h:panelGroup>
             <!-- -->
             <p:tabView id="acTab" widgetVar="tabWidget" style="width:100%; border:none; font-size:13px;" dynamic="false" cache="true" activeIndex="#{workflowBean.activeIndex}">
