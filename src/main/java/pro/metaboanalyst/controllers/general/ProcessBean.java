@@ -49,7 +49,7 @@ public class ProcessBean implements Serializable {
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
-    
+
     @JsonIgnore
     @Inject
     private DatasetController dc;
@@ -948,5 +948,9 @@ public class ProcessBean implements Serializable {
 
     public void setBlankCutoff(int blankCutoff) {
         this.blankCutoff = blankCutoff;
+    }
+
+    public boolean isSanityReady() {
+        return msgText != null && !msgText.isBlank();
     }
 }
