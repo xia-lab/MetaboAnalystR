@@ -354,6 +354,7 @@ public class MummiAnalBean implements Serializable {
             String TmpMSModeOpt = spb.getPolarity();
             RDataUtils.setInstrumentParams(sb, instrumentOpt, TmpMSModeOpt, "yes", 0.02);
         }
+            System.out.println("mummichog-------algoptsvalue[0]=============" + algOpts[0]);
 
         if (analOption.equals("heatmap")) {
 
@@ -436,6 +437,8 @@ public class MummiAnalBean implements Serializable {
                     sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 }
             }
+            
+            System.out.println("mummichog-------mum");
             if (REnrichUtils.setupMummichogPval(sb, pvalCutoff)) {
                 if (REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
 
@@ -465,7 +468,7 @@ public class MummiAnalBean implements Serializable {
         } else {
             algOptSingle = "gsea";
 
-            RDataUtils.setPeakEnrichMethod(sb, algOpts[0], version);
+            RDataUtils.setPeakEnrichMethod(sb, "gsea", version);
             nextpage = "gseapkview";
             String imgName = sb.getNewImage("peaks_to_paths_gsea");
 

@@ -26,6 +26,7 @@ public class FunctionInvoker {
     // Registry for collection element types by property name
     // Add more entries here if you have other collection-typed properties.
     private static final Map<String, Class<?>> COLLECTION_ELEMENT_TYPES = new HashMap<>();
+
     static {
         COLLECTION_ELEMENT_TYPES.put("workflowOptions", pro.metaboanalyst.workflows.WorkflowParameters.class);
     }
@@ -117,52 +118,92 @@ public class FunctionInvoker {
 
     @SuppressWarnings("unchecked")
     private static Object convertValue(Object value, Class<?> targetType, String propertyName) {
-        if (value == null) return null;
-        if (targetType.isAssignableFrom(value.getClass())) return value;
+        if (value == null) {
+            return null;
+        }
+        if (targetType.isAssignableFrom(value.getClass())) {
+            return value;
+        }
 
-        // Handle Set/List with known element type (e.g., workflowOptions -> WorkflowParameters)
+        // Handle Set/List with known element type...
         if (Set.class.isAssignableFrom(targetType) || List.class.isAssignableFrom(targetType)) {
             Class<?> elemType = COLLECTION_ELEMENT_TYPES.get(propertyName);
             TypeFactory tf = MAPPER.getTypeFactory();
 
             if (elemType != null) {
                 if (Set.class.isAssignableFrom(targetType)) {
-                    return MAPPER.convertValue(
-                            value,
-                            tf.constructCollectionType(LinkedHashSet.class, elemType)
-                    );
+                    return MAPPER.convertValue(value, tf.constructCollectionType(LinkedHashSet.class, elemType));
                 } else {
-                    return MAPPER.convertValue(
-                            value,
-                            tf.constructCollectionType(ArrayList.class, elemType)
-                    );
+                    return MAPPER.convertValue(value, tf.constructCollectionType(ArrayList.class, elemType));
                 }
             }
-
             // Fallback best-effort conversion without element typing
             if (Set.class.isAssignableFrom(targetType)) {
-                List<Object> list = MAPPER.convertValue(value, new TypeReference<List<Object>>() {});
+                List<Object> list = MAPPER.convertValue(value, new TypeReference<List<Object>>() {
+                });
                 return new LinkedHashSet<>(list);
             } else {
-                return MAPPER.convertValue(value, new TypeReference<List<Object>>() {});
+                return MAPPER.convertValue(value, new TypeReference<List<Object>>() {
+                });
             }
         }
 
-        // Strings -> String[]
+        // --- FIXED: robust conversion to String[] ---
         if (targetType == String[].class) {
-            return value.toString().split("\\s*,\\s*");
+            // JSON array → List -> String[]
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                return list.stream().map(String::valueOf).toArray(String[]::new);
+            }
+            // Already some array type -> copy element-wise into String[]
+            if (value.getClass().isArray()) {
+                int len = java.lang.reflect.Array.getLength(value);
+                String[] arr = new String[len];
+                for (int i = 0; i < len; i++) {
+                    Object el = java.lang.reflect.Array.get(value, i);
+                    arr[i] = String.valueOf(el);
+                }
+                return arr;
+            }
+            // Scalar string: support either "a,b,c" or "[a, b, c]" (strip brackets and quotes)
+            String s = value.toString().trim();
+            if (s.startsWith("[") && s.endsWith("]")) {
+                s = s.substring(1, s.length() - 1);
+            }
+            if (s.isEmpty()) {
+                return new String[0];
+            }
+            return Arrays.stream(s.split("\\s*,\\s*"))
+                    .map(FunctionInvoker::stripQuotes)
+                    .toArray(String[]::new);
         }
 
         // Primitive/wrapper conversions via String
         String s = value.toString();
-        if (targetType == int.class || targetType == Integer.class) return Integer.valueOf(s);
-        if (targetType == double.class || targetType == Double.class) return Double.valueOf(s);
-        if (targetType == boolean.class || targetType == Boolean.class) return Boolean.valueOf(s);
-        if (targetType == long.class || targetType == Long.class) return Long.valueOf(s);
-        if (targetType == float.class || targetType == Float.class) return Float.valueOf(s);
-        if (targetType == short.class || targetType == Short.class) return Short.valueOf(s);
-        if (targetType == byte.class || targetType == Byte.class) return Byte.valueOf(s);
-        if (targetType == char.class || targetType == Character.class) return s.isEmpty() ? null : s.charAt(0);
+        if (targetType == int.class || targetType == Integer.class) {
+            return Integer.valueOf(s);
+        }
+        if (targetType == double.class || targetType == Double.class) {
+            return Double.valueOf(s);
+        }
+        if (targetType == boolean.class || targetType == Boolean.class) {
+            return Boolean.valueOf(s);
+        }
+        if (targetType == long.class || targetType == Long.class) {
+            return Long.valueOf(s);
+        }
+        if (targetType == float.class || targetType == Float.class) {
+            return Float.valueOf(s);
+        }
+        if (targetType == short.class || targetType == Short.class) {
+            return Short.valueOf(s);
+        }
+        if (targetType == byte.class || targetType == Byte.class) {
+            return Byte.valueOf(s);
+        }
+        if (targetType == char.class || targetType == Character.class) {
+            return s.isEmpty() ? null : s.charAt(0);
+        }
 
         // For POJOs/Maps/JsonNode: let Jackson bind
         if (value instanceof Map || value instanceof List || value instanceof JsonNode) {
@@ -175,6 +216,18 @@ public class FunctionInvoker {
         } catch (IllegalArgumentException ignored) {
             return value;
         }
+    }
+
+// Helper to unquote tokens like "'mum'" or "\"mum\""
+    private static String stripQuotes(String x) {
+        if (x == null) {
+            return null;
+        }
+        String t = x.trim();
+        if ((t.startsWith("\"") && t.endsWith("\"")) || (t.startsWith("'") && t.endsWith("'"))) {
+            return t.substring(1, t.length() - 1);
+        }
+        return t;
     }
 
     public static void invokeFunction(FunctionInfo functionInfo) throws Exception {
@@ -233,20 +286,34 @@ public class FunctionInvoker {
     }
 
     private static Object convertJsonNode(JsonNode node) {
-        if (node == null || node.isNull()) return null;
-        if (node.isTextual()) return node.asText();
-        if (node.isInt()) return node.asInt();
-        if (node.isBoolean()) return node.asBoolean();
-        if (node.isDouble() || node.isFloat() || node.isBigDecimal()) return node.asDouble();
-        if (node.isLong() || node.isBigInteger()) return node.asLong();
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        if (node.isTextual()) {
+            return node.asText();
+        }
+        if (node.isInt()) {
+            return node.asInt();
+        }
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        if (node.isDouble() || node.isFloat() || node.isBigDecimal()) {
+            return node.asDouble();
+        }
+        if (node.isLong() || node.isBigInteger()) {
+            return node.asLong();
+        }
 
         if (node.isArray()) {
             // Return a List of Objects; convertValue() will bind to typed Set/List later
-            return MAPPER.convertValue(node, new TypeReference<List<Object>>() {});
+            return MAPPER.convertValue(node, new TypeReference<List<Object>>() {
+            });
         }
         if (node.isObject()) {
             // Return a Map for POJO binding later
-            return MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {});
+            return MAPPER.convertValue(node, new TypeReference<Map<String, Object>>() {
+            });
         }
         // Fallback
         return MAPPER.convertValue(node, Object.class);
@@ -256,7 +323,8 @@ public class FunctionInvoker {
         try {
             Map<String, FunctionInfo> functionInfos = MAPPER.readValue(
                     new File(filePath),
-                    new TypeReference<Map<String, FunctionInfo>>() {}
+                    new TypeReference<Map<String, FunctionInfo>>() {
+            }
             );
             System.out.println("FunctionInfos loaded successfully from " + filePath);
             return functionInfos;

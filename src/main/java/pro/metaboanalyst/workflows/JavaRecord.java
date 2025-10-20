@@ -659,23 +659,26 @@ public class JavaRecord {
 
     public void record_performPeaks2Fun(MummiAnalBean bean) {
         // Normalize option
-        final String opt =  bean.getAlgOptSingle();
+        final String opt = bean.getAlgOptSingle();
         final String key = "performPeaks2Fun_" + opt;
-
+        String[] opts = null;
         // Friendly description per option
         final String desc;
         switch (opt) {
             case "mum":
                 desc = "Peak→function analysis (Mummichog mode).";
+                opts = new String[]{"mum"};
                 break;
             case "gsea":
                 desc = "Peak→function analysis (GSEA-like enrichment).";
-                break;
-            case "integ":
-                desc = "Peak→function analysis (Integrated/combined mode).";
+                opts = new String[]{"gsea"};
+
                 break;
             default:
-                desc = "Peak→function analysis (unspecified mode).";
+                desc = "Peak→function analysis (Integrated/combined mode).";
+                opts = new String[]{"mum", "gsea"};
+
+                break;
         }
 
         FunctionInfo functionInfo = new FunctionInfo(
@@ -687,8 +690,7 @@ public class JavaRecord {
         // Log parameters that drive execution
         functionInfo.addParameter("mummiAnalBean.analOption", bean.getAnalOption());
         functionInfo.addParameter("mummiAnalBean.algOptSingle", opt);
-        functionInfo.addParameter("mummiAnalBean.algOpts", bean.getAlgOpts());
-
+        functionInfo.addParameter("mummiAnalBean.algOpts", opts);
         functionInfo.addParameter("mummiAnalBean.mumVersion", bean.getMumVersion());
         functionInfo.addParameter("mummiAnalBean.instrumentOpt", bean.getInstrumentOpt());
         functionInfo.addParameter("mummiAnalBean.pathDBOpt", bean.getPathDBOpt());

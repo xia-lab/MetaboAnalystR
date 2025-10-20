@@ -1,0 +1,96 @@
+{
+  "performPeaks2Fun" : {
+    "name" : "performPeaks2Fun",
+    "function" : "performPeaks2Fun",
+    "description" : "No description available",
+    "parameters" : { },
+    "rCommands" : [ "UpdateInstrumentParameters(NA, 5.0, \"negative\", \"yes\", 0.02);", "SetPeakEnrichMethod(NA, \"mum\", \"v2\")", "SetMummichogPval(NA, 0.2)", "PerformPSEA(NA, \"hsa_mfn\", \"current\", 3 , 100)", "SetPeakEnrichMethod(NA, \"integ\", \"v2\")", "SetMummichogPval(NA, 0.2)", "PerformPSEA(NA, \"hsa_mfn\", \"current\", 3 , 100)", "PlotPSEAIntegPaths(NA, \"integ_peaks_0_\", \"png\", 150, width=NA)", "SetPeakEnrichMethod(NA, \"gsea\", \"v2\")", "PerformPSEA(NA, \"hsa_mfn\", \"current\", 3 , 100)" ]
+  },
+  "Sanity Check" : {
+    "name" : "Sanity Check",
+    "function" : "ProcessBean.skipButton_action_default",
+    "description" : "Sanity check function",
+    "parameters" : {
+      "sessionBean1.dataType" : "mass_all",
+      "sessionBean1.multiGroup" : false,
+      "sessionBean1.cmpdIDType" : "na",
+      "sessionBean1.analType" : "mummichog",
+      "sessionBean1.integChecked" : false,
+      "sessionBean1.smallSmplSize" : false,
+      "sessionBean1.featType" : "none"
+    },
+    "rCommands" : [ ]
+  },
+  "InitLibrary" : {
+    "name" : "InitLibrary",
+    "function" : "peakcBean.customButton_action",
+    "description" : "Init Functional Annotation Library",
+    "parameters" : { },
+    "rCommands" : [ ]
+  },
+  "performPeaks2Fun_mum" : {
+    "name" : "performPeaks2Fun_mum",
+    "function" : "mummiAnalBean.performPeaks2Fun",
+    "description" : "Peak→function analysis (Mummichog mode).",
+    "parameters" : {
+      "mummiAnalBean.analOption" : "scatter",
+      "mummiAnalBean.algOptSingle" : "mum",
+      "mummiAnalBean.filterOpt" : "filtered",
+      "mummiAnalBean.mumVersion" : "v2",
+      "mummiAnalBean.instrumentOpt" : 5.0,
+      "mummiAnalBean.algOpts" : [ "mum" ],
+      "mummiAnalBean.libVersion" : "current",
+      "mummiAnalBean.minMsetNum" : "3",
+      "mummiAnalBean.pvalCutoff" : "0.2",
+      "mummiAnalBean.pathDBOpt" : "hsa_mfn"
+    },
+    "rCommands" : [ ]
+  },
+  "performPeaks2Fun_integ" : {
+    "name" : "performPeaks2Fun_integ",
+    "function" : "mummiAnalBean.performPeaks2Fun",
+    "description" : "Peak→function analysis (Integrated/combined mode).",
+    "parameters" : {
+      "mummiAnalBean.analOption" : "scatter",
+      "mummiAnalBean.algOptSingle" : "integ",
+      "mummiAnalBean.filterOpt" : "filtered",
+      "mummiAnalBean.mumVersion" : "v2",
+      "mummiAnalBean.instrumentOpt" : 5.0,
+      "mummiAnalBean.algOpts" : [ "mum", "gsea" ],
+      "mummiAnalBean.libVersion" : "current",
+      "mummiAnalBean.minMsetNum" : "3",
+      "mummiAnalBean.pvalCutoff" : "0.2",
+      "mummiAnalBean.pathDBOpt" : "hsa_mfn"
+    },
+    "rCommands" : [ ]
+  },
+  "performPeaks2Fun_gsea" : {
+    "name" : "performPeaks2Fun_gsea",
+    "function" : "mummiAnalBean.performPeaks2Fun",
+    "description" : "Peak→function analysis (GSEA-like enrichment).",
+    "parameters" : {
+      "mummiAnalBean.analOption" : "scatter",
+      "mummiAnalBean.algOptSingle" : "gsea",
+      "mummiAnalBean.filterOpt" : "filtered",
+      "mummiAnalBean.mumVersion" : "v2",
+      "mummiAnalBean.instrumentOpt" : 5.0,
+      "mummiAnalBean.algOpts" : [ "gsea" ],
+      "mummiAnalBean.libVersion" : "current",
+      "mummiAnalBean.minMsetNum" : "3",
+      "mummiAnalBean.pvalCutoff" : "0.2",
+      "mummiAnalBean.pathDBOpt" : "hsa_mfn"
+    },
+    "rCommands" : [ ]
+  },
+  "restoreWorkflowState" : {
+    "name" : "restoreWorkflowState",
+    "function" : "workflowBean.restoreState",
+    "description" : "Restore workflow state",
+    "parameters" : {
+      "workflowBean.moduleNames" : [ ],
+      "workflowBean.workflowOptions" : [ ],
+      "workflowBean.runPlans" : [ ]
+    },
+    "rCommands" : [ ]
+  }
+}

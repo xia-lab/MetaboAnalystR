@@ -1923,13 +1923,10 @@ public class DiagramView implements Serializable {
                 steps = new ArrayList<>(Arrays.asList(
                         "Sanity Check Peak",
                         "Functional Annotation",
-                        "performPeaks2Fun",
                         "performPeaks2Fun_mum",
                         "performPeaks2Fun_gsea",
                         "performPeaks2Fun_integ",
                         "Heatmap_mum",
-                        "Heatmap_gsea",
-                        "Heatmap_integ",
             
             "Network"
                 ));
