@@ -91,17 +91,23 @@
             <h2>Workflow Management</h2>
             <p style="font-size: 1.1em">
                 Run end-to-end analyses as reusable workflows by picking a template or one of your saved workflows.
-                <ul>
+                <ol style="margin-left:1.2rem; line-height:1.6;font-size: 1.1em">
                     <li>
-                        To create your workflow, go through an analysis with your data and when saving it, check the "Worklow" checkbox.
+                        To start, select a dataset in <b>Data Center</b> or upload your own.
                     </li>
                     <li>
-                        To customize key parameters, click on the <i class="pi pi-cog"></i> icon. 
-
+                        Once a dataset is selected, incompatible workflows will appear
+                        <span style="opacity:.7;">grayed out</span> (hover to see the reason).
                     </li>
-
-                </ul>
-
+                    <li>
+                        To customize key parameters for a workflow, click the
+                        <i class="pi pi-cog" aria-label="settings"></i> icon.
+                    </li>
+                    <li>
+                        To create and save your own workflow, run an analysis and check the
+                        <b>“Workflow”</b> box when saving.
+                    </li>
+                </ol>
 
             </p>
             <h:panelGroup style="font-size: 1.1em; float:right">
@@ -113,135 +119,140 @@
             <!-- -->
             <p:tabView id="acTab" widgetVar="tabWidget" style="width:100%; border:none; font-size:13px;" dynamic="false" cache="true" activeIndex="#{workflowBean.activeIndex}">
                 <p:tab title="Example Workflows">
+                    <!-- Example Workflows -->
                     <h:form id="wfForm">
                         <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
                             <ui:repeat value="#{workflowBean.defaultWorkflowList}" var="wf">
-                                <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}">
+                                <p:fieldset
+                                    legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
+                                    styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}"
+                                    title="#{!workflowBean.workflowCompatible(wf) and datasetController.selected ne null ? workflowBean.incompatReason(wf) : ''}">
 
-                                    <div style="margin-bottom:.4rem;">
-                                        <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
-                                                       update=":wfViewForm"
-                                                       oncomplete="PF('wfViewDlg').show();">
-                                            <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                        </p:commandLink>
-                                    </div>
-
-                                    <div class="wf-meta">
-                                        <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
-                                        <h:panelGroup rendered="#{not empty wf['filename']}">
-                                            <div><b>File:</b> #{wf['filename']}</div>
-                                        </h:panelGroup>
-                                    </div>
-
-                                    <p:spacer/>
-                                    <p:spacer/>
-                                    <p:toolbar styleClass="dataset-toolbar">
-                                        <f:facet name="left">
-                                            <!-- FOLDER = Download -->
-                                            <p:commandLink id="dlWf" title="Download workflow" ajax="false"
-                                                           onclick="PrimeFaces.monitorDownload(start, stop);">
-                                                <i class="pi pi-folder-open"></i>
-                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                                <p:fileDownload value="#{workflowBean.downloadSelectedExample}"/>
-                                            </p:commandLink>
-                                            <p:tooltip for="dlWf" value="Download workflow file"/>
-                                            <!-- EXPLORE = View details -->
-                                            <p:commandLink id="viewWf" title="View and update parameters"
-                                                           action="#{workflowBean.goToWorkflowDetails}">
-                                                <i class="pi pi-cog"></i>
+                                    <!-- wrap all interactive content so it's not clickable when incompatible -->
+                                    <div class="#{workflowBean.workflowCompatible(wf) ? '' : 'no-clicks'}">
+                                        <div style="margin-bottom:.4rem;">
+                                            <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
+                                                           update=":wfViewForm"
+                                                           oncomplete="PF('wfViewDlg').show();">
                                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                             </p:commandLink>
-                                            <p:tooltip for="viewWf" value="View details"/>
-                                        </f:facet>
+                                        </div>
 
-                                        <f:facet name="right">
-                                            <p:commandLink id="runWf" title="Start workflow"
-                                                           disabled="#{!workflowBean.workflowCompatible(wf)}"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab"
-                                                           action="#{workflowBean.startFromTemplate(wf)}">
-                                                <i class="pi pi-caret-right" style="color:#16a34a;"></i>
-                                            </p:commandLink>
-                                            <p:tooltip for="runWf"
-                                                       value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
-                                        </f:facet>
-                                    </p:toolbar>
+                                        <div class="wf-meta">
+                                            <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
+                                            <h:panelGroup rendered="#{not empty wf['filename']}">
+                                                <div><b>File:</b> #{wf['filename']}</div>
+                                            </h:panelGroup>
+                                        </div>
+
+                                        <p:spacer/><p:spacer/>
+                                        <p:toolbar styleClass="dataset-toolbar">
+                                            <f:facet name="left">
+                                                <p:commandLink id="dlWf" title="Download workflow" ajax="false"
+                                                               onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                    <i class="pi pi-folder-open"></i>
+                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                    <p:fileDownload value="#{workflowBean.downloadSelectedExample}"/>
+                                                </p:commandLink>
+                                                <p:tooltip for="dlWf" value="Download workflow file"/>
+
+                                                <p:commandLink id="viewWf" title="View and update parameters"
+                                                               action="#{workflowBean.goToWorkflowDetails}">
+                                                    <i class="pi pi-cog"></i>
+                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                </p:commandLink>
+                                                <p:tooltip for="viewWf" value="View details"/>
+                                            </f:facet>
+
+                                            <f:facet name="right">
+                                                <p:commandLink id="runWf" title="Start workflow"
+                                                               disabled="#{!workflowBean.workflowCompatible(wf)}"
+                                                               onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                               update=":acTab"
+                                                               action="#{workflowBean.startFromTemplate(wf)}">
+                                                    <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                                </p:commandLink>
+                                                <p:tooltip for="runWf"
+                                                           value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
+                                            </f:facet>
+                                        </p:toolbar>
+                                    </div>
                                 </p:fieldset>
                             </ui:repeat>
                         </h:panelGroup>
                     </h:form>
+
                 </p:tab>
 
                 <!-- =================== Tab 2: User Workflows =================== -->
                 <p:tab title="User Workflows">
                     <h:form id="wfForm2">
                         <h:panelGroup id="wfCards" layout="block" styleClass="cards-grid">
-                            <!-- workflowList: ArrayList<HashMap<String,Object>> -->
                             <ui:repeat value="#{workflowBean.workflowList}" var="wf">
-                                <p:fieldset legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
-                                            styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}">
+                                <p:fieldset
+                                    legend="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}"
+                                    styleClass="ds-card surface-card shadow-1 p-3 #{workflowBean.workflowCompatible(wf) ? '' : (datasetController.selected ne null ? 'wf-incompat' : '')}"
+                                    title="#{!workflowBean.workflowCompatible(wf) and datasetController.selected ne null ? workflowBean.incompatReason(wf) : ''}">
 
-                                    <div style="margin-bottom:.4rem;">
-                                        <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
-                                                       update=":wfViewForm"
-                                                       oncomplete="PF('wfViewDlg').show();">
-                                            <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                        </p:commandLink>
+                                    <div class="#{workflowBean.workflowCompatible(wf) ? '' : 'no-clicks'}">
+                                        <div style="margin-bottom:.4rem;">
+                                            <p:commandLink value="#{empty wf['description'] ? 'No description' : wf['description']}"
+                                                           update=":wfViewForm"
+                                                           oncomplete="PF('wfViewDlg').show();">
+                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                            </p:commandLink>
+                                        </div>
+
+                                        <div class="wf-meta">
+                                            <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
+                                            <h:panelGroup rendered="#{not empty wf['created_at']}">
+                                                <div><b>Last Updated:</b> #{wf['created_at']}</div>
+                                            </h:panelGroup>
+                                            <h:panelGroup rendered="#{not empty wf['filename']}">
+                                                <div><b>File:</b> #{wf['filename']}</div>
+                                            </h:panelGroup>
+                                        </div>
+
+                                        <p:spacer/><p:spacer/>
+                                        <p:toolbar styleClass="dataset-toolbar">
+                                            <f:facet name="left">
+                                                <p:commandLink id="delWf" title="Delete workflow"
+                                                               update=":wfDelForm"
+                                                               oncomplete="PF('wfDelDlg').show();">
+                                                    <i class="pi pi-trash"></i>
+                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                </p:commandLink>
+                                                <p:tooltip for="delWf" value="Delete this workflow"/>
+
+                                                <p:commandLink id="dlWf" title="Download workflow" ajax="false"
+                                                               onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                    <i class="pi pi-folder-open"></i>
+                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                    <p:fileDownload value="#{workflowBean.downloadSelected}"/>
+                                                </p:commandLink>
+                                                <p:tooltip for="dlWf" value="Download workflow file"/>
+
+                                                <p:commandLink id="viewWf" title="View and update parameters"
+                                                               action="#{workflowBean.goToWorkflowDetails}">
+                                                    <i class="pi pi-cog"></i>
+                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
+                                                </p:commandLink>
+                                                <p:tooltip for="viewWf" value="View details"/>
+                                            </f:facet>
+
+                                            <f:facet name="right">
+                                                <p:commandLink id="runWf" title="Start workflow"
+                                                               disabled="#{!workflowBean.workflowCompatible(wf)}"
+                                                               onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                               update=":acTab"
+                                                               action="#{workflowBean.startFromTemplate(wf)}">
+                                                    <i class="pi pi-caret-right" style="color:#16a34a;"></i>
+                                                </p:commandLink>
+                                                <p:tooltip for="runWf"
+                                                           value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
+                                            </f:facet>
+                                        </p:toolbar>
                                     </div>
-
-                                    <div class="wf-meta">
-                                        <div><b>Module:</b> #{workflowView.getReadableType(wf['module'])}</div>
-                                        <h:panelGroup rendered="#{not empty wf['created_at']}">
-                                            <div><b>Last Updated:</b> #{wf['created_at']}</div>
-                                        </h:panelGroup>
-                                        <h:panelGroup rendered="#{not empty wf['filename']}">
-                                            <div><b>File:</b> #{wf['filename']}</div>
-                                        </h:panelGroup>
-                                    </div>
-                                    <p:spacer/>
-                                    <p:spacer/>
-
-                                    <p:toolbar styleClass="dataset-toolbar">
-                                        <f:facet name="left">
-                                            <!-- NEW: Delete workflow -->
-                                            <p:commandLink id="delWf" title="Delete workflow"
-                                                           update=":wfDelForm"
-                                                           oncomplete="PF('wfDelDlg').show();">
-                                                <i class="pi pi-trash"></i>
-                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                            </p:commandLink>
-                                            <p:tooltip for="delWf" value="Delete this workflow"/>
-
-                                            <p:commandLink id="dlWf" title="Download workflow" ajax="false"
-                                                           onclick="PrimeFaces.monitorDownload(start, stop);">
-                                                <i class="pi pi-folder-open"></i>
-                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                                <p:fileDownload value="#{workflowBean.downloadSelected}"/>
-                                            </p:commandLink>
-                                            <p:tooltip for="dlWf" value="Download workflow file"/>
-                                            <!-- EXPLORE = View details -->
-                                            <p:commandLink id="viewWf" title="View and update parameters"
-                                                           action="#{workflowBean.goToWorkflowDetails}">
-                                                <i class="pi pi-cog"></i>
-                                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
-                                            </p:commandLink>
-                                            <p:tooltip for="viewWf" value="View details"/>
-                                        </f:facet>
-
-                                        <f:facet name="right">
-                                            <p:commandLink id="runWf" title="Start workflow"
-                                                           disabled="#{!workflowBean.workflowCompatible(wf)}"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab"
-                                                           action="#{workflowBean.startFromTemplate(wf)}">
-                                                <i class="pi pi-caret-right" style="color:#16a34a;"></i>
-                                            </p:commandLink>
-                                            <p:tooltip for="runWf"
-                                                       value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
-                                        </f:facet>
-                                    </p:toolbar>
-
                                 </p:fieldset>
                             </ui:repeat>
                         </h:panelGroup>

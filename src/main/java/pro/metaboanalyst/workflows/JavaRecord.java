@@ -658,24 +658,47 @@ public class JavaRecord {
     }
 
     public void record_performPeaks2Fun(MummiAnalBean bean) {
+        // Normalize option
+        final String opt =  bean.getAlgOptSingle();
+        final String key = "performPeaks2Fun_" + opt;
+
+        // Friendly description per option
+        final String desc;
+        switch (opt) {
+            case "mum":
+                desc = "Peak→function analysis (Mummichog mode).";
+                break;
+            case "gsea":
+                desc = "Peak→function analysis (GSEA-like enrichment).";
+                break;
+            case "integ":
+                desc = "Peak→function analysis (Integrated/combined mode).";
+                break;
+            default:
+                desc = "Peak→function analysis (unspecified mode).";
+        }
+
         FunctionInfo functionInfo = new FunctionInfo(
-                "performPeaks2Fun",
-                "mummiAnalBean.performPeaks2Fun",
-                "Handles the execution of peak to function analysis and decides the analytical path based on selected options."
+                key, // name
+                "mummiAnalBean.performPeaks2Fun", // backing action
+                desc
         );
 
-        // Log each parameter and condition that could influence the method execution
+        // Log parameters that drive execution
+        functionInfo.addParameter("mummiAnalBean.analOption", bean.getAnalOption());
+        functionInfo.addParameter("mummiAnalBean.algOptSingle", opt);
+        functionInfo.addParameter("mummiAnalBean.algOpts", bean.getAlgOpts());
+
         functionInfo.addParameter("mummiAnalBean.mumVersion", bean.getMumVersion());
         functionInfo.addParameter("mummiAnalBean.instrumentOpt", bean.getInstrumentOpt());
-        functionInfo.addParameter("mummiAnalBean.analOption", bean.getAnalOption());
         functionInfo.addParameter("mummiAnalBean.pathDBOpt", bean.getPathDBOpt());
         functionInfo.addParameter("mummiAnalBean.libVersion", bean.getLibVersion());
         functionInfo.addParameter("mummiAnalBean.minMsetNum", String.valueOf(bean.getMinMsetNum()));
         functionInfo.addParameter("mummiAnalBean.filterOpt", bean.getFilterOpt());
         functionInfo.addParameter("mummiAnalBean.pvalCutoff", String.valueOf(bean.getPvalCutoff()));
 
-        // Here, fp is assumed to be a context or application-wide accessible object
-        wb.addFunctionInfo("performPeaks2Fun", functionInfo);
+        // Persist
+        wb.addFunctionInfo(key, functionInfo);
     }
 
     public void record_paBn_action(PathBean bean) {
@@ -698,8 +721,8 @@ public class JavaRecord {
         // Here, fp is assumed to be a system-wide accessible object for handling function information
         wb.addFunctionInfo("paBn_action", functionInfo);
     }
-    
-        public void record_paBn_heatmap(PathBean bean) {
+
+    public void record_paBn_heatmap(PathBean bean) {
         FunctionInfo functionInfo = new FunctionInfo(
                 "paBn_heatmap",
                 "pathBean.paBn_heatmap",

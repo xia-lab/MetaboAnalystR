@@ -761,6 +761,7 @@ public class FireBaseController implements Serializable {
         beanClassMap.put("MummiAnalBean", mab);
         beanClassMap.put("PowerAnalBean", pab);
         beanClassMap.put("RocAnalBean", rab);
+        beanClassMap.put("PeakUploadBean", pub);
 
         // Print debug information
         //System.out.println("myClassType: " + myClassType + ", myMethod: " + myMethod + ", myParamType: " + myParamType + ", myParam: " + myParam);
@@ -811,12 +812,10 @@ public class FireBaseController implements Serializable {
                     // ArrayList<OmicsModel> dataSets = (ArrayList<OmicsModel>) DataUtils.convertJsonToObj(myParam, myParamType);
                     // method.invoke(obj, dataSets);
                 }
-                case "SessionBean1", "DiagramView", "SpectraProcessBean", "SpectraControlBean", "IntegProcessBean", "IntegResBean", "MsetBean", "PathBean", "TandemMSBean", "SpectraParamBean", "UtilsBean", "MetaLoadBean", "MetaPathLoadBean", "MetaPathStatBean", "MnetResBean", "MultifacBean", "MummiAnalBean", "RocAnalBean", "WorkflowView", "WorkflowBean", "PowerAnalBean" -> {
+                default -> {
                     paramString[0] = ArrayList.class;
                     DataUtils.convertJsonToObj(obj, myParam, myParamType);
                 }
-                default ->
-                    LOGGER.error("Unsupported parameter type: " + myParamType);
             }
         } catch (Exception ex) {
             LOGGER.error("Error executing method: " + myMethod + " on class: " + myClassType, ex);

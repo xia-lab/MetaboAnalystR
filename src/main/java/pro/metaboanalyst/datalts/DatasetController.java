@@ -57,6 +57,7 @@ import pro.metaboanalyst.rwrappers.RDataUtils;
 import org.primefaces.extensions.component.sheet.Sheet;
 import org.primefaces.extensions.event.SheetEvent;
 import org.primefaces.extensions.model.sheet.SheetUpdate;
+import pro.metaboanalyst.controllers.mummichog.PeakUploadBean;
 import pro.metaboanalyst.rwrappers.SearchUtils;
 
 /**
@@ -86,6 +87,8 @@ public class DatasetController implements Serializable {
     private HistoryBean hb;
     @Inject
     StateSaver stateSaver;
+        @Inject
+    PeakUploadBean pu;
 
     private List<DatasetRow> datasetTableExample = new ArrayList<>();
 
@@ -974,8 +977,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 case "roc":
                 case "power":
                 case "dose":
-                case "mnet":
-                case "mummichog": {
+                case "mnet": {
                     if (dataName == null) {
                         sb.addMessage("Error", "No data file (role=data).");
                         return false;
@@ -992,7 +994,29 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     break;
                 }
 
-                // Pathway / Enrich QEA-like (table-based). Metadata optional.
+                case "mummichog": {
+                    if (sb.getUploadType().equals("table")) {
+                        if (dataName == null) {
+                            sb.addMessage("Error", "No data file (role=data).");
+                            return false;
+                        }
+                        ok = loadSmart.apply(RC, dataName);
+                        if (!ok) {
+                            break;
+                        }
+
+                        // optional metadata for these
+                        if (metaName != null && !metaName.isBlank()) {
+                            ok = RDataUtils.readMetaData(RC, metaName) && ok;
+                        }
+                    } else {
+                        pu.setPeakListParams();
+                        RDataUtils.readPeakListData(RC, dataName);
+
+                    }
+                    break;
+
+                }
                 case "pathway":
                 case "pathqea":
                 case "msetqea": {
@@ -1170,8 +1194,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             // 0) Remember selection
             this.selected = ds;
 
-            if(login){
-            sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
+            if (login) {
+                sb.doLogin(ds.getDataType(), ds.getModule(), false, false);
             }
             // 2) Resolve source (dataset storage) and destination (fresh work folder) paths
             Path srcDir = Paths.get(
@@ -2757,7 +2781,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
         return dto;
     }
-    private boolean resetFlag=false;
+    private boolean resetFlag = false;
 
     public boolean isResetFlag() {
         return resetFlag;
@@ -2766,7 +2790,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     public void setResetFlag(boolean resetFlag) {
         this.resetFlag = resetFlag;
     }
-    
+
     // ---- Import from DTO (called after new session is created)
     @PostConstruct
     public void init() {
@@ -2790,7 +2814,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 handleDataset(selected);      // your existing method (no streaming)
             }
         }
-        resetFlag=false;
+        resetFlag = false;
     }
 
     // In DatasetController

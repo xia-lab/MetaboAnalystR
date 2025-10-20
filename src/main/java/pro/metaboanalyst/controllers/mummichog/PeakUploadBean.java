@@ -5,11 +5,15 @@
  */
 package pro.metaboanalyst.controllers.mummichog;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import jakarta.inject.Inject;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
@@ -18,6 +22,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pro.metaboanalyst.datalts.DatasetController;
 
 /**
  *
@@ -33,6 +38,9 @@ public class PeakUploadBean implements Serializable {
     ApplicationBean1 ab;
     @Inject
     SessionBean1 sb;
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
     private static final Logger LOGGER = LogManager.getLogger(PeakUploadBean.class);
     @Inject
     MummiAnalBean mb;
@@ -257,6 +265,21 @@ public class PeakUploadBean implements Serializable {
             if (dataFormat.equals("mprt") || dataFormat.equals("mpr") || dataFormat.equals("mrt")) {
                 mb.setDisabledV2(true);
             }
+
+            Path destData = Paths.get("");
+            try {
+                destData = DataUtils.materializeToHome(sb, fileName);
+            } catch (Exception ex) {
+                System.getLogger(PeakUploadBean.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            }
+
+            String dataBase = destData.getFileName().toString();
+
+            String niceTitle = DataUtils.stripExt(dataBase);
+            java.util.List<String> names = java.util.List.of(dataBase);
+            java.util.List<String> roles = java.util.List.of("data");
+            dc.stageDatasetFromStrings(niceTitle, 0, names, roles);
+            sb.setUploadType("list");
             return "Data check";
 
         } else {
@@ -323,6 +346,13 @@ public class PeakUploadBean implements Serializable {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
             return null;
         } else {
+            // 3) STAGE (filenames only; commit will resolve them under home dir)
+            String niceTitle = DataUtils.stripExt(fileName);
+            java.util.List<String> names = java.util.List.of(fileName);
+            java.util.List<String> roles = java.util.List.of("data");
+            dc.stageDatasetFromStrings(niceTitle, /*sampleNum*/ 0, names, roles);
+            sb.setUploadType("table");
+
             return "Data check";
         }
 
@@ -360,9 +390,9 @@ public class PeakUploadBean implements Serializable {
         String fileName;
         if (dataType.equals("table")) {
             pfb.setPeakFile(pfb.getPeakFileTable());
-            
+
         }
-        UploadedFile peakFile= pfb.getPeakFile();
+        UploadedFile peakFile = pfb.getPeakFile();
         try {
             if (peakFile == null || peakFile.getSize() == 0) {
                 sb.addMessage("Error", "File is empty!");
@@ -401,6 +431,17 @@ public class PeakUploadBean implements Serializable {
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             } else {
+
+                UploadedFile dataFile = peakFile;
+                String niceTitle = DataUtils.stripExt(dataFile.getFileName());
+                int samples = 10; // or inferSampleNumFromR(RC)
+
+                List<UploadedFile> files = List.of(dataFile);
+                List<String> roles = List.of("data");
+
+                // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+                dc.stageDataset(niceTitle, samples, files, roles);
+                sb.addMessage("info", "Dataset staged in memory.");
                 return "Data check";
             }
         }
@@ -436,11 +477,51 @@ public class PeakUploadBean implements Serializable {
                 mb.setDisabledV2(true);
             }
 
+            UploadedFile dataFile = peakFile;
+            String niceTitle = DataUtils.stripExt(dataFile.getFileName());
+            int samples = 0; // or inferSampleNumFromR(RC)
+
+            List<UploadedFile> files = List.of(dataFile);
+            List<String> roles = List.of("data");
+
+            // Assumes you have @Inject DatasetController datasetController; or otherwise get the bean
+            dc.stageDataset(niceTitle, samples, files, roles);
+            sb.addMessage("info", "Dataset staged in memory.");
             return "Data check";
         } else {
             String err = RDataUtils.getErrMsg(sb.getRConnection());
             sb.addMessage("Error", "Failed to read in the peak list file." + err);
             return null;
+        }
+    }
+
+    public void setPeakListParams() {
+        RDataUtils.setPeakFormat(sb.getRConnection(), dataFormat);
+        setMsModeOpt(msModeOpt);
+        RDataUtils.setInstrumentParams(sb, instrumentOpt, msModeOpt, primaryIon ? "yes" : "no", rtFrac);
+        String format = RDataUtils.GetPeakFormat(sb.getRConnection());
+
+        switch (format) {
+            case "mpt", "mprt" -> {
+                mb.setDisabledGsea(false);
+                mb.setDisabledMum(false);
+            }
+            case "mp", "mpr" -> {
+                mb.setDisabledGsea(true);
+                mb.setDisabledMum(false);
+            }
+            case "rmp" -> {
+                // single column
+                mb.setDisabledGsea(true);
+                mb.setDisabledMum(false);
+                mb.setDisabledMumPval(true);
+            }
+            default -> {
+                //rmt or mt or mtr
+                mb.setDisabledGsea(false);
+                mb.setDisabledMum(true);
+                mb.setDisabledMumPval(true);
+            }
         }
     }
 

@@ -29,7 +29,6 @@ import org.primefaces.PrimeFaces;
 import org.primefaces.event.FileUploadEvent;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
-import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.datalts.DatasetFile;
 
@@ -793,22 +792,13 @@ public class UploadBean implements Serializable {
             df.setSizeBytes(Math.max(0L, size));
             df.setUploadedAt(java.time.OffsetDateTime.now());
 
-            if (java.nio.file.Files.exists(guessedPath)) {
                 dc.stageDatasetFromPaths(
                         "MW " + nmdrStudyId, // title
                         /*sampleNum*/ 0,
                         java.util.List.of(df),
                         java.util.List.of(guessedPath)
                 );
-            } else {
-                // Fallback: stage metadata, remember intended path for commit
-                dc.stageDatasetFromPaths(
-                        "MW " + nmdrStudyId,
-                        /*sampleNum*/ 0,
-                        java.util.List.of(df),
-                        java.util.List.of(guessedPath) // commit will verify and error if missing
-                );
-            }
+
 
             sb.addMessage("info", "Metabolomics Workbench study staged in memory. You can review and commit later.");
             return "Data check";

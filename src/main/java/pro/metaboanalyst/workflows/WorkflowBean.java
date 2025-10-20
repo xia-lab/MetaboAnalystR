@@ -1253,7 +1253,7 @@ public class WorkflowBean implements Serializable {
             editMode = false;
 
             final String module = (String) selectedWorkflow.get("module");
-            final String input = resolveInputForModule(module);
+            final String input = resolveInputForModule(module,sb.getDataType());
             postLoadCommon();
 
             initializeDiagramForInput(input);
@@ -1288,6 +1288,10 @@ public class WorkflowBean implements Serializable {
                 return;
             }
 
+            if (ds.getSelected() == null) {
+                sb.addMessage("Warn", "Please select a dataset in 'Data Center' or upload a dataset first!");
+                return;
+            }
             final String fileName = (String) selectedWorkflow.get("filename");
             final Path destPath = prepareTemplateWorkflowJson(fileName);
 
@@ -1299,7 +1303,10 @@ public class WorkflowBean implements Serializable {
             // 3) UI
             calledWorkflows.add("Data Preparation");
             final String module = (String) selectedWorkflow.get("module");
-            final String input = resolveInputForModule(module);
+            String input = resolveInputForModule(module, sb.getDataType());
+            if (module.equals("mummichog")) {
+
+            }
             postLoadCommon();
 
             initializeDiagramForInput(input);
@@ -1329,7 +1336,7 @@ public class WorkflowBean implements Serializable {
     /**
      * Central mapping: module -> input block label
      */
-    private String resolveInputForModule(String module) {
+    private String resolveInputForModule(String module, String dataType) {
         if (module == null) {
             return "Generic Table";
         }
@@ -1345,14 +1352,19 @@ public class WorkflowBean implements Serializable {
                 Map.entry("msetqea", "Compound Table"),
                 Map.entry("msetora", "Metabolite List"),
                 Map.entry("pathora", "Metabolite List"),
-                Map.entry("mass_all", "Peak Table"),
                 Map.entry("metapaths", "Peak Tables"),
-                Map.entry("mass_table", "Peak List"),
                 Map.entry("raw", "LC-MS Spectra"),
                 Map.entry("network", "Gene List")
         );
-
-        return map.getOrDefault(module, "Generic Table");
+        if (module.equals("mummichog")) {
+            if (dataType.equals("mass_all")) {
+                return ("Peak List");
+            } else {
+                return ("Peak Table");
+            }
+        } else {
+            return map.getOrDefault(module, "Generic Table");
+        }
     }
 
     /**
@@ -1673,7 +1685,7 @@ public class WorkflowBean implements Serializable {
     }
 
     public boolean isDisplayParams() {
-        String input = resolveInputForModule((String) selectedWorkflow.get("module"));
+        String input = resolveInputForModule((String) selectedWorkflow.get("module"), sb.getDataType());
         System.out.println(input + "==========input");
         if (input.equals("Generic Table") || input.equals("Peak Table") || input.equals("Compound Table") || input.equals("LC-MS Spectra")) {
             return true;
@@ -1930,46 +1942,143 @@ public class WorkflowBean implements Serializable {
                 return true;
         }
     }
+// Families (modules, not datatypes)
+    private static final Set<String> TABLE_FAMILY = Set.of(
+            "stat", "roc", "dose", "mf", "raw", "power", "mummichog", "pathqea", "msetqea", "pathway", "enrich"
+    );
+    private static final Set<String> LIST_FAMILY = Set.of(
+            "pathora", "msetora", "pathway", "enrich"
+    );
 
-// === Public API for Facelets ===
-// If no dataset selected => TRUE (no disabling). Otherwise compare with ds.selected's dataType & module.
+// (reuse your existing sets if you want the extra checks too)
+    private static final Set<String> UNTARGETED_DATAS = Set.of("spec", "specbin", "pktable", "nmrpeak", "mspeak", "table");
+    private static final Set<String> REGRES_ANALS = Set.of("pathway", "enrich");
+
     public boolean workflowCompatible(Map<String, Object> wf) {
-        if (wf == null) {
-            return true;
-        }
-        if (!hasSelectedDataset()) {
-            return true; // <-- your requested behavior
-        }
-        String dsDt = currentDatasetDataTypeSafe();
-        String dsMod = currentDatasetModuleSafe();
-        InputKind kind = kindForDataType(dsDt);
+        try {
+            // No dataset selected → don't disable anything
+            if (ds.getSelected() == null) {
+                return true;
+            }
 
-        String wfModule = wf.get("module") == null ? null : wf.get("module").toString();
-        return isModuleCompatibleForDataset(wfModule, dsMod, kind);
+            final String dsModule = safeStr(ds.getSelected().getModule());
+            final String wfModule = safeStr(wf.get("module"));
+
+            // 1) base rule: must be in the SAME family
+            final boolean sameTableFamily = TABLE_FAMILY.contains(dsModule) && TABLE_FAMILY.contains(wfModule);
+            final boolean sameListFamily = LIST_FAMILY.contains(dsModule) && LIST_FAMILY.contains(wfModule);
+            if (!(sameTableFamily || sameListFamily)) {
+                return false; // different families → incompatible
+            }
+
+            // 2) (optional) apply your existing extra guards inside the family
+            String dataType = safeStr(sb.getDataType());
+            if (dataType.equals("mass_all")) {
+                if (!wfModule.equals("mummichog")) {
+                    return false;
+                }
+            }
+            final String cmpdIdType = safeStr(sb.getCmpdIDType()); // "na" = not mapped
+            // regression only pathway/enrich
+            if (sb.isRegresion() && !REGRES_ANALS.contains(wfModule)) {
+                return false;
+            }
+
+            // QEA needs conc
+            if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
+                if (!"conc".equalsIgnoreCase(dataType)) {
+                    return false;
+                }
+            }
+
+            // mummichog needs spec or mass_table
+            if ("mummichog".equals(wfModule)) {
+                if (!("mass_all".equalsIgnoreCase(dataType) || "mass_table".equalsIgnoreCase(dataType) || "pktable".equalsIgnoreCase(dataType) || "spec".equalsIgnoreCase(dataType)
+                        || "nmrpeak".equalsIgnoreCase(dataType)
+                        || "mspeak".equalsIgnoreCase(dataType))) {
+                    return false;
+                }
+            }
+
+            // list ORA needs ID mapping
+            if ("pathora".equals(wfModule) || "msetora".equals(wfModule)) {
+                if ("na".equalsIgnoreCase(cmpdIdType)) {
+                    return false;
+                }
+            }
+
+            // 4) QEA modules: need quantified conc table AND ID mapping
+            if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
+                if (!"conc".equalsIgnoreCase(dataType)) {
+                    return false;
+                }
+                if ("na".equalsIgnoreCase(cmpdIdType)) {
+                    return false;  // << NEW
+                }
+            }
+
+            return true;
+        } catch (Exception e) {
+            return true; // fail-open to avoid blocking UI if something transient happens
+        }
     }
 
     public String incompatReason(Map<String, Object> wf) {
-        if (wf == null || !hasSelectedDataset()) {
+        try {
+            if (ds.getSelected() == null) {
+                return "";
+            }
+
+            final String dsModule = safeStr(ds.getSelected().getModule());
+            final String wfModule = safeStr(wf.get("module"));
+
+            final boolean sameTableFamily = TABLE_FAMILY.contains(dsModule) && TABLE_FAMILY.contains(wfModule);
+            final boolean sameListFamily = LIST_FAMILY.contains(dsModule) && LIST_FAMILY.contains(wfModule);
+            if (!(sameTableFamily || sameListFamily)) {
+                return "This workflow is not compatible with the current dataset family (list vs. table).";
+            }
+
+            // Extra, more specific messages (optional but helpful)
+            String dataType = safeStr(sb.getDataType());
+            if (wfModule.equals("mummichog")) {
+                dataType = safeStr(sb.getUploadType());
+            }
+            final String cmpdIdType = safeStr(sb.getCmpdIDType());
+
+            if (sb.isRegresion() && !REGRES_ANALS.contains(wfModule)) {
+                return "This module does not support continuous class labels.";
+            }
+            if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
+                if (!"conc".equalsIgnoreCase(dataType)) {
+                    return "Requires a quantified compound table (concentration).";
+                }
+            }
+            if ("mummichog".equals(wfModule)) {
+                if (!("spec".equalsIgnoreCase(dataType) || "mass_table".equalsIgnoreCase(dataType))) {
+                    return "Functional Analysis requires raw spectra or a generic mass feature table (m/z & RT).";
+                }
+            }
+            if ("pathora".equals(wfModule) || "msetora".equals(wfModule)) {
+                if ("na".equalsIgnoreCase(cmpdIdType)) {
+                    return "Requires compound ID mapping to run ORA.";
+                }
+            }
+            if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
+                if (!"conc".equalsIgnoreCase(dataType)) {
+                    return "Requires a quantified compound table (concentration).";
+                }
+                if ("na".equalsIgnoreCase(cmpdIdType)) {
+                    return "Requires compound ID mapping (annotated IDs)."; // << NEW
+                }
+            }
             return "";
+        } catch (Exception e) {
+            return "Compatibility could not be determined.";
         }
-        String module = (wf.get("module") == null ? "" : wf.get("module").toString().toLowerCase());
-        switch (module) {
-            case "raw":
-                return "Requires LC–MS Spectra";
-            case "mummichog":
-                return "Requires Peak Table or Peak List";
-            case "pathqea":
-            case "msetqea":
-                return "Requires Compound Table";
-            case "pathora":
-            case "msetora":
-                return "Requires Metabolite List";
-            case "pathway":
-            case "enrich":
-                return "Requires Compound Table or List";
-            default:
-                return "Incompatible with current dataset type";
-        }
+    }
+
+    private static String safeStr(Object o) {
+        return (o == null) ? "" : String.valueOf(o);
     }
 
 }

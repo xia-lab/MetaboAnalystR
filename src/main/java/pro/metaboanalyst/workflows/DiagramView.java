@@ -172,6 +172,10 @@ public class DiagramView implements Serializable {
     private WorkflowJobTimerService wsv;
 
     @JsonIgnore
+    @Inject
+    pro.metaboanalyst.controllers.mummichog.PeakUploadBean pu;
+
+    @JsonIgnore
     private DefaultDiagramModel model;
     private boolean workflowFinished = false;
     private boolean suspendEvent;
@@ -553,8 +557,7 @@ public class DiagramView implements Serializable {
             selectionMap.put(element.getId(), false);
             executionMap.put(element.getId(), false);
         }
-        
-        
+
     }
 
     public void resetDiagram() {
@@ -1913,15 +1916,22 @@ public class DiagramView implements Serializable {
                 sb.setAnalType("mummichog");
                 RDataUtils.setAnalType(sb.getRConnection(), sb.getAnalType());
 
-                sb.setPaired(false);
-                sb.setRegression(false);
+                pu.setPeakListParams();
+                RDataUtils.readPeakListData(sb.getRConnection(), wb.getDataName());
                 //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "Sanity Check Peak",
                         "Functional Annotation",
-                        "Scatter",
-                        "Network"
+                        "performPeaks2Fun",
+                        "performPeaks2Fun_mum",
+                        "performPeaks2Fun_gsea",
+                        "performPeaks2Fun_integ",
+                        "Heatmap_mum",
+                        "Heatmap_gsea",
+                        "Heatmap_integ",
+            
+            "Network"
                 ));
             }
             case "mass_table" -> {

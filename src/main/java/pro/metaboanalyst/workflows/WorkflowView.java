@@ -219,7 +219,7 @@ public class WorkflowView implements Serializable {
                         }
                     }
                     case "Filtering", "Filtering_Table", "Filtering Intensity" -> {
-                        if(sb.isMissingDisabled()){
+                        if (sb.isMissingDisabled()) {
                             return 1;
                         }
                         ProcessBean pb = (ProcessBean) getBeanInstance("pb");
@@ -498,31 +498,22 @@ public class WorkflowView implements Serializable {
                         PeakCustomBean pc = (PeakCustomBean) getBeanInstance("pc");
                         pc.customButton_action();
                     }
-                    case "performPeaks2Fun", "Scatter" -> {
-                        boolean resBool = checkWorkflowContained(func);
-                        if (!resBool && wb.isReloadingWorkflow()) {
+                    case "performPeaks2Fun", "performPeaks2Fun_mum", "performPeaks2Fun_gsea", "performPeaks2Fun_integ" -> {
+                        int res = handlePeaks2Fun(func);   // knows which variant
+                        if (res == 2) {
                             return 2;
                         }
-                        MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
-                        String nextPage = ma.performPeaks2Fun();
-                        wb.getCalledWorkflows().add("Scatter");
-                        if (nextPage.equals("Heatmap view")) {
-                            sb.addNaviTrack("Heatmap", "/Secure/viewer/HeatmapView.xhtml");
-                        } else {
-                            if (ma.getAlgOpts().length > 1) {
-                                sb.addNaviTrack("Integ. result", "/Secure/mummichog/IntegMumResultView.xhtml");
-                            } else if (ma.getAlgOpts()[0].equals("mum")) {
-                                sb.addNaviTrack("Mummi. result", "/Secure/mummichog/MummiResultView.xhtml");
-                            } else if (ma.getAlgOpts()[0].equals("gsea")) {
-                                sb.addNaviTrack("GSEA result", "/Secure/mummichog/GseaResultView.xhtml");
-                            }
-                        }
-                        refactoredName = "Scatter Visualization";
-
-                        sb.addNaviTrack("Metabolic network", "/Secure/mummichog/KeggNetView.xhtml");
                     }
-                    case "Heatmap_mum" -> {
-                        boolean resBool = checkWorkflowContained("performPeaks2Fun");
+                    case "Heatmap_mum", "Heatmap_gsea", "Heatmap_integ" -> {
+                        String funct = "";
+                        if (func.equals("Heatmap_mum")) {
+                            funct = "performPeaks2Fun_mum";
+                        } else if (func.equals("Heatmap_gsea")) {
+                            funct = "performPeaks2Fun_gsea";
+                        }else if (func.equals("Heatmap_integ")) {
+                            funct = "performPeaks2Fun_integ";
+                        }
+                        boolean resBool = checkWorkflowContained(funct);
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
@@ -550,7 +541,7 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("Heatmap (Pathway)", "/Secure/viewer/HeatmapView.xhtml");
 
                     }
-                    case "paBn_proceed_ora", "paBn_proceed_qea" , "paBn_action"-> {
+                    case "paBn_proceed_ora", "paBn_proceed_qea", "paBn_action" -> {
                         PathBean pab = (PathBean) getBeanInstance("pab");
                         boolean resBool = checkWorkflowContained("paBn_action");
                         if (!resBool && wb.isReloadingWorkflow()) {
@@ -2047,6 +2038,31 @@ public class WorkflowView implements Serializable {
             refactoredName = "Network Visualization";
         }
 
+    }
+
+    private int handlePeaks2Fun(String key) {
+        boolean resBool = checkWorkflowContained(key);
+        if (!resBool && wb.isReloadingWorkflow()) {
+            return 2;
+        }
+        MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+        String nextPage = ma.performPeaks2Fun();
+        wb.getCalledWorkflows().add("Scatter");
+        if (nextPage.equals("Heatmap view")) {
+            sb.addNaviTrack("Heatmap", "/Secure/viewer/HeatmapView.xhtml");
+        } else {
+            if (key.contains("_integ")) {
+                sb.addNaviTrack("Integ. result", "/Secure/mummichog/IntegMumResultView.xhtml");
+            } else if (key.contains("_mum")) {
+                sb.addNaviTrack("Mummi. result", "/Secure/mummichog/MummiResultView.xhtml");
+            } else if (ma.getAlgOpts()[0].equals("gsea")) {
+                sb.addNaviTrack("GSEA result", "/Secure/mummichog/GseaResultView.xhtml");
+            }
+        }
+        refactoredName = "Scatter Visualization";
+
+        sb.addNaviTrack("Metabolic network", "/Secure/mummichog/KeggNetView.xhtml");
+        return 1;
     }
 
 }

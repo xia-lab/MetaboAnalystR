@@ -209,9 +209,17 @@
     }
 }
 
+/* dim the card */
 .wf-incompat {
-    opacity: .55;
+  opacity: .55;
+  position: relative;
+  cursor: not-allowed;
 }
+
+.wf-incompat .no-clicks {
+  pointer-events: none;   /* blocks all mouse actions on the inner controls */
+}
+
 .wf-incompat .pi {
     filter: grayscale(1);
 }

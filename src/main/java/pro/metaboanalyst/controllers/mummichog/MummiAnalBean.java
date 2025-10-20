@@ -58,6 +58,7 @@ public class MummiAnalBean implements Serializable {
     private String enrichOpt = "fisher";
     private String filterOpt = "filtered";
     private String[] algOpts = {"mum"}; //"mum" and/or "gsea"
+
     private String pvalCutoffOpt = "default";
     private boolean disabledMumPval = false;
     private boolean disabledMum = false;
@@ -337,7 +338,6 @@ public class MummiAnalBean implements Serializable {
             sb.addMessage("Error", "Select algorithm(s) to perform enrichment analysis!");
             return null;
         }
-        jrd.record_performPeaks2Fun(this);
         wb.getCalledWorkflows().add("Heatmap");
         //throttling
         Semaphore semphore = sb.getPermissionToStart();
@@ -378,11 +378,12 @@ public class MummiAnalBean implements Serializable {
             } else {
                 REnrichUtils.createListHeatmapJson(sb, pathDBOpt, libVersion, minMsetNum, heatmapName, filterOpt, version);
             }
+            jrd.record_performPeaks2Fun(this);
 
             nextpage = "Heatmap view";
 
         } else if (algOpts.length > 1) {
-
+            algOptSingle = "integ";
             RDataUtils.setPeakEnrichMethod(sb, "integ", version);
             nextpage = "peakintegview";
             String imgName = sb.getNewImage("integ_peaks");
@@ -419,8 +420,10 @@ public class MummiAnalBean implements Serializable {
                     sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
                 }
             }
+            jrd.record_performPeaks2Fun(this);
 
         } else if (algOpts[0].equals("mum")) {
+            algOptSingle = "mum";
 
             RDataUtils.setPeakEnrichMethod(sb, "mum", version);
             nextpage = "mummires";
@@ -457,8 +460,11 @@ public class MummiAnalBean implements Serializable {
                 String msg = RDataUtils.getErrMsg(sb.getRConnection());
                 sb.addMessage("Error", msg + "You can click the Submit button again to accept recommended p value.");
             }
+            jrd.record_performPeaks2Fun(this);
 
         } else {
+            algOptSingle = "gsea";
+
             RDataUtils.setPeakEnrichMethod(sb, algOpts[0], version);
             nextpage = "gseapkview";
             String imgName = sb.getNewImage("peaks_to_paths_gsea");
@@ -491,6 +497,8 @@ public class MummiAnalBean implements Serializable {
                 String msg = RDataUtils.getErrMsg(sb.getRConnection());
                 sb.addMessage("Error", "There is something wrong with the MS Peaks to Paths analysis: " + msg);
             }
+            jrd.record_performPeaks2Fun(this);
+
         }
 
         //don't forget
