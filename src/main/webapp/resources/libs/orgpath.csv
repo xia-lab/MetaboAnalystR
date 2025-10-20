@@ -121,13 +121,14 @@ gla,Giardia lamblia,(KEGG),Protists,119,Giardia lamblia (KEGG)
 tsr,Thamnophis sirtalis (common garter snake),(KEGG),Other animals,120,Thamnophis sirtalis (common garter snake) (KEGG)  
 spu,Strongylocentrotus purpuratus (purple sea urchin),(KEGG),Other animals,121,Strongylocentrotus purpuratus (purple sea urchin) (KEGG)  
 dpx,Daphnia pulex (common water flea),(KEGG),Other animals,122,Daphnia pulex (common water flea) (KEGG)  
-lpx,Lactiplantibacillus paraplantarum L-ZS9,(KEGG),Prokaryotes,122,Lactiplantibacillus paraplantarum L-ZS9 (KEGG)
-wpa,Weissella paramesenteroides FDAARGOS_414,(KEGG),Prokaryotes,123,Weissella paramesenteroides FDAARGOS_414 (KEGG)
-wcb,Weissella cibaria CH2,(KEGG),Prokaryotes,124,Weissella cibaria CH2 (KEGG)
-lpl,Lactiplantibacillus plantarum WCFS1,(KEGG),Prokaryotes,125,Lactiplantibacillus plantarum WCFS1 (KEGG)
-lsa,Latilactobacillus sakei subsp. sakei 23K,(KEGG),Prokaryotes,126,Latilactobacillus sakei subsp. sakei 23K (KEGG)
-lla,Lactococcus lactis subsp. lactis Il1403,(KEGG),Prokaryotes,127,Lactococcus lactis subsp. lactis Il1403 (KEGG)
-gmw,Galleria mellonella (greater wax moth),(KEGG),Insects,128,Galleria mellonella (greater wax moth) [KEGG]
-gmx,Glycine max (soybean),(KEGG),Plants,129,Glycine max (soybean) [KEGG]
-lrg,Lacticaseibacillus rhamnosus GG,(KEGG),Prokaryotes,130,Lacticaseibacillus rhamnosus GG [KEGG]
-saa,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA),(KEGG),Prokaryotes,131,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA) [KEGG]
+lpx,Lactiplantibacillus paraplantarum L-ZS9,(KEGG),Prokaryotes,123,Lactiplantibacillus paraplantarum L-ZS9 (KEGG)
+wpa,Weissella paramesenteroides FDAARGOS_414,(KEGG),Prokaryotes,124,Weissella paramesenteroides FDAARGOS_414 (KEGG)
+wcb,Weissella cibaria CH2,(KEGG),Prokaryotes,125,Weissella cibaria CH2 (KEGG)
+lpl,Lactiplantibacillus plantarum WCFS1,(KEGG),Prokaryotes,126,Lactiplantibacillus plantarum WCFS1 (KEGG)
+lsa,Latilactobacillus sakei subsp. sakei 23K,(KEGG),Prokaryotes,127,Latilactobacillus sakei subsp. sakei 23K (KEGG)
+lla,Lactococcus lactis subsp. lactis Il1403,(KEGG),Prokaryotes,128,Lactococcus lactis subsp. lactis Il1403 (KEGG)
+gmw,Galleria mellonella (greater wax moth),(KEGG),Insects,129,Galleria mellonella (greater wax moth) [KEGG]
+gmx,Glycine max (soybean),(KEGG),Plants,130,Glycine max (soybean) [KEGG]
+lrg,Lacticaseibacillus rhamnosus GG,(KEGG),Prokaryotes,131,Lacticaseibacillus rhamnosus GG [KEGG]
+saa,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA),(KEGG),Prokaryotes,132,Staphylococcus aureus subsp. aureus USA300FPR3757 (CA-MRSA) [KEGG]
+csav,Cannabis sativa (hemp),(KEGG),Plants,133,Cannabis sativa (hemp) [KEGG]

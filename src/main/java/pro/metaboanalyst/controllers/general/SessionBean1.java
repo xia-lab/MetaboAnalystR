@@ -625,8 +625,8 @@ public class SessionBean1 implements Serializable {
         return sessionToken;
     }
 
-    //private final Set<String> overViewPageIDs = Set.of("Modules", "Projects", "Workflows");
-    private final Set<String> overViewPageIDs = Set.of("Modules", "Projects");
+    private final Set<String> overViewPageIDs = Set.of("Modules", "Projects", "Workflows", "Datasets");
+    //private final Set<String> overViewPageIDs = Set.of("Modules", "Projects");
 
     public boolean isOverviewPage() {
         return overViewPageIDs.contains(currentPageID);

@@ -11,7 +11,6 @@ import jakarta.inject.Named;
 import jakarta.faces.model.SelectItem;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
-import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.controllers.general.DetailsBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.LivePCABean;
@@ -94,7 +93,7 @@ public class PCABean implements Serializable {
     }
 
     public String pcaPairBtn_action() {
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"),"pca_pair", "png", 150, pcaPairNum, "NA", "NA");
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"), "pca_pair", "png", 150, pcaPairNum, "NA", "NA");
         return null;
     }
 
@@ -347,6 +346,9 @@ public class PCABean implements Serializable {
     private int pcaBiplotFeat = 10;
 
     public int getPcaBiplotFeat() {
+        if (pcaBiplotFeat >= sb.getFeatureNumber()) {
+            pcaBiplotFeat = sb.getFeatureNumber() - 1;
+        }
         return pcaBiplotFeat;
     }
 
@@ -357,9 +359,15 @@ public class PCABean implements Serializable {
     public void pcaBiplotBtn_action() {
         if (pcaBiplotX == pcaBiplotY) {
             sb.addMessage("Error", "Detected the same PC on two axes!");
-        } else {
-            ChemoMetrics.plotPCABiplot(sb, sb.getNewImage("pca_biplot"), "png", 150, pcaBiplotX, pcaBiplotY, pcaBiplotFeat);
+            return;
         }
+
+        if (pcaBiplotFeat >= sb.getFeatureNumber()) {
+            sb.addMessage("Error", "The value must be less than the total feature number in your data: " + sb.getFeatureNumber());
+            return;
+        }
+        ChemoMetrics.plotPCABiplot(sb, sb.getNewImage("pca_biplot"), "png", 150, pcaBiplotX, pcaBiplotY, pcaBiplotFeat);
+
     }
 
     public void flipPCA() {
