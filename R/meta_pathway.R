@@ -1864,7 +1864,8 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
@@ -1888,7 +1889,8 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj,"F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
@@ -1904,7 +1906,8 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
