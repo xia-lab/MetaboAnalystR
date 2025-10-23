@@ -29,6 +29,7 @@ import java.net.http.HttpResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.time.Duration;
+import pro.metaboanalyst.workflows.WorkflowRunModel;
 
 /**
  *
@@ -65,11 +66,47 @@ public class FireProjectBean implements Serializable {
     private String projectType = "project";
     //Project data table
     private List<ProjectModel> projectTable = new ArrayList<>();
+    private List<ProjectModel> workflowProjectTable = new ArrayList<>();
+
     private HashMap<Long, ProjectModel> projectMap = null;
     private ProjectModel selectedProject = null;
     private ProjectModel projectToLoad = null;
     private ProjectModel myProject = null;
     private int activeTabIndex = 0;
+// In your ProjectBean (or whatever pb is)
+    private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
+    private WorkflowRunModel workflowRunToLoad; // optional, if you auto-select one
+ private WorkflowRunModel selectedWorkflowRun;
+
+    public WorkflowRunModel getSelectedWorkflowRun() {
+        return selectedWorkflowRun;
+    }
+
+    public void setSelectedWorkflowRun(WorkflowRunModel selectedWorkflowRun) {
+        this.selectedWorkflowRun = selectedWorkflowRun;
+    }
+ 
+ 
+    public List<WorkflowRunModel> getWorkflowRunsTable() {
+        // ensure it's never null for the UI
+        if (workflowRunsTable == null) {
+            workflowRunsTable = new ArrayList<>();
+        }
+        return workflowRunsTable;
+    }
+
+    public void setWorkflowRunsTable(List<WorkflowRunModel> workflowRunsTable) {
+        this.workflowRunsTable = (workflowRunsTable != null) ? workflowRunsTable : new ArrayList<>();
+    }
+
+// Optional helpers if you’re auto-picking a row to load
+    public WorkflowRunModel getWorkflowRunToLoad() {
+        return workflowRunToLoad;
+    }
+
+    public void setWorkflowRunToLoad(WorkflowRunModel run) {
+        this.workflowRunToLoad = run;
+    }
 
     public ProjectModel getProjectToLoad() {
         return projectToLoad;
@@ -77,6 +114,14 @@ public class FireProjectBean implements Serializable {
 
     public void setProjectToLoad(ProjectModel projectToLoad) {
         this.projectToLoad = projectToLoad;
+    }
+
+    public List<ProjectModel> getWorkflowProjectTable() {
+        return workflowProjectTable;
+    }
+
+    public void setWorkflowProjectTable(List<ProjectModel> workflowProjectTable) {
+        this.workflowProjectTable = workflowProjectTable;
     }
 
     public String checkProjectInfo() {
@@ -208,7 +253,7 @@ public class FireProjectBean implements Serializable {
 
             DataUtils.deleteFile(fb.getProjectPath() + "/user_folders/" + folderNm + "/", selectedProject.getFolderName() + ".zip");
             //System.out.println("Document successfully deleted!");
-            fbc.setupProjectTable();
+            fbc.setupProjectTable("project");
             sb.addMessage("info", "Project " + selectedProject.getId() + " successfully deleted!");
             selectedProject = null;
         } catch (Exception e) {
@@ -313,7 +358,7 @@ public class FireProjectBean implements Serializable {
         } else {
             sb.addMessage("info", "Project " + selectedProject.getId() + " successfully loaded!");
         }
-        
+
         return true;
     }
 
@@ -480,5 +525,6 @@ public class FireProjectBean implements Serializable {
     public Map<String, FunctionInfo> getFunctionInfos() {
         return functionInfos;
     }
-
+    
+    
 }

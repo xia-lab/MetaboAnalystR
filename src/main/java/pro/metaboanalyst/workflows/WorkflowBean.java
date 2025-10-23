@@ -37,8 +37,10 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
@@ -51,6 +53,7 @@ import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.datalts.DatasetController;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
+import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.models.SampleBean;
@@ -109,6 +112,10 @@ public class WorkflowBean implements Serializable {
     @JsonIgnore
     @Inject
     private DatasetController ds;
+
+    @JsonIgnore
+    @Inject
+    private FireProjectBean fpb;
 
     @JsonIgnore
     private ArrayList<HashMap<String, Object>> workflowList;
@@ -1253,7 +1260,7 @@ public class WorkflowBean implements Serializable {
             editMode = false;
 
             final String module = (String) selectedWorkflow.get("module");
-            final String input = resolveInputForModule(module,sb.getDataType());
+            final String input = resolveInputForModule(module, sb.getDataType());
             postLoadCommon();
 
             initializeDiagramForInput(input);
@@ -1279,92 +1286,123 @@ public class WorkflowBean implements Serializable {
     }
 
     public void startFromTemplate(HashMap<String, Object> wfTemplate) {
+        // === Record a workflow RUN row with status "pending" ===
         try {
-            selectedWorkflow = wfTemplate;
-            activeIndex = 2;
+            // 1) Gather fields
+            final String email = fub.getEmail();
+            final String module = sb.getAnalType();//;(String) selectedWorkflow.getOrDefault("module", sb.getAnalType());
+            String wfName = String.valueOf(fbc.getFireDocName());
+            String description = String.valueOf(fbc.getFireDocDescription());
 
-            if (sb.getCurrentUser() == null) {
-                sb.addMessage("Warn", "Please start an analysis session first!");
-                return;
+            if (wfName == null || wfName.isEmpty()) {
+                wfName = "WorkflowRun";
             }
 
-            if (ds.getSelected() == null) {
-                sb.addMessage("Warn", "Please select a dataset in 'Data Center' or upload a dataset first!");
-                return;
+            if (description.isEmpty()) {
+                description = "None";
             }
-            final String fileName = (String) selectedWorkflow.get("filename");
-            final Path destPath = prepareTemplateWorkflowJson(fileName);
+            // Prefer a stable identifier if present; otherwise fall back to template filename
+            final String workflowId = String.valueOf(selectedWorkflow.getOrDefault("id", ""));
 
-            Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
-            setFunctionInfos(functionInfos);
-
-            wf.checkWorkflowContained("restoreWorkflowState");
-
-            // 3) UI
-            calledWorkflows.add("Data Preparation");
-            final String module = (String) selectedWorkflow.get("module");
-            String input = resolveInputForModule(module, sb.getDataType());
-            if (module.equals("mummichog")) {
-
+            // Dataset info: dataset_id column in workflow_runs is INTEGER; our DatasetRow uses UUID,
+            // so we only pass datasetName (title) here to avoid type mismatches.
+            UUID datasetId = ds.getSelected().getId();
+            String datasetName = null;
+            if (ds != null && ds.getSelected() != null) {
+                datasetName = ds.getSelected().getTitle();
             }
-            postLoadCommon();
 
-            initializeDiagramForInput(input);
-
-            reloadingWorkflow = true;
-
-            if (moduleNames.isEmpty()) {
-                dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
-            } else {
-                for (String moduleName : moduleNames) {
-                    dv.selectNode(dv.convertToBlockName(moduleName), true);
+            // Optional "other" JSON payload with a few useful bits
+            String otherJson = new com.google.gson.Gson().toJson(
+                    new java.util.LinkedHashMap<String, Object>() {
+                {
+                    put("dataType", sb.getDataType());
+                    put("dataFormat", sb.getDataFormat());
+                    put("toolLocation", ab.getToolLocation());
                 }
             }
+            );
 
+            // 2) Insert with status "pending"; no start/finish times yet
+            String insertMsg = dbc.insertWorkflowRun(
+                    email,
+                    module,
+                    wfName,
+                    description,
+                    "pending",
+                    null, // startDateIso
+                    null, // finishDateIso
+                    workflowId,
+                    datasetId, // null on purpose; see note above
+                    datasetName,
+                    otherJson,
+                    ab.getAppName()
+            );
+
+            /*
+            var runs = dbc.getAllWorkflowRuns(module, email); 
+            String wfId = String.valueOf(selectedWorkflow.getOrDefault("id", selectedWorkflow.get("filename")));
+            String dsName = ds.getSelected().getTitle();
+
+            for (HashMap<String, Object> r : runs) {
+                String status = String.valueOf(r.get("status"));
+                String rid = String.valueOf(r.get("workflowId"));
+                String rds = String.valueOf(r.get("datasetId"));
+                if ("pending".equalsIgnoreCase(status)
+                        && Objects.equals(rid, wfId)
+                        && Objects.equals(rds, dsName)) {
+                    setActiveWorkflowRunId(((Number) r.get("id")).intValue());
+                    break;
+                }
+            }
+             */
             DataUtils.doRedirectWithGrowl(sb,
-                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
+                    "/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=1",
                     "info",
                     "Workflow loaded successfully! You can proceed to run the workflow.");
-        } catch (Exception ex) {
+
+        } catch (Exception e) {
             Logger.getLogger(WorkflowBean.class.getName())
-                    .log(Level.SEVERE, "startFromTemplate failed", ex);
-            sb.addMessage("Error", "Failed to prepare workflow template: " + ex.getMessage());
+                    .log(Level.SEVERE, "insert workflow_run (pending) failed", e);
+            sb.addMessage("Warn", "Could not record workflow run: " + e.getMessage());
         }
+// === end insert workflow run ===
+
     }
 
     // === HELPERS ===
     /**
      * Central mapping: module -> input block label
      */
+    private static final Map<String, String> INPUT_BY_MODULE = Map.ofEntries(
+            Map.entry("stat", "Generic Table"),
+            Map.entry("roc", "Generic Table"),
+            Map.entry("dose", "Generic Table"),
+            Map.entry("mf", "Generic Table"),
+            // If plural is intentional, keep it; otherwise change to "Generic Table"
+            Map.entry("metadata", "Generic Tables"),
+            Map.entry("pathqea", "Compound Table"),
+            Map.entry("msetqea", "Compound Table"),
+            Map.entry("msetora", "Metabolite List"),
+            Map.entry("pathora", "Metabolite List"),
+            Map.entry("metapaths", "Peak Tables"),
+            Map.entry("raw", "LC-MS Spectra"),
+            Map.entry("network", "Gene List")
+    );
+
     private String resolveInputForModule(String module, String dataType) {
         if (module == null) {
             return "Generic Table";
         }
 
-        // Use a compact map; duplicates share the same target
-        final Map<String, String> map = Map.ofEntries(
-                Map.entry("stat", "Generic Table"),
-                Map.entry("roc", "Generic Table"),
-                Map.entry("dose", "Generic Table"),
-                Map.entry("mf", "Generic Table"),
-                Map.entry("metadata", "Generic Tables"),
-                Map.entry("pathqea", "Compound Table"),
-                Map.entry("msetqea", "Compound Table"),
-                Map.entry("msetora", "Metabolite List"),
-                Map.entry("pathora", "Metabolite List"),
-                Map.entry("metapaths", "Peak Tables"),
-                Map.entry("raw", "LC-MS Spectra"),
-                Map.entry("network", "Gene List")
-        );
-        if (module.equals("mummichog")) {
-            if (dataType.equals("mass_all")) {
-                return ("Peak List");
-            } else {
-                return ("Peak Table");
-            }
-        } else {
-            return map.getOrDefault(module, "Generic Table");
+        final String m = module.trim().toLowerCase(Locale.ROOT);
+
+        if (m.equals("mummichog")) {
+            final String dt = dataType == null ? "" : dataType.trim().toLowerCase(Locale.ROOT);
+            return dt.equals("mass_all") ? "Peak List" : "Peak Table";
         }
+
+        return INPUT_BY_MODULE.getOrDefault(m, "Generic Table");
     }
 
     /**
@@ -1394,7 +1432,7 @@ public class WorkflowBean implements Serializable {
         Path home = Paths.get(sb.getCurrentUser().getHomeDir());
 
         // --- Ensure/attach mSetObj_after_sanity.qs ---
-        Path msetFile = home.resolve("RloadSanity.RData");
+        Path msetFile = home.resolve("mSetObj_after_sanity.RData");
         if (!Files.exists(msetFile)) {
             sb.setDataType(RDataUtils.getDataType(sb.getRConnection()));
             sb.setDataFormat(RDataUtils.getDataFormat(sb.getRConnection()));
@@ -1870,78 +1908,6 @@ public class WorkflowBean implements Serializable {
         }
     }
 
-    private String currentDatasetDataTypeSafe() {
-        if (!hasSelectedDataset()) {
-            return "";
-        }
-        String dt = String.valueOf(ds.getSelected().getDataType());
-        return dt == null ? "" : dt.trim().toLowerCase();
-    }
-
-    private String currentDatasetModuleSafe() {
-        if (!hasSelectedDataset()) {
-            return "";
-        }
-        String m = String.valueOf(ds.getSelected().getModule());
-        return m == null ? "" : m.trim().toLowerCase();
-    }
-
-    private InputKind kindForDataType(String dt) {
-        switch (dt) {
-            case "conc":
-                return InputKind.COMPOUND_TABLE;
-            case "pktable":
-            case "mspeak":
-            case "nmrpeak":
-                return InputKind.PEAK_TABLE;
-            case "mass_table":
-                return InputKind.PEAK_LIST;
-            case "spec":
-            case "specbin":
-                return InputKind.LCMS_SPECTRA;
-            case "metabolite_list":
-            case "list":
-                return InputKind.METABOLITE_LIST;
-            default:
-                return InputKind.GENERIC_TABLE;
-        }
-    }
-
-    private boolean isModuleCompatibleForDataset(String wfModule, String dsModule, InputKind kind) {
-        if (wfModule == null) {
-            return true; // permissive default
-        }
-        String m = wfModule.trim().toLowerCase();
-
-        // Core by input kind
-        switch (m) {
-            case "raw":
-                return kind == InputKind.LCMS_SPECTRA;
-            case "mummichog":
-                return kind == InputKind.PEAK_TABLE || kind == InputKind.PEAK_LIST;
-            case "pathqea":
-            case "msetqea":
-                return kind == InputKind.COMPOUND_TABLE;
-            case "pathora":
-            case "msetora":
-                return kind == InputKind.METABOLITE_LIST;
-            case "pathway":
-            case "enrich":
-                return kind == InputKind.COMPOUND_TABLE
-                        || kind == InputKind.METABOLITE_LIST
-                        || kind == InputKind.PEAK_LIST;
-            case "stat":
-            case "roc":
-            case "dose":
-            case "mf":
-            case "power":
-                return kind == InputKind.GENERIC_TABLE
-                        || kind == InputKind.COMPOUND_TABLE
-                        || kind == InputKind.PEAK_TABLE;
-            default:
-                return true;
-        }
-    }
 // Families (modules, not datatypes)
     private static final Set<String> TABLE_FAMILY = Set.of(
             "stat", "roc", "dose", "mf", "raw", "power", "mummichog", "pathqea", "msetqea", "pathway", "enrich"
@@ -2081,4 +2047,159 @@ public class WorkflowBean implements Serializable {
         return (o == null) ? "" : String.valueOf(o);
     }
 
+    @JsonIgnore
+    private Integer activeWorkflowRunId;
+
+    public Integer getActiveWorkflowRunId() {
+        return activeWorkflowRunId;
+    }
+
+    public void setActiveWorkflowRunId(Integer id) {
+        this.activeWorkflowRunId = id;
+    }
+
+    public void startRun() {
+        try {
+            calledWorkflows.add("Data Preparation");
+            editMode = false;
+            boolean success = selectWorkflowById(fpb.getSelectedWorkflowRun().getWorkflowId());
+            if (!success) {
+                return;
+            }
+            ds.setSelected(ds.findById(fpb.getSelectedWorkflowRun().getDatasetId()));
+
+            boolean res = ds.load(ds.getSelected(), true);
+
+            if (res) {
+                boolean res2 = ds.handleDataset(ds.getSelected());
+            }
+            final String module = sb.getAnalType();//(String) selectedWorkflow.get("module");
+            final String input = resolveInputForModule(module, sb.getDataType());
+
+            postLoadCommon();
+
+            initializeDiagramForInput(input);
+
+            reloadingWorkflow = false;
+            wf.generateWorkflowJson("project", false);   // only in "details"
+            if (moduleNames.isEmpty()) {
+                dv.selectNode(dv.convertToBlockName(module), true);
+            } else {
+                for (String moduleName : moduleNames) {
+                    dv.selectNode(dv.convertToBlockName(moduleName), true);
+                }
+            }
+
+            dv.submitWorkflowJob();
+
+        } catch (Exception ex) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "startFromDetails failed", ex);
+            sb.addMessage("Error", "Failed to start from details: " + ex.getMessage());
+        }
+    }
+
+    /*
+    public void startFromTemplate(HashMap<String, Object> wfTemplate) {
+        try {
+            selectedWorkflow = wfTemplate;
+            activeIndex = 2;
+
+            if (sb.getCurrentUser() == null) {
+                sb.addMessage("Warn", "Please start an analysis session first!");
+                return;
+            }
+
+            if (ds.getSelected() == null) {
+                sb.addMessage("Warn", "Please select a dataset in 'Data Center' or upload a dataset first!");
+                return;
+            }
+ 
+
+            wf.checkWorkflowContained("restoreWorkflowState");
+
+            // 3) UI
+            calledWorkflows.add("Data Preparation");
+            final String module = (String) selectedWorkflow.get("module");
+            final String input = resolveInputForModule(module);
+            postLoadCommon();
+
+            initializeDiagramForInput(input);
+
+            reloadingWorkflow = true;
+
+            if (moduleNames.isEmpty()) {
+                dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
+            } else {
+                for (String moduleName : moduleNames) {
+                    dv.selectNode(dv.convertToBlockName(moduleName), true);
+                }
+            }
+
+            DataUtils.doRedirectWithGrowl(sb,
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
+                    "info",
+                    "Workflow loaded successfully! You can proceed to run the workflow.");
+        } catch (Exception ex) {
+            Logger.getLogger(WorkflowBean.class.getName())
+                    .log(Level.SEVERE, "startFromTemplate failed", ex);
+            sb.addMessage("Error", "Failed to prepare workflow template: " + ex.getMessage());
+        }
+    }
+     */
+    public boolean selectWorkflowById(int id) {
+        // Ensure lists are loaded
+        if (workflowList == null) {
+            loadAllWorkflows();
+        }
+
+        // 1) Try to find it in the already-loaded custom workflows
+        if (workflowList != null) {
+            for (HashMap<String, Object> wf : workflowList) {
+                Object v = wf.get("id");
+                if (v != null) {
+                    try {
+                        int vid = (v instanceof Number) ? ((Number) v).intValue() : Integer.parseInt(v.toString());
+                        if (vid == id) {
+                            selectedWorkflow = wf;
+                            return true;
+                        }
+                    } catch (NumberFormatException ignore) {
+                    }
+                }
+            }
+        }
+
+        if (defaultWorkflowList != null) {
+            for (HashMap<String, Object> wf : defaultWorkflowList) {
+                Object v = wf.get("id");
+                if (v != null) {
+                    try {
+                        int vid = (v instanceof Number) ? ((Number) v).intValue() : Integer.parseInt(v.toString());
+                        if (vid == id) {
+                            selectedWorkflow = wf;
+                            return true;
+                        }
+                    } catch (NumberFormatException ignore) {
+                    }
+                }
+            }
+        }
+
+        // 3) Not found
+        sb.addMessage("warn", "No workflow found with id = " + id);
+        return false;
+    }
+
+// Convenience overload if id comes in as String
+    public boolean selectWorkflowById(String idStr) {
+        try {
+            return selectWorkflowById(Integer.parseInt(idStr));
+        } catch (Exception e) {
+            sb.addMessage("warn", "Invalid workflow id: " + idStr);
+            return false;
+        }
+    }
+
+    
 }

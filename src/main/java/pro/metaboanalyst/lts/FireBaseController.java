@@ -76,9 +76,11 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.postgresql.util.PGobject;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
@@ -91,6 +93,7 @@ import pro.metaboanalyst.spectra.TandemMSBean;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.workflows.WorkflowBean;
+import pro.metaboanalyst.workflows.WorkflowRunModel;
 import pro.metaboanalyst.workflows.WorkflowView;
 
 /**
@@ -431,9 +434,7 @@ public class FireBaseController implements Serializable {
         }
 
     }
-    
 
-    
     public boolean saveDataAndGoToWorkflow() {
         if (dc.hasStagedDataset()) {
             dc.getStagedDataset().setSamplenum(RDataUtils.getSampleNum(sb.getRConnection()));
@@ -443,7 +444,7 @@ public class FireBaseController implements Serializable {
             }
             dc.loadWorkflow(dc.findById(dsId), false);
             return true;
-        }else{
+        } else {
             sb.addMessage("warn", "Failed to load the current dataset.");
             return false;
         }
@@ -895,13 +896,19 @@ public class FireBaseController implements Serializable {
     private boolean projInit = false;
 
     public void initUserProjects() {
+        if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
+            return; // Skip ajax requests.
+        }
 
         reloadUserInfo();
+
         if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
         } else {
             pb.setActiveTabIndex(0);
-            setupProjectTable();
+            setupProjectTable("project");
+            //setupProjectTable("workflow");
+            setupWorkflowRunsTable();
             projInit = true;
         }
 
@@ -955,11 +962,16 @@ public class FireBaseController implements Serializable {
         this.projectToLoadId = projectToLoadId;
     }
 
-    public boolean setupProjectTable() {
+    public boolean setupProjectTable(String type) {
 
         try {
             ArrayList<HashMap<String, Object>> res = db.getProjectsFromPostgres(fub.getEmail(), ab.getAppName(), ab.getToolLocation());
-            pb.setProjectTable(new ArrayList());
+            if (type.equals("project")) {
+                pb.setProjectTable(new ArrayList());
+            } else {
+                pb.setWorkflowProjectTable(new ArrayList());
+
+            }
             if (res == null) {
                 return false;
             }
@@ -969,11 +981,15 @@ public class FireBaseController implements Serializable {
                 Map<String, Object> myMap = myHashMap;
 
                 Object projectTypeObject = myMap.get("projecttype");
-                if (projectTypeObject != null && !"project".equals(projectTypeObject.toString())) {
+                if (projectTypeObject != null && !type.equals(projectTypeObject.toString())) {
                     continue; // Skip this project and move to the next iteration
                 }
                 ProjectModel project = createProjectFromMap(myMap);
-                pb.getProjectTable().add(project);
+                if (type.equals("project")) {
+                    pb.getProjectTable().add(project);
+                } else {
+                    pb.getWorkflowProjectTable().add(project);
+                }
                 if (!projectToLoadId.isEmpty()) {
                     Object idObject = myMap.get("id"); // This will get the value associated with 'Id' key
                     if (idObject != null) { // Check if the 'Id' exists
@@ -1043,6 +1059,8 @@ public class FireBaseController implements Serializable {
             project.setDescription(description);
             project.setType(analType);
             project.setDataType(dataType);
+            project.setProjectType(safeGet(docData, "projecttype", "NA"));
+
             project.setOrg(org);
             project.setCreationDate(date); // This will be null if dateStr was "NA"
             project.setFolderName(folderName);
@@ -1791,6 +1809,247 @@ public class FireBaseController implements Serializable {
     public void addDoseFeatureToReport() {
         RDataUtils.addDoseFeatureToReport(sb.getRConnection(), drb.getSelectedFeature().getName(), drb.getCurrentFeatureImg());
         sb.addMessage("info", "This feature has been added to report!");
+    }
+
+    public boolean setupWorkflowRunsTable() {
+        try {
+            // Init target table
+            if (pb.getWorkflowRunsTable() == null) {
+                pb.setWorkflowRunsTable(new ArrayList<>());
+            } else {
+                pb.getWorkflowRunsTable().clear();
+            }
+
+            final String email = fub.getEmail();
+
+            // Fetch from DB/API (DatabaseClient delegates to Docker DB or REST)
+            ArrayList<HashMap<String, Object>> res = db.getAllWorkflowRuns(ab.getAppName(), email);
+            if (res == null) {
+                return false;
+            }
+
+            boolean autoPickToLoad = false;
+
+            for (HashMap<String, Object> row : res) {
+                // Optional status filter
+
+                // Build model
+                WorkflowRunModel run = createWorkflowRunFromMap(row);
+                pb.getWorkflowRunsTable().add(run);
+
+                // If you have a "runToLoadId" like projectToLoadId, auto-pick it
+                if (runToLoadId != null && !runToLoadId.isEmpty()) {
+                    Object idObj = row.get("id");
+                    if (idObj != null && runToLoadId.equals(String.valueOf(idObj))) {
+                        pb.setWorkflowRunToLoad(run);
+                        autoPickToLoad = true;
+                        runToLoadId = "";
+                    }
+                }
+            }
+
+            if (autoPickToLoad) {
+                pb.settingProceedType("load");
+            }
+            return true;
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to load workflow runs!");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private WorkflowRunModel createWorkflowRunFromMap(Map<String, Object> m) {
+        WorkflowRunModel r = new WorkflowRunModel();
+
+        // Core identifiers
+        r.setId(safeIntFromDoubleLike(m.get("id")));                          // DB PK
+        r.setWorkflowId(safeStr(getAny(m, "workflowId", "workflow_id")));
+        r.setName(safeStr(m.get("name")));                      // display name (if present)
+        r.setModule(safeStr(m.get("module")));
+        r.setEmail(safeStr(m.get("email")));
+
+        // Dataset linkage (UUID)
+        Object dsRaw = getAny(m, "datasetId", "dataset_id");
+        r.setDatasetId(safeUUID(dsRaw));                        // <-- UUID now
+        r.setDatasetName(safeStr(getAny(m, "datasetName", "dataset_name")));
+
+        // Status & timing
+        r.setStatus(safeStr(m.get("status")));                  // pending|running|completed|failed
+        r.setStartDate(safeStr(getAny(m, "startDate", "start_date")));
+        r.setFinishDate(safeStr(getAny(m, "finishDate", "finish_date")));
+        r.setLastUpdated(safeStr(getAny(m, "lastUpdated", "last_updated")));
+
+        // Description & misc
+        r.setDescription(safeStr(m.get("description")));
+        r.setOtherJson(safeStr(m.get("other")));                // JSON blob for extra info
+
+        // Convenience: derive a readable title if none provided
+        if (r.getName() == null || r.getName().isBlank()) {
+            String fallback = r.getWorkflowId();
+            if (fallback == null || fallback.isBlank()) {
+                fallback = "Run-" + r.getId();
+            }
+            r.setName(fallback);
+        }
+        return r;
+    }
+
+    private Object getAny(Map<String, Object> m, String... keys) {
+        for (String k : keys) {
+            if (m.containsKey(k)) {
+                return m.get(k);
+            }
+        }
+        return null;
+    }
+
+    private UUID safeUUID(Object v) {
+        if (v == null) {
+            return null;
+        }
+
+        if (v instanceof UUID) {
+            return (UUID) v;
+        }
+
+        if (v instanceof String) {
+            String s = ((String) v).trim();
+            if (s.isEmpty()) {
+                return null;
+            }
+            try {
+                return UUID.fromString(s);
+            } catch (IllegalArgumentException ignore) {
+                return null;
+            }
+        }
+
+        // Postgres driver may surface uuid as PGobject
+        if (v instanceof PGobject) {
+            PGobject pgo = (PGobject) v;
+            if ("uuid".equalsIgnoreCase(pgo.getType())) {
+                String s = pgo.getValue();
+                if (s != null) {
+                    try {
+                        return UUID.fromString(s);
+                    } catch (IllegalArgumentException ignore) {
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Some drivers return 16-byte arrays for UUID columns
+        if (v instanceof byte[]) {
+            byte[] b = (byte[]) v;
+            if (b.length == 16) {
+                ByteBuffer bb = ByteBuffer.wrap(b);
+                long high = bb.getLong();
+                long low = bb.getLong();
+                return new UUID(high, low);
+            }
+        }
+
+        // Fallback: try toString() parse
+        try {
+            return UUID.fromString(v.toString());
+        } catch (Exception ignore) {
+        }
+        return null;
+    }
+
+    private String safeStr(Object o) {
+        return (o == null) ? "" : String.valueOf(o);
+    }
+
+    private Integer safeInt(Object o) {
+        try {
+            return (o == null) ? 0 : Integer.valueOf(String.valueOf(o));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private Integer safeIntOrNull(Object o) {
+        try {
+            return (o == null) ? null : Integer.valueOf(String.valueOf(o));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String runToLoadId = "";
+
+    public String getRunToLoadId() {
+        return runToLoadId;
+    }
+
+    public void setRunToLoadId(String runToLoadId) {
+        this.runToLoadId = runToLoadId;
+    }
+
+    private static final double EPS = 1e-9;
+
+    public static int safeIntFromDoubleLike(Object v) {
+        if (v == null) {
+            System.out.println("[safeIntFromDoubleLike] null -> 0");
+            return 0;
+        }
+        try {
+            // Fast path: integral Number types
+            if (v instanceof Integer || v instanceof Short || v instanceof Byte) {
+                return ((Number) v).intValue();
+            }
+            if (v instanceof Long) {
+                long x = (Long) v;
+                if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE) {
+                    System.out.println("[safeIntFromDoubleLike] WARN: long out of int range: " + x);
+                    return 0;
+                }
+                return (int) x;
+            }
+
+            // Double/Float → accept only if effectively whole
+            if (v instanceof Double || v instanceof Float) {
+                double d = ((Number) v).doubleValue();
+                if (!Double.isFinite(d)) {
+                    System.out.println("[safeIntFromDoubleLike] WARN: non-finite: " + d + " -> 0");
+                    return 0;
+                }
+                double rounded = Math.rint(d);
+                if (Math.abs(d - rounded) > EPS) {
+                    System.out.println("[safeIntFromDoubleLike] WARN: fractional " + d + " -> 0");
+                    return 0;
+                }
+                if (rounded < Integer.MIN_VALUE || rounded > Integer.MAX_VALUE) {
+                    System.out.println("[safeIntFromDoubleLike] WARN: out of int range: " + rounded);
+                    return 0;
+                }
+                return (int) rounded;
+            }
+
+            // Fallback for other Number impls
+            if (v instanceof Number) {
+                double d = ((Number) v).doubleValue();
+                double rounded = Math.rint(d);
+                if (!Double.isFinite(d) || Math.abs(d - rounded) > EPS
+                        || rounded < Integer.MIN_VALUE || rounded > Integer.MAX_VALUE) {
+                    System.out.println("[safeIntFromDoubleLike] WARN: unsupported/frac number " + v + " -> 0");
+                    return 0;
+                }
+                return (int) rounded;
+            }
+
+            System.out.println("[safeIntFromDoubleLike] WARN: unsupported type "
+                    + v.getClass().getName() + " -> 0");
+            return 0;
+
+        } catch (Exception ex) {
+            System.out.println("[safeIntFromDoubleLike] ERROR parsing '" + v + "': " + ex.getMessage());
+            return 0;
+        }
     }
 
 }
