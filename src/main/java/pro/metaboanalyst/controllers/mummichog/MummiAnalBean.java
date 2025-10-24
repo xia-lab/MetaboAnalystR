@@ -88,8 +88,10 @@ public class MummiAnalBean implements Serializable {
         return algOptSingle;
     }
 
+    //note pass to sb, so sb don't call mummi bean
     public void setAlgOptSingle(String algOptSingle) {
         this.algOptSingle = algOptSingle;
+        sb.setMummiOptSingle(algOptSingle);
     }
 
     public String getEnrichOpt() {

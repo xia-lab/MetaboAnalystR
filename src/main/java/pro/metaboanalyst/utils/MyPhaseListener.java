@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.UUID;
-import java.util.logging.Level;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.faces.context.ExternalContext;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +18,9 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.PhaseEvent;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.event.PhaseListener;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
-import java.io.ObjectInputFilter.Status;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,17 +40,12 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.spectra.SpectraControlBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.omnifaces.cdi.Push;
-import org.omnifaces.cdi.PushContext;
 import org.primefaces.PrimeFaces;
-import org.rosuda.REngine.Rserve.RConnection;
-import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.workflows.DiagramView;
-import pro.metaboanalyst.workflows.JobExecution;
 import pro.metaboanalyst.workflows.WorkflowBean;
 import pro.metaboanalyst.workflows.JobTimerService;
 
@@ -210,6 +202,7 @@ public class MyPhaseListener implements PhaseListener {
             //} else if (rootId.contains(redirToken)) {
             //    handleRedirRequest(event);
         } else if (!extContext.getSessionMap().containsKey(USER_SESSION_KEY)) {
+            //System.out.println("============no session key detected!=======");
             if (path.startsWith("/MetaboAnalyst/Secure")) {
                 context.getApplication().getNavigationHandler().handleNavigation(context, "*", "Exit");
                 context.responseComplete();

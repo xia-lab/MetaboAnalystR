@@ -8,8 +8,6 @@ package pro.metaboanalyst.controllers.general;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.annotation.PreDestroy;
-import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
-import pro.metaboanalyst.controllers.mnet.MnetResBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.models.ColorBean;
 import pro.metaboanalyst.models.SampleBean;
@@ -25,6 +23,7 @@ import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 import org.rosuda.REngine.Rserve.RConnection;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.ActionEvent;
@@ -41,8 +40,6 @@ import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
-import pro.metaboanalyst.datalts.DatasetController;
-import pro.metaboanalyst.models.StickyDTO;
 import pro.metaboanalyst.workflows.WorkflowView;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.DiagramView;
@@ -56,49 +53,151 @@ public class SessionBean1 implements Serializable {
 
     @JsonIgnore
     private static final long serialVersionUID = 3520685098167757691L;
+
+    // ==========================================
+    // EAGER BEANS (keep as-is - used by everyone)
+    // ==========================================
     @JsonIgnore
     @Inject
-    private ApplicationBean1 ab;
+    private ApplicationBean1 ab;  // Keep eager
 
     @JsonIgnore
     @Inject
-    private WorkflowBean wb;
+    private FireBaseController fbc;  // Keep eager
 
     @JsonIgnore
     @Inject
-    private WorkflowView wfv;
+    private ResourceSemaphore resourceSemaphore;  // Keep eager
 
     @JsonIgnore
     @Inject
-    private MultifacBean mfb;
+    private FireUserBean ulb;  // Keep eager
+
+    // ==========================================
+    // LAZY BEANS (new pattern)
+    // ==========================================
+    // Step 1: Change @Inject type from Bean to Instance<Bean>
+    @JsonIgnore
+    @Inject
+    private Instance<WorkflowBean> wfbProvider;  // Provider, not actual bean
 
     @JsonIgnore
     @Inject
-    private RocAnalBean rab;
+    private Instance<WorkflowView> wfvProvider;
 
     @JsonIgnore
     @Inject
-    private FireBaseController fbc;
+    private Instance<MultifacBean> mfbProvider;
 
     @JsonIgnore
     @Inject
-    private DiagramView dv;
+    private Instance<RocAnalBean> rabProvider;
 
     @JsonIgnore
     @Inject
-    private MnetResBean mnb;
+    private Instance<DiagramView> dvProvider;
 
     @JsonIgnore
     @Inject
-    private ResourceSemaphore resourceSemaphore;
+    private Instance<JavaRecord> jrdProvider;
+
+    // Step 2: Add cached instances (only created when first accessed)
+    @JsonIgnore
+    private transient WorkflowBean wfb;  // transient = don't serialize
 
     @JsonIgnore
-    @Inject
-    private JavaRecord jrd;
+    private transient WorkflowView wfv;
 
     @JsonIgnore
-    @Inject
-    private DatasetController dc;
+    private transient MultifacBean mfb;
+
+    @JsonIgnore
+    private transient RocAnalBean rab;
+
+    @JsonIgnore
+    private transient DiagramView dv;
+
+    @JsonIgnore
+    private transient JavaRecord jrd;
+
+
+    // Step 3: Add lazy getter methods
+    private WorkflowBean getWorkflowBean() {
+        if (wfb == null) {
+            wfb = wfbProvider.get();  // Create bean only now!
+            LOGGER.debug("Lazy-loaded WorkflowBean for session");
+        }
+        return wfb;
+    }
+
+    private WorkflowView getWorkflowView() {
+        if (wfv == null) {
+            wfv = wfvProvider.get();
+            LOGGER.debug("Lazy-loaded WorkflowView for session");
+        }
+        return wfv;
+    }
+
+    private MultifacBean getMultifacBean() {
+        if (mfb == null) {
+            mfb = mfbProvider.get();
+            LOGGER.debug("Lazy-loaded MultifacBean for session");
+        }
+        return mfb;
+    }
+
+    private RocAnalBean getRocAnalBean() {
+        if (rab == null) {
+            rab = rabProvider.get();
+            LOGGER.debug("Lazy-loaded RocAnalBean for session");
+        }
+        return rab;
+    }
+
+    private DiagramView getDiagramView() {
+        if (dv == null) {
+            dv = dvProvider.get();
+            LOGGER.debug("Lazy-loaded DiagramView for session");
+        }
+        return dv;
+    }
+
+    private JavaRecord getJavaRecord() {
+        if (jrd == null) {
+            jrd = jrdProvider.get();
+            LOGGER.debug("Lazy-loaded JavaRecord for session");
+        }
+        return jrd;
+    }
+
+    public void updateBoxplotMeta(String name) {
+        mfb = getMultifacBean();
+        mfb.setBoxId(name);
+        mfb.updateBoxplotMeta();
+        mfb.setBoxMetaVersionNum(getMultifacBean().getBoxMetaVersionNum() + 1);
+    }
+
+    public void resetRocState() {
+        // BEFORE: rab.resetState();
+        // AFTER:
+        if (analType.equals("roc")) {
+            getRocAnalBean().resetState();
+        }
+    }
+
+    public void setEditMode(boolean edit) {
+       getWorkflowBean().setEditMode(edit);
+    }
+
+    public boolean isEditMode() {
+        return getWorkflowBean().isEditMode();
+    }
+
+    public void setImageSource(String code, String name) {
+        // Line 1127: imgSource = code + rab.getCurrentCmpd();
+        // AFTER:
+        imgSource = code + getRocAnalBean().getCurrentCmpd();
+    }
 
     //****************user defined methods**************
     //USED TO BE FINAL, REMOVED FINAL AND ADDED SETTER FUNCTION FOR DESERIALIZATION FROM JSON
@@ -460,16 +559,10 @@ public class SessionBean1 implements Serializable {
         } catch (Exception e) {
 
         }
-        try {
-            //WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
-            wb.setCalledWorkflowsError(new LinkedHashSet());
-            wb.setCalledWorkflows(new LinkedHashSet());
-        } catch (Exception e) {
-            //System.out.println("Failed to use find bean. Trying CDI way...");
-            //WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
-            wb.setCalledWorkflowsError(new LinkedHashSet());
-            wb.setCalledWorkflows(new LinkedHashSet());
-        }
+
+        //WorkflowBean getWorkflowBean() = (WorkflowBean) DataUtils.findBean("workflowBean");
+        getWorkflowBean().setCalledWorkflowsError(new LinkedHashSet());
+        getWorkflowBean().setCalledWorkflows(new LinkedHashSet());
 
         RDataUtils.setPrimaryUser(RC);
         try {
@@ -585,10 +678,9 @@ public class SessionBean1 implements Serializable {
                 FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
             }
             keepUserInfo();
-        } else {
-
+        } else if(returnHome == 1){
             String rootId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
-            if (!rootId.endsWith("home.xhtml") & returnHome == 1) {
+            if (!rootId.endsWith("home.xhtml")) {
                 // Still need to destory the session beans once user click 'Exit' -- zhiqiang
                 // for exit 1 only. Issues with ModuleView page 
                 FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
@@ -596,6 +688,8 @@ public class SessionBean1 implements Serializable {
 
                 DataUtils.doRedirect(ab.getDomainURL(), ab);
             }
+        } else{
+            System.out.println("Nothing to do here ....");
         }
     }
 
@@ -683,6 +777,7 @@ public class SessionBean1 implements Serializable {
             addNaviTrack("Upload", uploadVal);
         }
         //reset sessionbean of individual module
+        RocAnalBean rab = getRocAnalBean();
         if ("roc".equals(analType)) {
             rab.resetState();
         } else if ("mf".equals(analType)) {
@@ -946,8 +1041,6 @@ public class SessionBean1 implements Serializable {
             naviType = type;
             naviTree = NaviUtils.createNaviTree(type);
         }
-        //WorkflowBean wb = (WorkflowBean) DataUtils.findBean("workflowBean");
-        wb.setEditMode(false);
     }
 
     public TreeNode getNaviTree() {
@@ -1123,8 +1216,9 @@ public class SessionBean1 implements Serializable {
 
     public void graphicsLnk_action(String code) {
         setImgDownloadTxt("");
+
         if (code.contains("roc_univ_") || code.contains("roc_boxplot_")) {
-            imgSource = code + rab.getCurrentCmpd();
+            imgSource = code + getRocAnalBean().getCurrentCmpd();
         } else {
             imgSource = code;
 
@@ -1281,7 +1375,7 @@ public class SessionBean1 implements Serializable {
             naviTrackAnalType.put(pageName, getAnalType());
             naviTrackStatus.put(pageName, true);  // 🔹 Track success/failure
 
-            wfv.addToWorkflow(naviCode);
+            getWorkflowView().addToWorkflow(naviCode);
         }
 
         if (pageName.equals("Upload")) {
@@ -1531,6 +1625,7 @@ public class SessionBean1 implements Serializable {
 
     public void viewCmpdSummary(String name) {
         UniVarTests.setCmpdSummaryType(getRConnection(), getCmpdSummaryType());
+        MultifacBean mfb = getMultifacBean();
         if (getAnalType().equals("mf") && getTsDesign().equals("multi")) {
             mfb.setBoxId(name);
             mfb.updateBoxplotMeta();
@@ -1570,25 +1665,6 @@ public class SessionBean1 implements Serializable {
 
     public void setSwitchMode(boolean switchMode) {
         this.switchMode = switchMode;
-    }
-
-    public String computeDspcNet() {
-        if (wb.isEditMode()) {
-            addMessage("Info", "Parameters have been updated!");
-
-            jrd.record_computeDspcNet();
-            return null;
-        }
-        setDspcNet(true);
-        int[] res = UniVarTests.computeDSPC(this);
-        if (res.length == 1 & res[0] == 0) {
-            addMessage("error", "DSPC failed - possible reason: some variables are highly collinear or sample size is too small.");
-            return null;
-        }
-
-        setVisMode("dspc");
-        jrd.record_computeDspcNet();
-        return (mnb.setupDspcNetwork(res));
     }
 
     public boolean isShowResumable() {
@@ -1823,6 +1899,7 @@ public class SessionBean1 implements Serializable {
             return;
         }
         if (isWorkflowMode()) {
+            dv = getDiagramView();
             if (dv.isWorkflowFinished()) {
                 setDataNormed();
                 DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/DashboardView.xhtml", ab);
@@ -1909,30 +1986,28 @@ public class SessionBean1 implements Serializable {
 
     //relay center
     public void recordRCommandFunctionInfo(String rCmd, String functionName) {
-        jrd.recordRCommandFunctionInfo(RC, rCmd, functionName);
+        getJavaRecord().recordRCommandFunctionInfo(RC, rCmd, functionName);
     }
 
-    @Inject
-    private MummiAnalBean ma;
     private String enrNetName = "";
+    private String mummiOptSingle;
 
+    public void setMummiOptSingle(String mummiOptSingle) {
+        this.mummiOptSingle = mummiOptSingle;
+    }
+    
     public String getEnrNetName() {
         if (getAnalType().startsWith("path")) {
             enrNetName = "enrichNet_" + analType + ".json";
         } else {//mummichogg methods: mum, gsea,integ
-            enrNetName = "enrichNet_" + ma.getAlgOptSingle() + ".json";
+            enrNetName = "enrichNet_" + mummiOptSingle + ".json";
         }
         return enrNetName;
     }
 
     public void setEnrNetName(String enrNetName) {
-
         this.enrNetName = enrNetName;
     }
-
-    @JsonIgnore
-    @Inject
-    private FireUserBean ulb;
 
     public void keepUserInfo() {
         // this function is used to keep user's login information after session has been cleared
@@ -1958,56 +2033,6 @@ public class SessionBean1 implements Serializable {
 
     public void setGraphTypeOptAI(String graphTypeOptAI) {
         this.graphTypeOptAI = graphTypeOptAI;
-    }
-
-    public void doLogoutKeepDataset(int returnHome) {
-        if (loggedIn) {
-            if (RC != null) {
-                if (ab.isOnLocalServer()) {
-                    RCenter.showMemoryUsage(RC);
-                }
-                RC.close();
-            }
-            loggedIn = false;
-
-            // ---- preserve only what we need (selected dataset id)
-            StickyDTO sticky = dc.exportSticky();
-
-            // reset other state you want cleared (optional)
-            reset2DefaultState();
-
-            // real logout + handoff sticky to new session
-            logoutAndPreserve(sticky);
-
-            if (returnHome == 1) {
-                DataUtils.doRedirect(ab.getDomainURL(), ab);
-            } else {
-                FacesContext.getCurrentInstance().getExternalContext()
-                        .getSessionMap().put("MA6_PRO_user", true);
-            }
-
-            keepUserInfo();
-        } else {
-            // your existing already-logged-out branch...
-        }
-    }
-
-    public static void logoutAndPreserve(StickyDTO dto) {
-        var fc = FacesContext.getCurrentInstance();
-        var ext = fc.getExternalContext();
-        var req = (jakarta.servlet.http.HttpServletRequest) ext.getRequest();
-
-        // 1) kill old session
-        var old = req.getSession(false);
-        if (old != null) {
-            old.invalidate();
-        }
-
-        // 2) new clean session
-        var fresh = req.getSession(true);
-
-        // 3) hand off sticky to the new session for @PostConstruct to pick up
-        fresh.setAttribute("STICKY_AFTER_LOGOUT", dto);
     }
 
 }

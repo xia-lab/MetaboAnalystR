@@ -20,6 +20,7 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import pro.metaboanalyst.rwrappers.UniVarTests;
 import pro.metaboanalyst.workflows.JavaRecord;
 import pro.metaboanalyst.workflows.WorkflowBean;
 
@@ -36,7 +37,7 @@ public class MnetResBean implements Serializable {
 
     @JsonIgnore
     @Inject
-    private WorkflowBean wb;
+    private WorkflowBean wfb;
 
     @JsonIgnore
     @Inject
@@ -166,6 +167,25 @@ public class MnetResBean implements Serializable {
         return (setupDspcNetwork(res));
     }
 
+    public String computeDspcNet() {
+
+        if (wfb.isEditMode()) {
+            sb.addMessage("Info", "Parameters have been updated!");
+            jrd.record_computeDspcNet();
+            return null;
+        }
+        sb.setDspcNet(true);
+        int[] res = UniVarTests.computeDSPC(sb);
+        if (res.length == 1 & res[0] == 0) {
+            sb.addMessage("error", "DSPC failed - possible reason: some variables are highly collinear or sample size is too small.");
+            return null;
+        }
+
+        sb.setVisMode("dspc");
+        jrd.record_computeDspcNet();
+        return (setupDspcNetwork(res));
+    }
+
     public String setupDspcNetwork(int[] res) {
         netOK = false;
         nodeCount = res[0];
@@ -201,7 +221,7 @@ public class MnetResBean implements Serializable {
 
     public String doMnetworkAnalysis(String visMode) {
         sb.setVisMode(visMode);
-        if (wb.isEditMode()) {
+        if (wfb.isEditMode()) {
             sb.addMessage("info", "Parameters have been updated!");
 
             jrd.record_doMnetworkAnalysis(visMode);
@@ -215,15 +235,15 @@ public class MnetResBean implements Serializable {
         switch (visMode) {
             case "static" -> {
                 networkpage = prepareKEGGNetwork();
-                wb.getCalledWorkflows().add("Network Builder_static");
+                wfb.getCalledWorkflows().add("Network Builder_static");
             }
             case "dspc" -> {
                 networkpage = prepareDspcNetwork();
-                wb.getCalledWorkflows().add("Network Builder_dspc");
+                wfb.getCalledWorkflows().add("Network Builder_dspc");
             }
             default -> {
                 networkpage = preparePhenoNetwork();
-                wb.getCalledWorkflows().add("doMnetworkAnalysis");
+                wfb.getCalledWorkflows().add("doMnetworkAnalysis");
             }
         }
         return networkpage;

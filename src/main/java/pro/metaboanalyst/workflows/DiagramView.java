@@ -17,9 +17,6 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,15 +43,7 @@ import org.primefaces.model.diagram.connector.StraightConnector;
 import org.primefaces.model.diagram.endpoint.EndPoint;
 import org.primefaces.model.diagram.endpoint.EndPointAnchor;
 import org.primefaces.model.diagram.overlay.ArrowOverlay;
-import static org.quartz.JobBuilder.newJob;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import org.quartz.Trigger;
-import static org.quartz.TriggerBuilder.newTrigger;
+import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.DownloadBean;
@@ -70,7 +59,6 @@ import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.lts.HistoryBean;
-import pro.metaboanalyst.lts.JobMonitor;
 import pro.metaboanalyst.lts.JobScheduler;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.project.ProjectModel;
@@ -78,6 +66,7 @@ import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 import pro.metaboanalyst.models.JobInfo;
+import pro.metaboanalyst.models.StickyDTO;
 
 /**
  *
@@ -2532,10 +2521,38 @@ public class DiagramView implements Serializable {
 
     public String resetWorkflow() {
         resetDiagram();
-        sb.doLogoutKeepDataset(0);
+        doLogoutKeepDataset();
 
         return "WorkflowView";
 
+    }
+
+    public void doLogoutKeepDataset() {
+        boolean loggedIn = sb.isLoggedIn();
+        RConnection RC = sb.getRConnection();
+        if (loggedIn) {
+            if (RC != null) {
+                if (ab.isOnLocalServer()) {
+                    RCenter.showMemoryUsage(RC);
+                }
+                RC.close();
+            }
+            sb.setLoggedIn(false);
+
+
+            StickyDTO sticky = dc.exportSticky();
+
+            // reset other state you want cleared (optional)
+            sb.reset2DefaultState();
+
+            // real logout + handoff sticky to new session
+            logoutAndPreserve(sticky);
+
+            FacesContext.getCurrentInstance().getExternalContext()
+                    .getSessionMap().put("MA6_PRO_user", true);
+
+            sb.keepUserInfo();
+        }
     }
 
     //workflow
@@ -2556,12 +2573,12 @@ public class DiagramView implements Serializable {
             if (selectionMap.getOrDefault("Spectra Processing", false)) {
                 res = startWorkflow();
             } else {
-                res=submitWorkflowOther();
+                res = submitWorkflowOther();
             }
         } else {
 
             jeb.setStopStatusCheck(true);
-            res=startWorkflow();
+            res = startWorkflow();
         }
 
         // --- NEW: flip the workflow run to RUNNING (and stamp start_date) ---
@@ -2678,8 +2695,7 @@ public class DiagramView implements Serializable {
 
         // 9) Show progress dialog & notify
         PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
-        
-        
+
         sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.");
         return true;
     }
@@ -3318,5 +3334,23 @@ public class DiagramView implements Serializable {
             sb.addMessage("info", "Execution Finished! Click 'Dashboard' button to view results.");
             return true;
         }
+    }
+
+    public static void logoutAndPreserve(StickyDTO dto) {
+        var fc = FacesContext.getCurrentInstance();
+        var ext = fc.getExternalContext();
+        var req = (jakarta.servlet.http.HttpServletRequest) ext.getRequest();
+
+        // 1) kill old session
+        var old = req.getSession(false);
+        if (old != null) {
+            old.invalidate();
+        }
+
+        // 2) new clean session
+        var fresh = req.getSession(true);
+
+        // 3) hand off sticky to the new session for @PostConstruct to pick up
+        fresh.setAttribute("STICKY_AFTER_LOGOUT", dto);
     }
 }

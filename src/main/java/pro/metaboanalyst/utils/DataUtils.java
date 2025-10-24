@@ -93,7 +93,38 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
+import pro.metaboanalyst.controllers.dose.DoseResponseBean;
+import pro.metaboanalyst.controllers.enrich.MappingBean;
+import pro.metaboanalyst.controllers.enrich.MsetBean;
+import pro.metaboanalyst.controllers.enrich.PathBean;
+import pro.metaboanalyst.controllers.general.NormBean;
+import pro.metaboanalyst.controllers.general.ProcessBean;
+import pro.metaboanalyst.controllers.meta.MetaLoadBean;
+import pro.metaboanalyst.controllers.meta.MetaStatBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
+import pro.metaboanalyst.controllers.mnet.MnetResBean;
+import pro.metaboanalyst.controllers.multifac.Aov2Bean;
+import pro.metaboanalyst.controllers.multifac.AscaBean;
+import pro.metaboanalyst.controllers.multifac.LimmaBean;
+import pro.metaboanalyst.controllers.multifac.LivePCABean;
+import pro.metaboanalyst.controllers.multifac.MebaBean;
+import pro.metaboanalyst.controllers.multifac.MetaHeatmapBean;
+import pro.metaboanalyst.controllers.multifac.MetaProcBean;
+import pro.metaboanalyst.controllers.multifac.MultiCorrBean;
+import pro.metaboanalyst.controllers.multifac.MultiRfBean;
+import pro.metaboanalyst.controllers.multifac.MultifacBean;
+import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
+import pro.metaboanalyst.controllers.mummichog.PeakCustomBean;
+import pro.metaboanalyst.controllers.stats.AnalysisBean;
+import pro.metaboanalyst.controllers.stats.ClusterBean;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
+import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.lts.FunctionInfo;
+import pro.metaboanalyst.spectra.SpectraControlBean;
+import pro.metaboanalyst.spectra.SpectraProcessBean;
+import pro.metaboanalyst.spectra.SpectraUploadBean;
+import pro.metaboanalyst.workflows.WorkflowView;
 
 /**
  *
@@ -103,18 +134,122 @@ public class DataUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(DataUtils.class);
 
-    /*
+
     @SuppressWarnings("unchecked")
     public static Object findBean(String beanName) { // DOESN't work with project saving.
-        Instance<Object> instance = CDI.current().select(new NamedLiteral(beanName));
-        return instance.get();  // returns the bean as an Object
+        return CDI.current().select(new NamedLiteral(beanName)).get();
     }
-
-    public static <T> T findBean2(String beanName) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        return (T) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
+    
+    public static Object getBeanInstance(String beanName) {
+        // Programmatic lookup using CDI BeanManager
+        switch (beanName) {
+            case "sp" -> {
+                return CDI.current().select(SpectraProcessBean.class).get();
+            }
+            case "sup" -> {
+                return CDI.current().select(SpectraUploadBean.class).get();
+            }
+            case "sc" -> {
+                return CDI.current().select(SpectraControlBean.class).get();
+            }
+            case "metapl" -> {
+                return CDI.current().select(MetaPathLoadBean.class).get();
+            }
+            case "metaps" -> {
+                return CDI.current().select(MetaPathStatBean.class).get();
+            }
+            case "mf" -> {
+                return CDI.current().select(MultifacBean.class).get();
+            }
+            case "ms" -> {
+                return CDI.current().select(MetaStatBean.class).get();
+            }
+            case "ml" -> {
+                return CDI.current().select(MetaLoadBean.class).get();
+            }
+            case "dr" -> {
+                return CDI.current().select(DoseResponseBean.class).get();
+            }
+            case "mc" -> {
+                return CDI.current().select(MultiCorrBean.class).get();
+            }
+            case "rf" -> {
+                return CDI.current().select(MultiRfBean.class).get();
+            }
+            case "meba" -> {
+                return CDI.current().select(MebaBean.class).get();
+            }
+            case "lm" -> {
+                return CDI.current().select(LimmaBean.class).get();
+            }
+            case "hm" -> {
+                return CDI.current().select(HeatMap2Bean.class).get();
+            }
+            case "as" -> {
+                return CDI.current().select(AscaBean.class).get();
+            }
+            case "aov" -> {
+                return CDI.current().select(Aov2Bean.class).get();
+            }
+            case "mh" -> {
+                return CDI.current().select(MetaHeatmapBean.class).get();
+            }
+            case "mp" -> {
+                return CDI.current().select(MetaProcBean.class).get();
+            }
+            case "b" -> {
+                return CDI.current().select(RocAnalBean.class).get();
+            }
+            case "mn" -> {
+                return CDI.current().select(MnetResBean.class).get();
+            }
+            case "ma" -> {
+                return CDI.current().select(MummiAnalBean.class).get();
+            }
+            case "pab" -> {
+                return CDI.current().select(PathBean.class).get();
+            }
+            case "pc" -> {
+                return CDI.current().select(PeakCustomBean.class).get();
+            }
+            case "nb" -> {
+                return CDI.current().select(NormBean.class).get();
+            }
+            case "fp" -> {
+                return CDI.current().select(WorkflowView.class).get();
+            }
+            case "ub" -> {
+                return CDI.current().select(UnivBean.class).get();
+            }
+            case "cb" -> {
+                return CDI.current().select(ClusterBean.class).get();
+            }
+            case "an" -> {
+                return CDI.current().select(AnalysisBean.class).get();
+            }
+            case "mb" -> {
+                return CDI.current().select(MsetBean.class).get();
+            }
+            case "mapb" -> {
+                return CDI.current().select(MappingBean.class).get();
+            }
+            case "pb" -> {
+                return CDI.current().select(ProcessBean.class).get();
+            }
+            case "ab" -> {
+                return CDI.current().select(ApplicationBean1.class).get();
+            }
+            case "lp" -> {
+                return CDI.current().select(LivePCABean.class).get();
+            }
+            case "sb" -> {
+                return CDI.current().select(SessionBean1.class).get();
+            }
+            default ->
+                throw new IllegalArgumentException("Unknown bean name: " + beanName);
+        }
     }
-     */
+        
     // NamedLiteral class to represent @Named(beanName)
     public static class NamedLiteral extends AnnotationLiteral<jakarta.inject.Named> implements jakarta.inject.Named {
 
