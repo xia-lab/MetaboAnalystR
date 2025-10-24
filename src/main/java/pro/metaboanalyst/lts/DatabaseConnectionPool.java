@@ -125,7 +125,7 @@ public class DatabaseConnectionPool {
         }
 
         // Optional: HikariCP settings to tweak the connection pool behavior
-        config.setMaximumPoolSize(10); // Maximum number of connections in the pool
+        config.setMaximumPoolSize(50); // Maximum number of connections in the pool
         config.setConnectionTimeout(30000); // Maximum wait milliseconds for a connection from the pool
         config.setIdleTimeout(600000); // Maximum time milliseconds a connection can sit idle in the pool
         config.setLeakDetectionThreshold(5000);
@@ -133,7 +133,6 @@ public class DatabaseConnectionPool {
     }
 
     public static Connection getConnection() throws SQLException {
-        //System.out.println(getPoolStatus());
         return dataSource.getConnection(); // Get a connection from the pool
     }
 

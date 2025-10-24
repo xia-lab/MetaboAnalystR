@@ -406,7 +406,7 @@ public class DatabaseController implements Serializable {
 
         try {
             con = DatabaseConnectionPool.getConnection(); // Get a connection from the pool
-            con.setAutoCommit(false); // Start transaction
+            //con.setAutoCommit(false); // Start transaction, should not be used for read/select
             String query = "SELECT * FROM project WHERE userId = ? AND toolName = ? AND (projectType != 'batch_project' OR projectType IS NULL) AND (location = ? OR location = ? OR location = ? OR location = ?) ORDER BY id DESC";
             stmt = con.prepareStatement(query);
             stmt.setString(1, email);
@@ -416,7 +416,7 @@ public class DatabaseController implements Serializable {
             stmt.setString(5, "pro");
             stmt.setString(6, "eu");
             rs = stmt.executeQuery();
-            System.out.println(stmt.toString());
+            //System.out.println(stmt.toString());
 
             while (rs.next()) {
                 HashMap<String, Object> row = new HashMap<>();
@@ -432,7 +432,7 @@ public class DatabaseController implements Serializable {
 
                 projects.add(row);
             }
-            con.commit(); // Commit the transaction
+            //con.commit(); // Commit the transaction
 
         } catch (SQLException ex) {
             System.out.println("getProjectsFromPostgres SQLException occurred: " + ex.getMessage());
