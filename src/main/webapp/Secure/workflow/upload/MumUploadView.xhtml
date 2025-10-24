@@ -80,88 +80,90 @@
                 <h:panelGroup rendered="#{workflowBean.activeIndex eq 0}">
 
                     <h:form id="form1" enctype="multipart/form-data">
-                            <h:outputLabel style="font-size: 15px; font-weight: bold; color: var(--surface-800)" value="Upload a peak list file"/>
-                            <h:panelGrid columns="2" style="margin-left:20px; width:780px; line-height: 28px; font-size: 13px; background: #F9F9FB; padding: 20px 20px 20px 30px;" class="surface-card shadow-1 p-4 text-800">
-                                <p:outputLabel value="Ion Mode:"/>
-                                <p:selectOneMenu value="#{peakLoader.msModeOpt}">
-                                    <f:selectItem itemLabel="Positive Mode" itemValue="positive" />
-                                    <f:selectItem itemLabel="Negative Mode" itemValue="negative" />
-                                    <f:selectItem itemLabel="Mixed Mode" itemValue="mixed" />
-                                </p:selectOneMenu>
+                        <h:outputLabel style="font-size: 15px; font-weight: bold; color: var(--surface-800)" value="Upload a peak list file"/>
+                        <h:panelGrid columns="2" style="margin-left:20px; width:780px; line-height: 28px; font-size: 13px; background: #F9F9FB; padding: 20px 20px 20px 30px;" class="surface-card shadow-1 p-4 text-800">
+                            <p:outputLabel value="Ion Mode:"/>
+                            <p:selectOneMenu value="#{peakLoader.msModeOpt}">
+                                <f:selectItem itemLabel="Positive Mode" itemValue="positive" />
+                                <f:selectItem itemLabel="Negative Mode" itemValue="negative" />
+                                <f:selectItem itemLabel="Mixed Mode" itemValue="mixed" />
+                            </p:selectOneMenu>
 
-                                <h:panelGroup  style="width:280px" layout="block">
-                                    <p:outputLabel value="Mass Tolerance (ppm):"/>
-                                    <p:graphicImage id="formatIcon1" url="/resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>
-                                <h:panelGroup>
-                                    <p:selectOneMenu value="#{peakLoader.instrumentOpt}" editable="true">
-                                        <f:selectItem itemLabel="10" itemValue="10" />
-                                        <f:selectItem itemLabel="5" itemValue="5" />
-                                        <f:selectItem itemLabel="3" itemValue="3" />
-                                        <f:selectItem itemLabel="1" itemValue="1" />
-                                    </p:selectOneMenu> 
-                                    <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
-                                </h:panelGroup>       
+                            <h:panelGroup  style="width:280px" layout="block">
+                                <p:outputLabel value="Mass Tolerance (ppm):"/>
+                                <p:graphicImage id="formatIcon1" url="/resources/images/ui-help.png" alt="help"/>
+                            </h:panelGroup>
+                            <h:panelGroup>
+                                <p:selectOneMenu value="#{peakLoader.instrumentOpt}" editable="true">
+                                    <f:selectItem itemLabel="10" itemValue="10" />
+                                    <f:selectItem itemLabel="5" itemValue="5" />
+                                    <f:selectItem itemLabel="3" itemValue="3" />
+                                    <f:selectItem itemLabel="1" itemValue="1" />
+                                </p:selectOneMenu> 
+                                <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
+                            </h:panelGroup>       
 
-                                <p:outputLabel value="Retention Time:"/>
-                                <p:selectOneMenu value="#{peakLoader.rtIncluded}">
-                                    <f:selectItem itemLabel="Not present" itemValue="no" />
-                                    <f:selectItem itemLabel="Yes - Minutes" itemValue="minutes" />
-                                    <f:selectItem itemLabel="Yes - Seconds" itemValue="seconds" />
-                                </p:selectOneMenu>
+                            <p:outputLabel value="Retention Time:"/>
+                            <p:selectOneMenu value="#{peakLoader.rtIncluded}">
+                                <f:selectItem itemLabel="Not present" itemValue="no" />
+                                <f:selectItem itemLabel="Yes - Minutes" itemValue="minutes" />
+                                <f:selectItem itemLabel="Yes - Seconds" itemValue="seconds" />
+                            </p:selectOneMenu>
 
-                                <p:outputLabel value="Ranked by (1 column only):"/>
-                                <p:selectOneRadio value="#{peakLoader.dataRankedBy}">
-                                    <f:selectItem itemValue="pvalue" itemLabel="P values"/>
-                                    <f:selectItem itemValue="tscore" itemLabel="T scores"/>
-                                </p:selectOneRadio>
+                            <p:outputLabel value="Ranked by (1 column only):"/>
+                            <p:selectOneRadio value="#{peakLoader.dataRankedBy}">
+                                <f:selectItem itemValue="pvalue" itemLabel="P values"/>
+                                <f:selectItem itemValue="tscore" itemLabel="T scores"/>
+                            </p:selectOneRadio>
 
-                                <h:panelGroup  style="width:250px" layout="block">
-                                    <p:outputLabel value="Enforce Primary Ions (V2 only):"/>
-                                    <p:graphicImage id="formatIconIon" url="/resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>  
-                                <p:selectBooleanCheckbox value="#{peakLoader.primaryIon}" style="line-height: 18px"/>
+                            <h:panelGroup  style="width:250px" layout="block">
+                                <p:outputLabel value="Enforce Primary Ions (V2 only):"/>
+                                <p:graphicImage id="formatIconIon" url="/resources/images/ui-help.png" alt="help"/>
+                            </h:panelGroup>  
+                            <p:selectBooleanCheckbox value="#{peakLoader.primaryIon}" style="line-height: 18px"/>
 
-                                <!--- <h:panelGroup  style="width:250px" layout="block">
-                                    <p:outputLabel style="font-size:13px; font-weight: bold; padding-right: 3px" value="Retention time window (V2):"/>
-                                    <p:graphicImage id="formatIconWin" url="../resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>
-                                <h:inputText style="width: 80px" value="#{peakLoader.rtFrac}"/> -->                         
-                                <h:panelGroup  style="width:250px" layout="block">
-                                    <p:outputLabel value="Data File:"/>
-                                    <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>
-                                <p:fileUpload value="#{peakLoader.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
-                            </h:panelGrid>
-                            <h:panelGrid style="padding: 10px; text-align: center; width: 670px">
-                                <p:commandButton value="Submit" ajax="false" 
-                                                 onclick="PF('statusDialog').show()" 
-                                                 oncomplete="PF('statusDialog').hide()"   
-                                                 action="#{wfUploadBean.handleMassAllUpload}"/>  
-                            </h:panelGrid> 
+                            <!--- <h:panelGroup  style="width:250px" layout="block">
+                                <p:outputLabel style="font-size:13px; font-weight: bold; padding-right: 3px" value="Retention time window (V2):"/>
+                                <p:graphicImage id="formatIconWin" url="../resources/images/ui-help.png" alt="help"/>
+                            </h:panelGroup>
+                            <h:inputText style="width: 80px" value="#{peakLoader.rtFrac}"/> -->                         
+                            <h:panelGroup  style="width:250px" layout="block">
+                                <p:outputLabel value="Data File:"/>
+                                <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            </h:panelGroup>
+                            <p:fileUpload value="#{peakLoader.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                            </p:fileUpload>
+                        </h:panelGrid>
+                        <h:panelGrid style="padding: 10px; text-align: center; width: 670px">
+                            <p:commandButton value="Submit" ajax="false" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"   
+                                             action="#{wfUploadBean.handleMassAllUpload}"/>  
+                        </h:panelGrid> 
 
-                            <p:tooltip for="formatIcon1" styleClass="helpTip">
-                                <p>
-                                    The Molecular Weight Tolerance refers to the ppm used for matching m/z features to compounds. 
-                                </p>    
-                            </p:tooltip>
-                            <p:tooltip for="formatIconIon" styleClass="helpTip">
-                                <p>
-                                    When primary ions are enforced, mz matches to compounds must contain a primary ion to be considered valid.
-                                    Primary ions considered are 'M+H[1+]', 'M+Na[1+]', 'M-H2O+H[1+]', 'M-H[-]', 'M-2H[2-]', 'M-H2O-H[-]',
-                                    'M+H [1+]', 'M+Na [1+]', 'M-H2O+H [1+]', 'M-H [1-]', 'M-2H [2-]', and 'M-H2O-H [1-]'. Note this is only used
-                                    in Version 2.
-                                </p>    
-                            </p:tooltip>
-                            <p:tooltip for="formatIcon" styleClass="helpTip">
-                                <p>
-                                    Mummichog requires p.values and GSEA requires t.scores for peak ranking purposes. 
-                                    You can upload your data in a tab-delimited text file (.txt) format. 
-                                    For single mode, for Version 1, a complete dataset contains three columns with specific names - m.z, p.value, and t.score.
-                                    While for Version 2, a complete dataset contains four columns with specific names - m.z, p.value, t.score and r.t.
-                                    For mixed mode, for Versions 1 and 2, your last column ("mode") must indicate whether the m.z's are positive or negative. 
-                                    Please see below for an example (mixed mode). Note that you can use fold change values instead of t.scores. 
-                                    <pre>
+                        <p:tooltip for="formatIcon1" styleClass="helpTip">
+                            <p>
+                                The Molecular Weight Tolerance refers to the ppm used for matching m/z features to compounds. 
+                            </p>    
+                        </p:tooltip>
+                        <p:tooltip for="formatIconIon" styleClass="helpTip">
+                            <p>
+                                When primary ions are enforced, mz matches to compounds must contain a primary ion to be considered valid.
+                                Primary ions considered are 'M+H[1+]', 'M+Na[1+]', 'M-H2O+H[1+]', 'M-H[-]', 'M-2H[2-]', 'M-H2O-H[-]',
+                                'M+H [1+]', 'M+Na [1+]', 'M-H2O+H [1+]', 'M-H [1-]', 'M-2H [2-]', and 'M-H2O-H [1-]'. Note this is only used
+                                in Version 2.
+                            </p>    
+                        </p:tooltip>
+                        <p:tooltip for="formatIcon" styleClass="helpTip">
+                            <p>
+                                Mummichog requires p.values and GSEA requires t.scores for peak ranking purposes. 
+                                You can upload your data in a tab-delimited text file (.txt) format. 
+                                For single mode, for Version 1, a complete dataset contains three columns with specific names - m.z, p.value, and t.score.
+                                While for Version 2, a complete dataset contains four columns with specific names - m.z, p.value, t.score and r.t.
+                                For mixed mode, for Versions 1 and 2, your last column ("mode") must indicate whether the m.z's are positive or negative. 
+                                Please see below for an example (mixed mode). Note that you can use fold change values instead of t.scores. 
+                                <pre>
 m.z             p.value                 t.score     mode
 304.2979	1.0153771115e-10	14.7179316191   negative
 177.1024	1.61647122234e-10	14.2666000207   negative
@@ -171,78 +173,78 @@ m.z             p.value                 t.score     mode
 483.1205	2.21510885538e-10	-13.9676335843  positive
 694.9937	2.81091747637e-10	-13.7451720928  negative
 270.9767	3.26786548614e-10	13.6060704804   positive
-                                    </pre>
-                                </p>
-                            </p:tooltip>
-                        </h:form>
-                        <hr class="style-one"/>
-                        <h:outputLabel style="font-size: 15px; font-weight: bold;" value="Try our example datasets"/>
-                        <h:form>
-                            <p:selectOneRadio id="customRadio" value="#{peakLoader.listDataOpt}" layout="custom">  
-                                <f:selectItem itemLabel="IBDfecal" itemValue="ibd" />
-                                <f:selectItem itemLabel="ImmuneCell" itemValue="dc1" />                   
-                                <f:selectItem itemLabel="Macrophage" itemValue="mixed" />
-                                <f:selectItem itemLabel="IBD2" itemValue="ibd_rt" />
-                            </p:selectOneRadio>
-                            <h:panelGrid columns="4" style="margin-left: 20px; width:780px; padding: 20px 30px 20px 30px; font-size: 13px"
-                                         class="surface-50 shadow-1 p-4 text-800">
-                                <p:spacer style="width: 30px"/>
-                                <h:panelGrid style="width:80px">
-                                    <p:outputLabel style="font-weight: bold; font-size: 13px" value="Data"/>
-                                </h:panelGrid> 
-                                <h:panelGrid style="width:160px">
-                                    <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Format"/>
-                                </h:panelGrid> 
-                                <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Description"/>
+                                </pre>
+                            </p>
+                        </p:tooltip>
+                    </h:form>
+                    <hr class="style-one"/>
+                    <h:outputLabel style="font-size: 15px; font-weight: bold;" value="Try our example datasets"/>
+                    <h:form>
+                        <p:selectOneRadio id="customRadio" value="#{peakLoader.listDataOpt}" layout="custom">  
+                            <f:selectItem itemLabel="IBDfecal" itemValue="ibd" />
+                            <f:selectItem itemLabel="ImmuneCell" itemValue="dc1" />                   
+                            <f:selectItem itemLabel="Macrophage" itemValue="mixed" />
+                            <f:selectItem itemLabel="IBD2" itemValue="ibd_rt" />
+                        </p:selectOneRadio>
+                        <h:panelGrid columns="4" style="margin-left: 20px; width:780px; padding: 20px 30px 20px 30px; font-size: 13px"
+                                     class="surface-50 shadow-1 p-4 text-800">
+                            <p:spacer style="width: 30px"/>
+                            <h:panelGrid style="width:80px">
+                                <p:outputLabel style="font-weight: bold; font-size: 13px" value="Data"/>
+                            </h:panelGrid> 
+                            <h:panelGrid style="width:160px">
+                                <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Format"/>
+                            </h:panelGrid> 
+                            <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Description"/>
 
-                                <p:radioButton for="customRadio" itemIndex="0"/>
-                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_ibd.txt">IBD</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Three columns (m.z, p.value, t.score)
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak list data (12 pediatric IBD patients and 12 controls) obtained using a Q-Exactive Plus Orbitrap 
-                                    (negative ion mode) from the Integrative Human Microbiome Project
-                                    (<a href="https://ibdmdb.org/tunnel/public/summary.html">iHMP</a>).
-                                </h:panelGrid>
-
-                                <p:radioButton for="customRadio" itemIndex="3"/>
-                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_rt.txt">IBD 2</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Four columns (m.z, p.value, t.score, rt)
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Same as above
-                                </h:panelGrid>
-
-                                <p:radioButton for="customRadio" itemIndex="1"/>
-                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_dc1.txt">Dendritic Cells</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    One column (m.z ranked by p.value)
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak list data obtained from human monocyte-derived dendritic cells stimulated by yellow fever vaccine strain (YF17D), 
-                                    collected using an Orbitrap LC-MS (positive ion mode). 
-                                </h:panelGrid>
-
-                                <p:radioButton for="customRadio" itemIndex="2"/>
-                                <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_mixed.txt">Macrophages</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Four columns (m.z, p.value, t.score, mode)
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak list from mice alveolar macrophages, with or without mTOR knock-out (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28798047">details</a>),
-                                    collected using an Orbitrap LC-MS (C18 negative ion mode and HILIC positive ion mode)
-                                </h:panelGrid>
+                            <p:radioButton for="customRadio" itemIndex="0"/>
+                            <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_ibd.txt">IBD</a>
+                            <h:panelGrid style="padding-left: 15px">
+                                Three columns (m.z, p.value, t.score)
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left: 15px">
+                                Peak list data (12 pediatric IBD patients and 12 controls) obtained using a Q-Exactive Plus Orbitrap 
+                                (negative ion mode) from the Integrative Human Microbiome Project
+                                (<a href="https://ibdmdb.org/tunnel/public/summary.html">iHMP</a>).
                             </h:panelGrid>
 
-                            <h:panelGrid style="width: 780px; padding-top: 10px; text-align: center">
-                                <p:commandButton value="Submit" ajax="false" 
-                                                 onclick="PF('statusDialog').show()" 
-                                                 oncomplete="PF('statusDialog').hide()"   
-                                                 action="#{wfUploadBean.processListExampleUpload}"/>  
+                            <p:radioButton for="customRadio" itemIndex="3"/>
+                            <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_rt.txt">IBD 2</a>
+                            <h:panelGrid style="padding-left: 15px">
+                                Four columns (m.z, p.value, t.score, rt)
                             </h:panelGrid>
-                        </h:form>
+                            <h:panelGrid style="padding-left: 15px">
+                                Same as above
+                            </h:panelGrid>
+
+                            <p:radioButton for="customRadio" itemIndex="1"/>
+                            <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_dc1.txt">Dendritic Cells</a>
+                            <h:panelGrid style="padding-left: 15px">
+                                One column (m.z ranked by p.value)
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left: 15px">
+                                Peak list data obtained from human monocyte-derived dendritic cells stimulated by yellow fever vaccine strain (YF17D), 
+                                collected using an Orbitrap LC-MS (positive ion mode). 
+                            </h:panelGrid>
+
+                            <p:radioButton for="customRadio" itemIndex="2"/>
+                            <a target="_blank" href="#{facesContext.externalContext.requestContextPath}/resources/data/mummichog_mixed.txt">Macrophages</a>
+                            <h:panelGrid style="padding-left: 15px">
+                                Four columns (m.z, p.value, t.score, mode)
+                            </h:panelGrid>
+                            <h:panelGrid style="padding-left: 15px">
+                                Peak list from mice alveolar macrophages, with or without mTOR knock-out (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28798047">details</a>),
+                                collected using an Orbitrap LC-MS (C18 negative ion mode and HILIC positive ion mode)
+                            </h:panelGrid>
+                        </h:panelGrid>
+
+                        <h:panelGrid style="width: 780px; padding-top: 10px; text-align: center">
+                            <p:commandButton value="Submit" ajax="false" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"   
+                                             action="#{wfUploadBean.processListExampleUpload}"/>  
+                        </h:panelGrid>
+                    </h:form>
                 </h:panelGroup>
 
                 <h:panelGroup rendered="#{workflowBean.activeIndex eq 1}">

@@ -87,23 +87,6 @@ public class DatabaseClient {
         }
     }
 
-    public int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
-        if (ab.isInDocker()) {
-            return DatabaseController.writeProjectToPostgres(rawDocData, projectType, tableName);
-        } else {
-            try {
-                Map<String, Object> payload = new HashMap<>(rawDocData);
-                payload.put("projectType", projectType);
-                payload.put("tableName", tableName);
-                String response = apiClient.post("/database/projects", toJson(payload));
-                return Integer.parseInt(response);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error writing project to Postgres", e);
-                return -1;
-            }
-        }
-    }
-
     public int updateProjectTitleDescription(String newName, String newDescription, int id) {
         if (ab.isInDocker()) {
             return DatabaseController.updateProjectTitleDescription(newName, newDescription, id);

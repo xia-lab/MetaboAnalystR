@@ -186,7 +186,9 @@
                                         <f:selectItem itemLabel="Samples in rows" itemValue="rowu"/> 
                                     </p:selectOneMenu>
                                     <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                                    <p:fileUpload value="#{loadBean.file}" mode="simple"  skinSimple="true" style="line-height: 18px"/>  
+                                    <p:fileUpload value="#{loadBean.file}" mode="simple"  skinSimple="true" style="line-height: 18px">
+                                        <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                    </p:fileUpload>  
                                 </h:panelGrid>
 
                                 <h:panelGrid style="width:100%; text-align: center; padding-top: 10px">

@@ -36,7 +36,9 @@
                         </p:selectOneMenu>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                        <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
 
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false"
@@ -63,7 +65,9 @@
                         </p:selectOneRadio>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                        <p:fileUpload value="#{uploader.zipFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{uploader.zipFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(ZIP|zip)$/"/>
+                        </p:fileUpload>
 
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false" 
@@ -90,7 +94,9 @@
                         </p:selectOneRadio>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                        <p:fileUpload value="#{uploader.mzTabFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{uploader.mzTabFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(mzTab)$/"/>
+                        </p:fileUpload>
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false"
                                      onclick="PF('statusDialog').show()" 
@@ -100,7 +106,7 @@
                 </h:panelGrid>
 
                 <h:panelGroup id="formatIcon3">
-                    <p:outputLabel style="font-size:13px; font-weight: bold" value="An XLSX file from Metabolon:"/>
+                    <p:outputLabel style="font-size:13px; font-weight: bold" value="An XLSX file from Metabolon (.xlsx):"/>
                     <p:spacer style="width:5px"/>
                     <i class="pi pi-info-circle"/>
                 </h:panelGroup>
@@ -110,7 +116,9 @@
                         <h:panelGroup layout="block" style="width:180px">
                             <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
                         </h:panelGroup>                        
-                        <p:fileUpload value="#{uploader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{uploader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(xlsx|XLSX)$/"/>
+                        </p:fileUpload>
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false"
                                      onclick="PF('statusDialog').show()" 

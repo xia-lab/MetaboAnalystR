@@ -19,7 +19,7 @@
                 </h2>
                 <ul>
                     <li>
-                        Data table contains compound concentrations or peak intensities for multiple samples;
+                        Data table contains compound concentrations or peak intensities for multiple samples (max 100M);
                     </li>
                     <li>
                         Metadata table contains various descriptors of these samples and can be discrete or continuous;
@@ -60,10 +60,14 @@
                         </p:selectOneMenu>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                        <p:fileUpload value="#{tsuploader.csvFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{tsuploader.csvFile}" mode="simple"  skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold" value="Metadata File:"/>
-                        <p:fileUpload value="#{tsuploader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
+                        <p:fileUpload value="#{tsuploader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px">
+                            <p:validateFile sizeLimit="10485760" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
                     </h:panelGrid>
 
                     <p:commandButton value="Submit" 
@@ -87,7 +91,9 @@
                         <h:panelGroup layout="block" style="width:480px">
                             <p:fileUpload value="#{tsuploader.metabolonFile}" 
                                           mode="simple" skinSimple="true" 
-                                          style="line-height: 18px; padding-left: 10px; text-align: left;"/>
+                                          style="line-height: 18px; padding-left: 10px; text-align: left;">
+                                <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(XLSX|xlsx)$/"/>
+                            </p:fileUpload>
                         </h:panelGroup>
                     </h:panelGrid>
 
@@ -113,7 +119,7 @@
                     </p>    
                 </p:tooltip>
 
-               
+
                 <hr class="style-one"/>
                 <h3 style="margin-top: 20px; margin-bottom: 4px"> Try our test data</h3>
                 <p:selectOneRadio id="timeRadio" value="#{tsuploader.timeDataOpt}" layout="custom">  

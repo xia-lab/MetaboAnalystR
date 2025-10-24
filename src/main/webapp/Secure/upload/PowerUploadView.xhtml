@@ -27,7 +27,9 @@
                         <f:selectItems value="#{optBean.csvFormatOpts}" />
                     </p:selectOneMenu>
                     <p:outputLabel style="font-weight: bold" value="Data File:"/>
-                    <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                    <p:fileUpload value="#{uploader.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                        <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                    </p:fileUpload>
                 </h:panelGrid>
                 <h:panelGrid style="width: 720px; padding-top: 10px; padding-bottom: 20px; text-align: center">
                     <p:commandButton value="Submit" ajax="false"

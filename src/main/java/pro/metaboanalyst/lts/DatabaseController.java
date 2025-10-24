@@ -26,8 +26,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.inject.Named;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import pro.metaboanalyst.api.ApiClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.datalts.DatasetFile;
@@ -123,112 +126,6 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public String[] loginUser(String email, String password, String tool) {
-        System.out.println("loginUser --> step0");
-        tool = tool.toLowerCase();
-        // Check PSQL db availability (This can be a method that checks if pool is available or not)
-        // Assuming DatabaseConnectionPool.getDataSource() is always available or throws an exception if not.
-
-        // Hash the password using SHA-256
-        String hashedPassword = RCenter.hashPassword(sb, fb.getRscriptsDBPath(),
-                fb.getProjectDBPath(), password);
-
-        Connection con = null;
-        PreparedStatement stmt = null;
-        ResultSet user_data = null;
-
-        try {
-            con = DatabaseConnectionPool.getConnection(); // Get a connection from the pool
-            con.setAutoCommit(false); // Start transaction
-
-            // Fetch stored password and additional fields
-            String query = "SELECT * FROM users WHERE email = ?";
-            stmt = con.prepareStatement(query);
-            stmt.setString(1, email);
-            user_data = stmt.executeQuery();
-
-            if (!user_data.next()) {
-                con.rollback(); // Roll back the transaction
-                return new String[]{"Username not found."};
-            }
-
-            String storedPassword = user_data.getString("password");
-            int activationStatus = user_data.getInt("activated");
-
-            if (activationStatus != 1) {
-                con.rollback(); // Roll back the transaction
-                return new String[]{"Account needs to be activated first."};
-            }
-
-            if (!tool.equalsIgnoreCase("xialab")) {
-                String checkQuery = "SELECT tool_" + tool.toLowerCase() + ", node FROM registration WHERE email = ?";
-                System.out.println("checkQuery --> " + checkQuery);
-                PreparedStatement checkStmt = con.prepareStatement(checkQuery);
-                checkStmt.setString(1, email);
-                ResultSet res = checkStmt.executeQuery();
-
-                if (res.next()) {
-                    boolean isTool = res.getBoolean("tool_" + tool.toLowerCase());
-                    if (!isTool) {
-                        return new String[]{"Login Error - User exists but is not authorized for tool " + tool + "."};
-                    }
-                } else {
-                    // The ResultSet was empty, no user found with the given email
-                    return new String[]{"Login Error - No entry found for the provided email in the registration table."};
-                }
-
-                if (storedPassword.equals(hashedPassword)) {
-                    con.commit(); // Commit the transaction
-                    // Return additional user data
-                    return new String[]{
-                        user_data.getString("email"),
-                        user_data.getString("firstname"),
-                        user_data.getString("lastname"),
-                        user_data.getString("institution"),
-                        res.getString("node")
-                    };
-                } else {
-                    con.rollback(); // Roll back the transaction
-                    return new String[]{"Invalid password."};
-                }
-            } else {
-                // For tool_xialab, skip the tool check
-                if (storedPassword.equals(hashedPassword)) {
-                    con.commit(); // Commit the transaction
-                    // Return additional user data
-                    return new String[]{
-                        user_data.getString("email"),
-                        user_data.getString("firstname"),
-                        user_data.getString("lastname"),
-                        user_data.getString("institution"),
-                        "" // Assuming node is not needed for tool_xialab
-                    };
-                } else {
-                    con.rollback(); // Roll back the transaction
-                    return new String[]{"Invalid password."};
-                }
-            }
-
-        } catch (SQLException ex) {
-            System.out.println("SQLException occurred: " + ex.getMessage());
-            return new String[]{"Login Error - " + ex.getMessage()};
-        } finally {
-            // Close all resources
-            try {
-                if (user_data != null) {
-                    user_data.close();
-                }
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (con != null) {
-                    con.close(); // Return connection back to the pool, not really closing it
-                }
-            } catch (SQLException ex) {
-                System.out.println("Error when closing resources: " + ex.getMessage());
-            }
-        }
-    }
 
     public String[] loginUserDocker(String email, String password) {
         //System.out.println("loginUser --> step0");
@@ -301,7 +198,10 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public static int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
+    //the table name is defined
+    private static final String tableName = "project";
+
+    public static int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType) {
         // Convert all values in rawDocData to String, handling single quotes
         Map<String, String> docData = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawDocData.entrySet()) {

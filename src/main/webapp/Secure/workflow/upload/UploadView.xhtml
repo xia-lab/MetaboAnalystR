@@ -97,7 +97,9 @@
                                     </p:outputLabel>
                                 </h:panelGroup>
                                 <p:fileUpload mode="advanced" listener="#{wfUploadBean.handleFileUploadWorkflow}" 
-                                              multiple="true"  style="line-height: 18px;"/>
+                                              multiple="true"  style="line-height: 18px;">
+                                  <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(zip|csv|txt|tsv)$/"/>
+                                </p:fileUpload>
 
                                 <p:spacer style="margin-top: -10px"/>
                             </h:panelGrid>

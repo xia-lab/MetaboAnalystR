@@ -70,11 +70,10 @@
                                         <f:selectItems value="#{optBean.tableFormatOpts}" />
                                     </p:selectOneMenu>
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File:"/>
-                                    <p:fileUpload value="#{pathLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
-                                    <!--
-                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata File (optional):"/>
-                                    <p:fileUpload value="#{pathLoader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
-                                    -->
+                                    <p:fileUpload value="#{pathLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                        <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                    </p:fileUpload>
+
                                 </h:panelGrid>   
                                 <p:commandButton value="Submit" ajax="false" 
                                                  onclick="PF('statusDialog').show()" 
@@ -84,8 +83,8 @@
                             </h:panelGrid>
 
                             <hr class="style-one"/>
-                            
-                             <p:selectOneRadio id="qeaTestRadio" value="#{pathLoader.qeaTestDataOpt}" layout="custom">  
+
+                            <p:selectOneRadio id="qeaTestRadio" value="#{pathLoader.qeaTestDataOpt}" layout="custom">  
                                 <f:selectItem itemValue="disc" itemLabel="Data 1"/>
                                 <f:selectItem itemValue="cont" itemLabel="Data 2"/> 
                             </p:selectOneRadio>  
@@ -169,7 +168,9 @@
                                     <h:panelGroup layout="block" style="width:180px">
                                         <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
                                     </h:panelGroup>                        
-                                    <p:fileUpload value="#{pathLoader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                    <p:fileUpload value="#{pathLoader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                        <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(xlsx|XLSX)$/"/>
+                                    </p:fileUpload>
                                 </h:panelGrid>
                                 <p:commandButton value="Submit" ajax="false"
                                                  onclick="PF('statusDialog').show()" 
@@ -314,7 +315,9 @@
                                                 <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>
                                             </h:panelGroup>
                                             <h:panelGroup>
-                                                <p:fileUpload value="#{integProcesser.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                                <p:fileUpload value="#{integProcesser.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                                   <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                                </p:fileUpload>
                                                 <p:outputLabel style = "font-size:12px" rendered="#{integLoader.exampleOrder eq 'genepeak'}" value="MalariaPeaks.txt 323K"/>
                                             </h:panelGroup>
 

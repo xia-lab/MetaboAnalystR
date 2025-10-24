@@ -140,7 +140,9 @@
                                       style="width: 240px; padding-left: 132px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="regular2"
-                                      rendered="#{pLoadBean.selectedData.ionMode ne 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode ne 'mixed'}">
+                            <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold"
                                        value="Positive File:"
@@ -150,7 +152,9 @@
                                       style="width: 240px; padding-left: 106px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="positive2"
-                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}">
+                            <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
 
                         <p:outputLabel style="font-size:12px; font-weight: bold"
                                        value="Negative File:"
@@ -160,7 +164,9 @@
                                       style="width: 240px; padding-left: 106px; line-height: 18px"
                                       mode="simple"  skinSimple="true"
                                       id="negative2"
-                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}"/>
+                                      rendered="#{pLoadBean.selectedData.ionMode eq 'mixed'}">
+                            <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>
 
                     </h:panelGrid>
 

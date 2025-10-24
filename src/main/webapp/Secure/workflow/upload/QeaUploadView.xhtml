@@ -108,13 +108,11 @@
                                     </p:selectOneMenu>
 
                                     <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File: "/>
-                                    <p:fileUpload value="#{enrichLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                    <p:fileUpload value="#{enrichLoader.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                        <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(ZIP|zip)$/"/>
+                                    </p:fileUpload>
 
-                                    <!--
-                                    <p:outputLabel style="font-size:13px; font-weight: bold" value="Metadata File (optional):"/>
-                                    <p:fileUpload value="#{enrichLoader.metaFile}" mode="simple"  skinSimple="true" style="line-height: 18px"/>
-                                    -->
-
+                      
                                 </h:panelGrid>
                                 <p:commandButton value="Submit" ajax="false" 
                                                  onclick="PF('statusDialog').show()" 

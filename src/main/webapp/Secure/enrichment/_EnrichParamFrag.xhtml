@@ -218,7 +218,7 @@
               hideEffect="explode" resizable="true">
         <h:panelGrid style="padding:0px 10px 20px 18px; font-size: 13px; line-height: 23px; width:480px;">
             <div style="padding-bottom: 20px">
-                Your metabolite set library must be uploaded as a comma separated file format (.csv). 
+                Your metabolite set library must be uploaded as a comma separated file format (.csv), max 10M.
                 It must contain two columns: the first column is the metabolite set name, 
                 and the second column is a list of compound names separated by "; " (a semicolon and a space). 
                 An example subset of the pathway library can be found 
@@ -228,7 +228,11 @@
                 "ID Conversion" program from <b>Other Utilities</b> to standardize the names.
             </div>
             <h:form id="uploadForm" enctype="multipart/form-data">
-                <p:fileUpload value="#{msetBean.msetLibFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>  
+                <p:fileUpload value="#{msetBean.msetLibFile}" mode="simple" skinSimple="true" 
+                              style="line-height: 18px">
+                    <p:validateFile sizeLimit="10485760"
+                                    allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                </p:fileUpload>  
                 <p:commandButton value="Submit" ajax="false"
                                  style ="margin-left: 20px"
                                  onclick="PF('statusDialog').show()"
@@ -243,12 +247,16 @@
         <h:panelGrid style="padding:0px 10px 20px 20px; font-size: 13px; line-height: 23px; width:480px;">
             <div style="padding-bottom: 20px">
                 The reference metabolome refers to all the metabolites that can be detected based on your analytical platform. 
-                They should be uploaded as a single-column list of compound names. You can use the "Compound ID Conversion" program 
+                They should be uploaded as a plain text file (.csv or .txt, max 10M) containing a single-column list of compound names. 
+                You can use the "Compound ID Conversion" program 
                 from "Other Utilities" to perform the name conversion. An example list can be found 
                 <a href="#{facesContext.externalContext.requestContextPath}/resources/data/hmdb_list.txt">here</a>.
             </div>
             <h:form enctype="multipart/form-data">
-                <p:fileUpload value="#{msetBean.metabolomeFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>  
+                <p:fileUpload value="#{msetBean.metabolomeFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                    <p:validateFile sizeLimit="10485760"
+                                    allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                </p:fileUpload>  
                 <p:commandButton value="Submit" ajax="false"
                                  style ="margin-left: 20px"
                                  onclick="PF('statusDialog').show()"

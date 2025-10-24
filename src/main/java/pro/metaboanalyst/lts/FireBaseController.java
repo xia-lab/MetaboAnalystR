@@ -4,7 +4,6 @@
  */
 package pro.metaboanalyst.lts;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.enrich.IntegProcessBean;
@@ -16,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.zeroturnaround.zip.ZipUtil;
 import jakarta.faces.context.FacesContext;
@@ -77,8 +77,7 @@ import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
-import java.util.UUID;
+import pro.metaboanalyst.api.ApiClient;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
 import pro.metaboanalyst.controllers.meta.MetaLoadBean;
@@ -152,6 +151,8 @@ public class FireBaseController implements Serializable {
 
     private boolean saveDataBoolean = true;
     private boolean saveWorkflowBoolean = false;
+
+    private final ApiClient apiClient = new ApiClient();
 
     public boolean isSaveWorkflowBoolean() {
         return saveWorkflowBoolean;
@@ -342,14 +343,14 @@ public class FireBaseController implements Serializable {
     @Inject
     StateSaver stateSaver;
 
-    public void writeDoc(String folderName, String type) throws InterruptedException, ExecutionException, JsonProcessingException {
+    public int writeDoc(String folderName, String type) throws InterruptedException, ExecutionException, JsonProcessingException {
 
         long idNum = 0;
         String token = DataUtils.generateToken(folderName);
         sb.setShareToken(token);
 
         String uid = fub.getEmail();
-        System.out.println("Saver injected? " + (stateSaver != null));
+        //System.out.println("Saver injected? " + (stateSaver != null));
         stateSaver.saveState();
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
 
@@ -402,9 +403,19 @@ public class FireBaseController implements Serializable {
 
         shareableLink = app_url + "/MetaboAnalyst/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + token;
 
-        db.writeProjectToPostgres(docData, type, "project");
-        if (!ab.isInDocker()) {
-            db.writeProjectToPostgres(docData, type, "project_history");
+        if (ab.isInDocker()) {
+            DatabaseController.writeProjectToPostgres(docData, type);
+        } else {
+            try {
+                Map<String, Object> payload = new HashMap<>(docData);
+                payload.put("projectType", type);
+                payload.put("tableName", "project_history");
+                String response = apiClient.post("/database/projects", toJson(payload));
+                return Integer.parseInt(response);
+            } catch (Exception e) {
+                System.out.println("Error writing project to Postgres: " + e);
+                return -1;
+            }
         }
 
         idNum = db.checkMatchingFolderNameProject(sb.getCurrentUser().getName());
@@ -429,11 +440,13 @@ public class FireBaseController implements Serializable {
         } catch (IOException ex) {
             Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        return 0;
     }
-    
 
-    
+    private String toJson(Map<String, ?> map) {
+        return new Gson().toJson(map);
+    }
+
     public boolean saveDataAndGoToWorkflow() {
         if (dc.hasStagedDataset()) {
             dc.getStagedDataset().setSamplenum(RDataUtils.getSampleNum(sb.getRConnection()));
@@ -443,7 +456,7 @@ public class FireBaseController implements Serializable {
             }
             dc.loadWorkflow(dc.findById(dsId), false);
             return true;
-        }else{
+        } else {
             sb.addMessage("warn", "Failed to load the current dataset.");
             return false;
         }

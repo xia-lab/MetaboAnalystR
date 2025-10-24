@@ -87,55 +87,57 @@
                         <h:form id="form3" enctype="multipart/form-data">
 
                             <h:panelGrid columns="2">
-                            <h:panelGrid columns="2" style="margin-left:20px; margin-right: 60px; width:720px; line-height: 28px; font-size: 13px; padding: 20px 20px 20px 30px;" 
-                                         class="surface-card shadow-1 p-4 text-800">
+                                <h:panelGrid columns="2" style="margin-left:20px; margin-right: 60px; width:720px; line-height: 28px; font-size: 13px; padding: 20px 20px 20px 30px;" 
+                                             class="surface-card shadow-1 p-4 text-800">
 
-                                <p:outputLabel value="Ion Mode:"/>
-                                <p:selectOneMenu value="#{wfPeakLoader.msModeOpt}">
-                                    <f:selectItem itemLabel="Positive Mode" itemValue="positive" />
-                                    <f:selectItem itemLabel="Negative Mode" itemValue="negative" />
-                                    <p:ajax event="change" update=":form3:formatOpts3"/>
-                                </p:selectOneMenu>
+                                    <p:outputLabel value="Ion Mode:"/>
+                                    <p:selectOneMenu value="#{wfPeakLoader.msModeOpt}">
+                                        <f:selectItem itemLabel="Positive Mode" itemValue="positive" />
+                                        <f:selectItem itemLabel="Negative Mode" itemValue="negative" />
+                                        <p:ajax event="change" update=":form3:formatOpts3"/>
+                                    </p:selectOneMenu>
 
-                                <h:panelGroup  style="width:280px" layout="block">
-                                    <p:outputLabel value="Mass Tolerance (ppm):"/>
-                                    <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>
-                                <h:panelGroup>
-                                    <p:selectOneMenu value="#{wfPeakLoader.instrumentOpt}" editable="true">
-                                        <f:selectItem itemLabel="10" itemValue="10" />
-                                        <f:selectItem itemLabel="5" itemValue="5" />
-                                        <f:selectItem itemLabel="3" itemValue="3" />
-                                        <f:selectItem itemLabel="1" itemValue="1" />
-                                    </p:selectOneMenu> 
-                                    <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
-                                </h:panelGroup>
+                                    <h:panelGroup  style="width:280px" layout="block">
+                                        <p:outputLabel value="Mass Tolerance (ppm):"/>
+                                        <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:selectOneMenu value="#{wfPeakLoader.instrumentOpt}" editable="true">
+                                            <f:selectItem itemLabel="10" itemValue="10" />
+                                            <f:selectItem itemLabel="5" itemValue="5" />
+                                            <f:selectItem itemLabel="3" itemValue="3" />
+                                            <f:selectItem itemLabel="1" itemValue="1" />
+                                        </p:selectOneMenu> 
+                                        <h:outputText style="color:grey; padding-left: 5px" value="(editable)"/>
+                                    </h:panelGroup>
 
-                                <p:outputLabel value="Retention Time:"/>
-                                <p:selectOneMenu value="#{wfPeakLoader.rtIncluded}">
-                                    <f:selectItem itemLabel="Not present" itemValue="no" />
-                                    <f:selectItem itemLabel="Yes - Minutes" itemValue="minutes" />
-                                    <f:selectItem itemLabel="Yes - Seconds" itemValue="seconds" />
-                                </p:selectOneMenu>
+                                    <p:outputLabel value="Retention Time:"/>
+                                    <p:selectOneMenu value="#{wfPeakLoader.rtIncluded}">
+                                        <f:selectItem itemLabel="Not present" itemValue="no" />
+                                        <f:selectItem itemLabel="Yes - Minutes" itemValue="minutes" />
+                                        <f:selectItem itemLabel="Yes - Seconds" itemValue="seconds" />
+                                    </p:selectOneMenu>
 
-                                <h:panelGroup  style="width:280px" layout="block">
-                                    <p:outputLabel value="Data Source:"/>
-                                    <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
-                                </h:panelGroup>                              
-                                <p:selectOneMenu value="#{wfPeakLoader.dataSource}">
-                                    <f:selectItem itemLabel="Generic" itemValue="generic" />
-                                    <f:selectItem itemLabel="MZmine" itemValue="mzmine" />
-                                </p:selectOneMenu>
+                                    <h:panelGroup  style="width:280px" layout="block">
+                                        <p:outputLabel value="Data Source:"/>
+                                        <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                    </h:panelGroup>                              
+                                    <p:selectOneMenu value="#{wfPeakLoader.dataSource}">
+                                        <f:selectItem itemLabel="Generic" itemValue="generic" />
+                                        <f:selectItem itemLabel="MZmine" itemValue="mzmine" />
+                                    </p:selectOneMenu>
 
-                                <p:outputLabel value="Data Format:"/>
-                                <p:selectOneMenu id="formatOpts3" value="#{wfPeakLoader.dataFormat}">
-                                    <f:selectItems value="#{optBean.tableFormatOpts}"/>
-                                </p:selectOneMenu>
+                                    <p:outputLabel value="Data Format:"/>
+                                    <p:selectOneMenu id="formatOpts3" value="#{wfPeakLoader.dataFormat}">
+                                        <f:selectItems value="#{optBean.tableFormatOpts}"/>
+                                    </p:selectOneMenu>
 
-                                <p:outputLabel value="Data File:"/>
-                                <p:fileUpload value="#{wfPeakLoader.peakFileTable}" mode="simple" skinSimple="true" style="line-height: 18px"/>
-                            </h:panelGrid>
-                         
+                                    <p:outputLabel value="Data File:"/>
+                                    <p:fileUpload value="#{wfPeakLoader.peakFileTable}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                        <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                    </p:fileUpload>
+                                </h:panelGrid>
+
                                 <p:commandButton value="Submit" update="form3 southform"
                                                  onclick="PF('statusDialog').show()" 
                                                  oncomplete="PF('statusDialog').hide()"   
@@ -179,51 +181,51 @@ Group               healthy                 healthy
                                 <f:selectItem itemLabel="Malaria" itemValue="table_malaria"/>
                             </p:selectOneRadio>
                             <h:panelGrid columns="2">
-                            <h:panelGrid columns="4" style="margin-left: 20px; width:720px; padding: 20px 30px 20px 30px; font-size: 13px; margin-right: 60px" 
-                                         class="surface-card shadow-1 p-4 text-800">
-                                <p:spacer style="width: 30px"/>
-                                <h:panelGrid style="width:80px">
-                                    <p:outputLabel style="font-weight: bold; font-size: 13px" value="Data"/>
-                                </h:panelGrid> 
-                                <h:panelGrid style="width:160px">
-                                    <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Format"/>
-                                </h:panelGrid> 
-                                <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Description"/>
+                                <h:panelGrid columns="4" style="margin-left: 20px; width:720px; padding: 20px 30px 20px 30px; font-size: 13px; margin-right: 60px" 
+                                             class="surface-card shadow-1 p-4 text-800">
+                                    <p:spacer style="width: 30px"/>
+                                    <h:panelGrid style="width:80px">
+                                        <p:outputLabel style="font-weight: bold; font-size: 13px" value="Data"/>
+                                    </h:panelGrid> 
+                                    <h:panelGrid style="width:160px">
+                                        <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Format"/>
+                                    </h:panelGrid> 
+                                    <p:outputLabel style="font-weight: bold; font-size: 13px; padding-left: 15px;" value="Description"/>
 
-                                <p:radioButton for="customRadio" itemIndex="0"/>
-                                <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/mummichog_immu_table.csv">Immune Cell</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Generic peak intensity table (no retention time)
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Example peak intensity table from KO experiment of dendritic cells and epithelial cells treated in DSS.
+                                    <p:radioButton for="customRadio" itemIndex="0"/>
+                                    <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/mummichog_immu_table.csv">Immune Cell</a>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Generic peak intensity table (no retention time)
+                                    </h:panelGrid>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Example peak intensity table from KO experiment of dendritic cells and epithelial cells treated in DSS.
+                                    </h:panelGrid>
+
+                                    <p:radioButton for="customRadio" itemIndex="1"/>
+                                    <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/A3_pos.csv">Covid-19</a>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Peak intensity table with retention time
+                                    </h:panelGrid>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Peak intensity table of COVID-19 global metabolomics <a href="https://www.mdpi.com/2218-1989/11/1/44">study</a> with over 9,000 peaks.
+                                    </h:panelGrid>
+
+                                    <p:radioButton for="customRadio" itemIndex="2"/>
+                                    <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/malaria_feature_table.csv">Malaria</a>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Small intensity table with retention time
+                                    </h:panelGrid>
+                                    <h:panelGrid style="padding-left: 15px">
+                                        Peak table of a Malaria metabolomics <a href="https://dx.doi.org/10.1016%2Fj.redox.2018.04.011">study</a> with 5,113 peaks.
+                                    </h:panelGrid>                                
                                 </h:panelGrid>
 
-                                <p:radioButton for="customRadio" itemIndex="1"/>
-                                <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/A3_pos.csv">Covid-19</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak intensity table with retention time
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak intensity table of COVID-19 global metabolomics <a href="https://www.mdpi.com/2218-1989/11/1/44">study</a> with over 9,000 peaks.
-                                </h:panelGrid>
 
-                                <p:radioButton for="customRadio" itemIndex="2"/>
-                                <a target="_blank" href="https://www.xialab.ca/api/download/metaboanalyst/malaria_feature_table.csv">Malaria</a>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Small intensity table with retention time
-                                </h:panelGrid>
-                                <h:panelGrid style="padding-left: 15px">
-                                    Peak table of a Malaria metabolomics <a href="https://dx.doi.org/10.1016%2Fj.redox.2018.04.011">study</a> with 5,113 peaks.
-                                </h:panelGrid>                                
-                            </h:panelGrid>
-
-                      
                                 <p:commandButton value="Submit" update="form3 southform"
                                                  onclick="PF('statusDialog').show()" 
                                                  oncomplete="PF('statusDialog').hide()"   
                                                  action="#{wfPeakLoader.processTableExampleUpload}"/>  
-                           </h:panelGrid>
+                            </h:panelGrid>
                         </h:form>
                     </h:panelGrid>
 

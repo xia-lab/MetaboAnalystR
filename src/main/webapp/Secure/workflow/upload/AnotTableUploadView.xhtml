@@ -92,7 +92,9 @@
                                     <f:selectItems value="#{optBean.tableFormatOpts}" />
                                 </p:selectOneMenu>
                                 <p:outputLabel style="font-size:13px; font-weight: bold" value="Data File:"/>
-                                <p:fileUpload value="#{wfAnotTableUploadBean.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                <p:fileUpload value="#{wfAnotTableUploadBean.csvFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                    <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                </p:fileUpload>
 
                             </h:panelGrid>   
                             <p:commandButton value="Submit" ajax="false" 
