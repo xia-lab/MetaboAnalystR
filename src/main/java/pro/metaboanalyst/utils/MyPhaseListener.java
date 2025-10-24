@@ -49,6 +49,7 @@ import org.primefaces.PrimeFaces;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.api.DatabaseClient;
+import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.rwrappers.RCenter;
 import pro.metaboanalyst.rwrappers.RDataUtils;
@@ -583,8 +584,10 @@ public class MyPhaseListener implements PhaseListener {
         SessionBean1 sb = getBeanByName("sessionBean1", SessionBean1.class);
         FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
         DiagramView dv = getBeanByName("diagramView", DiagramView.class);
-        //JobExecution je = getBeanByName("jobExecution", JobExecution.class);
+        DatabaseClient db = getBeanByName("databaseClient", DatabaseClient.class);
+        WorkflowBean wb = getBeanByName("workflowBean", WorkflowBean.class);
 
+        //JobExecution je = getBeanByName("jobExecution", JobExecution.class);
         JobTimerService jobTimerService = getBeanByName("jobTimerService", JobTimerService.class);
         try {
             String tokenId = request.getParameter("tokenId");
@@ -611,6 +614,7 @@ public class MyPhaseListener implements PhaseListener {
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
+                        String msg = db.updateWorkflowRunStatus(wb.getSelectedWorkflowRun().getId(), "completed", tokenId);
                         //je.checkJobStatus();
                         dv.sendRawResume(email, jobId, shareLink);
                     }
@@ -647,9 +651,10 @@ public class MyPhaseListener implements PhaseListener {
             if (res) {
                 dv.setStatusMsg("<b style='color: green'>Workflow Completed.</b>");
                 if (wfb.getRunPlans().size() > 1) {
-                    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml", "info", "Workflow completed!");
+                    fbc.reloadUserInfo();
+                    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/DashBoardView.xhtml", "info", "Workflow run completed!");
                 } else {
-                    DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/WorkflowView.xhtml?callFunc=checkPagesToVisit", ab);
+                    DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?callFunc=checkPagesToVisit", ab);
                 }
             } else {
                 dv.setStatusMsg("<b style='color: green'>Workflow Failed.</b>");

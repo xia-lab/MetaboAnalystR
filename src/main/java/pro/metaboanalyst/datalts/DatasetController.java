@@ -91,8 +91,15 @@ public class DatasetController implements Serializable {
     private HistoryBean hb;
     @Inject
     StateSaver stateSaver;
-        @Inject
+    @Inject
     PeakUploadBean pu;
+
+    // In DatasetController.java
+    private List<DatasetRow> datasetTableAll = new ArrayList<>();
+
+    public List<DatasetRow> getDatasetTableAll() {
+        return datasetTableAll;
+    }
 
     private List<DatasetRow> datasetTableExample = new ArrayList<>();
 
@@ -302,15 +309,40 @@ public class DatasetController implements Serializable {
      * Called by Refresh button and can be wired to preRenderView.
      */
     public void refresh() {
+        if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
+            return; // Skip ajax requests.
+        }
         fc.reloadUserInfo();
 
-        String email = fub.getEmail();
-        String node = ab.getToolLocation();
+        final String email = fub.getEmail();
+        final String node = ab.getToolLocation();
+
         if (email == null || email.isBlank()) {
             datasetTable = new ArrayList<>();
+            datasetTableAll = new ArrayList<>(getDatasetTableExample()); // show examples if no login
             return;
         }
+
+        // Load user datasets
         datasetTable = db.getDatasetsForEmail(email, "metaboanalyst", true);
+        if (datasetTable == null) {
+            datasetTable = new ArrayList<>();
+        }
+
+        // In refresh() after loading user datasets:
+        for (DatasetRow ds : datasetTable) {
+            ds.setOrigin("Custom"); // user datasets show no badge/label
+        }
+
+        // Merge: Examples + Custom
+        final List<DatasetRow> examples = getDatasetTableExample(); // already cached by your guard
+
+        datasetTableAll = new ArrayList<>(examples.size() + datasetTable.size());
+        datasetTableAll.addAll(examples);
+        datasetTableAll.addAll(datasetTable);
+
+        System.out.println("[refresh] merged datasets: total=" + datasetTableAll.size()
+                + ", examples=" + examples.size() + ", custom=" + datasetTable.size());
     }
 
     public void syncSelectedDatasets() {
@@ -1418,23 +1450,23 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setTags(List.of("metabolomics", "experimentA"));
         ds1.setFileCount(1);
         ds1.setHasMetadata(true);
+        ds1.setOrigin("Example"); // <-- NEW
 
         List<DatasetFile> ds1Files = new ArrayList<>();
         {
             DatasetFile f1 = new DatasetFile();
             f1.setRole("data");
-            f1.setFilename("human_cachexia.csv"); // main table
+            f1.setFilename("human_cachexia.csv");
             f1.setType("csv");
             f1.setSizeBytes(32461L);
             ds1Files.add(f1);
-
         }
         ds1.setFiles(ds1Files);
         ds1.setFileCount(ds1Files.size());
 
         datasetTableExample.add(ds1);
 
-        /////////////////////////////////////
+        // Example 2
         ds1 = new DatasetRow();
         ds1.setId(UUID.fromString("2292bf17-3ce9-43f1-81ea-6735b4cb7b96"));
         ds1.setTitle("Peaks with metadata table");
@@ -1451,19 +1483,20 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setTags(List.of("metabolomics", "experimentA"));
         ds1.setFileCount(1);
         ds1.setHasMetadata(true);
+        ds1.setOrigin("Example"); // <-- NEW
 
         ds1Files = new ArrayList<>();
         {
             DatasetFile f1 = new DatasetFile();
             f1.setRole("data");
-            f1.setFilename("covid_metabolomics_data.csv"); // main table
+            f1.setFilename("covid_metabolomics_data.csv");
             f1.setType("csv");
             f1.setSizeBytes(1468006L);
             ds1Files.add(f1);
 
             DatasetFile f2 = new DatasetFile();
             f2.setRole("metadata");
-            f2.setFilename("covid_metadata_multiclass.csv"); // main table
+            f2.setFilename("covid_metadata_multiclass.csv");
             f2.setType("csv");
             f2.setSizeBytes(2598L);
             ds1Files.add(f2);
@@ -1473,7 +1506,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
         datasetTableExample.add(ds1);
 
-        ////////////////////////////////////////////////////////
+        // Example 3
         ds1 = new DatasetRow();
         ds1.setId(UUID.fromString("9a105202-0de6-4e24-b42e-dcf10b6ca562"));
         ds1.setTitle("List of Metabolites");
@@ -1490,16 +1523,16 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         ds1.setTags(List.of("metabolomics", "experimentA"));
         ds1.setFileCount(1);
         ds1.setHasMetadata(true);
+        ds1.setOrigin("Example"); // <-- NEW
 
         ds1Files = new ArrayList<>();
         {
             DatasetFile f1 = new DatasetFile();
             f1.setRole("data");
-            f1.setFilename("datalist.csv"); // main table
+            f1.setFilename("datalist.csv");
             f1.setType("csv");
             f1.setSizeBytes(226L);
             ds1Files.add(f1);
-
         }
         ds1.setFiles(ds1Files);
         ds1.setFileCount(ds1Files.size());
@@ -2871,7 +2904,5 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         // Not found locally
         return null;
     }
-    
-
 
 }

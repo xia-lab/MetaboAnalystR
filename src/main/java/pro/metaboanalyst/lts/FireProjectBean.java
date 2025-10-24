@@ -76,15 +76,7 @@ public class FireProjectBean implements Serializable {
 // In your ProjectBean (or whatever pb is)
     private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
     private WorkflowRunModel workflowRunToLoad; // optional, if you auto-select one
- private WorkflowRunModel selectedWorkflowRun;
 
-    public WorkflowRunModel getSelectedWorkflowRun() {
-        return selectedWorkflowRun;
-    }
-
-    public void setSelectedWorkflowRun(WorkflowRunModel selectedWorkflowRun) {
-        this.selectedWorkflowRun = selectedWorkflowRun;
-    }
  
  
     public List<WorkflowRunModel> getWorkflowRunsTable() {

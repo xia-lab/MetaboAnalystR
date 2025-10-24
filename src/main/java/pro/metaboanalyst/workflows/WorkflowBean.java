@@ -724,31 +724,41 @@ public class WorkflowBean implements Serializable {
     }
 
     public void loadAllWorkflows() {
-
         fbc.reloadUserInfo();
 
+        // Load user's saved workflows
         workflowList = dbc.getAllWorkflows(ab.getAppName(), fub.getEmail());
-
-        for (HashMap<String, Object> workflow : workflowList) {
-            workflow.put("type", "Custom");
-            System.out.println("Keys: " + workflow.keySet());
-
-        }
-
-        defaultWorkflowList = loadDefaultWorkflows("/" + ab.getRealPath() + "/pro/default_workflows.json");
-
-        // Add all elements from defaultWorkflowList to the beginning of workList
         if (workflowList == null) {
             workflowList = new ArrayList<>();
         }
-
-        //defaultWorkflowList = filterWorkflowsByProperty(defaultWorkflowList, "module", sb.getNaviType());
-        if (selectedWorkflow == null || selectedWorkflow.isEmpty()) {
-            if (!workflowList.isEmpty()) {
-                selectedWorkflow = workflowList.get(0);
-            }
+        for (HashMap<String, Object> wf : workflowList) {
+            wf.put("type", "Custom"); // mark user workflows
         }
 
+        // Load default/example workflows and tag them
+        defaultWorkflowList = loadDefaultWorkflows("/" + ab.getRealPath() + "/pro/default_workflows.json");
+        if (defaultWorkflowList == null) {
+            defaultWorkflowList = new ArrayList<>();
+        }
+        for (HashMap<String, Object> wf : defaultWorkflowList) {
+            wf.put("type", "Example"); // mark examples
+        }
+
+        // Merge: examples first, then customs (adjust order if you prefer the opposite)
+        final ArrayList<HashMap<String, Object>> merged = new ArrayList<>(defaultWorkflowList.size() + workflowList.size());
+        merged.addAll(defaultWorkflowList);
+        merged.addAll(workflowList);
+        workflowList = merged;
+
+        // Pick a default selection if none
+        if ((selectedWorkflow == null || selectedWorkflow.isEmpty()) && !workflowList.isEmpty()) {
+            selectedWorkflow = workflowList.get(0);
+        }
+
+        // Optional: quick debug line
+        System.out.println("[loadAllWorkflows] total=" + workflowList.size()
+                + ", examples=" + defaultWorkflowList.size()
+                + ", custom=" + (workflowList.size() - defaultWorkflowList.size()));
     }
 
     public ArrayList<HashMap<String, Object>> loadDefaultWorkflows(String jsonFilePath) {
@@ -2058,15 +2068,22 @@ public class WorkflowBean implements Serializable {
         this.activeWorkflowRunId = id;
     }
 
+    public void prepareNewRun() {
+        DataUtils.doRedirectWithGrowl(sb,
+                "/" + ab.getAppName() + "/Secure/xialabpro/DataCenterView.xhtml",
+                "info",
+                "Select your dataset first.");
+    }
+
     public void startRun() {
         try {
             calledWorkflows.add("Data Preparation");
             editMode = false;
-            boolean success = selectWorkflowById(fpb.getSelectedWorkflowRun().getWorkflowId());
+            boolean success = selectWorkflowById(getSelectedWorkflowRun().getWorkflowId());
             if (!success) {
                 return;
             }
-            ds.setSelected(ds.findById(fpb.getSelectedWorkflowRun().getDatasetId()));
+            ds.setSelected(ds.findById(getSelectedWorkflowRun().getDatasetId()));
 
             boolean res = ds.load(ds.getSelected(), true);
 
@@ -2201,5 +2218,13 @@ public class WorkflowBean implements Serializable {
         }
     }
 
-    
+    private WorkflowRunModel selectedWorkflowRun;
+
+    public WorkflowRunModel getSelectedWorkflowRun() {
+        return selectedWorkflowRun;
+    }
+
+    public void setSelectedWorkflowRun(WorkflowRunModel selectedWorkflowRun) {
+        this.selectedWorkflowRun = selectedWorkflowRun;
+    }
 }

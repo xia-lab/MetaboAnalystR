@@ -5,7 +5,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 public class ApiClient {
-    private static final String BASE_URL = "https://www.xialab.ca/rest";
+    private static final String BASE_URL = "https://www.xialab.ai/rest";
     private static final String TOKEN = "mySecretKey12345678901234567890123456789012";
     private final HttpClient client;
 

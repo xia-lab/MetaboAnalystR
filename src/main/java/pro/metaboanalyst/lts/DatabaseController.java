@@ -2379,6 +2379,10 @@ public class DatabaseController implements Serializable {
 // Overwrite status, touch last_updated = NOW(), and conditionally set start/finish.
 
     public static String updateWorkflowRunStatus(int id, String newStatus) {
+        return updateWorkflowRunStatus(id, newStatus, (String) null);
+    }
+
+    public static String updateWorkflowRunStatus(int id, String newStatus, String projectId) {
         Connection con = null;
         PreparedStatement checkStmt = null;
         PreparedStatement updateStmt = null;
@@ -2398,28 +2402,50 @@ public class DatabaseController implements Serializable {
             res.close();
             checkStmt.close();
 
-            // Update status, last_updated; set start_date/finish_date when appropriate
+            final String status = (newStatus == null) ? "" : newStatus.trim().toLowerCase();
+
+            Integer projectIdInt = null;
+            if (projectId != null) {
+                final String s = projectId.trim();
+                if (!s.isEmpty()) {
+                    try {
+                        projectIdInt = Integer.valueOf(s);
+                    } catch (NumberFormatException nfe) {
+                        // If it's not numeric, treat as "no change"
+                        System.err.println("updateWorkflowRunStatus: ignoring non-numeric projectId '" + projectId + "'");
+                        projectIdInt = null;
+                    }
+                }
+            }
+
             final String updateSql
                     = "UPDATE workflow_runs "
                     + "SET status = ?, "
+                    + "    project_id = COALESCE(?, project_id), "
                     + "    last_updated = NOW(), "
                     + "    start_date  = CASE WHEN ? = 'running' AND start_date IS NULL THEN NOW() ELSE start_date END, "
                     + "    finish_date = CASE WHEN ? IN ('completed','failed') THEN NOW() ELSE finish_date END "
                     + "WHERE id = ?";
 
             updateStmt = con.prepareStatement(updateSql);
-            updateStmt.setString(1, newStatus);
-            updateStmt.setString(2, newStatus);
-            updateStmt.setString(3, newStatus);
-            updateStmt.setInt(4, id);
+            int idx = 1;
+            updateStmt.setString(idx++, status);                    // status
+            if (projectIdInt == null) {
+                updateStmt.setNull(idx++, java.sql.Types.INTEGER);  // keep project_id unchanged via COALESCE
+            } else {
+                updateStmt.setInt(idx++, projectIdInt);             // set project_id
+            }
+            updateStmt.setString(idx++, status);                    // CASE for start_date
+            updateStmt.setString(idx++, status);                    // CASE for finish_date
+            updateStmt.setInt(idx++, id);                           // WHERE id
 
             int updated = updateStmt.executeUpdate();
-            return (updated > 0) ? "Workflow run status (and last_updated) updated successfully."
-                    : "Workflow run status update failed.";
+            return (updated > 0) ? "Workflow run updated successfully."
+                    : "Workflow run update failed.";
 
         } catch (SQLException ex) {
             System.err.println("SQLException occurred: " + ex.getMessage());
-            return "Error updating workflow run status - " + ex.getMessage();
+            return "Error updating workflow run - " + ex.getMessage();
         } finally {
             try {
                 if (res != null) {
@@ -2437,15 +2463,6 @@ public class DatabaseController implements Serializable {
             } catch (SQLException ex) {
                 System.err.println("Error when closing resources: " + ex.getMessage());
             }
-        }
-    }
-
-// Convenience overload
-    public static String updateWorkflowRunStatus(String id, String newStatus) {
-        try {
-            return updateWorkflowRunStatus(Integer.parseInt(id), newStatus);
-        } catch (NumberFormatException nfe) {
-            return "Invalid id format (must be an integer).";
         }
     }
 

@@ -28,6 +28,7 @@ public class WorkflowRunModel {
 
     private String description;
     private String otherJson;
+    private String projectId;
 
     // --- getters/setters ---
     public int getId() {
@@ -133,4 +134,14 @@ public class WorkflowRunModel {
     public void setOtherJson(String otherJson) {
         this.otherJson = otherJson;
     }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+    
+    
 }

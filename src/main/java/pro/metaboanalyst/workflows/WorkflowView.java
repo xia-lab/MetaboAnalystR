@@ -1621,9 +1621,10 @@ public class WorkflowView implements Serializable {
         return "";
     }
 
-    public void generateWorkflowJson(String projectType, boolean insert) throws IOException {
-        generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, insert, true);
+    public void generateWorkflowJson(String projectType,  boolean msgBool) throws IOException {
+        generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, true, msgBool);
     }
+    
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
@@ -1631,7 +1632,7 @@ public class WorkflowView implements Serializable {
     public void generateWorkflowJson(String wName, String wDescription, String projectType, boolean insert, boolean msgBool) throws IOException {
         if (wb.getFunctionInfos() == null || wb.getFunctionInfos().isEmpty()) {
             if (msgBool) {
-                sb.addMessage("Error", "Workflow is empty!");
+                sb.addMessage("warn", "Workflow is empty!");
             } else {
                 System.out.println("workflow is empty!");
             }

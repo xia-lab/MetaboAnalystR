@@ -2566,36 +2566,12 @@ public class DiagramView implements Serializable {
 
         // --- NEW: flip the workflow run to RUNNING (and stamp start_date) ---
         try {
-            Integer runId = wb.getActiveWorkflowRunId();
+            Integer runId = wb.getSelectedWorkflowRun().getId();
 
-            if (runId == null) {
-                // Fallback: resolve by module + workflowId/filename + dataset
-                Map<String, Object> selWf = wb.getSelectedWorkflow(); // needs the getter added above
-                if (selWf != null && !selWf.isEmpty() && dc.getSelected() != null) {
-                    String module = String.valueOf(selWf.get("module"));
-                    String email = fub.getEmail();
-                    String wfIdOrFile = String.valueOf(selWf.getOrDefault("id", selWf.get("filename")));
-                    String dsName = dc.getSelected().getTitle();
-
-                    var runs = db.getAllWorkflowRuns(module, email);
-                    for (HashMap<String, Object> r : runs) {
-                        String status = String.valueOf(r.get("status"));
-                        String rid = String.valueOf(r.get("workflowId"));
-                        String rds = String.valueOf(r.get("datasetName"));
-                        if ("pending".equalsIgnoreCase(status)
-                                && Objects.equals(rid, wfIdOrFile)
-                                && Objects.equals(rds, dsName)) {
-                            runId = ((Number) r.get("id")).intValue();
-                            wb.setActiveWorkflowRunId(runId);
-                            break;
-                        }
-                    }
-                }
-            }
 
             if (runId != null) {
                 // This also sets start_date = NOW() when status == 'running'
-                String msg = db.updateWorkflowRunStatus(runId, "running");
+                String msg = db.updateWorkflowRunStatus(runId +"", "running");
                 System.out.println("[workflow-run] " + msg);
             } else {
                 System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");

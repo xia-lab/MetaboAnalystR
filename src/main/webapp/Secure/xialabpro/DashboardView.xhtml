@@ -13,25 +13,58 @@
     <ui:define name="toptrack">
         <ui:include src="/template/_menubar_workflow.xhtml" />
     </ui:define>
-    <ui:define name="leftpane">
+    <ui:define name="myscript">
+        <script type="text/javascript">
+            //<![CDATA[
+            window.onload = function () {
+                PF("workflowProgressDialog").hide();
+                localStorage.removeItem('pagesToVisit');
 
+                var reportEndBool = localStorage.getItem('reportEndBool');
+                if (reportEndBool) {
+                    PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Execution Finished! Click 'Dashboard' button to view results."}]);
+                    localStorage.removeItem('reportEndBool');
+                }
+
+                function getURLParameter(name) {
+                    return decodeURIComponent(
+                            (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')
+                            ) || null;
+                }
+                if (getURLParameter('callFunc') !== null) {
+                    checkPagesToVisit([]);
+                }
+            };
+            //]]>
+        </script>
+
+    </ui:define>
+    <ui:define name="leftpane">
+        <h:form id="hiddenForm">
+            <p:remoteCommand 
+                name="checkPagesToVisit" 
+                actionListener="#{diagramView.checkPagesToVisit}" 
+                oncomplete="console.log('Remote command executed successfully');"
+                onerror="console.error('Error during remote command execution');"
+                />
+        </h:form>
         <h:form id="treeForm">
             <h:panelGrid style="text-align: center" class="cyan-100 text-800">
-                    <p:tree style="width: 200px; font-size: 13px; border:none; border: teal thin solid" 
-                            value="#{sessionBean1.naviTree}" 
-                            var="node"
-                            class="cyan-100 text-800 shadow-3"
-                            selectionMode="single">
-                        <p:ajax update=":treeForm" 
-                                onstart="PF('statusDialog').show()"  
-                                onerror="PF('statusDialog').hide()"
-                                event="select" 
-                                listener="#{ctl.onNodeSelect}" />  
-                        <p:treeNode>
-                            <h:outputText value="#{node}" 
-                                          style="#{sessionBean1.naviTrackStatus[node] == false ? 'color:red;' : 'color:inherit;'}" />
-                        </p:treeNode>
-                    </p:tree>
+                <p:tree style="width: 200px; font-size: 13px; border:none; border: teal thin solid" 
+                        value="#{sessionBean1.naviTree}" 
+                        var="node"
+                        class="cyan-100 text-800 shadow-3"
+                        selectionMode="single">
+                    <p:ajax update=":treeForm" 
+                            onstart="PF('statusDialog').show()"  
+                            onerror="PF('statusDialog').hide()"
+                            event="select" 
+                            listener="#{ctl.onNodeSelect}" />  
+                    <p:treeNode>
+                        <h:outputText value="#{node}" 
+                                      style="#{sessionBean1.naviTrackStatus[node] == false ? 'color:red;' : 'color:inherit;'}" />
+                    </p:treeNode>
+                </p:tree>
                 <p:commandButton id="startBn" title="Update Analysis" 
                                  icon="pi pi-refresh"
                                  value="Update"

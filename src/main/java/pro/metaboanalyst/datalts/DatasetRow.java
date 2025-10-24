@@ -39,7 +39,6 @@ public class DatasetRow implements Serializable {
     private String description;      // used by edit dialog
     private List<String> tags = new ArrayList<>(); // used by <p:chips>
 
-    
     @JsonIgnore
     private boolean selected;
 
@@ -50,7 +49,7 @@ public class DatasetRow implements Serializable {
     public void setSelected(boolean selected) {
         this.selected = selected;
     }
-    
+
     public DatasetRow() {
     }
 
@@ -195,9 +194,8 @@ public class DatasetRow implements Serializable {
     }
 
     public int getSamplenum() {
-        return samplenum ;
+        return samplenum;
     }
-    
 
     public void setSamplenum(int samplenum) {
         this.samplenum = samplenum;
@@ -225,8 +223,8 @@ public class DatasetRow implements Serializable {
     public int getFileCount() {
         return fileCount;
     }
-    
-        public int getFileCountAdjusted() {
+
+    public int getFileCountAdjusted() {
         return fileCount;
     }
 
@@ -251,8 +249,7 @@ public class DatasetRow implements Serializable {
                 .withZone(ZoneId.systemDefault());
         return fmt.format(uploadedAt);
     }
-    
-    
+
     public String getModule() {
         return module;
     }
@@ -268,23 +265,41 @@ public class DatasetRow implements Serializable {
     public void setDataType(String dataType) {
         this.dataType = dataType;
     }
-    
+
+    // In DatasetRow.java (fields section, under UI-only / optional fields)
+    private String origin; // "Example" or "Custom"
+
+// getters/setters
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+// Optional helper
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public boolean isExample() {
+        return "Example".equalsIgnoreCase(origin);
+    }
+
     @Override
-public String toString() {
-    return "DatasetRow{" +
-            "id=" + id +
-            ", title='" + title + '\'' +
-            ", filename='" + filename + '\'' +
-            ", type='" + type + '\'' +
-            ", sizeBytes=" + sizeBytes +
-            ", uploadedAt=" + (uploadedAt != null ? uploadedAt.toString() : "null") +
-            ", email='" + email + '\'' +
-            ", node='" + node + '\'' +
-            ", samplenum=" + samplenum +
-            ", module='" + module + '\'' +
-            ", dataType='" + dataType + '\'' +
-            ", fileCount=" + fileCount +
-            ", hasMetadata=" + hasMetadata +
-            '}';
-}
+    public String toString() {
+        return "DatasetRow{"
+                + "id=" + id
+                + ", title='" + title + '\''
+                + ", filename='" + filename + '\''
+                + ", type='" + type + '\''
+                + ", sizeBytes=" + sizeBytes
+                + ", uploadedAt=" + (uploadedAt != null ? uploadedAt.toString() : "null")
+                + ", email='" + email + '\''
+                + ", node='" + node + '\''
+                + ", samplenum=" + samplenum
+                + ", module='" + module + '\''
+                + ", dataType='" + dataType + '\''
+                + ", fileCount=" + fileCount
+                + ", hasMetadata=" + hasMetadata
+                + '}';
+    }
 }

@@ -36,33 +36,69 @@
 
             <h2>Data Management</h2>
             <p>
-                Your saved dataset files appear in the table below, where you can use them to start new analysis or workflow.
+                Your saved dataset files appear in the table below, where you can use them to start new analysis or workflow. To add a new dataset you need to run upload your data normally and check "Dataset" option under save when saving your project.
             </p>
+            
 
             <p:tabView widgetVar="tabWidget" id="acTab" style="margin: 20px; width:90%; border: none; font-size: 13px; line-height: 23px; min-height: 70vh" >
-                
-                <p:tab title ="Example Dataset">
-                    <h:form id="dataTableExampleForm">
 
+                <p:tab title="Datasets">
+                    <h:form id="dataTableForm">
                         <h:panelGroup id="cardsGrid" layout="block" styleClass="cards-grid">
-                            <ui:repeat value="#{datasetController.datasetTableExample}" var="ds">
+                            <ui:repeat value="#{datasetController.datasetTableAll}" var="ds">
                                 <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
-                                        
+
+                                    <!-- Header row: show only for Examples -->
+                                    <div class="flex align-items-center justify-content-between mb-2">
+                                        <span class="text-700 text-sm">
+                                            <h:panelGroup rendered="#{ds.origin eq 'Example'}">
+                                                From Example Library
+                                            </h:panelGroup>
+                                        </span>
+                                        <h:panelGroup rendered="#{ds.origin eq 'Example'}">
+                                            <p:tag value="Example" severity="info"/>
+                                        </h:panelGroup>
+                                    </div>
+
+                                    <!-- Description (clickable for user datasets i.e., no origin) -->
                                     <div style="margin-bottom:.25rem;">
-                                        <h:outputText value="#{ds.description}"/>
+                                        <h:panelGroup rendered="#{ds.origin eq 'Custom'}">
+                                            <p:commandLink value="#{ds.description}" styleClass="title-link"
+                                                           update=":editForm"
+                                                           oncomplete="PF('editDialog').show();">
+                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            </p:commandLink>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{ds.origin eq 'Custom'}">
+                                            <h:outputText value="#{ds.description}"/>
+                                        </h:panelGroup>
                                     </div>
 
                                     <div class="ds-meta">
+                                        <h:panelGroup rendered="#{ds.origin eq 'Custom'}">
+                                            <div><b>ID:</b> #{ds.id}</div>
+                                        </h:panelGroup>
+
                                         <div><b>File:</b> #{ds.filename}</div>
                                         <div><b>Size:</b> #{ds.humanSize}</div>
-                                        <div>
-                                            <b>Files:</b> #{ds.fileCountAdjusted}
-                                        </div>
+                                        <div><b>Files:</b> #{ds.fileCountAdjusted}</div>
                                         <div><b>Samples:</b> #{ds.samplenum == 0 ? 'NA' : ds.samplenum}</div>
+                                        <h:panelGroup rendered="#{not empty ds.uploadedAtStr}">
+                                            <div><b>Uploaded:</b> #{ds.uploadedAtStr}</div>
+                                        </h:panelGroup>
                                     </div>
 
                                     <p:toolbar styleClass="dataset-toolbar">
                                         <f:facet name="left">
+                                            <!-- Delete only for user datasets -->
+                                            <p:commandLink id="deleteBn" title="Delete"
+                                                           rendered="#{ds.origin eq 'Custom'}"
+                                                           update=":delForm"
+                                                           oncomplete="PF('delDialog').show();">
+                                                <i class="pi pi-trash" style="color:orangered;"></i>
+                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                                            </p:commandLink>
+
                                             <p:commandLink id="editBn" title="Explore"
                                                            update=":editorForm :dataTableForm"
                                                            onstart="PF('statusDialog').show();"
@@ -71,28 +107,29 @@
                                                 <i class="pi pi-compass"/>
                                             </p:commandLink>
 
-
-                                            <p:commandLink id="filesBn" 
+                                            <p:commandLink id="filesBn"
                                                            title="Files"
                                                            process="@this"
                                                            update=":filesForm"
                                                            onstart="PF('statusDialog').show();"
                                                            oncomplete="PF('filesDialog').show();PF('statusDialog').hide();"
                                                            action="#{datasetController.populateFilesForDialog(ds)}">
-                                                <i class="pi pi-folder -open"></i>
+                                                <i class="pi pi-folder-open"></i>
                                             </p:commandLink>
-
                                         </f:facet>
 
                                         <f:facet name="right">
                                             <p:commandLink id="loadBn" title="Load"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+                                                           onstart="PF('statusDialog').show();"
+                                                           oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab:dataTableForm"
                                                            action="#{datasetController.loadDefault(ds)}">
                                                 <i class="pi pi-caret-right" style="color:#16a34a;"></i>
                                             </p:commandLink>
-                                            <p:commandLink id="loadWorkflowBn" title="Load"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
+
+                                            <p:commandLink id="loadWorkflowBn" title="Load workflow"
+                                                           onstart="PF('statusDialog').show();"
+                                                           oncomplete="PF('statusDialog').hide();"
                                                            update=":acTab:dataTableForm"
                                                            action="#{datasetController.loadWorkflow(ds, true)}">
                                                 <i class="pi pi-sitemap" style="color:#16a34a;"></i>
@@ -101,99 +138,18 @@
                                     </p:toolbar>
 
                                     <!-- Tooltips -->
+                                    <p:tooltip for="deleteBn" value="Delete this dataset" rendered="#{ds.origin eq 'Custom'}"/>
                                     <p:tooltip for="editBn" value="View / edit file"/>
-
                                     <p:tooltip for="filesBn" value="Show all files in this dataset"/>
                                     <p:tooltip for="loadBn" value="Load this dataset"/>
                                     <p:tooltip for="loadWorkflowBn" value="Load this dataset and select a workflow"/>
-
-                                </p:fieldset>
-                            </ui:repeat>
-                        </h:panelGroup>
-                    </h:form>
-
-                </p:tab>
-                <p:tab title ="User Dataset">
-                    <h:form id="dataTableForm">
-
-                        <h:panelGroup id="cardsGrid" layout="block" styleClass="cards-grid">
-                            <ui:repeat value="#{datasetController.datasetTable}" var="ds">
-                                <p:fieldset legend="#{ds.title}" styleClass="ds-card surface-card shadow-1 p-3">
-
-                                    <!-- title link to edit -->
-                                    <div style="margin-bottom:.25rem;">
-                                        <p:commandLink value="#{ds.description}" styleClass="title-link"
-                                                       update=":editForm"
-                                                       oncomplete="PF('editDialog').show();">
-                                            <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                        </p:commandLink>
-                                    </div>
-
-                                    <div class="ds-meta">
-                                        <h:panelGroup rendered="#{applicationBean1.onZgyPc}">
-                                            <div><b>ID:</b> #{ds.id}</div>
-                                        </h:panelGroup>
-
-
-                                        <div><b>File:</b> #{ds.filename}</div>
-                                        <div><b>Size:</b> #{ds.humanSize}</div>
-                                        <div>
-                                            <b>Files:</b> #{ds.fileCountAdjusted}
-                                        </div>
-                                        <div><b>Samples:</b> #{ds.samplenum == 0 ? 'NA' : ds.samplenum}</div>
-                                        <div><b>Uploaded:</b> #{ds.uploadedAtStr}</div>
-                                    </div>
-
-                                    <p:toolbar styleClass="dataset-toolbar">
-                                        <f:facet name="left">
-                                            <p:commandLink id="deleteBn" title="Delete" update=":delForm" oncomplete="PF('delDialog').show();">
-                                                <i class="pi pi-trash" style="color:orangered;"></i>
-                                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                                            </p:commandLink>
-                                            <p:commandLink id="editBn" title="Explore"
-                                                           update=":editorForm :dataTableForm"
-                                                           onstart="PF('statusDialog').show();"
-                                                           oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
-                                                           actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">
-                                                <i class="pi pi-compass"/>
-                                            </p:commandLink>
-                                            <p:commandLink id="filesBn"
-                                                           title="Files"
-                                                           process="@this"
-                                                           update=":filesForm"
-                                                           oncomplete="PF('filesDialog').show();"
-                                                           action="#{datasetController.populateFilesForDialog(ds)}">
-                                                <i class="pi pi-folder-open"></i>
-                                            </p:commandLink>
-                                        </f:facet>
-
-                                        <f:facet name="right">
-                                            <p:commandLink id="loadBn" title="Load"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab:dataTableForm"
-                                                           action="#{datasetController.loadDefault(ds)}">
-                                                <i class="pi pi-caret-right" style="color:#16a34a;"></i>
-                                            </p:commandLink>
-                                            <p:commandLink id="loadWorkflowBn" title="Load"
-                                                           onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();"
-                                                           update=":acTab:dataTableForm"
-                                                           action="#{datasetController.loadWorkflow(ds, true)}">
-                                                <i class="pi pi-sitemap" style="color:#16a34a;"></i>
-                                            </p:commandLink>
-
-                                        </f:facet>
-                                    </p:toolbar>
-
-                                    <p:tooltip for="filesBn" value="Show all files in this dataset"/>
-                                    <p:tooltip for="loadBn" value="Load this dataset"/>
-                                    <p:tooltip for="loadWorkflowBn" value="Load this dataset and select a workflow"/>
-
-                                    <p:tooltip for="deleteBn" value="Delete this dataset"/>
                                 </p:fieldset>
                             </ui:repeat>
                         </h:panelGroup>
                     </h:form>
                 </p:tab>
+
+
                 <p:tab title ="Data Upload" rendered="false">
                     <h:form id="uploadform" enctype="multipart/form-data">
 
