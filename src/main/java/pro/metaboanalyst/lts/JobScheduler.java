@@ -111,9 +111,9 @@ public class JobScheduler implements Serializable {
         @Override
         public void execute(JobExecutionContext jec) throws JobExecutionException {
             try {
-                System.out.println("====== testing HelloJobxxx=== 1");
+                //System.out.println("====== testing HelloJobxxx=== 1");
                 Thread.sleep(15000);
-                System.out.println("====== testing HelloJobxxx=== 2");
+                //System.out.println("====== testing HelloJobxxx=== 2");
             } catch (InterruptedException ex) {
                 Logger.getLogger(testJobx.class.getName()).log(Level.SEVERE, null, ex);
             }

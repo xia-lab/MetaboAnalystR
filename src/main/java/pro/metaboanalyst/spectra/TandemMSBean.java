@@ -351,7 +351,7 @@ public class TandemMSBean implements Serializable {
                 sb.addMessage("Error", "Please make sure FragsAnnotateDBNL_v02042024.sqlite has been successfully attached into your docker!");
                 return null;
             }
-            System.out.println("All required database exits!");
+            //System.out.println("All required database exits!");
         }
 
         if (precMZ < 40) {

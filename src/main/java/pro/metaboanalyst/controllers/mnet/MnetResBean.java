@@ -243,7 +243,7 @@ public class MnetResBean implements Serializable {
             fileName = "metaboanalyst_enrichment.csv";
             return fileName;
         } else {
-            System.out.println("===========Not supported format: " + format);
+            sb.addMessage("Error", "Not supported format: " + format);
             return "NA";
         }
         RNetworkUtils.exportNetwork(sb.getRConnection(), fileName);

@@ -235,7 +235,7 @@ public class FireProjectBean implements Serializable {
             //System.out.println("projectToLoad=====" + projectToLoad.getId());
             selectedProject = projectToLoad;
         }
-        System.out.println("proceedType ===" + type);
+        //System.out.println("proceedType ===" + type);
         proceedToAnotherProject();
     }
 

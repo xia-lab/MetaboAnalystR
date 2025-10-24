@@ -55,9 +55,6 @@ public class FireUserBean implements Serializable {
     private DatabaseClient db;
 
     @Inject
-    private FireUserBean fub;
-
-    @Inject
     private FireBaseController fbc;
 
     @JsonIgnore
@@ -244,7 +241,7 @@ public class FireUserBean implements Serializable {
             sb.addMessage("error", "Login failed! Please check the validity of your project path!");
             return false;
         } else if (res.length == 1) {
-            System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
+            //System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
             if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") || ab.getToolLocation().equals("vip2") || ab.getToolLocation().equals("vip")) {
                 if (res[0].contains("Login Error - User exists but is not authorized for tool")) {
                     return true;
@@ -323,7 +320,7 @@ public class FireUserBean implements Serializable {
     public void doSendEmail() {
 
         String res = db.checkUserExists(email);
-        System.out.println(res);
+        //System.out.println(res);
         if (res.equals("User exists.")) {
             // prepare tokens for password reset later
             String resetToken = UUID.randomUUID().toString().replaceAll("-", "");
@@ -332,10 +329,10 @@ public class FireUserBean implements Serializable {
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-            System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
+            //System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
 
             String res2 = db.insertToken(email, resetToken, sdf.format(ExpDate));
-            System.out.println(res2);
+            //System.out.println(res2);
             try {
                 boolean res3 = sendResetMessage(email, resetToken);
                 if (res3) {
@@ -551,9 +548,9 @@ public class FireUserBean implements Serializable {
         if (fb.getLoginUserMap().containsKey(tokenId)) {
             FireUserBean ubObj = fb.getLoginUserMap().get(tokenId);
 
-            fub.setFireUserBean(ubObj);
-            fub.setOmicsquareVerified(true);
-            System.out.println("handshake=====" + fub.getEmail());
+            setFireUserBean(ubObj);
+            setOmicsquareVerified(true);
+            //System.out.println("handshake=====" + fub.getEmail());
             fb.getLoginUserMap().remove(tokenId);
 
             Faces.addResponseCookie("user", email, "/", 3600);
@@ -604,16 +601,6 @@ public class FireUserBean implements Serializable {
             e.printStackTrace();
             // Handle exception
         }
-    }
-
-    public void copyFrom(FireUserBean other) {
-        System.out.println(other.email + "===copyFrom");
-        this.email = other.email;
-        this.fname = other.fname;
-        this.institution = other.institution;
-        this.status = other.status;
-        this.omicsquareVerified = other.omicsquareVerified;
-        this.omicsquareToken = other.omicsquareToken;
     }
 
     @Override

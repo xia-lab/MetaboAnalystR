@@ -771,7 +771,7 @@ public class WorkflowBean implements Serializable {
             }
         }
 
-        System.out.println("Filtered workflows by " + property + " = " + value + ": " + filteredWorkflows);
+        //System.out.println("Filtered workflows by " + property + " = " + value + ": " + filteredWorkflows);
         return filteredWorkflows;
     }
 
@@ -987,7 +987,7 @@ public class WorkflowBean implements Serializable {
 
             // Iterate through the unique selectedRCommands
             for (String command : selectedRCommands) {
-                System.out.println("R Command: " + command);
+               // System.out.println("R Command: " + command);
                 // Perform any required processing for each command
             }
         } else {

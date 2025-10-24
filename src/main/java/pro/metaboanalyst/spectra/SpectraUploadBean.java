@@ -882,7 +882,7 @@ public class SpectraUploadBean implements Serializable {
         }
         int res2 = RSpectraUtils.ExtractGoogleDriveURL(RC, googledriveURL);
 
-        System.out.println(" ==== confirmSeqURL ===> " + res2);
+        //System.out.println(" ==== confirmSeqURL ===> " + res2);
         switch (res2) {
             case 0 -> {
                 sb.addMessage("error", "No files detected! Please make sure no files are not included in multiple-level sub-folders!");
@@ -906,7 +906,7 @@ public class SpectraUploadBean implements Serializable {
 
         // Now, let's check if metadata file matches to the files
         int res3 = RSpectraUtils.CheckMetadataMatching(RC);
-        System.out.println(" ==== CheckMetadataMatching ===> " + res3);
+        //System.out.println(" ==== CheckMetadataMatching ===> " + res3);
         if (res3 == 0) {
             String missing_files = RSpectraUtils.GetMissingFiles(RC);
             sb.addMessage("error", "Spectra files are not matched!" + missing_files);

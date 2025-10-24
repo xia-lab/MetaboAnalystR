@@ -160,12 +160,12 @@ public class OmicsBot implements Serializable {
         if (threadId == null) {
             var thread = openAI.threads().create(ThreadRequest.builder().build()).join();
             threadId = thread.getId();
-            System.out.println("Thread was created with id: " + threadId);
+            //System.out.println("Thread was created with id: " + threadId);
         }
 
         //System.out.println("===========" + myQuestion);
         StringBuilder result = new StringBuilder();
-        System.out.println("myquestion===" + myQuestion);
+        //System.out.println("myquestion===" + myQuestion);
 
         openAI.threadMessages()
                 .create(threadId, ThreadMessageRequest.builder()
@@ -293,11 +293,11 @@ public class OmicsBot implements Serializable {
         res = getHtmlContent(res);
         // Add the response from OpenAI to the chat
         messages.add(new Message("Assistant", res));
-        System.out.println("msg====" + res);
+        //System.out.println("msg====" + res);
 
         // Clear the prompt message for the next input
         promptMsg = "";
-        return;
+        //return;
     }
 
     private String modelName = "GPT-3.5";

@@ -209,10 +209,6 @@ public class JobManager implements Serializable {
 
     public void changePriority(RawJobsBean job) {
 
-        System.out.println(job.getPriority());
-        System.out.println(job.getId());
-        System.out.println(listModel.getRowData().getId());
-        System.out.println(listModel.getRowData().getPriority());
 
         sb.addMessage("error", "This function is still under development!");
         //for(int i=0; i < listModel.getWrappedData; i++){

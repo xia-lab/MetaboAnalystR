@@ -159,7 +159,7 @@ public class MyPhaseListener implements PhaseListener {
         //System.out.println("Setting default view /home.xhtml");
         //}
         if (funcNm != null) {
-            System.out.println("=========================== for funcNm: " + funcNm);
+            //System.out.println("=========================== for funcNm: " + funcNm);
 
             switch (funcNm) {
                 case LOGIN_EXTERNAL ->

@@ -292,17 +292,17 @@ public class MultifacBean implements Serializable {
                 List<MetaDataBean> beans = getMetaDataBeans();
                 analysisMetaOpts = new SelectItem[beans.size()];
                 for (int i = 0; i < beans.size(); i++) {
-                    System.out.println("======here 3");
+                    //System.out.println("======here 3");
                     analysisMetaOpts[i] = new SelectItem(beans.get(i).getName(), beans.get(i).getName());
                 }
             }
         } else {
             analysisMetaOpts = new SelectItem[1];
             if (sb.getAnalType().equals("dose")) {
-                System.out.println("======here 00");
+                //System.out.println("======here 00");
                 analysisMetaOpts[0] = new SelectItem("NA", "Dose");
             } else {
-                System.out.println("======here 000");
+                //System.out.println("======here 000");
                 analysisMetaOpts[0] = new SelectItem("NA", "Class");
             }
         }
@@ -454,7 +454,7 @@ public class MultifacBean implements Serializable {
         UniVarTests.setCmpdSummaryType(sb.getRConnection(), sb.getCmpdSummaryType());
         String cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, boxMetaVersionNum, "png", 150 + "");
         String imgUrl = "/MetaboAnalyst/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + cmpdName;
-        System.out.println(imgUrl);
+        //System.out.println(imgUrl);
         sb.setBoxplotUrl(imgUrl);
         sb.setCmpdSummaryNm(cmpdName);
         sb.setCurrentCmpdName(boxId);//important for high resolution image export

@@ -14,7 +14,7 @@ public class ApiClient {
     }
 
     private HttpRequest.Builder createRequest(String endpoint) {
-        System.out.println(BASE_URL + endpoint);
+        //System.out.println(BASE_URL + endpoint);
         return HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + endpoint))
                 .header("Authorization", "Bearer " + TOKEN)

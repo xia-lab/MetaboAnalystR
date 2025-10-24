@@ -102,7 +102,7 @@ public class UserLoginBean implements Serializable {
 
         boolean res = mdbb.connect();
         boolean res2 = mdbb.disconnect();
-        System.out.println("MysqlDBAvailabilityCheck result: (true is working)" + res + "|" + res2);
+        //System.out.println("MysqlDBAvailabilityCheck result: (true is working)" + res + "|" + res2);
         return (res && res2);
     }
 
@@ -212,13 +212,10 @@ public class UserLoginBean implements Serializable {
             mdbb.disconnect();
         }
 
-        System.out.println("password: " + password + "pw: " + pw + "slt: " + slt);
         boolean verRes = PasswordUtils.verifyUserPassword(password, pw, slt);
 
         if (verRes) {
-
             UserLoginModel UserInfo = new UserLoginModel(userNM, email, password, 1, "", new Date(), userfname, userInstitute);
-
             UserInfoSet = UserInfo;
             //UserInfo.setEmail(email);         
 
@@ -342,7 +339,7 @@ public class UserLoginBean implements Serializable {
                 || "guangyan.zhou@mail.mcgill.ca".equals(email)
                 || "jeff.xia@mcgill.ca".equals(email)
                 || "pangzq2812@gmail.com".equals(email);
-        System.out.println("is manager is ----> " + jobManager);
+        //System.out.println("is manager is ----> " + jobManager);
         return jobManager;
     }
 
@@ -473,7 +470,7 @@ public class UserLoginBean implements Serializable {
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-            System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
+            //System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
 
             String tokenstmp = "insert into devUsers.tokens (userNM, tokens, ExpDate) values ("
                     + userID + ",\'" + resetToken + "\', \'" + sdf.format(ExpDate) + "\');";
@@ -528,7 +525,7 @@ public class UserLoginBean implements Serializable {
                 return "";
             }
         } catch (Exception ex) {
-            System.out.println("Congs! The cloud server is working~~");
+           ex.printStackTrace();
         }
 
         // check token is expired or not
@@ -593,7 +590,7 @@ public class UserLoginBean implements Serializable {
 
     private boolean resetPassword(int userNM, String password) {
 
-        System.out.println("Now the new password is: " + password);
+        //System.out.println("Now the new password is: " + password);
 
         PasswordUtils encryptPW = encryptPassword(password);
 
@@ -724,11 +721,11 @@ public class UserLoginBean implements Serializable {
             psqlb = new PSQLdbController("jdbc:postgresql://132.216.38.4:5432/omicsdb", "devserver", "1qazxDR%^yHN");
             //psqlb = new PSQLdbController("jdbc:postgresql://10.240.0.12:5432/omicsdb", "devserver", "1qazxDR%^yHN");
         } else {
-            System.out.println("RUnning into this option 3 <---");
+            //System.out.println("RUnning into this option 3 <---");
             //For real application (dev + genap public)            
             psqlb = new PSQLdbController("jdbc:postgresql://132.216.38.4:5432/omicsdb", "devserver", "1qazxDR%^yHN");
         }
-        System.out.println("RUnning into this option 3xxxxxxx  <---" + psqlb);
+        //System.out.println("RUnning into this option 3xxxxxxx  <---" + psqlb);
         boolean res1 = false, res2 = false;
         try {
             res1 = psqlb.connect();
@@ -747,7 +744,7 @@ public class UserLoginBean implements Serializable {
     }
 
     public boolean PsqlDBAvailabilityCheck() {
-        System.out.println("PsqlDBAvailabilityCheck --> 1 " + psqlb);
+        //System.out.println("PsqlDBAvailabilityCheck --> 1 " + psqlb);
         boolean created;
         if (psqlb == null) {
             created = false;
@@ -832,7 +829,6 @@ public class UserLoginBean implements Serializable {
             }
         }
 
-        System.out.println("password: " + passwd + " --> pw: " + pw + "slt: " + slt);
         boolean verRes = PasswordBean.verifyUserPassword(passwd, pw, slt);
 
         if (verRes) {
@@ -866,7 +862,7 @@ public class UserLoginBean implements Serializable {
         Date ExpDate = new Date();
         ExpDate = addHoursToJavaUtilDate(ExpDate, valid_min/60);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println("Setting Token as: " + token_char + sdf.format(ExpDate));
+        //System.out.println("Setting Token as: " + token_char + sdf.format(ExpDate));
         
         // Insert a new line into psql token table
         String tokenscmd = "insert into tokens (userNM, token, ExpDate, type) values ("
@@ -901,10 +897,10 @@ public class UserLoginBean implements Serializable {
 
     public void doGeneralLogin() {
         boolean stepBool1, stepBool2;
-        System.out.println("doGeneralLogin --> step0");
+        //System.out.println("doGeneralLogin --> step0");
         // Check PSQL db availability
         stepBool1 = PsqlDBAvailabilityCheck();
-        System.out.println("doGeneralLogin --> step1 + psqldb avalib: " + stepBool1);
+       // System.out.println("doGeneralLogin --> step1 + psqldb avalib: " + stepBool1);
         if (!stepBool1) {
             sb.addMessage("error", "Login database server is temporarily down! Please try to access later.");
             return;
@@ -1091,7 +1087,7 @@ public class UserLoginBean implements Serializable {
     
     */
     public boolean isMbrshipped() {
-        System.out.println("Now the mbrshipped is --> " + mbrshipped);
+        //System.out.println("Now the mbrshipped is --> " + mbrshipped);
         return mbrshipped;
     }
 

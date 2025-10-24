@@ -1208,7 +1208,7 @@ public class RocAnalBean implements Serializable {
     public String getRocDetailImg() {
         //System.out.println("univROCImg======" + univROCImg);
         if (rocDetailImg == null) {
-            System.out.println("univROCImg======" + rocDetailImg);
+            //System.out.println("univROCImg======" + rocDetailImg);
 
             return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + univROCImg;
         }

@@ -735,7 +735,7 @@ public class DatabaseClient {
     public boolean deleteDatasetFilesFolderOk(UUID datasetId, String email) {
         Map<String, Object> resp = deleteDatasetFilesFolder(datasetId, email);
         Object s = resp.get("status");
-        System.out.println("String.valueOf(s)===" + String.valueOf(s));
+        //System.out.println("String.valueOf(s)===" + String.valueOf(s));
         return s != null && "ok".equalsIgnoreCase(String.valueOf(s));
     }
 

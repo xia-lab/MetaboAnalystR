@@ -122,9 +122,7 @@ public class JobMonitor {
                             + "as.logical(dt[dt$jobid == " + jid + ", 'wfBool'])";
                     boolean wfBool = RC.eval(rCmd).asInteger() == 1; // TRUE → 1, FALSE → 0
 
-                    System.out.println("==== this job_email====> " + job_email);
-                    System.out.println("==== this job_status====> " + job_status);
-
+               
                     boolean res = false;
                     if (job_status.contains("CANCELLED") || job_status.contains("FAILED")) {
                         res = sendReminderEmail(job_status, jid, job_email);
@@ -150,8 +148,7 @@ public class JobMonitor {
                                     .log(Level.WARNING, "Failed to read wfstatus for job " + jid, e);
                             wfStatusCsv = "UNCOMPLETE";
                         }
-                        System.out.println("==== current wfstatus in CSV for job " + jid + " => " + wfStatusCsv);
-
+                       
                         if (!wfBool) {
                             res = sendReminderEmail(job_status, jid, job_email);
 
@@ -295,7 +292,7 @@ public class JobMonitor {
     public boolean sendPostRequest(String node, String folderName, String jobId, String email) {
         String baseUri = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml";
         HttpClient client = HttpClient.newHttpClient();
-        System.out.println("SENDPOSTREQUEST=============" + baseUri);
+        //System.out.println("SENDPOSTREQUEST=============" + baseUri);
 
         if (node.equals("localhost")) {
             baseUri = ab.getBaseUrlDyn() + "/faces/AjaxHandler.xhtml";
@@ -324,11 +321,11 @@ public class JobMonitor {
 
             // Send request and handle response
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            System.out.println("SENDPOSTREQUEST===========urlParameters=====" + urlParameters);
+            //System.out.println("SENDPOSTREQUEST===========urlParameters=====" + urlParameters);
 
             if (response.statusCode() == 200) { // HTTP OK
                 // Process the response content
-                System.out.println("Response: " + response.body());
+                //System.out.println("Response: " + response.body());
                 return true;
             } else {
                 System.err.println("Request failed. Response code: " + response.statusCode());

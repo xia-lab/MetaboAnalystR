@@ -210,7 +210,7 @@ public class DataUtils {
                 if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
                     System.out.println("Not delete user=====" + guestDir + " from Zhiqiang's local");
                 } else {
-                    System.out.println("delete user=====" + guestDir);
+                    //System.out.println("delete user=====" + guestDir);
                     deleteDir(guestDir);
                 }
 
@@ -657,7 +657,7 @@ public class DataUtils {
         String res = null;
         try {
             String rcmd = "system(\"" + cmd + "\", intern = T)[" + index + "]";
-            System.out.println("R systemExec boolean => " + cmd);
+            //System.out.println("R systemExec boolean => " + cmd);
             RC.eval(rcmd).asString();
             return res;
         } catch (Exception e) {
@@ -671,7 +671,7 @@ public class DataUtils {
         String res[] = null;
         try {
             String rcmd = "system(\"" + cmd + "\", intern = T)";
-            System.out.println("R systemExec boolean => " + cmd);
+            //System.out.println("R systemExec boolean => " + cmd);
             res = RC.eval(rcmd).asStrings();
             return res;
         } catch (Exception e) {

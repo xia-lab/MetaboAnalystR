@@ -63,7 +63,7 @@ public class PSQLdbController {
     }
 
     public ResultSet runQuery(String query) {
-        System.out.println("This PSQLdb query has been received: " + query);
+
         try {
             connect();
             PreparedStatement statement = connection.prepareStatement(query);
@@ -76,7 +76,6 @@ public class PSQLdbController {
     }
 
     public void runUpdate(String query) {
-        System.out.println("This PSQLdb query has been received: " + query);
         try {
             connect();
             PreparedStatement statement = connection.prepareStatement(query);

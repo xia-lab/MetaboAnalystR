@@ -270,13 +270,13 @@ public class SpectraControlBean implements Serializable {
 
             if (isms2) {
                 String db_str = sparam.getMsmsDBOpt();
-                System.out.println(" db_str 1 ====> " + db_str);
+                //System.out.println(" db_str 1 ====> " + db_str);
                 if (!db_str.startsWith("[")) {
                     String[] db_strs = {db_str};
                     sparam.setMsmsDBOpt_multi(db_strs);
                     db_str = sparam.getMsmsDBOpt();
                 }
-                System.out.println(" db_str 2 ====> " + db_str);
+                //System.out.println(" db_str 2 ====> " + db_str);
                 if (db_str.equals("all")) {
                     db_str = "[all]";
                 }
@@ -349,11 +349,13 @@ public class SpectraControlBean implements Serializable {
                 }
                 if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
                     dv.setRawJobId(JobID + "");
+                    /*
                     System.out.println("fub.getEmail  ---> " + fub.getEmail());
                     System.out.println("    JobID     ---> " + JobID);
                     System.out.println("  getHomeDir  ---> " + sb.getCurrentUser().getHomeDir());
                     System.out.println("  getName     ---> " + sb.getCurrentUser().getName());
                     System.out.println("getRelativeDir---> " + sb.getCurrentUser().getRelativeDir());
+                    */
                     //recordJob(JobID);
                     String JobPos;
                     if (ab.isOnVipServer()) {
@@ -589,7 +591,7 @@ public class SpectraControlBean implements Serializable {
             spb.summarizeProcessingMsg();
             String omics_type = RDataUtils.retrieveOmicsType(sb.getRConnection());
             sparam.setTarget_omics(omics_type);
-            System.out.println("===== isms2==2==> " + isms2);
+            //System.out.println("===== isms2==2==> " + isms2);
             if (isms2) {
                 if (omics_type.equals("metabolomics")) {
                     spb.preparePiechart(0);
@@ -761,7 +763,7 @@ public class SpectraControlBean implements Serializable {
         if (myPro > progress2) {
             progress2 = myPro;
         }
-        System.out.println(" === getProgressProcessing====> " + myPro + "=== progress2===> " + progress2);
+        //System.out.println(" === getProgressProcessing====> " + myPro + "=== progress2===> " + progress2);
         if (progress2 == 100) {
             if (ab.shouldUseScheduler()) {
                 setCurrentJobStatus("Finished");
@@ -1009,7 +1011,7 @@ public class SpectraControlBean implements Serializable {
 
         boolean res = mdbb.connect();
         boolean res2 = mdbb.disconnect();
-        System.out.println("MysqlDBAvailabilityCheck result: (double true is working)" + res + "|" + res2);
+        //System.out.println("MysqlDBAvailabilityCheck result: (double true is working)" + res + "|" + res2);
         return res;
     }
 

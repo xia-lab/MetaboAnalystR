@@ -192,7 +192,7 @@ public class AjaxCallServlet extends HttpServlet {
         } else if (funcName.equalsIgnoreCase("getImageMap")) {
                      
             String leftImgURL = prefix + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage("path_view") + "dpi150.png";
-            System.out.println(leftImgURL);
+            //System.out.println(leftImgURL);
             String urlCode = "leftImgURL=\"" + leftImgURL + "\"";
 
             String imgMapInfo = RGraphUtils.getOverviewImgMap(sb.getRConnection());
@@ -226,7 +226,7 @@ public class AjaxCallServlet extends HttpServlet {
             String opts = Arrays.toString(mbean.getAlgOpts());
             res = prefix + "/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + "||" + opts;
         } else if (funcName.equalsIgnoreCase("getheatmap")) {
-            System.out.println("getheatmap========" + sb.getHeatmapType());
+            //System.out.println("getheatmap========" + sb.getHeatmapType());
             if (sb.getHeatmapType().equals("mummichog")) {
                 MummiAnalBean mbean = findBeanInstance("mummiAnalBean");
 
@@ -391,7 +391,7 @@ public class AjaxCallServlet extends HttpServlet {
                     File outputfile = new File(dir + "/" + fileNm + ".png");
                     ImageIO.write(img, "png", outputfile);
                 }
-                System.out.println("receiveimagedata====" + fileNm);
+                //System.out.println("receiveimagedata====" + fileNm);
                 sb.getReportImgMap().put(fileNm, fileNm + "." + format);
 
             } catch (IOException ex) {
@@ -404,7 +404,7 @@ public class AjaxCallServlet extends HttpServlet {
 
             String fileName = "";
             String outputName = "";
-            System.out.println("receiveJsonData======" + nm);
+            //System.out.println("receiveJsonData======" + nm);
             switch (nm) {
                 case "ipca_3d" ->
                     fileName = sb.getCurrentImage("ipca_3d") + ".json";
@@ -444,7 +444,7 @@ public class AjaxCallServlet extends HttpServlet {
                 }
 
             }
-            System.out.println("receiveJsonDataName======" + fileName);
+            //System.out.println("receiveJsonDataName======" + fileName);
             if (outputName.equals("")) {
                 outputName = "report_" + fileName;
             }
@@ -673,7 +673,7 @@ public class AjaxCallServlet extends HttpServlet {
             res = url + "/MetaboAnalyst/resources/users/" + sb.getCurrentUser().getName() + "/" + res0;
 
         } else if (funcName.equalsIgnoreCase("dologout")) {
-            System.out.println(" Reaching here dologout !!!!");
+            //System.out.println(" Reaching here dologout !!!!");
             sb.doLogout(0);
             res = "done";
         } else {

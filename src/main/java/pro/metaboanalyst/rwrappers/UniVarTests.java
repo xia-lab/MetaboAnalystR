@@ -833,7 +833,7 @@ public class UniVarTests {
             String rCommand = "PlotStaticCorrHeatMap(NA, \"" + imgName + "\", \"" + format + "\", "
                     + dpi + ", NA, \"" + target + "\", \"" + corMethod + "\", \"" + colors + "\", \""
                     + viewOpt + "\", " + fixCol + ", " + noClst + ", " + corrCutoff + ")";
-            System.out.println(rCommand);
+            //System.out.println(rCommand);
             // Record the R command for debugging/logging purposes
             RCenter.recordRCommand(RC, rCommand);
             sb.addGraphicsCMD("corr_heatmap", rCommand);
@@ -980,7 +980,7 @@ public class UniVarTests {
         try {
             String rCommand = "SetCmpdSummaryType(NA" + ", \"" + type + "\")";
             RCenter.recordRCommand(RC, rCommand);
-            System.out.println("rCommand");
+            //System.out.println("rCommand");
             RC.voidEval(rCommand);
         } catch (Exception rse) {
             System.out.println(rse);

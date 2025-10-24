@@ -169,7 +169,7 @@ public class SpectraParamBean implements Serializable {
             setBw(Double.parseDouble(param_array[1][10]));
         }
 
-        System.out.println("== Parameters of" + platformOpt + " has been set !==");
+        //System.out.println("== Parameters of" + platformOpt + " has been set !==");
 
     }
 

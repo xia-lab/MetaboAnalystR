@@ -463,7 +463,7 @@ public class SessionBean1 implements Serializable {
             wb.setCalledWorkflowsError(new LinkedHashSet());
             wb.setCalledWorkflows(new LinkedHashSet());
         } catch (Exception e) {
-            System.out.println("Failed to use find bean. Trying CDI way...");
+            //System.out.println("Failed to use find bean. Trying CDI way...");
             //WorkflowBean wb = CDI.current().select(WorkflowBean.class).get();
             wb.setCalledWorkflowsError(new LinkedHashSet());
             wb.setCalledWorkflows(new LinkedHashSet());
@@ -1794,10 +1794,10 @@ public class SessionBean1 implements Serializable {
         long elapse = (System.currentTimeMillis() - ab.getLastCleaningTime()) / 1000; //in seconds
         //call after 10 min break
         if (elapse > 600) {
-            System.out.println("performCleaning??????=====");
+            //System.out.println("performCleaning??????=====");
 
             if (!ab.isCleaningOn()) {
-                System.out.println("performCleaningOK=====");
+                //System.out.println("performCleaningOK=====");
                 ab.performResourceCleaning(RC);
             }
         }
@@ -1927,13 +1927,13 @@ public class SessionBean1 implements Serializable {
 
     public void keepUserInfo() {
         // this function is used to keep user's login information after session has been cleared
-        System.out.println("Testing user signed in status ... ");
+        //System.out.println("Testing user signed in status ... ");
         boolean res;
         if (ulb.getEmail().isEmpty()) {
-            System.out.println("Not signed in, reloading ... ");
+            //System.out.println("Not signed in, reloading ... ");
             res = fbc.reloadUserInfo();
         } else {
-            System.out.println("Signed in already. ");
+            //System.out.println("Signed in already. ");
 
             res = true;
             setRegisteredLogin(true);

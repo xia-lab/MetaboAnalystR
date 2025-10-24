@@ -1053,7 +1053,7 @@ public class WorkflowView implements Serializable {
 
         if (functionInfo != null) {
             try {
-                System.out.println("FunctionInfo found: " + functionType);
+                //System.out.println("FunctionInfo found: " + functionType);
                 if (wb.getReloadingParameters().equals("saved") || !wb.isReloadingWorkflow()) {
                     FunctionInvoker.callSetters(functionInfo);
                 }
@@ -1090,7 +1090,7 @@ public class WorkflowView implements Serializable {
     public void executeWorkflow(ActionEvent event) {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         String functionsStr = facesContext.getExternalContext().getRequestParameterMap().get("functionsStr");
-        System.out.println("===== functionsStr==xxxx==> " + functionsStr);
+        //System.out.println("===== functionsStr==xxxx==> " + functionsStr);
         int resInt = 1;
         String res = "";
         try {
@@ -1099,7 +1099,7 @@ public class WorkflowView implements Serializable {
             System.err.println("An error occurred while executing the workflow: " + ex.getMessage());
             resInt = 0;
         }
-        System.out.println("===== sb.getAnalType() xxx ==> " + sb.getAnalType());
+        //System.out.println("===== sb.getAnalType() xxx ==> " + sb.getAnalType());
         if (sb.getAnalType().equals("raw") || sb.getAnalType().equals("spec")) {
             if (resInt == 1) {
                 res = "pending";
@@ -1669,14 +1669,6 @@ public class WorkflowView implements Serializable {
 
     }
 
-    /*
-    public void onTabChange(TabChangeEvent event) {
-        // Check if the selected tab is at index 2 (Workflow View)
-        if (activeIndex == 2) {
-            System.out.println("ontabchange===2");
-            PrimeFaces.current().executeScript("initNetwork()");
-        }
-    }*/
     public void updateWorkflowDescription() {
         int id = fpb.getSelectedProject().getId();
         wb.setName("Saved Workflow");

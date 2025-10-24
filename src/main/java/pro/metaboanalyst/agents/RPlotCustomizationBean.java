@@ -144,21 +144,26 @@ public class RPlotCustomizationBean implements Serializable {
 
     public String getPreviewImage() {
         String plotSource = sb.getImageSource();
-        System.out.println(plotSource + "========plotSource");
-        if (plotSource.equals("cmpd")) {
-            if (!sb.showMultiBoxView()) {
-                System.out.println(sb.getCmpdSummaryImg());
-                return sb.getCmpdSummaryImg() + "?t=" + System.currentTimeMillis();
-            } else {
-                System.out.println(sb.getBoxplotUrl());
-                return sb.getBoxplotUrl() + "?t=" + System.currentTimeMillis();
+        //System.out.println(plotSource + "========plotSource");
+        switch (plotSource) {
+            case "cmpd" -> {
+                if (!sb.showMultiBoxView()) {
+                    //System.out.println(sb.getCmpdSummaryImg());
+                    return sb.getCmpdSummaryImg() + "?t=" + System.currentTimeMillis();
+                } else {
+                    //System.out.println(sb.getBoxplotUrl());
+                    return sb.getBoxplotUrl() + "?t=" + System.currentTimeMillis();
+                }
             }
-        } else if (plotSource.equals("roc_univ_")) {
-            return rcb.getRocUnivImg() + "?t=" + System.currentTimeMillis();
-        } else if (plotSource.equals("roc_boxplot_")) {
-            return rcb.getRocUnivBPImg() + "?t=" + System.currentTimeMillis();
-        } else {
-            return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
+            case "roc_univ_" -> {
+                return rcb.getRocUnivImg() + "?t=" + System.currentTimeMillis();
+            }
+            case "roc_boxplot_" -> {
+                return rcb.getRocUnivBPImg() + "?t=" + System.currentTimeMillis();
+            }
+            default -> {
+                return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
+            }
         }
     }
 

@@ -851,16 +851,12 @@ public class DetailsBean implements Serializable {
         obtainTableVars(from);
         //set up the view
         if (colnames == null || colnames.length == 0) {
-            if (dashboardBool) {
-                System.out.println("No results are available! ==" + from);
-            } else {
+            if (!dashboardBool) {
                 sb.addMessage("Error", "No results are available for: " + from);
             }
             return;
         } else if (rownames == null || rownames.length == 0) {
-            if (dashboardBool) {
-                System.out.println("No significant features are detected using set parameters! ==" + from);
-            } else {
+            if (!dashboardBool) {
                 sb.addMessage("Error", "No significant features are detected using set parameters!");
             }
             return;
@@ -1574,7 +1570,7 @@ public class DetailsBean implements Serializable {
     public String getEnrQueryType(String key) {
         key = key.replace("_enr", "");
         String res = RDataUtils.getEnrQueryType(sb.getRConnection(), key);
-        System.out.println(res);
+        //System.out.println(res);
         return res;
     }
 

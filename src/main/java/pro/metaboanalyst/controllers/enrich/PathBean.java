@@ -194,7 +194,7 @@ public class PathBean implements Serializable {
     }
 
     public String paBn_proceed() {
-        System.out.println("priiiiiiiiiiiiiiiiiiiint====" + wb.isEditMode());
+        //System.out.println("priiiiiiiiiiiiiiiiiiiint====" + wb.isEditMode());
         String type = sb.getAnalType();
 
         if (type.equals("pathqea")) {
@@ -417,9 +417,9 @@ public class PathBean implements Serializable {
     }
 
     public boolean isSmpdbBool() {
-        System.out.println(libOpt);
+        //System.out.println(libOpt);
 
-        System.out.println("libOpt.startsWith(\"smpdb\")========" + libOpt.startsWith("smpdb"));
+        //System.out.println("libOpt.startsWith(\"smpdb\")========" + libOpt.startsWith("smpdb"));
         return libOpt.startsWith("smpdb");
     }
 

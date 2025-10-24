@@ -636,7 +636,7 @@ public class FireBaseController implements Serializable {
         String bucketObjectName = "user_folders/" + userFolderName + "/" + folderName + ".zip";
         String localFilePath = fb.getProjectPath() + bucketObjectName;
         File f = new File(localFilePath);
-        System.out.println(localFilePath + "========================================abc");
+        //System.out.println(localFilePath + "========================================abc");
         if (f.exists()) {
             DataUtils.extract(localFilePath, destDirPath);
         } else {
@@ -883,10 +883,9 @@ public class FireBaseController implements Serializable {
         if (value != null) {
             FireUserBean stored = fb.getUserMap().get(value);
             if (stored == null) {
-                System.out.println("failed to reload");
+                sb.addMessage("Error", "Failed to reload info!");
                 return false;
             }
-            System.out.println("reload=====" + stored.toString());
 
             fub.setFireUserBean(stored);          // see below
             sb.setRegisteredLogin(true);
@@ -1283,9 +1282,6 @@ public class FireBaseController implements Serializable {
         }
 
         imgName = imgName.replace("150", mydpi + "");
-
-        System.out.println("now the imgName is ==> " + imgName);
-        System.out.println("now the rcmd is ==> " + rcmd);
 
         try {
             // Execute the R command

@@ -943,7 +943,7 @@ public class DiagramView implements Serializable {
                 connectNodes(node, EndPointAnchor.BOTTOM,
                         node + "_report", EndPointAnchor.TOP);
             }
-            System.out.println("All connections have been disconnected.");
+            //System.out.println("All connections have been disconnected.");
         } else {
             System.err.println("Model or connections are null, unable to disconnect.");
         }
@@ -1061,7 +1061,7 @@ public class DiagramView implements Serializable {
         if (clickedElement != null) {
             //handleElementSelect(clickedElement, true);
             Element currentElement = model.findElement(toSafeId(clickedElement));
-            System.out.println("dbl");
+            //System.out.println("dbl");
             if (currentElement != null) {
                 if (currentElement.getStyleClass().contains("proccls")) {
                     navToPage(clickedElement);
@@ -1770,7 +1770,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                System.out.println("homedir============" + sb.getCurrentUser().getHomeDir());
+                //System.out.println("homedir============" + sb.getCurrentUser().getHomeDir());
                 if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
@@ -2261,12 +2261,12 @@ public class DiagramView implements Serializable {
         RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getHomeDir());
         sb.setCurrentNaviUrl("/Secure/xialabpro/DashboardView.xhtml");
         sb.setAnalType("roc");
-        System.out.println("resumeRawProject=====FINISHED");
+        //System.out.println("resumeRawProject=====FINISHED");
         return true;
     }
 
     public boolean sendRawResume(String to, String jobId, String shareLink) throws JsonProcessingException, IOException, InterruptedException {
-        System.out.println("sendingrawresume=================================");
+        //System.out.println("sendingrawresume=================================");
         String htmlMsg = "<!DOCTYPE html>\n"
                 + "<html>\n"
                 + "<body style=\"font-family: Arial; font-size: 12px;\">\n"
@@ -2406,7 +2406,7 @@ public class DiagramView implements Serializable {
     }
 
     public void selectNode(String elementName, boolean isSelected) {
-        System.out.println("selectNode=====" + elementName);
+        //System.out.println("selectNode=====" + elementName);
         // Clean up the element name (remove checkmark and trim spaces)
 
         // Find the element in the diagram model
@@ -2624,7 +2624,7 @@ public class DiagramView implements Serializable {
         jeb.setCurrentJobId(jobId);
         jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         updateNoticeStartWorkflow();
-        System.out.println("token]]]]]]]]]]]]]]]]]]]]]]====" + token);
+        //System.out.println("token]]]]]]]]]]]]]]]]]]]]]]====" + token);
         // 7) Create the job payload and remember token (for finish redirect in poll)
         JobInfo info = new JobInfo(jobId, token, email, appName, node, type, folder, baseUrl);
         // If your JobTimerService has a token registry, remember it now:
@@ -2926,7 +2926,7 @@ public class DiagramView implements Serializable {
 
     public String convertToBlockName(String code) {
         String moduleName;
-        System.out.println("converttoblockname====" + code);
+        //System.out.println("converttoblockname====" + code);
         switch (code) {
             case "raw" ->
                 moduleName = "Spectra Processing";

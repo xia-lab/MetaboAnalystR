@@ -243,7 +243,7 @@ public class SchedulerUtils {
             Status = "Killed";
         }
 
-        System.out.println("==================== FINAL Status:" + Status);
+        //System.out.println("==================== FINAL Status:" + Status);
 
         return Status;
     }
@@ -447,13 +447,13 @@ public class SchedulerUtils {
             File myObj = new File(Marker1);
             if (!myObj.exists()) {
                 progress = 0;
-                System.out.println(" progress1 -----> " + progress);
+               // System.out.println(" progress1 -----> " + progress);
             } else {
                 try (Scanner myReader = new Scanner(myObj)) {
                     if (myReader.hasNextLine()) {
                         double data = myReader.nextDouble();
                         progress = (int) data;
-                        System.out.println(" progress2 -----> " + progress);
+                      //  System.out.println(" progress2 -----> " + progress);
                     }
                 }
             }
@@ -462,7 +462,7 @@ public class SchedulerUtils {
             progress = 0;
         }
 
-        System.out.println(" progress_final -----> " + progress);
+        //System.out.println(" progress_final -----> " + progress);
         return progress;
     }
 

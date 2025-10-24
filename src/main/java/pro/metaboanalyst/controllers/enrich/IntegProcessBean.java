@@ -550,7 +550,7 @@ public class IntegProcessBean implements Serializable {
         speciesGroup.add(prokaryotes);
         speciesGroup.add(protists);
         speciesGroup.add(otheranimals);
-        System.out.println("speciesGroupInfo len ===> " + speciesGroup.size());
+        //System.out.println("speciesGroupInfo len ===> " + speciesGroup.size());
     }
 
     public List<SelectItem> getSpeciesGroup() {
