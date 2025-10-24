@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
@@ -1927,8 +1928,7 @@ public class DiagramView implements Serializable {
                         "performPeaks2Fun_gsea",
                         "performPeaks2Fun_integ",
                         "Heatmap_mum",
-            
-            "Network"
+                        "Network"
                 ));
             }
             case "mass_table" -> {
@@ -2551,20 +2551,62 @@ public class DiagramView implements Serializable {
 
     public void submitWorkflowJob() {
 //ab.isOnZgyPc() ||
+        boolean res = false;
         if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isOnZgyPc()) {
             if (selectionMap.getOrDefault("Spectra Processing", false)) {
-                startWorkflow();
+                res = startWorkflow();
             } else {
-                submitWorkflowOther();
+                res=submitWorkflowOther();
             }
         } else {
 
             jeb.setStopStatusCheck(true);
-            startWorkflow();
+            res=startWorkflow();
         }
+
+        // --- NEW: flip the workflow run to RUNNING (and stamp start_date) ---
+        try {
+            Integer runId = wb.getActiveWorkflowRunId();
+
+            if (runId == null) {
+                // Fallback: resolve by module + workflowId/filename + dataset
+                Map<String, Object> selWf = wb.getSelectedWorkflow(); // needs the getter added above
+                if (selWf != null && !selWf.isEmpty() && dc.getSelected() != null) {
+                    String module = String.valueOf(selWf.get("module"));
+                    String email = fub.getEmail();
+                    String wfIdOrFile = String.valueOf(selWf.getOrDefault("id", selWf.get("filename")));
+                    String dsName = dc.getSelected().getTitle();
+
+                    var runs = db.getAllWorkflowRuns(module, email);
+                    for (HashMap<String, Object> r : runs) {
+                        String status = String.valueOf(r.get("status"));
+                        String rid = String.valueOf(r.get("workflowId"));
+                        String rds = String.valueOf(r.get("datasetName"));
+                        if ("pending".equalsIgnoreCase(status)
+                                && Objects.equals(rid, wfIdOrFile)
+                                && Objects.equals(rds, dsName)) {
+                            runId = ((Number) r.get("id")).intValue();
+                            wb.setActiveWorkflowRunId(runId);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (runId != null) {
+                // This also sets start_date = NOW() when status == 'running'
+                String msg = db.updateWorkflowRunStatus(runId, "running");
+                System.out.println("[workflow-run] " + msg);
+            } else {
+                System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");
+            }
+        } catch (Exception ex) {
+            System.out.println("[workflow-run] Failed to mark RUNNING: " + ex.getMessage());
+        }
+
     }
 
-    public void submitWorkflowOther() {
+    public boolean submitWorkflowOther() {
 
         // 0) Collect selected modules
         List<String> naviTypes = new ArrayList<>();
@@ -2578,13 +2620,13 @@ public class DiagramView implements Serializable {
         }
         if (naviTypes.isEmpty()) {
             sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
-            return;
+            return false;
         }
 
         // 1) Basic session checks
         if (!sb.isLoggedIn() || sb.getCurrentUser() == null) {
             sb.addMessage("warn", "Please prepare your data first by clicking on the upload icon!");
-            return;
+            return false;
         }
 
         // 2) Ensure project is saved
@@ -2596,7 +2638,7 @@ public class DiagramView implements Serializable {
         }
         if (!saveSuccess) {
             sb.addMessage("warn", "Failed to save project!");
-            return;
+            return false;
         }
 
         // 3) Derive job metadata
@@ -2615,7 +2657,7 @@ public class DiagramView implements Serializable {
         JobTimerService.Status existing = jsv.getStatus(jobId);
         if (existing == JobTimerService.Status.IN_PROGRESS) {
             sb.addMessage("warn", "Please wait for your last workflow to finish before submitting again!");
-            return;
+            return false;
         }
 
         // 6) Prime UI status
@@ -2636,7 +2678,10 @@ public class DiagramView implements Serializable {
 
         // 9) Show progress dialog & notify
         PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
+        
+        
         sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.");
+        return true;
     }
 
     private void updatingParams(WorkflowParameters params) {
@@ -3274,5 +3319,4 @@ public class DiagramView implements Serializable {
             return true;
         }
     }
-
 }

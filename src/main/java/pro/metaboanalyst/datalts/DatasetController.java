@@ -42,6 +42,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -99,7 +103,7 @@ public class DatasetController implements Serializable {
         } else {
             pb.setActiveTabIndex(0);
             //DataUtils.doRedirect("/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml");
-            fc.setupProjectTable();
+            fc.setupProjectTable("project");
         }
 
     }
@@ -2869,5 +2873,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         // Not found locally
         return null;
     }
+    
+
 
 }

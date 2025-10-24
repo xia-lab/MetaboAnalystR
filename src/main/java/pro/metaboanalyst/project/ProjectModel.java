@@ -34,12 +34,22 @@ public class ProjectModel {
     private String naviStr = "";
     private String javaHistory = "";
     private String shareToken = "";
+    private String projectType = "";
+
     private boolean regression = false;
     private boolean paired = false;
 
     @Override
     public String toString() {
         return "ProjectModel{" + "id=" + id + ", userNM=" + userNM + ", title=" + title + ", org=" + org + ", email=" + email + ", folder=" + folder + ", type=" + type + ", description=" + description + ", status=" + status + ", creationDate=" + creationDate + ", note=" + note + ", ip=" + ip + ", hostname=" + hostname + ", dataType=" + dataType + ", folderName=" + folderName + ", naviStr=" + naviStr + ", javaHistory=" + javaHistory + ", shareToken=" + shareToken + ", regression=" + regression + ", paired=" + paired + '}';
+    }
+
+    public String getProjectType() {
+        return projectType;
+    }
+
+    public void setProjectType(String projectType) {
+        this.projectType = projectType;
     }
 
     private final static int PROJECT_WARNING_DAYS = 21;
@@ -168,8 +178,8 @@ public class ProjectModel {
     }
 
     public String getCreationDate() {
-        //DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
+        DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        //DateFormat df = new SimpleDateFormat("yyyy/MM/dd");
         String mydateStr = df.format(creationDate);
         return mydateStr;
     }
@@ -192,6 +202,10 @@ public class ProjectModel {
 
     public void setHostname(String hostname) {
         this.hostname = hostname;
+    }
+
+    public String getWorklowStatus() {
+        return "Pending";
     }
 
     public String getStatus() {

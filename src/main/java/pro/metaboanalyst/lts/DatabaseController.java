@@ -5,6 +5,8 @@
 package pro.metaboanalyst.lts;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import java.io.Serializable;
@@ -25,12 +27,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.inject.Named;
+import java.sql.Types;
 import java.time.OffsetDateTime;
-import java.util.Collections;
+import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import pro.metaboanalyst.api.ApiClient;
+import org.postgresql.util.PGobject;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.datalts.DatasetFile;
@@ -1940,6 +1942,441 @@ public class DatabaseController implements Serializable {
                 System.out.println("Error when closing resources: " + ex.getMessage());
             }
         }
+    }
+
+    public static ArrayList<HashMap<String, Object>> getAllWorkflowRuns(String tool, String email)
+            throws SQLException {
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection()) {
+            // delegate; NOTE: do not close 'con' in the delegate
+            return getAllWorkflowRuns(con, tool, email);
+        }
+    }
+
+    public static ArrayList<HashMap<String, Object>> getAllWorkflowRuns(Connection con, String tool, String email)
+            throws SQLException {
+
+        final String base
+                = "SELECT id, module, name, description, status, start_date, finish_date, "
+                + "       workflow_id, dataset_id, dataset_name, other, last_updated, email, tool "
+                + // NEW cols
+                "  FROM workflow_runs ";
+
+        String where = "";
+        if (tool != null && !tool.isBlank()) {
+            where += (where.isEmpty() ? "WHERE " : " AND ") + "tool = ?";
+        }
+        if (email != null && !email.isBlank()) {
+            where += (where.isEmpty() ? "WHERE " : " AND ") + "email = ?";
+        }
+
+        final String sql = base + where + " ORDER BY id DESC";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            int i = 1;
+            if (tool != null && !tool.isBlank()) {
+                ps.setString(i++, tool);
+            }
+            if (email != null && !email.isBlank()) {
+                ps.setString(i++, email);
+            }
+
+            ArrayList<HashMap<String, Object>> out = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    HashMap<String, Object> m = new HashMap<>();
+                    m.put("id", rs.getInt("id"));
+                    m.put("module", rs.getString("module"));
+                    m.put("name", rs.getString("name"));
+                    m.put("description", rs.getString("description"));
+                    m.put("status", rs.getString("status"));
+                    m.put("startDate", rs.getString("start_date"));
+                    m.put("finishDate", rs.getString("finish_date"));
+                    m.put("workflowId", rs.getString("workflow_id"));
+                    m.put("datasetId", rs.getObject("dataset_id") == null ? null : rs.getInt("dataset_id"));
+                    m.put("datasetName", rs.getString("dataset_name"));
+                    m.put("other", rs.getString("other"));
+                    m.put("lastUpdated", rs.getString("last_updated"));
+                    m.put("email", rs.getString("email"));   // NEW
+                    m.put("tool", rs.getString("tool"));     // NEW
+                    out.add(m);
+                }
+            }
+            return out;
+        }
+    }
+
+    public static String deleteWorkflowRun(String id) {
+        Connection con = null;
+        PreparedStatement checkStmt = null;
+        PreparedStatement deleteStmt = null;
+        ResultSet res = null;
+
+        try {
+            // Parse ID safely
+            final int runId = Integer.parseInt(id);
+
+            // Get a connection from the connection pool
+            con = DatabaseConnectionPool.getDataSource().getConnection();
+
+            // Check if a workflow_run entry with the provided id exists
+            String checkQuery = "SELECT id FROM workflow_runs WHERE id = ?";
+            checkStmt = con.prepareStatement(checkQuery);
+            checkStmt.setInt(1, runId);
+            res = checkStmt.executeQuery();
+
+            if (!res.next()) {
+                // If no workflow_run with the id exists, return an error message
+                return "No workflow run entry found with the provided id.";
+            }
+
+            // Delete the workflow_run entry
+            String deleteQuery = "DELETE FROM workflow_runs WHERE id = ?";
+            deleteStmt = con.prepareStatement(deleteQuery);
+            deleteStmt.setInt(1, runId);
+
+            // Execute the delete statement
+            int deleteCount = deleteStmt.executeUpdate();
+
+            // Return success message if the deletion was successful
+            return deleteCount > 0 ? "Workflow run entry deleted successfully." : "Workflow run deletion failed.";
+
+        } catch (NumberFormatException nfe) {
+            return "Invalid id format (must be an integer).";
+        } catch (SQLException ex) {
+            System.out.println("SQLException occurred: " + ex.getMessage());
+            return "Error deleting workflow run entry - " + ex.getMessage();
+        } finally {
+            // Close all resources in the finally block
+            try {
+                if (res != null) {
+                    res.close();
+                }
+                if (checkStmt != null) {
+                    checkStmt.close();
+                }
+                if (deleteStmt != null) {
+                    deleteStmt.close();
+                }
+                if (con != null) {
+                    con.close(); // Return connection back to the pool
+                }
+            } catch (SQLException ex) {
+                System.out.println("Error when closing resources: " + ex.getMessage());
+            }
+        }
+    }
+
+    public static int insertWorkflowRunReturningId(
+            Connection con,
+            String email, String module, String name, String description, String status,
+            String startDateIso, String finishDateIso,
+            String workflowId, UUID datasetId, String datasetName, // <-- UUID here
+            String otherJson, String tool
+    ) throws SQLException {
+
+        final String sql
+                = "INSERT INTO workflow_runs ("
+                + "  module, name, description, status,"
+                + "  start_date, finish_date,"
+                + // TIMESTAMPTZ
+                "  workflow_id, dataset_id, dataset_name,"
+                + "  other, last_updated, email, tool"
+                + ") VALUES ("
+                + "  ?, ?, ?, ?,"
+                + "  ?, ?,"
+                + // bind TIMESTAMPTZ via setObject
+                "  ?, ?, ?, "
+                + "  ?, now(), ?, ?"
+                + ") RETURNING id";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            int i = 1;
+
+            // core + status
+            ps.setString(i++, module);
+            setOrNull(ps, i++, name);
+            setOrNull(ps, i++, description);
+            ps.setString(i++, (status == null ? "pending" : status));
+
+            // start_date / finish_date (TIMESTAMPTZ)
+            setTimestamptz(ps, i++, startDateIso);
+            setTimestamptz(ps, i++, finishDateIso);
+
+            // workflow_id (text)
+            setOrNull(ps, i++, workflowId);
+
+            // dataset_id (UUID)
+            if (datasetId == null) {
+                ps.setNull(i++, Types.OTHER);          // PostgreSQL UUID is OTHER via JDBC
+            } else {
+                ps.setObject(i++, datasetId, Types.OTHER);
+            }
+
+            // dataset_name
+            setOrNull(ps, i++, datasetName);
+
+            // other (jsonb)
+            setJsonb(ps, i++, otherJson);
+
+            // email, tool
+            setOrNull(ps, i++, email);
+            setOrNull(ps, i++, tool);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                throw new SQLException("INSERT returned no id");
+            }
+        }
+    }
+
+    private static void setTimestamptz(PreparedStatement ps, int idx, String iso) throws SQLException {
+        if (iso == null || iso.isBlank()) {
+            ps.setNull(idx, Types.TIMESTAMP_WITH_TIMEZONE);
+            return;
+        }
+        try {
+            OffsetDateTime odt = OffsetDateTime.parse(iso);
+            ps.setObject(idx, odt); // JDBC will send as TIMESTAMPTZ
+        } catch (DateTimeParseException e) {
+            ps.setNull(idx, Types.TIMESTAMP_WITH_TIMEZONE);
+        }
+    }
+
+    public static int insertWorkflowRun(String email,
+            String module,
+            String name,
+            String description,
+            String status, // pending/running/completed/failed
+            String startDateIso, // nullable ISO-8601
+            String finishDateIso, // nullable ISO-8601
+            String workflowId, // template/json identifier
+            UUID datasetId, // <-- UUID now
+            String datasetName, // nullable
+            String other, // JSON string or plain text
+            String tool) {          // tool name (MetaboAnalyst, etc.)
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            con = DatabaseConnectionPool.getConnection();
+            con.setAutoCommit(false);
+
+            final String sql
+                    = "INSERT INTO workflow_runs ("
+                    + "  email, module, name, description, status,"
+                    + "  start_date, finish_date, workflow_id,"
+                    + "  dataset_id, dataset_name, other, tool, last_updated"
+                    + ") VALUES ("
+                    + "  ?,     ?,      ?,    ?,          ?,"
+                    + "  ?,          ?,           ?,"
+                    + "  ?,         ?,           ?,    ?,   now()"
+                    + ") RETURNING id";
+
+            ps = con.prepareStatement(sql);
+
+            // 1) basics
+            ps.setString(1, email);
+            ps.setString(2, module);
+            ps.setString(3, name == null ? "" : name);
+            ps.setString(4, description == null ? "" : description);
+            ps.setString(5, status == null ? "pending" : status);
+
+            // 2) timestamptz (accept ISO-8601 or null)
+            //    Column types should be TIMESTAMPTZ; the driver accepts OffsetDateTime
+            if (startDateIso != null && !startDateIso.isBlank()) {
+                try {
+                    OffsetDateTime odt = OffsetDateTime.parse(startDateIso);
+                    ps.setObject(6, odt);
+                } catch (DateTimeParseException e) {
+                    ps.setNull(6, Types.TIMESTAMP_WITH_TIMEZONE);
+                }
+            } else {
+                ps.setNull(6, Types.TIMESTAMP_WITH_TIMEZONE);
+            }
+
+            if (finishDateIso != null && !finishDateIso.isBlank()) {
+                try {
+                    OffsetDateTime odt = OffsetDateTime.parse(finishDateIso);
+                    ps.setObject(7, odt);
+                } catch (DateTimeParseException e) {
+                    ps.setNull(7, Types.TIMESTAMP_WITH_TIMEZONE);
+                }
+            } else {
+                ps.setNull(7, Types.TIMESTAMP_WITH_TIMEZONE);
+            }
+
+            // 3) workflow id (store as text; adjust to setInt if your column is integer)
+            if (workflowId != null && !workflowId.isBlank()) {
+                ps.setString(8, workflowId);
+            } else {
+                ps.setNull(8, Types.VARCHAR);
+            }
+
+            // 4) dataset_id UUID
+            if (datasetId != null) {
+                ps.setObject(9, datasetId, Types.OTHER); // postgres uuid
+            } else {
+                ps.setNull(9, Types.OTHER);
+            }
+
+            // 5) dataset_name
+            if (datasetName != null) {
+                ps.setString(10, datasetName);
+            } else {
+                ps.setNull(10, Types.VARCHAR);
+            }
+
+            // 6) other -> jsonb
+            if (other != null) {
+                PGobject json = new PGobject();
+                json.setType("jsonb");
+                json.setValue(other); // should be valid JSON if you want jsonb semantics
+                ps.setObject(11, json);
+            } else {
+                ps.setNull(11, Types.OTHER);
+            }
+
+            // 7) tool
+            ps.setString(12, tool == null ? "" : tool);
+
+            rs = ps.executeQuery();
+            con.commit();
+
+            if (rs.next()) {
+                return rs.getInt(1); // return inserted id
+            }
+            return 1; // fallback success without id
+
+        } catch (SQLException ex) {
+            System.out.println("insertWorkflowRun SQLException occurred: " + ex.getMessage());
+            try {
+                if (con != null) {
+                    con.rollback();
+                }
+            } catch (SQLException ignore) {
+            }
+            return -1;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException ignore) {
+            }
+        }
+    }
+// Overwrite status, touch last_updated = NOW(), and conditionally set start/finish.
+
+    public static String updateWorkflowRunStatus(int id, String newStatus) {
+        Connection con = null;
+        PreparedStatement checkStmt = null;
+        PreparedStatement updateStmt = null;
+        ResultSet res = null;
+
+        try {
+            con = DatabaseConnectionPool.getDataSource().getConnection();
+
+            // Ensure row exists
+            final String checkSql = "SELECT id FROM workflow_runs WHERE id = ?";
+            checkStmt = con.prepareStatement(checkSql);
+            checkStmt.setInt(1, id);
+            res = checkStmt.executeQuery();
+            if (!res.next()) {
+                return "No workflow run entry found with the provided id.";
+            }
+            res.close();
+            checkStmt.close();
+
+            // Update status, last_updated; set start_date/finish_date when appropriate
+            final String updateSql
+                    = "UPDATE workflow_runs "
+                    + "SET status = ?, "
+                    + "    last_updated = NOW(), "
+                    + "    start_date  = CASE WHEN ? = 'running' AND start_date IS NULL THEN NOW() ELSE start_date END, "
+                    + "    finish_date = CASE WHEN ? IN ('completed','failed') THEN NOW() ELSE finish_date END "
+                    + "WHERE id = ?";
+
+            updateStmt = con.prepareStatement(updateSql);
+            updateStmt.setString(1, newStatus);
+            updateStmt.setString(2, newStatus);
+            updateStmt.setString(3, newStatus);
+            updateStmt.setInt(4, id);
+
+            int updated = updateStmt.executeUpdate();
+            return (updated > 0) ? "Workflow run status (and last_updated) updated successfully."
+                    : "Workflow run status update failed.";
+
+        } catch (SQLException ex) {
+            System.err.println("SQLException occurred: " + ex.getMessage());
+            return "Error updating workflow run status - " + ex.getMessage();
+        } finally {
+            try {
+                if (res != null) {
+                    res.close();
+                }
+                if (checkStmt != null) {
+                    checkStmt.close();
+                }
+                if (updateStmt != null) {
+                    updateStmt.close();
+                }
+                if (con != null) {
+                    con.close();
+                }
+            } catch (SQLException ex) {
+                System.err.println("Error when closing resources: " + ex.getMessage());
+            }
+        }
+    }
+
+// Convenience overload
+    public static String updateWorkflowRunStatus(String id, String newStatus) {
+        try {
+            return updateWorkflowRunStatus(Integer.parseInt(id), newStatus);
+        } catch (NumberFormatException nfe) {
+            return "Invalid id format (must be an integer).";
+        }
+    }
+
+    private static void setOrNull(PreparedStatement ps, int idx, String v) throws SQLException {
+        if (v == null || v.isBlank()) {
+            ps.setNull(idx, java.sql.Types.VARCHAR);
+        } else {
+            ps.setString(idx, v);
+        }
+    }
+
+    private static void setJsonb(PreparedStatement ps, int idx, String val) throws SQLException {
+        if (val == null || val.isBlank() || "null".equalsIgnoreCase(val.trim())) {
+            ps.setNull(idx, java.sql.Types.OTHER);
+            return;
+        }
+        String payload = val.trim();
+
+        // If it's valid JSON, pass through; otherwise, wrap as JSON string
+        boolean isJson = false;
+        try {
+            JsonParser.parseString(payload);
+            isJson = true;
+        } catch (Exception ignore) {
+        }
+
+        if (!isJson) {
+            payload = new Gson().toJson(val); // turns plain text into a JSON string
+        }
+
+        PGobject jsonb = new PGobject();
+        jsonb.setType("jsonb");
+        jsonb.setValue(payload);
+        ps.setObject(idx, jsonb);
     }
 
 }

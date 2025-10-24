@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -15,8 +17,10 @@ import java.util.logging.Logger;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.UUID;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -752,12 +756,226 @@ public class DatabaseClient {
         }.getType());
     }
 
+// import com.google.gson.*;  // ensure you have these
+// import java.lang.reflect.Type;
+// import com.google.gson.reflect.TypeToken;
     private ArrayList<HashMap<String, Object>> parseJsonToList(String json) {
-        return new Gson().fromJson(json, new TypeToken<List<HashMap<String, Object>>>() {
-        }.getType());
+        ArrayList<HashMap<String, Object>> out = new ArrayList<>();
+        if (json == null) {
+            return out;
+        }
+
+        String trimmed = json.trim();
+        System.out.println("workflowresponse======" + trimmed);
+
+        if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) {
+            return out;
+        }
+
+        try {
+            Gson gson = new Gson();
+            JsonElement root = JsonParser.parseString(trimmed);
+
+            if (root.isJsonArray()) {
+                Type listType = new TypeToken<ArrayList<HashMap<String, Object>>>() {
+                }.getType();
+                return gson.fromJson(root, listType);
+            }
+
+            if (root.isJsonObject()) {
+                // server sent a single object, wrap it
+                HashMap<String, Object> one = gson.fromJson(root, new TypeToken<HashMap<String, Object>>() {
+                }.getType());
+                out.add(one);
+                return out;
+            }
+
+            if (root.isJsonPrimitive() && root.getAsJsonPrimitive().isString()) {
+                // text like "No records" — treat as empty
+                String s = root.getAsString();
+                if (s == null || s.trim().isEmpty()
+                        || "No records".equalsIgnoreCase(s.trim())
+                        || "none".equalsIgnoreCase(s.trim())) {
+                    return out;
+                }
+                // If it *looks* like JSON despite being quoted (rare), try one more pass
+                String unq = s.trim();
+                if ((unq.startsWith("[") && unq.endsWith("]")) || (unq.startsWith("{") && unq.endsWith("}"))) {
+                    return parseJsonToList(unq);
+                }
+                return out;
+            }
+
+            // anything else → empty
+            return out;
+
+        } catch (Exception e) {
+            // Last-ditch: if server sent raw text like No records (unquoted), handle it
+            if (trimmed.equalsIgnoreCase("No records")) {
+                return out;
+            }
+            // Log and return empty rather than throwing
+            LOGGER.severe("parseJsonToList(): tolerant parse failed: " + e.getMessage());
+            return out;
+        }
     }
 
     public int detectDockerUserNum() {
         return DatabaseController.detectDockerUserNum();
     }
+
+    public ArrayList<HashMap<String, Object>> getAllWorkflowRuns(String tool, String email) {
+        if (ab.isInDocker()) {
+            try {
+                // Direct DB call when running inside Docker
+                return DatabaseController.getAllWorkflowRuns(tool, email);
+            } catch (SQLException ex) {
+                System.getLogger(DatabaseClient.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+                return new ArrayList<>();
+
+            }
+        } else {
+            try {
+                // Build payload
+                Map<String, String> payload = new HashMap<>();
+                payload.put("tool", tool);  // aligns with workflow_runs.module
+                payload.put("email", email);   // server can scope runs by owner
+
+                // POST to API and parse JSON -> List<Map<String,Object>>
+                String response = apiClient.post("/database/workflowruns/getall", toJson(payload));
+                return parseJsonToList(response);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error retrieving workflow runs", e);
+                return new ArrayList<>();
+            }
+        }
+    }
+
+    /**
+     * Insert a new workflow RUN row (workflow_runs). Dates should be ISO-8601
+     * strings (e.g., "2025-10-21T14:30:00Z" or "2025-10-21T10:30:00-04:00"). If
+     * a field is not applicable, pass null.
+     */
+    // ==== INSERT (now with `tool`) ====
+    public String insertWorkflowRun(String email,
+            String module,
+            String name,
+            String description,
+            String status, // e.g. pending/running/completed/failed
+            String startDateIso, // nullable ISO-8601
+            String finishDateIso, // nullable ISO-8601
+            String workflowId, // workflow template/json identifier
+            UUID datasetId, // <-- CHANGED: UUID (nullable)
+            String datasetName, // nullable
+            String other, // JSON string or plain text
+            String tool) {        // NEW
+        try {
+            final String toolVal = tool;
+
+            if (ab.isInDocker()) {
+                // Direct DB path
+                return DatabaseController.insertWorkflowRun(
+                        email, module, name, description, status,
+                        startDateIso, finishDateIso, workflowId,
+                        datasetId, // pass UUID through
+                        datasetName, other, toolVal
+                ) + "";
+            } else {
+                // Build payload (as Strings for consistency with your existing toJson(..))
+                Map<String, String> payload = new HashMap<>();
+                payload.put("email", email);
+                payload.put("module", module);
+                payload.put("name", name == null ? "" : name);
+                payload.put("description", description == null ? "" : description);
+                if (status != null) {
+                    payload.put("status", status);
+                }
+                if (startDateIso != null) {
+                    payload.put("start_date", startDateIso);
+                }
+                if (finishDateIso != null) {
+                    payload.put("finish_date", finishDateIso);
+                }
+                if (workflowId != null) {
+                    payload.put("workflow_id", workflowId);
+                }
+                if (datasetId != null) {
+                    payload.put("dataset_id", datasetId.toString()); // UUID -> string
+                }
+                if (datasetName != null) {
+                    payload.put("dataset_name", datasetName);
+                }
+                if (other != null) {
+                    payload.put("other", other); // if JSON, server should store as jsonb
+                }
+                if (tool != null) {
+                    payload.put("tool", tool);
+                }
+                String res = apiClient.post("/database/workflowruns/insert", toJson(payload));
+                System.out.println(res);
+                return res;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error inserting workflow run", e);
+            return "FAIL";
+        }
+    }
+
+// ==== DELETE (unchanged signature; no need for tool/email here) ====
+    /**
+     * Delete a workflow run by id. - In Docker:
+     * DatabaseController.deleteWorkflowRun(...) - Otherwise: POST
+     * /database/workflowruns/delete { "id": "<id>" }
+     */
+    public String deleteWorkflowRun(String id) {
+        if (ab.isInDocker()) {
+            return DatabaseController.deleteWorkflowRun(id);
+        } else {
+            try {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("id", id);
+                return apiClient.post("/database/workflowruns/delete", toJson(payload));
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error deleting workflow run (id=" + id + ")", e);
+                return "Error deleting workflow run: " + e.getMessage();
+            }
+        }
+    }
+
+    /**
+     * Convenience overload that accepts an integer id.
+     */
+    public String deleteWorkflowRun(int id) {
+        return deleteWorkflowRun(String.valueOf(id));
+    }
+
+// ==== UPDATE STATUS (unchanged externally; server sets start_date when running) ====
+    /**
+     * Update workflow_run status by id. - In Docker:
+     * DatabaseController.updateWorkflowRunStatus(...) - Otherwise: POST
+     * /database/workflowruns/status/update
+     */
+    public String updateWorkflowRunStatus(String id, String newStatus) {
+        if (ab.isInDocker()) {
+            return DatabaseController.updateWorkflowRunStatus(id, newStatus);
+        } else {
+            try {
+                Map<String, String> payload = new HashMap<>();
+                payload.put("id", id);
+                payload.put("status", newStatus);
+                return apiClient.post("/database/workflowruns/status/update", toJson(payload));
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Error updating workflow run status (id=" + id + ")", e);
+                return "Error updating workflow run status: " + e.getMessage();
+            }
+        }
+    }
+
+    /**
+     * Convenience overload accepting an integer id.
+     */
+    public String updateWorkflowRunStatus(int id, String newStatus) {
+        return updateWorkflowRunStatus(String.valueOf(id), newStatus);
+    }
+
 }
