@@ -391,7 +391,7 @@ public class FireBaseController implements Serializable {
         docData.put("toolname", "MetaboAnalyst");
         docData.put("toolcode", "MET");
         docData.put("paired", sb.isPaired());
-        docData.put("regression", sb.isRegresion());
+        docData.put("regression", sb.isRegression());
         docData.put("location", ab.getToolLocation());
 
         //System.out.println("javahistory==============================================");

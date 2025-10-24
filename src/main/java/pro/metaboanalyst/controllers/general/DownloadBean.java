@@ -979,7 +979,7 @@ public class DownloadBean implements Serializable {
         }
 
         //dealing with regression
-        if (sb.isRegresion() & !regresAnals.contains(mdlOpt)) {
+        if (sb.isRegression() & !regresAnals.contains(mdlOpt)) {
             sb.addMessage("Error", "This module does not support continuous class labels.");
             return null;
         }

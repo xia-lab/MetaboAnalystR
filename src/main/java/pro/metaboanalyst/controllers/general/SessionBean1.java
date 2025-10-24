@@ -7,6 +7,7 @@ package pro.metaboanalyst.controllers.general;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.annotation.PreDestroy;
 import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
 import pro.metaboanalyst.controllers.mnet.MnetResBean;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
@@ -35,7 +36,8 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import pro.metaboanalyst.lts.FireBase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
@@ -103,7 +105,7 @@ public class SessionBean1 implements Serializable {
     //OTHERWISE, CAN NOT RESTORE STATE.
     private LinkedHashMap<String, String> naviTrack = new LinkedHashMap<>();
     private LinkedHashMap<String, String> naviTrackAnalType = new LinkedHashMap<>();//useful for workflow custom navitree, on navigating to page load analtype 
-
+    private static final Logger LOGGER = LogManager.getLogger(SessionBean1.class);
     /**
      * To record all commands that produce the images
      */
@@ -595,7 +597,17 @@ public class SessionBean1 implements Serializable {
                 DataUtils.doRedirect(ab.getDomainURL(), ab);
             }
         }
+    }
 
+    @PreDestroy
+    public void cleanup() {
+        if (RC != null) {
+            try {
+                RC.close();
+            } catch (Exception e) {
+                LOGGER.error("Failed to close R connection", e);
+            }
+        }
     }
 
     public RConnection getRConnection(String myAnalType) {
@@ -1010,10 +1022,6 @@ public class SessionBean1 implements Serializable {
 
     public void setPaired(boolean paired) {
         this.paired = paired;
-    }
-
-    public boolean isRegresion() {
-        return regression;
     }
 
     public User getCurrentUser() {
@@ -1634,7 +1642,7 @@ public class SessionBean1 implements Serializable {
     private SelectItem[] grpNmOpts = null;
 
     private void setupGrpNmOpts() {
-        if (!isRegresion()) {
+        if (!isRegression()) {
             String[] grpNms = RDataUtils.getPrenormGroupNames(RC);
             int grpLen = grpNms.length;
             grpNmOpts = new SelectItem[grpLen];
@@ -1794,8 +1802,6 @@ public class SessionBean1 implements Serializable {
         long elapse = (System.currentTimeMillis() - ab.getLastCleaningTime()) / 1000; //in seconds
         //call after 10 min break
         if (elapse > 600) {
-            //System.out.println("performCleaning??????=====");
-
             if (!ab.isCleaningOn()) {
                 //System.out.println("performCleaningOK=====");
                 ab.performResourceCleaning(RC);
@@ -1894,6 +1900,9 @@ public class SessionBean1 implements Serializable {
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "OK", msg));
             pre = "<font color='#4BB543'>[Success]: ";
         }
+        if (notice.size() > 50) {
+            notice.subList(0, 25).clear(); // Keep last 25
+        }
         notice.add(pre + msg + "</font>");
         PrimeFaces.current().ajax().update("globalGrowl");
     }
@@ -1930,11 +1939,8 @@ public class SessionBean1 implements Serializable {
         //System.out.println("Testing user signed in status ... ");
         boolean res;
         if (ulb.getEmail().isEmpty()) {
-            //System.out.println("Not signed in, reloading ... ");
             res = fbc.reloadUserInfo();
         } else {
-            //System.out.println("Signed in already. ");
-
             res = true;
             setRegisteredLogin(true);
 
