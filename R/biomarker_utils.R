@@ -177,7 +177,11 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   #save.image("calcFeat.RData");
   mSetObj <- .get.mSet(mSetObj);
-  LRConverged <<- "FALSE"; 
+  if(is.null(mSetObj$analSet$LR)){
+    mSetObj$analSet$LR <- list();
+  }
+
+  mSetObj$analSet$LR$LRConverged <- "FALSE"; 
   
   x  <- mSetObj$dataSet$norm;
   y <- mSetObj$dataSet$cls;
@@ -427,8 +431,11 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
   cls <- mSetObj$dataSet$cls;    
   
   if(method == "lr") {
+    if(is.null(mSetObj$analSet$LR)){
+        mSetObj$analSet$LR <- list();
+    }
     # check cls (response variable) whether it is number 0/1 or not
-    if( length(levels(mSetObj$dataSet$cls)) == 2 ) {
+    if(length(levels(mSetObj$dataSet$cls)) == 2 ) {
       mSetObj$dataSet$cls.lbl <- levels(mSetObj$dataSet$cls);  # already sorted
       cls <- as.numeric(mSetObj$dataSet$cls)-1;
       mSetObj$dataSet$cls.lbl.new <- sort(unique(cls));
@@ -519,7 +526,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
       AddErrMsg("The sample size of each group should be more than 10!");
       return (0);
     } else {
-      doLogisticRegMdl(x.train.all, y.train.all, x.test.all, y.test.all);
+      doLogisticRegMdl(mSetObj, x.train.all, y.train.all, x.test.all, y.test.all);
     }
   }
   #######################
@@ -730,7 +737,7 @@ genLREquation <- function(coef.mdl){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-doLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
+doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
   
   # use 10-fold CV as default; or LOOCV if sample size < 10
   x <- x.train;
@@ -777,23 +784,19 @@ doLogisticRegMdl <- function(x.train, y.train, x.test, y.test){
   coefTable <- coef(model);
   names(coefTable)[-1] <- names.x.origin;
   if (model$converged & model$deviance > 1) {
-    LReq <<- genLREquation(coefTable);
-    LRConverged <<- "TRUE";
+    mSetObj$analSet$LR$LReq <- genLREquation(coefTable);
+    mSetObj$analSet$LR$LRConverged <- "TRUE";
   } else {
     # (Error: Model was not converged)
-    LReq <<- "(Error: Model was not converged)";
-    LRConverged <<- "FALSE"; 
+    mSetObj$analSet$LR$LReq <- "(Error: Model was not converged)";
+    mSetObj$analSet$LR$LRConverged <- "FALSE"; 
   }
   
   # ROC analysis with 10-fold CV test set   
   rStat <- .do.CVTest.LRmodel(data.xy, fmla.in=fmla, kfold=10, run.stepwise=FALSE)     
   # r <- roc(y.cv.test ~ prob.out, ci=T, ci.se=T, sp=seq(0,1,0.01)) # of: se (sensitivity), sp (specificity), thresholds, auc
   
-  # ROC plot with k-fold CV test set for ROC plot
-  LR.r <<- rStat$cv.robj;
-  LR.y.origin <<- rStat$cv.y;
-  LR.y.pred <<- rStat$cv.pred;
-  LR.threshold <<- rStat$cv.threshold;
+  mSetObj$analSet$LR$rStat <- rStat;
   
   # training/discovery; 10-fold CV
   auc  <- c( sprintf("%.3f (%.3f ~ %.3f)", rStat$train.r[2], rStat$train.r[1], rStat$train.r[3]),
@@ -836,9 +839,11 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   w <- h <- 8;
   mSetObj$imgSet$roc.lr <- imgName;
   
-  roc.object <- LR.r;
-  y.origin <- LR.y.origin;
-  y.pred <- LR.y.pred;
+  rStat <- mSetObj$analSet$LR$rStat;
+
+  roc.object <- rStat$cv.robj;
+  y.origin <- rStat$cv.y;
+  y.pred <- rStat$cv.pred;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(5,4,3,3));
@@ -2997,9 +3002,9 @@ GetLassoFreqs <- function(mSetObj=NA){
     lassoFreq <- rep(0, ncol(mSetObj$dataSet$norm));
   }
   names(lassoFreq) <- colnames(mSetObj$dataSet$norm);
-  lassoFreq <- sort(lassoFreq, decreasing =TRUE);
-  lassoFreq <<- lassoFreq;
-  return(lassoFreq);
+  mSetObj$analSet$LR$lassoFreq <- sort(lassoFreq, decreasing =TRUE);
+  .set.mSet(mSetObj);
+  return(mSetObj$analSet$LR$lassoFreq);
 }
 
 #'Get p-values for ROC
@@ -3011,10 +3016,11 @@ GetLassoFreqs <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 
 GetROCTtestP <- function(data, cls){
+  data <- as.matrix(data);
   if(ncol(data) < 1000){
     inx1 <- which(cls==levels(cls)[1]);
     inx2 <- which(cls==levels(cls)[2]);
-    p.value <- apply(as.matrix(data), 2, function(x) {
+    p.value <- apply(data, 2, function(x) {
       tmp <- try(t.test(x[inx1], x[inx2], paired = F, var.equal = T));
       if(class(tmp) == "try-error") {
         return(NA);
@@ -3023,7 +3029,8 @@ GetROCTtestP <- function(data, cls){
       }
     })
   }else{ # use fast version
-    p.value <- try(genefilter::rowttests(t(as.matrix(data)), cls)$p.value);
+    data <- t(data);
+    p.value <- try(genefilter::rowttests(data, cls)$p.value);
     if(class(p.value) == "try-error") {
       p.value <- NA;
     }
@@ -3258,17 +3265,19 @@ GetLR_clsLblNew <- function(mSetObj=NA){
   return(paste(mSetObj$dataSet$cls.lbl.new, collapse="/"));
 }
 
-GetLassoFreqNames <- function(){
-  return(names(lassoFreq));
+GetLassoFreqNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(names(mSetObj$analSet$LR$lassoFreq));
 }
 
-
-GetLRConvergence <- function(){
-  return(LRConverged);
+GetLRConvergence <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$LR$LRConverged);
 }
 
-GetLREquation <- function(){
-  return(LReq);
+GetLREquation <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  return(mSetObj$analSet$LR$LReq);
 }
 
 GetLRmodelTable <- function(){
@@ -3279,8 +3288,9 @@ GetLRperformTable <- function() {
   return(LRperf.xtable);
 }
 
-GetLRthreshold <- function() {
-  return(round(LR.threshold,2));
+GetLRthreshold <- function(mSetObj=NA) {
+  mSetObj <- .get.mSet(mSetObj);
+  return(round(mSetObj$analSet$LR$rStat$cv.threshold,2));
 }
 
 GetCurrentConfMat <- function(mSetObj=NA){

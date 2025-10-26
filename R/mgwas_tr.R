@@ -607,7 +607,7 @@ convertIgraph2JSON <- function(g, filenm){
   
 
   containsGP <- any(gene.nms %in% prot.nms) ## check if any overlap between gene and protein
-  cat("containsGP = ", containsGP, "\n")
+  #cat("containsGP = ", containsGP, "\n")
 
   if(substring(anal.type, 1,3) == "snp"){ #highlight SNP if they are the query
     node.sizes[snp.inx] <- node.sizes[snp.inx] + 1;

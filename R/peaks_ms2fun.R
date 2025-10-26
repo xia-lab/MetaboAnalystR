@@ -686,24 +686,3 @@ SetMS2IDType <- function(mSetObj=NA, IDtype = "hmdb_ids"){
   return(.set.mSet(mSetObj))
 }
 
-formatfunresult <- function(){
-  setwd("/tank/islets_samples/case_study/guest8509032390121001213tmp/")
-  df <- read.csv("peaks_ms1_islets.txt")
-  df_cmpd <- read.csv("compound_msn_results.csv")
-  dfx_list <- list()
-  for(i in 1:nrow(df)){
-    cat("==>", i, "\n")
-    if(any((df$mz[i]>df_cmpd$mzmin) & (df$mz[i] < df_cmpd$mzmax) & 
-           (df$rt[i]>df_cmpd$rtmin) & (df$rt[i] < df_cmpd$rtmax))){
-      idx <- which((df$mz[i]>df_cmpd$mzmin) & (df$mz[i] < df_cmpd$mzmax) & 
-                     (df$rt[i]>df_cmpd$rtmin) & (df$rt[i] < df_cmpd$rtmax))
-      dfx <- cbind(i, df_cmpd[idx[1], c("InchiKey_1", "InchiKey_2", "InchiKey_3", "InchiKey_4", "InchiKey_5")])
-      dfx_list <- c(dfx_list, list(dfx))
-    }
-  }
-  
-  dfx <- do.call(rbind, dfx_list)
-  colnames(dfx)[1] <- "index"
-  write.csv(dfx, file = "compound_ms2_islet.csv", row.names = F)
-  
-}

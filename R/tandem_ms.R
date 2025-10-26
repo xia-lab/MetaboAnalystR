@@ -1462,6 +1462,7 @@ readProgressSec <- function(path_str){
   chr <- readLines(paste0(path_str, "/progress_value_parallel.txt"), warn = F)
   return(nchar(chr));
 }
+
 loadMS2ResultmSet <- function(){
   mSet <<- qs::qread("MS2_searching_results.qs");
 }
