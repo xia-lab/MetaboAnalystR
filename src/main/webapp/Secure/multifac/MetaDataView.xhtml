@@ -89,7 +89,7 @@
                     </h:panelGrid>
                 </h:form>
                 <img onerror='this.style.display="none"'  
-                      style="width:9in;"
+                      style="width:7.2in;"
                      src="#{sessionBean1.getCurrentImageURL('metaCorrHeatmap')}" alt="Meta-data correlation"/>
 
                 <br/><br/>
@@ -195,7 +195,7 @@
                         setTimeout(function () {
                             Plotly.downloadImage(graphDiv, {format: tp, width: 1000, height: 1200, scale: 3})
                                     .then(function () {
-                                        PF('statusDialog').hide()
+                                        PF('statusDialog').hide();
                                     })
                                     .catch(function (error) {
                                         hideStatusDialog();
@@ -207,7 +207,6 @@
                 </script>
                 <div id="htmlwidget4" style="width:100%;" class="iheatmapr html-widget"></div>
             </h:panelGrid> 
-
         </h:panelGrid>
     </ui:define>
 </ui:composition>

@@ -43,7 +43,6 @@
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false"
                                      onclick="PF('statusDialog').show()" 
-                                     update=":sheet"
                                      oncomplete="PF('statusDialog').hide()"
                                      action="#{uploader.handleFileUpload()}"/>
                 </h:panelGrid>
@@ -72,7 +71,6 @@
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false" 
                                      onclick="PF('statusDialog').show()" 
-                                     update=":sheet"
                                      oncomplete="PF('statusDialog').hide()"                                         
                                      action="#{uploader.handleZipFileUpload}"/>                               
                 </h:panelGrid>
@@ -101,7 +99,6 @@
                     <p:commandButton value="Submit" ajax="false"
                                      onclick="PF('statusDialog').show()" 
                                      oncomplete="PF('statusDialog').hide()"
-                                     update=":sheet"
                                      action="#{uploader.handleMzTabUpload()}"/>                         
                 </h:panelGrid>
 
@@ -141,7 +138,6 @@
                     </h:panelGrid>
                     <p:commandButton value="Submit" ajax="false" 
                                      onclick="PF('statusDialog').show()" 
-                                     update=":sheet"
                                      oncomplete="PF('statusDialog').hide()"                                         
                                      action="#{uploader.handleMetWorkbenchData('stat')}"/>                               
                 </h:panelGrid>                

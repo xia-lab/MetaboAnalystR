@@ -105,7 +105,6 @@
                             </h:panelGrid>
                             <p:commandButton value="Submit" ajax="false"
                                              onclick="PF('statusDialog').show()" 
-                                             update=":sheet"
                                              oncomplete="PF('statusDialog').hide()"
                                              action="#{uploader.handleFileUpload()}"/>
                         </h:panelGrid>

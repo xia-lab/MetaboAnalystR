@@ -10,7 +10,6 @@ import java.io.Serializable;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.workflows.JavaRecord;
@@ -112,14 +111,14 @@ public class MetaHeatmapBean implements Serializable {
         if (!sb.isAnalInit(pageID)) {
             jrd.record_metaOverviewBn_action(this);
             sb.addNaviTrack(pageID, "/Secure/multifac/MetaDataView.xhtml");
-            int res = RDataUtils.plotMetaCorrHeatmap(sb,
+            RDataUtils.plotMetaCorrHeatmap(sb,
                     "univariate", // corMethod
                     corOpt,
                     "default", // colorGradient
                     false, sb.getNewImage("metaCorrHeatmap"), "png", 150);
             RDataUtils.plotMetaHeatmap(sb, "overview", "both", "euclidean", "ward.D", "bwm",
                     includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
-        } 
+        }
     }
 
     public boolean metaOverviewBn_action() {
@@ -160,12 +159,22 @@ public class MetaHeatmapBean implements Serializable {
                 corOpt,
                 "default", // colorGradient
                 false, sb.getNewImage("metaCorrHeatmap"), "png", 150);
+
+        int res2 = RDataUtils.plotMetaHeatmap(sb, metaViewOpt, metaClusterSelOpt, metaDistOpt, metaClusterOpt, metaColorOpt,
+                includeRowNamesMeta ? "T" : "F", sb.getNewImage("metaHeatmap"), "png", 150);
+
         if (res == 0) {
-            sb.addMessage("Error", "Unknown error occured in the image generation!");
-            return false;
+            sb.addMessage("Error", "Unknown error occured in correlation heatmap generation!");
         } else {
-            return true;
+            sb.addMessage("OK", "Correlation heatmap was generated successfully!");
         }
 
+        if (res2 == 0) {
+            sb.addMessage("Error", "Unknown error occured in detailed metadata heatmap generation. Please update parameters and try again!");
+        } else {
+            sb.addMessage("OK", "Metadata heatmap was generated successfully!");
+        }
+
+        return true;
     }
 }

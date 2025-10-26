@@ -70,10 +70,11 @@ body {
 }
 
 .my-content-panel {
-    padding: 40px 20px 20px 50px;
+    padding: 50px 20px 20px 50px;
     line-height: 23px;
     width:95%;
-    min-height: 72vh;
+    min-height: 75vh;
+    display: flex;
 }
 
 .myDashboard {
