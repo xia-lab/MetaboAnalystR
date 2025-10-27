@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.UUID;
 import org.postgresql.util.PGobject;
+import org.primefaces.PrimeFaces;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.event.CellEditEvent;
 
@@ -1935,6 +1936,7 @@ public class WorkflowBean implements Serializable {
 // (reuse your existing sets if you want the extra checks too)
     private static final Set<String> UNTARGETED_DATAS = Set.of("spec", "specbin", "pktable", "nmrpeak", "mspeak", "table");
     private static final Set<String> REGRES_ANALS = Set.of("pathway", "enrich");
+    private static final Set<String> RUN_STATUS_ALLOWED = Set.of("pending", "running", "completed", "failed");
 
     public boolean workflowCompatible(Map<String, Object> wf) {
         try {
@@ -2061,6 +2063,23 @@ public class WorkflowBean implements Serializable {
 
     private static String safeStr(Object o) {
         return (o == null) ? "" : String.valueOf(o);
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String normalizeRunStatus(String status) {
+        String trimmed = trimToNull(status);
+        if (trimmed == null) {
+            return null;
+        }
+        String canonical = trimmed.toLowerCase(Locale.ROOT);
+        return RUN_STATUS_ALLOWED.contains(canonical) ? canonical : null;
     }
 
     @JsonIgnore
@@ -2277,6 +2296,10 @@ public class WorkflowBean implements Serializable {
 
     public void setSelectedWorkflowRun(WorkflowRunModel selectedWorkflowRun) {
         this.selectedWorkflowRun = selectedWorkflowRun;
+        if (this.selectedWorkflowRun != null) {
+            String normalized = normalizeRunStatus(this.selectedWorkflowRun.getStatus());
+            this.selectedWorkflowRun.setStatus(normalized);
+        }
     }
 // Simple filters (optional)
     private String dsFilter, wfFilter;
@@ -2380,6 +2403,52 @@ public class WorkflowBean implements Serializable {
         }
     }
 
+    public void updateRunInfo() {
+        if (selectedWorkflowRun == null) {
+            sb.addMessage("Warn", "No workflow run selected.");
+            PrimeFaces pf = PrimeFaces.current();
+            if (pf != null) {
+                pf.ajax().addCallbackParam("runUpdateSuccess", false);
+            }
+            return;
+        }
+
+        WorkflowRunModel run = selectedWorkflowRun;
+        final int runId = run.getId();
+
+        String sanitizedName = trimToNull(run.getName());
+        String sanitizedDescription = trimToNull(run.getDescription());
+
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", sanitizedName);
+        updates.put("description", sanitizedDescription);
+
+        try {
+            String msg = dbc.updateWorkflowRunFields(String.valueOf(runId), updates);
+            boolean success = isUpdateSuccess(msg);
+
+            PrimeFaces pf = PrimeFaces.current();
+            if (pf != null) {
+                pf.ajax().addCallbackParam("runUpdateSuccess", success);
+            }
+
+            if (success) {
+                setupWorkflowRunsTable();
+                this.selectedWorkflowRun = findRunInModelById(runId);
+                sb.addMessage("Info", "Run " + runId + " updated.");
+            } else {
+                sb.addMessage("Warn", "Failed to update run " + runId + ": " + msg);
+            }
+        } catch (Exception e) {
+            PrimeFaces pf = PrimeFaces.current();
+            if (pf != null) {
+                pf.ajax().addCallbackParam("runUpdateSuccess", false);
+            }
+            sb.addMessage("Error", "Failed to update run: " + e.getMessage());
+        }
+    }
+
     private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
 
     public List<WorkflowRunModel> getWorkflowRunsTable() {
@@ -2461,14 +2530,17 @@ public class WorkflowBean implements Serializable {
         r.setDatasetName(safeStr(getAny(m, "datasetName", "dataset_name")));
 
         // Status & timing
-        r.setStatus(safeStr(m.get("status")));                  // pending|running|completed|failed
+        String statusRaw = trimToNull(safeStr(m.get("status")));
+        String statusNormalized = normalizeRunStatus(statusRaw);
+        r.setStatus(statusNormalized != null ? statusNormalized : statusRaw);    // pending|running|completed|failed
         r.setStartDate(safeStr(getAny(m, "startDate", "start_date")));
         r.setFinishDate(safeStr(getAny(m, "finishDate", "finish_date")));
         r.setLastUpdated(safeStr(getAny(m, "lastUpdated", "last_updated")));
 
         // Description & misc
-        r.setDescription(safeStr(m.get("description")));
+        r.setDescription(trimToNull(safeStr(m.get("description"))));
         r.setOtherJson(safeStr(m.get("other")));                // JSON blob for extra info
+        r.setProjectId(trimToNull(safeStr(getAny(m, "projectId", "project_id"))));
 
         // Convenience: derive a readable title if none provided
         if (r.getName() == null || r.getName().isBlank()) {

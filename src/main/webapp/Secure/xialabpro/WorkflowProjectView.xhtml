@@ -489,6 +489,46 @@
             </h:form>
         </p:dialog>
 
+        <p:dialog header="Edit Workflow Run" widgetVar="runEditDialog" dynamic="true" modal="true"
+                  appendTo="@(body)" resizable="true" onShow="PF('statusDialog').hide()">
+            <h:form id="runEditDialogForm">
+                <ui:fragment rendered="#{not empty workflowBean.selectedWorkflowRun}">
+                    <h:panelGrid style="padding:10px; width:420px;">
+                        <h:panelGrid style="width: 100%;" class="surface-card shadow-1 p-4 text-800">
+                            <h:panelGrid columns="2" style="width:100%; margin-bottom:1rem;" columnClasses="wide-column wide-column">
+                                <h:outputText styleClass="text-700" value="Run ID"/>
+                                <h:outputText value="#{workflowBean.selectedWorkflowRun.id}" />
+                                <h:outputText styleClass="text-700" value="Workflow"/>
+                                <h:outputText value="#{empty workflowBean.selectedWorkflowRun.module or workflowBean.selectedWorkflowRun.module eq 'NA' ? '[Not selected]' : workflowView.getReadableType(workflowBean.selectedWorkflowRun.module)}" />
+                                <h:outputText styleClass="text-700" value="Dataset"/>
+                                <h:outputText value="#{empty workflowBean.selectedWorkflowRun.datasetName or workflowBean.selectedWorkflowRun.datasetName eq 'NA' ? '[Not selected]' : workflowBean.selectedWorkflowRun.datasetName}" />
+                            </h:panelGrid>
+
+                            <p:outputLabel for="runName" value="Name" style="font-weight: bold;"/>
+                            <p:inputText id="runName" value="#{workflowBean.selectedWorkflowRun.name}" style="width: 100%"/>
+
+                            <p:outputLabel for="runDescription" value="Description"  style="font-weight: bold;"/>
+                            <p:inputTextarea id="runDescription" value="#{workflowBean.selectedWorkflowRun.description}"
+                                             rows="5" cols="48"/>
+
+                        </h:panelGrid>
+
+                        <h:panelGrid columns="2" style="width:100%; text-align: center">
+                            <p:commandButton value="Cancel" type="button"
+                                             onclick="PF('runEditDialog').hide()"/>
+                            <p:commandButton id="runEditBn" value="Update" style="width:80px"
+                                             process="@form"
+                                             update=":dataTableForm :msgs"
+                                             action="#{workflowBean.updateRunInfo}"
+                                             onstart="PF('statusDialog').show();"
+                                             oncomplete="PF('statusDialog').hide(); if (args &amp;&amp; args.runUpdateSuccess) { PF('runEditDialog').hide(); }"
+                                             styleClass="procBn"/>
+                        </h:panelGrid>
+                    </h:panelGrid>
+                </ui:fragment>
+            </h:form>
+        </p:dialog>
+
         <p:dialog id="dlgByDataset" widgetVar="dlgByDataset" header="Select Dataset"
                   modal="true" responsive="true" closable="true" resizable="false" width="900">
             <h:form id="formByDataset">
@@ -502,14 +542,15 @@
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
                              emptyMessage="No datasets found." styleClass="surface-card shadow-1">
                     <p:column headerText="Name" sortBy="#{ds.title}" width="35%">
-                        <h:panelGrid columns="2">
-
-                            <h:outputText value="#{ds.title}"/>
+                        <p:outputPanel layout="flex"
+                                       style="align-items:center; justify-content:space-between; width:100%; border:0; padding:0;">
+                            <h:outputText value="#{ds.title}" style="flex:1 1 auto;"/>
 
                             <p:tag value="Example"
                                    severity="info"
-                                   rendered="#{ds.origin eq 'Example'}"/>
-                        </h:panelGrid>
+                                   rendered="#{ds.origin eq 'Example'}"
+                                   style="margin-left:auto;"/>
+                        </p:outputPanel>
                     </p:column>
 
                     <p:column headerText="File" sortBy="#{ds.filename}">

@@ -2509,7 +2509,7 @@ public class DatabaseController implements Serializable {
         final Set<String> allowed = Set.of(
                 "status", "project_id",
                 "dataset_id", "dataset_name",
-                "workflow_id", "module", "name"
+                "workflow_id", "module", "name", "description"
         );
 
         List<String> sets = new ArrayList<>();
@@ -2564,6 +2564,7 @@ public class DatabaseController implements Serializable {
                 case "module":
                 case "name":
                 case "status":
+                case "description":
                     sets.add(col + " = ?");
                     if (v == null || String.valueOf(v).isBlank()) {
                         params.add(null);
