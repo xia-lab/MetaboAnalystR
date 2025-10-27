@@ -197,7 +197,7 @@
                              class="surface-card shadow-1 p-0 text-800"
                              sortBy="#{run.id}"
                              rowKey="#{run.id}"
-                             rowStyleClass="#{workflowBean.selectedWorkflowRun ne null and run.id eq workflowBean.selectedWorkflowRun.id ? 'row-selected' : ''}">
+                             rowStyleClass="#{workflowBean.isSelected(run) ? 'row-selected' : ''}">
 
                     <!-- fire once per edited cell -->
                     <p:ajax event="cellEdit"

@@ -2419,7 +2419,6 @@ public class WorkflowBean implements Serializable {
         String sanitizedName = trimToNull(run.getName());
         String sanitizedDescription = trimToNull(run.getDescription());
 
-
         Map<String, Object> updates = new HashMap<>();
         updates.put("name", sanitizedName);
         updates.put("description", sanitizedDescription);
@@ -2795,6 +2794,14 @@ public class WorkflowBean implements Serializable {
         } catch (Exception ignore) {
             return raw; // not strict JSON? just show raw
         }
+    }
+
+    public boolean isSelected(WorkflowRunModel r) {
+        if (r == null || selectedWorkflowRun == null) {
+            return false;
+        }
+        System.out.println(String.valueOf(r.getId()).equals(String.valueOf(selectedWorkflowRun.getId())) + "===============selectedrow");
+        return String.valueOf(r.getId()).equals(String.valueOf(selectedWorkflowRun.getId()));
     }
 
 }
