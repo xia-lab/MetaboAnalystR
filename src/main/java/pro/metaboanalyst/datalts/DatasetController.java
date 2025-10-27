@@ -47,6 +47,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -313,7 +314,11 @@ public class DatasetController implements Serializable {
             return; // Skip ajax requests.
         }
         fc.reloadUserInfo();
+        reloadTable();
 
+    }
+
+    public void reloadTable() {
         final String email = fub.getEmail();
         final String node = ab.getToolLocation();
 
@@ -2904,5 +2909,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         // Not found locally
         return null;
     }
+   
 
 }

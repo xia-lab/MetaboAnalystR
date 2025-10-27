@@ -69,7 +69,7 @@
             <to-view-id>/Secure/xialabpro/WorkflowView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>
-                <navigation-case>
+        <navigation-case>
             <from-outcome>WorkflowDetails</from-outcome>
             <to-view-id>/Secure/xialabpro/WorkflowDetails.xhtml</to-view-id>
             <redirect/>
@@ -586,7 +586,13 @@
             <from-outcome>projects</from-outcome>
             <to-view-id>/Secure/spectra/ProjectView.xhtml</to-view-id>
             <redirect/>
-        </navigation-case>        
+        </navigation-case>  
+        <navigation-case>
+            <from-outcome>WorkflowProjectView</from-outcome>
+            <to-view-id>/Secure/xialabpro/WorkflowProjectView.xhtml</to-view-id>
+            <redirect/>
+        </navigation-case>  
+              
         <navigation-case>
             <from-outcome>Dose Analysis</from-outcome>
             <to-view-id>/Secure/dose/SigFeatureView.xhtml</to-view-id>

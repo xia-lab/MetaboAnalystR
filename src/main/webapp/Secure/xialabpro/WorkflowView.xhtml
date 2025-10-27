@@ -415,6 +415,7 @@
 
         </h:panelGrid>
 
+
         <p:dialog header="You are about to log off!"
                   widgetVar="logoutProjDialog"
                   showEffect="fade"
@@ -436,7 +437,7 @@
                 </h:panelGrid>
                 <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
                                  onclick="PF('logoutProjDialog').hide();
-                                         PF('statusDialog').show();"
+                                     PF('statusDialog').show();"
                                  action="#{projCtrl.saveProject()}"
                                  oncomplete ="PF('statusDialog').hide();"/>
 
@@ -481,7 +482,7 @@
                                      action="#{diagramView.resetWorkflow()}" 
                                      ajax="false"     
                                      onclick="PF('resetDialog').hide();
-                                             PF('statusDialog').show();" 
+                                         PF('statusDialog').show();" 
                                      oncomplete="PF('statusDialog').hide();" />
                 </div>
             </h:form>
@@ -575,204 +576,7 @@
                 </h:form>
             </h:panelGrid>
         </p:dialog>
-
-        <p:dialog header="Data Preparation" widgetVar="enrichDialog" modal="true" 
-                  showEffect="fade" hideEffect="fade" width="500">   
-
-            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
-                <h:form id="formEnr">
-
-                    <h:outputText value="Analysis Type:" style="font-weight:bold;" />
-                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.enrichOpt}">
-                        <f:selectItem itemLabel="ORA" itemValue="ora" />
-                        <f:selectItem itemLabel="SSP" itemValue="ssp" />
-                        <f:selectItem itemLabel="QEA" itemValue="qea" />
-                    </p:selectOneRadio>
-
-                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
-                    <h:panelGrid columns="2">
-                        <p:commandButton value="Upload Data" 
-                                         action="#{wfUploadBean.navigateToEnrichUpload}" 
-                                         style="margin-right:10px;" 
-                                         onclick="PF('statusDialog').show()" 
-                                         oncomplete="PF('statusDialog').hide()" 
-                                         ajax="false"/>
-                        <p:commandButton value="Try Example" 
-                                         action="#{wfUploadBean.loadEnrichExample}" 
-                                         onclick="PF('statusDialog').show();
-                                                 PF('enrichDialog').hide();" 
-                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                         update="formHidden1"/>
-
-                    </h:panelGrid>
-                </h:form>
-            </h:panelGrid>
-        </p:dialog>
-
-        <p:dialog header="Data Preparation" widgetVar="statDialog" modal="true" 
-                  showEffect="fade" hideEffect="fade" width="500">   
-
-            <h:panelGrid  style="width:100%; line-height: 23px; padding: 20px;">
-                <p>
-                    Please upload your data or try our example
-                </p>
-                <h:form>
-                    <h:panelGrid columns="2" style="width:100%;" class="surface-card p-3">
-                        <h:outputText value="Data Type:" style="font-weight:bold;" />
-                        <p:selectOneRadio id="analysisType" value="#{wfUploadBean.statOpt}">
-                            <f:selectItem itemLabel="Table" itemValue="table" />
-                            <f:selectItem itemLabel="Zip" itemValue="zip" />
-                            <f:selectItem itemLabel="mzTab" itemValue="mztab" />
-                        </p:selectOneRadio>
-                    </h:panelGrid>
-                    <h:panelGrid columns="2" style="width:100%; text-align: center; padding-top: 10px">
-                        <p:commandButton value="Upload Data" 
-                                         action="#{wfUploadBean.navigateToStatUpload}" 
-                                         onclick="PF('statusDialog').show()" 
-                                         oncomplete="PF('statusDialog').hide()" 
-                                         ajax="false"/>
-                        <p:commandButton value="Try Example" 
-                                         action="#{wfUploadBean.loadStatExample}" 
-                                         onclick="PF('statusDialog').show();
-                                                 PF('statDialog').hide();" 
-                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                         update="formHidden1"/>
-
-                    </h:panelGrid>
-                </h:form>
-            </h:panelGrid>
-
-        </p:dialog>
-        <p:dialog header="Data Preparation" widgetVar="pathDialog" modal="true" 
-                  showEffect="fade" hideEffect="fade" width="500">   
-
-            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
-                <h:form id="formPath">
-
-                    <h:outputText value="Data Type:" style="font-weight:bold;" />
-                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.pathOpt}">
-                        <f:selectItem itemLabel="List" itemValue="list" />
-                        <f:selectItem itemLabel="Table" itemValue="table" />
-                    </p:selectOneRadio>
-
-                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
-                    <h:panelGrid columns="2">
-                        <p:commandLink value="Upload Data" 
-                                       action="#{wfUploadBean.navigateToPathUpload}" 
-                                       style="margin-right:10px;" 
-                                       onclick="PF('statusDialog').show()" 
-                                       oncomplete="PF('statusDialog').hide()" 
-                                       ajax="false"/>
-                        <p:commandLink value="Try Example" 
-                                       action="#{wfUploadBean.loadPathExample}" 
-                                       onclick="PF('statusDialog').show();
-                                               PF('pathDialog').hide();" 
-                                       oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                       update="formHidden1"/>
-
-                    </h:panelGrid>
-                </h:form>
-            </h:panelGrid>
-        </p:dialog>
-
-        <p:dialog header="Data Preparation" widgetVar="networkDialog" modal="true"
-                  showEffect="fade" hideEffect="fade" width="500">   
-
-            <h:panelGrid styleClass="surface-card shadow-0 p-3 text-600" columns="1">
-                <h:form id="formNet">
-
-                    <h:outputText value="Data Type:" styleClass="font-weight-bold mb-2" />
-                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.networkOpt}" styleClass="mb-3">
-                        <f:selectItem itemLabel="List" itemValue="list" />
-                        <f:selectItem itemLabel="Table" itemValue="table" />
-                    </p:selectOneRadio>
-
-                    <h:outputText value="Choose an Option:" styleClass="font-weight-bold mb-2" />
-                    <h:panelGrid columns="2" styleClass="grid-align-center">
-                        <p:commandButton value="Upload Data" 
-                                         action="#{wfUploadBean.navigateToNetUpload}" 
-                                         styleClass="btn btn-primary mr-2"
-                                         icon="pi pi-upload"
-                                         onclick="PF('statusDialog').show()" 
-                                         oncomplete="PF('statusDialog').hide()" 
-                                         ajax="false"
-                                         title="Upload your data for analysis"/>
-
-                        <p:commandButton value="Try Example" 
-                                         action="#{wfUploadBean.loadNetExample}" 
-                                         styleClass="btn btn-secondary"
-                                         icon="pi pi-search"
-                                         onclick="PF('statusDialog').show();
-                                                 PF('networkDialog').hide();" 
-                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                         update="formHidden1"
-                                         title="Load an example dataset for preview"/>
-                    </h:panelGrid>
-
-                </h:form>
-            </h:panelGrid>
-
-        </p:dialog>
-
-        <p:dialog header="Data Preparation" widgetVar="mumDialog" modal="true" 
-                  showEffect="fade" hideEffect="fade" width="500">   
-
-            <h:panelGrid style="width:450px; height:250px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" columns="2" class="surface-card shadow-0 p-3 text-600">
-                <h:form id="formMum">
-
-                    <h:outputText value="Data Type:" style="font-weight:bold;" />
-                    <p:selectOneRadio id="analysisType" value="#{wfUploadBean.mumOpt}">
-                        <f:selectItem itemLabel="List" itemValue="list" />
-                        <f:selectItem itemLabel="Table" itemValue="table" />
-                    </p:selectOneRadio>
-
-                    <h:outputText value="Choose an option:" style="font-weight:bold;" />
-                    <h:panelGrid columns="2">
-                        <p:commandLink value="Upload Data" 
-                                       action="#{wfUploadBean.navigateToMumUpload}" 
-                                       style="margin-right:10px;" 
-                                       onclick="PF('statusDialog').show()" 
-                                       oncomplete="PF('statusDialog').hide()" 
-                                       ajax="false"/>
-                        <p:commandLink value="Try Example" 
-                                       action="#{wfUploadBean.loadMumExample}" 
-                                       onclick="PF('statusDialog').show();
-                                               PF('mumDialog').hide();" 
-                                       oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                       update="formHidden1"/>
-
-                    </h:panelGrid>
-
-                </h:form>
-
-            </h:panelGrid>
-
-        </p:dialog>
-        <p:dialog header="Data Preparation" widgetVar="mfDialog" modal="true" 
-                  showEffect="fade" hideEffect="fade" width="500">   
-            <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
-                <h:form>
-                    <p>Please upload your data or try our example</p>
-
-                    <h:panelGrid columns="2">
-                        <p:commandButton value="Upload Data" 
-                                         action="#{wfUploadBean.navigateToMfUpload}" 
-                                         style="margin-right:10px;" 
-                                         onclick="PF('statusDialog').show()" 
-                                         oncomplete="PF('statusDialog').hide()" 
-                                         ajax="false"/>
-                        <p:commandButton value="Try Example" 
-                                         action="#{wfUploadBean.loadMfExample}" 
-                                         onclick="PF('statusDialog').show();
-                                                 PF('mfDialog').hide();" 
-                                         oncomplete="PF('statusDialog').hide(); workflowRc();" 
-                                         update="formHidden1"/>
-
-                    </h:panelGrid>
-                </h:form>
-            </h:panelGrid>
-        </p:dialog>
-
+        
         <p:dialog header="Data Preparation" widgetVar="specDialog" modal="true" 
                   showEffect="fade" hideEffect="fade" width="500">   
             <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
@@ -795,7 +599,7 @@
                         <p:commandButton value="Try Example" 
                                          action="#{wfUploadBean.processSpecExampleUpload}" 
                                          onclick="PF('statusDialog').show();
-                                                 PF('specDialog').hide();" 
+                                             PF('specDialog').hide();" 
                                          oncomplete="PF('statusDialog').hide(); workflowRc();" 
                                          update="formHidden1"/>
                     </h:panelGrid>
@@ -950,190 +754,7 @@
                 </h:form>
             </h:panelGrid>
         </p:dialog>
-        <p:dialog header="Workflow Progress"
-                  widgetVar="workflowInfoDialog"
-                  showEffect="fade"
-                  hideEffect="fade"
-                  modal="true"
-                  width="600"
-                  closable="true"
-                  draggable="false"
-                  resizable="false"
-                  appendTo="@(body)">
-            <h:form id="formWorkflowInfo">
-                <!-- Job details in a structured grid -->
-                <h:panelGrid style="margin:40px">
+        <ui:include src="/Secure/xialabpro/_WorkflowDIalogs.xhtml" />
 
-                    <h:panelGrid columns="2" 
-                                 style="display: inline-block; border-collapse: separate; border-spacing: 0 10px;"> 
-                        <h:panelGroup style="width:120px" layout="block">
-                            <h:outputLabel value="Start Time:" style="font-weight:bold"/>
-                        </h:panelGroup>
-
-                        <h:outputText value="#{jobExecution.currentStartTime}" />
-
-                        <h:outputLabel value="Job ID:" style="font-weight:bold" />
-                        <h:outputText value="#{jobExecution.currentJobId}" />
-
-                        <h:outputLabel value="Status:" style="font-weight:bold"/>
-                        <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
-                            <span>
-                                <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
-                                <span class="dots">
-                                    <span>.</span>
-                                    <span>.</span>
-                                    <span>.</span>
-                                </span>
-                            </span>
-                        </h:panelGroup>
-
-                        <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
-                            <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
-                        </h:panelGroup>
-                    </h:panelGrid>
-
-                    <h:panelGroup layout="block" style="margin-top:15px;">
-                        <h:outputText value="Job submitted successfully. An email notice will be sent to you when your job is completed."/>
-                    </h:panelGroup>
-
-                    <h:panelGroup layout="block" style="margin-top:15px; font-weight:bold;">
-                        <h:outputText value="Use the ‘Notice’ on the top menu bar to view all important system messages."/>
-                    </h:panelGroup>
-
-                </h:panelGrid>
-            </h:form>
-        </p:dialog>
-
-
-        <p:dialog header="Job Progress"
-                  widgetVar="progressDialog"
-                  showEffect="fade"
-                  hideEffect="fade"
-                  modal="true"
-                  width="920"
-                  height="550"
-                  closable="true"
-                  draggable="false"
-                  resizable="false"
-                  appendTo="@(body)">
-            <h:form>
-                <h:panelGrid style="width:100%; line-height: 1.5; padding: 10px; font-size: 14px;" id='jobField'
-                             rendered="#{specLoader.spectraUploaded}"
-                             columnClasses="align-left">
-                    <h:panelGrid  columns="2" style="width:auto; text-align: left; line-height: 24px">
-                        <h:outputLabel style="font-weight: bold" value="Job ID:"/>
-                        <h:outputLabel value="#{spectraController.currentJobId}"/>
-
-                        <h:panelGroup style="width: 160px;" layout="block">
-                            <h:outputLabel style="font-weight: bold" value="Current Status:"/>
-                        </h:panelGroup>
-                        <h:outputLabel value="#{spectraController.currentJobStatus}"/>
-
-                        <h:outputLabel style="font-weight: bold" value="Job Progress:"/>
-                        <p:progressBar widgetVar="pbAjax1" value="#{spectraController.progressProcessing}" 
-                                       labelTemplate="{value}%" global="false" 
-                                       style="width: 660px"/>
-
-                        <h:outputLabel style="font-weight: bold" value="Text Output:"/>
-                        <p:scrollPanel id="msgPane"
-                                       style="width:620px; height:365px; padding:10px 20px 10px 20px; text-align: left;"
-                                       class="surface-card shadow-1 p-4 text-800">
-                            <p:outputLabel escape="false" value="#{spectraProcessor.jobStatusText}"/>
-                        </p:scrollPanel>
-                    </h:panelGrid>
-                </h:panelGrid>
-                <p:poll interval="3" listener="#{spectraController.checkStatus}" stop="#{!spectraController.stopStatusCheck}" update="jobField" />
-
-                <!-- Buttons Section -->
-                <div style="text-align: center; margin-top: 10px;">
-                    <p:commandButton value="Close" 
-                                     style="width:120px; font-size: 14px; margin-right: 10px;" 
-                                     onclick="PF('progressDialog').hide();" />
-                </div>
-            </h:form>
-        </p:dialog>
-
-        <p:dialog modal="true" widgetVar="rawWorkflowProgressDialog" 
-                  style="width: 200px; height:100px;" 
-                  appendTo="@(body)" header="Processing .... "
-                  draggable="false" closable="true" resizable="false"> 
-            <h:panelGrid style="width: 100%; text-align: center; padding-top:20px;">
-                <h:outputLabel value="Spectra processing step has finished, now processing the rest of the workflow, please be patient...."/>
-                <h:outputLabel value="Once finished you will be notified through email and notification bell."/>
-                <p:spacer/>
-                <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
-                <p:spacer/>
-            </h:panelGrid>
-        </p:dialog>
-
-        <p:dialog id="rawWorkflowFinishDialogId" widgetVar="rawWorkflowFinishDialog" header="Workflow Status" modal="true" closable="true" width="510">
-            <h:form id="finishDialogForm">
-                <h:panelGrid columns="1" style="margin: 10px;">
-                    <p:spacer height="30px" />
-
-                    <h:panelGrid columns="2">
-                        <p:outputLabel value="Your workflow processing job (ID: #{diagramView.jobId}) status has become " />
-                        <p:outputLabel value="COMPLETED" style="font-weight: bold; color: green;" />
-                    </h:panelGrid>
-
-                    <p:spacer height="10px" />
-                    <h:panelGrid columns="2">
-
-                        <h:outputText value="You can access the following link to view your results: " />
-                        <h:outputLink value="#{diagramView.finishLink}">Click here</h:outputLink>
-                    </h:panelGrid>
-
-                    <p:spacer height="30px" />
-                </h:panelGrid>
-            </h:form>
-        </p:dialog>
-        <p:dialog header="Workflow Details" widgetVar="wfViewDlg" modal="true" appendTo="@(body)" resizable="true" width="720">
-            <h:form id="wfViewForm">
-                <h:panelGrid columns="2" columnClasses="col-label,col-value" style="width:100%; line-height:1.6;">
-                    <h:outputText value="Name:"/>
-                    <h:outputText value="#{workflowBean.selectedWorkflow['name']}"/>
-
-                    <h:outputText value="Description:"/>
-                    <h:outputText value="#{workflowBean.selectedWorkflow['description']}"/>
-
-                    <h:outputText value="Module:"/>
-                    <h:outputText value="#{workflowBean.selectedWorkflow['module']}"/>
-
-                    <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['filename']}">
-                        <h:outputText value="File:"/>
-                        <h:outputText value="#{workflowBean.selectedWorkflow['filename']}"/>
-                    </h:panelGroup>
-
-                    <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['created_at']}">
-                        <h:outputText value="Saved:"/>
-                        <h:outputText value="#{workflowBean.selectedWorkflow['created_at']}"/>
-                    </h:panelGroup>
-                </h:panelGrid>
-
-                <div style="text-align:right; margin-top:10px;">
-                    <p:commandButton value="Close" onclick="PF('wfViewDlg').hide();
-                            return false;"/>
-                </div>
-            </h:form>
-        </p:dialog>
-        <p:dialog header="Delete Workflow" widgetVar="wfDelDlg" modal="true" appendTo="@(body)" resizable="false" width="520">
-            <h:form id="wfDelForm">
-                <h:panelGrid style="width:100%; line-height:1.6; font-size:14px;">
-                    <p>
-                        This action will permanently delete
-                        <b>#{workflowBean.selectedWorkflow['name']}</b>.
-                        Continue?
-                    </p>
-                    <h:panelGrid columns="2" style="width:100%; line-height:1.6;">
-                        <p:commandButton value="Cancel" onclick="PF('wfDelDlg').hide();
-                                return false;"/>
-                        <p:commandButton value="Delete" styleClass="ui-button-danger"
-                                         onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('wfDelDlg').hide();"
-                                         update=":acTab:wfForm :acTab:wfForm2"
-                                         actionListener="#{workflowBean.deleteSelected}"/>
-                    </h:panelGrid>
-                </h:panelGrid>
-            </h:form>
-        </p:dialog>
     </ui:define>
 </ui:composition>

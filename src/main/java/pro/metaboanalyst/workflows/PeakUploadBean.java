@@ -35,8 +35,6 @@ public class PeakUploadBean implements Serializable {
     @Inject
     MummiAnalBean mb;
     @Inject
-    WfUploadBean wu;
-    @Inject
     private WorkflowBean wb;
 
     private UploadedFile peakFile;
@@ -278,9 +276,7 @@ public class PeakUploadBean implements Serializable {
                 mb.setDisabledV2(true);
             }
 
-            wu.setUploadInfo(wu.getUploadInfo() + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.");
             sb.addMessage("Info", "Data has been uploaded successfully");
-            wu.setFileUploaded(true);
             wb.setDataName(fileName);
             wb.setDataFormat(dataFormat);
             wb.setDataType(dataType);
@@ -351,9 +347,7 @@ public class PeakUploadBean implements Serializable {
             sb.addMessage("Error", RDataUtils.getErrMsg(RC));
             return null;
         } else {
-            wu.setUploadInfo(wu.getUploadInfo() + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.");
             sb.addMessage("Info", "Data has been uploaded successfully");
-            wu.setFileUploaded(true);
             wb.setDataName(fileName);
             wb.setDataFormat(dataFormat);
             wb.setDataType(dataType);
@@ -375,10 +369,7 @@ public class PeakUploadBean implements Serializable {
         //sb.initNaviTree("mummichog-table");
         String res = handleMassAllUpload();
         if (res != null) {
-            wu.setUploadInfo(wu.getUploadInfo() + "<br/>Upload successful! Please click the <b>Proceed</b> button to the next step.");
             sb.addMessage("Info", "Data has been uploaded successfully");
-            wu.setFileUploaded(true);
-
         }
     }
 

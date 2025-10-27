@@ -86,7 +86,7 @@ public class FireProjectBean implements Serializable {
         }
         return workflowRunsTable;
     }
-
+   
     public void setWorkflowRunsTable(List<WorkflowRunModel> workflowRunsTable) {
         this.workflowRunsTable = (workflowRunsTable != null) ? workflowRunsTable : new ArrayList<>();
     }

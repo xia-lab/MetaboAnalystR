@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import pro.metaboanalyst.lts.FunctionInfo;
+import pro.metaboanalyst.utils.DataUtils;
 
 public class FunctionInvoker {
 
@@ -231,20 +232,28 @@ public class FunctionInvoker {
     }
 
     public static void invokeFunction(FunctionInfo functionInfo) throws Exception {
+        // e.g., "myBean.doWork"
         String functionName = functionInfo.getFunction();
+        String[] parts = functionName.split("\\.", 2);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid function format: " + functionName + " (expected beanName.methodName)");
+        }
+
+        String beanName = parts[0];
+        String methodName = parts[1];
+
+        // 1) Get the CDI/JSF bean (uses your new DataUtils.findBean)
+        Object bean = DataUtils.findBean(beanName);
+        if (bean == null) {
+            throw new IllegalStateException("Bean not found: " + beanName);
+        }
+
+        // 2) Set parameters via setters on that bean
         Map<String, Object> parameters = functionInfo.getParameters();
-
-        // Get the bean instance to call methods on
-        String beanName = functionName.split("\\.")[0];
-        Object bean = getBeanInstance(beanName);
-
-        // Set parameters using setters
         setParameters(bean, parameters);
 
-        // Invoke the main function (no-arg)
-        String methodName = functionName.split("\\.")[1];
-        Class<?> clazz = bean.getClass();
-        Method method = clazz.getMethod(methodName);
+        // 3) Invoke the no-arg method
+        Method method = bean.getClass().getMethod(methodName);
         method.invoke(bean);
     }
 
@@ -253,15 +262,9 @@ public class FunctionInvoker {
         Map<String, Object> parameters = functionInfo.getParameters();
 
         String beanName = functionName.split("\\.")[0];
-        System.out.println(beanName + "===callSettersBeanName");
-        Object bean = getBeanInstance(beanName);
+        Object bean = DataUtils.findBean(beanName);
 
         setParameters(bean, parameters);
-    }
-
-    private static Object getBeanInstance(String beanName) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        return context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
     }
 
     public static void main(String[] args) {

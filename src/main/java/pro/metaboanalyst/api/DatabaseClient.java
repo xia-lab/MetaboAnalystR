@@ -974,7 +974,7 @@ public class DatabaseClient {
      */
     // Back-compat: delegate to the 3-arg version (no project change)
     public String updateWorkflowRunStatus(String id, String newStatus) {
-        return updateWorkflowRunStatus(id, newStatus,  null);
+        return updateWorkflowRunStatus(id, newStatus, null);
     }
 
     /**
@@ -1023,5 +1023,26 @@ public class DatabaseClient {
     public String updateWorkflowRunStatus(int id, String newStatus, String projectId) {
         return updateWorkflowRunStatus(String.valueOf(id), newStatus, projectId);
     }
+    
+public String updateWorkflowRunFields(String id, Map<String, Object> fields) {
+    try {
+        if (id == null || id.isBlank()) return "Error updating workflow run: 'id' is required.";
+        final int runId = Integer.parseInt(id.trim());
+        if (fields == null || fields.isEmpty()) return "Error updating workflow run: payload is empty.";
 
+        if (ab.isInDocker()) {
+            return DatabaseController.updateWorkflowRunFlexible(runId, fields);
+        } else {
+            final Map<String, Object> payload = new HashMap<>(fields);
+            payload.put("id", runId);
+            return apiClient.post("/database/workflowruns/update", toJson(payload));
+        }
+    } catch (NumberFormatException nfe) {
+        LOGGER.log(Level.SEVERE, "updateWorkflowRunFields: invalid id '" + id + "'", nfe);
+        return "Error updating workflow run: 'id' must be an integer.";
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Error updating workflow run (id=" + id + ")", e);
+        return "Error updating workflow run: " + e.getMessage();
+    }
+}
 }

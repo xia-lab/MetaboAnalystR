@@ -84,7 +84,9 @@ import pro.metaboanalyst.controllers.multifac.HeatMap2Bean;
 import pro.metaboanalyst.lts.MailService;
 /* ------------- Jackson core ------------------------------- */
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.spi.AnnotatedField;
+import jakarta.enterprise.inject.literal.NamedLiteral;   // <-- this one
 
 /* ------------- Java reflection + collections -------------- */
 import java.lang.reflect.Field;
@@ -103,32 +105,38 @@ public class DataUtils {
 
     private static final Logger LOGGER = LogManager.getLogger(DataUtils.class);
 
-    /*
     @SuppressWarnings("unchecked")
-    public static Object findBean(String beanName) { // DOESN't work with project saving.
-        Instance<Object> instance = CDI.current().select(new NamedLiteral(beanName));
-        return instance.get();  // returns the bean as an Object
+    public static Object findBean(String beanName) {
+        // 1) Try CDI by @Named("<beanName>")
+        try {
+            Instance<Object> inst = CDI.current().select(Object.class, NamedLiteral.of(beanName));
+            if (inst.isResolvable()) {
+                return inst.get();
+            }
+            if (inst.isAmbiguous()) {
+                throw new IllegalStateException("Ambiguous CDI bean for name: " + beanName);
+            }
+            // fall through if unsatisfied
+        } catch (IllegalStateException noCdi) {
+            // CDI not active in this thread (e.g., background job / early bootstrap)
+        }
+
+        // 2) Fallback to JSF EL if we are on a JSF request
+        FacesContext fc = FacesContext.getCurrentInstance();
+        if (fc != null) {
+            return fc.getApplication().evaluateExpressionGet(fc, "#{" + beanName + "}", Object.class);
+        }
+
+        throw new IllegalStateException("Bean not found or CDI inactive for name: " + beanName);
     }
 
+    /*
     public static <T> T findBean2(String beanName) {
         FacesContext context = FacesContext.getCurrentInstance();
         return (T) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
     }
      */
-    // NamedLiteral class to represent @Named(beanName)
-    public static class NamedLiteral extends AnnotationLiteral<jakarta.inject.Named> implements jakarta.inject.Named {
-
-        private final String value;
-
-        public NamedLiteral(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String value() {
-            return value;
-        }
-    }
+    
 
     public static String getDomainURL(String myurl) {
         try {
@@ -1338,8 +1346,8 @@ public class DataUtils {
             LOGGER.error("doRedirect", ioe);
         }
     }
-    
-        public static void doRedirectWithGrowlTest(SessionBean1 sb, String url, String messageType, String message) {
+
+    public static void doRedirectWithGrowlTest(SessionBean1 sb, String url, String messageType, String message) {
         try {
             FacesContext facesContext = FacesContext.getCurrentInstance();
             Flash flash = facesContext.getExternalContext().getFlash();
@@ -1351,7 +1359,7 @@ public class DataUtils {
             // Perform the redirect
             facesContext.getExternalContext().redirect(url);
             sb.addMessage(messageType, message);
-                FacesContext.getCurrentInstance().responseComplete(); // ← stop JSF lifecycle
+            FacesContext.getCurrentInstance().responseComplete(); // ← stop JSF lifecycle
 
         } catch (IOException ioe) {
             LOGGER.error("doRedirect", ioe);

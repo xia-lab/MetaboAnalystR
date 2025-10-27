@@ -31,6 +31,7 @@ import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.postgresql.util.PGobject;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -2497,6 +2498,117 @@ public class DatabaseController implements Serializable {
         jsonb.setType("jsonb");
         jsonb.setValue(payload);
         ps.setObject(idx, jsonb);
+    }
+
+    public static String updateWorkflowRunFlexible(int id, Map<String, Object> fields) {
+        if (fields == null || fields.isEmpty()) {
+            return "No fields to update.";
+        }
+
+        // Whitelist & per-column typing/validation
+        final Set<String> allowed = Set.of(
+                "status", "project_id",
+                "dataset_id", "dataset_name",
+                "workflow_id", "module", "name"
+        );
+
+        List<String> sets = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        List<Integer> types = new ArrayList<>();
+
+        // Validate status if present
+        Object statusVal = fields.get("status");
+        if (statusVal != null) {
+            String s = String.valueOf(statusVal).toLowerCase();
+            if (!Set.of("pending", "running", "completed", "failed").contains(s)) {
+                return "Invalid status. Allowed: pending, running, completed, failed.";
+            }
+            fields.put("status", s);
+        }
+
+        for (Map.Entry<String, Object> e : fields.entrySet()) {
+            final String col = e.getKey();
+            if (!allowed.contains(col)) {
+                continue; // ignore unknown
+            }
+            Object v = e.getValue(); // keep nulls to clear
+            switch (col) {
+                case "dataset_id":
+                    sets.add("dataset_id = ?");
+                    if (v == null) {
+                        params.add(null);
+                        types.add(Types.OTHER); // postgres uuid
+                    } else {
+                        try {
+                            params.add(UUID.fromString(String.valueOf(v)));
+                            types.add(Types.OTHER);
+                        } catch (IllegalArgumentException iae) {
+                            return "dataset_id must be a valid UUID.";
+                        }
+                    }
+                    break;
+
+                case "project_id":
+                    sets.add("project_id = ?");
+                    if (v == null || String.valueOf(v).isBlank()) {
+                        params.add(null);
+                        types.add(Types.VARCHAR);
+                    } else {
+                        params.add(String.valueOf(v));
+                        types.add(Types.VARCHAR);
+                    }
+                    break;
+
+                case "dataset_name":
+                case "workflow_id":
+                case "module":
+                case "name":
+                case "status":
+                    sets.add(col + " = ?");
+                    if (v == null || String.valueOf(v).isBlank()) {
+                        params.add(null);
+                        types.add(Types.VARCHAR);
+                    } else {
+                        params.add(String.valueOf(v));
+                        types.add(Types.VARCHAR);
+                    }
+                    break;
+
+                default:
+                // skip any non-whitelisted
+            }
+        }
+
+        if (sets.isEmpty()) {
+            return "No valid columns in payload.";
+        }
+
+        final String sql = "UPDATE workflow_runs SET "
+                + String.join(", ", sets) + ", last_updated = NOW() WHERE id = ?";
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            int idx = 1;
+            for (int i = 0; i < params.size(); i++) {
+                Object val = params.get(i);
+                int t = types.get(i);
+                if (val == null) {
+                    ps.setNull(idx++, t);
+                } else if (t == Types.OTHER && val instanceof UUID) {
+                    ps.setObject(idx++, val, Types.OTHER); // UUID
+                } else {
+                    ps.setObject(idx++, val);
+                }
+            }
+            ps.setInt(idx, id);
+
+            int n = ps.executeUpdate();
+            return (n > 0) ? "OK" : "No row updated (id not found).";
+
+        } catch (SQLException e) {
+            System.err.println("updateWorkflowRunFlexible SQL error: " + e.getMessage());
+            return "SQL error: " + e.getMessage();
+        }
     }
 
 }

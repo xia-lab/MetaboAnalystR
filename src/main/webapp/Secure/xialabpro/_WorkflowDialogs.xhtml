@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                xmlns:c="jakarta.tags.core">
+
+
+    <p:dialog header="Workflow Progress"
+              widgetVar="workflowInfoDialog"
+              showEffect="fade"
+              hideEffect="fade"
+              modal="true"
+              width="600"
+              closable="true"
+              draggable="false"
+              resizable="false"
+              appendTo="@(body)">
+        <h:form id="formWorkflowInfo">
+            <!-- Job details in a structured grid -->
+            <h:panelGrid style="margin:40px">
+
+                <h:panelGrid columns="2" 
+                             style="display: inline-block; border-collapse: separate; border-spacing: 0 10px;"> 
+                    <h:panelGroup style="width:120px" layout="block">
+                        <h:outputLabel value="Start Time:" style="font-weight:bold"/>
+                    </h:panelGroup>
+
+                    <h:outputText value="#{jobExecution.currentStartTime}" />
+
+                    <h:outputLabel value="Job ID:" style="font-weight:bold" />
+                    <h:outputText value="#{jobExecution.currentJobId}" />
+
+                    <h:outputLabel value="Status:" style="font-weight:bold"/>
+                    <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
+                        <span>
+                            <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
+                            <span class="dots">
+                                <span>.</span>
+                                <span>.</span>
+                                <span>.</span>
+                            </span>
+                        </span>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
+                        <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
+                    </h:panelGroup>
+                </h:panelGrid>
+
+                <h:panelGroup layout="block" style="margin-top:15px;">
+                    <h:outputText value="Job submitted successfully. An email notice will be sent to you when your job is completed."/>
+                </h:panelGroup>
+
+                <h:panelGroup layout="block" style="margin-top:15px; font-weight:bold;">
+                    <h:outputText value="Use the ‘Notice’ on the top menu bar to view all important system messages."/>
+                </h:panelGroup>
+
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+
+
+    <p:dialog header="Job Progress"
+              widgetVar="progressDialog"
+              showEffect="fade"
+              hideEffect="fade"
+              modal="true"
+              width="920"
+              height="550"
+              closable="true"
+              draggable="false"
+              resizable="false"
+              appendTo="@(body)">
+        <h:form>
+            <h:panelGrid style="width:100%; line-height: 1.5; padding: 10px; font-size: 14px;" id='jobField'
+                         rendered="#{specLoader.spectraUploaded}"
+                         columnClasses="align-left">
+                <h:panelGrid  columns="2" style="width:auto; text-align: left; line-height: 24px">
+                    <h:outputLabel style="font-weight: bold" value="Job ID:"/>
+                    <h:outputLabel value="#{spectraController.currentJobId}"/>
+
+                    <h:panelGroup style="width: 160px;" layout="block">
+                        <h:outputLabel style="font-weight: bold" value="Current Status:"/>
+                    </h:panelGroup>
+                    <h:outputLabel value="#{spectraController.currentJobStatus}"/>
+
+                    <h:outputLabel style="font-weight: bold" value="Job Progress:"/>
+                    <p:progressBar widgetVar="pbAjax1" value="#{spectraController.progressProcessing}" 
+                                   labelTemplate="{value}%" global="false" 
+                                   style="width: 660px"/>
+
+                    <h:outputLabel style="font-weight: bold" value="Text Output:"/>
+                    <p:scrollPanel id="msgPane"
+                                   style="width:620px; height:365px; padding:10px 20px 10px 20px; text-align: left;"
+                                   class="surface-card shadow-1 p-4 text-800">
+                        <p:outputLabel escape="false" value="#{spectraProcessor.jobStatusText}"/>
+                    </p:scrollPanel>
+                </h:panelGrid>
+            </h:panelGrid>
+            <p:poll interval="3" listener="#{spectraController.checkStatus}" stop="#{!spectraController.stopStatusCheck}" update="jobField" />
+
+            <!-- Buttons Section -->
+            <div style="text-align: center; margin-top: 10px;">
+                <p:commandButton value="Close" 
+                                 style="width:120px; font-size: 14px; margin-right: 10px;" 
+                                 onclick="PF('progressDialog').hide();" />
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog modal="true" widgetVar="rawWorkflowProgressDialog" 
+              style="width: 200px; height:100px;" 
+              appendTo="@(body)" header="Processing .... "
+              draggable="false" closable="true" resizable="false"> 
+        <h:panelGrid style="width: 100%; text-align: center; padding-top:20px;">
+            <h:outputLabel value="Spectra processing step has finished, now processing the rest of the workflow, please be patient...."/>
+            <h:outputLabel value="Once finished you will be notified through email and notification bell."/>
+            <p:spacer/>
+            <p:graphicImage value="/resources/images/ajax-loader.gif" /> 
+            <p:spacer/>
+        </h:panelGrid>
+    </p:dialog>
+
+    <p:dialog id="rawWorkflowFinishDialogId" widgetVar="rawWorkflowFinishDialog" header="Workflow Status" modal="true" closable="true" width="510">
+        <h:form id="finishDialogForm">
+            <h:panelGrid columns="1" style="margin: 10px;">
+                <p:spacer height="30px" />
+
+                <h:panelGrid columns="2">
+                    <p:outputLabel value="Your workflow processing job (ID: #{diagramView.jobId}) status has become " />
+                    <p:outputLabel value="COMPLETED" style="font-weight: bold; color: green;" />
+                </h:panelGrid>
+
+                <p:spacer height="10px" />
+                <h:panelGrid columns="2">
+
+                    <h:outputText value="You can access the following link to view your results: " />
+                    <h:outputLink value="#{diagramView.finishLink}">Click here</h:outputLink>
+                </h:panelGrid>
+
+                <p:spacer height="30px" />
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+    <p:dialog header="Workflow Details" widgetVar="wfViewDlg" modal="true" appendTo="@(body)" resizable="true" width="720">
+        <h:form id="wfViewForm">
+            <h:panelGrid columns="2" columnClasses="col-label,col-value" style="width:100%; line-height:1.6;">
+                <h:outputText value="Name:"/>
+                <h:outputText value="#{workflowBean.selectedWorkflow['name']}"/>
+
+                <h:outputText value="Description:"/>
+                <h:outputText value="#{workflowBean.selectedWorkflow['description']}"/>
+
+                <h:outputText value="Module:"/>
+                <h:outputText value="#{workflowBean.selectedWorkflow['module']}"/>
+
+                <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['filename']}">
+                    <h:outputText value="File:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['filename']}"/>
+                </h:panelGroup>
+
+                <h:panelGroup rendered="#{not empty workflowBean.selectedWorkflow['created_at']}">
+                    <h:outputText value="Saved:"/>
+                    <h:outputText value="#{workflowBean.selectedWorkflow['created_at']}"/>
+                </h:panelGroup>
+            </h:panelGrid>
+
+            <div style="text-align:right; margin-top:10px;">
+                <p:commandButton value="Close" onclick="PF('wfViewDlg').hide();
+                        return false;"/>
+            </div>
+        </h:form>
+    </p:dialog>
+    <p:dialog header="Delete Workflow" widgetVar="wfDelDlg" modal="true" appendTo="@(body)" resizable="false" width="520">
+        <h:form id="wfDelForm">
+            <h:panelGrid style="width:100%; line-height:1.6; font-size:14px;">
+                <p>
+                    This action will permanently delete
+                    <b>#{workflowBean.selectedWorkflow['name']}</b>.
+                    Continue?
+                </p>
+                <h:panelGrid columns="2" style="width:100%; line-height:1.6;">
+                    <p:commandButton value="Cancel" onclick="PF('wfDelDlg').hide();
+                            return false;"/>
+                    <p:commandButton value="Delete" styleClass="ui-button-danger"
+                                     onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('wfDelDlg').hide();"
+                                     ajax="false"                                     
+                                     actionListener="#{workflowBean.deleteSelected}"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </h:form>
+    </p:dialog>
+    <p:dialog id="wfJsonDlg" widgetVar="wfJsonDlg"
+              header="Workflow JSON" modal="true"
+              appendTo="@(body)" width="900" height="600"
+              resizable="true" draggable="true" closable="true">
+        <h:form id="wfJsonDlgForm">
+            <p:toolbar class="mb-2">
+                <p:toolbarGroup>
+                    <span class="text-700">File: </span>
+                    <span class="ml-2 text-900">
+                        #{workflowBean.selectedWorkflowFile}
+                    </span>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <p:scrollPanel style="height:520px; border:1px solid var(--surface-border);">
+                <pre style="margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:12px; white-space:pre-wrap; word-break:break-word;">
+<h:outputText value="#{workflowBean.selectedWorkflowJson}" escape="true"/>
+                </pre>
+            </p:scrollPanel>
+        </h:form>
+    </p:dialog>
+
+
+</ui:composition>
+

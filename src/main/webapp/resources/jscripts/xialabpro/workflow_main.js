@@ -271,6 +271,7 @@ function setupButtons() {
      });
      */
     // Add interactivity (e.g., click event)
+    /*
     cy.on('tap', 'node', function (evt) {
         var node = evt.target;
         const id = node.id();
@@ -435,7 +436,7 @@ function setupButtons() {
         }
 
     });
-
+    */
     cy.on('tap', 'edge', function (evt) {
         var edge = evt.target;
     });

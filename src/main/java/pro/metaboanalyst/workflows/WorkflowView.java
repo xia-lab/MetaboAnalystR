@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.ActionEvent;
 import jakarta.faces.view.ViewScoped;
@@ -194,7 +193,7 @@ public class WorkflowView implements Serializable {
                         }
                     }
                     case "Missing Values" -> {
-                        ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                         boolean resBool = checkWorkflowContained("performMissingImpute");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
@@ -206,7 +205,7 @@ public class WorkflowView implements Serializable {
                     }
                     case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak", "Sanity Check_Table" -> {
                         sb.addNaviTrack("Data check", "/Secure/process/SanityCheck.xhtml");
-                        ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                         pb.setSanityChecked(false);
                         pb.performSanityCheck();
                         pb.skipButton_action_default();
@@ -222,7 +221,7 @@ public class WorkflowView implements Serializable {
                         if (sb.isMissingDisabled()) {
                             return 1;
                         }
-                        ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                        ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                         if (pb != null) {
                             boolean resBool = checkWorkflowContained("Filtering");
                             //if (!resBool && wb.isReloadingWorkflow()) {
@@ -243,7 +242,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        NormBean nb = (NormBean) getBeanInstance("nb");
+                        NormBean nb = (NormBean) DataUtils.findBean("normBean");
                         nb.preparePrenormData();
                         if (nb.getRowNormOpt().equals("SpecNorm") && nb.isSpecNormSpecifed()) {
                             RDataUtils.setSampleNormFactor(sb.getRConnection(), wb.getSampleBeans());
@@ -269,7 +268,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        UnivBean ub = (UnivBean) getBeanInstance("ub");
+                        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                         ub.vcButton_action();
                     }
                     case "PCA" -> {
@@ -279,7 +278,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("PCA", "/Secure/analysis/PCAView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultPCA();
                     }
                     case "iPCA" -> {
@@ -289,7 +288,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("PCA", "/Secure/multifac/LivePCAView.xhtml");
 
-                        LivePCABean lp = (LivePCABean) getBeanInstance("lp");
+                        LivePCABean lp = (LivePCABean) DataUtils.findBean("livePcaBean");
                         lp.initPCA3D();
                     }
                     case "ANOVA" -> {
@@ -299,7 +298,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("ANOVA", "/Secure/analysis/AnovaView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultANOVA();
                     }
                     case "Fold change" -> {
@@ -309,7 +308,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Fold change", "/Secure/analysis/FoldChangeView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultFC();
                     }
                     case "T-test" -> {
@@ -319,7 +318,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("T-test", "/Secure/analysis/TtestView.xhtml");
 
-                        UnivBean ub = (UnivBean) getBeanInstance("ub");
+                        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                         ub.ttButton_action();
                     }
                     case "Pattern Search" -> {
@@ -329,7 +328,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("PatternHunter", "/Secure/analysis/PatternView.xhtml");
 
-                        UnivBean ub = (UnivBean) getBeanInstance("ub");
+                        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                         ub.ptnBtn_action();
                     }
                     case "Correlation Heatmap" -> {
@@ -339,7 +338,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Correlations", "/Secure/analysis/CorrelationView.xhtml");
 
-                        UnivBean ub = (UnivBean) getBeanInstance("ub");
+                        UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                         ub.doDefaultStaticCorrelation();
                         ub.corrBtn_action();
                     }
@@ -350,7 +349,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("PLSDA", "/Secure/analysis/PLSDAView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultPLSDA();
                     }
                     case "sPLSDA" -> {
@@ -360,7 +359,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("sPLSDA", "/Secure/analysis/SparsePLSDAView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultSPLSDA();
                     }
                     case "OrthoPLSDA" -> {
@@ -370,7 +369,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("OrthoPLSDA", "/Secure/analysis/OrthoPLSDAView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultOPLSDA();
                     }
                     case "SAM" -> {
@@ -380,7 +379,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("SAM", "/Secure/analysis/SAMView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultSAM();
                     }
                     case "EBAM" -> {
@@ -391,7 +390,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("EBAM", "/Secure/analysis/EBAMView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultEBAM();
                     }
                     case "Dendrogram" -> {
@@ -401,7 +400,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Dendrogram", "/Secure/analysis/TreeView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultDendrogram();
                     }
                     case "Heatmap" -> {
@@ -411,7 +410,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Heatmap", "/Secure/analysis/HeatmapView.xhtml");
 
-                        ClusterBean cb = (ClusterBean) getBeanInstance("cb");
+                        ClusterBean cb = (ClusterBean) DataUtils.findBean("clusterBean");
                         cb.hmButton_action();
                     }
                     case "K-means" -> {
@@ -421,7 +420,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("K-means", "/Secure/analysis/KMView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultKmeanClust();
                     }
                     case "SOM" -> {
@@ -431,7 +430,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("SOM", "/Secure/analysis/SOMView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultSOMClust();
                     }
                     case "Random Forest" -> {
@@ -441,7 +440,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("RandomForest", "/Secure/analysis/RFView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultRF();
                     }
                     case "SVM" -> {
@@ -451,7 +450,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("SVM", "/Secure/analysis/RSVMView.xhtml");
 
-                        AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                        AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultSVM();
                     }
                     case "SSP" -> {
@@ -462,7 +461,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/OraView.xhtml");
-                        MsetBean mb = (MsetBean) getBeanInstance("mb");
+                        MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
                         mb.submitBtn_action();
                     }
                     case "QEA" -> {
@@ -473,7 +472,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/QeaView.xhtml");
-                        MsetBean mb = (MsetBean) getBeanInstance("mb");
+                        MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
                         //System.out.println(sb.getAnalType() + "=======QEA");
                         mb.submitBtn_action();
                     }
@@ -485,7 +484,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/enrichment/EnrichParamView.xhtml");
                         sb.addNaviTrack("Enrichment result", "/Secure/enrichment/OraView.xhtml");
-                        MsetBean mb = (MsetBean) getBeanInstance("mb");
+                        MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
                         mb.submitBtn_action();
                     }
                     case "Functional Annotation" -> {
@@ -495,7 +494,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/mummichog/LibraryView.xhtml");
 
-                        PeakCustomBean pc = (PeakCustomBean) getBeanInstance("pc");
+                        PeakCustomBean pc = (PeakCustomBean) DataUtils.findBean("peakcBean");
                         pc.customButton_action();
                     }
                     case "performPeaks2Fun", "performPeaks2Fun_mum", "performPeaks2Fun_gsea", "performPeaks2Fun_integ" -> {
@@ -510,14 +509,14 @@ public class WorkflowView implements Serializable {
                             funct = "performPeaks2Fun_mum";
                         } else if (func.equals("Heatmap_gsea")) {
                             funct = "performPeaks2Fun_gsea";
-                        }else if (func.equals("Heatmap_integ")) {
+                        } else if (func.equals("Heatmap_integ")) {
                             funct = "performPeaks2Fun_integ";
                         }
                         boolean resBool = checkWorkflowContained(funct);
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+                        MummiAnalBean ma = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
                         ma.setAnalOption("heatmap");
                         String nextPage = ma.performPeaks2Fun();
                         sb.addNaviTrack("Heatmap", "/Secure/viewer/HeatmapView.xhtml");
@@ -532,7 +531,7 @@ public class WorkflowView implements Serializable {
 
                     }
                     case "paBn_heatmap" -> {
-                        PathBean pab = (PathBean) getBeanInstance("pab");
+                        PathBean pab = (PathBean) DataUtils.findBean("pathBean");
                         boolean resBool = checkWorkflowContained("paBn_heatmap");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
@@ -542,7 +541,7 @@ public class WorkflowView implements Serializable {
 
                     }
                     case "paBn_proceed_ora", "paBn_proceed_qea", "paBn_action" -> {
-                        PathBean pab = (PathBean) getBeanInstance("pab");
+                        PathBean pab = (PathBean) DataUtils.findBean("pathBean");
                         boolean resBool = checkWorkflowContained("paBn_action");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
@@ -579,7 +578,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                         sb.setVisMode("dspc");
                         String res = mn.doMnetworkAnalysis("dspc");
                         refactoredName = "Network Building (DSPC)";
@@ -594,7 +593,7 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("Network viewer", "/Secure/network/MphenoNetView.xhtml");
                         refactoredName = "Network Visualization (DSPC)";
                         /*boolean resBool = checkWorkflowContained(func);
-                        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                         mn.setVisMode("dspc");
                         String res = mn.doMnetworkAnalysis(mn.getVisMode());
                          */
@@ -606,7 +605,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Network viewer", "/Secure/network/MetaboNetView.xhtml");
 
-                        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                         sb.setVisMode("static");
                         String res = mn.doMnetworkAnalysis(sb.getVisMode());
                         //System.out.println("KEGGNETWORK+++++===============");
@@ -618,7 +617,7 @@ public class WorkflowView implements Serializable {
                         }
                         sb.addNaviTrack("Set parameter", "/Secure/network/MnetParamView.xhtml");
 
-                        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                         String res = mn.doMnetworkAnalysis(sb.getVisMode());
                         if (res == null) {
                             success = false;
@@ -640,7 +639,7 @@ public class WorkflowView implements Serializable {
                             return 2;
                         }
                         sb.addNaviTrack("Explorer", "/Secure/roc/MultiRocView.xhtml");
-                        RocAnalBean b = (RocAnalBean) getBeanInstance("b");
+                        RocAnalBean b = (RocAnalBean) DataUtils.findBean("rocAnalBean");
                         b.performExploreAnalysis();
                     }
                     case "Model-based ROC" -> {
@@ -674,7 +673,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaProcBean mp = (MetaProcBean) getBeanInstance("mp");
+                        MetaProcBean mp = (MetaProcBean) DataUtils.findBean("mprocBean");
                         mp.metacheck_proceed();
                     }
                     case "Metadata Heatmap" -> {
@@ -682,7 +681,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaHeatmapBean mh = (MetaHeatmapBean) getBeanInstance("mh");
+                        MetaHeatmapBean mh = (MetaHeatmapBean) DataUtils.findBean("mhmBean");
                         success = mh.metaOverviewBn_action();
                         sb.addNaviTrack("Metadata", "/Secure/multifac/MetaDataView.xhtml", success);
 
@@ -692,7 +691,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        Aov2Bean aov = (Aov2Bean) getBeanInstance("aov");
+                        Aov2Bean aov = (Aov2Bean) DataUtils.findBean("aov2Bean");
                         aov.doDefaultAov2();
                         success = aov.aov2Bn_action();
                         sb.addNaviTrack("ANOVA2", "/Secure/multifac/Anova2View.xhtml", success);
@@ -703,7 +702,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        AscaBean as = (AscaBean) getBeanInstance("as");
+                        AscaBean as = (AscaBean) DataUtils.findBean("ascaBean");
                         as.doDefaultAsca();
                         success = as.mdlBtn_action();
                         sb.addNaviTrack("ASCA", "/Secure/multifac/AscaView.xhtml", success);
@@ -714,7 +713,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        HeatMap2Bean hm = (HeatMap2Bean) getBeanInstance("hm");
+                        HeatMap2Bean hm = (HeatMap2Bean) DataUtils.findBean("hm2Bean");
                         hm.doDefaultHeatmap2();
                         success = hm.hm2Bn_action();
                         sb.addNaviTrack("Heatmap2", "/Secure/multifac/Heatmap2View.xhtml", success);
@@ -725,8 +724,8 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MultifacBean mf = (MultifacBean) getBeanInstance("mf");
-                        LimmaBean lm = (LimmaBean) getBeanInstance("lm");
+                        MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
+                        LimmaBean lm = (LimmaBean) DataUtils.findBean("lmBean");
                         mf.setCovPerformed(false);
                         lm.covScatterButton_action();
                         if (!mf.isCovPerformed()) {
@@ -745,7 +744,7 @@ public class WorkflowView implements Serializable {
                             sb.addNaviTrack("MEBA", "/Secure/multifac/TimeCourseView.xhtml", success);
 
                         } else {
-                            MebaBean meba = (MebaBean) getBeanInstance("meba");
+                            MebaBean meba = (MebaBean) DataUtils.findBean("mebaBean");
                             FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
                         }
                     }
@@ -754,19 +753,19 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MultiRfBean rf = (MultiRfBean) getBeanInstance("rf");
+                        MultiRfBean rf = (MultiRfBean) DataUtils.findBean("mrfBean");
                         success = rf.rfBn_action_time();
                         sb.addNaviTrack("RandomForest", "/Secure/multifac/MultifacRFView.xhtml", success);
 
                     }
                     case "Correlation Analysis" -> {
-                        MultifacBean mf = (MultifacBean) getBeanInstance("mf");
+                        MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
                         mf.setCorrPerformed(false);
                         boolean resBool = checkWorkflowContained("corBtn_action");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MultiCorrBean mc = (MultiCorrBean) getBeanInstance("mc");
+                        MultiCorrBean mc = (MultiCorrBean) DataUtils.findBean("mCorrBean");
                         mc.corBtn_action();
                         if (!mf.isCorrPerformed()) {
                             success = false;
@@ -793,7 +792,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        DoseResponseBean dr = (DoseResponseBean) getBeanInstance("dr");
+                        DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
                         dr.updateDoseDEAnalysis();
                         success = dr.isSigOK();
                         sb.addNaviTrack("Sig. analysis", "/Secure/dose/SigFeatureView.xhtml", success);
@@ -805,7 +804,7 @@ public class WorkflowView implements Serializable {
                             return 2;
                         }
                         sb.addNaviTrack("Curve Fit", "/Secure/dose/ModelFitView.xhtml");
-                        DoseResponseBean dr = (DoseResponseBean) getBeanInstance("dr");
+                        DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
                         success = dr.performCurveFitting();
                         sb.addNaviTrack("Curve Fitting", "/Secure/dose/FitResultView.xhtml", success);
                     }
@@ -824,7 +823,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                        MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                         String res = ms.performPvalCombination();
                         if (res == null) {
                             success = false;
@@ -836,7 +835,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                        MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                         String res = ms.performVoteCounting();
                         if (res == null) {
                             success = false;
@@ -848,7 +847,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                        MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                         String res = ms.performDirectMerging();
                         if (res == null) {
                             success = false;
@@ -860,7 +859,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaLoadBean ml = (MetaLoadBean) getBeanInstance("ml");
+                        MetaLoadBean ml = (MetaLoadBean) DataUtils.findBean("loadBean");
                         String res = ml.prepareUpsetView();
                         if (res == null) {
                             success = false;
@@ -876,7 +875,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaPathStatBean metaps = (MetaPathStatBean) getBeanInstance("metaps");
+                        MetaPathStatBean metaps = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
                         String res = metaps.performMetaPathAnalysis();
                         if (res == null) {
                             success = false;
@@ -901,7 +900,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaPathLoadBean metapl = (MetaPathLoadBean) getBeanInstance("metapl");
+                        MetaPathLoadBean metapl = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
                         String res = metapl.prepareMetaPathUpsetView();
                         if (res == null) {
                             success = false;
@@ -915,7 +914,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaPathStatBean metaps = (MetaPathStatBean) getBeanInstance("metaps");
+                        MetaPathStatBean metaps = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
                         String res = metaps.performMetaPoolAnalysis();
                         if (res == null) {
                             success = false;
@@ -940,7 +939,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MetaLoadBean ml = (MetaLoadBean) getBeanInstance("ml");
+                        MetaLoadBean ml = (MetaLoadBean) DataUtils.findBean("loadBean");
                         String res = ml.prepareUpsetView();
                         if (res == null) {
                             success = false;
@@ -954,8 +953,7 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("Spectra check", "/Secure/spectra/SpectraCheck.xhtml", success);
                     }
                     case "Spectra Parameters Settings" -> {
-                        SpectraProcessBean sp = (SpectraProcessBean) getBeanInstance("sp");
-                        SpectraControlBean sc = (SpectraControlBean) getBeanInstance("sc");
+                        SpectraProcessBean sp = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
                         String res = "ok";
                         if (sp.isIsms2DIA()) {
                             boolean resBool = checkWorkflowContained("prepareDIASpec");
@@ -977,7 +975,7 @@ public class WorkflowView implements Serializable {
                         }
                     }
                     case "Spectra Processing" -> {
-                        SpectraControlBean sc = (SpectraControlBean) getBeanInstance("sc");
+                        SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean("spectraController");
                         boolean resBool = checkWorkflowContained("spectraParams");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
@@ -1118,120 +1116,9 @@ public class WorkflowView implements Serializable {
         // Add response to request map to pass to the client
         // Add response to the context
         if (res.equals("ok") && functionsStr.equals("Save Project")) {
-
             res = "ok=" + fpb.getSelectedProject().getId();
         }
         PrimeFaces.current().ajax().addCallbackParam("res", res);
-    }
-
-    private Object getBeanInstance(String beanName) {
-        // Programmatic lookup using CDI BeanManager
-        switch (beanName) {
-            case "sp" -> {
-                return CDI.current().select(SpectraProcessBean.class).get();
-            }
-            case "sup" -> {
-                return CDI.current().select(SpectraUploadBean.class).get();
-            }
-            case "sc" -> {
-                return CDI.current().select(SpectraControlBean.class).get();
-            }
-            case "metapl" -> {
-                return CDI.current().select(MetaPathLoadBean.class).get();
-            }
-            case "metaps" -> {
-                return CDI.current().select(MetaPathStatBean.class).get();
-            }
-            case "mf" -> {
-                return CDI.current().select(MultifacBean.class).get();
-            }
-            case "ms" -> {
-                return CDI.current().select(MetaStatBean.class).get();
-            }
-            case "ml" -> {
-                return CDI.current().select(MetaLoadBean.class).get();
-            }
-            case "dr" -> {
-                return CDI.current().select(DoseResponseBean.class).get();
-            }
-            case "mc" -> {
-                return CDI.current().select(MultiCorrBean.class).get();
-            }
-            case "rf" -> {
-                return CDI.current().select(MultiRfBean.class).get();
-            }
-            case "meba" -> {
-                return CDI.current().select(MebaBean.class).get();
-            }
-            case "lm" -> {
-                return CDI.current().select(LimmaBean.class).get();
-            }
-            case "hm" -> {
-                return CDI.current().select(HeatMap2Bean.class).get();
-            }
-            case "as" -> {
-                return CDI.current().select(AscaBean.class).get();
-            }
-            case "aov" -> {
-                return CDI.current().select(Aov2Bean.class).get();
-            }
-            case "mh" -> {
-                return CDI.current().select(MetaHeatmapBean.class).get();
-            }
-            case "mp" -> {
-                return CDI.current().select(MetaProcBean.class).get();
-            }
-            case "b" -> {
-                return CDI.current().select(RocAnalBean.class).get();
-            }
-            case "mn" -> {
-                return CDI.current().select(MnetResBean.class).get();
-            }
-            case "ma" -> {
-                return CDI.current().select(MummiAnalBean.class).get();
-            }
-            case "pab" -> {
-                return CDI.current().select(PathBean.class).get();
-            }
-            case "pc" -> {
-                return CDI.current().select(PeakCustomBean.class).get();
-            }
-            case "nb" -> {
-                return CDI.current().select(NormBean.class).get();
-            }
-            case "fp" -> {
-                return CDI.current().select(WorkflowView.class).get();
-            }
-            case "ub" -> {
-                return CDI.current().select(UnivBean.class).get();
-            }
-            case "cb" -> {
-                return CDI.current().select(ClusterBean.class).get();
-            }
-            case "an" -> {
-                return CDI.current().select(AnalysisBean.class).get();
-            }
-            case "mb" -> {
-                return CDI.current().select(MsetBean.class).get();
-            }
-            case "mapb" -> {
-                return CDI.current().select(MappingBean.class).get();
-            }
-            case "pb" -> {
-                return CDI.current().select(ProcessBean.class).get();
-            }
-            case "ab" -> {
-                return CDI.current().select(ApplicationBean1.class).get();
-            }
-            case "lp" -> {
-                return CDI.current().select(LivePCABean.class).get();
-            }
-            case "sb" -> {
-                return CDI.current().select(SessionBean1.class).get();
-            }
-            default ->
-                throw new IllegalArgumentException("Unknown bean name: " + beanName);
-        }
     }
 
     public void addToWorkflow(String url) {
@@ -1302,117 +1189,117 @@ public class WorkflowView implements Serializable {
         try {
             switch (func) {
                 case "Data Processing", "Sanity Check", "Sanity Check Intensity", "Sanity Check Peak" -> {
-                    ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                    ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                     pb.skipButton_action_default();
                 }
                 case "Filtering", "Filtering_Table", "Filtering Intensity" -> {
-                    ProcessBean pb = (ProcessBean) getBeanInstance("pb");
+                    ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                     pb.filterButton_action();
                 }
                 case "Normalization", "Normalization_Table", "Normalization Intensity" -> {
-                    NormBean nb = (NormBean) getBeanInstance("nb");
+                    NormBean nb = (NormBean) DataUtils.findBean("normBean");
                     nb.preparePrenormData();
                     nb.performDataNormalization();
                 }
                 case "Volcano" -> {
 
-                    //UnivBean ub = (UnivBean) getBeanInstance("ub");
+                    //UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                     //ub.setupVolcano();
                 }
                 case "PCA" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultPCA();
                 }
                 case "iPCA" -> {
-                    //LivePCABean lp = (LivePCABean) getBeanInstance("lp");
+                    //LivePCABean lp = (LivePCABean) DataUtils.findBean("livePcaBean");
                     //lp.initPCA3D();
                 }
                 case "ANOVA" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultANOVA();
                 }
                 case "Fold change" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultFC();
                 }
                 case "T-test" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultTT();
                 }
                 case "Pattern Search" -> {
-                    //UnivBean ub = (UnivBean) getBeanInstance("ub");
+                    //UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                     //ub.ptnBtn_action();
                 }
                 case "Correlation Heatmap" -> {
-                    //UnivBean ub = (UnivBean) getBeanInstance("ub");
+                    //UnivBean ub = (UnivBean) DataUtils.findBean("univBean");
                     //ub.corrBtn_action();
                 }
                 case "PLSDA" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultPLSDA();
                 }
                 case "sPLSDA" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultSPLSDA();
                 }
                 case "OrthoPLSDA" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultOPLSDA();
                 }
                 case "SAM" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultSAM();
                 }
                 case "EBAM" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultEBAM();
                 }
                 case "Dendrogram" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultDendrogram();
                 }
                 case "Heatmap" -> {
-                    //ClusterBean cb = (ClusterBean) getBeanInstance("cb");
+                    //ClusterBean cb = (ClusterBean) DataUtils.findBean("clusterBean");
                     //cb.hmButton_action();
                 }
                 case "K-means" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultKmeanClust();
                 }
                 case "SOM" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultSOMClust();
                 }
                 case "Random Forest" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultRF();
                 }
                 case "SVM" -> {
-                    //AnalysisBean an = (AnalysisBean) getBeanInstance("an");
+                    //AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                     //an.doDefaultSVM();
                 }
                 case "SSP" -> {
-                    MappingBean mapb = (MappingBean) getBeanInstance("mapb");
+                    MappingBean mapb = (MappingBean) DataUtils.findBean("mapBean");
                     mapb.sspNextBn_action();
                 }
                 case "QEA" -> {
-                    MsetBean mb = (MsetBean) getBeanInstance("mb");
+                    MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
                     mb.submitBtn_action();
                 }
                 case "ORA" -> {
-                    MsetBean mb = (MsetBean) getBeanInstance("mb");
+                    MsetBean mb = (MsetBean) DataUtils.findBean("msetBean");
                     mb.submitBtn_action();
                 }
                 case "Functional Annotation" -> {
-                    PeakCustomBean pc = (PeakCustomBean) getBeanInstance("pc");
+                    PeakCustomBean pc = (PeakCustomBean) DataUtils.findBean("peakcBean");
                     pc.customButton_action();
                 }
                 case "performPeaks2Fun", "Scatter" -> {
-                    MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+                    MummiAnalBean ma = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
                     String nextPage = ma.performPeaks2Fun();
                 }
                 case "Heatmap_mum" -> {
-                    MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+                    MummiAnalBean ma = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
                     ma.setAnalOption("heatmap");
                     String nextPage = ma.performPeaks2Fun();
                 }
@@ -1423,7 +1310,7 @@ public class WorkflowView implements Serializable {
 
                 }
                 case "paBn_proceed_ora", "paBn_proceed_qea" -> {
-                    PathBean pab = (PathBean) getBeanInstance("pab");
+                    PathBean pab = (PathBean) DataUtils.findBean("pathBean");
                     String res = pab.paBn_proceed();
 
                 }
@@ -1435,7 +1322,7 @@ public class WorkflowView implements Serializable {
                     sb.addNaviTrack("Set parameter", "/Secure/network/MnetParamView.xhtml");
                 }
                 case "Network Builder_dspc" -> {
-                    MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                    MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                     sb.setVisMode("dspc");
                     String res = mn.doMnetworkAnalysis(sb.getVisMode());
 
@@ -1443,22 +1330,22 @@ public class WorkflowView implements Serializable {
                 case "DSPC Network", "Network Viewer_dspc" -> {
                     //sb.addNaviTrack("Network viewer", "/Secure/network/MphenoNetView.xhtml");
                     /*boolean resBool = checkWorkflowContained(func);
-                        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                         mn.setVisMode("dspc");
                         String res = mn.doMnetworkAnalysis(mn.getVisMode());
                      */
                 }
                 case "KEGG Network" -> {
-                    MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                    MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                     sb.setVisMode("static");
                     String res = mn.doMnetworkAnalysis(sb.getVisMode());
                 }
                 case "doMnetworkAnalysis" -> {
-                    MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+                    MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                     String res = mn.doMnetworkAnalysis(sb.getVisMode());
                 }
                 case "Multivariate ROC" -> {
-                    RocAnalBean b = (RocAnalBean) getBeanInstance("b");
+                    RocAnalBean b = (RocAnalBean) DataUtils.findBean("rocAnalBean");
                     b.performExploreAnalysis();
                 }
                 case "Model-based ROC" -> {
@@ -1468,31 +1355,31 @@ public class WorkflowView implements Serializable {
                     rocb.performDefaultUnivAnalysis_internal();
                 }
                 case "Metadata check" -> {
-                    //MetaProcBean mp = (MetaProcBean) getBeanInstance("mp");
+                    //MetaProcBean mp = (MetaProcBean) DataUtils.findBean("mprocBean");
                     //mp.metacheck_proceed();
                 }
                 case "Metadata Heatmap" -> {
-                    MetaHeatmapBean mh = (MetaHeatmapBean) getBeanInstance("mh");
+                    MetaHeatmapBean mh = (MetaHeatmapBean) DataUtils.findBean("mhmBean");
                     mh.metaOverviewBn_action();
                 }
                 case "Multifactor anova" -> {
-                    Aov2Bean aov = (Aov2Bean) getBeanInstance("aov");
+                    Aov2Bean aov = (Aov2Bean) DataUtils.findBean("aov2Bean");
                     aov.doDefaultAov2();
                     aov.aov2Bn_action();
                 }
                 case "ASCA" -> {
-                    AscaBean as = (AscaBean) getBeanInstance("as");
+                    AscaBean as = (AscaBean) DataUtils.findBean("ascaBean");
                     as.doDefaultAsca();
                     as.mdlBtn_action();
                 }
                 case "Clustering heatmap" -> {
-                    HeatMap2Bean hm = (HeatMap2Bean) getBeanInstance("hm");
+                    HeatMap2Bean hm = (HeatMap2Bean) DataUtils.findBean("hm2Bean");
                     hm.doDefaultHeatmap2();
                     hm.hm2Bn_action();
                 }
                 case "Linear Models" -> {
-                    MultifacBean mf = (MultifacBean) getBeanInstance("mf");
-                    LimmaBean lm = (LimmaBean) getBeanInstance("lm");
+                    MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
+                    LimmaBean lm = (LimmaBean) DataUtils.findBean("lmBean");
                     mf.setCovPerformed(false);
                     lm.covScatterButton_action();
                 }
@@ -1501,16 +1388,16 @@ public class WorkflowView implements Serializable {
                         sb.addMessage("Error", "MEBA only work on time-series data.");
                         success = false;
                     } else {
-                        MebaBean meba = (MebaBean) getBeanInstance("meba");
+                        MebaBean meba = (MebaBean) DataUtils.findBean("mebaBean");
                         FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
                     }
                 }
                 case "Random Forest2" -> {
-                    MultiRfBean rf = (MultiRfBean) getBeanInstance("rf");
+                    MultiRfBean rf = (MultiRfBean) DataUtils.findBean("mrfBean");
                     rf.rfBn_action_time();
                 }
                 case "Correlation Analysis" -> {
-                    MultiCorrBean mc = (MultiCorrBean) getBeanInstance("mc");
+                    MultiCorrBean mc = (MultiCorrBean) DataUtils.findBean("mCorrBean");
                     mc.corBtn_action();
                 }
                 case "Correlation Networks (DSPC)" -> {
@@ -1518,12 +1405,12 @@ public class WorkflowView implements Serializable {
 
                 }
                 case "DE Analysis" -> {
-                    DoseResponseBean dr = (DoseResponseBean) getBeanInstance("dr");
+                    DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
                     dr.updateDoseDEAnalysis();
                 }
                 case "Curve Fitting" -> {
 
-                    DoseResponseBean dr = (DoseResponseBean) getBeanInstance("dr");
+                    DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
                     dr.performCurveFitting();
                 }
                 case "Result" -> {
@@ -1534,52 +1421,52 @@ public class WorkflowView implements Serializable {
                     //sb.addNaviTrack("View result", "/Secure/dose/FitResultView.xhtml");
                 }
                 case "Combine P-values" -> {
-                    MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                    MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                     ms.performPvalCombination();
                 }
                 case "Vote Counting" -> {
-                    MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                    MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                     ms.performVoteCounting();
                 }
                 case "Direct Merging" -> {
-                    MetaStatBean ms = (MetaStatBean) getBeanInstance("ms");
+                    MetaStatBean ms = (MetaStatBean) DataUtils.findBean("metaStatBean");
                     ms.performDirectMerging();
                 }
                 case "Upset Diagram" -> {
-                    MetaLoadBean ml = (MetaLoadBean) getBeanInstance("ml");
+                    MetaLoadBean ml = (MetaLoadBean) DataUtils.findBean("loadBean");
                     ml.prepareUpsetView();
                 }
                 case "metapaths_Method Selection" -> {
 
                 }
                 case "Pathway-level integration" -> {
-                    MetaPathStatBean metaps = (MetaPathStatBean) getBeanInstance("metaps");
+                    MetaPathStatBean metaps = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
                     metaps.performMetaPathAnalysis();
                 }
                 case "metapaths Network Explorer path" -> {
                     //int res = RMetaPathUtils.performNetworkAnal(sb.getRConnection());
                 }
                 case "metapaths Upset Diagram path" -> {
-                    MetaPathLoadBean metapl = (MetaPathLoadBean) getBeanInstance("metapl");
+                    MetaPathLoadBean metapl = (MetaPathLoadBean) DataUtils.findBean("pLoadBean");
                     metapl.prepareMetaPathUpsetView();
                 }
                 case "Pooling peaks" -> {
-                    MetaPathStatBean metaps = (MetaPathStatBean) getBeanInstance("metaps");
+                    MetaPathStatBean metaps = (MetaPathStatBean) DataUtils.findBean("pMetaStatBean");
                     metaps.performMetaPoolAnalysis();
                 }
                 case "metapaths Network Explorer pool" -> {
                     //int res = RMetaPathUtils.performNetworkAnal(sb.getRConnection());
                 }
                 case "metapaths Upset Diagram pool" -> {
-                    MetaLoadBean ml = (MetaLoadBean) getBeanInstance("ml");
+                    MetaLoadBean ml = (MetaLoadBean) DataUtils.findBean("loadBean");
                     ml.prepareUpsetView();
                 }
                 case "Spectra Check" -> {
                     // Add specific handling if required
                 }
                 case "Spectra Parameters Settings" -> {
-                    SpectraProcessBean sp = (SpectraProcessBean) getBeanInstance("sp");
-                    SpectraControlBean sc = (SpectraControlBean) getBeanInstance("sc");
+                    SpectraProcessBean sp = (SpectraProcessBean) DataUtils.findBean("spectraProcessor");
+                    SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean("spectraController");
                     if (sp.isIsms2DIA()) {
                         sp.prepareDIASpec();
                     } else {
@@ -1588,7 +1475,7 @@ public class WorkflowView implements Serializable {
                     sc.goToJobStatus(false);
                 }
                 case "Spectra Processing" -> {
-                    SpectraControlBean sc = (SpectraControlBean) getBeanInstance("sc");
+                    SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean("spectraController");
                     sc.setCount(5);
                     //sc.performPlan();
                     if (sc.isJobSubmitted()) {
@@ -1621,10 +1508,10 @@ public class WorkflowView implements Serializable {
         return "";
     }
 
-    public void generateWorkflowJson(String projectType,  boolean msgBool) throws IOException {
+    public void generateWorkflowJson(String projectType, boolean msgBool) throws IOException {
         generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, true, msgBool);
     }
-    
+
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
@@ -1833,7 +1720,7 @@ public class WorkflowView implements Serializable {
             }
             case "performPeaks2Fun", "Scatter" -> {
                 boolean resBool = checkWorkflowContained(func);
-                MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+                MummiAnalBean ma = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
 
                 if (ma.getAlgOpts().length > 1) {
                     url = "/Secure/mummichog/IntegMumResultView.xhtml";
@@ -1857,7 +1744,7 @@ public class WorkflowView implements Serializable {
 
             }
             case "paBn_proceed_ora", "paBn_proceed_qea" -> {
-                PathBean pab = (PathBean) getBeanInstance("pab");
+                PathBean pab = (PathBean) DataUtils.findBean("pathBean");
                 boolean resBool = checkWorkflowContained("paBn_proceed");
                 String res = pab.paBn_proceed();
                 if (pab.getAnalOption().equals("Scatter")) {
@@ -2026,7 +1913,7 @@ public class WorkflowView implements Serializable {
             return;
         }
         sb.addNaviTrack("Set parameter", "/Secure/network/MnetParamView.xhtml");
-        MnetResBean mn = (MnetResBean) getBeanInstance("mn");
+        MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
         String res = mn.doMnetworkAnalysis(sb.getVisMode());
         if (res.equals("MnetView")) {
             sb.addNaviTrack("Network viewer", "/Secure/network/MetaboNetView.xhtml");
@@ -2046,7 +1933,7 @@ public class WorkflowView implements Serializable {
         if (!resBool && wb.isReloadingWorkflow()) {
             return 2;
         }
-        MummiAnalBean ma = (MummiAnalBean) getBeanInstance("ma");
+        MummiAnalBean ma = (MummiAnalBean) DataUtils.findBean("mummiAnalBean");
         String nextPage = ma.performPeaks2Fun();
         wb.getCalledWorkflows().add("Scatter");
         if (nextPage.equals("Heatmap view")) {

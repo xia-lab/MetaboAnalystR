@@ -2173,55 +2173,6 @@ public class DiagramView implements Serializable {
         }
     }
 
-    public void onWorkflowChange() {
-        sourceNodes.clear();
-        String name = "";
-        switch (workflowName) {
-            case "NA" -> {
-                System.out.println("Selected workflow: None");
-                return;
-            }
-
-            case "lcms-spec" ->
-                name = "LC-MS Spectra";
-
-            case "generic-table" -> {
-                System.out.println("Selected workflow: Generic Table Analysis");
-                name = "Generic Table";
-            }
-
-            case "targeted" -> {
-                System.out.println("Selected workflow: Targeted Metabolomics");
-                name = "Compound Table";
-            }
-
-            case "untargeted" -> {
-                System.out.println("Selected workflow: Untargeted Metabolomics");
-                name = "Peak Table";
-            }
-
-            case "mspeak" -> {
-                System.out.println("Selected workflow: MS peak list");
-                name = "Peak List";
-            }
-
-            case "cmpdpeak" -> {
-                System.out.println("Selected workflow: Metabolite list");
-                name = "Metabolite List";
-            }
-
-            default ->
-                System.out.println("Unknown workflow selected: " + workflowName);
-            // Add fallback logic for unknown workflows
-        }
-        sourceNodes.add(name);
-        disconnectAllConnections();
-        //connectInputToProc(name);
-        selectInputNode(name);
-        disableAnalNodes(name);
-
-    }
-
     public boolean resumeRawProject(String folderName, String jobId, String email) {
 
         Map<String, Object> obj = db.obtainFolderNameProject(folderName);
@@ -2273,31 +2224,6 @@ public class DiagramView implements Serializable {
                 + "<div>\n"
                 + "    <p>\n"
                 + "        Your workflow processing job (ID: " + jobId + ") status has become <b>COMPLETED</b>.\n"
-                + "    </p>\n"
-                + "    <p>\n"
-                + "        You can access the following link to resume your project: " + shareLink + ".\n"
-                + "    </p>\n"
-                + "    <p>\n"
-                + "        Please ignore this email if you did not submit any jobs to MetaboAnalyst.\n"
-                + "    </p>\n"
-                + "\n"
-                + "\n Do NOT reply this email."
-                + "</div>\n"
-                + "</body>\n"
-                + "</html>";
-
-        boolean res = ms.sendEmail(to, ab.getAppName() + " - Workflow Completed", "text/html", htmlMsg);
-        return res;
-    }
-
-    public boolean sendRawResumeTest(String to, String jobId, String shareLink) throws JsonProcessingException, IOException, InterruptedException {
-
-        String htmlMsg = "<!DOCTYPE html>\n"
-                + "<html>\n"
-                + "<body style=\"font-family: Arial; font-size: 12px;\">\n"
-                + "<div>\n"
-                + "    <p>\n"
-                + "        Your raw data processing (ID: " + jobId + ") has become <b>COMPLETED</b>.\n"
                 + "    </p>\n"
                 + "    <p>\n"
                 + "        You can access the following link to resume your project: " + shareLink + ".\n"
@@ -2981,65 +2907,7 @@ public class DiagramView implements Serializable {
         return moduleName;
     }
 
-    /*
-     * dataType: list, conc, specbin, pktable, nmrpeak, mspeak, msspec
-     * analType: stat, pathora, pathqea, msetora, msetssp, msetqea, msetview, cmpdmap, peaksearch, smpmap
-     * */
-    public void checkAvailableModules() {
-        if (dc.getSelected() == null) {
-            return;
-        }
-
-        switch (dc.getSelected().getModule()) {
-            case "stat" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Feature List", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "dose" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Feature List", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "mf" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Feature List", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "roc" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Feature List", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "pathqea", "msetqea" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Feature List", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "pathqora", "msetora" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Data Table", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "mummichog" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Data Table", false);
-                toggleNodeVisibility("Multiple Tables", false);
-            }
-            case "metadata" -> {
-                toggleNodeVisibility("LC-MS Spectra", false);
-                toggleNodeVisibility("Data Table", false);
-                toggleNodeVisibility("Feature List", false);
-            }
-            case "raw" -> {
-                toggleNodeVisibility("Multiple Tables", false);
-                toggleNodeVisibility("Data Table", false);
-                toggleNodeVisibility("Feature List", false);
-            }
-            default -> {
-            }
-        }
-    }
+    
     private static final Logger LOGGER = Logger.getLogger(DiagramView.class.getName());
 
     // === Convert Set<WorkflowParameters> to a deterministic List ===

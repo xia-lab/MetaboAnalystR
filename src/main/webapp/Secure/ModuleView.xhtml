@@ -183,23 +183,21 @@
                         <div class="ui-g-2  mypane5 mypane" onclick="window.location = '#{ctl.getModuleURL(12)}'">Causal Analysis <br/> [Mendelian randomization]</div>
                         <div class="ui-g-4"></div>
                     </div>
-                    <h:panelGrid columns="3"
+                    <h:panelGrid columns="2"
                                  style="text-align:center; padding:20px 10px; margin-top:20px; width:100%">
-                        <p:button value="Saved Projects"
-                                  styleClass="ui-button-outlined ui-button-info"
-                                  style="font-size:15px !important; font-weight:bold; height:46px; width:200px"
-                                  outcome="ProjectView"/>
+                        <p:commandButton value="Saved Projects"
+                                         styleClass="ui-button-outlined ui-button-info"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width:200px"
+                                         ajax="false" process="@this" immediate="true"
+                                         action="ProjectView"/>
 
-                        <p:button value="Data Center"
-                                  styleClass="ui-button-outlined ui-button-help"
-                                  style="font-size:15px !important; font-weight:bold; height:46px; width:200px"
-                                  outcome="DataCenterView"/>
-
-                        <p:button value="Create Workflows"
-                                  styleClass="ui-button-outlined ui-button-help"
-                                  style="font-size:15px !important; font-weight:bold; height:46px; width:200px"
-                                  outcome="WorkflowView"/>
+                        <p:commandButton value="Workflow Projects"
+                                         styleClass="ui-button-outlined ui-button-help"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width:200px"
+                                         ajax="false" process="@this" immediate="true"
+                                         action="WorkflowProjectView"/>
                     </h:panelGrid>
+
                 </div> 
                 <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>
             </h:form>

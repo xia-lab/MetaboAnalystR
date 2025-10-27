@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +42,9 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.UUID;
+import org.postgresql.util.PGobject;
+import org.primefaces.component.api.UIColumn;
+import org.primefaces.event.CellEditEvent;
 
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
@@ -51,8 +55,10 @@ import pro.metaboanalyst.controllers.general.ProcessBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.MultifacBean;
 import pro.metaboanalyst.datalts.DatasetController;
+import pro.metaboanalyst.datalts.DatasetRow;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
+import static pro.metaboanalyst.lts.FireBaseController.safeIntFromDoubleLike;
 import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
@@ -1285,9 +1291,9 @@ public class WorkflowBean implements Serializable {
                 }
             }
             DataUtils.doRedirectWithGrowl(sb,
-                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowProjectView.xhtml",
                     "info",
-                    "Workflow loaded successfully! You can proceed to run the workflow.");
+                    "Parameters updated successfully! You can proceed to run the workflow.");
         } catch (Exception ex) {
             Logger.getLogger(WorkflowBean.class.getName())
                     .log(Level.SEVERE, "startFromDetails failed", ex);
@@ -2069,10 +2075,55 @@ public class WorkflowBean implements Serializable {
     }
 
     public void prepareNewRun() {
-        DataUtils.doRedirectWithGrowl(sb,
-                "/" + ab.getAppName() + "/Secure/xialabpro/DataCenterView.xhtml",
-                "info",
-                "Select your dataset first.");
+        try {
+            String email = fub.getEmail();
+            String tool = ab.getAppName(); // or a constant like "MetaboAnalyst"
+
+            // Placeholders:
+            String module = "NA";              // user will choose later
+            final String name = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("'New run — 'yyyy-MM-dd HH:mm"));
+            String description = "NA";
+            String status = "pending";
+            String startDateIso = null;              // or Instant.now().toString()
+            String finishDateIso = null;
+            String workflowId = null;
+            UUID datasetId = null;
+            String datasetName = "NA";
+            String other = "{}";              // MUST be JSON (see step 1)
+
+            // Use your existing function as-is:
+            String newId = dbc.insertWorkflowRun(
+                    email, module, name, description, status,
+                    startDateIso, finishDateIso, workflowId,
+                    datasetId, datasetName, other, tool
+            );
+
+            // Refresh table & select the new row
+            setupWorkflowRunsTable();
+            this.selectedWorkflowRun = findRunInModelById(Integer.parseInt(newId));
+
+            sb.addMessage("info", "New run (" + newId + ") created. Pick a dataset and workflow first.");
+
+        } catch (Exception e) {
+            sb.addMessage("error", "Error creating run.");
+
+        }
+    }
+
+    // Returns the first match, or null if not found
+    public WorkflowRunModel findRunInModelById(int id) {
+        final List<WorkflowRunModel> list = getWorkflowRunsTable();
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+
+        for (WorkflowRunModel r : list) {
+            if (r.getId() == id) {
+                return r;
+            }
+        }
+        return null;
     }
 
     public void startRun() {
@@ -2227,4 +2278,451 @@ public class WorkflowBean implements Serializable {
     public void setSelectedWorkflowRun(WorkflowRunModel selectedWorkflowRun) {
         this.selectedWorkflowRun = selectedWorkflowRun;
     }
+// Simple filters (optional)
+    private String dsFilter, wfFilter;
+
+    public String getDsFilter() {
+        return dsFilter;
+    }
+
+    public void setDsFilter(String s) {
+        dsFilter = s;
+    }
+
+    public String getWfFilter() {
+        return wfFilter;
+    }
+
+    public void setWfFilter(String s) {
+        wfFilter = s;
+    }
+
+    public void prepareDialogByDataset(WorkflowRunModel run) {
+        ds.reloadTable();
+        this.selectedWorkflowRun = run;
+        this.dsFilter = ""; // clear filter if you like
+    }
+
+    public void prepareDialogByWorkflow(WorkflowRunModel run) {
+        loadAllWorkflows();
+        this.selectedWorkflowRun = run;
+        this.wfFilter = "";
+    }
+
+    // In WorkflowBean.java
+    public void selectDatasetOnly(DatasetRow dr) {
+        ds.setSelected(dr);
+
+        if (selectedWorkflowRun == null) {
+            sb.addMessage("Warn", "No target run selected.");
+            return;
+        }
+
+        // Update local model
+        selectedWorkflowRun.setDatasetId(dr.getId());
+        selectedWorkflowRun.setDatasetName(dr.getTitle());
+
+        // Persist to DB (dataset_id UUID + dataset_name)
+        try {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("dataset_id", dr.getId() == null ? null : dr.getId().toString());
+            updates.put("dataset_name", (dr.getTitle() == null || dr.getTitle().isBlank()) ? null : dr.getTitle());
+
+            String msg = dbc.updateWorkflowRunFields(String.valueOf(selectedWorkflowRun.getId()), updates);
+            if (msg.contains("\"updated\":true")) {
+                sb.addMessage("Info", "Dataset saved.");
+            } else {
+                sb.addMessage("Warn", "Dataset set locally, but DB update failed: " + msg);
+            }
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to update dataset: " + e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void selectWorkflowOnly(HashMap<String, Object> wf) {
+        this.selectedWorkflow = wf;
+
+        if (selectedWorkflowRun == null) {
+            sb.addMessage("Warn", "No target run selected.");
+            return;
+        }
+
+        // Extract fields from your workflow list item
+        Object wfIdObj = wf.get("id");                            // your unique workflow ID
+        String wfId = wfIdObj == null ? null : wfIdObj.toString();
+        String module = wf.get("module") == null ? null : String.valueOf(wf.get("module"));
+        String name = wf.getOrDefault("name", "") == null ? null : String.valueOf(wf.getOrDefault("name", "")).trim();
+        if (name != null && name.isEmpty()) {
+            name = null;
+        }
+
+        // Update local model
+        selectedWorkflowRun.setWorkflowId(wfId);
+        selectedWorkflowRun.setModule(module);
+        selectedWorkflowRun.setName(name);
+
+        // Persist to DB (workflow_id + module + name)
+        try {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("workflow_id", wfId);
+            updates.put("module", module);
+            //updates.put("name", name);
+
+            String msg = dbc.updateWorkflowRunFields(String.valueOf(selectedWorkflowRun.getId()), updates);
+            if (msg.contains("\"updated\":true")) {
+                sb.addMessage("Info", "Workflow saved.");
+            } else {
+                sb.addMessage("Warn", "Workflow set locally, but DB update failed: " + msg);
+            }
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to update workflow: " + e.getMessage());
+        }
+    }
+
+    private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
+
+    public List<WorkflowRunModel> getWorkflowRunsTable() {
+        // ensure it's never null for the UI
+        if (workflowRunsTable == null) {
+            workflowRunsTable = new ArrayList<>();
+        }
+        return workflowRunsTable;
+    }
+
+    public void setWorkflowRunsTable(List<WorkflowRunModel> workflowRunsTable) {
+        this.workflowRunsTable = (workflowRunsTable != null) ? workflowRunsTable : new ArrayList<>();
+    }
+
+    public void initUserProjects() {
+        if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
+            return; // Skip ajax requests.
+        }
+
+        fbc.reloadUserInfo();
+
+        if (fub.getEmail() == null || fub.getEmail().equals("")) {// on local do not need to login
+            DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "error", "Please login first!");
+        } else {
+            setupWorkflowRunsTable();
+        }
+
+    }
+
+    public boolean setupWorkflowRunsTable() {
+        try {
+            // Init target table
+            if (getWorkflowRunsTable() == null) {
+                setWorkflowRunsTable(new ArrayList<>());
+            } else {
+                getWorkflowRunsTable().clear();
+            }
+
+            final String email = fub.getEmail();
+
+            // Fetch from DB/API (DatabaseClient delegates to Docker DB or REST)
+            ArrayList<HashMap<String, Object>> res = dbc.getAllWorkflowRuns(ab.getAppName(), email);
+            if (res == null) {
+                return false;
+            }
+
+            boolean autoPickToLoad = false;
+
+            for (HashMap<String, Object> row : res) {
+                // Optional status filter
+
+                // Build model
+                WorkflowRunModel run = createWorkflowRunFromMap(row);
+                getWorkflowRunsTable().add(run);
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to load workflow runs!");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private WorkflowRunModel createWorkflowRunFromMap(Map<String, Object> m) {
+        WorkflowRunModel r = new WorkflowRunModel();
+
+        // Core identifiers
+        r.setId(safeIntFromDoubleLike(m.get("id")));                          // DB PK
+        r.setWorkflowId(safeStr(getAny(m, "workflowId", "workflow_id")));
+        r.setName(safeStr(m.get("name")));                      // display name (if present)
+        r.setModule(safeStr(m.get("module")));
+        r.setEmail(safeStr(m.get("email")));
+
+        // Dataset linkage (UUID)
+        Object dsRaw = getAny(m, "datasetId", "dataset_id");
+        r.setDatasetId(safeUUID(dsRaw));                        // <-- UUID now
+        r.setDatasetName(safeStr(getAny(m, "datasetName", "dataset_name")));
+
+        // Status & timing
+        r.setStatus(safeStr(m.get("status")));                  // pending|running|completed|failed
+        r.setStartDate(safeStr(getAny(m, "startDate", "start_date")));
+        r.setFinishDate(safeStr(getAny(m, "finishDate", "finish_date")));
+        r.setLastUpdated(safeStr(getAny(m, "lastUpdated", "last_updated")));
+
+        // Description & misc
+        r.setDescription(safeStr(m.get("description")));
+        r.setOtherJson(safeStr(m.get("other")));                // JSON blob for extra info
+
+        // Convenience: derive a readable title if none provided
+        if (r.getName() == null || r.getName().isBlank()) {
+            String fallback = r.getWorkflowId();
+            if (fallback == null || fallback.isBlank()) {
+                fallback = "Run-" + r.getId();
+            }
+            r.setName(fallback);
+        }
+        return r;
+    }
+
+    private Object getAny(Map<String, Object> m, String... keys) {
+        for (String k : keys) {
+            if (m.containsKey(k)) {
+                return m.get(k);
+            }
+        }
+        return null;
+    }
+
+    private UUID safeUUID(Object v) {
+        if (v == null) {
+            return null;
+        }
+
+        if (v instanceof UUID) {
+            return (UUID) v;
+        }
+
+        if (v instanceof String) {
+            String s = ((String) v).trim();
+            if (s.isEmpty()) {
+                return null;
+            }
+            try {
+                return UUID.fromString(s);
+            } catch (IllegalArgumentException ignore) {
+                return null;
+            }
+        }
+
+        // Postgres driver may surface uuid as PGobject
+        if (v instanceof PGobject) {
+            PGobject pgo = (PGobject) v;
+            if ("uuid".equalsIgnoreCase(pgo.getType())) {
+                String s = pgo.getValue();
+                if (s != null) {
+                    try {
+                        return UUID.fromString(s);
+                    } catch (IllegalArgumentException ignore) {
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Some drivers return 16-byte arrays for UUID columns
+        if (v instanceof byte[]) {
+            byte[] b = (byte[]) v;
+            if (b.length == 16) {
+                ByteBuffer bb = ByteBuffer.wrap(b);
+                long high = bb.getLong();
+                long low = bb.getLong();
+                return new UUID(high, low);
+            }
+        }
+
+        // Fallback: try toString() parse
+        try {
+            return UUID.fromString(v.toString());
+        } catch (Exception ignore) {
+        }
+        return null;
+    }
+
+    private Integer safeInt(Object o) {
+        try {
+            return (o == null) ? 0 : Integer.valueOf(String.valueOf(o));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private Integer safeIntOrNull(Object o) {
+        try {
+            return (o == null) ? null : Integer.valueOf(String.valueOf(o));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void onRunCellEdit(CellEditEvent<WorkflowRunModel> event) {
+        try {
+            // Only handle the Name column
+            UIColumn col = event.getColumn();
+            String header = col != null && col.getHeaderText() != null ? col.getHeaderText().trim() : "";
+            if (!"Name".equalsIgnoreCase(header)) {
+                return; // ignore other columns if you add more editable ones later
+            }
+
+            WorkflowRunModel run = (WorkflowRunModel) event.getRowData();
+            Object oldVal = event.getOldValue();
+            Object newVal = event.getNewValue();
+
+            String oldName = oldVal == null ? null : String.valueOf(oldVal);
+            String newName = newVal == null ? null : String.valueOf(newVal).trim();
+            if (Objects.equals(oldName, newName)) {
+                return; // nothing changed
+            }
+            if (newName != null && newName.isEmpty()) {
+                newName = null; // treat empty as clearing the name
+            }
+
+            // optimistic update (table already shows newName in editor)
+            String msg = dbc.updateWorkflowRunFields(String.valueOf(run.getId()), Map.of("name", newName));
+
+            if (isUpdateSuccess(msg)) {
+                run.setName(newName);
+                sb.addMessage("Info", "Run name saved.");
+            } else {
+                // revert UI model
+                run.setName(oldName);
+                sb.addMessage("Warn", "Failed to save name: " + msg);
+            }
+        } catch (Exception e) {
+            sb.addMessage("Error", "Save error: " + e.getMessage());
+        }
+    }
+
+    private boolean isUpdateSuccess(String msg) {
+        if (msg == null) {
+            return false;
+        }
+        String t = msg.trim().toLowerCase();
+        if (t.startsWith("ok")) {
+            return true;           // direct DB path
+        }
+        if (t.contains("\"updated\":true")) {
+            return true; // REST JSON
+        }
+        if (t.contains("\"success\":true")) {
+            return true;
+        }
+        if (t.contains("\"status\":\"ok\"")) {
+            return true;
+        }
+        return false;
+    }
+
+    private String selectedWorkflowFile;
+
+    public String getSelectedWorkflowFile() {
+        return selectedWorkflowFile;
+    }
+
+    @SuppressWarnings("unchecked")
+    public void viewWorkflowJson() {
+        try {
+            if (selectedWorkflow == null) {
+                sb.addMessage("Warn", "No workflow selected.");
+                return;
+            }
+
+            final String type = String.valueOf(selectedWorkflow.get("type"));
+            final String filename = String.valueOf(selectedWorkflow.get("filename")); // no .json suffix here
+            if (filename == null || filename.isBlank()) {
+                sb.addMessage("Warn", "Invalid workflow filename.");
+                return;
+            }
+
+            // Resolve local path (same logic as loadWorkflow)
+            final java.nio.file.Path jsonPath = resolveWorkflowJsonPath(selectedWorkflow);
+            if (jsonPath == null) {
+                sb.addMessage("Error", "Failed to resolve workflow JSON path.");
+                return;
+            }
+
+            // Read + pretty print
+            final String raw = java.nio.file.Files.readString(jsonPath, java.nio.charset.StandardCharsets.UTF_8);
+            this.selectedWorkflowJson = prettyJsonOrRaw(raw);
+            this.selectedWorkflowFile = jsonPath.getFileName().toString();
+
+            // open dialog
+            org.primefaces.PrimeFaces.current().executeScript("PF('wfJsonDlg').show();");
+        } catch (Exception e) {
+            this.selectedWorkflowJson = "Error loading JSON: " + e.getMessage();
+            this.selectedWorkflowFile = "(error)";
+            org.primefaces.PrimeFaces.current().executeScript("PF('wfJsonDlg').show();");
+        }
+    }
+
+    /**
+     * Resolves the on-disk JSON file, downloading from bucket if needed,
+     * mirroring loadWorkflow()
+     */
+    private java.nio.file.Path resolveWorkflowJsonPath(java.util.Map<String, Object> wf) throws Exception {
+        final String type = wf.get("type") == null ? "" : wf.get("type").toString();
+        final String filename = wf.get("filename") == null ? "" : wf.get("filename").toString(); // no ".json"
+        final String jsonName = filename + ".json";
+        final String overview = filename + "_overview.json";
+
+        if ("default".equalsIgnoreCase(type)) {
+            // examplePath: {resourceDir}/pro/example_workflows/{fileName}
+            final String examplePath = ab.getResourceDir() + "/pro/example_workflows/" + jsonName;
+            final java.nio.file.Path p = java.nio.file.Paths.get(examplePath).normalize();
+            if (!java.nio.file.Files.exists(p)) {
+                throw new java.io.FileNotFoundException("Default workflow not found: " + p);
+            }
+            return p; // caller will read the JSON and (optionally) pretty print
+        }
+
+        // CUSTOM (user) workflows — same logic as loadWorkflow()
+        if (sb.getCurrentUser() == null) {
+            throw new IllegalStateException("Please start an analysis session first!");
+        }
+
+        final String destDir = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
+        final String bucketObjectName = "/user_folders/" + fub.getEmail() + "/" + jsonName;
+        final String bucketObjectName2 = "/user_folders/" + fub.getEmail() + "/" + overview;
+        final String localFilePath = fbb.getProjectPath() + bucketObjectName;
+        final String localFilePath2 = fbb.getProjectPath() + bucketObjectName2;
+
+        java.nio.file.Path localCache = java.nio.file.Paths.get(localFilePath);
+        java.nio.file.Path localCache2 = java.nio.file.Paths.get(localFilePath2);
+        java.nio.file.Path destJson = java.nio.file.Paths.get(destDir, jsonName);
+        java.nio.file.Path destOverview = java.nio.file.Paths.get(destDir, overview);
+
+        // If cached in project path, copy to dest; else download from bucket
+        if (java.nio.file.Files.exists(localCache)) {
+            java.nio.file.Files.createDirectories(java.nio.file.Paths.get(destDir));
+            java.nio.file.Files.copy(localCache, destJson, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            if (java.nio.file.Files.exists(localCache2)) {
+                java.nio.file.Files.copy(localCache2, destOverview, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } else {
+            // Download both (same as loadWorkflow())
+            fbc.downloadObject(String.valueOf(wf.get("location")), fub.getEmail(), jsonName, destJson.toString());
+            fbc.downloadObject(String.valueOf(wf.get("location")), fub.getEmail(), overview, destOverview.toString());
+        }
+        return destJson;
+    }
+
+    private String prettyJsonOrRaw(String raw) {
+        if (raw == null) {
+            return "(empty)";
+        }
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+            Object node = om.readValue(raw, Object.class);
+            return om.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        } catch (Exception ignore) {
+            return raw; // not strict JSON? just show raw
+        }
+    }
+
 }
