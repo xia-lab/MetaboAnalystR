@@ -335,7 +335,7 @@ public class MsetBean implements Serializable {
     }
 
     public void setMsetNm(String msetNm) {
-        System.out.println(msetNm + "=====setCurrentMsetLib");
+        //System.out.println(msetNm + "=====setCurrentMsetLib");
         this.msetNm = msetNm;
     }
 
@@ -347,7 +347,7 @@ public class MsetBean implements Serializable {
 
     @JsonIgnore
     public MetSetBean[] getCurrentMsetLib() {
-        System.out.println(msetNm + "=====getCurrentMsetLib");
+        //System.out.println(msetNm + "=====getCurrentMsetLib");
         String[] details = REnrichUtils.getHTMLMetSet(sb.getRConnection(), msetNm);
         ArrayList<MetSetBean> libVec = new ArrayList();
         libVec.add(new MetSetBean(details[0], details[1], details[2]));

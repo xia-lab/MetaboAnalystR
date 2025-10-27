@@ -778,7 +778,8 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        String res = sb.computeDspcNet();
+                        MnetResBean mnb = (MnetResBean) DataUtils.getBeanInstance("mn");
+                        String res = mnb.computeDspcNet();
                         File newFile = new File(sb.getCurrentUser().getHomeDir() + "/networkanalyst_dspc.json");
 
                         if (!newFile.exists()) {
@@ -1051,7 +1052,7 @@ public class WorkflowView implements Serializable {
 
         if (functionInfo != null) {
             try {
-                System.out.println("FunctionInfo found: " + functionType);
+                //System.out.println("FunctionInfo found: " + functionType);
                 if (wb.getReloadingParameters().equals("saved") || !wb.isReloadingWorkflow()) {
                     FunctionInvoker.callSetters(functionInfo);
                 }
@@ -1088,7 +1089,7 @@ public class WorkflowView implements Serializable {
     public void executeWorkflow(ActionEvent event) {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         String functionsStr = facesContext.getExternalContext().getRequestParameterMap().get("functionsStr");
-        System.out.println("===== functionsStr==xxxx==> " + functionsStr);
+        //System.out.println("===== functionsStr==xxxx==> " + functionsStr);
         int resInt = 1;
         String res = "";
         try {
@@ -1097,7 +1098,7 @@ public class WorkflowView implements Serializable {
             System.err.println("An error occurred while executing the workflow: " + ex.getMessage());
             resInt = 0;
         }
-        System.out.println("===== sb.getAnalType() xxx ==> " + sb.getAnalType());
+        //System.out.println("===== sb.getAnalType() xxx ==> " + sb.getAnalType());
         if (sb.getAnalType().equals("raw") || sb.getAnalType().equals("spec")) {
             if (resInt == 1) {
                 res = "pending";
@@ -1141,7 +1142,6 @@ public class WorkflowView implements Serializable {
                 wb.getCalledWorkflows().add("Network Selection");
 
             }
-
             case "/Secure/roc/RocTestView.xhtml" -> {
                 wb.getCalledWorkflows().add("Model-based ROC");
             }
@@ -1183,7 +1183,7 @@ public class WorkflowView implements Serializable {
     }
 
     public String saveParams() throws IOException {
-        boolean success = true;
+        //boolean success = true;
         String func = wb.getCurrentStep();
         wb.setEditMode(true);
         try {
@@ -1386,7 +1386,7 @@ public class WorkflowView implements Serializable {
                 case "MEBA" -> {
                     if (!sb.isContainsTime()) {
                         sb.addMessage("Error", "MEBA only work on time-series data.");
-                        success = false;
+                        //  success = false;
                     } else {
                         MebaBean meba = (MebaBean) DataUtils.findBean("mebaBean");
                         FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
@@ -1401,8 +1401,8 @@ public class WorkflowView implements Serializable {
                     mc.corBtn_action();
                 }
                 case "Correlation Networks (DSPC)" -> {
-                    String res = sb.computeDspcNet();
-
+                    MnetResBean mn = (MnetResBean) DataUtils.getBeanInstance("mn");
+                    mn.computeDspcNet();
                 }
                 case "DE Analysis" -> {
                     DoseResponseBean dr = (DoseResponseBean) DataUtils.findBean("doseResponseBean");
@@ -1481,7 +1481,7 @@ public class WorkflowView implements Serializable {
                     if (sc.isJobSubmitted()) {
                         sb.addNaviTrack("Job status", "/Secure/spectra/JobStatusView.xhtml");
                     } else {
-                        success = false;
+                        //     success = false;
                     }
 
                 }
@@ -1557,14 +1557,6 @@ public class WorkflowView implements Serializable {
 
     }
 
-    /*
-    public void onTabChange(TabChangeEvent event) {
-        // Check if the selected tab is at index 2 (Workflow View)
-        if (activeIndex == 2) {
-            System.out.println("ontabchange===2");
-            PrimeFaces.current().executeScript("initNetwork()");
-        }
-    }*/
     public void updateWorkflowDescription() {
         int id = fpb.getSelectedProject().getId();
         wb.setName("Saved Workflow");

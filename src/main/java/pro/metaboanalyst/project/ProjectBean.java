@@ -410,7 +410,7 @@ public class ProjectBean implements Serializable {
                 sb.addMessage("error", "Your previous result is missing, please re-do the process !");
             }
 
-            System.out.println("Processing has been finished already!");
+            //System.out.println("Processing has been finished already!");
             sb.setDataUploaded();
             scb.setStopStatusCheck(false);
             scb.setFinishedJobId(jobID);
@@ -534,10 +534,8 @@ public class ProjectBean implements Serializable {
 
         //String jobFolder = checkPartialvalid(partialID);
         if (jobFolder == null) { // A invalid/expired partial link
-            System.out.println("This is an invalid link to job: " + jobFolder);
+            //System.out.println("This is an invalid link to job: " + jobFolder);
             return null;
-        } else {
-            System.out.println("This is a valid link to job: " + jobFolder);
         }
 
         //get parial job id and initialize sessionbean's current user
@@ -673,7 +671,7 @@ public class ProjectBean implements Serializable {
         }
 
         //done
-        System.out.println(" --- Loading partial link finished! <----");
+        //System.out.println(" --- Loading partial link finished! <----");
         return "Job status";
     }
 
@@ -698,7 +696,7 @@ public class ProjectBean implements Serializable {
                 Date currentDate = new Date();
                 long timed = currentDate.getTime() - creatDate.getTime();
                 diff = TimeUnit.DAYS.convert(timed, TimeUnit.MILLISECONDS);
-                System.out.println("---------- time of days has pased since the url was created: " + diff);
+                //System.out.println("---------- time of days has pased since the url was created: " + diff);
                 if (diff < 14) {
                     folder = jobRes.getString(2);
                 }

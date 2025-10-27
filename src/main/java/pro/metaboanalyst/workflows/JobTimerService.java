@@ -42,10 +42,10 @@ public class JobTimerService {
     /** Schedule a persistent single-shot job (fires immediately). */
     public void schedule(JobInfo info) {
         final String jobId = info.getJobId();
-        System.out.println("[JobTimerService] schedule() jobId=" + jobId
-                + " node=" + info.getNode()
-                + " type=" + info.getType()
-                + " folder=" + info.getFolderName());
+        //System.out.println("[JobTimerService] schedule() jobId=" + jobId
+        //        + " node=" + info.getNode()
+        //        + " type=" + info.getType()
+         //       + " folder=" + info.getFolderName());
 
         updateJobStatus(jobId, Status.IN_PROGRESS);
 
@@ -56,19 +56,19 @@ public class JobTimerService {
         }
 
         timerService.createSingleActionTimer(0, new TimerConfig(info, true)); // persistent
-        System.out.println("[JobTimerService] schedule() timer created (persistent) for jobId=" + jobId);
+        //System.out.println("[JobTimerService] schedule() timer created (persistent) for jobId=" + jobId);
     }
 
     /** Legacy-style insert + schedule helper. */
     public void insertJob(String jobId, String token, String email,
                           String appName, String node, String type,
                           String folderName, String baseUrl) {
-        System.out.println("[JobTimerService] insertJob() jobId=" + jobId + " node=" + node + " type=" + type);
+        //System.out.println("[JobTimerService] insertJob() jobId=" + jobId + " node=" + node + " type=" + type);
         schedule(new JobInfo(jobId, token, email, appName, node, type, folderName, baseUrl));
     }
 
     public void rememberToken(String jobId, String token) {
-        System.out.println("[JobTimerService] rememberToken() jobId=" + jobId + " token.len=" + (token == null ? 0 : token.length()));
+        //System.out.println("[JobTimerService] rememberToken() jobId=" + jobId + " token.len=" + (token == null ? 0 : token.length()));
         tokens.put(jobId, token);
         writeMarker(jobId, statuses.get(jobId), token);
     }
@@ -76,16 +76,16 @@ public class JobTimerService {
     public String getTokenByJobId(String jobId) {
         String t = tokens.get(jobId);
         if (t != null) {
-            System.out.println("[JobTimerService] getTokenByJobId() (mem) jobId=" + jobId);
+           // System.out.println("[JobTimerService] getTokenByJobId() (mem) jobId=" + jobId);
             return t;
         }
         Marker m = readMarker(jobId);
-        System.out.println("[JobTimerService] getTokenByJobId() (file) jobId=" + jobId + " hit=" + (m != null && m.token != null));
+        //System.out.println("[JobTimerService] getTokenByJobId() (file) jobId=" + jobId + " hit=" + (m != null && m.token != null));
         return m != null ? m.token : null;
     }
 
     public void updateJobStatus(String jobId, Status status) {
-        System.out.println("[JobTimerService] updateJobStatus() jobId=" + jobId + " -> " + status);
+        //System.out.println("[JobTimerService] updateJobStatus() jobId=" + jobId + " -> " + status);
         statuses.put(jobId, status);
         writeMarker(jobId, status, tokens.get(jobId));
     }
@@ -100,21 +100,21 @@ public class JobTimerService {
     }
 
     public Status getStatus(String jobId) {
-            System.out.println("[JobTimerService] getStatus() (mem) jobId=" + jobId);
+         //   System.out.println("[JobTimerService] getStatus() (mem) jobId=" + jobId);
         Status s = statuses.get(jobId);
         if (s != null) {
             // noisy but useful when debugging polling
-            System.out.println("[JobTimerService] getStatus() (mem) jobId=" + jobId + " = " + s);
+         //   System.out.println("[JobTimerService] getStatus() (mem) jobId=" + jobId + " = " + s);
             return s;
         }
         Marker m = readMarker(jobId);
         if (m != null) {
             if (m.status != null) statuses.put(jobId, m.status);
             if (m.token  != null) tokens.put(jobId,  m.token);
-            System.out.println("[JobTimerService] getStatus() (file) jobId=" + jobId + " = " + m.status);
+         //   System.out.println("[JobTimerService] getStatus() (file) jobId=" + jobId + " = " + m.status);
             return m.status;
         }
-        System.out.println("[JobTimerService] getStatus() not found jobId=" + jobId);
+        //System.out.println("[JobTimerService] getStatus() not found jobId=" + jobId);
         return null;
     }
 
@@ -125,14 +125,14 @@ public class JobTimerService {
         Object payload = timer.getInfo();
         if (!(payload instanceof JobInfo info)) {
             LOG.warning("Timer fired without JobInfo payload");
-            System.out.println("[JobTimerService] onTimeout() missing JobInfo payload");
+         //   System.out.println("[JobTimerService] onTimeout() missing JobInfo payload");
             return;
         }
         final String jobId = info.getJobId();
-        System.out.println("[JobTimerService] onTimeout() fired for jobId=" + jobId);
+       // System.out.println("[JobTimerService] onTimeout() fired for jobId=" + jobId);
 
         executor.submit(() -> {
-            System.out.println("[JobTimerService] execute() begin jobId=" + jobId);
+         //   System.out.println("[JobTimerService] execute() begin jobId=" + jobId);
             try {
                 boolean ok = DataUtils.sendPostRequest(
                         info.getNode(),
@@ -145,7 +145,7 @@ public class JobTimerService {
                         info.getJobId(),
                         info.getBaseUrl()
                 );
-                System.out.println("[JobTimerService] execute() finished jobId=" + jobId + " ok=" + ok);
+          //      System.out.println("[JobTimerService] execute() finished jobId=" + jobId + " ok=" + ok);
                 updateJobStatus(jobId, ok ? Status.COMPLETED : Status.FAILED);
             } catch (Exception e) {
                 System.out.println("[JobTimerService] execute() EXCEPTION jobId=" + jobId + " msg=" + e.getMessage());
@@ -164,7 +164,7 @@ public class JobTimerService {
             Path dir = Paths.get(base, "job-markers");
             Files.createDirectories(dir);
             Path resolved = dir.resolve(jobId + ".marker");
-            System.out.println("[JobTimerService] markerPath() jobId=" + jobId + " path=" + resolved);
+          //  System.out.println("[JobTimerService] markerPath() jobId=" + jobId + " path=" + resolved);
             return resolved;
         } catch (Exception e) {
             Path fallback = Paths.get(System.getProperty("java.io.tmpdir"), "job_" + jobId + ".marker");
@@ -179,7 +179,7 @@ public class JobTimerService {
             Files.createDirectories(p.getParent());
             String content = (s == null ? "" : s.name()) + "\n" + (token == null ? "" : token) + "\n";
             Files.writeString(p, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            System.out.println("[JobTimerService] writeMarker() jobId=" + jobId + " status=" + s + " token.len=" + (token == null ? 0 : token.length()));
+          //  System.out.println("[JobTimerService] writeMarker() jobId=" + jobId + " status=" + s + " token.len=" + (token == null ? 0 : token.length()));
         } catch (Exception e) {
             System.out.println("[JobTimerService] writeMarker() ERROR jobId=" + jobId + " msg=" + e.getMessage());
         }
@@ -189,14 +189,14 @@ public class JobTimerService {
         try {
             Path p = markerPath(jobId);
             if (!Files.exists(p)) {
-                System.out.println("[JobTimerService] readMarker() NOT FOUND jobId=" + jobId);
+            //    System.out.println("[JobTimerService] readMarker() NOT FOUND jobId=" + jobId);
                 return null;
             }
             var lines = Files.readAllLines(p);
             Status s = (lines.size() > 0 && !lines.get(0).isBlank())
                     ? Status.valueOf(lines.get(0).trim()) : null;
             String t = (lines.size() > 1) ? lines.get(1).trim() : null;
-            System.out.println("[JobTimerService] readMarker() jobId=" + jobId + " status=" + s + " token.len=" + (t == null ? 0 : t.length()));
+          //  System.out.println("[JobTimerService] readMarker() jobId=" + jobId + " status=" + s + " token.len=" + (t == null ? 0 : t.length()));
             return new Marker(s, t);
         } catch (Exception e) {
             System.out.println("[JobTimerService] readMarker() ERROR jobId=" + jobId + " msg=" + e.getMessage());

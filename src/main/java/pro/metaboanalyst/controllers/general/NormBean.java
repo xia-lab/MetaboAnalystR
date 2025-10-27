@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
 import jakarta.faces.model.SelectItem;
@@ -313,7 +312,7 @@ public class NormBean implements Serializable {
     private SelectItem[] grpNmOpts = null;
 
     private void setupGrpNmOpts() {
-        if (!sb.isRegresion()) {
+        if (!sb.isRegression()) {
             String[] grpNms = RDataUtils.getPrenormGroupNames(sb.getRConnection());
             int grpLen = grpNms.length;
             grpNmOpts = new SelectItem[grpLen];

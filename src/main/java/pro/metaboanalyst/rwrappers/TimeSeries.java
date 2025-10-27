@@ -121,11 +121,11 @@ public class TimeSeries {
             //RCenter.recordRCommand(RC, "meta.vec.aov <- " + Arrays.toString(selectedMetas));
             String rcmd = "meta.vec.aov <- " + DataUtils.convertArrayToVecInR(selectedMetas);
             RCenter.recordRCommand(RC, rcmd);
-            System.out.println(rcmd);
+            //System.out.println(rcmd);
 
             String rCommand = "ANOVA2.Anal(NA, " + thresh + ", \"" + corType + "\", \"" + type + "\", \"" + phenOpt + "\", 500)";
             RCenter.recordRCommand(RC, rCommand);
-            System.out.println(rCommand);
+            //System.out.println(rCommand);
 
             sb.recordRCommandFunctionInfo(rCommand, "Multifactor anova");
 

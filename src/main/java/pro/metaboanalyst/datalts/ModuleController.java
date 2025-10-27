@@ -104,7 +104,7 @@ public class ModuleController implements Serializable {
         final boolean hasMeta = ds.isHasMetadata();
         final boolean isUntargeted = untargetedDatas.contains(dt);
 
-        System.out.println(mod + "===========================mod");
+        //System.out.println(mod + "===========================mod");
 
         // Buckets from your provided lists
         final boolean isCompatible = compatibleAnals.contains(mod) || compatibleListAnals.contains(mod);
@@ -115,7 +115,7 @@ public class ModuleController implements Serializable {
         final boolean isCoreStats = "stat".equals(mod) || "roc".equals(mod) || "mf".equals(mod) || "dose".equals(mod);
         final boolean isMummichog = "mummichog".equals(mod);
         final boolean isRaw = "raw".equals(mod);
-        System.out.println(isCoreStats + "===========================isCoreStats");
+        //System.out.println(isCoreStats + "===========================isCoreStats");
 
         // Helpers
         java.util.function.Consumer<String> on = k -> nodeVisibility.put(k, true);
@@ -234,7 +234,7 @@ public class ModuleController implements Serializable {
             String dataName = null, data2Name = null, metaName = null, listName = null, listGeneName = null, ms2Name = null, rawName = null;
             for (DatasetFile f : ds.getFiles()) {
                 String role = f.getRole() == null ? "" : f.getRole().toLowerCase();
-                System.out.println(role + "====role");
+               // System.out.println(role + "====role");
                 switch (role) {
                     case "data" ->
                         dataName = f.getFilename();

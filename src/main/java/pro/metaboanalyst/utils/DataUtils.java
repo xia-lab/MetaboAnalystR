@@ -95,7 +95,38 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
+import pro.metaboanalyst.controllers.dose.DoseResponseBean;
+import pro.metaboanalyst.controllers.enrich.MappingBean;
+import pro.metaboanalyst.controllers.enrich.MsetBean;
+import pro.metaboanalyst.controllers.enrich.PathBean;
+import pro.metaboanalyst.controllers.general.NormBean;
+import pro.metaboanalyst.controllers.general.ProcessBean;
+import pro.metaboanalyst.controllers.meta.MetaLoadBean;
+import pro.metaboanalyst.controllers.meta.MetaStatBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
+import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
+import pro.metaboanalyst.controllers.mnet.MnetResBean;
+import pro.metaboanalyst.controllers.multifac.Aov2Bean;
+import pro.metaboanalyst.controllers.multifac.AscaBean;
+import pro.metaboanalyst.controllers.multifac.LimmaBean;
+import pro.metaboanalyst.controllers.multifac.LivePCABean;
+import pro.metaboanalyst.controllers.multifac.MebaBean;
+import pro.metaboanalyst.controllers.multifac.MetaHeatmapBean;
+import pro.metaboanalyst.controllers.multifac.MetaProcBean;
+import pro.metaboanalyst.controllers.multifac.MultiCorrBean;
+import pro.metaboanalyst.controllers.multifac.MultiRfBean;
+import pro.metaboanalyst.controllers.multifac.MultifacBean;
+import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
+import pro.metaboanalyst.controllers.mummichog.PeakCustomBean;
+import pro.metaboanalyst.controllers.stats.AnalysisBean;
+import pro.metaboanalyst.controllers.stats.ClusterBean;
+import pro.metaboanalyst.controllers.stats.RocAnalBean;
+import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.lts.FunctionInfo;
+import pro.metaboanalyst.spectra.SpectraControlBean;
+import pro.metaboanalyst.spectra.SpectraProcessBean;
+import pro.metaboanalyst.spectra.SpectraUploadBean;
+import pro.metaboanalyst.workflows.WorkflowView;
 
 /**
  *
@@ -218,7 +249,7 @@ public class DataUtils {
                 if (Files.isDirectory(Paths.get("/home/qiang/Documents/Regular_commands"))) {
                     System.out.println("Not delete user=====" + guestDir + " from Zhiqiang's local");
                 } else {
-                    System.out.println("delete user=====" + guestDir);
+                    //System.out.println("delete user=====" + guestDir);
                     deleteDir(guestDir);
                 }
 
@@ -665,7 +696,7 @@ public class DataUtils {
         String res = null;
         try {
             String rcmd = "system(\"" + cmd + "\", intern = T)[" + index + "]";
-            System.out.println("R systemExec boolean => " + cmd);
+            //System.out.println("R systemExec boolean => " + cmd);
             RC.eval(rcmd).asString();
             return res;
         } catch (Exception e) {
@@ -679,7 +710,7 @@ public class DataUtils {
         String res[] = null;
         try {
             String rcmd = "system(\"" + cmd + "\", intern = T)";
-            System.out.println("R systemExec boolean => " + cmd);
+            //System.out.println("R systemExec boolean => " + cmd);
             res = RC.eval(rcmd).asStrings();
             return res;
         } catch (Exception e) {

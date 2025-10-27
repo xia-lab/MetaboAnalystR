@@ -126,9 +126,7 @@ public class StateSaver implements Serializable {
         for (String module : modules) {
             // Determine the analysis type
             String analTypePrefix = module.length() >= 4 ? module.substring(0, 4) : module;
-            System.out.println("analTypePrefix===" + module);
-            System.out.println("naviType===" + sb.getNaviType());
-
+     
             switch (analTypePrefix) {
                 case "raw" -> {
 

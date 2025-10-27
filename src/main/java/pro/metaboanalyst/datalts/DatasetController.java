@@ -4,7 +4,6 @@
  */
 package pro.metaboanalyst.datalts;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.annotation.PostConstruct;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.DefaultStreamedContent;
@@ -134,7 +133,7 @@ public class DatasetController implements Serializable {
                 if (projectTypeObject != null && "workflow".equals(projectTypeObject.toString())) {
                     continue; // Skip this project and move to the next iteration
                 }
-                System.out.println(projectTypeObject.toString() + "===projecttype");
+                //System.out.println(projectTypeObject.toString() + "===projecttype");
                 ProjectModel project = fc.createProjectFromMap(myMap);
                 pb.getProjectTable().add(project);
             }
@@ -771,8 +770,8 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         this.stagedDataset = ds;
         this.stagedFiles.clear();
         this.stagedFiles.addAll(files);
-        System.out.println("staged========");
-        System.out.println("stagedFiles========" + stagedFiles.size());
+        //System.out.println("staged========");
+        //System.out.println("stagedFiles========" + stagedFiles.size());
 
     }
 
@@ -1225,7 +1224,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public boolean load(DatasetRow ds, boolean login) {
-        System.out.println("selected====" + ds.getFilename());
+        //System.out.println("selected====" + ds.getFilename());
         if (ds == null) {
             sb.addMessage("Error", "No dataset selected to load.");
             return false;
@@ -1400,7 +1399,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public String stageListDataset(String niceTitleHint) {
-        System.out.println("stageListDataset");
+        //System.out.println("stageListDataset");
         try {
             final String home = sb.getCurrentUser().getHomeDir();
             final java.nio.file.Path lp = java.nio.file.Paths.get(home, "datalist.csv");
@@ -1574,7 +1573,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                     + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                     + "&datasetId=" + URLEncoder.encode(datasetId, StandardCharsets.UTF_8);
 
-            System.out.println("[downloadDataset] URL: " + urlString);
+            //System.out.println("[downloadDataset] URL: " + urlString);
 
             HttpClient client = HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -1635,10 +1634,10 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 Files.move(tempFile.toPath(), destPath, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            System.out.println("[downloadDataset] Saved to: " + destPath + " (" + size + " bytes)");
+            //System.out.println("[downloadDataset] Saved to: " + destPath + " (" + size + " bytes)");
 
         } catch (Exception e) {
-            System.err.println("[downloadDataset] Failed: " + e.getMessage());
+            //System.err.println("[downloadDataset] Failed: " + e.getMessage());
             e.printStackTrace();
             if (tempFile != null && tempFile.exists()) {
                 try {
@@ -2683,7 +2682,9 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                         .contentType(guessMimeByExt(fileName)) // fallback; will refine from connection below
                         .stream(() -> {
                             try {
-                                java.net.URL url = new java.net.URL(finalApiUrl);
+                                
+                                URI uri = new URI(finalApiUrl);
+                                java.net.URL url = uri.toURL();
                                 java.net.URLConnection conn = url.openConnection();
                                 conn.setConnectTimeout(10_000);
                                 conn.setReadTimeout(60_000);
@@ -2696,8 +2697,9 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                                 }
 
                                 return new java.io.BufferedInputStream(conn.getInputStream());
-                            } catch (java.io.IOException ex) {
-                                throw new java.io.UncheckedIOException(ex);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                throw new RuntimeException("Failed to open file stream from API: " + finalApiUrl, e);
                             }
                         })
                         .build();
@@ -2817,7 +2819,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     public StickyDTO exportSticky() {
         StickyDTO dto = new StickyDTO();
         if (selected != null && selected.getId() != null) {
-            System.out.println("Export===============================" + dto.getSelectedDatasetId());
+            //System.out.println("Export===============================" + dto.getSelectedDatasetId());
 
             dto.setSelectedDatasetId(selected.getId());
         }
@@ -2842,7 +2844,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         if (o instanceof StickyDTO dto && dto.getSelectedDatasetId() != null) {
             refresh();
             this.selected = findById(dto.getSelectedDatasetId());
-            System.out.println("Selected===============================" + dto.getSelectedDatasetId());
+            //System.out.println("Selected===============================" + dto.getSelectedDatasetId());
             this.resetFlag = true;                 // boolean with getter
 
         }

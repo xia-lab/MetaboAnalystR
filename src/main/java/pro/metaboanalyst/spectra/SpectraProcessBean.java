@@ -315,15 +315,15 @@ public class SpectraProcessBean implements Serializable {
     public String viewMSFeature() {
         // plot box and EIC
         plotMSfeature("png");
-        System.out.println("=== featureNum0===> " + featureNum0);
-        System.out.println("=== featureNum===> " + featureNum);
+        //System.out.println("=== featureNum0===> " + featureNum0);
+        //System.out.println("=== featureNum===> " + featureNum);
         // find potential MS2 annotation esxits or not
         int res_num = RSpectraUtils.checkMS2annotationExists(sb.getRConnection(), featureNum);
-        System.out.println("=== res_num 1===> " + res_num);
+        //System.out.println("=== res_num 1===> " + res_num);
         if (res_num != 0) {
             ms2annotated = true;
             //  if ms2 results are there, let's show top 3 results if any
-            System.out.println("=== res_num 2===> " + res_num);
+            //System.out.println("=== res_num 2===> " + res_num);
             ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
             MS2ResutlsBean mfb;
             if (res_num > 3) {
@@ -408,15 +408,15 @@ public class SpectraProcessBean implements Serializable {
     public String viewMSFeature2() {
         // plot box and EIC
         String filenm = plotMSfeature("svg");
-        System.out.println("=== featureNum02===> " + featureNum0);
-        System.out.println("=== featureNum2===> " + featureNum);
+        //System.out.println("=== featureNum02===> " + featureNum0);
+        //System.out.println("=== featureNum2===> " + featureNum);
         // find potential MS2 annotation esxits or not
         int res_num = RSpectraUtils.checkMS2annotationExists(sb.getRConnection(), featureNum);
-        System.out.println("=== res_num 12===> " + res_num);
+        //System.out.println("=== res_num 12===> " + res_num);
         if (res_num != 0) {
             ms2annotated = true;
             //  if ms2 results are there, let's show top 3 results if any
-            System.out.println("=== res_num 22===> " + res_num);
+            //System.out.println("=== res_num 22===> " + res_num);
             ArrayList<MS2ResutlsBean> MS2ResutlsBeans = new ArrayList<>();
             MS2ResutlsBean mfb;
             if (res_num > 3) {
@@ -940,7 +940,7 @@ public class SpectraProcessBean implements Serializable {
         refspecHMap.put(resNum + "", "reference_spectrum_" + resNum + "_" + subidx + ".txt");
         cmpdinfHMap.put(resNum + "", "compound_info_" + resNum + "_" + subidx + ".txt");
 
-        System.out.println("mirror=====" + resNum);
+        //System.out.println("mirror=====" + resNum);
 
         return resx;
     }
@@ -1117,7 +1117,7 @@ public class SpectraProcessBean implements Serializable {
         } else if (Files.isDirectory(Paths.get("/home/zgy/projects/MetaboDemoRawData"))) {
             path = "/home/zgy/projects/MetaboDemoRawData/";
         }
-        System.out.println(path + "=====path");
+        //System.out.println(path + "=====path");
         File f = new File(path + "upload/");
         // Populates the array with names of files and directories
         groupnames = f.list();
@@ -1566,9 +1566,6 @@ public class SpectraProcessBean implements Serializable {
                 String internal_path = sb.getCurrentUser().getHomeDir();
                 String png_name;
 
-                System.out.println("===== internal_path====> " + internal_path);
-                System.out.println("=====    myDir     ====> " + myDir);
-
                 File[] pngfiles = new File(internal_path).listFiles((dir, name) -> name.toLowerCase().endsWith(".png"));
                 File pngnewfile, pngoldfile;
                 if (pngfiles != null) {
@@ -1577,7 +1574,7 @@ public class SpectraProcessBean implements Serializable {
                         pngnewfile = new File(myDir + "/" + png_name);
                         pngoldfile = new File(internal_path + "/" + png_name);
                         DataUtils.copyFile(pngoldfile, pngnewfile);
-                        System.out.println(pngfile.getAbsolutePath());
+                        //System.out.println(pngfile.getAbsolutePath());
                     }
                 }
                 File msn_res = new File(sb.getCurrentUser().getHomeDir() + "/msn_result.zip");

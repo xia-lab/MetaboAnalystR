@@ -113,7 +113,7 @@ public class Aov2Bean implements Serializable {
             jrd.record_aov2Bn_action(this);
             return true;
         }
-        System.out.println(selectedMetasAnova.length + "=====selectedMetasAnova");
+        //System.out.println(selectedMetasAnova.length + "=====selectedMetasAnova");
         if (selectedMetasAnova.length != 2) {
             sb.addMessage("Error", "Please select exactly two meta-data classes!");
             return false;

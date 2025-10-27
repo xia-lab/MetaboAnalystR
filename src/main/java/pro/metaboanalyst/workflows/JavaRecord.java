@@ -111,7 +111,7 @@ public class JavaRecord {
         functionInfo.addParameter("procBean.filterCutoff", pb.getFilterCutoff());
         functionInfo.addParameter("procBean.intFilterOpt", pb.getIntFilterOpt());
         functionInfo.addParameter("procBean.IntFilterCutoff", pb.getIntFilterCutoff());
-        System.out.println("record_filterButton_action");
+        //System.out.println("record_filterButton_action");
 
         wb.addFunctionInfo("Filtering", functionInfo);
 
@@ -129,7 +129,7 @@ public class JavaRecord {
         functionInfo.addParameter("univBean.equalVar", vb.getEqualVar());
         functionInfo.addParameter("univBean.vcPvalType", vb.getVcPvalType());
         functionInfo.addParameter("univBean.labelOpt", vb.getLabelOpt());
-        System.out.println("record_vcButton_action======================================");
+        //System.out.println("record_vcButton_action======================================");
 
         wb.getCalledWorkflows().add("Univariate");
         wb.getCalledWorkflows().add("Volcano");
@@ -142,7 +142,7 @@ public class JavaRecord {
         // Extract information directly from VolcanoBean
         functionInfo.addParameter("univBean.aovPThresh", vb.getAovPThresh());
         functionInfo.addParameter("univBean.nonParam", vb.isNonParam() ? "True" : "False");
-        System.out.println("record_aovButton_action==================================");
+        //System.out.println("record_aovButton_action==================================");
 
         wb.getCalledWorkflows().add("Univariate");
         wb.getCalledWorkflows().add("ANOVA");
@@ -192,7 +192,7 @@ public class JavaRecord {
         functionInfo.addParameter("univBean.fcThresh", vb.getFcThresh());
         functionInfo.addParameter("univBean.cmpType", vb.getCmpType());
 
-        System.out.println("record_fcButton_action");
+        //("record_fcButton_action");
 
         wb.addFunctionInfo("Fold Change", functionInfo);
     }
@@ -203,7 +203,7 @@ public class JavaRecord {
         functionInfo.addParameter("clusterBean.kmClustNm", b.getKmClustNm());
         functionInfo.addParameter("clusterBean.kmColPal", b.getKmColPal());
 
-        System.out.println("record_kmButton_action");
+        //System.out.println("record_kmButton_action");
 
         wb.addFunctionInfo("K-means", functionInfo);
     }
@@ -217,7 +217,7 @@ public class JavaRecord {
         functionInfo.addParameter("univBean.equalVar", b.getEqualVar());
         functionInfo.addParameter("univBean.ttPvalType", b.getTtPvalType());
 
-        System.out.println("record_ttButton_action");
+        //System.out.println("record_ttButton_action");
         wb.getCalledWorkflows().add("Univariate");
 
         wb.addFunctionInfo("T-test", functionInfo);
@@ -309,7 +309,7 @@ public class JavaRecord {
         functionInfo.addParameter("sigBean.deltaMax", b.getDeltaMax());
         functionInfo.addParameter("sigBean.step", b.getStep());
 
-        System.out.println("record_samBtn1_action");
+        //System.out.println("record_samBtn1_action");
 
         wb.addFunctionInfo("SAM", functionInfo);
         wb.getCalledWorkflows().add("SAM");
@@ -372,7 +372,7 @@ public class JavaRecord {
         FunctionInfo functionInfo = new FunctionInfo("Dendrogram", "clusterBean.treeButton_action", "Performs Hierarchical Clustering Dendrogram");
         functionInfo.addParameter("clusterBean.clustDistOpt", b.getClustDistOpt());
         functionInfo.addParameter("clusterBean.clustMethodOpt", b.getClustMethodOpt());
-        System.out.println("record_treeButton_action");
+        //System.out.println("record_treeButton_action");
         wb.addFunctionInfo("Dendrogram", functionInfo);
         wb.getCalledWorkflows().add("Dendrogram");
 
@@ -436,7 +436,7 @@ public class JavaRecord {
         functionInfo.addParameter("ascaBean.alphaThresh", b.getAlphaThresh());
         functionInfo.addParameter("ascaBean.lvlThresh", b.getLvlThresh());
 
-        System.out.println("mdlBtn_action");
+        //System.out.println("mdlBtn_action");
 
         wb.addFunctionInfo("ASCA", functionInfo);
         wb.getCalledWorkflows().add("ASCA");
@@ -535,7 +535,7 @@ public class JavaRecord {
         functionInfo.addParameter("mCorrBean.covMetas", Arrays.toString(bean.getCovMetas()));
 
         // Log or store the functionInfo somewhere, e.g., console or a file
-        System.out.println("Recorded correlation button action: " + functionInfo);
+        //System.out.println("Recorded correlation button action: " + functionInfo);
         wb.addFunctionInfo("corBtn_action", functionInfo);
         wb.getCalledWorkflows().add("Correlation Analysis");
         wb.getCalledWorkflows().add("Data Overview");

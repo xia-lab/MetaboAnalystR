@@ -38,9 +38,8 @@ public class RMetaPathUtils {
             String rCommand = "PrepareMetaPath(NA, \""
                     + ionMode + "\"," + ppm + ", \"" + version + "\"," + pcutoff + ", \""
                     + rt + "\",\"" + dataName + "\",\"" + dataName2 + "\")";
-            double sig_per = RC.eval(rCommand).asDouble();
             RCenter.recordRCommand(RC, rCommand);
-            return sig_per;
+            return RC.eval(rCommand).asDouble();
         } catch (Exception rse) {
             LOGGER.error("PrepareMetaPath", rse);
         }

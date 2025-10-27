@@ -108,10 +108,10 @@ public class BatchProcesser implements Serializable {
         homeDir = home_dir;
         String temp_path = pbb.getBatchTemplatePath();
 
-        System.out.println("exeBatchProcessing -- home_dir    ==> " + home_dir);
-        System.out.println("exeBatchProcessing -- script_path ==> " + script_path);
-        System.out.println("exeBatchProcessing -- analType    ==> " + analType);
-        System.out.println("exeBatchProcessing -- temp_path   ==> " + temp_path);
+        //System.out.println("exeBatchProcessing -- home_dir    ==> " + home_dir);
+        //System.out.println("exeBatchProcessing -- script_path ==> " + script_path);
+        //System.out.println("exeBatchProcessing -- analType    ==> " + analType);
+        //System.out.println("exeBatchProcessing -- temp_path   ==> " + temp_path);
 
         String JobSubmission;
         //int JobID = 0;

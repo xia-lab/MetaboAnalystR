@@ -795,7 +795,7 @@ public class WorkflowBean implements Serializable {
             }
         }
 
-        System.out.println("Filtered workflows by " + property + " = " + value + ": " + filteredWorkflows);
+        //System.out.println("Filtered workflows by " + property + " = " + value + ": " + filteredWorkflows);
         return filteredWorkflows;
     }
 
@@ -1011,7 +1011,7 @@ public class WorkflowBean implements Serializable {
 
             // Iterate through the unique selectedRCommands
             for (String command : selectedRCommands) {
-                System.out.println("R Command: " + command);
+               // System.out.println("R Command: " + command);
                 // Perform any required processing for each command
             }
         } else {
@@ -1964,7 +1964,7 @@ public class WorkflowBean implements Serializable {
             }
             final String cmpdIdType = safeStr(sb.getCmpdIDType()); // "na" = not mapped
             // regression only pathway/enrich
-            if (sb.isRegresion() && !REGRES_ANALS.contains(wfModule)) {
+            if (sb.isRegression() && !REGRES_ANALS.contains(wfModule)) {
                 return false;
             }
 
@@ -2029,7 +2029,7 @@ public class WorkflowBean implements Serializable {
             }
             final String cmpdIdType = safeStr(sb.getCmpdIDType());
 
-            if (sb.isRegresion() && !REGRES_ANALS.contains(wfModule)) {
+            if (sb.isRegression() && !REGRES_ANALS.contains(wfModule)) {
                 return "This module does not support continuous class labels.";
             }
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {

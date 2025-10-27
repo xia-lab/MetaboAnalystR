@@ -19,8 +19,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -57,9 +55,6 @@ public class FireUserBean implements Serializable {
     private DatabaseClient db;
 
     @Inject
-    private FireUserBean fub;
-
-    @Inject
     private FireBaseController fbc;
 
     @JsonIgnore
@@ -82,7 +77,7 @@ public class FireUserBean implements Serializable {
     }
 
     public void setFireUserBean(FireUserBean bean) {
-        System.out.println("setFireUserBean===" + bean.getEmail());
+        //System.out.println("setFireUserBean===" + bean.getEmail());
         this.email = bean.getEmail();
         this.fname = bean.getFname();
         this.institution = bean.getInstitution();
@@ -215,8 +210,22 @@ public class FireUserBean implements Serializable {
         this.omicsquareVerified = omicsquareVerified;
     }
 
+    private long lastLoginAttemptTime = 0; // Store the last successful execution time (in milliseconds)
+
     public void doUserLogin() {
+        long currentTime = System.currentTimeMillis();
+        long timeSinceLastAttempt = currentTime - lastLoginAttemptTime;
+ 
+        if (timeSinceLastAttempt < 10000) {
+            // Too soon - calculate remaining wait time
+              long timeRemaining = (10000 - timeSinceLastAttempt) / 1000;
+              sb.addMessage("error", String.format("Please wait %d more seconds before trying again!", timeRemaining));
+              return; // Block the attempt     
+        }
+        
+        lastLoginAttemptTime = currentTime;
         boolean res = doUserLoginLocal();
+   
         if (res) {
             Faces.addResponseCookie("user", email, "/", 3600);
             fb.getUserMap().put(email, this);
@@ -232,8 +241,8 @@ public class FireUserBean implements Serializable {
             sb.addMessage("error", "Login failed! Please check the validity of your project path!");
             return false;
         } else if (res.length == 1) {
-            System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
-            if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") || ab.getToolLocation().equals("vip2") || ab.getToolLocation().equals("vip")  ) {
+            //System.out.println(ab.getToolLocation() + "+ab.getToolLocation()");
+            if (ab.getToolLocation().equals("as") || ab.getToolLocation().equals("localhost") || ab.getToolLocation().equals("vip2") || ab.getToolLocation().equals("vip")) {
                 if (res[0].contains("Login Error - User exists but is not authorized for tool")) {
                     return true;
                 }
@@ -311,7 +320,7 @@ public class FireUserBean implements Serializable {
     public void doSendEmail() {
 
         String res = db.checkUserExists(email);
-        System.out.println(res);
+        //System.out.println(res);
         if (res.equals("User exists.")) {
             // prepare tokens for password reset later
             String resetToken = UUID.randomUUID().toString().replaceAll("-", "");
@@ -320,10 +329,10 @@ public class FireUserBean implements Serializable {
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-            System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
+            //System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
 
             String res2 = db.insertToken(email, resetToken, sdf.format(ExpDate));
-            System.out.println(res2);
+            //System.out.println(res2);
             try {
                 boolean res3 = sendResetMessage(email, resetToken);
                 if (res3) {
@@ -347,7 +356,7 @@ public class FireUserBean implements Serializable {
 
     public void doResetPassword() throws SQLException {
         String token = sb.getResetToken();
-        System.out.println("toknreset======" + token);
+        //System.out.println("toknreset======" + token);
         if (token == null) {
             sb.addMessage("error", "Invalid reset link! Please use a valid reset link.");
             return;
@@ -359,7 +368,7 @@ public class FireUserBean implements Serializable {
         if (!res.contains("Error encountered:")) {
             email = res;
             String resetDone = db.resetPassword(res, password);
-            System.out.println(resetDone);
+            //System.out.println(resetDone);
             if (resetDone.equals("Success")) {
                 db.deleteTokenForUser(email);
                 DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/users/LoginView.xhtml", "info", "Please login with new password!");
@@ -465,55 +474,6 @@ public class FireUserBean implements Serializable {
         }
     }
 
-    /*
-    public boolean doSendActivateCode(String to, String activateCode, Date ExpDate) throws JsonProcessingException, IOException, InterruptedException {
-        if (!DataUtils.isValidEmail(email)) {
-            sb.addMessage("error", "Please provide your email address!");
-            return false;
-        }
-
-        MailService ms = (MailService) DataUtils.findBean("mailService");
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sdf.format(ExpDate);
-        String url;
-        if (ab.isInDocker()) {
-            String site_domain = System.getenv("SITE_DOMAIN");
-            System.out.println("Now the SITE_DOMAIN ---> " + site_domain);
-            url = "http://" + site_domain + "/" + ab.getAppName() + "/xialabpro/ActivateView.xhtml?code=" + activateCode + "&mail=" + email;
-        } else {
-            url = "https://pro.metaboanalyst.ca/" + ab.getAppName() + "/xialabpro/ActivateView.xhtml?code=" + activateCode + "&mail=" + email;
-        }
-        String htmlMsg = "<!DOCTYPE html>\n"
-                + "<html>\n"
-                + "<head>\n"
-                + "</head>\n"
-                + "\n"
-                + "<body style=\"font-family: Arial; font-size: 12px;\">\n"
-                + "<div>\n"
-                + "    <p>\n"
-                + "        You have requested to activate your account, please click the link below to activate your account.\n"
-                + "    </p>\n"
-                + "    <p>\n"
-                + "        Please ignore this email if you did not request an account activation. The activation code is: \n <b>"
-                + activateCode
-                + "</b> \n"
-                + "    </p>\n"
-                + "\n"
-                + "    <p>\n"
-                + "            Copy and paste the following link into your browser to activate your account: "
-                + url
-                + "    </p>\n"
-                + "    <p>\n"
-                + "        This code will expire in 60 minutes or after another activation request is sent. <b><i>\"" + ExpDate + " \"</i></b>. Please don't reply.\n"
-                + "    </p>\n"
-                + "</div>\n"
-                + "</body>\n"
-                + "</html>";
-
-        boolean res = ms.sendEmail(to, ab.getAppName() + " - Account Activation", "text/html", htmlMsg);
-        return res;
-    }**/
     private String activationCode = "";
 
     public String getActivationCode() {
@@ -588,9 +548,9 @@ public class FireUserBean implements Serializable {
         if (fb.getLoginUserMap().containsKey(tokenId)) {
             FireUserBean ubObj = fb.getLoginUserMap().get(tokenId);
 
-            fub.setFireUserBean(ubObj);
-            fub.setOmicsquareVerified(true);
-            System.out.println("handshake=====" + fub.getEmail());
+            setFireUserBean(ubObj);
+            setOmicsquareVerified(true);
+            //System.out.println("handshake=====" + fub.getEmail());
             fb.getLoginUserMap().remove(tokenId);
 
             Faces.addResponseCookie("user", email, "/", 3600);
@@ -641,22 +601,6 @@ public class FireUserBean implements Serializable {
             e.printStackTrace();
             // Handle exception
         }
-    }
-
-    public boolean isAdminUserBool() {
-        String[] myArray = {"jeff.xia@xialab.ca", "guangyan.zhou@xialab.ca", "zhiqiang.pang@xialab.ca", "guangyan.zhou@mcgill.ca"};
-        ArrayList<String> myList = new ArrayList<>(Arrays.asList(myArray));
-        return myList.contains(email);
-    }
-
-    public void copyFrom(FireUserBean other) {
-        System.out.println(other.email + "===copyFrom");
-        this.email = other.email;
-        this.fname = other.fname;
-        this.institution = other.institution;
-        this.status = other.status;
-        this.omicsquareVerified = other.omicsquareVerified;
-        this.omicsquareToken = other.omicsquareToken;
     }
 
     @Override

@@ -122,13 +122,13 @@ public class ApplicationBean1 implements Serializable {
             onVipServer2 = true;
 
         } else if (Files.isRegularFile(Paths.get("/docker_marker"))) {
-            System.out.println("domain_url=======> " + domain_url);
+            //System.out.println("domain_url=======> " + domain_url);
             if (domain_url.contains("/MetaboAnalyst/home.xhtml")) {
                 app_url = domain_url.replace("/MetaboAnalyst/home.xhtml", "");
             } else {
                 app_url = domain_url.replace("/MetaboAnalyst/", "");
             }
-            System.out.println("Now the app url is xxx ===> " + app_url);
+            //System.out.println("Now the app url is xxx ===> " + app_url);
             inDocker = true;
             onProServer = false;
             raw_spec_folder = "/data/glassfish/projects/metaboanalyst/";
@@ -201,7 +201,7 @@ public class ApplicationBean1 implements Serializable {
             bool5 = false;
 
             while ((line = br.readLine()) != null) {
-                System.out.println("Now this validate_psql_conf line is ==> " + line);
+                //System.out.println("Now this validate_psql_conf line is ==> " + line);
                 String[] values = line.split(":");
                 if (values[0].equals("PSQL_DB_Name")) {
                     bool1 = true;
@@ -270,13 +270,13 @@ public class ApplicationBean1 implements Serializable {
             File cleanJobsScript = new File(resourcePath + "/rscripts/_clean_jobs.sh");
             if (!cleanJobsScript.canExecute()) {
                 boolean madeExecutable = cleanJobsScript.setExecutable(true);
-                System.out.println("_clean_jobs.sh executable: " + madeExecutable);
+                //System.out.println("_clean_jobs.sh executable: " + madeExecutable);
             }
 
             File cleanFoldersScript = new File(resourcePath + "/rscripts/_clean_folders.sh");
             if (!cleanFoldersScript.canExecute()) {
                 boolean madeExecutable = cleanFoldersScript.setExecutable(true);
-                System.out.println("_clean_folders.sh executable: " + madeExecutable);
+                //System.out.println("_clean_folders.sh executable: " + madeExecutable);
             }
 
             cleaningOn = true;
@@ -288,12 +288,12 @@ public class ApplicationBean1 implements Serializable {
 
             String userPath = resourcePath + "/users";
             String sysCleaningCmd2 = RCenter.getBashFullPath(RC) + " " + resourcePath + "/rscripts/_clean_folders.sh " + userPath;
-            System.out.println("=== sysCleaningCmd2 ==> " + sysCleaningCmd2);
+            //System.out.println("=== sysCleaningCmd2 ==> " + sysCleaningCmd2);
             DataUtils.runExternalCommand(sysCleaningCmd2, streamHandlers);
 
         } catch (Exception e) {
             System.out.println("Exception in resource cleaning -  ");
-            // LOGGER.error("performResourceCleaning", e);
+            //LOGGER.error("performResourceCleaning", e);
         } finally {
             cleaningOn = false;
         }

@@ -82,7 +82,9 @@
                         </h:panelGroup>
 
                         <p:outputLabel value="Data File:"/>
-                        <p:fileUpload value="#{dpEstimator.duplicateTable}" mode="simple"  skinSimple="true"  style="line-height: 23px"/>                           
+                        <p:fileUpload value="#{dpEstimator.duplicateTable}" mode="simple"  skinSimple="true"  style="line-height: 23px">
+                            <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                        </p:fileUpload>                           
                     </h:panelGrid>
 
                     <p:commandButton value="Submit" 

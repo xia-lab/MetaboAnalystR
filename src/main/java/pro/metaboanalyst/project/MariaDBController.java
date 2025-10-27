@@ -48,7 +48,7 @@ public class MariaDBController {
 
     public ResultSet runQuery(String query) throws SQLException {
 
-        System.out.println("This DB query has been received: " + query);
+        //System.out.println("This DB query has been received: " + query);
 
         try {
             connect();
@@ -64,7 +64,7 @@ public class MariaDBController {
 
     public void runUpdate(String query) throws SQLException {
 
-        System.out.println("This DB query has been received: " + query);
+        //System.out.println("This DB query has been received: " + query);
 
         try {
             connect();

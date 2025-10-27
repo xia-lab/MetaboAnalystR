@@ -38,6 +38,7 @@ import org.primefaces.model.TreeNode;
 import pro.metaboanalyst.controllers.enrich.IntegProcessBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
+import pro.metaboanalyst.controllers.mnet.MnetResBean;
 import pro.metaboanalyst.spectra.SpectraControlBean;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 import static pro.metaboanalyst.utils.NaviUtils.selectNode;
@@ -218,7 +219,8 @@ public class GenericControllers implements Serializable {
                     return;
                 }
             case "DSPC network":
-                naviKey = sb.computeDspcNet();
+                MnetResBean mn = (MnetResBean) DataUtils.getBeanInstance("mn");
+                naviKey = mn.computeDspcNet();
             case "Set parameter":
                 //need to work out unspecific case
                 if (analType.startsWith("mset")) {
@@ -711,11 +713,6 @@ public class GenericControllers implements Serializable {
             LOGGER.error("getSysMsgFile", e);
         }
         return null;
-    }
-
-    public String toModuleView() {
-        return ab.getDomainURL() + "/Secure/ModuleView.xhtml";
-        //return ((ApplicationBean1) DataUtils.findBean("applicationBean1")).getDomainURL() + "ModuleView.xhtml";
     }
 
     private String userType = "guest";

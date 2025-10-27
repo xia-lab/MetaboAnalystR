@@ -31,13 +31,13 @@
                 </p>
                 <ul>
                     <li>
-                        Batches can be uploaded as multiple individual files or a single merged file. In the former case, only overlapped features 
+                        Batches can be uploaded as multiple individual files (max 10M per file) or a single merged file (max 25M). In the former case, only overlapped features 
                         across all batches will be used. In the later case, batch information should be provided in the table. More 
                         details are provided below for each scenario;
                     </li>
                     <li>The <b>automated (default)</b> will return the results with least distance among batches.</li>
                     <li>EigenMS is not supported for large files (> 5M), please use 
-                        <a href="https://github.com/xia-lab/MetaboAnalystR" target="_blank">MetaboAnalystR</a> in this case.</li>
+                        <a href="https://github.com/xia-lab/MetaboAnalystR" target="_blank">MetaboAnalystR</a> for large data.</li>
                     <li>QC-RLSC requires injection order (only available for 'Upload A Single Merged File')</li>
                 </ul>
                 <p:accordionPanel id="ac" style="width: 1000px; padding-left: 20px;">
@@ -88,12 +88,15 @@
                                 <p:outputLabel value="Data label:"/>
                                 <h:panelGrid columns="2" style="width:90px">
                                     <p:inputText id="keyword" value="#{batchLoader.dataName}" label="Comment: "
-                                    placeholder="Enter data label"/>
+                                                 placeholder="Enter data label"/>
                                 </h:panelGrid>
 
                                 <p:outputLabel value="Data file:"/>
                                 <h:panelGrid>
-                                    <p:fileUpload value="#{batchLoader.batchFile}" mode="simple" style="width:240px;line-height: 18px" skinSimple="true"/>
+                                    <p:fileUpload value="#{batchLoader.batchFile}" mode="simple" style="width:240px;line-height: 18px" skinSimple="true">
+                                        <p:validateFile sizeLimit="10485760"
+                                                        allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                    </p:fileUpload>
                                     <h:panelGroup layout="block" style="width: 360px;">
                                         <p:commandButton value="Upload" 
                                                          onclick="PF('statusDialog').show()" 
@@ -171,7 +174,11 @@
 
                                 <p:outputLabel value="Data file:"/>
                                 <h:panelGrid>
-                                    <p:fileUpload value="#{batchLoader.batchTableFile}" mode="simple" style="width:180px; line-height: 18px"  skinSimple="true"/>
+                                    <p:fileUpload value="#{batchLoader.batchTableFile}" mode="simple" style="width:180px; line-height: 18px"  
+                                                  skinSimple="true">
+                                            <p:validateFile sizeLimit="26214400"
+                                                        allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
+                                    </p:fileUpload>
                                     <p:commandButton value="Upload" 
                                                      onclick="PF('statusDialog').show()" 
                                                      oncomplete="PF('statusDialog').hide()"

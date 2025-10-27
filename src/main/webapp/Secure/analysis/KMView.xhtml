@@ -41,8 +41,7 @@
                         <p:selectBooleanCheckbox value ="#{clusterBean.kmLabel}" style="line-height: 18px"/>
                     </h:panelGrid>
                     <p:commandButton value="Submit" 
-                                     update=":hisTab:cmdPane" 
-                                     ajax="false"
+                                     update=":ac :hisTab:cmdPane" 
                                      onclick="PF('statusDialog').show()"
                                      oncomplete="PF('statusDialog').hide()"
                                      actionListener="#{clusterBean.kmButton_action()}"/>   

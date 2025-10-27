@@ -76,7 +76,7 @@ public class DatabaseConnectionPool {
                     br.readLine();  // Skip the header line
 
                     while ((line = br.readLine()) != null) {
-                        System.out.println("Now this validate_psql_conf line is ==> " + line);
+                        //System.out.println("Now this validate_psql_conf line is ==> " + line);
                         String[] values = line.split(":");
                         if (values[0].equals("PSQL_DB_Name")) {
                             if (!values[1].equals("")) {
@@ -110,7 +110,7 @@ public class DatabaseConnectionPool {
                     e.printStackTrace();
                 }                
                 psql_addr = psql_remote_addr + ":" + psql_remote_port;
-                System.out.println("Now the psql_addr info is here: " + psql_addr + " | " + psql_db + " | " + psql_usernm + psql_password);
+                //System.out.println("Now the psql_addr info is here: " + psql_addr + " | " + psql_db + " | " + psql_usernm + psql_password);
                 config.setJdbcUrl("jdbc:postgresql://" + psql_addr + "/" + psql_db); // Docker's host IP and PSQL port
                 config.setUsername(psql_usernm); // Replace with your database username
                 config.setPassword(psql_password); // Replace with your database password
@@ -125,7 +125,7 @@ public class DatabaseConnectionPool {
         }
 
         // Optional: HikariCP settings to tweak the connection pool behavior
-        config.setMaximumPoolSize(10); // Maximum number of connections in the pool
+        config.setMaximumPoolSize(50); // Maximum number of connections in the pool
         config.setConnectionTimeout(30000); // Maximum wait milliseconds for a connection from the pool
         config.setIdleTimeout(600000); // Maximum time milliseconds a connection can sit idle in the pool
         config.setLeakDetectionThreshold(5000);
@@ -133,7 +133,6 @@ public class DatabaseConnectionPool {
     }
 
     public static Connection getConnection() throws SQLException {
-        System.out.println(getPoolStatus());
         return dataSource.getConnection(); // Get a connection from the pool
     }
 

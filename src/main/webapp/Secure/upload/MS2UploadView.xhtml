@@ -164,7 +164,9 @@ BMDMS                 227307            2739                Aug 20th 2022
                                 </p:selectOneRadio>  
 
                                 <p:outputLabel style="font-size:12px; font-weight: bold" value="Data File:"/>
-                                <p:fileUpload value="#{tandemMS.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px"/>
+                                <p:fileUpload value="#{tandemMS.dataFile}" mode="simple" skinSimple="true" style="line-height: 18px">
+                                    <p:validateFile sizeLimit="10485760" allowTypes="/(\.|\/)(msp|mgf)$/"/>
+                                </p:fileUpload>
 
                                 <p:outputLabel style="font-weight: bold" value="Precursor Mass Tolerance: "/>
                                 <h:panelGroup layout="block" style="width: 175px">

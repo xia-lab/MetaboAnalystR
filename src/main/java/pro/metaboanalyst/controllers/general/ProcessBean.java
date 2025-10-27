@@ -189,7 +189,8 @@ public class ProcessBean implements Serializable {
         }
         RConnection RC = sb.getRConnection();
         if (RC == null) {
-            System.out.println("sanity RC is null");
+            //System.out.println("sanity RC is null");
+            sb.addMessage("Error", "No RConnection established!");
             return;
         }
 

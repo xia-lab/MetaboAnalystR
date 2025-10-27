@@ -232,7 +232,7 @@ public class DownloadBean implements Serializable {
             if (wb.getResultPageDisplay().equals("default")) {
                 setupDownloadTable("");
                 setupGalleryStat("");
-                System.out.println("getResultPageDisplay === default");
+                //System.out.println("getResultPageDisplay === default");
             } else {
                 RCenter.setWd(sb.getRConnection(), sb.getCurrentUser().getOrigHomeDir() + "/");
 
@@ -979,7 +979,7 @@ public class DownloadBean implements Serializable {
         }
 
         //dealing with regression
-        if (sb.isRegresion() & !regresAnals.contains(mdlOpt)) {
+        if (sb.isRegression() & !regresAnals.contains(mdlOpt)) {
             sb.addMessage("Error", "This module does not support continuous class labels.");
             return null;
         }
@@ -1263,7 +1263,7 @@ public class DownloadBean implements Serializable {
 
     public void selectImage(String image) {
         this.selectedImage = image;
-        System.out.println("Selected image: " + image); // Debug log
+        //System.out.println("Selected image: " + image); // Debug log
     }
 
     private String currentSubFolder = "";
@@ -1282,8 +1282,8 @@ public class DownloadBean implements Serializable {
         sb.getCurrentUser().setHomeDir(sb.getCurrentUser().getOrigHomeDir() + "/" + subFolder);
         sb.getCurrentUser().setRelativeDir(sb.getCurrentUser().getOrigRelativeDir() + "/" + subFolder);
 
-        System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
-        System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
+        //System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
+        //System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
 
         currentSubFolder = subFolder;
         wb.setCurrentSubFolder(subFolder);
@@ -1326,10 +1326,10 @@ public class DownloadBean implements Serializable {
     }
 
     public void loadDetails(RunSummary selectedSummary) {
-        System.out.println(selectedSummary.getPcaImage() + "======isFilterUnmapped");
+        //System.out.println(selectedSummary.getPcaImage() + "======isFilterUnmapped");
         WorkflowParameters opt = wb.getWorkflowParameterByFolderName(selectedSummary.getRunId());
         selectedWorkflowParams = opt;
-        System.out.println(selectedWorkflowParams.getDetailTextHtml() + "======text");
+        //System.out.println(selectedWorkflowParams.getDetailTextHtml() + "======text");
 
     }
 

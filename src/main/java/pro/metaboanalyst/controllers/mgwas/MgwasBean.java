@@ -1069,12 +1069,13 @@ public class MgwasBean implements Serializable {
         Object val = map.get("selected");
         boolean selected = false;
 
-        if (val instanceof Boolean) {
-            selected = (Boolean) val;
-        } else if (val instanceof String) {
-            selected = Boolean.parseBoolean((String) val);
+        switch (val) {
+            case Boolean aBoolean -> selected = aBoolean;
+            case String string -> selected = Boolean.parseBoolean(string);
+            default -> {
+            }
         }
-        System.out.println("=========.MgwasBean.handleSelect()" + selected);
+        //System.out.println("=========.MgwasBean.handleSelect()" + selected);
         if (!selected) {
             int res = MgwasUtils.addEntry(sb.getRConnection(), (String) map.get("rowID"));
             if (res == 1) {

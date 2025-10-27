@@ -168,7 +168,7 @@ public class RPlotCustomizationAgent implements Serializable {
                 + helperBlocks
                 + "\n\nUser request:\n" + userRequest;
 
-        System.out.println(prompt + "\n");
+        //System.out.println(prompt + "\n");
 
         chatHistory.add(new ChatMessage("user", userRequest));
 
@@ -177,7 +177,7 @@ public class RPlotCustomizationAgent implements Serializable {
         chatHistory.add(new ChatMessage("model", llmOut));
 
         // debugging
-        System.out.println("Model Response: \n" + llmOut);
+        //System.out.println("Model Response: \n" + llmOut);
 
         /*── 5. sanitize + suffix main & helpers + rewrite call-sites ─────────────*/
         llmOut = llmOut
@@ -304,7 +304,7 @@ public class RPlotCustomizationAgent implements Serializable {
 
         // <---------------- NEW ADDITION ------------------------------------->
         // debugging: show the final transformed code
-        System.out.println("Final transformed code:\n" + llmOut);
+        //System.out.println("Final transformed code:\n" + llmOut);
 
         /*── 6. evaluate the code in R ──────────────────────────────────────*/
         try {
@@ -417,7 +417,7 @@ public class RPlotCustomizationAgent implements Serializable {
                 cmdToRun = originalCmd;
             }
 
-            System.out.println(cmdToRun);
+            //System.out.println(cmdToRun);
             RCenter.recordRCommand(rc, cmdToRun);
             rc.voidEval(cmdToRun);
 

@@ -272,7 +272,7 @@ public class DataModel implements Serializable {
         String[] msgArray = null;
         try {
             if (RDataUtils.sanityCheckMetaData(sb.getRConnection(), name)) {
-                System.out.println("pro.metaboanalyst.models.DataModel.processMetaData()" + name);
+                //System.out.println("pro.metaboanalyst.models.DataModel.processMetaData()" + name);
                 msgVec.add("Checking data content ...passed.");
                 msgArray = RDataUtils.getMetaSanityCheckMessage(sb.getRConnection(), name);
                 processed = true;

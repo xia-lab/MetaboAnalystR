@@ -88,8 +88,10 @@ public class MummiAnalBean implements Serializable {
         return algOptSingle;
     }
 
+    //note pass to sb, so sb don't call mummi bean
     public void setAlgOptSingle(String algOptSingle) {
         this.algOptSingle = algOptSingle;
+        sb.setMummiOptSingle(algOptSingle);
     }
 
     public String getEnrichOpt() {
@@ -354,7 +356,7 @@ public class MummiAnalBean implements Serializable {
             String TmpMSModeOpt = spb.getPolarity();
             RDataUtils.setInstrumentParams(sb, instrumentOpt, TmpMSModeOpt, "yes", 0.02);
         }
-            System.out.println("mummichog-------algoptsvalue[0]=============" + algOpts[0]);
+        //System.out.println("mummichog-------algoptsvalue[0]=============" + algOpts[0]);
 
         if (analOption.equals("heatmap")) {
 
@@ -438,7 +440,7 @@ public class MummiAnalBean implements Serializable {
                 }
             }
             
-            System.out.println("mummichog-------mum");
+            //System.out.println("mummichog-------mum");
             if (REnrichUtils.setupMummichogPval(sb, pvalCutoff)) {
                 if (REnrichUtils.performPSEA(sb, pathDBOpt, libVersion, minMsetNum)) {
 
@@ -557,53 +559,50 @@ public class MummiAnalBean implements Serializable {
     private boolean populateResTable(String type) {
         RConnection RC = sb.getRConnection();
 
-        if (type.equals("mum")) {
-            System.out.println("REnrichUtils.checkMumExists" + REnrichUtils.checkMumExists(RC, "mum"));
-            if (REnrichUtils.checkMumExists(RC, "mum") == 0) {
-                listModel = new ListDataModel<>(new ArrayList<>());
-                return false;
-            }
-            ArrayList<MummiBean> mummiBeans = new ArrayList();
-            String[] rownames = REnrichUtils.getMummiPathNames(RC);
-            String[] keggLnks = rownames;
-            double[][] mat = REnrichUtils.getMummiMat(RC);
-            MummiBean mb;
-            for (int i = 0; i < rownames.length; i++) {
-                mb = new MummiBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], (int) mat[i][2], mat[i][5], mat[i][4], mat[i][8], mat[i][3], mat[i][9]);
-                mummiBeans.add(mb);
-            }
-            listModel = new ListDataModel(mummiBeans);
-        } else if (type.equals("gsea")) {
-            if (REnrichUtils.checkMumExists(RC, "gsea") == 0) {
-                listGSEAModel = new ListDataModel<>(new ArrayList<>());
-                return false;
-            }
-            ArrayList<GseaBean> gseaBeans = new ArrayList();
-            String[] rownames = REnrichUtils.getMummiPathNames(RC);
-            String[] keggLnks = rownames;
-            double[][] mat = REnrichUtils.getMummiMat(RC);
-
-            GseaBean gb;
-            for (int i = 0; i < rownames.length; i++) {
-                gb = new GseaBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], mat[i][2], mat[i][3], mat[i][4]);
-                gseaBeans.add(gb);
-            }
-            listGSEAModel = new ListDataModel(gseaBeans);
-        } else {
-            if (REnrichUtils.checkMumExists(RC, "integ") == 0) {
-                listIntegModel = new ListDataModel<>(new ArrayList<>());
-                return false;
-            }
-            ArrayList<IntegBean> integBeans = new ArrayList();
-            String[] rownames = REnrichUtils.getMummiPathNames(RC);
-            String[] keggLnks = rownames;
-            double[][] mat = REnrichUtils.getMummiMat(RC);
-            IntegBean ib;
-            for (int i = 0; i < rownames.length; i++) {
-                ib = new IntegBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], (int) mat[i][2], mat[i][3], mat[i][4], mat[i][5]);
-                integBeans.add(ib);
-            }
-            listIntegModel = new ListDataModel(integBeans);
+        switch (type) {
+            case "mum" ->                 {
+                    //System.out.println("REnrichUtils.checkMumExists" + REnrichUtils.checkMumExists(RC, "mum"));
+                    if (REnrichUtils.checkMumExists(RC, "mum") == 0) {
+                        listModel = new ListDataModel<>(new ArrayList<>());
+                        return false;
+                    }       ArrayList<MummiBean> mummiBeans = new ArrayList();
+                    String[] rownames = REnrichUtils.getMummiPathNames(RC);
+                    String[] keggLnks = rownames;
+                    double[][] mat = REnrichUtils.getMummiMat(RC);
+                    MummiBean mb;
+                    for (int i = 0; i < rownames.length; i++) {
+                        mb = new MummiBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], (int) mat[i][2], mat[i][5], mat[i][4], mat[i][8], mat[i][3], mat[i][9]);
+                        mummiBeans.add(mb);
+                    }       listModel = new ListDataModel(mummiBeans);
+                }
+            case "gsea" ->                 {
+                    if (REnrichUtils.checkMumExists(RC, "gsea") == 0) {
+                        listGSEAModel = new ListDataModel<>(new ArrayList<>());
+                        return false;
+                    }       ArrayList<GseaBean> gseaBeans = new ArrayList();
+                    String[] rownames = REnrichUtils.getMummiPathNames(RC);
+                    String[] keggLnks = rownames;
+                    double[][] mat = REnrichUtils.getMummiMat(RC);
+                    GseaBean gb;
+                    for (int i = 0; i < rownames.length; i++) {
+                        gb = new GseaBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], mat[i][2], mat[i][3], mat[i][4]);
+                        gseaBeans.add(gb);
+                    }       listGSEAModel = new ListDataModel(gseaBeans);
+                }
+            default ->                 {
+                    if (REnrichUtils.checkMumExists(RC, "integ") == 0) {
+                        listIntegModel = new ListDataModel<>(new ArrayList<>());
+                        return false;
+                    }       ArrayList<IntegBean> integBeans = new ArrayList();
+                    String[] rownames = REnrichUtils.getMummiPathNames(RC);
+                    String[] keggLnks = rownames;
+                    double[][] mat = REnrichUtils.getMummiMat(RC);
+                    IntegBean ib;
+                    for (int i = 0; i < rownames.length; i++) {
+                        ib = new IntegBean(rownames[i], keggLnks[i], (int) mat[i][0], (int) mat[i][1], (int) mat[i][2], mat[i][3], mat[i][4], mat[i][5]);
+                        integBeans.add(ib);
+                    }       listIntegModel = new ListDataModel(integBeans);
+                }
         }
         return true;
     }

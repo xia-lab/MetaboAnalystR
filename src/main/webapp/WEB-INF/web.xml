@@ -6,7 +6,7 @@
     </context-param>
     <context-param>
         <param-name>primefaces.COOKIE_SAMESITE</param-name> 
-        <param-value>off</param-value>
+        <param-value>lax</param-value>
     </context-param>
 
     <context-param>

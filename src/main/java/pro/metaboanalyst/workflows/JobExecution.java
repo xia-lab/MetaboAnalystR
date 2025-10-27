@@ -112,7 +112,7 @@ public class JobExecution implements Serializable {
     private JobTimerService jobTimers;
 
     public void checkJobStatus() {
-        System.out.println("checkjob1");
+        //System.out.println("checkjob1");
         if (sb.getCurrentUser() == null || stopStatusCheck) {
             return;
         }
@@ -125,14 +125,14 @@ public class JobExecution implements Serializable {
 
         final String userId = sb.getCurrentUser().getName();
         final JobTimerService.Status st = jobTimers.getStatus(userId);
-        System.out.println("checkjob2");
+        //System.out.println("checkjob2");
 
         if (st == null) {
             statusMsg = "No job found for job_" + userId + " (not started or not initialized yet).";
             return;
         }
         String jobId = userId;
-        System.out.println("checkjob3" + "======" + st);
+        //System.out.println("checkjob3" + "======" + st);
 
         switch (st) {
             case IN_PROGRESS -> {
@@ -147,7 +147,7 @@ public class JobExecution implements Serializable {
                 String url = DataUtils.constructNavigationURL(
                         ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab
                 );
-                System.out.println("finishworkflowjob======================" + url);
+                //System.out.println("finishworkflowjob======================" + url);
                 // Use client-side redirect for Ajax requests
                 //DataUtils.doRedirect(url, ab);
                 PrimeFaces.current().executeScript("console.log('" + url + "')");
@@ -169,12 +169,12 @@ public class JobExecution implements Serializable {
             }
         }
 
-        System.out.println("statusMsg==" + statusMsg);
+        //System.out.println("statusMsg==" + statusMsg);
     }
 
     public void run() {
 
-        System.out.println("Running into job monitor session....POLL  - " + LocalDateTime.now());
+        //System.out.println("Running into job monitor session....POLL  - " + LocalDateTime.now());
         int num = 0;
         String rCommand = "", job_status = "", job_email = "";
         String dataPath = "/data/glassfish/projects/data/all_slurm_jobs.csv";
@@ -237,7 +237,7 @@ public class JobExecution implements Serializable {
                 }
 
                 if ("RAW_FINISHED".equalsIgnoreCase(status)) {
-                    System.out.println("REACHED=======================RAW_FINISHED");
+                    //System.out.println("REACHED=======================RAW_FINISHED");
 
                     sb.getNotice().add(DataUtils.obtainTimestampText());
                     sb.getNotice().add("Raw processing is <b>COMPLETED</b>. Now computing the rest of the workflow.");
@@ -248,7 +248,7 @@ public class JobExecution implements Serializable {
 
                 } else if ("WORKFLOW_FINISHED".equalsIgnoreCase(status)) {
                     PrimeFaces.current().executeScript("PF('rawWorkflowProgressDialog').hide()");
-                    System.out.println("REACHED=======================WORKFLOW_FINISHED");
+                    //System.out.println("REACHED=======================WORKFLOW_FINISHED");
                     String node = "vip";
                     String funcName = "finishRawProject";
                     Map<String, String> params = Map.of(
@@ -285,7 +285,7 @@ public class JobExecution implements Serializable {
                             } else {
                                 dv.getExecutionMap().put(entry.getKey(), true);
                             }
-                            System.out.println(entry.getKey() + "====trueExecution");
+                          //  System.out.println(entry.getKey() + "====trueExecution");
                         }
                     }
                     PrimeFaces.current().ajax().update(":finishDialogForm");
@@ -305,7 +305,7 @@ public class JobExecution implements Serializable {
     public boolean sendPostRequest(String node, String folderName, String jobId, String email, ApplicationBean1 ab) {
         String baseUri = "https://" + node + ".metaboanalyst.ca/MetaboAnalyst/faces/AjaxHandler.xhtml";
         HttpClient client = HttpClient.newHttpClient();
-        System.out.println("SENDPOSTREQUEST=============" + baseUri);
+        //System.out.println("SENDPOSTREQUEST=============" + baseUri);
 
         if (node.equals("localhost")) {
             // enforce url for local testing
@@ -338,7 +338,7 @@ public class JobExecution implements Serializable {
 
             if (response.statusCode() == 200) { // HTTP OK
                 // Process the response content
-                System.out.println("Response: " + response.body());
+                //System.out.println("Response: " + response.body());
                 return true;
             } else {
                 System.err.println("Request failed. Response code: " + response.statusCode());
