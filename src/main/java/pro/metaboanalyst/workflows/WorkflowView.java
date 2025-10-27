@@ -778,7 +778,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        MnetResBean mnb = (MnetResBean) DataUtils.getBeanInstance("mn");
+                        MnetResBean mnb = (MnetResBean) DataUtils.findBean("mnetResBean");
                         String res = mnb.computeDspcNet();
                         File newFile = new File(sb.getCurrentUser().getHomeDir() + "/networkanalyst_dspc.json");
 
@@ -1401,7 +1401,7 @@ public class WorkflowView implements Serializable {
                     mc.corBtn_action();
                 }
                 case "Correlation Networks (DSPC)" -> {
-                    MnetResBean mn = (MnetResBean) DataUtils.getBeanInstance("mn");
+                    MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                     mn.computeDspcNet();
                 }
                 case "DE Analysis" -> {

@@ -219,7 +219,7 @@ public class GenericControllers implements Serializable {
                     return;
                 }
             case "DSPC network":
-                MnetResBean mn = (MnetResBean) DataUtils.getBeanInstance("mn");
+                MnetResBean mn = (MnetResBean) DataUtils.findBean("mnetResBean");
                 naviKey = mn.computeDspcNet();
             case "Set parameter":
                 //need to work out unspecific case
