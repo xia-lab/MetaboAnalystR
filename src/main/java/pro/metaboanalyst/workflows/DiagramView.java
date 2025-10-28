@@ -2513,8 +2513,9 @@ public class DiagramView implements Serializable {
 
 
             if (runId != null) {
-                // This also sets start_date = NOW() when status == 'running'
-                String msg = db.updateWorkflowRunStatus(runId +"", "running");
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("status", "running");
+                String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
                 System.out.println("[workflow-run] " + msg);
             } else {
                 System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");

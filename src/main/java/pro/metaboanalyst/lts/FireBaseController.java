@@ -267,6 +267,7 @@ public class FireBaseController implements Serializable {
         ZipUtil.pack(new File(myDir), new File(fb.getProjectPath() + "/user_folders/" + folderName + "/" + zipName));
         System.out.println(fb.getProjectPath() + "/user_folders/" + folderName + "/" + zipName + "======savedZip");
         //copy batch template outside zip file
+        /*
         File oribtfile = new File(myDir + "/RBatchTemplate.qs");
         if (oribtfile.exists()) {
             File destDir = new File(fb.getProjectPath() + "/BatchProcess/MetaboAnalyst/");
@@ -276,14 +277,15 @@ public class FireBaseController implements Serializable {
             File destbtfile = new File(fb.getProjectPath() + "/BatchProcess/MetaboAnalyst/" + user.getName() + "_RBatchTemplate.qs");
             DataUtils.copyFile(oribtfile, destbtfile);
         }
+         */
 
         if (!type.equals("share")) {
             sb.addMessage("info", "Project saved sucessfully!");
         }
-
-        setFireDocName(pb.getSelectedProject().getTitle());
-        setFireDocDescription(pb.getSelectedProject().getDescription());
-
+        if (pb.getSelectedProject() != null) {
+            setFireDocName(pb.getSelectedProject().getTitle());
+            setFireDocDescription(pb.getSelectedProject().getDescription());
+        }
         //save workflow
         //WorkflowView wf = (WorkflowView) DataUtils.findBean2("workflowView");
         //wf.generateWorkflowJson(pb.getSelectedProject().getTitle(), pb.getSelectedProject().getDescription(), false);
@@ -407,19 +409,9 @@ public class FireBaseController implements Serializable {
 
         shareableLink = app_url + "/MetaboAnalyst/faces/AjaxHandler.xhtml?funcNm=ShareLink&tokenId=" + token;
 
-        if (ab.isInDocker()) {
-            DatabaseController.writeProjectToPostgres(docData, type);
-        } else {
-            try {
-                Map<String, Object> payload = new HashMap<>(docData);
-                payload.put("projectType", type);
-                payload.put("tableName", "project_history");
-                String response = apiClient.post("/database/projects", toJson(payload));
-                return Integer.parseInt(response);
-            } catch (Exception e) {
-                System.out.println("Error writing project to Postgres: " + e);
-                return -1;
-            }
+        db.writeProjectToPostgres(docData, type, "project");
+        if (!ab.isInDocker()) {
+            db.writeProjectToPostgres(docData, type, "project_history");
         }
 
         idNum = db.checkMatchingFolderNameProject(sb.getCurrentUser().getName());

@@ -120,14 +120,11 @@ public class WorkflowBean implements Serializable {
     @Inject
     private DatasetController ds;
 
-    @JsonIgnore
-    @Inject
-    private FireProjectBean fpb;
 
     @JsonIgnore
-    private ArrayList<HashMap<String, Object>> workflowList;
+    private ArrayList<HashMap<String, Object>> workflowList = new ArrayList();
     @JsonIgnore
-    private ArrayList<HashMap<String, Object>> defaultWorkflowList;
+    private ArrayList<HashMap<String, Object>> defaultWorkflowList =  new ArrayList();
     @JsonIgnore
     private HashMap<String, Object> selectedWorkflow = new HashMap<>();
 
@@ -1011,7 +1008,7 @@ public class WorkflowBean implements Serializable {
 
             // Iterate through the unique selectedRCommands
             for (String command : selectedRCommands) {
-               // System.out.println("R Command: " + command);
+                // System.out.println("R Command: " + command);
                 // Perform any required processing for each command
             }
         } else {
@@ -2145,16 +2142,26 @@ public class WorkflowBean implements Serializable {
         return null;
     }
 
-    public void startRun() {
+    public void startRun(WorkflowRunModel run) {
         try {
+            if(ds.getDatasetTableAll().isEmpty()){
+                ds.reloadTable();
+            }
+            
+            if(workflowList.isEmpty()){
+                loadAllWorkflows();
+            }
+            
+            this.selectedWorkflowRun = run;
             calledWorkflows.add("Data Preparation");
+
             editMode = false;
             boolean success = selectWorkflowById(getSelectedWorkflowRun().getWorkflowId());
             if (!success) {
                 return;
             }
             ds.setSelected(ds.findById(getSelectedWorkflowRun().getDatasetId()));
-
+            
             boolean res = ds.load(ds.getSelected(), true);
 
             if (res) {
@@ -2177,6 +2184,9 @@ public class WorkflowBean implements Serializable {
                 }
             }
 
+            //FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
+            fbc.setFireDocName(run.getName());
+            fbc.setFireDocDescription(run.getDescription());
             dv.submitWorkflowJob();
 
         } catch (Exception ex) {
@@ -2616,24 +2626,9 @@ public class WorkflowBean implements Serializable {
         return null;
     }
 
-    private Integer safeInt(Object o) {
-        try {
-            return (o == null) ? 0 : Integer.valueOf(String.valueOf(o));
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private Integer safeIntOrNull(Object o) {
-        try {
-            return (o == null) ? null : Integer.valueOf(String.valueOf(o));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     public void onRunCellEdit(CellEditEvent<WorkflowRunModel> event) {
         try {
+
             // Only handle the Name column
             UIColumn col = event.getColumn();
             String header = col != null && col.getHeaderText() != null ? col.getHeaderText().trim() : "";
@@ -2642,6 +2637,8 @@ public class WorkflowBean implements Serializable {
             }
 
             WorkflowRunModel run = (WorkflowRunModel) event.getRowData();
+            this.selectedWorkflowRun = run;
+
             Object oldVal = event.getOldValue();
             Object newVal = event.getNewValue();
 
@@ -2800,7 +2797,6 @@ public class WorkflowBean implements Serializable {
         if (r == null || selectedWorkflowRun == null) {
             return false;
         }
-        System.out.println(String.valueOf(r.getId()).equals(String.valueOf(selectedWorkflowRun.getId())) + "===============selectedrow");
         return String.valueOf(r.getId()).equals(String.valueOf(selectedWorkflowRun.getId()));
     }
 

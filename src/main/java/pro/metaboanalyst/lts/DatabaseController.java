@@ -129,7 +129,6 @@ public class DatabaseController implements Serializable {
         }
     }
 
-
     public String[] loginUserDocker(String email, String password) {
         //System.out.println("loginUser --> step0");
         // Check PSQL db availability (This can be a method that checks if pool is available or not)
@@ -202,9 +201,7 @@ public class DatabaseController implements Serializable {
     }
 
     //the table name is defined
-    private static final String tableName = "project";
-
-    public static int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType) {
+    public static int writeProjectToPostgres(Map<String, Object> rawDocData, String projectType, String tableName) {
         // Convert all values in rawDocData to String, handling single quotes
         Map<String, String> docData = new HashMap<>();
         for (Map.Entry<String, Object> entry : rawDocData.entrySet()) {
@@ -216,57 +213,58 @@ public class DatabaseController implements Serializable {
         int result = 0;
         Connection con = null;
         PreparedStatement stmt = null;
-        ResultSet tables = null;
         ResultSet existingCount = null;
 
         try {
-            con = DatabaseConnectionPool.getDataSource().getConnection();
+            con = DatabaseConnectionPool.getConnection();
             con.setAutoCommit(false); // Start transaction
 
             // Prepare the query string using the tableName parameter
-            String checkQuery = String.format("SELECT COUNT(*) FROM %s WHERE folderName=? AND userId=?", tableName);
+            String checkQuery = String.format("SELECT COUNT(*) FROM %s WHERE folderName=? AND projectType='project'", tableName);
             PreparedStatement checkStmt = con.prepareStatement(checkQuery);
             checkStmt.setString(1, docData.get("foldername"));
-            checkStmt.setString(2, docData.get("userid"));
-
             existingCount = checkStmt.executeQuery();
 
             if (existingCount.next() && existingCount.getInt(1) > 0) {
-                // Update existing row in the specified table
+                String existingName = null;
+                if ("Autosaved Project".equals(docData.get("name"))) {
+                    String fetchNameQuery = String.format("SELECT name FROM %s WHERE folderName=? AND projectType='project'", tableName);
+                    try (PreparedStatement fetchNameStmt = con.prepareStatement(fetchNameQuery)) {
+                        fetchNameStmt.setString(1, docData.get("foldername"));
+                        try (ResultSet rs = fetchNameStmt.executeQuery()) {
+                            if (rs.next()) {
+                                existingName = rs.getString("name");
+                            }
+                        }
+                    }
+                    if (existingName != null) {
+                        docData.put("name", existingName);
+                    }
+                }
+
                 String updateQuery = String.format("UPDATE %s SET userId=?, name=?, description=?, module=?, moduleReadable=?, dataType=?, date=?, javaHistory=?, naviString=?, naviCode=?, org=?, partialToken=?, toolName=?, toolCode=?, projectType=?, paired=?, regression=?, location=? WHERE folderName=?", tableName);
                 stmt = con.prepareStatement(updateQuery);
             } else {
-                // Insert new row in the specified table
                 String insertQuery = String.format("INSERT INTO %s (userId, name, description, module, moduleReadable, dataType, date, javaHistory, naviString, naviCode, org, partialToken, toolName, toolCode, projectType, paired, regression, location, folderName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", tableName);
                 stmt = con.prepareStatement(insertQuery);
             }
 
-            // Set parameters for the update/insert statement
-            // Assuming you have a method like setPreparedStatementParameters to set these
-            setPreparedStatementParameters(stmt, docData);
-
-            // Execute the update/insert operation
+            setPreparedStatementParameters(stmt, docData, projectType);
             stmt.executeUpdate();
-
-            con.commit(); // Commit the transaction
-            result = 1; // Indicate success
-
+            con.commit();
+            result = 1;
         } catch (SQLException ex) {
             System.out.println("SQLException occurred: " + ex.getMessage());
-            try {
-                if (con != null) {
+            if (con != null) {
+                try {
                     con.rollback();
+                } catch (SQLException exRollback) {
+                    System.out.println("Rollback failed: " + exRollback.getMessage());
                 }
-            } catch (SQLException exRollback) {
-                System.out.println("Rollback failed: " + exRollback.getMessage());
             }
-            result = -1; // Indicate an error
+            result = -1;
         } finally {
-            // Close all resources
             try {
-                if (tables != null) {
-                    tables.close();
-                }
                 if (existingCount != null) {
                     existingCount.close();
                 }
@@ -274,7 +272,7 @@ public class DatabaseController implements Serializable {
                     stmt.close();
                 }
                 if (con != null) {
-                    con.close(); // Return connection back to the pool
+                    con.close();
                 }
             } catch (SQLException ex) {
                 System.out.println("Error when closing resources: " + ex.getMessage());
@@ -283,44 +281,24 @@ public class DatabaseController implements Serializable {
         return result;
     }
 
-    private static void setPreparedStatementParameters(PreparedStatement pstmt, Map<String, String> docData) throws SQLException {
-        // Assuming that you handle data type conversion where necessary, e.g., converting string to integer/date
+    private static void setPreparedStatementParameters(PreparedStatement pstmt, Map<String, String> docData, String projectType) throws SQLException {
         pstmt.setString(1, docData.get("userid"));
         pstmt.setString(2, docData.get("name"));
         pstmt.setString(3, docData.get("description"));
         pstmt.setString(4, docData.get("module"));
         pstmt.setString(5, docData.get("modulereadable"));
         pstmt.setString(6, docData.get("datatype"));
-
-        // Handle date conversion from String to Date
-        String dateStr = docData.get("date");
-        if (dateStr != null && !dateStr.isEmpty()) {
-            Date date = null;
-            try {
-                date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(dateStr);
-            } catch (ParseException ex) {
-                Logger.getLogger(DatabaseController.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            pstmt.setDate(7, new java.sql.Date(date.getTime()));
-        } else {
-            pstmt.setDate(7, null);
-        }
-
+        pstmt.setString(7, docData.get("date"));
         pstmt.setString(8, docData.get("javahistory"));
         pstmt.setString(9, docData.get("navistring"));
-        pstmt.setString(10, docData.get("naviCcode"));
+        pstmt.setString(10, docData.get("navicode"));
         pstmt.setString(11, docData.get("org"));
         pstmt.setString(12, docData.get("partialtoken"));
         pstmt.setString(13, docData.get("toolname"));
         pstmt.setString(14, docData.get("toolcode"));
-
-        // Assuming projectType, paired, and regression are stored in docData
-        pstmt.setString(15, docData.get("projectType"));
-
-        // Convert string "true"/"false" to boolean
-        pstmt.setBoolean(16, "true".equalsIgnoreCase(docData.get("paired")));
-        pstmt.setBoolean(17, "true".equalsIgnoreCase(docData.get("regression")));
-
+        pstmt.setString(15, projectType);
+        pstmt.setBoolean(16, Boolean.parseBoolean(docData.get("paired")));
+        pstmt.setBoolean(17, Boolean.parseBoolean(docData.get("regression")));
         pstmt.setString(18, docData.get("location"));
         pstmt.setString(19, docData.get("foldername"));
     }
@@ -2415,11 +2393,13 @@ public class DatabaseController implements Serializable {
 
         // Validate status if present
         Object statusVal = fields.get("status");
+        String normalizedStatus = null;
         if (statusVal != null) {
-            String s = String.valueOf(statusVal).toLowerCase();
+            String s = String.valueOf(statusVal).trim().toLowerCase();
             if (!Set.of("pending", "running", "completed", "failed").contains(s)) {
                 return "Invalid status. Allowed: pending, running, completed, failed.";
             }
+            normalizedStatus = s;
             fields.put("status", s);
         }
 
@@ -2475,6 +2455,16 @@ public class DatabaseController implements Serializable {
                 default:
                 // skip any non-whitelisted
             }
+        }
+
+        if (normalizedStatus != null) {
+            sets.add("start_date = CASE WHEN ? = 'running' AND start_date IS NULL THEN NOW() ELSE start_date END");
+            params.add(normalizedStatus);
+            types.add(Types.VARCHAR);
+
+            sets.add("finish_date = CASE WHEN ? IN ('completed','failed') THEN NOW() ELSE finish_date END");
+            params.add(normalizedStatus);
+            types.add(Types.VARCHAR);
         }
 
         if (sets.isEmpty()) {

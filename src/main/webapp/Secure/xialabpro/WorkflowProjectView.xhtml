@@ -39,15 +39,6 @@
                 text-align: left;
             }
 
-            .row-selected {
-                background: #FEF3C7 !important;   /* warm amber */
-            }
-            .row-selected > td {
-                border-top: 1px solid #F59E0B !important;
-                border-bottom: 1px solid #F59E0B !important;
-                background: #FEF3C7 !important;   /* warm amber */
-            }
-
             /* Make all items appear “active” within this steps instance */
             #wfSteps .ui-steps-item .ui-menuitem-link {
                 background: var(--primary-color, #3B82F6);
@@ -245,7 +236,7 @@
                         <p:commandLink id="dsPick"
                                        value="#{run.datasetName eq 'NA' or empty run.datasetName ? '[Select Dataset]' : run.datasetName}"
                                        process="@this"
-                                       update=":formByDataset"
+                                       update=":dataTableForm :formByDataset"
                                        actionListener="#{workflowBean.prepareDialogByDataset(run)}"
                                        onstart="PF('statusDialog').show();"
                                        oncomplete="PF('statusDialog').hide(); PF('dlgByDataset').show();">
@@ -259,7 +250,7 @@
                         <p:commandLink id="wfPick"
                                        value="#{empty run.module or run.module eq 'NA' ? '[Select Workflow]' : workflowView.getReadableType(run.module)}"
                                        process="@this"
-                                       update=":formByWorkflow"
+                                       update=":dataTableForm :formByWorkflow"
                                        actionListener="#{workflowBean.prepareDialogByWorkflow(run)}"
                                        onstart="PF('statusDialog').show();"
                                        oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').show();">
@@ -305,11 +296,12 @@
                     </p:column>
 
                     <p:column headerText="Start" style="text-align:center;">
-                        <p:commandLink id="startBn"
-                                       update="formWorkDoc"
-                                       oncomplete="PF('workStartDialog').show();">
+                        <p:commandLink actionListener="#{workflowBean.startRun(run)}"
+                                       onclick="PF('workStartDialog').hide();
+                                                 PF('statusDialog').show();"
+                                       update=":dataTableForm"
+                                       oncomplete="PF('statusDialog').hide();">
                             <i class="pi pi-arrow-circle-right" style="font-size:1.4rem; color: orangered"></i>
-                            <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
                         </p:commandLink>
                     </p:column>
 
