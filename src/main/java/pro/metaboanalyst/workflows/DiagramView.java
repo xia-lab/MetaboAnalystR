@@ -1636,19 +1636,16 @@ public class DiagramView implements Serializable {
         RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
-        if (wb.getLblType().equals("")) {
-            wb.setLblType(sb.getDataClsOpt());
-        }
+        
         switch (name) {
             case "mf" -> {
 
-                sb.setDataType(wb.getDataType());
                 sb.setAnalType("mf");
                 RDataUtils.setAnalType(sb.getRConnection(), sb.getAnalType());
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                if (RDataUtils.readTextDataTs(sb.getRConnection(), wb.getDataName(), wb.getDataFormat())) {
+                if (RDataUtils.readTextDataTs(sb.getRConnection(), wb.getDataName(), sb.getDataFormat())) {
                     if (RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName())) {
                         sb.setDataUploaded();
                         steps = new ArrayList<>(Arrays.asList(
@@ -1686,7 +1683,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                if (RDataUtils.readTextDataDose(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                if (RDataUtils.readTextDataDose(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
                     }
@@ -1710,7 +1707,7 @@ public class DiagramView implements Serializable {
 
                     sb.setPaired(false);
                     sb.setRegression(false);
-                    if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                    if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                         sb.setDataUploaded();
                         steps = new ArrayList<>(Arrays.asList(
                                 "Table",
@@ -1738,7 +1735,7 @@ public class DiagramView implements Serializable {
                         mnb.setCmpdList(wb.getOraList());
                         mnb.handleCmpdListUpload();
 
-                        //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                        //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                         sb.setDataUploaded();
                         steps = new ArrayList<>(Arrays.asList(
                                 "List",
@@ -1761,7 +1758,7 @@ public class DiagramView implements Serializable {
                 sb.setPaired(false);
                 sb.setRegression(false);
                 //System.out.println("homedir============" + sb.getCurrentUser().getHomeDir());
-                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
                     }
@@ -1784,8 +1781,8 @@ public class DiagramView implements Serializable {
                 RDataUtils.setAnalType(sb.getRConnection(), sb.getAnalType());
 
                 sb.setPaired(false);
-                sb.setRegression(wb.getLblType().equals("cont"));
-                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), wb.getLblType())) {
+                sb.setRegression(sb.getDataClsOpt().equals("cont"));
+                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), sb.getDataClsOpt())) {
                     sb.setDataUploaded();
                     steps = new ArrayList<>(Arrays.asList(
                             "Sanity Check_Table",
@@ -1806,8 +1803,8 @@ public class DiagramView implements Serializable {
                 RDataUtils.setAnalType(sb.getRConnection(), sb.getAnalType());
 
                 sb.setPaired(false);
-                sb.setRegression(wb.getLblType().equals("cont"));
-                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), wb.getLblType())) {
+                sb.setRegression(sb.getDataClsOpt().equals("cont"));
+                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), sb.getDataClsOpt())) {
                     sb.setDataUploaded();
                     steps = new ArrayList<>(Arrays.asList(
                             "Annotation_Table",
@@ -1827,8 +1824,8 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-
-                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                System.out.println(sb.getDataFormat() + "======sb.getDataFormat()");
+                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                     if (!wb.getMetaName().equals("")) {
                         RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName());
                     }
@@ -1888,7 +1885,7 @@ public class DiagramView implements Serializable {
                 RDataUtils.setAnalType(sb.getRConnection(), sb.getAnalType());
                 sb.setPaired(false);
                 sb.setRegression(false);
-                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "Annotated Features",
@@ -1908,7 +1905,7 @@ public class DiagramView implements Serializable {
 
                 pu.setPeakListParams();
                 RDataUtils.readPeakListData(sb.getRConnection(), wb.getDataName());
-                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "Sanity Check Peak",
@@ -1927,7 +1924,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                     sb.setDataUploaded();
                     steps = new ArrayList<>(Arrays.asList(
                             "Sanity Check Intensity",
@@ -1958,7 +1955,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "Data_Processing",
@@ -1975,7 +1972,7 @@ public class DiagramView implements Serializable {
 
                 sb.setPaired(false);
                 sb.setRegression(false);
-                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), wb.getDataFormat(), "disc")) {
+                //if (RDataUtils.readTextData(sb.getRConnection(), wb.getDataName(), sb.getDataFormat(), "disc")) {
                 sb.setDataUploaded();
                 steps = new ArrayList<>(Arrays.asList(
                         "Data_Processing",

@@ -773,7 +773,7 @@ public class FireBaseController implements Serializable {
         beanClassMap.put("PeakUploadBean", pub);
 
         // Print debug information
-        //System.out.println("myClassType: " + myClassType + ", myMethod: " + myMethod + ", myParamType: " + myParamType + ", myParam: " + myParam);
+        System.out.println("myClassType: " + myClassType + ", myMethod: " + myMethod + ", myParamType: " + myParamType + ", myParam: " + myParam);
         // Retrieve the bean from the map
         Object obj = beanClassMap.get(myParamType);
         if (obj == null) {

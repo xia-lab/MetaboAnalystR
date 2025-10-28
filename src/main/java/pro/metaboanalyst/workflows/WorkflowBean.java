@@ -1446,15 +1446,6 @@ public class WorkflowBean implements Serializable {
         Path home = Paths.get(sb.getCurrentUser().getHomeDir());
 
         // --- Ensure/attach mSetObj_after_sanity.qs ---
-        Path msetFile = home.resolve("mSetObj_after_sanity.RData");
-        if (!Files.exists(msetFile)) {
-            sb.setDataType(RDataUtils.getDataType(sb.getRConnection()));
-            sb.setDataFormat(RDataUtils.getDataFormat(sb.getRConnection()));
-            //sb.setRegression("cont".equalsIgnoreCase(RDataUtils.getLblType(sb.getRConnection())));
-        }
-
-        setDataType(sb.getDataType());
-        setDataFormat(sb.getDataFormat());
         //setLblType(sb.isRegression() ? "cont" : "disc");
 
     }
