@@ -449,7 +449,7 @@ public class RocUtils {
 
     public static double[] getLassoFreqs(RConnection RC) {
         try {
-            String rCommand = "GetLassoFreqs()";
+            String rCommand = "GetLassoFreqs(NA)";
             return RC.eval(rCommand).asDoubles();
         } catch (Exception rse) {
             LOGGER.error("getLassoFreqs", rse);
@@ -533,7 +533,7 @@ public class RocUtils {
 
     public static String getLRConvergence(RConnection RC) {
         try {
-            return RC.eval("GetLRConvergence()").asString();
+            return RC.eval("GetLRConvergence(NA)").asString();
         } catch (Exception e) {
             LOGGER.error("getLRConvergence", e);
         }
@@ -542,7 +542,7 @@ public class RocUtils {
 
     public static String getLREquation(RConnection RC) {
         try {
-            return RC.eval("GetLREquation()").asString();
+            return RC.eval("GetLREquation(NA)").asString();
         } catch (Exception e) {
             LOGGER.error("getLREquation", e);
         }
@@ -588,7 +588,7 @@ public class RocUtils {
 
     public static String getLRthreshold(RConnection RC) {
         try {
-            return RC.eval("GetLRthreshold()").asString();
+            return RC.eval("GetLRthreshold(NA)").asString();
         } catch (Exception e) {
             LOGGER.error("getLRthreshold", e);
         }

@@ -11,6 +11,14 @@
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
+        <style>
+            .highlight1 {
+                background-color: var(--cyan-100) !important; /*#6CE26C !important;*/
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            // rowStyleClass="#{fb.significant ? 'highlight1' : null}">            
+        </style>
         <h:form id="form1">
             <h:panelGrid styleClass="my-content-panel">
                 <h2>Feature Details Table</h2>    
@@ -35,7 +43,7 @@
                               rows="20" rowsPerPageTemplate="20,50,100"   
                               class="surface-card shadow-1 p-0 text-800" 
                               editable="true" editMode="cell" widgetVar="cellDetails" paginatorPosition="bottom"
-                              var="fb" value="#{detailsBean.featureBeans}" resizableColumns="true">  
+                              var="fb" value="#{detailsBean.featureBeans}" resizableColumns="true">
                     <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
                     <p:column headerText="Name" 
                               style="width:200px"

@@ -82,49 +82,47 @@ public class FeatureBean implements Serializable {
 
     public void addValue(double val) {
         switch (count) {
-            case 0:
+            case 0 -> {
                 val1 = val;
                 count++;
-                break;
-            case 1:
+            }
+            case 1 -> {
                 val2 = val;
                 count++;
-                break;
-            case 2:
+            }
+            case 2 -> {
                 val3 = val;
                 count++;
-                break;
-            case 3:
+            }
+            case 3 -> {
                 val4 = val;
                 count++;
-                break;
-            case 4:
+            }
+            case 4 -> {
                 val5 = val;
                 count++;
-                break;
-            case 5:
+            }
+            case 5 -> {
                 val6 = val;
                 count++;
-                break;
-            case 6:
+            }
+            case 6 -> {
                 val7 = val;
                 count++;
-                break;
-            case 7:
+            }
+            case 7 -> {
                 val8 = val;
                 count++;
-                break;
-            case 8:
+            }
+            case 8 -> {
                 val9 = val;
                 count++;
-                break;
-            case 9:
+            }
+            case 9 -> {
                 val10 = val;
                 count++;
-                break;
-            default:
-                val11 = val;
-                break;
+            }
+            default -> val11 = val;
         }
     }
 
