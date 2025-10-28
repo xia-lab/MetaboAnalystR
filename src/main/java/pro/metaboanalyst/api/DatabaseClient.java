@@ -766,7 +766,7 @@ public class DatabaseClient {
         }
 
         String trimmed = json.trim();
-        System.out.println("workflowresponse======" + trimmed);
+        //System.out.println("workflowresponse======" + trimmed);
 
         if (trimmed.isEmpty() || "null".equalsIgnoreCase(trimmed)) {
             return out;

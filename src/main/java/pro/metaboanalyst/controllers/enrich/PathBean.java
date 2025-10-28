@@ -158,10 +158,11 @@ public class PathBean implements Serializable {
 
     @JsonIgnore
     public MetSetBean[] getCurrentPathSet() {
+        //System.out.println("called here =======getCurrentPathSet");
         String[] details = REnrichUtils.getHTMLPathSet(sb.getRConnection(), sb.getCurrentPathName());
         ArrayList<MetSetBean> libVec = new ArrayList();
         libVec.add(new MetSetBean(details[0], details[1], ""));
-        return libVec.toArray(new MetSetBean[0]);
+        return libVec.toArray(MetSetBean[]::new);
     }
 
     public void handleRefLibUpload() {
@@ -310,7 +311,7 @@ public class PathBean implements Serializable {
             setHeatmapName(fileNm);
             if (REnrichUtils.computePathHeatmap(sb, libOpt, fileNm, type)) {
                 sb.setHeatmapType("pathway");
-                            jrd.record_paBn_heatmap(this);
+                jrd.record_paBn_heatmap(this);
 
                 return "Heatmap view";
             } else {
@@ -329,7 +330,7 @@ public class PathBean implements Serializable {
     @JsonIgnore
     public PABean[] getPaBeans() {
         if (paBeans == null) {
-             paBn_action();
+            paBn_action();
         }
         return paBeans;
     }

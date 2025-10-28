@@ -96,37 +96,7 @@
                     Click the corresponding <b>Pathway Name</b> to view its graphical presentation; 
                     click <b>Match Status</b> to view the pathway compounds (with matched ones highlighted). 
                 </p>
-                <p:dataTable rows="20" rowsPerPageTemplate="20,50,100" paginator="true" paginatorPosition="bottom" 
-                             class="surface-card shadow-1 p-0 text-800"
-                             id="resTbl" style="width:95%; font-size: 12px" var="pab" value="#{pathBean.paBeans}">  
-                    <p:column headerText="Pathway Name" style="width:320px; font-size: 12px">  
-                        <p:commandLink value="#{pab.setName}" onclick="renderPath('#{pab.setName}')" update=":hisTab:cmdPane" /> 
-                    </p:column>  
-                    <p:column headerText="Match Status" style="text-align: center">  
-                        <p:commandLink value="#{pab.match}" update=":detailView" oncomplete="PF('msetDialog').show()">  
-                            <f:setPropertyActionListener value="#{pab.setName}" target="#{sessionBean1.currentPathName}" />  
-                        </p:commandLink>
-                    </p:column>  
-                    <p:column headerText="p">  
-                        <h:outputText escape="false" value="#{pab.PVal}"/>
-                    </p:column>                     
-                    <p:column headerText="-log(p)">  
-                        <h:outputText escape="false" value="#{pab.logP}"/>
-                    </p:column>  
-                    <p:column headerText="Holm p">  
-                        <h:outputText escape="false" value="#{pab.holmPval}"/>
-                    </p:column>  
-                    <p:column headerText="FDR">  
-                        <h:outputText escape="false" value="#{pab.fdrPval}"/>
-                    </p:column>  
-                    <p:column headerText="Impact">  
-                        <h:outputText escape="false" value="#{pab.impVal}"/>
-                    </p:column> 
-                    <p:column headerText="Details">  
-                        <h:outputText escape="false" value="#{pab.details}"/>
-                    </p:column>   
-                </p:dataTable>   
-
+                <ui:include src="/Secure/xialabpro/table/path/_PathTable.xhtml" />
                 <h:outputText escape="false" value="#{pathBean.downloadMsg}"/>
                 <h:panelGrid style="width: 100%; padding-bottom: 20px; text-align: center">
                     <p:commandButton value="Submit" ajax="false" style="font-size: 14px"
@@ -136,29 +106,8 @@
                 </h:panelGrid> 
             </h:form>
         </h:panelGrid>
-        <p:dialog widgetVar="msetDialog" 
-                  header="Pathway Details"
-                  dynamic="true" modal="true" appendTo="@(body)" 
-                  hideEffect="explode" resizable="true"> 
-            <h:panelGrid id="detailView" style="width:500px; font-size: 13px; padding: 20px">
-                <h:outputText escape="false" value="Matched metabolites: "/>
-                <h:form id="summaryForm">
-                    <p:dataTable style="width:100%; font-size: 12px" var="set" 
-                                 class="surface-card shadow-1 p-0 text-800"
-                                 value="#{pathBean.currentPathSet}">
-                        <p:column headerText="Pathway">  
-                            <h:outputText escape="false" value="#{set.name}"/>  
-                        </p:column>  
-                        <p:column headerText="Metabolites">  
-                            <h:outputText escape="false" value="#{set.members}"/>
-                        </p:column>   
-                    </p:dataTable> 
-                    <h:panelGrid style="width:100%; text-align: center">
-                        <p:commandButton value="OK" onclick="PF('msetDialog').hide()"/>
-                    </h:panelGrid>
-                </h:form>
-            </h:panelGrid> 
-        </p:dialog>
+
+        <ui:include src="/Secure/xialabpro/dialog/_msetDialog.xhtml" />
 
         <p:dialog widgetVar="plotparam" dynamic="true" modal="true" appendTo="@(body)" 
                   hideEffect="explode" resizable="true" header="Limit of x and y axises">

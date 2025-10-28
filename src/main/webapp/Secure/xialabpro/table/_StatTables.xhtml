@@ -11,6 +11,14 @@
              class="surface-card text-800"
              rendered="#{empty rocAnalBean.featureBeans and (not empty detailsBean.listModelAnova or not empty detailsBean.listModelVolcano)}">
         <h:panelGroup rendered="#{not empty detailsBean.listModelAnova}">
+            <div style="text-align: right; margin-bottom: 10px;">
+                <p:commandButton value="Download"
+                                 ajax="false"
+                                 icon="pi pi-download"
+                                 style="margin-bottom: 10px;">
+                    <p:fileDownload value="#{detailsBean.detailFileAnova}" />
+                </p:commandButton>
+            </div>
             <ui:include src="./stat/_AnovaTable.xhtml" />
         </h:panelGroup>
         <h:panelGroup rendered="#{not empty detailsBean.listModelVolcano}">

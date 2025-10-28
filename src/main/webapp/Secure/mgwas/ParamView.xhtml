@@ -49,7 +49,7 @@
                     </p:outputPanel>
                 </h:panelGrid>  
 
-                <p:dataTable id="resultTable"  paginator="true" paginatorPosition="bottom" rows="10" 
+                <p:dataTable id="resultTable"  paginator="true" paginatorPosition="bottom" rows="15" 
                              resizableColumns="true" emptyMessage="No metabolite(s) have been selected!"
                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
                              style="font-size: 10px; width: 100%; padding-top:10px" var="rb" value="#{mgwasBean.doSNPViewing()}" rowKey="#{rb.get('rowID')}">  

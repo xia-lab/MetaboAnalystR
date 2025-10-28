@@ -36,9 +36,9 @@
 
     <p:dialog widgetVar="msetPathDialog" dynamic="true" modal="true" appendTo="@(body)" 
               onShow="updatePathMset()"
+              header="Matched metabolites"
               hideEffect="explode" resizable="true"> 
         <h:panelGrid id="detailViewPath" style="width:500px; font-size: 13px; padding: 20px">
-            <h:outputText escape="false" value="Matched metabolites: "/>
             <h:form id="summaryFormPath">
                 <p:dataTable style="width:100%; font-size: 12px" var="set" 
                              class="surface-card shadow-1 p-0 text-800"
@@ -56,7 +56,7 @@
             </h:form>
         </h:panelGrid> 
     </p:dialog>
-    <p:remoteCommand name="updateMsetPath" process="@this" update=":detailViewPath"/>
+    <p:remoteCommand name="updatePathMset" process="@this" update=":detailViewPath"/>
 
     <p:dialog header="Match Details" widgetVar="msetMumDialog" dynamic="true" modal="true" appendTo="@(body)" 
               onShow="updateMsetMum()" hideEffect="explode" resizable="true"> 

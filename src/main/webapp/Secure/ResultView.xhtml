@@ -18,16 +18,29 @@
             function stop() {
                 PF('statusDialog').hide();
             }
+
+            //overwrite 
+            function renderPath(pathname) {
+                PF("DashboardDialog").show();
+            }
+
         </script> 
 
         <h:panelGroup>
-            <ui:include src="./xialabpro/_DefaultResult.xhtml" />
-
-            <h:panelGroup>
-                <ui:include src="./xialabpro/dialog/_msetDialog.xhtml" />
-            </h:panelGroup>
+            <ui:include src="/Secure/xialabpro/_DefaultResult.xhtml" />
+            <ui:include src="/Secure/xialabpro/dialog/_msetDialog.xhtml" />
             <ui:include src="/template/_feature_dialog.xhtml" />
-
         </h:panelGroup>
+
+        <p:dialog id="DashboardDialog" modal="true" widgetVar="DashboardDialog"
+                  style="width: 320px; height:240px;" 
+                  appendTo="@(body)" header="Dashboard Notice"
+                  draggable="false" closable="true" resizable="false"> 
+            <div style="width: 320px; padding:20px; line-height: 23px">
+                <p>
+                    Please use the <b>Navigation Tree</b> to visit the page for interactive visualization.
+                </p>
+            </div>
+        </p:dialog>
     </ui:define>
 </ui:composition>

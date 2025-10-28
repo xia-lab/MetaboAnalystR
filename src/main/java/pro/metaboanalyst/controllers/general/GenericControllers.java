@@ -495,16 +495,16 @@ public class GenericControllers implements Serializable {
     }
 
     public ArrayList<RcmdBean> getCmdVec() {
-        ArrayList<RcmdBean> myCmds = new ArrayList<>();
-        RConnection RC = sb.getRConnection();
 
+        RConnection RC = sb.getRConnection();
         if (RC == null || !isRConnectionValid(RC)) {
             if(!ab.isInDocker()){
                 LOGGER.error("RConnection is null or invalid in getCmdVec");
             }    
-            return myCmds;
+            return null;
         }
-
+        
+        ArrayList<RcmdBean> myCmds = new ArrayList<>();
         try {
             if (sb.isLoggedIn() && sb.getDataType().equals("spec") && ab.isInDocker()) {
                 if (spb.isRecordCMD()) {

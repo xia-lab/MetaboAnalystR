@@ -5,20 +5,9 @@
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
-
-
     <p:panel styleClass="myPanel myDashboard" header="Pathway Analysis Result" toggleable="true" toggleSpeed="500"  
-             class="surface-card text-800"
-             rendered="#{!downloader.naviContainsUrl('/Secure/pathway/SMPDBResultView.xhtml')}">
+             class="surface-card text-800">
         <ui:include src="./path/_PathTable.xhtml" />
-
     </p:panel>
-    <p:panel styleClass="myPanel myDashboard" header="Pathway Analysis Result (SMPDB)" toggleable="true" toggleSpeed="500" 
-             class="surface-card text-800"
-             rendered="#{downloader.naviContainsUrl('/Secure/pathway/SMPDBResultView.xhtml')}">
-        <ui:include src="./path/_SmpdbTable.xhtml" />
-    </p:panel>
-
-    
 </ui:composition>
 

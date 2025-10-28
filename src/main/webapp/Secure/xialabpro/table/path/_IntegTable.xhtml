@@ -6,14 +6,6 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
 
-    <div style="text-align: right; margin-bottom: 10px;">
-        <p:commandButton value="Download" ajax="false" 
-                         onclick="PrimeFaces.monitorDownload(start, stop);"   
-                         icon="pi pi-download">  
-            <p:fileDownload value="#{integResBean.downloadPathwayFile}"/>  
-        </p:commandButton> 
-    </div>
-
     <p:dataTable rows="10" rowsPerPageTemplate="10,20,50" paginator="true" id="resTbl" paginatorPosition="bottom"
                  class="surface-card shadow-1 p-0 text-800"
                  style="width:95%; font-size: 12px" var="pab" value="#{integResBean.paBeans}">
