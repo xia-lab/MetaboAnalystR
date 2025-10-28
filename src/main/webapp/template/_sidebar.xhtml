@@ -521,28 +521,5 @@
         </h:form>
     </p:dialog>
 
-    <p:dialog modal="true" widgetVar="workflowSaveDialog" 
-              style="width: 400px; " 
-              dynamic="true"
-              header="Workflow Saving:" 
-              appendTo="@(body)" 
-              draggable="false" closable="true" resizable="false"> 
-        <h:form id="formWf">
-            <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px"  class="surface-card shadow-0 p-3 text-600"> 
-                <h:panelGrid columns="2" style="width:100%">
-                    <h:outputLabel value="Name"/>
-                    <p:inputText id="float-input" style="width:100%" value="#{workflowBean.name}"/>
-                    <h:outputLabel value="Description"/>
-                    <p:inputTextarea rows="10" cols="36" value="#{workflowBean.description}"/>
-                </h:panelGrid>
-                <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
-                    <p:commandButton value="Save"
-                                     actionListener="#{workflowView.generateWorkflowJson()}"
-                                     oncomplete="PF('workflowSaveDialog').hide();"
-                                     />
-                </h:panelGrid>
-            </h:panelGrid>
-        </h:form>
-    </p:dialog>
 
 </ui:composition>

@@ -1979,3 +1979,15 @@ a {
 }
 
 /* Add your customizations of the layout styles here */
+
+/* Workflow Runs row highlight – black */
+#dataTableForm\:dtTable tbody tr.row-selected > td {
+  background-color: rgba(148,163,184,0.18) !important; /* slate-400 wash */
+  color: #F8FAFC !important;                            /* near-white */
+  border-top: 1px solid rgba(148,163,184,0.45) !important;
+  border-bottom: 1px solid rgba(148,163,184,0.45) !important;
+}
+#dataTableForm\:dtTable tbody tr.row-selected > td:first-child {
+  box-shadow: inset 4px 0 0 0 #94A3B8 !important;       /* slate accent */
+}
+#dataTableForm\:dtTable tbody tr.row-selected i { color: inherit !important; }

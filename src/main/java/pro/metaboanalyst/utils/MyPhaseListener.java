@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -586,7 +587,7 @@ public class MyPhaseListener implements PhaseListener {
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
             String jobId = request.getParameter("jobId");
-
+            System.out.println("handleWorkflowStartRequest===tokenId====" + tokenId);
             boolean res = fbc.loadProject(tokenId, "workflow");
             if (res) {
                 boolean wfRes = dv.startWorkflow();
@@ -607,7 +608,11 @@ public class MyPhaseListener implements PhaseListener {
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
-                        String msg = db.updateWorkflowRunStatus(wb.getSelectedWorkflowRun().getId(), "completed", tokenId);
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("status", "completed");
+                        updates.put("project_id", tokenId);
+                        String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
+                        System.out.println("updateworkflowafterfinish-----" + msg);
                         //je.checkJobStatus();
                         dv.sendRawResume(email, jobId, shareLink);
                     }
