@@ -17,10 +17,7 @@
             <li><b>FDR:</b> The false discovery rate-adjusted p-value, accounting for multiple testing and controlling for false positives.</li> 
         </ul>
     </h:panelGrid>
-    <p:tabView value="#{detailsBean.listModelEntries}" var="entry">
-        <h:panelGrid>
-
-        </h:panelGrid>  
+    <p:tabView value="#{detailsBean.listModelEntries}" var="entry"> 
         <p:tab title="#{detailsBean.getEnrTableName(entry.key)}">
             <ul>
                 <li>
@@ -47,13 +44,8 @@
                           rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
                           var="fb" value="#{entry.value}" resizableColumns="true">  
 
-                <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
-
                 <p:column headerText="Name">
-                    <p:cellEditor>
-                        <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
-                        <f:facet name="input"><p:inputText value="#{fb.name}" /></f:facet>
-                    </p:cellEditor>
+                    <h:outputText value="#{fb.name}" />
                 </p:column>
 
                 <!-- Repeat value columns -->
@@ -80,8 +72,5 @@
             </p:dataTable>
         </p:tab>
     </p:tabView>
-
-
-
 </ui:composition>
 

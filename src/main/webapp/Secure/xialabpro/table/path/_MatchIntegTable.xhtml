@@ -5,57 +5,46 @@
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
-    <h:panelGrid>
-        <p>Pathway mapping details table. Showing matched metabolites and genes for each enriched pathway.</p> 
 
-    </h:panelGrid>
+    <p>
+        Pathway mapping details table. Showing matched metabolites and genes for each enriched pathway.
+    </p> 
+    <p:dataTable  id="detailTblMatchInteg" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                  rows="10" rowsPerPageTemplate="10,20,50" 
+                  class="surface-card shadow-1 p-0 text-800" 
+                  editable="true" editMode="cell" 
+                  widgetVar="detailTblMatchIntegVar" paginatorPosition="bottom"
+                  rowIndexVar="rowIndex" 
+                  rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                  var="fb" value="#{detailsBean.hashListModel2.get('match_integ')}" resizableColumns="true">  
 
-            <div style="text-align: right; margin-bottom: 10px;">
-                <p:commandButton value="Download"
-                                 ajax="false"
-                                 icon="pi pi-download"
-                                 style="margin-bottom: 10px;">
-            <p:fileDownload value="#{integResBean.downloadPathwayMatchingFile}"/>  
-                </p:commandButton>
-            </div>
+        <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
 
+        <p:column headerText="Name">
+            <p:cellEditor>
+                <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                <f:facet name="input"><p:inputText value="#{fb.name}" /></f:facet>
+            </p:cellEditor>
+        </p:column>
 
-            <p:dataTable  id="detailTblMatchInteg" paginator="true" style="font-size: 12px; line-height: 21px;" 
-                          rows="10" rowsPerPageTemplate="10,20,50" 
-                          class="surface-card shadow-1 p-0 text-800" 
-                          editable="true" editMode="cell" 
-                          widgetVar="detailTblMatchIntegVar" paginatorPosition="bottom"
-                          rowIndexVar="rowIndex" 
-                          rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
-                          var="fb" value="#{detailsBean.hashListModel2.get('match_integ')}" resizableColumns="true">  
-
-                <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
-
-                <p:column headerText="Name">
-                    <p:cellEditor>
-                        <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
-                        <f:facet name="input"><p:inputText value="#{fb.name}" /></f:facet>
-                    </p:cellEditor>
-                </p:column>
-
-                <!-- Repeat value columns -->
-                <p:column headerText="Matched Metabolites"><h:outputText value="#{fb.extra}" /></p:column>
-                <p:column headerText="Matched Genes"><h:outputText value="#{fb.extra2}" /></p:column>
-                <!--
-                <p:column exportable="false" style="width:45px; text-align:center">  
-                    <f:facet name="header">  
-                        Detail 
-                    </f:facet>  
-                    <p:commandButton update=":form1 :summaryForm"
-                                     style="border:none"
-                                     onclick="PF('statusDialog').show()"
-                                     icon="pi pi-list"
-                                     oncomplete="PF('statusDialog').hide(); PF('enrSetDialog').show()">  
-                        <f:setPropertyActionListener value="#{fb}" target="#{detailsBean.selectedPath}" /> 
-                    </p:commandButton>    
-                </p:column>
-                -->
-            </p:dataTable>
+        <!-- Repeat value columns -->
+        <p:column headerText="Matched Genes (Entrez ID)"><h:outputText value="#{fb.extra}" /></p:column>
+        <p:column headerText="Matched Compounds (KEGG ID)"><h:outputText value="#{fb.extra2}" /></p:column>
+        <!--
+        <p:column exportable="false" style="width:45px; text-align:center">  
+            <f:facet name="header">  
+                Detail 
+            </f:facet>  
+            <p:commandButton update=":form1 :summaryForm"
+                             style="border:none"
+                             onclick="PF('statusDialog').show()"
+                             icon="pi pi-list"
+                             oncomplete="PF('statusDialog').hide(); PF('enrSetDialog').show()">  
+                <f:setPropertyActionListener value="#{fb}" target="#{detailsBean.selectedPath}" /> 
+            </p:commandButton>    
+        </p:column>
+        -->
+    </p:dataTable>
 
 
 

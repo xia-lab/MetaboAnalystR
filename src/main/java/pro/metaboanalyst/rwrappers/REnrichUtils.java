@@ -212,6 +212,7 @@ public class REnrichUtils {
             //remove the html tag
             //setNM = setNM.replaceAll("\\<.*?>", "");
             String rCommand = "GetHTMLMetSet(NA, \"" + msetNm + "\")";
+            RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asStrings();
         } catch (Exception e) {
             LOGGER.error("getHTMLMetSet", e);
@@ -236,6 +237,7 @@ public class REnrichUtils {
             //remove the html tag
             //setNM = setNM.replaceAll("\\<.*?>", "");
             String rCommand = "GetHTMLPathSet(NA, \"" + pathName + "\")";
+               RCenter.recordRCommand(RC, rCommand);
             return RC.eval(rCommand).asStrings();
         } catch (Exception e) {
             LOGGER.error("getHTMLPathSet", e);

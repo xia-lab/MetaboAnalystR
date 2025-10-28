@@ -424,13 +424,13 @@ public class DownloadBean implements Serializable {
         File folder = new File(mainFolderPath);
 
         File[] listOfFiles = folder.listFiles(new OnlyExt(true));
-        System.out.println(listOfFiles.length + "======listOfFiles.length");
+        //System.out.println(listOfFiles.length + "======listOfFiles.length");
         if (listOfFiles == null || listOfFiles.length == 0) {
             downloads = new ResultBean[1];
             downloads[0] = new ResultBean("Empty Folder", "", null, null);
         } else {
             DataUtils.deleteFile(usr, "Download.zip");
-            System.out.println("CreatingZip=====" + mainFolderPath);
+            //System.out.println("CreatingZip=====" + mainFolderPath);
             DataUtils.createZipFile(listOfFiles, "Download.zip", mainFolderPath);
 
             ArrayList<String> fileNames = new ArrayList<>();
@@ -894,7 +894,7 @@ public class DownloadBean implements Serializable {
             }
 
             File myReport2 = new File(path2);
-            System.out.println(path2 + "=====path2");
+            //System.out.println(path2 + "=====path2");
             if (myReport2.exists()) {
                 return DataUtils.getDownloadFile(path2);
             } else {

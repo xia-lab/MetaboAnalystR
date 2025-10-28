@@ -6,50 +6,45 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
 
-    <h:panelGrid columns="2">
-        <div style="color:orange">
-            To update a name suitable for graphical display, <b>click the name</b> to edit and then click the next column to save.
-        </div>
 
-        <p:commandButton value="Download" ajax="false" icon="pi pi-download" style="margin-left: 60px">
-            <p:fileDownload value="#{detailsBean.detailFileAnova}" />
-        </p:commandButton>  
-    </h:panelGrid>  
-    <div class="card">
-        <p:dataTable  id="detailTblAnova" paginator="true" style="font-size: 12px; line-height: 21px;" 
-                      rows="10" rowsPerPageTemplate="10,20,50" 
-                      class="surface-card shadow-1 p-0 text-800" 
-                      editable="true" editMode="cell" widgetVar="cellDetailsAnova" paginatorPosition="bottom"
-                      rowIndexVar="rowIndex" 
-                      rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
-                      var="fb" value="#{detailsBean.listModelAnova}" resizableColumns="true">  
-            <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
-            <p:column headerText="Name" 
-                      style="width:200px"
-                      sortBy="#{fb.name}" filterBy="#{fb.name}">
-                <p:cellEditor>
-                    <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
-                    <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
-                </p:cellEditor>
-            </p:column>
-            <p:column headerText="#{detailsBean.getColHeaderAnova(0)}" sortBy="#{fb.val1}">
-                <h:outputText escape="false" value="#{fb.val1}"/>
-            </p:column>
-            <p:column headerText="#{detailsBean.getColHeaderAnova(1)}" sortBy="#{fb.val2}">
-                <h:outputText escape="false" value="#{fb.val2}"/>
-            </p:column>
-            <p:column headerText="#{detailsBean.getColHeaderAnova(2)}" sortBy="#{fb.val3}">
-                <h:outputText escape="false" value="#{fb.val3}"/>
-            </p:column>
-            <p:column headerText="#{detailsBean.getColHeaderAnova(3)}" sortBy="#{fb.val4}">
-                <h:outputText escape="false" value="#{fb.val4}"/>
-            </p:column>
+    <p>
+        To update a name suitable for graphical display, <b>click the name</b> to edit and then click the next column to save.
+    </p>
 
-            <p:column headerText="Detail">
-                <p:commandLink value="View" actionListener="#{sessionBean1.viewCmpdSummary(fb.name)}" oncomplete="PF('FeatureView').show();"/>
-            </p:column>
-        </p:dataTable> 
-    </div>
+    <p:dataTable  id="detailTblAnova" paginator="true" style="font-size: 12px; line-height: 21px;" 
+                  rows="10" rowsPerPageTemplate="10,20,50" 
+                  class="surface-card shadow-1 p-0 text-800" 
+                  editable="true" editMode="cell" widgetVar="cellDetailsAnova" paginatorPosition="bottom"
+                  rowIndexVar="rowIndex" 
+                  rowStyleClass="#{rowIndex mod 2 == 0 ? 'grey-row' : 'transparent-row'}"
+                  var="fb" value="#{detailsBean.listModelAnova}" resizableColumns="true">  
+        <p:ajax event="cellEdit" listener="#{detailsBean.onCellEdit}"/>
+        <p:column headerText="Name" 
+                  style="width:200px"
+                  sortBy="#{fb.name}" filterBy="#{fb.name}">
+            <p:cellEditor>
+                <f:facet name="output"><h:outputText value="#{fb.name}" /></f:facet>
+                <f:facet name="input"><p:inputText id="modelInput" value="#{fb.name}" style="width:95%"/></f:facet>
+            </p:cellEditor>
+        </p:column>
+        <p:column headerText="#{detailsBean.getColHeaderAnova(0)}" sortBy="#{fb.val1}">
+            <h:outputText escape="false" value="#{fb.val1}"/>
+        </p:column>
+        <p:column headerText="#{detailsBean.getColHeaderAnova(1)}" sortBy="#{fb.val2}">
+            <h:outputText escape="false" value="#{fb.val2}"/>
+        </p:column>
+        <p:column headerText="#{detailsBean.getColHeaderAnova(2)}" sortBy="#{fb.val3}">
+            <h:outputText escape="false" value="#{fb.val3}"/>
+        </p:column>
+        <p:column headerText="#{detailsBean.getColHeaderAnova(3)}" sortBy="#{fb.val4}">
+            <h:outputText escape="false" value="#{fb.val4}"/>
+        </p:column>
+
+        <p:column headerText="Detail">
+            <p:commandLink value="View" actionListener="#{sessionBean1.viewCmpdSummary(fb.name)}" oncomplete="PF('FeatureView').show();"/>
+        </p:column>
+    </p:dataTable> 
+
     <p:contextMenu for="detailTblAnova" widgetVar="cMenu">   
         <p:menuitem value="Edit Cell" icon="pi pi-search" onclick="PF('cellDetails').showCellEditor();return false;"/>  
         <p:menuitem value="Hide Menu" icon="pi pi-times" onclick="PF('cMenu').hide()"/>  

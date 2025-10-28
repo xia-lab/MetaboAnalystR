@@ -14,7 +14,7 @@
     <ui:define name="content">
         <h:panelGrid styleClass="my-content-panel">
             <h2>Data Upload</h2>
-            <p:tabView id="ac" style="width: 95%; border: none;">
+            <p:tabView id="ac" style="width: 100%; border: none;">
                 <p:tab title="Compound List" rendered="#{pathBean.switchORAtab}">
                     <h:form id="form1">
                         <h:panelGrid style="padding: 10px 10px 10px 20px; width: 100%">
@@ -133,7 +133,7 @@
                     </h:panelGrid>
                 </p:tab>
 
-                <p:tab title="Metabolomics Workbench Data" rendered="#{pathBean.switchQEAtab}">
+                <p:tab title="Metabolomics Workbench" rendered="#{pathBean.switchQEAtab}">
                     <h:form>
                         <h:panelGrid style="padding: 10px 20px 0px 20px; font-size: 13px; line-height: 23px">
                             <p>
@@ -155,7 +155,7 @@
                     </h:form>
                 </p:tab>
 
-                <p:tab title="Metabolon Data Sheet" rendered="#{pathBean.switchQEAtab}">
+                <p:tab title="Metabolon Data" rendered="#{pathBean.switchQEAtab}">
                     <h:form id="metaolonform" enctype="multipart/form-data">
                         <h:panelGrid style="padding: 10px 20px 0px 20px; font-size: 13px; line-height: 23px">
                             <p>

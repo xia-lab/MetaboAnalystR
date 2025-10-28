@@ -1200,6 +1200,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void setCurrentPathName(String currentPathName) {
+        System.out.println("===========current img key: " + currentPathName);
         this.currentPathName = currentPathName;
     }
 
