@@ -120,7 +120,6 @@ public class SessionBean1 implements Serializable {
     @JsonIgnore
     private transient JavaRecord jrd;
 
-
     // Step 3: Add lazy getter methods
     private WorkflowBean getWorkflowBean() {
         if (wfb == null) {
@@ -186,7 +185,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void setEditMode(boolean edit) {
-       getWorkflowBean().setEditMode(edit);
+        getWorkflowBean().setEditMode(edit);
     }
 
     public boolean isEditMode() {
@@ -678,7 +677,7 @@ public class SessionBean1 implements Serializable {
                 FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
             }
             keepUserInfo();
-        } else if(returnHome == 1){
+        } else if (returnHome == 1) {
             String rootId = FacesContext.getCurrentInstance().getViewRoot().getViewId();
             if (!rootId.endsWith("home.xhtml")) {
                 // Still need to destory the session beans once user click 'Exit' -- zhiqiang
@@ -688,20 +687,14 @@ public class SessionBean1 implements Serializable {
 
                 DataUtils.doRedirect(ab.getDomainURL(), ab);
             }
-        } else{
+        } else {
             System.out.println("Nothing to do here ....");
         }
     }
 
     @PreDestroy
     public void cleanup() {
-        if (RC != null) {
-            try {
-                RC.close();
-            } catch (Exception e) {
-                LOGGER.error("Failed to close R connection", e);
-            }
-        }
+        doLogout(1);
     }
 
     public RConnection getRConnection(String myAnalType) {
@@ -760,7 +753,10 @@ public class SessionBean1 implements Serializable {
         this.integChecked = false;
         this.dataNormed = false;
         imgMap.clear();
-
+        graphicsMap.clear();
+        graphicsMapLink.clear();
+        reportImgMap.clear();
+        reportJsonMap.clear();
         //this is called in data upload, need to keep this entry
         String uploadVal = null;
         boolean uploaded = false;
@@ -773,16 +769,23 @@ public class SessionBean1 implements Serializable {
         }
         naviTrack.clear();
         naviTrackAnalType.clear();
+        naviTrackStatus.clear();
         if (uploaded) {
             addNaviTrack("Upload", uploadVal);
         }
         //reset sessionbean of individual module
-        RocAnalBean rab = getRocAnalBean();
         if ("roc".equals(analType)) {
-            rab.resetState();
+            getRocAnalBean().resetState();
         } else if ("mf".equals(analType)) {
-            rab.resetState();
+            getRocAnalBean().resetState();
         }
+
+        sampleBeans = null;
+        colorBeanLists = null;
+        if (notice.size() > 25) {
+            notice.subList(0, notice.size() - 25).clear();
+        }
+
     }
 
     public void setDataUploaded() {
@@ -908,46 +911,9 @@ public class SessionBean1 implements Serializable {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
 
-    @JsonIgnore
-    public String getCurrentImageURLNoCache(String name) {
-        // Build a URL with forward slashes and append a cache-busting query param
-        String root = ab.getRootContext();                   // e.g. "/ExpressAnalyst"
-        String rel = getCurrentUser().getRelativeDir();     // e.g. "users/zgy/session123/"
-        String file = getCurrentImage(name) + "dpi150.png";  // e.g. "pca_pairdpi150.png" (your convention)
-
-        // Normalize pieces to avoid double slashes and backslashes
-        StringBuilder sb = new StringBuilder();
-        if (root == null) {
-            root = "";
-        }
-        if (!root.startsWith("/")) {
-            sb.append('/');
-        }
-        sb.append(root.replace('\\', '/'));
-        if (sb.charAt(sb.length() - 1) != '/') {
-            sb.append('/');
-        }
-        if (rel != null && !rel.isEmpty()) {
-            sb.append(rel.replace('\\', '/'));
-            if (sb.charAt(sb.length() - 1) != '/') {
-                sb.append('/');
-            }
-        }
-        sb.append(file);
-
-        long v = getImageStamp(name);
-        return sb.toString() + (sb.indexOf("?") >= 0 ? "&" : "?") + "v=" + v;
-    }
-
-    // In SessionBean1 (or your image-serving bean)
-    private final java.util.concurrent.ConcurrentHashMap<String, Long> imgStamp = new java.util.concurrent.ConcurrentHashMap<>();
-
-    public void bumpImageStamp(String key) {
-        imgStamp.put(key, System.currentTimeMillis());
-    }
-
-    public long getImageStamp(String key) {
-        return imgStamp.computeIfAbsent(key, k -> System.currentTimeMillis());
+        @JsonIgnore
+    public String getCurrentImageURL96(String name) {
+        return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi96.png";
     }
 
     /**
@@ -977,7 +943,6 @@ public class SessionBean1 implements Serializable {
     }
 
     public void addGraphicsCMD(String key, String rcmd) {
-        bumpImageStamp(key);
         graphicsMap.put(key, rcmd);
     }
 
@@ -1995,7 +1960,7 @@ public class SessionBean1 implements Serializable {
     public void setMummiOptSingle(String mummiOptSingle) {
         this.mummiOptSingle = mummiOptSingle;
     }
-    
+
     public String getEnrNetName() {
         if (getAnalType().startsWith("path")) {
             enrNetName = "enrichNet_" + analType + ".json";
