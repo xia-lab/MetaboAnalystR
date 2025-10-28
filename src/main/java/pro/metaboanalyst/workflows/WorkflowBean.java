@@ -142,10 +142,6 @@ public class WorkflowBean implements Serializable {
     private String returnType = "diagram"; //diagram or individual
     private List<String> selectedRCommands = new ArrayList<>();
 
-    private List<String> selectedTransNormOpts = new ArrayList<>();
-    private List<String> selectedScaleNormOpts = new ArrayList<>();
-    private Map<String, Boolean> transSelected = new HashMap<>();
-    private Map<String, Boolean> scaleSelected = new HashMap<>();
     private int activeIndex = 0;
     private String dataPreparationUrl = null;
     private String currentSubFolder = "NA";
@@ -250,37 +246,6 @@ public class WorkflowBean implements Serializable {
         this.resultPageDisplay = resultPageDisplay;
     }
 
-    public List<String> getSelectedTransNormOpts() {
-        return selectedTransNormOpts;
-    }
-
-    public void setSelectedTransNormOpts(List<String> selectedTransNormOpts) {
-        this.selectedTransNormOpts = selectedTransNormOpts;
-    }
-
-    public List<String> getSelectedScaleNormOpts() {
-        return selectedScaleNormOpts;
-    }
-
-    public void setSelectedScaleNormOpts(List<String> selectedScaleNormOpts) {
-        this.selectedScaleNormOpts = selectedScaleNormOpts;
-    }
-
-    public Map<String, Boolean> getTransSelected() {
-        return transSelected;
-    }
-
-    public void setTransSelected(Map<String, Boolean> transSelected) {
-        this.transSelected = transSelected;
-    }
-
-    public Map<String, Boolean> getScaleSelected() {
-        return scaleSelected;
-    }
-
-    public void setScaleSelected(Map<String, Boolean> scaleSelected) {
-        this.scaleSelected = scaleSelected;
-    }
 
     public List<String> getSelectedRCommands() {
         return selectedRCommands;
@@ -622,7 +587,6 @@ public class WorkflowBean implements Serializable {
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "You can now start the workflow.");
             //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=2", "info", "You can now start the workflow.");
         } else {
-            convertSelections();
             DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml", "info", "Data preparation is complete.");
             //DataUtils.doRedirectWithGrowl(sb, "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?tabWidgetId=acVar&activeTab=1", "info", "Data preparation is complete");
         }
@@ -1012,73 +976,6 @@ public class WorkflowBean implements Serializable {
             }
         } else {
             System.out.println("FunctionInfo not found for: " + funcName);
-        }
-    }
-
-    public void onTransformationChange() {
-        // Clear the list to rebuild it from the current state of the checkboxes
-        selectedTransNormOpts.clear();
-
-        // For each entry in the scaleSelected map:
-        // if the checkbox is true, add the corresponding key to selectedScaleNormOpts
-        for (Map.Entry<String, Boolean> entry : transSelected.entrySet()) {
-            if (Boolean.TRUE.equals(entry.getValue())) {
-                selectedTransNormOpts.add(entry.getKey());
-            }
-        }
-
-        // Display a message showing the current selection
-        sb.addMessage("info",
-                "Selected: " + String.join(", ", selectedTransNormOpts));
-    }
-
-    // Listener for Scaling Changes
-    public void onScalingChange() {
-        // Clear the list to rebuild it from the current state of the checkboxes
-        selectedScaleNormOpts.clear();
-
-        // For each entry in the scaleSelected map:
-        // if the checkbox is true, add the corresponding key to selectedScaleNormOpts
-        for (Map.Entry<String, Boolean> entry : scaleSelected.entrySet()) {
-            if (Boolean.TRUE.equals(entry.getValue())) {
-                selectedScaleNormOpts.add(entry.getKey());
-            }
-        }
-
-        // Display a message showing the current selection
-        sb.addMessage("info",
-                "Selected: " + String.join(", ", selectedScaleNormOpts));
-    }
-
-    public WorkflowBean() {
-        // Default selection for "None"
-        selectedTransNormOpts = new ArrayList<>();
-        selectedTransNormOpts.add("NULL");
-
-        selectedScaleNormOpts = new ArrayList<>();
-        selectedScaleNormOpts.add("NULL");
-
-        // Initialize maps with default values
-        transSelected.put("None", true);
-        scaleSelected.put("None", true);
-    }
-
-    // Method to Convert Selections to Maps
-    public void convertSelections() {
-        // Convert Transformation Selections
-        transSelected.clear();
-        if (selectedTransNormOpts != null) {
-            for (String opt : selectedTransNormOpts) {
-                transSelected.put(opt, true);
-            }
-        }
-
-        // Convert Scaling Selections
-        scaleSelected.clear();
-        if (selectedScaleNormOpts != null) {
-            for (String opt : selectedScaleNormOpts) {
-                scaleSelected.put(opt, true);
-            }
         }
     }
 
@@ -2185,54 +2082,6 @@ public class WorkflowBean implements Serializable {
         }
     }
 
-    /*
-    public void startFromTemplate(HashMap<String, Object> wfTemplate) {
-        try {
-            selectedWorkflow = wfTemplate;
-            activeIndex = 2;
-
-            if (sb.getCurrentUser() == null) {
-                sb.addMessage("Warn", "Please start an analysis session first!");
-                return;
-            }
-
-            if (ds.getSelected() == null) {
-                sb.addMessage("Warn", "Please select a dataset in 'Data Center' or upload a dataset first!");
-                return;
-            }
- 
-
-            wf.checkWorkflowContained("restoreWorkflowState");
-
-            // 3) UI
-            calledWorkflows.add("Data Preparation");
-            final String module = (String) selectedWorkflow.get("module");
-            final String input = resolveInputForModule(module);
-            postLoadCommon();
-
-            initializeDiagramForInput(input);
-
-            reloadingWorkflow = true;
-
-            if (moduleNames.isEmpty()) {
-                dv.selectNode(dv.convertToBlockName((String) selectedWorkflow.get("module")), true);
-            } else {
-                for (String moduleName : moduleNames) {
-                    dv.selectNode(dv.convertToBlockName(moduleName), true);
-                }
-            }
-
-            DataUtils.doRedirectWithGrowl(sb,
-                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=2",
-                    "info",
-                    "Workflow loaded successfully! You can proceed to run the workflow.");
-        } catch (Exception ex) {
-            Logger.getLogger(WorkflowBean.class.getName())
-                    .log(Level.SEVERE, "startFromTemplate failed", ex);
-            sb.addMessage("Error", "Failed to prepare workflow template: " + ex.getMessage());
-        }
-    }
-     */
     public boolean selectWorkflowById(int id) {
         // Ensure lists are loaded
         if (workflowList == null) {
