@@ -612,6 +612,7 @@ public class MyPhaseListener implements PhaseListener {
                         updates.put("status", "completed");
                         updates.put("project_id", tokenId);
                         String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
+                        System.out.println("updateworkflowafterfinish-----" + msg);
                         //je.checkJobStatus();
                         dv.sendRawResume(email, jobId, shareLink);
                     }

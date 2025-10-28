@@ -120,11 +120,10 @@ public class WorkflowBean implements Serializable {
     @Inject
     private DatasetController ds;
 
-
     @JsonIgnore
     private ArrayList<HashMap<String, Object>> workflowList = new ArrayList();
     @JsonIgnore
-    private ArrayList<HashMap<String, Object>> defaultWorkflowList =  new ArrayList();
+    private ArrayList<HashMap<String, Object>> defaultWorkflowList = new ArrayList();
     @JsonIgnore
     private HashMap<String, Object> selectedWorkflow = new HashMap<>();
 
@@ -1447,7 +1446,6 @@ public class WorkflowBean implements Serializable {
 
         // --- Ensure/attach mSetObj_after_sanity.qs ---
         //setLblType(sb.isRegression() ? "cont" : "disc");
-
     }
 
     /**
@@ -2135,14 +2133,14 @@ public class WorkflowBean implements Serializable {
 
     public void startRun(WorkflowRunModel run) {
         try {
-            if(ds.getDatasetTableAll().isEmpty()){
+            if (ds.getDatasetTableAll().isEmpty()) {
                 ds.reloadTable();
             }
-            
-            if(workflowList.isEmpty()){
+
+            if (workflowList.isEmpty()) {
                 loadAllWorkflows();
             }
-            
+
             this.selectedWorkflowRun = run;
             calledWorkflows.add("Data Preparation");
 
@@ -2152,7 +2150,7 @@ public class WorkflowBean implements Serializable {
                 return;
             }
             ds.setSelected(ds.findById(getSelectedWorkflowRun().getDatasetId()));
-            
+
             boolean res = ds.load(ds.getSelected(), true);
 
             if (res) {
@@ -2322,15 +2320,44 @@ public class WorkflowBean implements Serializable {
     }
 
     public void prepareDialogByDataset(WorkflowRunModel run) {
+
         ds.reloadTable();
         this.selectedWorkflowRun = run;
         this.dsFilter = ""; // clear filter if you like
     }
 
     public void prepareDialogByWorkflow(WorkflowRunModel run) {
-        loadAllWorkflows();
+
         this.selectedWorkflowRun = run;
         this.wfFilter = "";
+
+        if (ds.getDatasetTableAll().isEmpty()) {
+            ds.reloadTable();
+        }
+
+        DatasetRow sel = ds.findById(getSelectedWorkflowRun().getDatasetId());
+        if (sel == null) {
+            sb.addMessage("warn", "Error when fetching the data.");
+            return;
+        } else {
+            ds.setSelected(sel);
+        }
+
+        loadAllWorkflows();
+
+        if (workflowList != null && !workflowList.isEmpty()) {
+            ArrayList<HashMap<String, Object>> compatible = new ArrayList<>(workflowList.size());
+            for (HashMap<String, Object> wf : workflowList) {
+                if (workflowCompatible(wf)) {
+                    compatible.add(wf);
+                }
+            }
+            workflowList = compatible;
+
+            if (selectedWorkflow != null && (workflowList == null || !workflowList.contains(selectedWorkflow))) {
+                selectedWorkflow = workflowList.isEmpty() ? null : workflowList.get(0);
+            }
+        }
     }
 
     // In WorkflowBean.java
