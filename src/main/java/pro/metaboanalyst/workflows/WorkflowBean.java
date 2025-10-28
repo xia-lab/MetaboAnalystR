@@ -1849,34 +1849,23 @@ public class WorkflowBean implements Serializable {
             final boolean sameTableFamily = dsInTable && wfInTable;
             final boolean sameListFamily = dsInList && wfInList;
 
-            System.out.println(TAG + " familyCheck -> dsInTable=" + dsInTable
-                    + ", wfInTable=" + wfInTable
-                    + ", dsInList=" + dsInList
-                    + ", wfInList=" + wfInList
-                    + " => sameTableFamily=" + sameTableFamily
-                    + ", sameListFamily=" + sameListFamily);
-
             if (!(sameTableFamily || sameListFamily)) {
-                System.out.println(TAG + " RETURN FALSE: Different families (table/list) -> incompatible");
                 return false;
             }
 
             // 2) mass_all constraint -> only mummichog
             if ("mass_all".equals(dataType) && !"mummichog".equals(wfModule)) {
-                System.out.println(TAG + " RETURN FALSE: dataType=mass_all requires wfModule=mummichog");
                 return false;
             }
 
             // 3) regression restriction
             if (regression && !REGRES_ANALS.contains(wfModule)) {
-                System.out.println(TAG + " RETURN FALSE: regression=true but wfModule not in REGRES_ANALS");
                 return false;
             }
 
             // 4) QEA requires conc (and later also ID mapping)
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
                 if (!"conc".equalsIgnoreCase(dataType)) {
-                    System.out.println(TAG + " RETURN FALSE: QEA (" + wfModule + ") requires dataType=conc");
                     return false;
                 }
             }
@@ -1890,7 +1879,6 @@ public class WorkflowBean implements Serializable {
                         || "nmrpeak".equalsIgnoreCase(dataType)
                         || "mspeak".equalsIgnoreCase(dataType);
                 if (!ok) {
-                    System.out.println(TAG + " RETURN FALSE: mummichog requires one of [mass_all, mass_table, pktable, spec, nmrpeak, mspeak]");
                     return false;
                 }
             }
@@ -1904,13 +1892,11 @@ public class WorkflowBean implements Serializable {
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
                 if (!"conc".equalsIgnoreCase(dataType)) {
                     // (duplicate protection; kept for explicit logging)
-                    System.out.println(TAG + " RETURN FALSE: QEA (" + wfModule + ") requires dataType=conc (double-check)");
                     return false;
                 }
 
             }
 
-            System.out.println(TAG + " RETURN TRUE: compatible");
             return true;
 
         } catch (Exception e) {
