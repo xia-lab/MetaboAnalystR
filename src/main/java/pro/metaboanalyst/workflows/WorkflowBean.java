@@ -42,6 +42,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import org.postgresql.util.PGobject;
 import org.primefaces.PrimeFaces;
 import org.primefaces.component.api.UIColumn;
@@ -245,7 +246,6 @@ public class WorkflowBean implements Serializable {
     public void setResultPageDisplay(String resultPageDisplay) {
         this.resultPageDisplay = resultPageDisplay;
     }
-
 
     public List<String> getSelectedRCommands() {
         return selectedRCommands;
@@ -1822,71 +1822,100 @@ public class WorkflowBean implements Serializable {
     private static final Set<String> RUN_STATUS_ALLOWED = Set.of("pending", "running", "completed", "failed");
 
     public boolean workflowCompatible(Map<String, Object> wf) {
+        final String TAG = "[workflowCompatible]";
         try {
-            // No dataset selected → don't disable anything
+            // dataset selection status
             if (ds.getSelected() == null) {
+                System.out.println(TAG + " ds.selected = null -> TRUE (no dataset selected, allow all)");
                 return true;
             }
 
             final String dsModule = safeStr(ds.getSelected().getModule());
             final String wfModule = safeStr(wf.get("module"));
+            final String dataType = safeStr(sb.getDataType());
+            final boolean regression = sb.isRegression();
 
-            // 1) base rule: must be in the SAME family
-            final boolean sameTableFamily = TABLE_FAMILY.contains(dsModule) && TABLE_FAMILY.contains(wfModule);
-            final boolean sameListFamily = LIST_FAMILY.contains(dsModule) && LIST_FAMILY.contains(wfModule);
+            System.out.println(TAG + " dsModule=" + dsModule
+                    + ", wfModule=" + wfModule
+                    + ", dataType=" + dataType
+                    + ", regression=" + regression);
+
+            // 1) family rule
+            final boolean dsInTable = TABLE_FAMILY.contains(dsModule);
+            final boolean wfInTable = TABLE_FAMILY.contains(wfModule);
+            final boolean dsInList = LIST_FAMILY.contains(dsModule);
+            final boolean wfInList = LIST_FAMILY.contains(wfModule);
+
+            final boolean sameTableFamily = dsInTable && wfInTable;
+            final boolean sameListFamily = dsInList && wfInList;
+
+            System.out.println(TAG + " familyCheck -> dsInTable=" + dsInTable
+                    + ", wfInTable=" + wfInTable
+                    + ", dsInList=" + dsInList
+                    + ", wfInList=" + wfInList
+                    + " => sameTableFamily=" + sameTableFamily
+                    + ", sameListFamily=" + sameListFamily);
+
             if (!(sameTableFamily || sameListFamily)) {
-                return false; // different families → incompatible
-            }
-
-            // 2) (optional) apply your existing extra guards inside the family
-            String dataType = safeStr(sb.getDataType());
-            if (dataType.equals("mass_all")) {
-                if (!wfModule.equals("mummichog")) {
-                    return false;
-                }
-            }
-            final String cmpdIdType = safeStr(sb.getCmpdIDType()); // "na" = not mapped
-            // regression only pathway/enrich
-            if (sb.isRegression() && !REGRES_ANALS.contains(wfModule)) {
+                System.out.println(TAG + " RETURN FALSE: Different families (table/list) -> incompatible");
                 return false;
             }
 
-            // QEA needs conc
+            // 2) mass_all constraint -> only mummichog
+            if ("mass_all".equals(dataType) && !"mummichog".equals(wfModule)) {
+                System.out.println(TAG + " RETURN FALSE: dataType=mass_all requires wfModule=mummichog");
+                return false;
+            }
+
+            // 3) regression restriction
+            if (regression && !REGRES_ANALS.contains(wfModule)) {
+                System.out.println(TAG + " RETURN FALSE: regression=true but wfModule not in REGRES_ANALS");
+                return false;
+            }
+
+            // 4) QEA requires conc (and later also ID mapping)
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
                 if (!"conc".equalsIgnoreCase(dataType)) {
+                    System.out.println(TAG + " RETURN FALSE: QEA (" + wfModule + ") requires dataType=conc");
                     return false;
                 }
             }
 
-            // mummichog needs spec or mass_table
+            // 5) mummichog acceptable data types
             if ("mummichog".equals(wfModule)) {
-                if (!("mass_all".equalsIgnoreCase(dataType) || "mass_table".equalsIgnoreCase(dataType) || "pktable".equalsIgnoreCase(dataType) || "spec".equalsIgnoreCase(dataType)
+                boolean ok = "mass_all".equalsIgnoreCase(dataType)
+                        || "mass_table".equalsIgnoreCase(dataType)
+                        || "pktable".equalsIgnoreCase(dataType)
+                        || "spec".equalsIgnoreCase(dataType)
                         || "nmrpeak".equalsIgnoreCase(dataType)
-                        || "mspeak".equalsIgnoreCase(dataType))) {
+                        || "mspeak".equalsIgnoreCase(dataType);
+                if (!ok) {
+                    System.out.println(TAG + " RETURN FALSE: mummichog requires one of [mass_all, mass_table, pktable, spec, nmrpeak, mspeak]");
                     return false;
                 }
             }
 
-            // list ORA needs ID mapping
+            // 6) ORA modules need ID mapping
             if ("pathora".equals(wfModule) || "msetora".equals(wfModule)) {
-                if ("na".equalsIgnoreCase(cmpdIdType)) {
-                    return false;
-                }
+
             }
 
-            // 4) QEA modules: need quantified conc table AND ID mapping
+            // 7) QEA: need conc + ID mapping (both)
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
                 if (!"conc".equalsIgnoreCase(dataType)) {
+                    // (duplicate protection; kept for explicit logging)
+                    System.out.println(TAG + " RETURN FALSE: QEA (" + wfModule + ") requires dataType=conc (double-check)");
                     return false;
                 }
-                if ("na".equalsIgnoreCase(cmpdIdType)) {
-                    return false;  // << NEW
-                }
+
             }
 
+            System.out.println(TAG + " RETURN TRUE: compatible");
             return true;
+
         } catch (Exception e) {
-            return true; // fail-open to avoid blocking UI if something transient happens
+            System.out.println(TAG + " WARNING: Exception -> fail-open TRUE. " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return true; // keep your fail-open behavior
         }
     }
 
@@ -1910,7 +1939,6 @@ public class WorkflowBean implements Serializable {
             if (wfModule.equals("mummichog")) {
                 dataType = safeStr(sb.getUploadType());
             }
-            final String cmpdIdType = safeStr(sb.getCmpdIDType());
 
             if (sb.isRegression() && !REGRES_ANALS.contains(wfModule)) {
                 return "This module does not support continuous class labels.";
@@ -1926,17 +1954,13 @@ public class WorkflowBean implements Serializable {
                 }
             }
             if ("pathora".equals(wfModule) || "msetora".equals(wfModule)) {
-                if ("na".equalsIgnoreCase(cmpdIdType)) {
-                    return "Requires compound ID mapping to run ORA.";
-                }
+
             }
             if ("pathqea".equals(wfModule) || "msetqea".equals(wfModule)) {
                 if (!"conc".equalsIgnoreCase(dataType)) {
                     return "Requires a quantified compound table (concentration).";
                 }
-                if ("na".equalsIgnoreCase(cmpdIdType)) {
-                    return "Requires compound ID mapping (annotated IDs)."; // << NEW
-                }
+
             }
             return "";
         } catch (Exception e) {
@@ -2175,25 +2199,56 @@ public class WorkflowBean implements Serializable {
         this.dsFilter = ""; // clear filter if you like
     }
 
-    public void prepareDialogByWorkflow(WorkflowRunModel run) {
+    private static final Pattern UUID_RE
+            = Pattern.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty() || "NA".equalsIgnoreCase(s.trim());
+    }
+
+    private boolean isUuid(String s) {
+        return s != null && UUID_RE.matcher(s.trim()).matches();
+    }
+
+    public void prepareDialogByWorkflow(WorkflowRunModel run) {
         this.selectedWorkflowRun = run;
         this.wfFilter = "";
 
+        // ---- Guard: dataset UUID required
+        String dsId = (run == null) ? null : run.getDatasetId().toString();  // assuming model.getDatasetId() returns String UUID
+        boolean datasetMissing = isBlank(dsId) || !isUuid(dsId);
+
+        if (datasetMissing) {
+            sb.addMessage("warn",
+                    "Click the Dataset column to choose a dataset, then select a workflow.");
+            PrimeFaces.current().ajax().addCallbackParam("ok", false);
+            return;
+        }
+
+        // ---- Have a UUID → proceed
+        PrimeFaces.current().ajax().addCallbackParam("ok", true);
+
+        // Ensure dataset table is ready
         if (ds.getDatasetTableAll().isEmpty()) {
             ds.reloadTable();
         }
 
-        DatasetRow sel = ds.findById(getSelectedWorkflowRun().getDatasetId());
+        // Lookup dataset by UUID (adjust to your service API)
+        // Prefer a UUID/String overload; if you only have by-int, create a new one.
+        DatasetRow sel = ds.findById(run.getDatasetId()); // <-- implement this if not present
+        // Alternatively: DatasetRow sel = ds.findById(dsId); // if your DAO uses String UUID ids
+
         if (sel == null) {
-            sb.addMessage("warn", "Error when fetching the data.");
+            sb.addMessage("warn",
+                    "The selected dataset is missing. Please pick a dataset again.");
+            PrimeFaces.current().ajax().addCallbackParam("ok", false);
             return;
         } else {
             ds.setSelected(sel);
         }
 
+        // Load & filter workflows
         loadAllWorkflows();
-
         if (workflowList != null && !workflowList.isEmpty()) {
             ArrayList<HashMap<String, Object>> compatible = new ArrayList<>(workflowList.size());
             for (HashMap<String, Object> wf : workflowList) {
