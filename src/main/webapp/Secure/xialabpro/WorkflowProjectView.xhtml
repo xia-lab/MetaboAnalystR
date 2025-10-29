@@ -146,10 +146,27 @@
                 <h2>
                     Workflow Project
                 </h2>
-
+                <p>
+                    You can analyze your data using a workflow (batch processing). To do this, you need to 
+                    create a workflow project. The basic steps:
+                    <ol>
+                        <li>
+                            Define a <b>Project</b>: you can use <b>Add New</b>; or directly edit an existing projects (listed below)
+                        </li>
+                        <li>
+                            Select a <b>Data</b> from the available datasets. You add data by uploading a data or saving data from your previous project to the <a href="./DataCenterView.xhtml">Data Center</a>;
+                        </li>
+                        <li>
+                            Select a <b>Workflow</b> from the available and compatible workflows. You can add workflows by creating a workflow from the <a href="./WorkflowView.xhtml">Workflow Center</a>;
+                        </li>
+                        <li>
+                            Click the icon in the <b>Start</b> column
+                        </li>
+                    </ol>
+                </p>
                 <p:steps styleClass="mb-3">
                     <p:menuitem id="stepDataset" value="Dataset" icon="pi pi-database"
-                                title="Choose the input files and metadata."  styleClass="ui-state-highlight"/>
+                                title="Choose the input files and/or metadata."  styleClass="ui-state-highlight"/>
                     <p:menuitem id="stepWorkflow" value="Workflow" icon="pi pi-sitemap"
                                 title="Pick a template and parameters to run." styleClass="ui-state-highlight"/>
                     <p:menuitem id="stepResult" value="Result" icon="pi pi-wallet"
@@ -159,27 +176,6 @@
                 <p:tooltip for="stepDataset" showEffect="fade" position="top" />
                 <p:tooltip for="stepWorkflow" showEffect="fade" position="top" />
                 <p:tooltip for="stepResult"  showEffect="fade" position="top" />
-
-                <p:panel styleClass="surface-card p-3 mb-3 shadow-1 border-round">
-                    <div class="flex justify-content-between align-items-start gap-3">
-                        <!-- Left: info text -->
-                        <div class="flex align-items-start gap-3">
-                            <i class="pi pi-info-circle text-600" style="font-size:1.2rem"></i>
-                            <div>
-                                <div class="text-900 font-medium mb-1">What is a workflow run?</div>
-                                <div class="text-700 text-sm">
-                                    A run bundles a <b>Dataset</b> you provide, a <b>Workflow</b> you configure,
-                                    and the generated <b>Result</b> files. Use <b>Add New</b> to start a fresh run anytime.
-                                </div>
-                                <ul class="mt-2 pl-3 text-700 text-sm" style="line-height:1.6;">
-                                    <li><b>Dataset</b> – input matrix + metadata used for analysis.</li>
-                                    <li><b>Workflow</b> – the steps/parameters applied (e.g., filtering → normalization → DE → enrichment).</li>
-                                    <li><b>Result</b> – outputs you can preview, download, or re-run with tweaked settings (plots, tables, JSON/ZIP exports).</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </p:panel>
 
                 <p:dataTable id="dtTable"
                              var="run"
