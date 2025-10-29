@@ -10,13 +10,13 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  #var.size <- ncol(mSetObj$dataSet$norm);
-  #if(var.size > 10){
-  #  var.size <- 10;# keep top 10 should be sufficient
-  #}
-  #contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
-  contrib <- factoextra::get_pca_var(pca)$contrib;
-
+  var.size <- ncol(mSetObj$dataSet$norm);
+  if(var.size > 10){
+    var.size <- 10;# keep top 10 should be sufficient
+    contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
+  }else{ 
+    contrib <- factoextra::get_pca_var(pca)$contrib;
+  }
   # obtain variance explained
   sum.pca <- summary(pca);
   imp.pca <- sum.pca$importance;
@@ -82,9 +82,9 @@ PCA.Anal <- function(mSetObj=NA){
   } else {
     D <- x
   }
-  #cat('Now performing', nco, 'pairwise comparisons. Percent progress:\n')
+
   for(j in 1:nco) {
-    cat(round(j/nco*100,0),'...  ')
+    #cat(round(j/nco*100,0),'...  ')
     ij  <- f %in% c(co[1,j],co[2,j])
     Dij <- as.dist(as.matrix(D)[ij,ij])
     fij <- data.frame(fij = f[ij])
@@ -95,11 +95,10 @@ PCA.Anal <- function(mSetObj=NA){
     out[j,4] <- a$R2[1]
     out[j,5] <- a$`Pr(>F)`[1]
   }
-  #cat('\n')
+
   out$p.adj <- p.adjust(out$pval, method=padj)
   out$SumOfSqs <-NULL
-  #attr(out, 'p.adjust.method') <- padj
-  #cat('\np-adjust method:', padj, '\n\n');
+
   return(out)
 }
 
@@ -1030,13 +1029,8 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
 
   my.json.scatter(imgName, T);
 
-  if(.on.public.web){
-    mSet <<- mSetObj;
-    return(1);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-  
+  return(.set.mSet(mSetObj));
+
 }
 
 #'Update PLS loadings

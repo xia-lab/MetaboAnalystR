@@ -125,7 +125,8 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
   rowNms <- rownames(int.mat);
   colNms <- colnames(int.mat);
   naNms <- sum(is.na(int.mat));
-  num.mat<-apply(int.mat, 2, as.numeric)
+
+  num.mat <- matrix(as.numeric(int.mat), nrow=nrow(int.mat));
   
   msg<-NULL;
   if(sum(is.na(num.mat)) > naNms){
@@ -149,19 +150,17 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
   if(missingEstimate == "lods") {
     int.mat <- ReplaceMissingByLoD(int.mat);
   } else if(missingEstimate == "rmean") {
-    int.mat<-apply(int.mat, 2, function(x){
-      if(sum(is.na(x))>0){
-        x[is.na(x)]<-mean(x,na.rm=T);
-      }
-      x;
-    });
+    col_means <- colMeans(int.mat, na.rm=TRUE)
+    na_cols <- which(colSums(is.na(int.mat)) > 0)
+    for(j in na_cols) {
+      int.mat[is.na(int.mat[,j]), j] <- col_means[j]
+    }
   } else if(missingEstimate == "rmed") {
-    int.mat<-apply(int.mat, 2, function(x){
-      if(sum(is.na(x))>0){
-        x[is.na(x)]<-median(x,na.rm=T);
-      }
-      x;
-    });
+    col_meds <- matrixStats::colMedians(int.mat, na.rm=TRUE)
+    na_cols <- which(colSums(is.na(int.mat)) > 0)
+    for(j in na_cols) {
+      int.mat[is.na(int.mat[,j]), j] <- col_meds[j]
+    }
   } else if(missingEstimate == "knn") {
     int.mat<-t(impute::impute.knn(t(int.mat))$data);
   } else if(missingEstimate == "ppca") {

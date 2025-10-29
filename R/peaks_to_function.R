@@ -858,7 +858,7 @@ SetMummichogPval <- function(mSetObj=NA, cutoff){
   mSetObj$dataSet$N <- sig.size;
   
   if(.on.public.web){
-    mSet <<- mSetObj;
+    .set.mSet(mSetObj);
     return(round(sig.part, 0))
   } else {
     return(.set.mSet(mSetObj));

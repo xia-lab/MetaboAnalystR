@@ -169,13 +169,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
       data <- norm.data;
       transnm<-"Cubic Root Transformation";
     }else if(transNorm=='VsnNorm'){
-#n_inf <- sum(is.infinite(data))   # ±Inf
-#n_nan <- sum(is.nan(data))        # NaN (not a number)
-#n_na  <- sum(is.na(data))         # plain NA  (optional but useful)
-#cat("Total cells : ", length(data), "\n",
-#    "  • ±Inf   : ", n_inf, "\n",
-#    "  • NaN    : ", n_nan, "\n",
-#    "  • NA     : ", n_na,  "\n")
       data <- t(limma::normalizeVSN(t(data)));
       transnm<-"Variance Stabilizing Normalization";
     }else{
@@ -562,16 +555,13 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
   ## ------------------------------------------------------------------
   ## 0)  choose the working abundance table + class vector
   ## ------------------------------------------------------------------
-    data <- qs::qread("data_proc.qs")
-    cls  <- mSetObj$dataSet$proc.cls
-
-  print(sum(is.na(colnames(data))))
-  print("missing rownames");
+  data <- qs::qread("data_proc.qs")
+  cls  <- mSetObj$dataSet$proc.cls
 
   feat.hit.inx <- colnames(data) %in% feature.nm.vec        # feature.nm.vec: to delete
   data <- CleanDataMatrix(data[, !feat.hit.inx, drop = FALSE])
 
-
+  # this is only place to delete samples
   smpl.hit.inx <- rownames(data) %in% smpl.nm.vec           # smpl.nm.vec: to delete
   data <- CleanDataMatrix(data[!smpl.hit.inx, , drop = FALSE])
   cls  <- as.factor(as.character(cls[!smpl.hit.inx]))
@@ -610,9 +600,14 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
     qs::qsave(preproc, "preproc.qs")
   }
 
+  
   if (!is.null(mSetObj$dataSet$meta.info)) {
-    meta <- mSetObj$dataSet$meta.info
-
+    # save a copy before editing first time
+    if (is.null(mSetObj$dataSet$proc.meta.info)){
+        mSetObj$dataSet$proc.meta.info <- mSetObj$dataSet$meta.info;
+    }
+    # here we should start from previous copy. not current copy
+    meta <- mSetObj$dataSet$proc.meta.info;
     ## keep only surviving rows, preserve order exactly as in data
     meta <- meta[intersect(rownames(meta), keep.smp), , drop = FALSE]
     meta <- meta[match(keep.smp, rownames(meta)), , drop = FALSE]
@@ -621,9 +616,7 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
     meta[] <- lapply(meta, function(x)
       if (is.factor(x)) droplevels(x[ , drop = TRUE]) else x)
 
-    mSetObj$dataSet$meta.info <- meta
-    #print("dim(meta)");
-    #print(dim(meta));
+    mSetObj$dataSet$meta.info <- meta;
   }
 
   #mSetObj$dataSet$edit     <- data

@@ -1017,7 +1017,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     dataSet <- FetchDataSet(mSetObj, dataName);
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data
-    mSet <<- mSetObj
+    .set.mSet(mSetObj);
     mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, rt, rds.file=FALSE, rt.type, "all", mode);
@@ -1032,7 +1032,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
-    mSet <<- mSetObj
+    .set.mSet(mSetObj);
     dataSet <- FetchDataSet(mSetObj, dataName);
     
   } else {
@@ -1044,7 +1044,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     dataSet <- FetchDataSet(mSetObj, dataName);
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data    
-    mSet <<- mSetObj
+    .set.mSet(mSetObj);
     mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, 
@@ -1054,7 +1054,7 @@ PrepareMetaPath <- function(mSetObj = NA,
 
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
-    mSet <<- mSetObj;
+    .set.mSet(mSetObj);
     dataset_pos <- FetchDataSet(mSetObj, dataName);
     
     # 2nd step <- negative mode
@@ -1063,7 +1063,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     dataSet <- FetchDataSet(mSetObj, dataName2);
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data
-    mSet <<- mSetObj
+    .set.mSet(mSetObj);
     mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, 
@@ -1076,7 +1076,7 @@ PrepareMetaPath <- function(mSetObj = NA,
 
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
-    mSet <<- mSetObj
+    .set.mSet(mSetObj);
     dataset_neg <- FetchDataSet(mSetObj, dataName2);
     
     # Merge and save them
@@ -1087,7 +1087,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     # rm(mSetObj2)
   }
   mSetObj<-defineVersion(mSetObj,dataName,dataName2,version)
-  mSet <<- mSetObj;
+    .set.mSet(mSetObj);
 
   mSetObj<-SetPeakFormat(mSetObj, "mpt");
   mSetObj<-UpdateInstrumentParameters(mSetObj, ppm, mode);
@@ -1105,11 +1105,9 @@ PrepareMetaPath <- function(mSetObj = NA,
                           dataName);
   
   mSetObj$dataSet <- CleanDataSet;
-  mSet <<- mSetObj
-  
+
   if(.on.public.web){
-    # mSetObj <- InitDataObjects("conc", "metapaths", FALSE)
-    # mSet$cmdSet <<- CMDSet;
+    .set.mSet(mSetObj);
     return(res)
   } else {
     mSetObj$analSet$type <- "metapaths";
@@ -1304,7 +1302,7 @@ ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dat
       mSetObj$dataSet$url.var.nms <- 
       mSetObj$dataSet$url.smp.nms <- 
       MetaData <- NULL;
-    mSet <<- mSetObj;
+    .set.mSet(mSetObj);
 
     # Handle mass peaks for mummichog - DATA 2
     mSetObj <- Read.TextData(mSetObj, dataNM2, dataFormat, "disc");
@@ -1847,11 +1845,6 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
   if(name2 == "null"){name2 = NULL}
   fileTitle <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (name));
   fileTitle2 <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (name2));
-  # mSetObjNM <- paste0(fileTitle, "_" ,fileTitle2, "_mSetObj.qs");
-  # mSetNormedNM <- paste0(fileTitle, "_" ,fileTitle2, "_normalized_mSet.qs");
-  ## next, when doing the path analysis, will use '*_normalized_mSet.qs'
-
-  # mSet <<- mSetObj <- qs::qread(mSetObjNM);
 
   # if(length(mSetObj$dataSet2) == 0){
   if(is.null(name2)){
@@ -1864,7 +1857,8 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
@@ -1888,7 +1882,8 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj,"F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
@@ -1904,12 +1899,13 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj <- SanityCheckData(mSetObj);
     mSetObj <- PerformSanityClosure(mSetObj);
     mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL);
-    #mSetObj <- PreparePrenormData(mSetObj);
+    mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
+    mSetObj <- PreparePrenormData(mSetObj);
     mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20);
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
-    mSet <<- mSetObj;
+    .set.mSet(mSetObj);
 
     ## This is used to deal with the mix data files
     # 1st step, process dataset 1 (pos data)
@@ -1992,8 +1988,7 @@ PrepareCMPDList <- function() {
 
 Prepare4Network <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
-  # mSet <<- mSetObj <- NULL;
-  # mSetObj <- InitDataObjects("conc", "network", FALSE)
+
   mSetObj <- SetOrganism(mSetObj, "hsa")
   cmpdList <- PrepareCMPDList()
   

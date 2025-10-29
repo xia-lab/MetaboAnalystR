@@ -348,20 +348,6 @@ if (n.blank == 0) {
     msg<-c(msg, "No missing values were detected. Click the <b>Proceed</b> button to the next step.");
   }else{  
     msg<-c(msg, paste("A total of ", naCount, " (", naPercent, "%) missing values were detected.", sep=""));
-    if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
-      miss.msg <- "";
-      kw.p <- .test.missing.sig(int.mat, cls);
-      
-      if(kw.p <= 0.05){
-        miss.msg <- "<font color='red'>Missing-value patterns differ significantly between groups.</font>";
-      }else{
-        miss.msg <- "No significant differences were detected in missing-value patterns across different groups.";
-      }
-      mSetObj$dataSet$missTest <- kw.p;
-      mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
-      miss.msg <- c(miss.msg, mSetObj$msgSet$miss.msg);
-      msg<-c(msg,  miss.msg);
-    }
   }
   
   
