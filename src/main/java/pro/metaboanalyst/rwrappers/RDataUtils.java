@@ -3343,6 +3343,16 @@ public class RDataUtils {
         }
         return null;
     }
+    
+        public static String getEnrResFileName(RConnection RC, String key) {
+        try {
+            String rCommand = "GetEnrResFileName(\"" + key + "\")";
+            return RC.eval(rCommand).asString();
+        } catch (Exception rse) {
+            LOGGER.error("getEnrResFileName", rse);
+        }
+        return null;
+    }
 
     public static String getEnrQueryType(RConnection RC, String key) {
         try {

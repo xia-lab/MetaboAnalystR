@@ -213,3 +213,10 @@ GetEnrResultMatrix <-function(type){
   res <- suppressWarnings(apply(res, 2, as.numeric)); # force to be all numeric
   return(signif(as.matrix(res), 5));
 }
+
+GetEnrResFileName<-function(type){
+    mSetObj <- .get.mSet(mSetObj);
+    imgSet <- mSetObj$imgSet;
+  res <- imgSet$enrTables[[type]]$fileName
+  return(res);
+}

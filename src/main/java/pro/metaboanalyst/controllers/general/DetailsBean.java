@@ -1022,6 +1022,7 @@ public class DetailsBean implements Serializable {
             sigmat = RDataUtils.getEnrResMatrix(RC, type);
             colnames = RDataUtils.getEnrResColNames(RC, type);
             stringCol = RDataUtils.getEnrResSetIDs(RC, type);
+            fileName=RDataUtils.getEnrResFileName(RC, type);
             if (from.equals("gba_enr")) {
                 fileName = "gba_table.csv";
             }
@@ -1038,6 +1039,8 @@ public class DetailsBean implements Serializable {
     }
 
     private void setupTableVars(String from) {
+        System.out.println(from + "========================from");
+                System.out.println(fileName + "========================fromfilename");
 
         if (from.equals("volcano")) {
             listModelVolcano = listModel;
