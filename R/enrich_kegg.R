@@ -148,6 +148,7 @@ if(length(cidx)>0){
     res.mat <- as.data.frame(res.mat);
     res.mat$Name <- rownames(res.mat);
     res.mat <- res.mat[c("Name", setdiff(names(res.mat), "Name"))]
+    csv.nm <- paste(file.nm, ".csv", sep="");
 
   gene.vec <- current.universe;
   sym.vec <- doAllGeneIDMapping(gene.vec, mSetObj$org, "entrez");
@@ -173,6 +174,7 @@ if(length(cidx)>0){
 
     mSetObj$imgSet$enrTables[[vis.type]]$library <- "KEGG";
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+    mSetObj$imgSet$enrTables[[vis.type]]$fileName <- csv.nm;
     .set.mSet(mSetObj);
   return(mSetObj);
 }

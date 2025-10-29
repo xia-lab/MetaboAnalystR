@@ -163,48 +163,103 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
-  
-  mSetObj <- .get.mSet(mSetObj);
-  
-  if(paired){ 
-    # compute the average of paired FC (unit is pair)
-    row.norm <- qs::qread("row_norm.qs");
-    data <- log2(row.norm);
-    
-    G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
-    G2 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]
-    
-    if(cmpType == 0){
-      fc.mat <- G1-G2;
-    }else{
-      fc.mat <- G2-G1;
-    }
-    fc.log <- colMeans(fc.mat);
-    fc.all <- signif(2^fc.log, 5);
-  }else{
-    # compute the FC of two group means (unit is group)
-    
-    data <- qs::qread("row_norm.qs");
-    m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-    m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
-    
-    # create a named matrix of sig vars for display
-    if(cmpType == 0){
-      ratio <- m1/m2;
-    }else{
-      ratio <- m2/m1;
-    }
-    fc.all <- signif(ratio, 5);
-    ratio[ratio < 0] <- 0;
-    fc.log <- signif(log2(ratio), 5);
-    fc.log[is.infinite(fc.log) & fc.log < 0] <- -99;
-    fc.log[is.infinite(fc.log) & fc.log > 0] <- 99;
-    
+GetFC <- function(mSetObj = NA, paired = FALSE, cmpType, verbose = TRUE, top_k = 5) {
+  mSetObj <- .get.mSet(mSetObj)
+  cls <- mSetObj$dataSet$cls
+  lev <- levels(cls); stopifnot(length(lev) == 2)
+
+  .msg <- function(...) if (isTRUE(verbose)) cat(..., "\n")
+  .num <- function(x) {
+    if (is.data.frame(x)) x <- as.matrix(x)
+    x <- as.numeric(x)
+    x
   }
-  names(fc.all) <- names(fc.log) <- colnames(data);  
-  return(list(fc.all = fc.all, fc.log = fc.log));
+  .summ <- function(x, name) {
+    x <- .num(x); x <- x[is.finite(x)]
+    if (!length(x)) return(.msg(sprintf("[%-10s] empty/non-finite", name)))
+    q <- stats::quantile(x, c(0, .25, .5, .75, 1), na.rm = TRUE)
+    .msg(sprintf("[%-10s] n=%d  min=%.6g  q1=%.6g  med=%.6g  q3=%.6g  max=%.6g",
+                 name, length(x), q[1], q[2], q[3], q[4], q[5]))
+  }
+
+  if (paired) {
+    rn <- qs::qread("row_norm.qs"); rn <- as.matrix(rn); storage.mode(rn) <- "double"
+    n_nonpos <- sum(!is.na(rn) & rn <= 0); .msg("PAIRED: non-positive cells:", n_nonpos)
+
+    min.val <- suppressWarnings(min(abs(rn[rn != 0]), na.rm = TRUE)); if (!is.finite(min.val)) min.val <- 1e-9
+    .msg("PAIRED: min.abs(nonzero) for signed-log:", sprintf("%.6g", min.val))
+
+    logsafe <- log2((rn + sqrt(rn^2 + min.val)) / 2)
+    G1 <- logsafe[cls == lev[1], , drop = FALSE]
+    G2 <- logsafe[cls == lev[2], , drop = FALSE]
+
+    .summ(G1, paste0("G1(", lev[1], ")")); .summ(G2, paste0("G2(", lev[2], ")"))
+
+    diff.mat <- if (cmpType == 0) (G1 - G2) else (G2 - G1)
+    fc.log <- colMeans(diff.mat, na.rm = TRUE)
+    fc.all <- 2^fc.log
+    coln <- colnames(rn)
+
+  } else {
+    data <- qs::qread("row_norm.qs"); data <- as.matrix(data); storage.mode(data) <- "double"
+    print(data);
+    G1 <- data[cls == lev[1], , drop = FALSE]
+    G2 <- data[cls == lev[2], , drop = FALSE]
+
+    n_nonpos <- sum(!is.na(data) & data <= 0)
+    treat_as_log <- n_nonpos > 0
+    .msg("UNPAIRED: non-positive cells:", n_nonpos, " => treat_as_log =", treat_as_log)
+
+    .summ(G1, paste0("G1(", lev[1], ")")); .summ(G2, paste0("G2(", lev[2], ")"))
+
+    if (treat_as_log) {
+      m1 <- colMeans(G1, na.rm = TRUE); m2 <- colMeans(G2, na.rm = TRUE)
+      fc.log <- if (cmpType == 0) (m1 - m2) else (m2 - m1)
+      fc.all <- 2^fc.log
+    } else {
+      m1 <- colMeans(G1, na.rm = TRUE); m2 <- colMeans(G2, na.rm = TRUE)
+
+      pos <- data[data > 0 & is.finite(data)]
+      eps <- if (length(pos)) min(pos, na.rm = TRUE) / 10 else 1e-9
+      .msg("UNPAIRED(lin): eps =", sprintf("%.6g", eps))
+
+      m1s <- pmax(m1, eps); m2s <- pmax(m2, eps)
+      ratio <- if (cmpType == 0) (m1s / m2s) else (m2s / m1s)
+      bad <- !is.finite(ratio) | ratio < 0
+      if (any(bad, na.rm = TRUE)) .msg("UNPAIRED(lin): #bad ratios set NA:", sum(bad, na.rm = TRUE))
+      ratio[bad] <- NA_real_
+
+      fc.all <- ratio; fc.log <- log2(ratio)
+
+      den <- if (cmpType == 0) m2s else m1s
+      ord <- order(den, decreasing = FALSE); top_den <- head(ord, top_k)
+      .msg("UNPAIRED(lin): smallest denominators:")
+      for (i in top_den) .msg(sprintf("  %s  denom=%.6g  numer=%.6g  ratio=%.6g",
+                                      names(den)[i],
+                                      den[i],
+                                      if (cmpType == 0) m1s[i] else m2s[i],
+                                      fc.all[i]))
+    }
+    coln <- colnames(data)
+  }
+
+  fc.all[!is.finite(fc.all)] <- NA_real_
+  fc.log[!is.finite(fc.log)] <- NA_real_
+  fc.all <- signif(fc.all, 5); fc.log <- signif(fc.log, 5)
+  names(fc.all) <- names(fc.log) <- coln
+
+  .summ(fc.log, "log2FC"); .summ(fc.all, "FC")
+
+  big <- which(is.finite(fc.all) & fc.all > 100)
+  if (isTRUE(verbose) && length(big)) {
+    .msg("WARNING: very large FCs (>100):")
+    show <- head(big, top_k)
+    for (i in show) .msg(sprintf("  %s  FC=%.6g  log2FC=%.6g", names(fc.all)[i], fc.all[i], fc.log[i]))
+  }
+
+  list(fc.all = fc.all, fc.log = fc.log)
 }
+
 
 #'Perform t-test analysis
 #'@description This function is used to perform t-test analysis.

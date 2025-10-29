@@ -516,7 +516,6 @@ CovariateScatter.Anal <- function(mSetObj,
 
   mSetObj <- .get.mSet(mSetObj);
 
-
   if(!analysis.var %in% names(mSetObj$dataSet$meta.types)){
     analysis.var <- names(mSetObj$dataSet$meta.types)[1];
   }

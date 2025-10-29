@@ -960,8 +960,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     colnames(dfcombo) <- c("Total_Size", "Hits", "Sig_Hits", "Mummichog_Pvals", "GSEA_Pvals", "Combined_Pvals")
     ord.inx <- order(dfcombo[,6]);
     dfcombo <- signif(as.matrix(dfcombo[ord.inx, ]), 4);
-    
-    fast.write.csv(dfcombo, "mummicho_pathway_enrichment_integ.csv", row.names = TRUE)
+
+    csv.nm <- if(!is.null(mSetObj$mum_nm_csv)) mSetObj$mum_nm_csv else "mummichog_pathway_enrichment_integ.csv";
+    fast.write.csv(dfcombo, file = csv.nm, row.names = TRUE)
     if( is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
         mSetObj$integ.resmat <- dfcombo;
         mSetObj$paramSet$integ.lib <- mSetObj$lib.organism;
@@ -1009,6 +1010,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj$imgSet$enrTables[[vis.type]]$table <- dfcombo;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "GSEA and Mummichog integrative Analysis";
+    mSetObj$imgSet$enrTables[[vis.type]]$fileName <- csv.nm;
     }
   return(mSetObj);
 }
@@ -2677,7 +2679,8 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
         mSetObj$imgSet$enrTables[[vis.type]] <- list();
         mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
         mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-        mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog Analysis";    
+        mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog Analysis";
+        mSetObj$imgSet$enrTables[[vis.type]]$fileName <- mSetObj$mum_nm_csv;    
   return(mSetObj);
 }
 
@@ -2864,7 +2867,8 @@ json.res <- list(
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- resTable;
     mSetObj$imgSet$enrTables[[vis.type]]$library <- mSetObj$lib.organism;
-    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";  
+    mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Mummichog RT analysis";
+    mSetObj$imgSet$enrTables[[vis.type]]$fileName <- mSetObj$mum_nm_csv;  
 
   return(mSetObj);
 }
@@ -4648,4 +4652,3 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   .set.mSet(mSetObj);
   return(PerformPSEA("NA", libNm, "current", 3, 100, F));
 }
-

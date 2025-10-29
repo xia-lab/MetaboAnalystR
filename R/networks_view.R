@@ -196,6 +196,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
 
   mSetObj$imgSet$enrTables[[vis.type]]$library <- libOpt;
   mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+  mSetObj$imgSet$enrTables[[vis.type]]$fileName <- csv.nm;
   .set.mSet(mSetObj);
 
 

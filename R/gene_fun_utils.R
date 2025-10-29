@@ -148,6 +148,7 @@ PerformEnrichAnalysis <- function(mSetObj, org.code, file.nm, fun.type, ora.vec,
     #print(paste0("funType=",fun.type));
     #print(paste0("vis.type=", vis.type));
     mSetObj$imgSet$enrTables[[vis.type]]$algo <- "Overrepresentation Analysis";
+    mSetObj$imgSet$enrTables[[vis.type]]$fileName <- csv.nm;
     .set.mSet(mSetObj);
     return(1);
 }
