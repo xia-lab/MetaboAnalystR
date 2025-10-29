@@ -1351,8 +1351,14 @@ public class WorkflowBean implements Serializable {
      */
     private Path prepareTemplateWorkflowJson(String fileName) throws IOException {
         Objects.requireNonNull(fileName, "Template filename is required");
-        if (sb.getCurrentUser().getName() == null) {
-            sb.addMessage("warn", "Please select a dataset in 'Data Center' first.");
+        if (sb.getCurrentUser() == null) {
+            DatasetRow sel = ds.findById(selectedWorkflowRun.getDatasetId()); 
+            ds.setSelected(sel);
+            boolean res = ds.load(ds.getSelected(), true);
+            if (res) {
+                boolean res2 = ds.handleDataset(ds.getSelected());
+            }
+            //sb.addMessage("warn", "Please select a dataset in 'Data Center' first.");
         }
         final String destDirPath = ab.getRealUserHomePath() + "/" + sb.getCurrentUser().getName() + "/";
         final Path destPath = Paths.get(destDirPath, "workflow.json");
@@ -2207,12 +2213,8 @@ public class WorkflowBean implements Serializable {
         if (datasetMissing) {
             sb.addMessage("warn",
                     "Click the Dataset column to choose a dataset, then select a workflow.");
-            PrimeFaces.current().ajax().addCallbackParam("ok", false);
             return;
         }
-
-        // ---- Have a UUID → proceed
-        PrimeFaces.current().ajax().addCallbackParam("ok", true);
 
         // Ensure dataset table is ready
         if (ds.getDatasetTableAll().isEmpty()) {
@@ -2222,7 +2224,6 @@ public class WorkflowBean implements Serializable {
         // Lookup dataset by UUID (adjust to your service API)
         // Prefer a UUID/String overload; if you only have by-int, create a new one.
         DatasetRow sel = ds.findById(run.getDatasetId()); // <-- implement this if not present
-        // Alternatively: DatasetRow sel = ds.findById(dsId); // if your DAO uses String UUID ids
 
         if (sel == null) {
             sb.addMessage("warn",
