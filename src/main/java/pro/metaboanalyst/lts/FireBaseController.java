@@ -940,13 +940,8 @@ public class FireBaseController implements Serializable {
             return;
         }
 
-        if (ab.isOnLocalServer()) {
-            //need to access Secure folder
-            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("MA6_PRO_user", true);
-            DataUtils.doRedirect("/MetaboAnalyst/Secure/ModuleView.xhtml", ab);
-        } else {
-            PrimeFaces.current().executeScript("PF('notLoginDialog').show()");
-        }
+        PrimeFaces.current().executeScript("PF('notLoginDialog').show()");
+
     }
 
     public boolean isDisabledSave() {
