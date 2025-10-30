@@ -1507,17 +1507,17 @@ public class WorkflowView implements Serializable {
         return "";
     }
 
-    public void generateWorkflowJson(String projectType, boolean msgBool) throws IOException {
-        generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, true, msgBool);
+    public void generateWorkflowJson(String projectType, boolean insertBool) throws IOException {
+        generateWorkflowJson(wb.getName(), wb.getDescription(), projectType, insertBool);
     }
 
     @JsonIgnore
     @Inject
     private JavaRecord jrd;
 
-    public void generateWorkflowJson(String wName, String wDescription, String projectType, boolean insert, boolean msgBool) throws IOException {
+    public void generateWorkflowJson(String wName, String wDescription, String projectType, boolean insert) throws IOException {
         if (wb.getFunctionInfos() == null || wb.getFunctionInfos().isEmpty()) {
-            if (msgBool) {
+            if (insert) {
                 sb.addMessage("warn", "Workflow is empty!");
             } else {
                 System.out.println("workflow is empty!");
@@ -1549,7 +1549,7 @@ public class WorkflowView implements Serializable {
             dv.saveDiagramState(fb.getProjectPath() + "user_folders/" + fub.getEmail() + "/" + fileNameOverview + ".json");
             HashMap<String, Object> selectedWorkflow = wb.getSelectedWorkflow();
             dbc.insertWorkflow(fub.getEmail(), wName, wDescription, sb.getAnalType(), ab.getAppName(), fileName + ".json", ab.getToolLocation(), (String) selectedWorkflow.get("input"), (String) selectedWorkflow.get("analysisGoal"), (String) selectedWorkflow.get("analysisMethods"), (String) selectedWorkflow.get("output"), (String) selectedWorkflow.get("other"));
-            if (msgBool) {
+            if (insert) {
                 sb.addMessage("info", "Workflow has been successfully saved!");
             }
         }

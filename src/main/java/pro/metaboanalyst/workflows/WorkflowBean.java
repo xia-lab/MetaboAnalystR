@@ -1833,10 +1833,7 @@ public class WorkflowBean implements Serializable {
             final String dataType = safeStr(sb.getDataType());
             final boolean regression = sb.isRegression();
 
-            System.out.println(TAG + " dsModule=" + dsModule
-                    + ", wfModule=" + wfModule
-                    + ", dataType=" + dataType
-                    + ", regression=" + regression);
+
 
             // 1) family rule
             final boolean dsInTable = TABLE_FAMILY.contains(dsModule);
