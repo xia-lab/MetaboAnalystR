@@ -323,6 +323,7 @@ public class RocAnalBean implements Serializable {
 
     public void setCurrentCmpd(String currentCmpd) {
         this.currentCmpd = currentCmpd;
+        sb.setCurrentCmpdName(currentCmpd);
     }
 
     public int getLvNum() {

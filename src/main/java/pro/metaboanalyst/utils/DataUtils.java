@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.CDI;
-import jakarta.enterprise.util.AnnotationLiteral;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,38 +94,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.List;
-import pro.metaboanalyst.controllers.dose.DoseResponseBean;
-import pro.metaboanalyst.controllers.enrich.MappingBean;
-import pro.metaboanalyst.controllers.enrich.MsetBean;
-import pro.metaboanalyst.controllers.enrich.PathBean;
-import pro.metaboanalyst.controllers.general.NormBean;
-import pro.metaboanalyst.controllers.general.ProcessBean;
-import pro.metaboanalyst.controllers.meta.MetaLoadBean;
-import pro.metaboanalyst.controllers.meta.MetaStatBean;
-import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
-import pro.metaboanalyst.controllers.metapath.MetaPathStatBean;
-import pro.metaboanalyst.controllers.mnet.MnetResBean;
-import pro.metaboanalyst.controllers.multifac.Aov2Bean;
-import pro.metaboanalyst.controllers.multifac.AscaBean;
-import pro.metaboanalyst.controllers.multifac.LimmaBean;
-import pro.metaboanalyst.controllers.multifac.LivePCABean;
-import pro.metaboanalyst.controllers.multifac.MebaBean;
-import pro.metaboanalyst.controllers.multifac.MetaHeatmapBean;
-import pro.metaboanalyst.controllers.multifac.MetaProcBean;
-import pro.metaboanalyst.controllers.multifac.MultiCorrBean;
-import pro.metaboanalyst.controllers.multifac.MultiRfBean;
-import pro.metaboanalyst.controllers.multifac.MultifacBean;
-import pro.metaboanalyst.controllers.mummichog.MummiAnalBean;
-import pro.metaboanalyst.controllers.mummichog.PeakCustomBean;
-import pro.metaboanalyst.controllers.stats.AnalysisBean;
-import pro.metaboanalyst.controllers.stats.ClusterBean;
-import pro.metaboanalyst.controllers.stats.RocAnalBean;
-import pro.metaboanalyst.controllers.stats.UnivBean;
 import pro.metaboanalyst.lts.FunctionInfo;
-import pro.metaboanalyst.spectra.SpectraControlBean;
-import pro.metaboanalyst.spectra.SpectraProcessBean;
-import pro.metaboanalyst.spectra.SpectraUploadBean;
-import pro.metaboanalyst.workflows.WorkflowView;
+
 
 /**
  *
@@ -161,13 +130,6 @@ public class DataUtils {
         throw new IllegalStateException("Bean not found or CDI inactive for name: " + beanName);
     }
 
-    /*
-    public static <T> T findBean2(String beanName) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        return (T) context.getApplication().evaluateExpressionGet(context, "#{" + beanName + "}", Object.class);
-    }
-     */
-    
 
     public static String getDomainURL(String myurl) {
         try {
@@ -995,33 +957,6 @@ public class DataUtils {
         }
     }
 
-    //a utility function to kill long running Rserver process 
-    //Note 1) spare the mother (the oldest one) 
-    //     2) default 1 hour    
-    //     3) if an Rserve process is 100% CPU (>99%) for all measured (at least 3) time points, then kill it (i.e. don't wait for 1 hour
-    // Only works on Linux !!!! Mac does not recognize --sort=start_time
-    // filter need to apply in order day filter, hour filter and minutes filter (not used)
-    //for filter based on minutes (20min)
-    //String[] rmMinLongCmd = new String[]{bashPath, "-c", "ps -eo pid,etime,args --sort=start_time | grep 'Rserve'| grep -v 'grep' | tail -n +2 | grep '[0-9][0-9]:[0-9][0-9]'| awk 'substr($2,1,(index($2,\":\")-1))-20>=0' | awk '{print $1}' | xargs kill -9"};
-    // System.out.println("Process__ :: " + bashPath);
-    // System.out.println(Arrays.toString(rmDayLongCmd));
-    /*
-    public static void performResourceCleaning(String bashPath, String RScriptHome) {
-
-        try {
-
-            String sysCmd = bashPath + " " + RScriptHome + "/_clean_jobs.sh";
-            Process p = Runtime.getRuntime().exec(sysCmd);
-            p.waitFor();
-            System.out.println("Successfully performed resource cleaning!");
-
-        } catch (Exception e) {
-            System.out.println("Exception in resource cleaning -  ");
-            //System.out.println("Exception in resource cleaning - here's what I know: ");
-            //LOGGER.error("performResourceCleaning", e);
-        }
-    }
-    **/
     // based on: https://www.dontpanicblog.co.uk/2023/05/07/handling-blocked-process-output-stream/
     // wait for 2 sec
     public static boolean runExternalCommand(String sysCmd, ExecutorService streamHandlers) {
@@ -2057,13 +1992,6 @@ public class DataUtils {
         System.out.println("File copied successfully to: " + outputPath.toAbsolutePath());
     }
 
-    public static boolean isLocalNetwork(String hostname) {
-        return hostname.startsWith("http://localhost")
-                || hostname.startsWith("http://127.0.0.1")
-                || hostname.startsWith("http://192.168.")
-                || hostname.startsWith("http://10.");
-    }
-
     public static boolean extractFileFromZip(String zipFilePath, String targetFileName, String outputPath) {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFilePath))) {
             ZipEntry entry;
@@ -2086,50 +2014,6 @@ public class DataUtils {
         }
         System.err.println("File not found in archive: " + targetFileName);
         return false;
-    }
-
-    public static Object getBeanInstanceByName(String beanName) {
-        try {
-            BeanManager beanManager = CDI.current().getBeanManager();
-
-            Set<Bean<?>> beans = beanManager.getBeans(beanName);
-
-            if (beans.isEmpty()) {
-                System.err.println("No CDI bean found with name: {0}" + beanName);
-                return null;
-            }
-
-            Bean<?> bean = beanManager.resolve(beans);
-
-            if (bean == null) {
-                System.err.println("Could not resolve CDI bean with name: {0}" + beanName);
-                return null;
-            }
-
-            // Get the contextual reference without knowing the exact type at compile time for the return.
-            return beanManager.getReference(
-                    bean,
-                    bean.getBeanClass(),
-                    beanManager.createCreationalContext(bean)
-            );
-        } catch (Exception e) {
-            System.err.println("CDI container is not available. Ensure this code runs within a Jakarta EE environment or after CDI is initialized. Error: " + e.getMessage());
-            return null;
-        }
-    }
-
-    public static FunctionInfo convertLinkedHashMapToFunctionInfo(Object obj) {
-        if (obj instanceof LinkedHashMap) {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.convertValue(obj, FunctionInfo.class);
-
-        } else if (obj instanceof FunctionInfo) {
-            return (FunctionInfo) obj;
-
-        } else {
-            throw new IllegalArgumentException(
-                    "Unsupported object type: " + obj.getClass());
-        }
     }
 
     public static String[] readListFileToNames(String path, String fileName) {
@@ -2216,22 +2100,5 @@ public class DataUtils {
         throw new NoSuchFileException(resource);
     }
 
-    public static Map<String, FunctionInfo> loadFunctionInfosFromFile(String filePath) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            // Read the JSON file into a Map<String, FunctionInfo>
-            Map<String, FunctionInfo> functionInfos = mapper.readValue(
-                    new File(filePath),
-                    new TypeReference<Map<String, FunctionInfo>>() {
-            }
-            );
-            System.out.println("FunctionInfos loaded successfully from " + filePath);
-            return functionInfos;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Failed to load FunctionInfos from file.");
-            return null;
-        }
-    }
 
 }

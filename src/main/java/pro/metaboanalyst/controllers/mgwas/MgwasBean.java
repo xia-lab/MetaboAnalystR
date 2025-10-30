@@ -1111,7 +1111,7 @@ public class MgwasBean implements Serializable {
 
     public void graphicsLnk_action_mr(String cmpdName, String code) {
         selectedCmpdName = cmpdName;
-        System.out.println(cmpdName + "_" + code);
+        //System.out.println(cmpdName + "_" + code);
         sb.graphicsLnk_action(cmpdName + "_" + code);
     }
 

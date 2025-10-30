@@ -21,14 +21,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-
 import java.util.HashMap;
-
 import java.util.LinkedHashSet;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
@@ -47,7 +43,6 @@ import org.postgresql.util.PGobject;
 import org.primefaces.PrimeFaces;
 import org.primefaces.component.api.UIColumn;
 import org.primefaces.event.CellEditEvent;
-
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 import pro.metaboanalyst.api.DatabaseClient;
@@ -61,12 +56,9 @@ import pro.metaboanalyst.datalts.DatasetRow;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
 import static pro.metaboanalyst.lts.FireBaseController.safeIntFromDoubleLike;
-import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.models.SampleBean;
-import pro.metaboanalyst.rwrappers.RCenter;
-import pro.metaboanalyst.rwrappers.RDataUtils;
 import pro.metaboanalyst.utils.DataUtils;
 
 @Named("workflowBean")
@@ -1151,8 +1143,8 @@ public class WorkflowBean implements Serializable {
 
                 if (value instanceof LinkedHashMap) {
                     // Convert map → FunctionInfo
-                    FunctionInfo info
-                            = DataUtils.convertLinkedHashMapToFunctionInfo(value);
+                    FunctionInfo info = new ObjectMapper().convertValue(value, FunctionInfo.class);
+                    
                     this.functionInfos.put(key, info);
 
                 } else if (value instanceof FunctionInfo info) {
@@ -1514,7 +1506,7 @@ public class WorkflowBean implements Serializable {
             }
 
             // Pretty-print JSON
-            Map<String, FunctionInfo> funcs = DataUtils.loadFunctionInfosFromFile(jsonPath + "");
+            Map<String, FunctionInfo> funcs = FunctionInvoker.loadFunctionInfosFromFile(jsonPath + "");
             setFunctionInfos(funcs);
             selectedWorkflowJson = readAndPrettyPrintJson(jsonPath);
 
@@ -1612,7 +1604,7 @@ public class WorkflowBean implements Serializable {
         final String fileName = (String) selectedWorkflow.get("filename");
         final Path destPath = prepareTemplateWorkflowJson(fileName);
 
-        Map<String, FunctionInfo> functionInfos = DataUtils.loadFunctionInfosFromFile(destPath.toString());
+        Map<String, FunctionInfo> functionInfos = FunctionInvoker.loadFunctionInfosFromFile(destPath.toString());
         setFunctionInfos(functionInfos);
         editMode = true;
         return "WorkflowDetails";

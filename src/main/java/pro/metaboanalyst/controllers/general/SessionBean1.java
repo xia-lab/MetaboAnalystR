@@ -87,14 +87,6 @@ public class SessionBean1 implements Serializable {
 
     @JsonIgnore
     @Inject
-    private Instance<MultifacBean> mfbProvider;
-
-    @JsonIgnore
-    @Inject
-    private Instance<RocAnalBean> rabProvider;
-
-    @JsonIgnore
-    @Inject
     private Instance<DiagramView> dvProvider;
 
     @JsonIgnore
@@ -107,12 +99,6 @@ public class SessionBean1 implements Serializable {
 
     @JsonIgnore
     private transient WorkflowView wfv;
-
-    @JsonIgnore
-    private transient MultifacBean mfb;
-
-    @JsonIgnore
-    private transient RocAnalBean rab;
 
     @JsonIgnore
     private transient DiagramView dv;
@@ -137,22 +123,6 @@ public class SessionBean1 implements Serializable {
         return wfv;
     }
 
-    private MultifacBean getMultifacBean() {
-        if (mfb == null) {
-            mfb = mfbProvider.get();
-            LOGGER.debug("Lazy-loaded MultifacBean for session");
-        }
-        return mfb;
-    }
-
-    private RocAnalBean getRocAnalBean() {
-        if (rab == null) {
-            rab = rabProvider.get();
-            LOGGER.debug("Lazy-loaded RocAnalBean for session");
-        }
-        return rab;
-    }
-
     private DiagramView getDiagramView() {
         if (dv == null) {
             dv = dvProvider.get();
@@ -169,33 +139,12 @@ public class SessionBean1 implements Serializable {
         return jrd;
     }
 
-    public void updateBoxplotMeta(String name) {
-        mfb = getMultifacBean();
-        mfb.setBoxId(name);
-        mfb.updateBoxplotMeta();
-        mfb.setBoxMetaVersionNum(getMultifacBean().getBoxMetaVersionNum() + 1);
-    }
-
-    public void resetRocState() {
-        // BEFORE: rab.resetState();
-        // AFTER:
-        if (analType.equals("roc")) {
-            getRocAnalBean().resetState();
-        }
-    }
-
     public void setEditMode(boolean edit) {
         getWorkflowBean().setEditMode(edit);
     }
 
     public boolean isEditMode() {
         return getWorkflowBean().isEditMode();
-    }
-
-    public void setImageSource(String code, String name) {
-        // Line 1127: imgSource = code + rab.getCurrentCmpd();
-        // AFTER:
-        imgSource = code + getRocAnalBean().getCurrentCmpd();
     }
 
     //****************user defined methods**************
@@ -757,6 +706,7 @@ public class SessionBean1 implements Serializable {
         graphicsMapLink.clear();
         reportImgMap.clear();
         reportJsonMap.clear();
+        notice.clear();
         //this is called in data upload, need to keep this entry
         String uploadVal = null;
         boolean uploaded = false;
@@ -775,16 +725,16 @@ public class SessionBean1 implements Serializable {
         }
         //reset sessionbean of individual module
         if ("roc".equals(analType)) {
-            getRocAnalBean().resetState();
+            ((RocAnalBean) DataUtils.findBean("rocAnalBean")).resetState();
         } else if ("mf".equals(analType)) {
-            getRocAnalBean().resetState();
+            ((MultifacBean) DataUtils.findBean("multifacBean")).resetState();
         }
-
+        wfb = null;
+        wfv = null;
+        dv = null;
+        jrd = null;
         sampleBeans = null;
         colorBeanLists = null;
-        if (notice.size() > 25) {
-            notice.subList(0, notice.size() - 25).clear();
-        }
 
     }
 
@@ -911,7 +861,7 @@ public class SessionBean1 implements Serializable {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi150.png";
     }
 
-        @JsonIgnore
+    @JsonIgnore
     public String getCurrentImageURL96(String name) {
         return ab.getRootContext() + getCurrentUser().getRelativeDir() + File.separator + getCurrentImage(name) + "dpi96.png";
     }
@@ -1183,7 +1133,7 @@ public class SessionBean1 implements Serializable {
         setImgDownloadTxt("");
 
         if (code.contains("roc_univ_") || code.contains("roc_boxplot_")) {
-            imgSource = code + getRocAnalBean().getCurrentCmpd();
+            imgSource = code + currentCmpdName;
         } else {
             imgSource = code;
 
@@ -1200,7 +1150,7 @@ public class SessionBean1 implements Serializable {
     }
 
     public void setCurrentPathName(String currentPathName) {
-        System.out.println("===========current img key: " + currentPathName);
+        //System.out.println("===========current img key: " + currentPathName);
         this.currentPathName = currentPathName;
     }
 
@@ -1591,8 +1541,9 @@ public class SessionBean1 implements Serializable {
 
     public void viewCmpdSummary(String name) {
         UniVarTests.setCmpdSummaryType(getRConnection(), getCmpdSummaryType());
-        MultifacBean mfb = getMultifacBean();
+
         if (getAnalType().equals("mf") && getTsDesign().equals("multi")) {
+            MultifacBean mfb = (MultifacBean) DataUtils.findBean("multifacBean");
             mfb.setBoxId(name);
             mfb.updateBoxplotMeta();
             mfb.setBoxMetaVersionNum(mfb.getBoxMetaVersionNum() + 1);

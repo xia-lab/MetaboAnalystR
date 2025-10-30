@@ -15,7 +15,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.zeroturnaround.zip.ZipUtil;
 import jakarta.faces.context.FacesContext;
@@ -76,10 +75,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.UUID;
-import org.postgresql.util.PGobject;
 import pro.metaboanalyst.api.ApiClient;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.dose.DoseResponseBean;
@@ -93,7 +89,6 @@ import pro.metaboanalyst.spectra.TandemMSBean;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.FunctionInvoker;
 import pro.metaboanalyst.workflows.WorkflowBean;
-import pro.metaboanalyst.workflows.WorkflowRunModel;
 import pro.metaboanalyst.workflows.WorkflowView;
 
 /**
@@ -325,7 +320,6 @@ public class FireBaseController implements Serializable {
                 folderName = "assist";
             default -> {
                 folderName = fub.getEmail();
-
             }
         }
 
@@ -437,10 +431,6 @@ public class FireBaseController implements Serializable {
             Logger.getLogger(FireBaseController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
-    }
-
-    private String toJson(Map<String, ?> map) {
-        return new Gson().toJson(map);
     }
 
     public boolean saveDataAndGoToWorkflow() {
@@ -782,7 +772,7 @@ public class FireBaseController implements Serializable {
         }
 
         Class<?> cls = obj.getClass();
-        Method method = null;
+        Method method;
 
         if (myParam == null) {
             return;
@@ -900,8 +890,6 @@ public class FireBaseController implements Serializable {
         return base64Encoder.encodeToString(randomBytes);
     }
 
-    private boolean projInit = false;
-
     public void initUserProjects() {
         if (FacesContext.getCurrentInstance().getPartialViewContext().isAjaxRequest()) {
             return; // Skip ajax requests.
@@ -914,8 +902,6 @@ public class FireBaseController implements Serializable {
         } else {
             pb.setActiveTabIndex(0);
             setupProjectTable("project");
-            //setupProjectTable("workflow");
-            projInit = true;
         }
 
     }
@@ -1328,7 +1314,7 @@ public class FireBaseController implements Serializable {
         sb.setReloadReportImage(true);
         handleNaviCases(analNavi, cmpd);
         // optional: handle other cases here or do nothing
-        System.out.println("currentnaviurl========" + sb.getCurrentNaviUrl());
+        //System.out.println("currentnaviurl========" + sb.getCurrentNaviUrl());
         navToProject(sb.getCurrentNaviUrl());
 
         return true;
@@ -1833,13 +1819,12 @@ public class FireBaseController implements Serializable {
             if (v instanceof Integer || v instanceof Short || v instanceof Byte) {
                 return ((Number) v).intValue();
             }
-            if (v instanceof Long) {
-                long x = (Long) v;
+            if (v instanceof Long x) {
                 if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE) {
                     System.out.println("[safeIntFromDoubleLike] WARN: long out of int range: " + x);
                     return 0;
                 }
-                return (int) x;
+                return x.intValue();
             }
 
             // Double/Float → accept only if effectively whole
@@ -1862,8 +1847,8 @@ public class FireBaseController implements Serializable {
             }
 
             // Fallback for other Number impls
-            if (v instanceof Number) {
-                double d = ((Number) v).doubleValue();
+            if (v instanceof Number number) {
+                double d = number.doubleValue();
                 double rounded = Math.rint(d);
                 if (!Double.isFinite(d) || Math.abs(d - rounded) > EPS
                         || rounded < Integer.MIN_VALUE || rounded > Integer.MAX_VALUE) {
