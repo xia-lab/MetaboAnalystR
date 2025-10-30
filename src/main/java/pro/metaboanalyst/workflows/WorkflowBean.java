@@ -1144,7 +1144,7 @@ public class WorkflowBean implements Serializable {
                 if (value instanceof LinkedHashMap) {
                     // Convert map → FunctionInfo
                     FunctionInfo info = new ObjectMapper().convertValue(value, FunctionInfo.class);
-                    
+
                     this.functionInfos.put(key, info);
 
                 } else if (value instanceof FunctionInfo info) {
@@ -2198,33 +2198,33 @@ public class WorkflowBean implements Serializable {
         this.selectedWorkflowRun = run;
         this.wfFilter = "";
 
-        // ---- Guard: dataset UUID required
-        String dsId = (run == null) ? null : run.getDatasetId().toString();  // assuming model.getDatasetId() returns String UUID
-        boolean datasetMissing = isBlank(dsId) || !isUuid(dsId);
-
-        if (datasetMissing) {
-            sb.addMessage("warn",
-                    "Click the Dataset column to choose a dataset, then select a workflow.");
+        // ---- Guard: dataset UUID required (avoid .toString() on null)
+        UUID dsId = (run == null) ? null : run.getDatasetId();
+        if (dsId == null) {
+            sb.addMessage("warn", 
+                    "Click the Dataset column to choose a dataset first, then select a workflow.");
+            PrimeFaces.current().ajax().addCallbackParam("ok", false); // block dialog open
             return;
         }
+
+        // Allow client to open the dialog
+        PrimeFaces.current().ajax().addCallbackParam("ok", true);
 
         // Ensure dataset table is ready
         if (ds.getDatasetTableAll().isEmpty()) {
             ds.reloadTable();
         }
 
-        // Lookup dataset by UUID (adjust to your service API)
-        // Prefer a UUID/String overload; if you only have by-int, create a new one.
-        DatasetRow sel = ds.findById(run.getDatasetId()); // <-- implement this if not present
-
+        // Lookup dataset by UUID (prefer a UUID overload)
+        // If your service only has String, use dsId.toString() here.
+        DatasetRow sel = ds.findById(dsId);
         if (sel == null) {
-            sb.addMessage("warn",
+            sb.addMessage("warn", 
                     "The selected dataset is missing. Please pick a dataset again.");
             PrimeFaces.current().ajax().addCallbackParam("ok", false);
             return;
-        } else {
-            ds.setSelected(sel);
         }
+        ds.setSelected(sel);
 
         // Load & filter workflows
         loadAllWorkflows();
