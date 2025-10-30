@@ -827,7 +827,7 @@
                     </p:column>
                     <p:column headerText="Action" width="120" style="text-align:center;">
                         <div class="flex justify-content-center align-items-center gap-4">
-
+                            <!--
                             <p:commandLink id="deleteBn" title="Delete"
                                            disabled="#{ds.origin ne 'Custom'}"
                                            update=":delForm"
@@ -853,6 +853,7 @@
                                            action="#{datasetController.populateFilesForDialog(ds)}">
                                 <i class="pi pi-folder-open"></i>
                             </p:commandLink>
+                            -->
                             <p:commandLink title="Select" styleClass="p-button-sm p-button-primary"
                                            actionListener="#{workflowBean.selectDatasetOnly(ds)}"
                                            update=":projectTabs:dataTableForm"
