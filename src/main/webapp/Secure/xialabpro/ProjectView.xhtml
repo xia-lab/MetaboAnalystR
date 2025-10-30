@@ -8,6 +8,7 @@
                 template="/template/_template_workflow.xhtml">
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{fireBaseController.initUserProjects()}"></f:event> 
+        <f:event type="preRenderView" listener="#{workflowBean.initUserProjects()}"></f:event>
         <f:event type="preRenderView" listener="#{sessionBean1.addNaviTrack('Projects', '/Secure/xialabpro/ProjectView.xhtml')}"/> 
     </ui:define>
     <ui:define name="mystyle">    
@@ -107,6 +108,11 @@
     <ui:define name="content">
         <h:form id="formHidden1">
 
+            <p:remoteCommand name="afterResetCmd"
+                             process="@this"
+                             update=""
+                             actionListener="#{datasetController.afterResetInit}" />
+
             <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
             <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
             <h:inputHidden id="dataType" value="#{sessionBean1.dataType}" />
@@ -122,156 +128,344 @@
         <h:form id="pollForm">
             <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell :designForm" widgetVar="pollWidget" />
         </h:form>
-        <h:panelGrid styleClass="my-content-panel">
 
+        <h:panelGrid styleClass="my-content-panel">
             <p:growl id="msgs" showDetail="true" />
 
             <h2>
                 Project Management
             </h2>
-            <p>
-                Your saved projects are shown below. 
-                <ul>
-                    <li>
-                        Click <b>Project ID</b> to view / edit the details of the project;
-                    </li>
-                    <li>
-                        Click <b>Load</b> to resume a saved project to continue analysis; Or click <b>Delete</b> to remove the project
-                    </li>
-                    <li>
-                        Each project is associated with a live analysis report. Click <b>Report</b> to view or update the analysis report
-                    </li>
-                    <li>
-                        Each project is associated with a workflow. You can analyze new data use a project-associated workflow. To do this, 
-                        click the corresponding icon in <b>Workflow</b> column to extract and save the workflow into the workflow management page, 
-                        and start using the workflow. 
-                    </li>
-                </ul>
-            </p>
-            <h:form id="projForm">
-                <p:outputLabel class="text-800 text-xl" value="#{fireProjectBean.checkProjectInfo()}" escape="false"/>  
-                <p:dataTable id="checkboxDT"
-                             var="project"
-                             value="#{fireProjectBean.projectTable}"
-                             rowKey="#{project.id}"
-                             paginator="true" 
-                             rows="25" rowsPerPageTemplate="25,50,100"
-                             paginatorPosition="bottom"
-                             class="surface-card shadow-1 p-0 text-800"
-                             sortBy="#{project.id}"
-                             rowStyleClass="#{fireProjectBean.selectedProject ne null and project.id eq fireProjectBean.selectedProject.id ? 'row-selected' : ''}">
+
+            <p:tabView id="projectTabs">
+                <p:tab title="Saved Projects">
+                    <p>
+                        Your saved projects are shown below. 
+                        <ul>
+                            <li>
+                                Click <b>Project ID</b> to view / edit the details of the project;
+                            </li>
+                            <li>
+                                Click <b>Load</b> to resume a saved project to continue analysis; Or click <b>Delete</b> to remove the project
+                            </li>
+                            <li>
+                                Each project is associated with a live analysis report. Click <b>Report</b> to view or update the analysis report
+                            </li>
+                            <li>
+                                Each project is associated with a workflow. You can analyze new data use a project-associated workflow. To do this, 
+                                click the corresponding icon in <b>Workflow</b> column to extract and save the workflow into the workflow management page, 
+                                and start using the workflow. 
+                            </li>
+                        </ul>
+                    </p>
+                    <h:form id="projForm">
+                        <p:outputLabel class="text-800 text-xl" value="#{fireProjectBean.checkProjectInfo()}" escape="false"/>  
+                        <p:dataTable id="checkboxDT"
+                                     var="project"
+                                     value="#{fireProjectBean.projectTable}"
+                                     rowKey="#{project.id}"
+                                     paginator="true" 
+                                     rows="25" rowsPerPageTemplate="25,50,100"
+                                     paginatorPosition="bottom"
+                                     class="surface-card shadow-1 p-0 text-800"
+                                     sortBy="#{project.id}"
+                                     rowStyleClass="#{fireProjectBean.selectedProject ne null and project.id eq fireProjectBean.selectedProject.id ? 'row-selected' : ''}">
 
 
-                    <p:column headerText="Project ID" style="text-align:center;" width="100px">
-                        <p:commandLink value="#{project.id}" 
-                                       oncomplete="PF('projectEditDialog').show();"
-                                       update=":projForm :editDialogForm">
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
+                            <p:column headerText="Project ID" style="text-align:center;" width="100px">
+                                <p:commandLink value="#{project.id}" 
+                                               oncomplete="PF('projectEditDialog').show();"
+                                               update=":projectTabs:projForm :editDialogForm">
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
 
-                    </p:column>
+                            </p:column>
 
-                    <p:column headerText="Title" width="15%"> 
-                        <h:outputText value="#{project.title}" />
-                    </p:column>
+                            <p:column headerText="Title" width="15%"> 
+                                <h:outputText value="#{project.title}" />
+                            </p:column>
 
-                    <p:column headerText="Type" width="30%">
-                        <h:outputText
-                            value="#{project.projectType eq 'workflow'
-                                     ? project.readableType.concat(' - Workflow')
-                                     : project.readableType}" />
-                    </p:column>
+                            <p:column headerText="Type" width="30%">
+                                <h:outputText
+                                    value="#{project.projectType eq 'workflow'
+                                             ? project.readableType.concat(' - Workflow')
+                                             : project.readableType}" />
+                            </p:column>
 
-                    <p:column headerText="Last Updated" sortBy="#{project.creationDate}" width="120px">
-                        <h:outputText value="#{project.creationDate}" />
-                    </p:column>
+                            <p:column headerText="Last Updated" sortBy="#{project.creationDate}" width="120px">
+                                <h:outputText value="#{project.creationDate}" />
+                            </p:column>
 
-                    <p:column headerText="Load" style="text-align:center; ">  
-                        <p:commandLink value="" 
-                                       id="loadBn"
-                                       action="#{fireProjectBean.loadProjectOrShowDialog()}"
-                                       update=":projForm :switchDialogForm :switchServerDialogForm"
-                                       onclick="PF('statusDialog').show();"
-                                       oncomplete="PF('statusDialog').hide();"
-                                       >
-                            <i class="pi pi-arrow-circle-right" style="font-size: 1.4rem; color: orangered"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.projectToLoad}" />
-                        </p:commandLink>
-                    </p:column>
+                            <p:column headerText="Load" style="text-align:center; ">  
+                                <p:commandLink value="" 
+                                               id="loadBn"
+                                               action="#{fireProjectBean.loadProjectOrShowDialog()}"
+                                               update=":projectTabs:projForm :switchDialogForm :switchServerDialogForm"
+                                               onclick="PF('statusDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();"
+                                               >
+                                    <i class="pi pi-arrow-circle-right" style="font-size: 1.4rem; color: orangered"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.projectToLoad}" />
+                                </p:commandLink>
+                            </p:column>
 
-                    <p:column headerText="Resume" style="text-align:center;">  
-                        <p:commandLink value="" 
-                                       id="resumeBn"
-                                       action="#{fireProjectBean.settingProceedType('resume')}"
-                                       update=":projForm"
-                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
-                                       onclick="PF('statusDialog').show();"
-                                       oncomplete="PF('statusDialog').hide();"
-                                       >
-                            <i class="pi pi-chevron-circle-right" style="font-size: 1.4rem; color: #2196F3"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
+                            <p:column headerText="Resume" style="text-align:center;">  
+                                <p:commandLink value="" 
+                                               id="resumeBn"
+                                               action="#{fireProjectBean.settingProceedType('resume')}"
+                                               update=":projectTabs:projForm"
+                                               disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                               onclick="PF('statusDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();"
+                                               >
+                                    <i class="pi pi-chevron-circle-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
 
-                    <p:column headerText="View" style="text-align:center;">  
-                        <p:commandLink value="" 
-                                       id="viewBn"
-                                       action="#{fireProjectBean.settingProceedType('view')}"
-                                       update=":projForm"
-                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
-                                       onclick="PF('statusDialog').show();"
-                                       oncomplete="PF('statusDialog').hide();"
-                                       >
-                            <i class="pi pi-folder" style="font-size: 1.4rem; color: #2196F3"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
-                    <p:column headerText="Report" style="text-align:center;">  
-                        <p:commandLink value=""
-                                       id="reportBn"
-                                       action="#{fireProjectBean.settingProceedType('report')}"
-                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
-                                       onclick="PF('statusDialog').show();"
-                                       oncomplete="PF('statusDialog').hide();"
-                                       >
-                            <i class="pi pi-file" style="font-size: 1.4rem; color: #2196F3"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
-                    <!--
-                    <p:column headerText="Transfer" style="text-align:center;" rendered="#{fireUserBean.adminUserBool}">  
-                        <p:commandLink value=""
-                                       id="transferBn"
-                                       disabled="#{!fireProjectBean.selectionFlag(project)}"
-                                       onclick="PF('transferDialog').show();"
-                                       oncomplete="PF('statusDialog').hide();"
-                                       >
-                            <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
-                    -->
-                    <p:column headerText="Workflow" style="text-align:center;">  
-                        <p:commandLink value=""
-                                       id="transferBn"
-                                       onclick="PF('workflowDialog').show();"
-                                       >
-                            <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
+                            <p:column headerText="View" style="text-align:center;">  
+                                <p:commandLink value="" 
+                                               id="viewBn"
+                                               action="#{fireProjectBean.settingProceedType('view')}"
+                                               update=":projectTabs:projForm"
+                                               disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                               onclick="PF('statusDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();"
+                                               >
+                                    <i class="pi pi-folder" style="font-size: 1.4rem; color: #2196F3"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
+                            <p:column headerText="Report" style="text-align:center;">  
+                                <p:commandLink value=""
+                                               id="reportBn"
+                                               action="#{fireProjectBean.settingProceedType('report')}"
+                                               disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                               onclick="PF('statusDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();"
+                                               >
+                                    <i class="pi pi-file" style="font-size: 1.4rem; color: #2196F3"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
+                            <!--
+                            <p:column headerText="Transfer" style="text-align:center;" rendered="#{fireUserBean.adminUserBool}">  
+                                <p:commandLink value=""
+                                               id="transferBn"
+                                               disabled="#{!fireProjectBean.selectionFlag(project)}"
+                                               onclick="PF('transferDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();"
+                                               >
+                                    <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
+                            -->
+                            <p:column headerText="Workflow" style="text-align:center;">  
+                                <p:commandLink value=""
+                                               id="transferBn"
+                                               onclick="PF('workflowDialog').show();"
+                                               >
+                                    <i class="pi pi-arrow-up-right" style="font-size: 1.4rem; color: #2196F3"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
 
-                    <p:column headerText="Delete" style="text-align:center;"> 
-                        <p:commandLink value="" id="delActBn" onclick="PF('projectDelDialog').show();">
-                            <i class="pi pi-trash" style="font-size: 1.4rem; color: orangered"></i>
-                            <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
-                        </p:commandLink>
-                    </p:column>
-                </p:dataTable>
-            </h:form>
+                            <p:column headerText="Delete" style="text-align:center;"> 
+                                <p:commandLink value="" id="delActBn" onclick="PF('projectDelDialog').show();">
+                                    <i class="pi pi-trash" style="font-size: 1.4rem; color: orangered"></i>
+                                    <f:setPropertyActionListener value="#{project}" target="#{fireProjectBean.selectedProject}" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:form>
+                </p:tab>
+                <p:tab title="Workflow Runs">
+                        <h:form id="dataTableForm">
+                            <p:growl id="msgs" showDetail="true" /> 
+                            <p>
+                                You can analyze your data using a workflow (batch processing). To do this, you need to 
+                                create a workflow project. The basic steps:
+                                <ol>
+                                    <li>
+                                        Define a <b>Project</b>: you can use <b>Add New</b>; or directly edit an existing projects (listed below)
+                                    </li>
+                                    <li>
+                                        Select a <b>Data</b> from the available datasets. You add data by uploading a data or saving data from your previous project to the <a href="./DataCenterView.xhtml">Data Center</a>;
+                                    </li>
+                                    <li>
+                                        Select a <b>Workflow</b> from the available and compatible workflows. You can add workflows by creating a workflow from the <a href="./WorkflowView.xhtml">Workflow Center</a>;
+                                    </li>
+                                    <li>
+                                        Click the icon in the <b>Start</b> column
+                                    </li>
+                                </ol>
+                            </p>
+                            <p:steps styleClass="mb-3">
+                                <p:menuitem id="stepDataset" value="Dataset" icon="pi pi-database"
+                                            title="Choose the input files and/or metadata."  styleClass="ui-state-highlight"/>
+                                <p:menuitem id="stepWorkflow" value="Workflow" icon="pi pi-sitemap"
+                                            title="Pick a template and parameters to run." styleClass="ui-state-highlight"/>
+                                <p:menuitem id="stepResult" value="Result" icon="pi pi-wallet"
+                                            title="View analysis results, figures, and downloadable outputs." styleClass="ui-state-highlight"/>
+                            </p:steps>
+
+                            <p:tooltip for="stepDataset" showEffect="fade" position="top" />
+                            <p:tooltip for="stepWorkflow" showEffect="fade" position="top" />
+                            <p:tooltip for="stepResult"  showEffect="fade" position="top" />
+
+                            <p:dataTable id="dtTable"
+                                         var="run"
+                                         value="#{workflowBean.workflowRunsTable}"
+                                         editable="true" editMode="cell"
+                                         paginator="true" rows="25" rowsPerPageTemplate="25,50,100"
+                                         paginatorPosition="bottom"
+                                         class="surface-card shadow-1 p-0 text-800"
+                                         sortBy="#{run.id}"
+                                         rowKey="#{run.id}"
+                                         rowStyleClass="#{workflowBean.isSelected(run) ? 'row-selected' : ''}">
+
+                                <!-- fire once per edited cell -->
+                                <p:ajax event="cellEdit"
+                                        listener="#{workflowBean.onRunCellEdit}" />
+
+                                <f:facet name="header">
+                                    <div class="flex justify-content-between align-items-center w-full">
+                                        <span class="text-900 font-medium">Workflow Runs</span>
+
+                                        <p:commandButton id="btnAddRun"
+                                                         value="Add New"
+                                                         icon="pi pi-plus"
+                                                         styleClass="p-button-success p-button-raised p-button-sm"
+                                                         action="#{workflowBean.prepareNewRun}"
+                                                         process="@this"
+                                                         update=":projectTabs:dataTableForm :runEditDialogForm"
+                                                         onstart="PF('statusDialog').show();"
+                                                         oncomplete="PF('statusDialog').hide(); PF('runEditDialog').show();" />
+                                    </div>
+                                </f:facet>
+
+                                <p:column headerText="Run ID" style="text-align:center;" width="100px">
+                                    <p:commandLink value="#{run.id}"
+                                                   oncomplete="PF('runEditDialog').show();"
+                                                   update=":projectTabs:dataTableForm :runEditDialogForm">
+                                        <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
+                                    </p:commandLink>
+                                </p:column>
+
+                                <p:column headerText="Name" style="width:10%" sortBy="#{run.name}">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{empty run.name ? run.workflowId : run.name}" />
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputText value="#{run.name}" style="width:95%"/>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
 
 
+                                <!-- Dataset column → open “By Dataset” dialog (works for placeholder rows too) -->
+                                <p:column headerText="Dataset" width="14%">
+                                    <p:commandLink id="dsPick"
+                                                   value="#{run.datasetName eq 'NA' or empty run.datasetName ? '[Select Dataset]' : run.datasetName}"
+                                                   process="@this"
+                                                   update=":projectTabs:dataTableForm :formByDataset"
+                                                   actionListener="#{workflowBean.prepareDialogByDataset(run)}"
+                                                   onstart="PF('statusDialog').show();"
+                                                   oncomplete="PF('statusDialog').hide(); PF('dlgByDataset').show();">
+                                        <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
+                                    </p:commandLink>
+                                    <p:tooltip for="dsPick" value="Pick dataset, then choose a compatible workflow"/>
+                                </p:column>
+
+                                <!-- Workflow column → open “By Workflow” dialog (works for placeholder rows too) -->
+                                <p:column headerText="Workflow" width="16%">
+                                    <p:commandLink id="wfPick"
+                                                   value="#{empty run.module or run.module eq 'NA' ? '[Select Workflow]' : workflowView.getReadableType(run.module)}"
+                                                   process="@this"
+                                                   update=":projectTabs:dataTableForm :formByWorkflow"
+                                                   actionListener="#{workflowBean.prepareDialogByWorkflow(run)}"
+                                                   onstart="PF('statusDialog').show();"
+                                                   oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').show();">
+                                        <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
+                                    </p:commandLink>
+                                    <p:tooltip for="wfPick" value="Pick workflow, then choose a compatible dataset"/>
+                                </p:column>
+
+
+                                <p:column headerText="Status">
+                                    <!-- normalize to lowercase once and compare -->
+                                    <h:panelGroup rendered="#{run.status eq 'pending' or run.status eq 'Pending'}">
+                                        <span class="mr-4">
+                                            <i class="pi pi-hourglass text-orange-500" style="vertical-align:middle;"></i>
+                                            <span class="ml-1">Pending</span>
+                                        </span>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{run.status eq 'running' or run.status eq 'Running'}">
+                                        <span class="mr-4">
+                                            <i class="pi pi-spinner pi-spin text-blue-500" style="vertical-align:middle;"></i>
+                                            <span class="ml-1">Running</span>
+                                        </span>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{run.status eq 'completed' or run.status eq 'Completed'}">
+                                        <span class="mr-4">
+                                            <i class="pi pi-check-circle text-green-500" style="vertical-align:middle;"></i>
+                                            <span class="ml-1">Completed</span>
+                                        </span>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{run.status eq 'failed' or run.status eq 'Failed'}">
+                                        <span class="mr-4">
+                                            <i class="pi pi-times-circle text-red-500" style="vertical-align:middle;"></i>
+                                            <span class="ml-1">Failed</span>
+                                        </span>
+                                    </h:panelGroup>
+                                </p:column>
+
+                                <p:column headerText="Last Updated" sortBy="#{run.lastUpdated}" width="160px">
+                                    <h:outputText value="#{run.lastUpdated}" />
+                                </p:column>
+
+                                <p:column headerText="Start" style="text-align:center;">
+                                    <p:commandLink actionListener="#{workflowBean.startRun(run)}"
+                                                   onclick="PF('workStartDialog').hide();
+                                                           PF('statusDialog').show();"
+                                                   update=":projectTabs:dataTableForm"
+                                                   oncomplete="PF('statusDialog').hide();">
+                                        <i class="pi pi-arrow-circle-right" style="font-size:1.4rem; color: orangered"></i>
+                                    </p:commandLink>
+                                </p:column>
+
+                                <p:column headerText="View" style="text-align:center;" width="100px">
+                                    <p:commandLink id="viewBn"
+                                                   title="View results"
+                                                   disabled="#{empty run.projectId}"
+                                                   action="#{workflowBean.viewRunResults(run)}"
+                                                   update=":projectTabs:dataTableForm"
+                                                   onstart="PF('statusDialog').show();"
+                                                   oncomplete="PF('statusDialog').hide();">
+                                        <i class="pi pi-eye" style="font-size:1.4rem; color:#2563eb;"></i>
+                                    </p:commandLink>
+
+                                    <p:tooltip for="viewBn"
+                                               value="#{empty run.projectId ? 'Results not available (no project yet)' : 'Open analysis results'}"/>
+                                </p:column>
+
+                                <p:column headerText="Delete" style="text-align:center;">
+                                    <p:commandLink id="delRunBn" onclick="PF('runDelDialog').show();">
+                                        <i class="pi pi-trash" style="font-size:1.4rem; color:orangered"></i>
+                                        <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
+                                    </p:commandLink>
+                                </p:column>
+
+                            </p:dataTable>
+                        </h:form>
+                </p:tab>
+            </p:tabView>
         </h:panelGrid>
+
 
         <p:dialog widgetVar="projectDelDialog" dynamic="true" modal="true" 
                   header="Delete Project"
@@ -296,7 +490,7 @@
                                          onclick="PF('statusDialog').show();"
                                          action="#{fireProjectBean.callProjectDelete()}"
                                          ajax="false"
-                                         update=":projForm:checkboxDT"
+                                         update=":projectTabs:projForm:checkboxDT"
                                          oncomplete ="PF('statusDialog').hide(); PF('projectDelDialog').hide()"
                                          />
                     </h:panelGrid>
@@ -381,7 +575,7 @@
                     <p:commandButton style="width:100px; font-size: 13px;" value="Proceed"
                                      onclick="PF('switchProjDialog').hide();PF('statusDialog').show();"
                                      action="#{fireProjectBean.settingProceedType('load')}"
-                                     update=":projForm"
+                                     update=":projectTabs:projForm"
                                      oncomplete ="PF('statusDialog').hide();"/>
                 </h:panelGrid>
 
@@ -415,7 +609,7 @@
                                      onclick="PF('switchServerDialog').hide();PF('statusDialog').show();"
                                      action="#{fireProjectBean.settingProceedType('load')}"
                                      oncomplete="PF('statusDialog').hide();"
-                                     update=":projForm" />
+                                     update=":projectTabs:projForm" />
                 </h:panelGrid>
 
             </h:form>
@@ -537,58 +731,219 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog>
-        <p:dialog header="Workflow Progress"
-                  widgetVar="workflowInfoDialog"
-                  showEffect="fade"
-                  hideEffect="fade"
-                  modal="true"
-                  width="600"
-                  closable="true"
-                  draggable="false"
-                  resizable="false"
-                  appendTo="@(body)">
-            <h:form id="formWorkflowInfo">
-                <!-- Job details in a structured grid -->
-                <h:panelGrid style="margin:40px">
 
-                    <h:panelGrid columns="2" 
-                                 style="display: inline-block; border-collapse: separate; border-spacing: 0 10px;"> 
-                        <h:panelGroup style="width:120px" layout="block">
-                            <h:outputLabel value="Start Time:" style="font-weight:bold"/>
-                        </h:panelGroup>
+        <p:dialog header="Edit Workflow Run" widgetVar="runEditDialog" dynamic="true" modal="true"
+                  appendTo="@(body)" resizable="true" onShow="PF('statusDialog').hide()">
+            <h:form id="runEditDialogForm">
+                <ui:fragment rendered="#{not empty workflowBean.selectedWorkflowRun}">
+                    <h:panelGrid style="padding:10px; width:420px;">
+                        <h:panelGrid style="width: 100%;" class="surface-card shadow-1 p-4 text-800">
+                            <h:panelGrid columns="2" style="width:100%; margin-bottom:1rem;" columnClasses="wide-column wide-column">
+                                <h:outputText styleClass="text-700" value="Run ID"/>
+                                <h:outputText value="#{workflowBean.selectedWorkflowRun.id}" />
+                                <h:outputText styleClass="text-700" value="Workflow"/>
+                                <h:outputText value="#{empty workflowBean.selectedWorkflowRun.module or workflowBean.selectedWorkflowRun.module eq 'NA' ? '[Not selected]' : workflowView.getReadableType(workflowBean.selectedWorkflowRun.module)}" />
+                                <h:outputText styleClass="text-700" value="Dataset"/>
+                                <h:outputText value="#{empty workflowBean.selectedWorkflowRun.datasetName or workflowBean.selectedWorkflowRun.datasetName eq 'NA' ? '[Not selected]' : workflowBean.selectedWorkflowRun.datasetName}" />
+                            </h:panelGrid>
 
-                        <h:outputText value="#{jobExecution.currentStartTime}" />
+                            <p:outputLabel for="runName" value="Name" style="font-weight: bold;"/>
+                            <p:inputText id="runName" value="#{workflowBean.selectedWorkflowRun.name}" style="width: 100%"/>
 
-                        <h:outputLabel value="Job ID:" style="font-weight:bold" />
-                        <h:outputText value="#{jobExecution.currentJobId}" />
+                            <p:outputLabel for="runDescription" value="Description"  style="font-weight: bold;"/>
+                            <p:inputTextarea id="runDescription" value="#{workflowBean.selectedWorkflowRun.description}"
+                                             rows="5" cols="48"/>
 
-                        <h:outputLabel value="Status:" style="font-weight:bold"/>
-                        <h:panelGroup rendered="#{jobExecution.statusMsg == 'Job is running...'}">
-                            <span>
-                                <span id="statusText" style="color: green; font-weight:bold">Job is running</span>
-                                <span class="dots">
-                                    <span>.</span>
-                                    <span>.</span>
-                                    <span>.</span>
-                                </span>
-                            </span>
-                        </h:panelGroup>
+                            <p:outputLabel for="runStatus" value="Status" style="font-weight: bold;"/>
+                            <p:selectOneMenu id="runStatus" value="#{workflowBean.selectedWorkflowRun.status}" style="width:100%">
+                                <f:selectItem itemLabel="Pending" itemValue="pending" />
+                                <f:selectItem itemLabel="Running" itemValue="running" />
+                                <f:selectItem itemLabel="Completed" itemValue="completed" />
+                                <f:selectItem itemLabel="Failed" itemValue="failed" />
+                            </p:selectOneMenu>
 
-                        <h:panelGroup rendered="#{jobExecution.statusMsg != 'Job is running...'}">
-                            <h:outputText value="#{jobExecution.statusMsg}" escape="false" />
-                        </h:panelGroup>
+                            <p:outputLabel for="runProjectId" value="Project ID" style="font-weight: bold;"/>
+                            <p:inputText id="runProjectId" value="#{workflowBean.selectedWorkflowRun.projectId}" style="width: 100%"/>
+                        </h:panelGrid>
+
+                        <h:panelGrid columns="2" style="width:100%; text-align: center">
+                            <p:commandButton value="Cancel" type="button"
+                                             onclick="PF('runEditDialog').hide()"/>
+                            <p:commandButton id="runEditBn" value="Update" style="width:80px"
+                                             process="@form"
+                                             update=":projectTabs:dataTableForm"
+                                             action="#{workflowBean.updateRunInfo}"
+                                             onstart="PF('statusDialog').show();"
+                                             oncomplete="PF('statusDialog').hide(); PF('runEditDialog').hide();"
+                                             styleClass="procBn"/>
+                        </h:panelGrid>
                     </h:panelGrid>
-
-                    <h:panelGroup layout="block" style="margin-top:15px;">
-                        <h:outputText value="Job submitted successfully. An email notice will be sent to you when your job is completed."/>
-                    </h:panelGroup>
-
-                    <h:panelGroup layout="block" style="margin-top:15px; font-weight:bold;">
-                        <h:outputText value="Use the ‘Notice’ on the top menu bar to view all important system messages."/>
-                    </h:panelGroup>
-
-                </h:panelGrid>
+                </ui:fragment>
             </h:form>
         </p:dialog>
+
+        <p:dialog widgetVar="runDelDialog" modal="true" header="Delete Workflow Run" appendTo="@(body)" closable="true">
+            <h:panelGrid style="width:420px; line-height:1.6; font-size:14px;">
+                <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                    <h:panelGroup>
+                        <i class="pi pi-exclamation-triangle" style="font-size:42px;color:#f97316"></i>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        This action will permanently delete run <b>#{workflowBean.selectedWorkflowRun.id}</b>.
+                        Continue?
+                    </h:panelGroup>
+                </h:panelGrid>
+                <h:panelGrid columns="2" style="width:100%; text-align:center;">
+                    <p:commandButton value="Cancel" onclick="PF('runDelDialog').hide();return false;"/>
+                    <p:commandButton value="Yes, delete" styleClass="ui-button-danger"
+                                     onstart="PF('statusDialog').show();"
+                                     oncomplete="PF('statusDialog').hide();PF('runDelDialog').hide();"
+                                     update=":projectTabs:dataTableForm"
+                                     actionListener="#{workflowBean.deleteSelectedRun}"/>
+                </h:panelGrid>
+            </h:panelGrid>
+        </p:dialog>
+
+        <p:dialog id="dlgByDataset" widgetVar="dlgByDataset" header="Select Dataset"
+                  modal="true" responsive="true" closable="true" resizable="false" width="900">
+            <h:form id="formByDataset">
+                <div class="flex gap-2 mb-2">
+                    <p:inputText id="dsFilter" value="#{workflowBean.dsFilter}" placeholder="Filter datasets…" />
+                    <p:commandButton value="Apply" process="@this dsFilter" update="dsTable"/>
+                </div>
+
+                <p:dataTable id="dsTable"
+                             value="#{datasetController.datasetTableAll}" var="ds"
+                             paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
+                             emptyMessage="No datasets found." styleClass="surface-card shadow-1">
+                    <p:column headerText="Name" sortBy="#{ds.title}" width="35%">
+                        <p:outputPanel layout="flex"
+                                       style="align-items:center; justify-content:space-between; width:100%; border:0; padding:0;">
+                            <h:outputText value="#{ds.title}" style="flex:1 1 auto;"/>
+
+                            <p:tag value="Example"
+                                   severity="info"
+                                   rendered="#{ds.origin eq 'Example'}"
+                                   style="margin-left:auto;"/>
+                        </p:outputPanel>
+                    </p:column>
+
+                    <p:column headerText="File" sortBy="#{ds.filename}">
+                        <h:outputText value="#{ds.filename}"/>
+                    </p:column>
+                    <p:column headerText="Samples" width="10%" sortBy="#{ds.samplenum}">
+                        <h:outputText value="#{ds.samplenum == 0 ? 'NA' : ds.samplenum}"/>
+                    </p:column>
+                    <p:column headerText="Action" width="120" style="text-align:center;">
+                        <div class="flex justify-content-center align-items-center gap-4">
+
+                            <p:commandLink id="deleteBn" title="Delete"
+                                           disabled="#{ds.origin ne 'Custom'}"
+                                           update=":delForm"
+                                           oncomplete="PF('delDialog').show();">
+                                <i class="pi pi-trash" style="color:orangered;"></i>
+                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
+                            </p:commandLink>
+
+                            <p:commandLink id="editBn" title="Explore"
+                                           update=":editorForm :projectTabs:dataTableForm"
+                                           onstart="PF('statusDialog').show();"
+                                           oncomplete="PF('editorDlg').show();PF('statusDialog').hide();"
+                                           actionListener="#{datasetController.loadForEditor(ds, 'metadata')}">
+                                <i class="pi pi-compass"/>
+                            </p:commandLink>
+
+                            <p:commandLink id="filesBn"
+                                           title="Files"
+                                           process="@this"
+                                           update=":filesForm"
+                                           onstart="PF('statusDialog').show();"
+                                           oncomplete="PF('filesDialog').show();PF('statusDialog').hide();"
+                                           action="#{datasetController.populateFilesForDialog(ds)}">
+                                <i class="pi pi-folder-open"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Select" styleClass="p-button-sm p-button-primary"
+                                           actionListener="#{workflowBean.selectDatasetOnly(ds)}"
+                                           update=":projectTabs:dataTableForm"
+                                           onstart="PF('statusDialog').show();"
+                                           oncomplete="PF('statusDialog').hide(); PF('dlgByDataset').hide();">
+                                <i class="pi pi-play" style="font-size:1.1rem"></i>
+
+                            </p:commandLink>
+                        </div>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgByWorkflow" widgetVar="dlgByWorkflow" header="Select Workflow"
+                  modal="true" responsive="true" closable="true" resizable="false" width="900">
+            <h:form id="formByWorkflow">
+                <div class="flex gap-2 mb-2">
+                    <p:inputText id="wfFilter" value="#{workflowBean.wfFilter}" placeholder="Filter workflows…" />
+                    <p:commandButton value="Apply" process="@this wfFilter" update="wfTable"/>
+                </div>
+
+                <p:dataTable id="wfTable"
+                             value="#{workflowBean.workflowList}" var="wf"
+                             paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
+                             emptyMessage="No workflows found." styleClass="surface-card shadow-1">
+
+                    <p:column headerText="Name" sortBy="#{wf['name']}" width="35%">
+                        <p:outputPanel layout="flex"
+                                       style="align-items:center; justify-content:space-between; width:100%; border:0;">
+                            <h:outputText value="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}" />
+                            <p:tag value="Template"
+                                   severity="info"
+                                   rendered="#{wf['type'] eq 'Template'}"
+                                   style="margin-left:auto;" />
+                        </p:outputPanel>
+                    </p:column>
+
+                    <p:column headerText="Module" width="35%" sortBy="#{wf['module']}">
+                        <h:outputText value="#{workflowView.getReadableType(wf['module'])}"/>
+                    </p:column>
+
+                    <p:column headerText="Action" width="120" style="text-align:center;">
+                        <div class="flex justify-content-center align-items-center gap-4">
+                            <p:commandLink id="viewWfJson"
+                                           title="View workflow JSON"
+                                           disabled="#{wf['type'] ne 'Custom'}"
+                                           process="@this"
+                                           actionListener="#{workflowBean.prepareViewWorkflowJson(wf)}"
+                                           update=":wfJsonDlgForm"
+                                           onstart="PF('statusDialog').show();"
+                                           oncomplete="PF('statusDialog').hide(); PF('wfJsonDlg').show();">
+                                <i class="pi pi-file"></i>
+                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
+                            </p:commandLink>
+                            <p:tooltip for="viewWfJson" value="View JSON" position="top" />
+
+                            <p:commandLink id="viewWf"
+                                           title="View and update parameters"
+                                           ajax="false"
+                                           onclick="PF('statusDialog').show();"
+                                           action="#{workflowBean.goToWorkflowDetails}">
+                                <i class="pi pi-cog" style="font-size:1.1rem"></i>
+                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
+                            </p:commandLink>
+                            <p:tooltip for="viewWf" value="Open workflow details" position="top" />
+
+                            <p:commandLink id="runWf"
+                                           title="Use this workflow"
+                                           process="@this"
+                                           actionListener="#{workflowBean.selectWorkflowOnly(wf)}"
+                                           update=":projectTabs:dataTableForm"
+                                           onstart="PF('statusDialog').show();"
+                                           oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').hide();">
+                                <i class="pi pi-play" style="font-size:1.1rem"></i>
+                            </p:commandLink>
+                            <p:tooltip for="runWf" value="Select this workflow" position="top" />
+                        </div>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <ui:include src="/Secure/xialabpro/_WorkflowDialogs.xhtml" />
     </ui:define>
 </ui:composition>

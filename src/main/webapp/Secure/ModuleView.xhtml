@@ -183,19 +183,19 @@
                         <div class="ui-g-2  mypane5 mypane" onclick="window.location = '#{ctl.getModuleURL(12)}'">Causal Analysis <br/> [Mendelian randomization]</div>
                         <div class="ui-g-4"></div>
                     </div>
-                    <h:panelGrid columns="2"
-                                 style="text-align:center; padding:20px 10px; margin-top:20px; width:100%">
+                     <h:panelGrid columns="3" style="text-align:center; padding: 20px 10px 20px 10px; margin-top:20px; width:100%">
                         <p:commandButton value="Projects"
                                          styleClass="ui-button-outlined ui-button-info"
-                                         style="font-size:15px !important; font-weight: bold; height:46px; width:200px"
-                                         ajax="false" process="@this" immediate="true"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
                                          action="ProjectView"/>
-
-                        <p:commandButton value="Workflow"
+                        <p:commandButton value="Data"
                                          styleClass="ui-button-outlined ui-button-help"
-                                         style="font-size:15px !important; font-weight: bold; height:46px; width:200px"
-                                         ajax="false" process="@this" immediate="true"
-                                         action="WorkflowProjectView"/>
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="DataCenterView"/>
+                        <p:commandButton value="Workflows"
+                                         styleClass="ui-button-outlined ui-button-help"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="WorkflowView"/>
                     </h:panelGrid>
 
                 </div> 

@@ -1352,7 +1352,7 @@ public class WorkflowBean implements Serializable {
     private Path prepareTemplateWorkflowJson(String fileName) throws IOException {
         Objects.requireNonNull(fileName, "Template filename is required");
         if (sb.getCurrentUser() == null) {
-            DatasetRow sel = ds.findById(selectedWorkflowRun.getDatasetId()); 
+            DatasetRow sel = ds.findById(selectedWorkflowRun.getDatasetId());
             ds.setSelected(sel);
             boolean res = ds.load(ds.getSelected(), true);
             if (res) {
@@ -2367,6 +2367,29 @@ public class WorkflowBean implements Serializable {
         }
     }
 
+    public void deleteSelectedRun() {
+        if (selectedWorkflowRun == null) {
+            sb.addMessage("Warn", "No workflow run selected.");
+            return;
+        }
+
+        final int runId = selectedWorkflowRun.getId();
+        try {
+            String msg = dbc.deleteWorkflowRun(runId);
+            boolean success = msg != null && msg.toLowerCase(Locale.ROOT).contains("deleted");
+
+            if (success) {
+                setupWorkflowRunsTable();
+                selectedWorkflowRun = null;
+                sb.addMessage("Info", "Workflow run " + runId + " deleted.");
+            } else {
+                sb.addMessage("Warn", "Failed to delete run " + runId + (msg == null ? "." : ": " + msg));
+            }
+        } catch (Exception e) {
+            sb.addMessage("Error", "Failed to delete run: " + e.getMessage());
+        }
+    }
+
     private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
 
     public List<WorkflowRunModel> getWorkflowRunsTable() {
@@ -2459,6 +2482,7 @@ public class WorkflowBean implements Serializable {
         r.setDescription(trimToNull(safeStr(m.get("description"))));
         r.setOtherJson(safeStr(m.get("other")));                // JSON blob for extra info
         r.setProjectId(trimToNull(safeStr(getAny(m, "projectId", "project_id"))));
+        System.out.println("run===projectid===" + r.getProjectId());
 
         // Convenience: derive a readable title if none provided
         if (r.getName() == null || r.getName().isBlank()) {
@@ -2707,6 +2731,18 @@ public class WorkflowBean implements Serializable {
             return false;
         }
         return String.valueOf(r.getId()).equals(String.valueOf(selectedWorkflowRun.getId()));
+    }
+
+    public void viewRunResults(WorkflowRunModel run) {
+        selectedWorkflowRun = run;
+        boolean res = fbc.loadProject(run.getProjectId(), "workflow");
+        if (res) {
+            DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?callFunc=checkPagesToVisit", ab);
+        } else {
+            sb.addMessage("error", "Unable to load project.");
+
+        }
+
     }
 
 }

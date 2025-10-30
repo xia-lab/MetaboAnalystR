@@ -108,194 +108,198 @@
     <ui:define name="content">
         <h:panelGrid style="padding:3% 5% 2% 5%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva">
             <h:form id="selectForm">
-                    <div id="form_con" style="padding:1% 3% 1% 1%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva; min-height: 80vh !important">
-                        <div class="ui-g surface-section p-4" style="padding: 30px; line-height: 23px;">
-                            <div class="ui-g-2 ui-g-nopad" style="height:40px; border-right: grey solid 1px">
-                                <div class="ui-g-12" style="text-align: left; height:40px;"><b style="font-size: 16px">Input Data Type</b></div>
-                            </div>
-                            <div class="ui-g-10 ui-g-nopad" style="height:40px; text-align: left; padding-left: 20px">
-                                <font style="font-size: 16px"><b>Available Modules</b>
-                                    (click on a module to proceed, or scroll down to explore all 18 modules including
-                                    <a onclick='PF("utilDialog").show()' style="font-weight: bold"><u>utilities</u></a>) </font>
-                            </div>
-
-                            <div class="ui-g-2 ui-g-nopad">
-                                <div class="ui-g-12 mylabel">
-                                    LC-MS Spectra <br/>
-                                    <font style="color:grey; font-size: 13px">(mzML, mzXML or mzData)</font>
-                                </div>
-                            </div>
-                            <div class="ui-g-4"></div>
-
-                            <div class="ui-g-2 mypane1 mypane #{moduleController.visible('spectraProcessing') ? '' : 'module-disabled'}"
-                                 onclick="triggerSpectraUpload(); PF('statusDialog').show()"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('spectraProcessing')}"
-                                 tabindex="#{moduleController.visible('spectraProcessing') ? '0' : '-1'}">
-                                Spectra Processing <br/>
-                                [LC-MS w/wo MS2]
-                            </div>
-
-                            <div class="ui-g-4"></div>
-
-                            <div class="ui-g-2 ui-g-nopad">
-                                <div class="ui-g-12 mylabel">
-                                    MS Peaks<br/>
-                                    <font style="color:grey; font-size: 13px">(peak list or intensity table)</font>
-                                </div>
-                            </div>
-                            <div class="ui-g-2"></div>
-
-                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('peakAnnotation') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 14}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('peakAnnotation')}"
-                                 tabindex="#{moduleController.visible('peakAnnotation') ? '0' : '-1'}">
-                                Peak Annotation<br/>
-                                [MS2-DDA/DIA]
-                            </div>
-
-                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalAnalysis') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 0}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('functionalAnalysis')}"
-                                 tabindex="#{moduleController.visible('functionalAnalysis') ? '0' : '-1'}">
-                                Functional Analysis<br/>
-                                [LC-MS]
-                            </div>
-
-                            <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalMetaAnalysis') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 1}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('functionalMetaAnalysis')}"
-                                 tabindex="#{moduleController.visible('functionalMetaAnalysis') ? '0' : '-1'}">
-                                Functional Meta-analysis<br/>
-                                [LC-MS]
-                            </div>
-
-                            <div class="ui-g-2"></div>
-
-                            <div class="ui-g-2 ui-g-nopad">
-                                <div class="ui-g-12 mylabel">
-                                    Generic Format<br/>
-                                    <font style="color:grey; font-size: 13px">(.csv or .txt table files)</font>
-                                </div>
-                            </div>
-
-                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis1') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 6}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('statisticalAnalysis1')}"
-                                 tabindex="#{moduleController.visible('statisticalAnalysis1') ? '0' : '-1'}">
-                                Statistical Analysis<br/> 
-                                [one factor]
-                            </div>
-
-                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis2') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 7}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('statisticalAnalysis2')}"
-                                 tabindex="#{moduleController.visible('statisticalAnalysis2') ? '0' : '-1'}">
-                                Statistical Analysis <br/> 
-                                [metadata table]
-                            </div>
-
-                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('biomarkerAnalysis') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 8}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('biomarkerAnalysis')}"
-                                 tabindex="#{moduleController.visible('biomarkerAnalysis') ? '0' : '-1'}">
-                                Biomarker Analysis
-                            </div>
-
-                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('doseResponse') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 11}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('doseResponse')}"
-                                 tabindex="#{moduleController.visible('doseResponse') ? '0' : '-1'}">
-                                Dose Response Analysis
-                            </div>
-
-                            <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statMeta') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 9}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('statMeta')}"
-                                 tabindex="#{moduleController.visible('statMeta') ? '0' : '-1'}">
-                                Statistical Meta-analysis
-                            </div>
-
-                            <div class="ui-g-2 ui-g-nopad">
-                                <div class="ui-g-12 mylabel">
-                                    Annotated Features<br/>
-                                    <font style="color:grey; font-size: 13px">(metabolite list or  table)</font>
-                                </div>
-                            </div>
-                            <div class="ui-g-2"></div>
-
-                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('enrichment') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 2}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('enrichment')}"
-                                 tabindex="#{moduleController.visible('enrichment') ? '0' : '-1'}">
-                                Enrichment Analysis
-                            </div>
-
-                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('pathway') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 3}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('pathway')}"
-                                 tabindex="#{moduleController.visible('pathway') ? '0' : '-1'}">
-                                Pathway Analysis
-                            </div>
-
-                            <div class="ui-g-2 mypane4 mypane #{moduleController.visible('network') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 5}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('network')}"
-                                 tabindex="#{moduleController.visible('network') ? '0' : '-1'}">
-                                Network Analysis
-                            </div>
-
-                            <div class="ui-g-2"></div>
-
-                            <div class="ui-g-2 ui-g-nopad">
-                                <div class="ui-g-12 mylabel">
-                                    Link to Genomics &amp; Phenotypes<br/> 
-                                    <font style="color:grey; font-size: 13px">(metabolite list)</font>
-                                </div>
-                            </div>
-                            <div class="ui-g-4"></div>
-
-                            <div class="ui-g-2 mypane5 mypane #{moduleController.visible('causalAnalysis') ? '' : 'module-disabled'}"
-                                 onclick="openModule([{name: 'idx', value: 12}])"
-                                 role="button"
-                                 aria-disabled="#{!moduleController.visible('causalAnalysis')}"
-                                 tabindex="#{moduleController.visible('causalAnalysis') ? '0' : '-1'}">
-                                Causal Analysis <br/> [Mendelian randomization]
-                            </div>
-
-                            <div class="ui-g-4"></div>
+                <div id="form_con" style="padding:1% 3% 1% 1%; width:100%; text-align: center; line-height: 26px; font-size: 14px; font-family: Arial, Helvetica, Geneva; min-height: 80vh !important">
+                    <div class="ui-g surface-section p-4" style="padding: 30px; line-height: 23px;">
+                        <div class="ui-g-2 ui-g-nopad" style="height:40px; border-right: grey solid 1px">
+                            <div class="ui-g-12" style="text-align: left; height:40px;"><b style="font-size: 16px">Input Data Type</b></div>
+                        </div>
+                        <div class="ui-g-10 ui-g-nopad" style="height:40px; text-align: left; padding-left: 20px">
+                            <font style="font-size: 16px"><b>Available Modules</b>
+                                (click on a module to proceed, or scroll down to explore all 18 modules including
+                                <a onclick='PF("utilDialog").show()' style="font-weight: bold"><u>utilities</u></a>) </font>
                         </div>
 
-                        <h:panelGrid columns="2" style="text-align:center; padding: 20px 10px 20px 10px; margin-top:20px; width:100%">
-                            <p:commandButton value="Projects"
-                                             styleClass="ui-button-outlined ui-button-info"
-                                             style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
-                                             action="ProjectView"/>
-                            <p:commandButton value="Workflow"
-                                             styleClass="ui-button-outlined ui-button-help"
-                                             style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
-                                             action="WorkflowProjectView"/>
-                        </h:panelGrid>
+                        <div class="ui-g-2 ui-g-nopad">
+                            <div class="ui-g-12 mylabel">
+                                LC-MS Spectra <br/>
+                                <font style="color:grey; font-size: 13px">(mzML, mzXML or mzData)</font>
+                            </div>
+                        </div>
+                        <div class="ui-g-4"></div>
 
+                        <div class="ui-g-2 mypane1 mypane #{moduleController.visible('spectraProcessing') ? '' : 'module-disabled'}"
+                             onclick="triggerSpectraUpload(); PF('statusDialog').show()"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('spectraProcessing')}"
+                             tabindex="#{moduleController.visible('spectraProcessing') ? '0' : '-1'}">
+                            Spectra Processing <br/>
+                            [LC-MS w/wo MS2]
+                        </div>
+
+                        <div class="ui-g-4"></div>
+
+                        <div class="ui-g-2 ui-g-nopad">
+                            <div class="ui-g-12 mylabel">
+                                MS Peaks<br/>
+                                <font style="color:grey; font-size: 13px">(peak list or intensity table)</font>
+                            </div>
+                        </div>
+                        <div class="ui-g-2"></div>
+
+                        <div class="ui-g-2 mypane2 mypane #{moduleController.visible('peakAnnotation') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 14}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('peakAnnotation')}"
+                             tabindex="#{moduleController.visible('peakAnnotation') ? '0' : '-1'}">
+                            Peak Annotation<br/>
+                            [MS2-DDA/DIA]
+                        </div>
+
+                        <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalAnalysis') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 0}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('functionalAnalysis')}"
+                             tabindex="#{moduleController.visible('functionalAnalysis') ? '0' : '-1'}">
+                            Functional Analysis<br/>
+                            [LC-MS]
+                        </div>
+
+                        <div class="ui-g-2 mypane2 mypane #{moduleController.visible('functionalMetaAnalysis') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 1}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('functionalMetaAnalysis')}"
+                             tabindex="#{moduleController.visible('functionalMetaAnalysis') ? '0' : '-1'}">
+                            Functional Meta-analysis<br/>
+                            [LC-MS]
+                        </div>
+
+                        <div class="ui-g-2"></div>
+
+                        <div class="ui-g-2 ui-g-nopad">
+                            <div class="ui-g-12 mylabel">
+                                Generic Format<br/>
+                                <font style="color:grey; font-size: 13px">(.csv or .txt table files)</font>
+                            </div>
+                        </div>
+
+                        <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis1') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 6}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('statisticalAnalysis1')}"
+                             tabindex="#{moduleController.visible('statisticalAnalysis1') ? '0' : '-1'}">
+                            Statistical Analysis<br/> 
+                            [one factor]
+                        </div>
+
+                        <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statisticalAnalysis2') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 7}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('statisticalAnalysis2')}"
+                             tabindex="#{moduleController.visible('statisticalAnalysis2') ? '0' : '-1'}">
+                            Statistical Analysis <br/> 
+                            [metadata table]
+                        </div>
+
+                        <div class="ui-g-2 mypane3 mypane #{moduleController.visible('biomarkerAnalysis') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 8}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('biomarkerAnalysis')}"
+                             tabindex="#{moduleController.visible('biomarkerAnalysis') ? '0' : '-1'}">
+                            Biomarker Analysis
+                        </div>
+
+                        <div class="ui-g-2 mypane3 mypane #{moduleController.visible('doseResponse') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 11}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('doseResponse')}"
+                             tabindex="#{moduleController.visible('doseResponse') ? '0' : '-1'}">
+                            Dose Response Analysis
+                        </div>
+
+                        <div class="ui-g-2 mypane3 mypane #{moduleController.visible('statMeta') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 9}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('statMeta')}"
+                             tabindex="#{moduleController.visible('statMeta') ? '0' : '-1'}">
+                            Statistical Meta-analysis
+                        </div>
+
+                        <div class="ui-g-2 ui-g-nopad">
+                            <div class="ui-g-12 mylabel">
+                                Annotated Features<br/>
+                                <font style="color:grey; font-size: 13px">(metabolite list or  table)</font>
+                            </div>
+                        </div>
+                        <div class="ui-g-2"></div>
+
+                        <div class="ui-g-2 mypane4 mypane #{moduleController.visible('enrichment') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 2}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('enrichment')}"
+                             tabindex="#{moduleController.visible('enrichment') ? '0' : '-1'}">
+                            Enrichment Analysis
+                        </div>
+
+                        <div class="ui-g-2 mypane4 mypane #{moduleController.visible('pathway') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 3}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('pathway')}"
+                             tabindex="#{moduleController.visible('pathway') ? '0' : '-1'}">
+                            Pathway Analysis
+                        </div>
+
+                        <div class="ui-g-2 mypane4 mypane #{moduleController.visible('network') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 5}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('network')}"
+                             tabindex="#{moduleController.visible('network') ? '0' : '-1'}">
+                            Network Analysis
+                        </div>
+
+                        <div class="ui-g-2"></div>
+
+                        <div class="ui-g-2 ui-g-nopad">
+                            <div class="ui-g-12 mylabel">
+                                Link to Genomics &amp; Phenotypes<br/> 
+                                <font style="color:grey; font-size: 13px">(metabolite list)</font>
+                            </div>
+                        </div>
+                        <div class="ui-g-4"></div>
+
+                        <div class="ui-g-2 mypane5 mypane #{moduleController.visible('causalAnalysis') ? '' : 'module-disabled'}"
+                             onclick="openModule([{name: 'idx', value: 12}])"
+                             role="button"
+                             aria-disabled="#{!moduleController.visible('causalAnalysis')}"
+                             tabindex="#{moduleController.visible('causalAnalysis') ? '0' : '-1'}">
+                            Causal Analysis <br/> [Mendelian randomization]
+                        </div>
+
+                        <div class="ui-g-4"></div>
                     </div>
 
-                    <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>
-                    <p:remoteCommand name="openModule"
-                                     actionListener="#{moduleController.openModuleRC}"
-                                     process="@this"
-                                     update="@none"
-                                     onstart="PF('statusDialog').show()"/>
+                    <h:panelGrid columns="3" style="text-align:center; padding: 20px 10px 20px 10px; margin-top:20px; width:100%">
+                        <p:commandButton value="Projects"
+                                         styleClass="ui-button-outlined ui-button-info"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="ProjectView"/>
+                        <p:commandButton value="Data"
+                                         styleClass="ui-button-outlined ui-button-help"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="DataCenterView"/>
+                        <p:commandButton value="Workflows"
+                                         styleClass="ui-button-outlined ui-button-help"
+                                         style="font-size:15px !important; font-weight: bold; height:46px; width: 200px"
+                                         action="WorkflowView"/>
+                    </h:panelGrid>
+
+                </div>
+
+                <p:remoteCommand name="triggerSpectraUpload" actionListener="#{fireBaseController.goToSpectraUpload()}" autoRun="false"/>
+                <p:remoteCommand name="openModule"
+                                 actionListener="#{moduleController.openModuleRC}"
+                                 process="@this"
+                                 update="@none"
+                                 onstart="PF('statusDialog').show()"/>
             </h:form>
 
             <hr class="myhr"/>
