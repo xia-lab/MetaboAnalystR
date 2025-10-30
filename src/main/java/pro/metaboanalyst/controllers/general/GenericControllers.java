@@ -495,35 +495,38 @@ public class GenericControllers implements Serializable {
     }
 
     public ArrayList<RcmdBean> getCmdVec() {
-
-        RConnection RC = sb.getRConnection();
-        if (RC == null || !isRConnectionValid(RC)) {
-            if(!ab.isInDocker()){
-                LOGGER.error("RConnection is null or invalid in getCmdVec");
-            }    
-            return null;
-        }
-        
         ArrayList<RcmdBean> myCmds = new ArrayList<>();
+
         try {
-            if (sb.isLoggedIn() && sb.getDataType().equals("spec") && ab.isInDocker()) {
-                if (spb.isRecordCMD()) {
-                    spb.setRecordCMD(false);
-                    String[] cmds = RCenter.getRCommandHistory(RC);
-                    if (cmds != null) {
-                        for (int i = 0; i < cmds.length; i++) {
-                            myCmds.add(new RcmdBean(i + 1 + "", cmds[i]));
-                        }
-                    }
-                }
-            } else if (sb.isLoggedIn()) {
-                String[] cmds = RCenter.getRCommandHistory(RC);
-                if (cmds != null) {
-                    for (int i = 0; i < cmds.length; i++) {
-                        myCmds.add(new RcmdBean(i + 1 + "", cmds[i]));
+            RConnection RC = sb.getRConnection();
+            if (RC == null || !isRConnectionValid(RC)) {
+                return myCmds; // empty, not null
+            }
+            if (!sb.isLoggedIn()) {
+                return myCmds;
+            }
+
+            // Only control the record flag in the special case
+            if (sb.getDataType().equals("spec") && ab.isInDocker() && spb.isRecordCMD()) {
+                spb.setRecordCMD(false);
+            }
+
+            String[] cmds = RCenter.getRCommandHistory(RC);
+            if (cmds == null || cmds.length == 0) {
+                return myCmds;
+            }
+
+            // Newest first (optional); comment out if you prefer oldest first
+            for (int i = cmds.length - 1, step = 1; i >= 0; i--, step++) {
+                String c = cmds[i];
+                if (c != null) {
+                    c = c.trim();
+                    if (!c.isEmpty()) {
+                        myCmds.add(new RcmdBean(String.valueOf(step), c));
                     }
                 }
             }
+
         } catch (Exception e) {
             LOGGER.error("Error in getCmdVec", e);
         }
