@@ -828,14 +828,6 @@
                     <p:column headerText="Action" width="120" style="text-align:center;">
                         <div class="flex justify-content-center align-items-center gap-4">
 
-                            <p:commandLink id="deleteBn" title="Delete"
-                                           disabled="#{ds.origin ne 'Custom'}"
-                                           update=":delForm"
-                                           oncomplete="PF('delDialog').show();">
-                                <i class="pi pi-trash" style="color:orangered;"></i>
-                                <f:setPropertyActionListener value="#{ds}" target="#{datasetController.selected}"/>
-                            </p:commandLink>
-
                             <p:commandLink id="editBn" title="Explore"
                                            update=":editorForm :projectTabs:dataTableForm"
                                            onstart="PF('statusDialog').show();"
