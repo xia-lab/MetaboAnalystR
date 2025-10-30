@@ -754,16 +754,7 @@
                             <p:inputTextarea id="runDescription" value="#{workflowBean.selectedWorkflowRun.description}"
                                              rows="5" cols="48"/>
 
-                            <p:outputLabel for="runStatus" value="Status" style="font-weight: bold;"/>
-                            <p:selectOneMenu id="runStatus" value="#{workflowBean.selectedWorkflowRun.status}" style="width:100%">
-                                <f:selectItem itemLabel="Pending" itemValue="pending" />
-                                <f:selectItem itemLabel="Running" itemValue="running" />
-                                <f:selectItem itemLabel="Completed" itemValue="completed" />
-                                <f:selectItem itemLabel="Failed" itemValue="failed" />
-                            </p:selectOneMenu>
-
-                            <p:outputLabel for="runProjectId" value="Project ID" style="font-weight: bold;"/>
-                            <p:inputText id="runProjectId" value="#{workflowBean.selectedWorkflowRun.projectId}" style="width: 100%"/>
+                           
                         </h:panelGrid>
 
                         <h:panelGrid columns="2" style="width:100%; text-align: center">
