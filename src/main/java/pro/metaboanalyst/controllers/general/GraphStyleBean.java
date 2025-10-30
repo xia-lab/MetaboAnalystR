@@ -57,14 +57,6 @@ public class GraphStyleBean implements Serializable {
         applyStyle();
     }
 
-    public String iconPath(String code) {
-        // e.g. volcano  →  /resources/images/volcano_icons/graph_0.png
-        String plotSrc = sb.getImageSource();                    // "volcano", "heatmap", …
-        String path = ab.getRootContext() + "/resources/images/plot_icons/" + plotSrc + "/icon" + code + ".png";
-        System.out.println("=====iconPath==" + path);
-        return path;
-    }
-
     /**
      * thumbnail for the larger preview pane
      */

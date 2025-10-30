@@ -50,7 +50,6 @@ import pro.metaboanalyst.controllers.mummichog.PeakCustomBean;
 import pro.metaboanalyst.controllers.stats.AnalysisBean;
 import pro.metaboanalyst.controllers.stats.ClusterBean;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
-import pro.metaboanalyst.spectra.SpectraUploadBean;
 import pro.metaboanalyst.spectra.SpectraControlBean;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
 import pro.metaboanalyst.controllers.stats.UnivBean;

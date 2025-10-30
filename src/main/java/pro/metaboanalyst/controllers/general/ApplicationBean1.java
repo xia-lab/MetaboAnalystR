@@ -16,7 +16,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.ExternalContext;
 import jakarta.inject.Named;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.ServletContext;
@@ -134,9 +133,8 @@ public class ApplicationBean1 implements Serializable {
             raw_spec_folder = "/data/glassfish/projects/metaboanalyst/";
             toolLocation = "docker";
 
-        } else { //all others will be local
+        } else { //all others will be treated local
 
-            //if (DataUtils.isLocalNetwork(domain_url)) {
             app_url = DataUtils.getDomainURL(domain_url);
             onProServer = false;
             onLocalServer = true;
@@ -157,9 +155,7 @@ public class ApplicationBean1 implements Serializable {
                 resourcePath = resourcePath.replace("\\", "/");
             }
             toolLocation = "localhost";
-            //} else {
-            //    System.out.println("==========UNKNOWN LOCATION ======= " + domain_url);
-            //}
+   
         }
 
         //if (toolLocation.equals("localhost") && !(onQiangPc)) {

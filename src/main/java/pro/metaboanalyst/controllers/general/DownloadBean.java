@@ -174,7 +174,6 @@ public class DownloadBean implements Serializable {
     private List<String> galleryIntImages;
     private String galleryStat;
     private String imageStat = "";
-    private boolean hideImages = true;
     private final String imgPathUrl = "/resources/users/";
     private int activeIndex = 0;
 
@@ -389,10 +388,8 @@ public class DownloadBean implements Serializable {
 
         galleryStatImages = new ArrayList<>();
         galleryIntImages = new ArrayList<>();
-        hideImages = true;
 
         User usr = sb.getCurrentUser();
-        String usrName = usr.getName();
         RConnection RC = sb.getRConnection();
         RDataUtils.saveRCommands(RC);
 

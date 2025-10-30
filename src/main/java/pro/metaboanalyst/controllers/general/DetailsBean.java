@@ -7,6 +7,7 @@ package pro.metaboanalyst.controllers.general;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gson.Gson;
+import jakarta.annotation.PreDestroy;
 import java.io.File;
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -132,6 +133,42 @@ public class DetailsBean implements Serializable {
     private Map<String, ListDataModel<FeatureBean>> hashListModel = new HashMap<>();
     private Map<String, String> hashFileName = new HashMap<>();
     private Map<String, ColumnBean[]> hashColVis = new HashMap<>();
+
+    @PreDestroy
+    public void cleanup() {
+        listModel = null;
+        listModelVolcano = null;
+        listModelPLS = null;
+        listModelOPLS = null;
+        listModelPtn = null;
+        listModelRF = null;
+        listModelRSVM = null;
+        listModelAnova = null;
+        listModelLM = null;
+        listModelAnova2 = null;
+        listModelMultiRF = null;
+        listModelDoseDe = null;
+        listModelEbam = null;
+
+        if (hashListModel != null) {
+            hashListModel.clear();
+        }
+        if (hashListModel2 != null) {
+            hashListModel2.clear();
+        }
+        if (hashFileName != null) {
+            hashFileName.clear();
+        }
+        if (hashColVis != null) {
+            hashColVis.clear();
+        }
+        if (hashFileName2 != null) {
+            hashFileName2.clear();
+        }
+        if (hashColVis2 != null) {
+            hashColVis2.clear();
+        }
+    }
 
     public Map<String, ListDataModel<FeatureBean>> getHashListModel() {
         return hashListModel;
@@ -1022,7 +1059,7 @@ public class DetailsBean implements Serializable {
             sigmat = RDataUtils.getEnrResMatrix(RC, type);
             colnames = RDataUtils.getEnrResColNames(RC, type);
             stringCol = RDataUtils.getEnrResSetIDs(RC, type);
-            fileName=RDataUtils.getEnrResFileName(RC, type);
+            fileName = RDataUtils.getEnrResFileName(RC, type);
             if (from.equals("gba_enr")) {
                 fileName = "gba_table.csv";
             }
@@ -1040,7 +1077,7 @@ public class DetailsBean implements Serializable {
 
     private void setupTableVars(String from) {
         System.out.println(from + "========================from");
-                System.out.println(fileName + "========================fromfilename");
+        System.out.println(fileName + "========================fromfilename");
 
         if (from.equals("volcano")) {
             listModelVolcano = listModel;
