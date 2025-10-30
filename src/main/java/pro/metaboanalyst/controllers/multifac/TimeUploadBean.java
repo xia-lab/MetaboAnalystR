@@ -237,6 +237,7 @@ public class TimeUploadBean implements Serializable {
 
             // Read from local home paths
             if (!RDataUtils.readTextDataTs(RC, destData.toString(), tsFormat)) {
+                sb.setDataFormat(tsFormat);
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             }

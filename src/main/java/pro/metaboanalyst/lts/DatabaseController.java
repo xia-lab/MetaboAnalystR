@@ -2254,94 +2254,6 @@ public class DatabaseController implements Serializable {
     }
 // Overwrite status, touch last_updated = NOW(), and conditionally set start/finish.
 
-    public static String updateWorkflowRunStatus(int id, String newStatus) {
-        return updateWorkflowRunStatus(id, newStatus, (String) null);
-    }
-
-    public static String updateWorkflowRunStatus(int id, String newStatus, String projectId) {
-        Connection con = null;
-        PreparedStatement checkStmt = null;
-        PreparedStatement updateStmt = null;
-        ResultSet res = null;
-
-        try {
-            con = DatabaseConnectionPool.getDataSource().getConnection();
-
-            // Ensure row exists
-            final String checkSql = "SELECT id FROM workflow_runs WHERE id = ?";
-            checkStmt = con.prepareStatement(checkSql);
-            checkStmt.setInt(1, id);
-            res = checkStmt.executeQuery();
-            if (!res.next()) {
-                return "No workflow run entry found with the provided id.";
-            }
-            res.close();
-            checkStmt.close();
-
-            final String status = (newStatus == null) ? "" : newStatus.trim().toLowerCase();
-
-            Integer projectIdInt = null;
-            if (projectId != null) {
-                final String s = projectId.trim();
-                if (!s.isEmpty()) {
-                    try {
-                        projectIdInt = Integer.valueOf(s);
-                    } catch (NumberFormatException nfe) {
-                        // If it's not numeric, treat as "no change"
-                        System.err.println("updateWorkflowRunStatus: ignoring non-numeric projectId '" + projectId + "'");
-                        projectIdInt = null;
-                    }
-                }
-            }
-
-            final String updateSql
-                    = "UPDATE workflow_runs "
-                    + "SET status = ?, "
-                    + "    project_id = COALESCE(?, project_id), "
-                    + "    last_updated = NOW(), "
-                    + "    start_date  = CASE WHEN ? = 'running' AND start_date IS NULL THEN NOW() ELSE start_date END, "
-                    + "    finish_date = CASE WHEN ? IN ('completed','failed') THEN NOW() ELSE finish_date END "
-                    + "WHERE id = ?";
-
-            updateStmt = con.prepareStatement(updateSql);
-            int idx = 1;
-            updateStmt.setString(idx++, status);                    // status
-            if (projectIdInt == null) {
-                updateStmt.setNull(idx++, java.sql.Types.INTEGER);  // keep project_id unchanged via COALESCE
-            } else {
-                updateStmt.setInt(idx++, projectIdInt);             // set project_id
-            }
-            updateStmt.setString(idx++, status);                    // CASE for start_date
-            updateStmt.setString(idx++, status);                    // CASE for finish_date
-            updateStmt.setInt(idx++, id);                           // WHERE id
-
-            int updated = updateStmt.executeUpdate();
-            return (updated > 0) ? "Workflow run updated successfully."
-                    : "Workflow run update failed.";
-
-        } catch (SQLException ex) {
-            System.err.println("SQLException occurred: " + ex.getMessage());
-            return "Error updating workflow run - " + ex.getMessage();
-        } finally {
-            try {
-                if (res != null) {
-                    res.close();
-                }
-                if (checkStmt != null) {
-                    checkStmt.close();
-                }
-                if (updateStmt != null) {
-                    updateStmt.close();
-                }
-                if (con != null) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                System.err.println("Error when closing resources: " + ex.getMessage());
-            }
-        }
-    }
-
     private static void setOrNull(PreparedStatement ps, int idx, String v) throws SQLException {
         if (v == null || v.isBlank()) {
             ps.setNull(idx, java.sql.Types.VARCHAR);
@@ -2396,9 +2308,6 @@ public class DatabaseController implements Serializable {
         String normalizedStatus = null;
         if (statusVal != null) {
             String s = String.valueOf(statusVal).trim().toLowerCase();
-            if (!Set.of("pending", "running", "completed", "failed").contains(s)) {
-                return "Invalid status. Allowed: pending, running, completed, failed.";
-            }
             normalizedStatus = s;
             fields.put("status", s);
         }

@@ -1833,8 +1833,6 @@ public class WorkflowBean implements Serializable {
             final String dataType = safeStr(sb.getDataType());
             final boolean regression = sb.isRegression();
 
-
-
             // 1) family rule
             final boolean dsInTable = TABLE_FAMILY.contains(dsModule);
             final boolean wfInTable = TABLE_FAMILY.contains(wfModule);
@@ -1991,7 +1989,7 @@ public class WorkflowBean implements Serializable {
             final String name = java.time.LocalDateTime.now()
                     .format(java.time.format.DateTimeFormatter.ofPattern("'New run — 'yyyy-MM-dd HH:mm"));
             String description = "NA";
-            String status = "pending";
+            String status = "initiated";
             String startDateIso = null;              // or Instant.now().toString()
             String finishDateIso = null;
             String workflowId = null;
@@ -2198,7 +2196,7 @@ public class WorkflowBean implements Serializable {
         // ---- Guard: dataset UUID required (avoid .toString() on null)
         UUID dsId = (run == null) ? null : run.getDatasetId();
         if (dsId == null) {
-            sb.addMessage("warn", 
+            sb.addMessage("warn",
                     "Click the Dataset column to choose a dataset first, then select a workflow.");
             PrimeFaces.current().ajax().addCallbackParam("ok", false); // block dialog open
             return;
@@ -2216,7 +2214,7 @@ public class WorkflowBean implements Serializable {
         // If your service only has String, use dsId.toString() here.
         DatasetRow sel = ds.findById(dsId);
         if (sel == null) {
-            sb.addMessage("warn", 
+            sb.addMessage("warn",
                     "The selected dataset is missing. Please pick a dataset again.");
             PrimeFaces.current().ajax().addCallbackParam("ok", false);
             return;
@@ -2292,14 +2290,16 @@ public class WorkflowBean implements Serializable {
         selectedWorkflowRun.setWorkflowId(wfId);
         selectedWorkflowRun.setModule(module);
         selectedWorkflowRun.setName(name);
+        selectedWorkflowRun.setStatus("ready");
 
         // Persist to DB (workflow_id + module + name)
         try {
             Map<String, Object> updates = new HashMap<>();
             updates.put("workflow_id", wfId);
             updates.put("module", module);
-            //updates.put("name", name);
+            updates.put("status", "ready");
 
+            //updates.put("name", name);
             String msg = dbc.updateWorkflowRunFields(String.valueOf(selectedWorkflowRun.getId()), updates);
             if (msg.contains("\"updated\":true")) {
                 sb.addMessage("Info", "Workflow saved.");
@@ -2732,6 +2732,87 @@ public class WorkflowBean implements Serializable {
 
         }
 
+    }
+
+    public String statusIcon(String status) {
+        if (status == null) {
+            return "pi pi-question-circle text-500";
+        }
+        switch (status.toLowerCase()) {
+            case "initiated":
+                return "pi pi-plus-circle text-purple-500";
+            case "ready":
+                return "pi pi-check-square text-teal-500";
+            case "running":
+                return "pi pi-spinner pi-spin text-blue-500";
+            case "completed":
+                return "pi pi-check-circle text-green-500";
+            default:
+                return "pi pi-tag text-500";
+        }
+    }
+
+    public String statusLabel(String status) {
+        if (status == null) {
+            return "Unknown";
+        }
+        switch (status.toLowerCase()) {
+            case "initiated":
+                return "Initiated";
+            case "ready":
+                return "Ready";
+            case "running":
+                return "Running";
+            case "completed":
+                return "Completed";
+            default:
+                return status;
+        }
+    }
+
+    // --- Helpers (null-safe) ---
+    private static String nz(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    /**
+     * Should the "Workflow" link be disabled?
+     */
+    public boolean isWorkflowPickDisabled(WorkflowRunModel run) {
+        return run == null || run.getDatasetId() == null;
+    }
+
+    /**
+     * Tooltip / title text
+     */
+    public String getWorkflowPickTitle(WorkflowRunModel run) {
+        if (isWorkflowPickDisabled(run)) {
+            return "Select a dataset in the Dataset column first.";
+        }
+        String module = nz(run.getModule());
+        if (module.isEmpty() || "NA".equalsIgnoreCase(module)) {
+            return "Pick workflow, then choose a compatible dataset.";
+        }
+        return "Change workflow for this dataset.";
+    }
+
+    /**
+     * Button/link label
+     */
+    public String getWorkflowPickLabel(WorkflowRunModel run) {
+        if (isWorkflowPickDisabled(run)) {
+            return "[Select dataset first]";
+        }
+        String module = nz(run.getModule());
+        if (module.isEmpty() || "NA".equalsIgnoreCase(module)) {
+            return "[Select Workflow]";
+        }
+        try {
+            return nz(wf.getReadableType(module));
+        } catch (Exception e) {
+            // Fallback if mapping fails
+            return module;
+        }
     }
 
 }

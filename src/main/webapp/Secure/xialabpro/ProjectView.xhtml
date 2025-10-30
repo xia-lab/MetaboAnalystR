@@ -57,6 +57,12 @@
             #wfSteps .ui-steps-number {
                 color:#fff;
             }
+
+            .disabled-link {
+                opacity: .5;
+                pointer-events: none;
+            }
+
         </style>
     </ui:define>
     <ui:define name="myscript">
@@ -381,47 +387,28 @@
                             <!-- Workflow column → open “By Workflow” dialog (works for placeholder rows too) -->
                             <p:column headerText="Workflow" width="16%">
                                 <p:commandLink id="wfPick"
-                                               value="#{empty run.module or run.module eq 'NA' ? '[Select Workflow]' : workflowView.getReadableType(run.module)}"
+                                               value="#{workflowBean.getWorkflowPickLabel(run)}"
+                                               title="#{workflowBean.getWorkflowPickTitle(run)}"
+                                               disabled="#{workflowBean.isWorkflowPickDisabled(run)}"
                                                process="@this"
                                                update=":projectTabs:dataTableForm :formByWorkflow"
                                                actionListener="#{workflowBean.prepareDialogByWorkflow(run)}"
                                                onstart="PF('statusDialog').show();"
-                                               oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').show();">
-                                    <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
+                                               oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').show();"
+                                               styleClass="p-button-sm p-button-primary #{workflowBean.isWorkflowPickDisabled(run) ? 'opacity-50 pointer-events-none' : ''}">
                                 </p:commandLink>
-                                <p:tooltip for="wfPick" value="Pick workflow, then choose a compatible dataset"/>
+
+                                <p:tooltip for="wfPick"
+                                           value="#{empty run.datasetId ? 'Select a dataset in the Dataset column first.' : 'Pick workflow, then choose a compatible dataset.'}"/>
                             </p:column>
 
 
                             <p:column headerText="Status">
-                                <!-- normalize to lowercase once and compare -->
-                                <h:panelGroup rendered="#{run.status eq 'pending' or run.status eq 'Pending'}">
-                                    <span class="mr-4">
-                                        <i class="pi pi-hourglass text-orange-500" style="vertical-align:middle;"></i>
-                                        <span class="ml-1">Pending</span>
-                                    </span>
-                                </h:panelGroup>
+                                <span class="mr-4">
+                                    <i class="#{workflowBean.statusIcon(run.status)}" style="vertical-align:middle;"></i>
+                                    <span class="ml-1">#{workflowBean.statusLabel(run.status)}</span>
+                                </span>
 
-                                <h:panelGroup rendered="#{run.status eq 'running' or run.status eq 'Running'}">
-                                    <span class="mr-4">
-                                        <i class="pi pi-spinner pi-spin text-blue-500" style="vertical-align:middle;"></i>
-                                        <span class="ml-1">Running</span>
-                                    </span>
-                                </h:panelGroup>
-
-                                <h:panelGroup rendered="#{run.status eq 'completed' or run.status eq 'Completed'}">
-                                    <span class="mr-4">
-                                        <i class="pi pi-check-circle text-green-500" style="vertical-align:middle;"></i>
-                                        <span class="ml-1">Completed</span>
-                                    </span>
-                                </h:panelGroup>
-
-                                <h:panelGroup rendered="#{run.status eq 'failed' or run.status eq 'Failed'}">
-                                    <span class="mr-4">
-                                        <i class="pi pi-times-circle text-red-500" style="vertical-align:middle;"></i>
-                                        <span class="ml-1">Failed</span>
-                                    </span>
-                                </h:panelGroup>
                             </p:column>
 
                             <p:column headerText="Last Updated" sortBy="#{run.lastUpdated}" width="160px">
@@ -431,7 +418,8 @@
                             <p:column headerText="Start" style="text-align:center;">
                                 <p:commandLink actionListener="#{workflowBean.startRun(run)}"
                                                onclick="PF('workStartDialog').hide();
-                                                           PF('statusDialog').show();"
+                                                       PF('statusDialog').show();"
+                                               disabled="#{not empty run.status and run.status eq 'initiated'}"
                                                update=":projectTabs:dataTableForm"
                                                oncomplete="PF('statusDialog').hide();">
                                     <i class="pi pi-arrow-circle-right" style="font-size:1.4rem; color: orangered"></i>
@@ -825,7 +813,7 @@
                     <p:column headerText="Samples" width="10%" sortBy="#{ds.samplenum}">
                         <h:outputText value="#{ds.samplenum == 0 ? 'NA' : ds.samplenum}"/>
                     </p:column>
-                    <p:column headerText="Action" width="120" style="text-align:center;">
+                    <p:column headerText="Select" width="60" style="text-align:center;">
                         <div class="flex justify-content-center align-items-center gap-4">
                             <!--
                             <p:commandLink id="deleteBn" title="Delete"
@@ -859,7 +847,7 @@
                                            update=":projectTabs:dataTableForm"
                                            onstart="PF('statusDialog').show();"
                                            oncomplete="PF('statusDialog').hide(); PF('dlgByDataset').hide();">
-                                <i class="pi pi-play" style="font-size:1.1rem"></i>
+                                <i class="pi pi-plus-circle" style="font-size:1.1rem"></i>
 
                             </p:commandLink>
                         </div>

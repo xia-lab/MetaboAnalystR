@@ -949,63 +949,6 @@ public class DatabaseClient {
         return deleteWorkflowRun(String.valueOf(id));
     }
 
-// ==== UPDATE STATUS (unchanged externally; server sets start_date when running) ====
-    /**
-     * Update workflow_run status by id. - In Docker:
-     * DatabaseController.updateWorkflowRunStatus(...) - Otherwise: POST
-     * /database/workflowruns/status/update
-     */
-    // Back-compat: delegate to the 3-arg version (no project change)
-    public String updateWorkflowRunStatus(String id, String newStatus) {
-        return updateWorkflowRunStatus(id, newStatus, null);
-    }
-
-    /**
-     * New overload with optional projectId (INT). If projectId is null,
-     * project_id remains unchanged.
-     */
-    public String updateWorkflowRunStatus(String id, String newStatus, String projectId) {
-        try {
-            if (id == null || id.isBlank()) {
-                return "Error updating workflow run status: 'id' is required.";
-            }
-            final int runId = Integer.parseInt(id.trim());
-
-            // Normalize & validate status
-            final String status = newStatus == null ? "" : newStatus.trim().toLowerCase();
-            switch (status) {
-                case "pending":
-                case "running":
-                case "completed":
-                case "failed":
-                    break;
-                default:
-                    return "Error updating workflow run status: invalid status. Allowed: pending, running, completed, failed.";
-            }
-
-            if (ab.isInDocker()) {
-                return DatabaseController.updateWorkflowRunStatus(runId, status, projectId);
-            } else {
-                final Map<String, Object> payload = new HashMap<>();
-                payload.put("id", runId);
-                payload.put("status", status);
-                if (projectId != null) {
-                    payload.put("project_id", projectId);
-                }
-                return apiClient.post("/database/workflowruns/status/update", toJson(payload));
-            }
-        } catch (NumberFormatException nfe) {
-            LOGGER.log(Level.SEVERE, "updateWorkflowRunStatus: invalid id '" + id + "'", nfe);
-            return "Error updating workflow run status: 'id' must be an integer.";
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error updating workflow run status (id=" + id + ")", e);
-            return "Error updating workflow run status: " + e.getMessage();
-        }
-    }
-
-    public String updateWorkflowRunStatus(int id, String newStatus, String projectId) {
-        return updateWorkflowRunStatus(String.valueOf(id), newStatus, projectId);
-    }
 
     public String updateWorkflowRunFields(String id, Map<String, Object> fields) {
         try {
