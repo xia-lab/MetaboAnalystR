@@ -1,4 +1,4 @@
-package pro.metaboanalyst.datalts;
+package pro.metaboanalyst.datacenter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.enterprise.context.SessionScoped;

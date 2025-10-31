@@ -83,7 +83,7 @@ import pro.metaboanalyst.controllers.meta.MetaLoadBean;
 import pro.metaboanalyst.controllers.meta.MetaResBean;
 import pro.metaboanalyst.controllers.metapath.MetaPathLoadBean;
 import pro.metaboanalyst.controllers.mummichog.PeakUploadBean;
-import pro.metaboanalyst.datalts.DatasetController;
+import pro.metaboanalyst.datacenter.DatasetController;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 import pro.metaboanalyst.spectra.TandemMSBean;
 import pro.metaboanalyst.workflows.DiagramView;

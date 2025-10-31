@@ -101,6 +101,29 @@
             background: inherit !important;
             color: inherit !important;
         }
+
+        /* Table styling for markdown tables */
+        .assistant-message table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .assistant-message table th,
+        .assistant-message table td {
+            border: 1px solid var(--surface-300);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .assistant-message table th {
+            background-color: var(--surface-200);
+            font-weight: bold;
+        }
+
+        .assistant-message table tr:nth-child(even) {
+            background-color: var(--surface-50);
+        }
     </style>
     <div class="layout-topbar">
         <div class="topbar-left">
@@ -151,7 +174,7 @@
         </div>
     </div>
     <p:dialog modal="false" widgetVar="OmicsBotDialog" 
-              style="height:630px;width:720px;display: flex;flex-direction: column;" 
+              style="height:600px;width:670px;display: flex;flex-direction: column;" 
               dynamic="true"
               appendTo="@(body)" header="Omics Assistant (beta)" 
               draggable="true" closable="true" resizable="true"> 
@@ -164,12 +187,12 @@
                 <p:commandButton value="#{myBot.modelName}"  style="margin-right: 10px;" 
                                  actionListener="#{myBot.modifyModel()}" styleClass="mt-3"    
                                  update="formChat"/>
-
                 <i class="pi pi-question-circle" alt="help" style="font-size: 1.5rem; padding-top: 2px"
-                   title="OmicsBot runs on GPT-4o mini enhanced with our specialized knowledge base. If you experience any issues, you can Reset or switch to GPT-3.5-turbo"/>
+                   title="OmicsBot runs on Google Gemini 2.5 Flash enhanced with our specialized knowledge base. If you experience any issues, 
+                   you can Reset to start a new conversation or switch to gemini-2.5-flash-lite."/>
             </h:panelGroup>
 
-            <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 700px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">
+            <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 670px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">
                 <p:dataView var="message" value="#{myBot.messages}" 
                             style="padding-bottom:10px;width:100%;" rows="12" paginator="false" 
                             emptyMessage="#{myBot.welcomeMsg}" layout="list">
