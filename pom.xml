@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ai.xialab</groupId>
     <artifactId>MetaboAnalyst-Pro</artifactId>
-    <version>4.11</version>
+    <version>4.12</version>
     <packaging>war</packaging>
     <name>MetaboAnalyst</name>
     <properties>
@@ -153,14 +153,13 @@
             <version>0.1.55</version>
         </dependency>
         <dependency>
-            <groupId>io.github.sashirestela</groupId>
-            <artifactId>simple-openai</artifactId>
-            <version>3.13.0</version>
-            <type>jar</type>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark</artifactId>
+            <version>0.64.8</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark</artifactId>
+            <artifactId>flexmark-ext-tables</artifactId>
             <version>0.64.8</version>
         </dependency>
         <dependency>

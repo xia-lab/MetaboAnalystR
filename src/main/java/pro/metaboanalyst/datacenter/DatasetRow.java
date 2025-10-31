@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package pro.metaboanalyst.datalts;
+package pro.metaboanalyst.datacenter;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -91,8 +91,8 @@ public class DatasetRow implements Serializable {
     public static DatasetRow fromResultSet(ResultSet rs) throws SQLException {
         DatasetRow d = new DatasetRow();
         Object idObj = rs.getObject("id");
-        if (idObj instanceof UUID) {
-            d.setId((UUID) idObj);
+        if (idObj instanceof UUID uuid) {
+            d.setId(uuid);
         } else if (idObj != null) {
             d.setId(UUID.fromString(String.valueOf(idObj)));
         }

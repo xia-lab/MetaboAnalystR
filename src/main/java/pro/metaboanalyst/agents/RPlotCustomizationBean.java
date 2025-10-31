@@ -8,18 +8,10 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import pro.metaboanalyst.chat.Message;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.stats.RocAnalBean;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.security.MessageDigest;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 @Named("rPlotCustomizationBean")
