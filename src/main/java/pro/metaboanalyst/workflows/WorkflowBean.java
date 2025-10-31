@@ -1322,7 +1322,6 @@ public class WorkflowBean implements Serializable {
      * Shared tail: set active tab, infer meta/data names, etc.
      */
     private void postLoadCommon() {
-        activeIndex = 2;
 
         // attach metadata/data names if available
         final String metaNm = ds.resolveRoleFilename(ds.getSelected(), "metadata");
@@ -2053,29 +2052,41 @@ public class WorkflowBean implements Serializable {
             if (!success) {
                 return;
             }
+            reloadingWorkflow = true;
+
             ds.setSelected(ds.findById(getSelectedWorkflowRun().getDatasetId()));
 
+            ///////////////loading dataset
             boolean res = ds.load(ds.getSelected(), true);
 
-            if (res) {
+            /* if (res) {
                 boolean res2 = ds.handleDataset(ds.getSelected());
-            }
+            }*/
+            ////////////////////
+            ///loading workflow/
+             final String fileName = (String) selectedWorkflow.get("filename");
+            final Path destPath = prepareTemplateWorkflowJson(fileName);
+
+            Map<String, FunctionInfo> functionInfos = FunctionInvoker.loadFunctionInfosFromFile(destPath.toString());
+            setFunctionInfos(functionInfos);
+            /////////////
             final String module = (String) selectedWorkflow.get("module");
+            sb.setAnalType(module);
+            System.out.println("module============STARTRUN==========" + module);
             final String input = resolveInputForModule(module, sb.getDataType());
 
             postLoadCommon();
 
             initializeDiagramForInput(input);
 
-            reloadingWorkflow = true;
             wf.generateWorkflowJson("project", false);   // only in "details"
-            if (moduleNames.isEmpty()) {
+            //if (moduleNames.isEmpty()) {
                 dv.selectNode(dv.convertToBlockName(module), true);
-            } else {
+            /*} else {
                 for (String moduleName : moduleNames) {
                     dv.selectNode(dv.convertToBlockName(moduleName), true);
                 }
-            }
+            }*/
 
             //FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
             fbc.setFireDocName(run.getName());
@@ -2412,7 +2423,7 @@ public class WorkflowBean implements Serializable {
             sb.addMessage("Error", "Failed to delete run: " + e.getMessage());
         }
     }
-
+    @JsonIgnore
     private List<WorkflowRunModel> workflowRunsTable = new ArrayList<>();
 
     public List<WorkflowRunModel> getWorkflowRunsTable() {
@@ -2809,8 +2820,19 @@ public class WorkflowBean implements Serializable {
     /**
      * Should the "Workflow" link be disabled?
      */
-    public boolean workflowPickDisabled(WorkflowRunModel run) {
-        return run == null || run.getDatasetId() == null;
+    public boolean workflowPickDisabled(Object run) {
+        if (run == null) {
+            return true;
+        }
+        if (run instanceof WorkflowRunModel r) {
+            return r.getDatasetId() == null;
+        }
+        if (run instanceof java.util.Map<?, ?> m) {
+            Object ds = m.get("datasetId");
+            // handle UUID/string/blank
+            return (ds == null) || ds.toString().isBlank() || ds.toString().equals("NA");
+        }
+        return true;
     }
 
     /**
@@ -2908,6 +2930,5 @@ public class WorkflowBean implements Serializable {
         }
         return "pi pi-circle";
     }
-
 
 }

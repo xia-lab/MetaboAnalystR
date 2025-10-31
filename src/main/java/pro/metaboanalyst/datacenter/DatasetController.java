@@ -930,7 +930,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
             // 6) Notify + redirect to module selection
             String mode = restoredFromZip ? "restored" : "loaded";
-            sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
+            sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").",false);
             DataUtils.doRedirectWithGrowl(
                     sb,
                     "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
@@ -1309,7 +1309,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 RCenter.LoadRLoadImg(sb.getRConnection(), "RloadSanity.RData");
             }
             // 6) Notify + redirect to module selection
-            System.out.println("sb.dataformat=====" + sb.getDataFormat());
+            System.out.println("sb.analtype=====" + sb.getAnalType());
             String mode = restoredFromZip ? "restored" : "loaded";
             sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
         } catch (Exception e) {

@@ -275,10 +275,12 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        sb.addNaviTrack("PCA", "/Secure/analysis/PCAView.xhtml");
 
                         AnalysisBean an = (AnalysisBean) DataUtils.findBean("analBean");
                         an.doDefaultPCA();
+                        if (!wb.getCalledWorkflowsError().contains("PCA")) {
+                            sb.addNaviTrack("PCA", "/Secure/analysis/PCAView.xhtml");
+                        }
                     }
                     case "iPCA" -> {
                         boolean resBool = checkWorkflowContained(func);
@@ -1944,5 +1946,4 @@ public class WorkflowView implements Serializable {
         return 1;
     }
 
-    
 }

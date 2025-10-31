@@ -503,7 +503,7 @@ public class SessionBean1 implements Serializable {
 
         this.setLoggedIn(true);
         try {
-            addMessage("info", "Log in successful.");
+            addMessage("info", "Log in successful.", false);
         } catch (Exception e) {
 
         }
@@ -1874,30 +1874,83 @@ public class SessionBean1 implements Serializable {
     private int noticeSize = 0; // only for warn and danger
 
     public void addMessage(String type, String msg) {
-        String pre;
-        //note msg could contain ''' markup, replace with <b>
-        msg = DataUtils.replaceMarkup(msg);
-        if (type.equalsIgnoreCase("error")) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error", msg));
-            pre = "<font color='red'>[ERROR]: ";
-            noticeSize = noticeSize + 1;
-            PrimeFaces.current().ajax().update("formBell");
-        } else if (type.equalsIgnoreCase("warn") || type.equalsIgnoreCase("warning")) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Warning", msg));
-            pre = "<font color='orange'>[WARNING]: ";
-            noticeSize = noticeSize + 1;
-            PrimeFaces.current().ajax().update("formBell");
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_INFO, "OK", msg));
-            pre = "<font color='#4BB543'>[Success]: ";
+        addMessage(type, msg, true);
+    }
+
+    public void addMessage(String type, String msg, boolean showGrowl) {
+        // Normalize inputs
+        final String kind = (type == null ? "info" : type).toLowerCase(java.util.Locale.ROOT);
+        msg = DataUtils.replaceMarkup(msg); // your existing sanitizer
+
+        final boolean suppressGrowl = getWorkflowBean().isReloadingWorkflow() && showGrowl;
+
+        FacesMessage.Severity severity;
+        String summary;
+        String colorCss;
+        String prefix;
+
+        switch (kind) {
+            case "error":
+                severity = FacesMessage.SEVERITY_ERROR;
+                summary = "Error";
+                colorCss = "red";
+                prefix = "[ERROR]: ";
+                if (!suppressGrowl) {
+                    FacesContext.getCurrentInstance().addMessage(
+                            null, new FacesMessage(severity, summary, msg)
+                    );
+                }
+                noticeSize++;
+                PrimeFaces.current().ajax().update("formBell");
+                break;
+
+            case "warn":
+            case "warning":
+                severity = FacesMessage.SEVERITY_WARN;
+                summary = "Warning";
+                colorCss = "orange";
+                prefix = "[WARNING]: ";
+                if (!suppressGrowl) {
+                    FacesContext.getCurrentInstance().addMessage(
+                            null, new FacesMessage(severity, summary, msg)
+                    );
+                }
+                noticeSize++;
+                PrimeFaces.current().ajax().update("formBell");
+                break;
+
+            default:
+                severity = FacesMessage.SEVERITY_INFO;
+                summary = "OK";
+                colorCss = "#4BB543";
+                prefix = "[Success]: ";
+                if (!suppressGrowl) {
+                    FacesContext.getCurrentInstance().addMessage(
+                            null, new FacesMessage(severity, summary, msg)
+                    );
+                }
+                break;
         }
+
+        // Keep only the most recent 25 entries if we exceed 50
+        final int maxKeep = 25;
         if (notice.size() > 50) {
-            notice.subList(0, 25).clear(); // Keep last 25
+            int removeCount = notice.size() - maxKeep;
+            if (removeCount > 0) {
+                notice.subList(0, removeCount).clear();
+            }
         }
-        notice.add(pre + msg + "</font>");
+
+        // HTML5-safe color styling
+        notice.add("<span style='color:" + colorCss + "'>" + prefix + msg + "</span>");
+
+        System.out.println(
+                "addMessage kind=" + kind
+                + " reloading=" + getWorkflowBean().isReloadingWorkflow()
+                + " showGrowl=" + showGrowl
+                + " msg=" + msg
+        );
+
         PrimeFaces.current().ajax().update("globalGrowl");
     }
 

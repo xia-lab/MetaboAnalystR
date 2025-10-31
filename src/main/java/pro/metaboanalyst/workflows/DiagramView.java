@@ -2318,12 +2318,11 @@ public class DiagramView implements Serializable {
     }
 
     public void selectNode(String elementName, boolean isSelected) {
-        //System.out.println("selectNode=====" + elementName);
+        System.out.println("selectNode=====" + elementName);
         // Clean up the element name (remove checkmark and trim spaces)
 
         // Find the element in the diagram model
         Element currentElement = model.findElement(toSafeId(elementName));
-
         if (currentElement != null) {
             // Retrieve current properties of the element
             String currentStyleClass = currentElement.getStyleClass();
@@ -2596,7 +2595,7 @@ public class DiagramView implements Serializable {
         // 9) Show progress dialog & notify
         PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
 
-        sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.");
+        sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.",false);
         return true;
     }
 
@@ -3084,6 +3083,8 @@ public class DiagramView implements Serializable {
         List<String> procs = new ArrayList<>();
 
         // Gather selected nodes
+                                    System.out.println("startworkflowanaltype======" + sb.getAnalType()  );
+
         for (Map.Entry<String, Boolean> entry : selectionMap.entrySet()) {
             String nodeName = entry.getKey();
             boolean isSelected = Boolean.TRUE.equals(entry.getValue());
@@ -3092,7 +3093,9 @@ public class DiagramView implements Serializable {
             }
 
             String naviType = settingAnalType(nodeName);
+
             if (!naviType.isEmpty()) {
+                System.out.println("naviType======" + naviType);
                 naviTypes.add(naviType);
                 origNaviTypes.add(nodeName);
             } else if (secondLevelNodes.contains(nodeName)) {
