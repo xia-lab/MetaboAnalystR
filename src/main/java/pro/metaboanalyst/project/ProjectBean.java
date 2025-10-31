@@ -868,7 +868,7 @@ public class ProjectBean implements Serializable {
             return null;
         } else {
             sb.setCurrentUser(currentUser);
-            sb.setRConnetion(RC);
+            sb.setRConnection(RC);
         }
 
         ab.performResourceCleaning(RC);

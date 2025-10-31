@@ -1094,7 +1094,7 @@ public class DownloadBean implements Serializable {
 
         RConnection newRC = RCenter.updateRConnection(sb.getRConnection(), RCenter.getCleanRConnection(), ab.getRscriptLoaderPath(), newAnalType, sb.getCurrentUser().getHomeDir());
         RCenter.recordRserveConnection(newRC, sb.getCurrentUser().getHomeDir());
-        sb.setRConnetion(newRC);
+        sb.setRConnection(newRC);
 
         RDataUtils.updateDataObjects(newRC, newDataType, newAnalType, false);
     }

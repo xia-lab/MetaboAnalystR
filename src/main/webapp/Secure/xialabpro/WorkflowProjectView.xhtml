@@ -194,13 +194,12 @@
 
                     <f:facet name="header">
                         <div class="flex justify-content-between align-items-center w-full">
-                            <span class="text-900 font-medium">Workflow Runs</span>
-
+                            <span class="text-900 font-medium">Workflow Projects</span>
                             <p:commandButton id="btnAddRun"
                                              value="Add New"
                                              icon="pi pi-plus"
                                              styleClass="p-button-success p-button-raised p-button-sm"
-                                             action="#{workflowBean.prepareNewRun}"
+                                             actionListener="#{workflowBean.prepareNewRun}"
                                              process="@this"
                                              update=":dataTableForm :runEditDialogForm"
                                              onstart="PF('statusDialog').show();"

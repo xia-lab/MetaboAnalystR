@@ -40,13 +40,6 @@
                 text-align: left;
             }
 
-            .row-selected {
-                background: #FEF3C7 !important;   /* warm amber */
-            }
-            .row-selected > td {
-                border-top: 1px solid #F59E0B;
-                border-bottom: 1px solid #F59E0B;
-            }
 
             /* Make all items appear “active” within this steps instance */
             #wfSteps .ui-steps-item .ui-menuitem-link {
@@ -142,7 +135,7 @@
                 Project Management
             </h2>
 
-            <p:tabView id="projectTabs">
+            <p:tabView id="projectTabs" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
                 <p:tab title="Saved Projects">
                     <p>
                         Your saved projects are shown below. 
@@ -285,7 +278,7 @@
                         </p:dataTable>
                     </h:form>
                 </p:tab>
-                <p:tab title="Workflow Runs">
+                <p:tab title="Workflow Projects">
                     <h:form id="dataTableForm">
                         <p:growl id="msgs" showDetail="true" /> 
                         <p>
@@ -306,18 +299,7 @@
                                 </li>
                             </ol>
                         </p>
-                        <p:steps styleClass="mb-3">
-                            <p:menuitem id="stepDataset" value="Dataset" icon="pi pi-database"
-                                        title="Choose the input files and/or metadata."  styleClass="ui-state-highlight"/>
-                            <p:menuitem id="stepWorkflow" value="Workflow" icon="pi pi-sitemap"
-                                        title="Pick a template and parameters to run." styleClass="ui-state-highlight"/>
-                            <p:menuitem id="stepResult" value="Result" icon="pi pi-wallet"
-                                        title="View analysis results, figures, and downloadable outputs." styleClass="ui-state-highlight"/>
-                        </p:steps>
-
-                        <p:tooltip for="stepDataset" showEffect="fade" position="top" />
-                        <p:tooltip for="stepWorkflow" showEffect="fade" position="top" />
-                        <p:tooltip for="stepResult"  showEffect="fade" position="top" />
+                 
 
                         <p:dataTable id="dtTable"
                                      var="run"
@@ -325,7 +307,7 @@
                                      editable="true" editMode="cell"
                                      paginator="true" rows="25" rowsPerPageTemplate="25,50,100"
                                      paginatorPosition="bottom"
-                                     class="surface-card shadow-1 p-0 text-800"
+                                     class="workflow-runs surface-card shadow-1 p-0 text-800"
                                      sortBy="#{run.id}"
                                      rowKey="#{run.id}"
                                      rowStyleClass="#{workflowBean.isSelected(run) ? 'row-selected' : ''}">
@@ -336,7 +318,7 @@
 
                             <f:facet name="header">
                                 <div class="flex justify-content-between align-items-center w-full">
-                                    <span class="text-900 font-medium">Workflow Runs</span>
+                                    <span class="text-900 font-medium">Workflow Projects</span>
 
                                     <p:commandButton id="btnAddRun"
                                                      value="Add New"
@@ -387,15 +369,15 @@
                             <!-- Workflow column → open “By Workflow” dialog (works for placeholder rows too) -->
                             <p:column headerText="Workflow" width="16%">
                                 <p:commandLink id="wfPick"
-                                               value="#{workflowBean.getWorkflowPickLabel(run)}"
-                                               title="#{workflowBean.getWorkflowPickTitle(run)}"
-                                               disabled="#{workflowBean.isWorkflowPickDisabled(run)}"
+                                               value="#{workflowBean.workflowPickLabel(run)}"
+                                               title="#{workflowBean.workflowPickTitle(run)}"
+                                               disabled="#{workflowBean.workflowPickDisabled(run)}"
                                                process="@this"
                                                update=":projectTabs:dataTableForm :formByWorkflow"
                                                actionListener="#{workflowBean.prepareDialogByWorkflow(run)}"
                                                onstart="PF('statusDialog').show();"
                                                oncomplete="PF('statusDialog').hide(); PF('dlgByWorkflow').show();"
-                                               styleClass="p-button-sm p-button-primary #{workflowBean.isWorkflowPickDisabled(run) ? 'opacity-50 pointer-events-none' : ''}">
+                                               styleClass="p-button-sm p-button-primary #{workflowBean.workflowPickDisabled(run) ? 'opacity-50 pointer-events-none' : ''}">
                                 </p:commandLink>
 
                                 <p:tooltip for="wfPick"
@@ -431,9 +413,8 @@
                                                title="View results"
                                                disabled="#{empty run.projectId}"
                                                action="#{workflowBean.viewRunResults(run)}"
-                                               update=":projectTabs:dataTableForm"
-                                               onstart="PF('statusDialog').show();"
-                                               oncomplete="PF('statusDialog').hide();">
+                                               ajax="false"                     
+                                               onclick="PF('statusDialog').show();">
                                     <i class="pi pi-eye" style="font-size:1.4rem; color:#2563eb;"></i>
                                 </p:commandLink>
 
@@ -889,12 +870,11 @@
                                            title="View workflow JSON"
                                            disabled="#{wf['type'] ne 'Custom'}"
                                            process="@this"
-                                           actionListener="#{workflowBean.prepareViewWorkflowJson(wf)}"
+                                           actionListener="#{workflowBean.viewWorkflowJson(wf)}"
                                            update=":wfJsonDlgForm"
                                            onstart="PF('statusDialog').show();"
                                            oncomplete="PF('statusDialog').hide(); PF('wfJsonDlg').show();">
                                 <i class="pi pi-file"></i>
-                                <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
                             </p:commandLink>
                             <p:tooltip for="viewWfJson" value="View JSON" position="top" />
 

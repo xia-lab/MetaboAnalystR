@@ -1076,8 +1076,6 @@ public class DetailsBean implements Serializable {
     }
 
     private void setupTableVars(String from) {
-        System.out.println(from + "========================from");
-        System.out.println(fileName + "========================fromfilename");
 
         if (from.equals("volcano")) {
             listModelVolcano = listModel;

@@ -496,39 +496,35 @@ public class GenericControllers implements Serializable {
 
     public ArrayList<RcmdBean> getCmdVec() {
         ArrayList<RcmdBean> myCmds = new ArrayList<>();
-
         try {
-            RConnection RC = sb.getRConnection();
-            if (RC == null || !isRConnectionValid(RC)) {
-                return myCmds; // empty, not null
-            }
-            if (!sb.isLoggedIn()) {
+            RConnection rc = sb.getRConnection();
+            if (!sb.isLoggedIn() || !isRConnectionValid(rc)) {
                 return myCmds;
             }
 
-            // Only control the record flag in the special case
-            if (sb.getDataType().equals("spec") && ab.isInDocker() && spb.isRecordCMD()) {
+            // Special flag handling unchanged
+            if ("spec".equals(sb.getDataType()) && ab.isInDocker() && spb.isRecordCMD()) {
                 spb.setRecordCMD(false);
             }
 
-            String[] cmds = RCenter.getRCommandHistory(RC);
+            // RConnection is not thread-safe; guard if multiple callers possible.
+            String[] cmds;
+            synchronized (rc) {
+                cmds = RCenter.getRCommandHistory(rc);
+            }
             if (cmds == null || cmds.length == 0) {
                 return myCmds;
             }
 
-            // Newest first (optional); comment out if you prefer oldest first
             for (int i = cmds.length - 1, step = 1; i >= 0; i--, step++) {
                 String c = cmds[i];
-                if (c != null) {
-                    c = c.trim();
-                    if (!c.isEmpty()) {
-                        myCmds.add(new RcmdBean(String.valueOf(step), c));
-                    }
+                if (c != null && !(c = c.trim()).isEmpty()) {
+                    myCmds.add(new RcmdBean(String.valueOf(step), c));
                 }
             }
-
-        } catch (Exception e) {
-            LOGGER.error("Error in getCmdVec", e);
+        } catch (Throwable t) {
+            // Keep logs clean; no noisy client stack traces
+            LOGGER.warn("getCmdVec failed; returning empty list. Cause: {}", t.toString());
         }
         return myCmds;
     }
@@ -536,11 +532,44 @@ public class GenericControllers implements Serializable {
     /**
      * Checks if the given RConnection is valid.
      */
-    private boolean isRConnectionValid(RConnection RC) {
+    // --- Add this utility (optional) ---
+    private void safeDropRConnection(RConnection rc) {
         try {
-            return RC.isConnected() && RC.eval("R.version.string") != null; // Simple R command to validate connection
-        } catch (Exception e) {
-            LOGGER.error("RConnection is invalid or lost", e);
+            if (rc != null) {
+                rc.close();
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            sb.setRConnection(null);
+        } catch (Throwable ignored) {
+        }
+    }
+
+// --- Replace your current method ---
+    /**
+     * Lightweight/defensive health check. Avoids RC.eval() to prevent NPE in
+     * parseEvalResponse.
+     */
+    private boolean isRConnectionValid(RConnection rc) {
+        if (rc == null) {
+            return false;
+        }
+        try {
+            // Fast path
+            if (!rc.isConnected()) {
+                return false;
+            }
+
+            // If your Rserve client has a ping() (newer 1.8.x builds), prefer it:
+            // return rc.ping();
+            // Otherwise: DON'T eval. Just trust isConnected(). If you must probe, do it defensively:
+            // try { rc.voidEval("invisible(0L)"); } catch (Throwable t) { return false; }
+            return true;
+        } catch (Throwable t) {
+            // Don't spam logs with a huge stack from the client; just mark invalid.
+            LOGGER.warn("RConnection check failed; dropping the connection.");
+            safeDropRConnection(rc);
             return false;
         }
     }

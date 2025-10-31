@@ -2045,7 +2045,11 @@ public class WorkflowBean implements Serializable {
             calledWorkflows.add("Data Preparation");
 
             editMode = false;
-            boolean success = selectWorkflowById(getSelectedWorkflowRun().getWorkflowId());
+            if (getSelectedWorkflowRun().getWorkflowId() == null) {
+                return;
+            }
+
+            boolean success = selectWorkflowById(toWholeIntId(getSelectedWorkflowRun().getWorkflowId()));
             if (!success) {
                 return;
             }
@@ -2056,14 +2060,14 @@ public class WorkflowBean implements Serializable {
             if (res) {
                 boolean res2 = ds.handleDataset(ds.getSelected());
             }
-            final String module = sb.getAnalType();//(String) selectedWorkflow.get("module");
+            final String module = (String) selectedWorkflow.get("module");
             final String input = resolveInputForModule(module, sb.getDataType());
 
             postLoadCommon();
 
             initializeDiagramForInput(input);
 
-            reloadingWorkflow = false;
+            reloadingWorkflow = true;
             wf.generateWorkflowJson("project", false);   // only in "details"
             if (moduleNames.isEmpty()) {
                 dv.selectNode(dv.convertToBlockName(module), true);
@@ -2083,6 +2087,46 @@ public class WorkflowBean implements Serializable {
                     .log(Level.SEVERE, "startFromDetails failed", ex);
             sb.addMessage("Error", "Failed to start from details: " + ex.getMessage());
         }
+    }
+
+    private Integer toWholeIntId(Object v) {
+        if (v == null) {
+            return null;
+        }
+
+        if (v instanceof Integer) {
+            return (Integer) v;
+        }
+
+        if (v instanceof Number) {
+            double d = ((Number) v).doubleValue();
+            if (Double.isFinite(d) && Math.rint(d) == d) {
+                return (int) Math.round(d);
+            }
+            return null; // not a whole number
+        }
+
+        String s = v.toString().trim();
+        if (s.isEmpty()) {
+            return null;
+        }
+
+        // Try plain int first
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException ignored) {
+        }
+
+        // Try double string like "1.0" or "1e0"
+        try {
+            double d = Double.parseDouble(s);
+            if (Double.isFinite(d) && Math.rint(d) == d) {
+                return (int) Math.round(d);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        return null; // not parseable as whole int
     }
 
     public boolean selectWorkflowById(int id) {
@@ -2127,16 +2171,6 @@ public class WorkflowBean implements Serializable {
         // 3) Not found
         sb.addMessage("warn", "No workflow found with id = " + id);
         return false;
-    }
-
-// Convenience overload if id comes in as String
-    public boolean selectWorkflowById(String idStr) {
-        try {
-            return selectWorkflowById(Integer.parseInt(idStr));
-        } catch (Exception e) {
-            sb.addMessage("warn", "Invalid workflow id: " + idStr);
-            return false;
-        }
     }
 
     private WorkflowRunModel selectedWorkflowRun;
@@ -2616,12 +2650,9 @@ public class WorkflowBean implements Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public void viewWorkflowJson() {
+    public void viewWorkflowJson(HashMap<String, Object> wf) {
         try {
-            if (selectedWorkflow == null) {
-                sb.addMessage("Warn", "No workflow selected.");
-                return;
-            }
+            selectedWorkflow = wf;
 
             final String type = String.valueOf(selectedWorkflow.get("type"));
             final String filename = String.valueOf(selectedWorkflow.get("filename")); // no .json suffix here
@@ -2658,7 +2689,7 @@ public class WorkflowBean implements Serializable {
     private java.nio.file.Path resolveWorkflowJsonPath(java.util.Map<String, Object> wf) throws Exception {
         final String type = wf.get("type") == null ? "" : wf.get("type").toString();
         final String filename = wf.get("filename") == null ? "" : wf.get("filename").toString(); // no ".json"
-        final String jsonName = filename + ".json";
+        final String jsonName = filename;
         final String overview = filename + "_overview.json";
 
         if ("default".equalsIgnoreCase(type)) {
@@ -2778,15 +2809,15 @@ public class WorkflowBean implements Serializable {
     /**
      * Should the "Workflow" link be disabled?
      */
-    public boolean isWorkflowPickDisabled(WorkflowRunModel run) {
+    public boolean workflowPickDisabled(WorkflowRunModel run) {
         return run == null || run.getDatasetId() == null;
     }
 
     /**
      * Tooltip / title text
      */
-    public String getWorkflowPickTitle(WorkflowRunModel run) {
-        if (isWorkflowPickDisabled(run)) {
+    public String workflowPickTitle(WorkflowRunModel run) {
+        if (workflowPickDisabled(run)) {
             return "Select a dataset in the Dataset column first.";
         }
         String module = nz(run.getModule());
@@ -2799,8 +2830,8 @@ public class WorkflowBean implements Serializable {
     /**
      * Button/link label
      */
-    public String getWorkflowPickLabel(WorkflowRunModel run) {
-        if (isWorkflowPickDisabled(run)) {
+    public String workflowPickLabel(WorkflowRunModel run) {
+        if (workflowPickDisabled(run)) {
             return "[Select dataset first]";
         }
         String module = nz(run.getModule());
@@ -2814,5 +2845,69 @@ public class WorkflowBean implements Serializable {
             return module;
         }
     }
+
+    // Progress computation for the steps: 0=Dataset, 1=Workflow, 2=Result
+    public int stepIndex(WorkflowRunModel run) {
+        if (run == null) {
+            return 0;
+        }
+        boolean hasDataset = run.getDatasetId() != null;
+        boolean hasWorkflow = run.getWorkflowId() != null && !run.getWorkflowId().trim().isEmpty();
+        boolean hasResult = run.getProjectId() != null && !run.getProjectId().trim().isEmpty();
+
+        if (!hasDataset) {
+            return 0;                     // still on Dataset
+        }
+        if (!hasWorkflow) {
+            return 1;                    // move to Workflow
+        }
+        return 2;                                      // at Result (running/completed)
+    }
+
+// Optional: fine-grained status label for tooltips/icons
+    public String stepStatus(WorkflowRunModel run, String step) {
+        String s = (run == null || run.getStatus() == null) ? "" : run.getStatus().trim().toLowerCase();
+        switch (step) {
+            case "dataset":
+                return (run != null && run.getDatasetId() != null) ? "done" : "pending";
+            case "workflow":
+                return (run != null && run.getWorkflowId() != null && !run.getWorkflowId().isBlank()) ? "done" : "pending";
+            case "result":
+                if ("completed".equals(s)) {
+                    return "completed";
+                }
+                if ("running".equals(s) || "initiated".equals(s)) {
+                    return "running";
+                }
+                return (run != null && run.getProjectId() != null && !run.getProjectId().isBlank()) ? "ready" : "waiting";
+            default:
+                return "pending";
+        }
+    }
+
+// Style classes for each step (completed, active, waiting)
+    public String stepStyleClass(WorkflowRunModel run, int stepIdx) {
+        int idx = stepIndex(run);
+        if (stepIdx < idx) {
+            return "step-completed";  // past steps
+        }
+        if (stepIdx == idx) {
+            return "step-active";     // current step
+        }
+        return "step-waiting";                        // future steps
+    }
+
+// Icons per step (optional)
+    public String stepIcon(WorkflowRunModel run, int stepIdx) {
+        int idx = stepIndex(run);
+        if (stepIdx < idx) {
+            return "pi pi-check-circle";
+        }
+        if (stepIdx == idx) {
+            return "pi pi-circle-fill";
+        }
+        return "pi pi-circle";
+    }
+
 
 }

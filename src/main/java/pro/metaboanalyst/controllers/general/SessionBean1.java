@@ -1044,7 +1044,7 @@ public class SessionBean1 implements Serializable {
         return RC;
     }
 
-    public void setRConnetion(RConnection RC) {
+    public void setRConnection(RConnection RC) {
         this.RC = RC;
     }
 

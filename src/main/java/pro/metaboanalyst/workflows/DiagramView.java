@@ -1480,7 +1480,7 @@ public class DiagramView implements Serializable {
         }
 
         if (moduleNms.isEmpty()) {
-            sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
+            sb.addMessage("warn", "Please select at least an analysis module before proceeding1!");
             return false;
         }
 
@@ -1636,7 +1636,7 @@ public class DiagramView implements Serializable {
         RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
-        
+        System.out.print("executemodule===========" + name); 
         switch (name) {
             case "mf" -> {
 
@@ -2536,7 +2536,7 @@ public class DiagramView implements Serializable {
             }
         }
         if (naviTypes.isEmpty()) {
-            sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
+            sb.addMessage("warn", "Please select at least an analysis module before proceeding2!");
             return false;
         }
 
@@ -2707,7 +2707,7 @@ public class DiagramView implements Serializable {
         List<String> moduleNms = wb.getModuleNames();
 
         if (moduleNms.isEmpty()) {
-            sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
+            sb.addMessage("warn", "Please select at least an analysis module before proceeding3!");
             return false;
         }
 
@@ -2991,6 +2991,7 @@ public class DiagramView implements Serializable {
             if (!moduleNms.contains("stat")) {
                 try {
                     RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), "stat");
+                    wb.setReloadingWorkflow(false);
                     wfv.executeWorkflow("PCA");
                     wfv.executeWorkflow("Volcano");
                 } catch (Exception ex) {
@@ -3115,7 +3116,7 @@ public class DiagramView implements Serializable {
         }
 
         if (moduleNms.isEmpty()) {
-            sb.addMessage("warn", "Please select at least an analysis module before proceeding!");
+            sb.addMessage("warn", "Please select at least an analysis module before proceeding4!");
             return false;
         }
 

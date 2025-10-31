@@ -1981,13 +1981,13 @@ a {
 /* Add your customizations of the layout styles here */
 
 /* Workflow Runs row highlight – dark blue */
-#dataTableForm\:dtTable tbody tr.row-selected > td {
+.workflow-runs tbody tr.row-selected > td {
   background-color: rgba(59,130,246,0.18) !important; /* blue-500 @18% */
   color: #E8F1FF !important;                          /* readable on dark */
   border-top: 1px solid rgba(96,165,250,0.45) !important;
   border-bottom: 1px solid rgba(96,165,250,0.45) !important;
 }
-#dataTableForm\:dtTable tbody tr.row-selected > td:first-child {
+.workflow-runs tbody tr.row-selected > td:first-child {
   box-shadow: inset 4px 0 0 0 #60A5FA !important;     /* accent bar */
 }
-#dataTableForm\:dtTable tbody tr.row-selected i { color: inherit !important; }
+.workflow-runs tbody tr.row-selected i { color: inherit !important; }
