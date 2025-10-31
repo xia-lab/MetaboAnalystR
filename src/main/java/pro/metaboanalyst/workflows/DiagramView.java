@@ -2498,7 +2498,6 @@ public class DiagramView implements Serializable {
                 res = submitWorkflowOther();
             }
         } else {
-
             jeb.setStopStatusCheck(true);
             res = startWorkflow();
         }
@@ -2506,12 +2505,12 @@ public class DiagramView implements Serializable {
         // --- NEW: flip the workflow run to RUNNING (and stamp start_date) ---
         try {
             Integer runId = wb.getSelectedWorkflowRun().getId();
-
-
             if (runId != null) {
                 Map<String, Object> updates = new HashMap<>();
                 updates.put("status", "running");
                 String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
+                wb.getSelectedWorkflowRun().setStatus("running");
+                
                 System.out.println("[workflow-run] " + msg);
             } else {
                 System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");
@@ -2557,7 +2556,6 @@ public class DiagramView implements Serializable {
             return false;
         }
 
-        // 3) Derive job metadata
         final String userId = sb.getCurrentUser().getName();
         final String jobId = userId;
         final String token = sb.getShareToken();                 // used for redirect later
@@ -2567,9 +2565,7 @@ public class DiagramView implements Serializable {
         final String type = selectionMap.getOrDefault("LC-MS Spectra", false) ? "raw" : "other";
         final String folder = sb.getCurrentUser().getHomeDir();
         final String baseUrl = ab.getBaseUrlDyn();
-        // 4) Obtain services (use @Inject if you can; CDI fallback shown)
 
-        // 5) Prevent duplicate running job for this user
         JobTimerService.Status existing = jsv.getStatus(jobId);
         if (existing == JobTimerService.Status.IN_PROGRESS) {
             sb.addMessage("warn", "Please wait for your last workflow to finish before submitting again!");
@@ -2582,18 +2578,13 @@ public class DiagramView implements Serializable {
         jeb.setCurrentJobId(jobId);
         jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         updateNoticeStartWorkflow();
-        //System.out.println("token]]]]]]]]]]]]]]]]]]]]]]====" + token);
-        // 7) Create the job payload and remember token (for finish redirect in poll)
         JobInfo info = new JobInfo(jobId, token, email, appName, node, type, folder, baseUrl);
-        // If your JobTimerService has a token registry, remember it now:
-        // jobTimers.rememberToken(jobId, token);
 
-        // 8) Schedule via TimerService (persistent, fires immediately)
         jsv.rememberToken(jobId, token);
         wsv.schedule(info);
 
         // 9) Show progress dialog & notify
-        PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
+        //PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
 
         sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.",false);
         return true;
