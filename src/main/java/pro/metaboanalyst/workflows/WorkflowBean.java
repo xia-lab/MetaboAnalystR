@@ -21,6 +21,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.logging.Level;
@@ -1389,7 +1393,7 @@ public class WorkflowBean implements Serializable {
 
             // Refresh list immediately
             loadAllWorkflows();
-            String title= (String)selectedWorkflow.get("name");
+            String title = (String) selectedWorkflow.get("name");
             // IMPORTANT: clear selection so next click doesn't reuse old map
             selectedWorkflow = null;
 
@@ -2963,5 +2967,42 @@ public class WorkflowBean implements Serializable {
         } else {
             this.selectedWorkflow = null;
         }
+    }
+    private static final DateTimeFormatter OUT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final String[] IN = {
+        "yyyy-MM-dd HH:mm:ss.SSSSSS",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd HH:mm"
+    };
+
+    public String fmtCreatedAt(Map<String, Object> wf) {
+        return fmtCreatedAt(wf == null ? null : wf.get("created_at"));
+    }
+
+    public String fmtCreatedAt(Object v) {
+        if (v == null) {
+            return "";
+        }
+        try {
+            if (v instanceof OffsetDateTime odt) {
+                return odt.format(OUT);
+            }
+            if (v instanceof LocalDateTime ldt) {
+                return ldt.format(OUT);
+            }
+            if (v instanceof java.util.Date d) {
+                return LocalDateTime.ofInstant(d.toInstant(), ZoneId.systemDefault()).format(OUT);
+            }
+            String s = v.toString().trim();
+            if (s.contains("T")) {
+                return OffsetDateTime.parse(s).format(OUT);
+            }
+            for (String p : IN) try {
+                return LocalDateTime.parse(s, DateTimeFormatter.ofPattern(p)).format(OUT);
+            } catch (Exception ignored) {
+            }
+        } catch (Exception ignored) {
+        }
+        return v.toString();
     }
 }

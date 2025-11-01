@@ -849,7 +849,7 @@
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
                              emptyMessage="No workflows found." styleClass="surface-card shadow-1">
 
-                    <p:column headerText="Name" sortBy="#{wf['name']}" width="35%">
+                    <p:column headerText="Name" sortBy="#{wf['name']}" width="25%">
                         <p:outputPanel layout="flex"
                                        style="align-items:center; justify-content:space-between; width:100%; border:0;">
                             <h:outputText value="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}" />
@@ -860,8 +860,12 @@
                         </p:outputPanel>
                     </p:column>
 
-                    <p:column headerText="Module" width="35%" sortBy="#{wf['module']}">
+                    <p:column headerText="Module" width="30%" sortBy="#{wf['module']}">
                         <h:outputText value="#{workflowView.getReadableType(wf['module'])}"/>
+                    </p:column>
+
+                    <p:column headerText="Created" width="30%" sortBy="#{wf['created_at']}">
+                        <h:outputText value="#{wf['created_at']}" />
                     </p:column>
 
                     <p:column headerText="Action" width="120" style="text-align:center;">
