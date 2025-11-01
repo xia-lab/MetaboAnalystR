@@ -1712,30 +1712,35 @@ public class DatabaseController implements Serializable {
         }
     }
 
-    public static ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname) {
+    public static ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname, String node) {
         final ArrayList<DatasetRow> out = new ArrayList<>();
         if (email == null || email.isBlank() || toolname == null || toolname.isBlank()) {
             return out; // require both email and toolname
         }
 
-        final String sql
-                = "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
-                + "       d.email, d.node, d.samplenum, d.toolname, d.module, d.data_type, "
-                + "       COALESCE(df.file_count, 0) AS file_count, "
-                + "       COALESCE(df.has_metadata, false) AS has_metadata "
-                + "FROM datasets d "
-                + "LEFT JOIN ( "
-                + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
-                + "  FROM dataset_files GROUP BY dataset_id "
-                + ") df ON df.dataset_id = d.id "
-                + "WHERE d.email = ? AND d.toolname = ? "
-                + // <-- filter by toolname
-                "ORDER BY d.uploaded_at DESC, d.node";
+        final boolean filterNode = node != null && !node.isBlank();
+
+        final String sql =
+                "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
+              + "       d.email, d.node, d.samplenum, d.toolname, d.module, d.data_type, "
+              + "       COALESCE(df.file_count, 0) AS file_count, "
+              + "       COALESCE(df.has_metadata, false) AS has_metadata "
+              + "FROM datasets d "
+              + "LEFT JOIN ( "
+              + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
+              + "  FROM dataset_files GROUP BY dataset_id "
+              + ") df ON df.dataset_id = d.id "
+              + "WHERE d.email = ? AND d.toolname = ? "
+              + (filterNode ? "AND d.node = ? " : "")
+              + "ORDER BY d.uploaded_at DESC, d.node";
 
         try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, email);
             ps.setString(2, toolname);
+            if (filterNode) {
+                ps.setString(3, node);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

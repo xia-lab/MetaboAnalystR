@@ -159,50 +159,64 @@
 
                                         <p:spacer/><p:spacer/>
 
-                                        <p:toolbar styleClass="dataset-toolbar">
+                                        <p:toolbar styleClass="dataset-toolbar always-active">
                                             <f:facet name="left">
+
                                                 <!-- Delete only for Custom -->
                                                 <p:commandLink id="delWf"
+                                                               styleClass="always-active"
                                                                title="Delete workflow"
                                                                rendered="#{wf['type'] eq 'Custom'}"
+                                                               process="@this"
                                                                update=":wfDelForm"
+                                                               actionListener="#{workflowBean.selectWorkflow(wf)}"
                                                                oncomplete="PF('wfDelDlg').show();">
                                                     <i class="pi pi-trash"></i>
-                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                                 </p:commandLink>
                                                 <p:tooltip for="delWf" value="Delete this workflow" rendered="#{wf['type'] eq 'Custom'}"/>
 
-                                                <!-- Download link: choose correct download method -->
-                                                <p:commandLink id="dlWfExample" title="Download workflow" ajax="false"
+                                                <!-- Download: Example -->
+                                                <p:commandLink id="dlWfExample"
+                                                               styleClass="always-active"
+                                                               title="Download workflow"
+                                                               ajax="false"
                                                                rendered="#{wf['type'] eq 'Example'}"
-                                                               onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                               onclick="PrimeFaces.monitorDownload(start, stop);"
+                                                               actionListener="#{workflowBean.selectWorkflow(wf)}">
                                                     <i class="pi pi-folder-open"></i>
-                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                                     <p:fileDownload value="#{workflowBean.downloadSelectedExample}"/>
                                                 </p:commandLink>
                                                 <p:tooltip for="dlWfExample" value="Download template file" rendered="#{wf['type'] eq 'Example'}"/>
 
-                                                <p:commandLink id="dlWfCustom" title="Download workflow" ajax="false"
+                                                <!-- Download: Custom -->
+                                                <p:commandLink id="dlWfCustom"
+                                                               styleClass="always-active"
+                                                               title="Download workflow"
+                                                               ajax="false"
                                                                rendered="#{wf['type'] eq 'Custom'}"
-                                                               onclick="PrimeFaces.monitorDownload(start, stop);">
+                                                               onclick="PrimeFaces.monitorDownload(start, stop);"
+                                                               actionListener="#{workflowBean.selectWorkflow(wf)}">
                                                     <i class="pi pi-folder-open"></i>
-                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                                     <p:fileDownload value="#{workflowBean.downloadSelected}"/>
                                                 </p:commandLink>
                                                 <p:tooltip for="dlWfCustom" value="Download workflow file" rendered="#{wf['type'] eq 'Custom'}"/>
 
                                                 <!-- View / update -->
-                                                <p:commandLink id="viewWf" title="View and update parameters"
-                                                               action="#{workflowBean.goToWorkflowDetails}">
+                                                <p:commandLink id="viewWf"
+                                                               styleClass="always-active"
+                                                               title="View and update parameters"
+                                                               action="#{workflowBean.goToWorkflowDetails(wf)}">
                                                     <i class="pi pi-cog"></i>
-                                                    <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}"/>
                                                 </p:commandLink>
                                                 <p:tooltip for="viewWf" value="View details"/>
+
                                             </f:facet>
 
                                             <f:facet name="right">
                                                 <!-- Start -->
-                                                <p:commandLink id="runWf" title="Start workflow"
+                                                <p:commandLink id="runWf"
+                                                               styleClass="always-active"
+                                                               title="Start workflow"
                                                                disabled="#{!workflowBean.workflowCompatible(wf)}"
                                                                onstart="PF('statusDialog').show();"
                                                                oncomplete="PF('statusDialog').hide();"
@@ -214,6 +228,7 @@
                                                            value="#{workflowBean.workflowCompatible(wf) ? 'Start from template' : workflowBean.incompatReason(wf)}"/>
                                             </f:facet>
                                         </p:toolbar>
+
                                     </div>
                                 </p:fieldset>
                             </ui:repeat>
@@ -437,7 +452,7 @@
                 </h:panelGrid>
                 <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
                                  onclick="PF('logoutProjDialog').hide();
-                                     PF('statusDialog').show();"
+                                         PF('statusDialog').show();"
                                  action="#{projCtrl.saveProject()}"
                                  oncomplete ="PF('statusDialog').hide();"/>
 
@@ -482,7 +497,7 @@
                                      action="#{diagramView.resetWorkflow()}" 
                                      ajax="false"     
                                      onclick="PF('resetDialog').hide();
-                                         PF('statusDialog').show();" 
+                                             PF('statusDialog').show();" 
                                      oncomplete="PF('statusDialog').hide();" />
                 </div>
             </h:form>
@@ -576,7 +591,7 @@
                 </h:form>
             </h:panelGrid>
         </p:dialog>
-        
+
         <p:dialog header="Data Preparation" widgetVar="specDialog" modal="true" 
                   showEffect="fade" hideEffect="fade" width="500">   
             <h:panelGrid  style="width:400px; line-height: 170%; padding: 10px 20px 20px 30px; font-size: 13px" class="surface-card shadow-0 p-3 text-600">
@@ -599,7 +614,7 @@
                         <p:commandButton value="Try Example" 
                                          action="#{wfUploadBean.processSpecExampleUpload}" 
                                          onclick="PF('statusDialog').show();
-                                             PF('specDialog').hide();" 
+                                                 PF('specDialog').hide();" 
                                          oncomplete="PF('statusDialog').hide(); workflowRc();" 
                                          update="formHidden1"/>
                     </h:panelGrid>

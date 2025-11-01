@@ -381,6 +381,7 @@ public class DatabaseClient {
             try {
                 // Create the payload with the id
                 Map<String, String> payload = new HashMap<>();
+                System.out.println("deletworkflowid=====" + String.valueOf(id));
                 payload.put("id", String.valueOf(id));  // Converting int to String
 
                 // Make the POST request to the deleteWorkflow endpoint
@@ -627,7 +628,7 @@ public class DatabaseClient {
         }
     }
 
-    public ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname, boolean includeFiles) {
+    public ArrayList<DatasetRow> getDatasetsForEmail(String email, String toolname, String node, boolean includeFiles) {
         ArrayList<DatasetRow> out = new ArrayList<>();
         if (email == null || email.isBlank()) {
             return out;
@@ -635,7 +636,7 @@ public class DatabaseClient {
         try {
             if (ab.isInDocker()) {
                 // --- Direct DB path ---
-                List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email, toolname);
+                List<DatasetRow> rows = DatabaseController.getDatasetsForEmail(email, toolname, node);
                 if (includeFiles && rows != null) {
                     for (DatasetRow d : rows) {
                         UUID id = d.getId();
@@ -653,11 +654,16 @@ public class DatabaseClient {
                 // --- Remote API path ---
                 String qEmail = URLEncoder.encode(email, StandardCharsets.UTF_8.name());
                 String qTool = URLEncoder.encode(toolname, StandardCharsets.UTF_8.name());
-                String url = "/database/datasets/by-email?email=" + qEmail
-                        + "&toolname=" + qTool
-                        + "&includeFiles=" + includeFiles;
+                StringBuilder url = new StringBuilder("/database/datasets/by-email?email=").append(qEmail)
+                        .append("&toolname=").append(qTool)
+                        .append("&includeFiles=").append(includeFiles);
 
-                String json = apiClient.get(url);
+                if (node != null && !node.isBlank()) {
+                    String qNode = URLEncoder.encode(node, StandardCharsets.UTF_8.name());
+                    url.append("&node=").append(qNode);
+                }
+
+                String json = apiClient.get(url.toString());
 
                 ObjectMapper om = new ObjectMapper().findAndRegisterModules();
                 List<DatasetRow> list = om.readValue(json, new TypeReference<List<DatasetRow>>() {

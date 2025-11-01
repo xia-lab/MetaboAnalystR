@@ -324,6 +324,7 @@ public class WorkflowBean implements Serializable {
     }
 
     public void setSelectedWorkflow(HashMap<String, Object> selectedWorkflow) {
+        System.out.println(selectedWorkflow.get("id"));
         this.selectedWorkflow = selectedWorkflow;
     }
 
@@ -1374,9 +1375,31 @@ public class WorkflowBean implements Serializable {
     }
 
     public void deleteSelected() {
-        String res = dbc.deleteWorkflowById("" + selectedWorkflow.get("id"));
-        sb.addMessage("info", res);
-        loadAllWorkflows();
+        try {
+            Object sel = selectedWorkflow;
+            if (sel == null) {
+                sb.addMessage("warn", "No workflow selected to delete.");
+                return;
+            }
+
+            String id = String.valueOf(((Map<?, ?>) sel).get("id"));
+            String res = dbc.deleteWorkflowById(id);
+
+            sb.addMessage("info", res);
+
+            // Refresh list immediately
+            loadAllWorkflows();
+            String title= (String)selectedWorkflow.get("name");
+            // IMPORTANT: clear selection so next click doesn't reuse old map
+            selectedWorkflow = null;
+
+            DataUtils.doRedirectWithGrowl(sb,
+                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=1",
+                    "info",
+                    "Dataset <b>" + title + "</b> succesfully deleted.");
+        } catch (Exception e) {
+            sb.addMessage("error", "Delete failed: " + e.getMessage());
+        }
     }
 
     public StreamedContent getDownloadSelected() {
@@ -1598,9 +1621,9 @@ public class WorkflowBean implements Serializable {
         return selectedWorkflowJson;
     }
 
-    public String goToWorkflowDetails() throws IOException {
-
-        final String fileName = (String) selectedWorkflow.get("filename");
+    public String goToWorkflowDetails(HashMap<String, Object> wf) throws IOException {
+        this.selectedWorkflow = wf;
+        final String fileName = (String) wf.get("filename");
         final Path destPath = prepareTemplateWorkflowJson(fileName);
 
         Map<String, FunctionInfo> functionInfos = FunctionInvoker.loadFunctionInfosFromFile(destPath.toString());
@@ -1823,13 +1846,13 @@ public class WorkflowBean implements Serializable {
         try {
             // dataset selection status
             if (ds.getSelected() == null) {
-                System.out.println(TAG + " ds.selected = null -> TRUE (no dataset selected, allow all)");
+                //System.out.println(TAG + " ds.selected = null -> TRUE (no dataset selected, allow all)");
                 return true;
             }
 
             final String dsModule = safeStr(ds.getSelected().getModule());
             final String wfModule = safeStr(wf.get("module"));
-            final String dataType = safeStr(sb.getDataType());
+            final String dataType = safeStr(ds.getSelected().getDataType());
             final boolean regression = sb.isRegression();
 
             // 1) family rule
@@ -2081,7 +2104,7 @@ public class WorkflowBean implements Serializable {
 
             wf.generateWorkflowJson("project", false);   // only in "details"
             //if (moduleNames.isEmpty()) {
-                dv.selectNode(dv.convertToBlockName(module), true);
+            dv.selectNode(dv.convertToBlockName(module), true);
             /*} else {
                 for (String moduleName : moduleNames) {
                     dv.selectNode(dv.convertToBlockName(moduleName), true);
@@ -2931,4 +2954,14 @@ public class WorkflowBean implements Serializable {
         return "pi pi-circle";
     }
 
+    @SuppressWarnings("unchecked")
+    public void selectWorkflow(Object wf) {
+        if (wf instanceof HashMap) {
+            this.selectedWorkflow = (HashMap<String, Object>) wf;
+            System.out.println(selectedWorkflow.get("id") + "=============selectworkflow");
+
+        } else {
+            this.selectedWorkflow = null;
+        }
+    }
 }

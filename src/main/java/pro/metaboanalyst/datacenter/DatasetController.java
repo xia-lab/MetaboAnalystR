@@ -323,7 +323,7 @@ public class DatasetController implements Serializable {
         }
 
         // Load user datasets
-        datasetTable = db.getDatasetsForEmail(email, "metaboanalyst", true);
+        datasetTable = db.getDatasetsForEmail(email, "metaboanalyst", node, true);
         if (datasetTable == null) {
             datasetTable = new ArrayList<>();
         }
