@@ -26,6 +26,10 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 public class OmicsBot implements Serializable {
 
     private String code = "metabolomics";
+    private String systemInstruction = "You are a helpful assistant specialized in bioinformatics and omics data analysis. "
+            + "Answer questions clearly and concisely. If relevant information is provided in the RELEVANT KNOWLEDGE BASE section, "
+            + "prioritize that information in your response. Always provide accurate, scientifically sound advice. "
+            + " You specialize in metabolomics, mass spectrometry data analysis, and metabolite identification using MetaboAnalyst.";
     private String welcomeMsg = "I am MetaboAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
 
     private String promptMsg = "";
@@ -42,7 +46,9 @@ public class OmicsBot implements Serializable {
 
     private List<Message> messages;
 
-    private String modelName = "gemini-2.5-flash-lite";
+    //current model
+    private String modelName = "gemini-2.5-flash";
+
     public String getModelName() {
         return modelName;
     }
@@ -50,6 +56,37 @@ public class OmicsBot implements Serializable {
     public void setModelName(String modelName) {
         this.modelName = modelName;
     }
+
+    //alternative models
+    private String altMdlName = "gemini-2.5-flash-lite";
+
+    public String getAltMdlName() {
+        return altMdlName;
+    }
+
+    public void setAltMdlName(String altMdlName) {
+        this.altMdlName = altMdlName;
+    }
+
+    public void modifyModel() {
+        if (modelName.equals("gemini-2.5-flash")) {
+            modelName = "gemini-2.5-flash-lite";
+            altMdlName = "gemini-2.5-flash";
+        } else {
+            modelName = "gemini-2.5-flash";
+            altMdlName = "gemini-2.5-flash-lite";
+        }
+        initAssistant();
+    }
+
+    /**
+     * Gets user-friendly display name for the current model. Note the displayed
+     * name is alternative to the currently used model
+     */
+    private String getDisplayModelName() {
+        return modelName.equals("gemini-2.5-flash") ? "Gemini 2.5 Flash" : "Gemini 2.5 Flash Lite";
+    }
+
     public List<Message> getMessages() {
         if (messages == null) {
             messages = new ArrayList<>();
@@ -76,30 +113,14 @@ public class OmicsBot implements Serializable {
             messages = new ArrayList<>();
         }
 
-        if ("na".equals(code)) {
-            promptMsg = "";
-            welcomeMsg = "Welcome! Please first choose your Omics Assistant to start";
-            messages.add(new Message("Assistant", welcomeMsg));
-            return;
-        }
-
         cleanResource();
 
         // Initialize Gemini client for the selected domain
-        geminiClient = new GeminiConversationClient(getDomainName(code));
+        geminiClient = new GeminiConversationClient(code);
 
-        switch (code) {
-            case "transcriptomics" ->
-                welcomeMsg = "I am ExpressAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-            case "metabolomics" ->
-                welcomeMsg = "I am MetaboAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-            case "microbiomics" ->
-                welcomeMsg = "I am MicrobiomeAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-            case "microrna" ->
-                welcomeMsg = "I am miRNet Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-            default ->
-                welcomeMsg = "I am OmicsNet/OmicsAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-        }
+        // Get display model name for welcome message
+        String displayModelName = getDisplayModelName();
+        welcomeMsg = "I am MetaboAnalyst Assistant using " + displayModelName + ". Type your question and click on 'Send' to start. Please be patient ....";
         messages.add(new Message("Assistant", welcomeMsg));
     }
 
@@ -138,7 +159,7 @@ public class OmicsBot implements Serializable {
     }
 
     // Updated sendMessage method for JSF integration
-    public void sendMsg() {
+    public void sendUserQuery() {
 
         if (promptMsg.trim().length() == 0) {
             sb.addMessage("error", "Please enter your question first");
@@ -146,20 +167,15 @@ public class OmicsBot implements Serializable {
         }
 
         if (geminiClient == null) {
-            geminiClient = new GeminiConversationClient(getDomainName(code));
+            geminiClient = new GeminiConversationClient(code);
         }
 
         // Add the user's message to the chat
         getMessages().add(new Message("User", promptMsg));
 
         try {
-            // Get system instruction for this domain
-            String systemInstruction = getSystemInstruction(code);
-
             // Find relevant FAQs
-            List<FAQLoader.FAQEntry> relevantFAQs = faqLoader.findRelevantFAQs(
-                    getDomainName(code), promptMsg, 4);
-
+            List<FAQLoader.FAQEntry> relevantFAQs = faqLoader.findRelevantFAQs(code, promptMsg, 5);
             String answer = geminiClient.sendMessage(promptMsg, systemInstruction, relevantFAQs, modelName);
 
             // Clean up citations (in case Gemini adds any)
@@ -187,46 +203,6 @@ public class OmicsBot implements Serializable {
         promptMsg = "";
     }
 
-    /**
-     * Gets the domain name from the code.
-     */
-    private String getDomainName(String code) {
-        return switch (code) {
-            case "transcriptomics" ->
-                "transcriptomics";
-            case "metabolomics" ->
-                "metabolomics";
-            case "microbiomics" ->
-                "microbiomics";
-            case "microrna" ->
-                "microrna";
-            default ->
-                "multiomics";
-        };
-    }
-
-    /**
-     * Gets the system instruction for each domain.
-     */
-    private String getSystemInstruction(String code) {
-        String baseInstruction = "You are a helpful assistant specialized in bioinformatics and omics data analysis. "
-                + "Answer questions clearly and concisely. If relevant information is provided in the RELEVANT KNOWLEDGE BASE section, "
-                + "prioritize that information in your response. Always provide accurate, scientifically sound advice.";
-
-        return switch (code) {
-            case "transcriptomics" ->
-                baseInstruction + " You specialize in RNA sequencing, gene expression analysis, and transcriptomics using ExpressAnalyst.";
-            case "metabolomics" ->
-                baseInstruction + " You specialize in metabolomics, mass spectrometry data analysis, and metabolite identification using MetaboAnalyst.";
-            case "microbiomics" ->
-                baseInstruction + " You specialize in microbiome analysis, 16S rRNA sequencing, and metagenomic data analysis using MicrobiomeAnalyst.";
-            case "microrna" ->
-                baseInstruction + " You specialize in microRNA analysis, miRNA-target interactions, and network analysis using miRNet.";
-            default ->
-                baseInstruction + " You specialize in multi-omics integration, network analysis, and systems biology using OmicsNet and OmicsAnalyst.";
-        };
-    }
-
     public String getHtmlContent(String text) {
         // Configure Flexmark with table support
         MutableDataSet options = new MutableDataSet();
@@ -235,15 +211,6 @@ public class OmicsBot implements Serializable {
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
         return renderer.render(parser.parse(text)); // Render HTML from markdown
-    }
-
-    public void modifyModel() {
-        if (modelName.equals("gemini-2.5-flash")) {
-            modelName = "gemini-2.5-flash-lite";
-        } else {
-            modelName = "gemini-2.5-flash";
-        }
-        initAssistant();
     }
 
 }
