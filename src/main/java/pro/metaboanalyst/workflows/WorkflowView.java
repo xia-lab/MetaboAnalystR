@@ -959,15 +959,19 @@ public class WorkflowView implements Serializable {
                         String res = "ok";
                         if (sp.isIsms2DIA()) {
                             boolean resBool = checkWorkflowContained("prepareDIASpec");
-                            if (!resBool && wb.isReloadingWorkflow()) {
-                                return 2;
-                            }
+                            /*
+                        if (!resBool && wb.isReloadingWorkflow()) {
+                            return 2;
+                        }
+                             */
                             res = sp.prepareDIASpec();
                         } else {
                             boolean resBool = checkWorkflowContained("prepareSpecProc");
-                            if (!resBool && wb.isReloadingWorkflow()) {
-                                return 2;
-                            }
+                            /*
+                        if (!resBool && wb.isReloadingWorkflow()) {
+                            return 2;
+                        }
+                             */
                             res = sp.prepareSpecProc();
                         }
                         if (res.isEmpty()) {
@@ -979,9 +983,11 @@ public class WorkflowView implements Serializable {
                     case "Spectra Processing" -> {
                         SpectraControlBean sc = (SpectraControlBean) DataUtils.findBean("spectraController");
                         boolean resBool = checkWorkflowContained("spectraParams");
+                        /*
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
+                         */
                         String res = sc.goToJobStatus(false);
                         sc.setCount(5);
                         sb.addNaviTrack("Job Status", "/Secure/spectra/JobStatusView.xhtml");

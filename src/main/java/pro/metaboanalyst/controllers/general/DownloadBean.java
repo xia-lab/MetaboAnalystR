@@ -386,6 +386,10 @@ public class DownloadBean implements Serializable {
             return;
         }
 
+        System.out.println("setupDownloadTable========sb.getAnalType=====" + sb.getAnalType());
+        System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
+        System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
+
         galleryStatImages = new ArrayList<>();
         galleryIntImages = new ArrayList<>();
 
@@ -426,12 +430,23 @@ public class DownloadBean implements Serializable {
             downloads = new ResultBean[1];
             downloads[0] = new ResultBean("Empty Folder", "", null, null);
         } else {
-            DataUtils.deleteFile(usr, "Download.zip");
-            //System.out.println("CreatingZip=====" + mainFolderPath);
-            DataUtils.createZipFile(listOfFiles, "Download.zip", mainFolderPath);
+            List<File> existing = new ArrayList<>();
+            for (File f : listOfFiles) {
+                if (f != null && f.exists() && f.isFile()) {
+                    existing.add(f);
+                }
+            }
+            if (!existing.isEmpty()) {
+                DataUtils.deleteFile(usr, "Download.zip");
+                DataUtils.createZipFile(existing.toArray(new File[0]), "Download.zip", mainFolderPath);
+            } else {
+                System.out.println("No existing files to archive in " + mainFolderPath);
+            }
 
             ArrayList<String> fileNames = new ArrayList<>();
-            fileNames.add("Download.zip");
+            if (!existing.isEmpty()) {
+                fileNames.add("Download.zip");
+            }
 
             listOfFiles = folder.listFiles(new OnlyExt(false));
             if (listOfFiles != null) {
@@ -1278,9 +1293,6 @@ public class DownloadBean implements Serializable {
         //Change path
         sb.getCurrentUser().setHomeDir(sb.getCurrentUser().getOrigHomeDir() + "/" + subFolder);
         sb.getCurrentUser().setRelativeDir(sb.getCurrentUser().getOrigRelativeDir() + "/" + subFolder);
-
-        //System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
-        //System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
 
         currentSubFolder = subFolder;
         wb.setCurrentSubFolder(subFolder);

@@ -38,6 +38,7 @@ import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
+import pro.metaboanalyst.datacenter.DatasetController;
 import pro.metaboanalyst.lts.FireBaseController;
 import pro.metaboanalyst.models.MS2FeatureBean;
 import pro.metaboanalyst.project.SchedulerUtils;
@@ -66,6 +67,10 @@ public class TandemMSBean implements Serializable {
     @JsonIgnore
     @Inject
     private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
+    private DatasetController datasetController;
             
     private String tandemMSList;
     private double precMZ = 0.0000, ppm_val1 = 5.0, ppm_val2 = 10.0;
@@ -1212,6 +1217,9 @@ public class TandemMSBean implements Serializable {
 
         boolean res = false;
         try {
+            if (datasetController != null && !datasetController.stageCurrentRawWorkspace()) {
+                return;
+            }
             sb.addNaviTrack("MS2 Job status", "/Secure/spectra/Secure/spectra/MS2JobStatus.xhtml");
             res = fbc.saveProject("project");
         } catch (Exception ex) {

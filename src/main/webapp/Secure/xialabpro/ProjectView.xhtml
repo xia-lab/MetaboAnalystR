@@ -299,7 +299,7 @@
                                 </li>
                             </ol>
                         </p>
-                 
+
 
                         <p:dataTable id="dtTable"
                                      var="run"
@@ -414,7 +414,8 @@
                                                disabled="#{empty run.projectId}"
                                                action="#{workflowBean.viewRunResults(run)}"
                                                ajax="false"                     
-                                               onclick="PF('statusDialog').show();">
+                                               onclick="PF('statusDialog').show();"
+                                               oncomplete="PF('statusDialog').hide();">
                                     <i class="pi pi-eye" style="font-size:1.4rem; color:#2563eb;"></i>
                                 </p:commandLink>
 
@@ -767,11 +768,13 @@
         <p:dialog id="dlgByDataset" widgetVar="dlgByDataset" header="Select Dataset"
                   modal="true" responsive="true" closable="true" resizable="false" width="900">
             <h:form id="formByDataset">
-                <div class="flex gap-2 mb-2">
-                    <p:inputText id="dsFilter" value="#{workflowBean.dsFilter}" placeholder="Filter datasets…" />
-                    <p:commandButton value="Apply" process="@this dsFilter" update="dsTable"/>
-                </div>
+                <!-- 
 
+<div class="flex gap-2 mb-2">
+    <p:inputText id="dsFilter" value="#{workflowBean.dsFilter}" placeholder="Filter datasets…" />
+    <p:commandButton value="Apply" process="@this dsFilter" update="dsTable"/>
+</div>
+                -->
                 <p:dataTable id="dsTable"
                              value="#{datasetController.datasetTableAll}" var="ds"
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
@@ -839,11 +842,12 @@
         <p:dialog id="dlgByWorkflow" widgetVar="dlgByWorkflow" header="Select Workflow"
                   modal="true" responsive="true" closable="true" resizable="false" width="900">
             <h:form id="formByWorkflow">
+                <!-- 
                 <div class="flex gap-2 mb-2">
                     <p:inputText id="wfFilter" value="#{workflowBean.wfFilter}" placeholder="Filter workflows…" />
                     <p:commandButton value="Apply" process="@this wfFilter" update="wfTable"/>
                 </div>
-
+                -->
                 <p:dataTable id="wfTable"
                              value="#{workflowBean.workflowList}" var="wf"
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
@@ -865,11 +869,12 @@
                     </p:column>
 
                     <p:column headerText="Created" width="30%" sortBy="#{wf['created_at']}">
-                        <h:outputText value="#{wf['created_at']}" />
+                        <h:outputText value="#{workflowBean.fmtCreatedAt(wf['created_at'])}" />
                     </p:column>
 
                     <p:column headerText="Action" width="120" style="text-align:center;">
                         <div class="flex justify-content-center align-items-center gap-4">
+                            <!--
                             <p:commandLink id="viewWfJson"
                                            title="View workflow JSON"
                                            disabled="#{wf['type'] ne 'Custom'}"
@@ -881,7 +886,7 @@
                                 <i class="pi pi-file"></i>
                             </p:commandLink>
                             <p:tooltip for="viewWfJson" value="View JSON" position="top" />
-
+                            -->
                             <p:commandLink id="viewWf"
                                            title="View and update parameters"
                                            ajax="false"

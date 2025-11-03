@@ -16,6 +16,7 @@ import org.rosuda.REngine.Rserve.RConnection;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.lts.FireUserBean;
+import pro.metaboanalyst.datacenter.DatasetController;
 import pro.metaboanalyst.project.MariaDBController;
 import pro.metaboanalyst.project.SchedulerUtils;
 import pro.metaboanalyst.rwrappers.RCenter;
@@ -24,23 +25,28 @@ import pro.metaboanalyst.utils.DataUtils;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.enterprise.inject.spi.CDI;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.lts.FireBaseController;
+import pro.metaboanalyst.lts.FireProjectBean;
 import static pro.metaboanalyst.utils.DataUtils.processExec;
 import pro.metaboanalyst.workflows.DiagramView;
 import pro.metaboanalyst.workflows.WorkflowBean;
@@ -68,6 +74,10 @@ public class SpectraControlBean implements Serializable {
     @Inject
     private WorkflowBean wb;
 
+    @JsonIgnore
+    @Inject
+    private DatasetController dc;
+
     @Inject
     @JsonIgnore
     private SpectraParamBean sparam;
@@ -79,6 +89,10 @@ public class SpectraControlBean implements Serializable {
     @JsonIgnore
     @Inject
     private FireBaseController fbc;
+
+    @JsonIgnore
+    @Inject
+    private FireProjectBean pb;
 
     @Inject
     @JsonIgnore
@@ -168,23 +182,45 @@ public class SpectraControlBean implements Serializable {
     public void performPlan(String workflowBoolString) throws REXPMismatchException {
 
         int pid;
+        System.out.println("[performPlan] invoked for user=" + sb.getCurrentUser().getName()
+                + ", workflowBool=" + workflowBoolString
+                + ", isJobSubmitted=" + isJobSubmitted()
+                + ", performedPlan=" + performedPlan
+                + ", currentJobId=" + getCurrentJobId());
 
         if (isJobSubmitted() || performedPlan || getCurrentJobId() != 0) {
             count = count + 1;
+            System.out.println("[performPlan] skipping early exit: count=" + count);
             return;
         }
 
         if (count == 0) {
             count = count + 1;
+            System.out.println("[performPlan] priming count -> " + count);
             return;
         }
 
         if (progress2 != 0 || isCreatedShareLink() || !isDataConfirmed()) { //used to strongly block the job resubmit
+            System.out.println("[performPlan] blocked: progress2=" + progress2
+                    + ", createdShareLink=" + isCreatedShareLink()
+                    + ", dataConfirmed=" + isDataConfirmed());
             return;
         }
 
         RConnection RC = sb.getRConnection();
         setJobSubmitted(true);
+        System.out.println("[performPlan] continuing with jobSubmitted=true, includedFiles="
+                + getIncludedFileNamesString());
+
+        if (ab.shouldUseScheduler()) {
+            try {
+                Path inputTable = Paths.get(sb.getCurrentUser().getHomeDir(), "metaboanalyst_input.csv");
+                Files.deleteIfExists(inputTable);
+                System.out.println("[performPlan] removed stale metaboanalyst_input.csv before scheduling job.");
+            } catch (IOException ex) {
+                System.err.println("[performPlan] warning: unable to delete previous metaboanalyst_input.csv - " + ex.getMessage());
+            }
+        }
 
         boolean res = false;
         String params0_path = ab.getParams0();
@@ -241,6 +277,8 @@ public class SpectraControlBean implements Serializable {
 
             boolean ms2Opt = spb.getMs2DataOpt().equals("ms1");
             isms2 = !ms2Opt;
+            System.out.println("[performPlan] ms2Opt=" + ms2Opt + ", isms2=" + isms2
+                    + ", algorithm=" + sparam.getAlgorithms());
 
             if (sparam.getAlgorithms().equals("asari")) {
                 //AsariPlanProcessDefine
@@ -337,16 +375,18 @@ public class SpectraControlBean implements Serializable {
                     //System.out.println("IOException while trying to execute [JobSubmission: sbatch]" + JobSubmission);
                 }
 
-                setCurrentJobId(JobID);
-                if (JobID != 0) {
-                    if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
-                        String jobStatus = SchedulerUtils.getJobStatus(JobID, sb.getCurrentUser().getHomeDir());
-                        setCurrentJobStatus(jobStatus);
-                    } else {
-                        String jobStatus = "Local submitted";
-                        setCurrentJobStatus(jobStatus);
-                    }
+            setCurrentJobId(JobID);
+            if (JobID != 0) {
+                if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
+                    String jobStatus = SchedulerUtils.getJobStatus(JobID, sb.getCurrentUser().getHomeDir());
+                    setCurrentJobStatus(jobStatus);
+                    System.out.println("[performPlan] Scheduler jobId=" + JobID + ", status=" + jobStatus);
+                } else {
+                    String jobStatus = "Local submitted";
+                    setCurrentJobStatus(jobStatus);
+                    System.out.println("[performPlan] Local jobId=" + JobID + ", status=" + jobStatus);
                 }
+            }
                 if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isInDocker()) {
                     dv.setRawJobId(JobID + "");
                     /*
@@ -630,7 +670,10 @@ public class SpectraControlBean implements Serializable {
         this.finishedJobId = finishedJobId;
     }
 
-    // Section 3 : Job status section -------------------
+    public boolean stageRawDatasetSnapshot() {
+        return dc != null && dc.stageCurrentRawWorkspace();
+    }
+
     public String goToJobStatus(boolean saveBool) {
 
         if (!checkJobRunning()) {
@@ -658,6 +701,9 @@ public class SpectraControlBean implements Serializable {
             setCreatedShareLink(false);
             //return to the job status web page
             if (saveBool) {
+                if (!stageRawDatasetSnapshot()) {
+                    return null;
+                }
                 boolean res = false;
                 try {
                     sb.addNaviTrack("Job Status", "/Secure/spectra/JobStatusView.xhtml");

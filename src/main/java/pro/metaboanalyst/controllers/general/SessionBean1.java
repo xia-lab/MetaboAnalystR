@@ -436,7 +436,11 @@ public class SessionBean1 implements Serializable {
         }
 
         if (reload) {
-            currentUser = DataUtils.createPreviousFolder(ab.getRealUserHomePath(), previousFolderName);
+            if ("raw".equals(analType)) {
+                currentUser = DataUtils.loadRawUser(previousFolderName, ab);
+            } else {
+                currentUser = DataUtils.createPreviousFolder(ab.getRealUserHomePath(), previousFolderName);
+            }
         } else {
             if (analType.equals("raw") && ab.shouldUseScheduler()) {
                 currentUser = DataUtils.createRawSpecUser(ab.getRaw_spec_folder());

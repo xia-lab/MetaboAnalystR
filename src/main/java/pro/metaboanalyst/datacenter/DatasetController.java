@@ -4,24 +4,55 @@
  */
 package pro.metaboanalyst.datacenter;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.annotation.PostConstruct;
 import org.primefaces.model.StreamedContent;
 import org.primefaces.model.DefaultStreamedContent;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.io.UncheckedIOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
 import pro.metaboanalyst.controllers.general.SessionBean1;
@@ -32,19 +63,8 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.utils.DataUtils;
 import pro.metaboanalyst.models.SheetRow;
+import pro.metaboanalyst.models.SpecBean;
 import java.io.*;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.util.*;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
@@ -58,6 +78,10 @@ import org.primefaces.extensions.event.SheetEvent;
 import org.primefaces.extensions.model.sheet.SheetUpdate;
 import pro.metaboanalyst.controllers.mummichog.PeakUploadBean;
 import pro.metaboanalyst.rwrappers.SearchUtils;
+import pro.metaboanalyst.spectra.SpectraControlBean;
+import pro.metaboanalyst.spectra.SpectraParamBean;
+import pro.metaboanalyst.spectra.SpectraUploadBean;
+import pro.metaboanalyst.spectra.SpectraProcessBean;
 
 /**
  *
@@ -88,12 +112,103 @@ public class DatasetController implements Serializable {
     StateSaver stateSaver;
     @Inject
     PeakUploadBean pu;
+    @Inject
+    private SpectraProcessBean spectraProcessBean;
+    @Inject
+    private SpectraControlBean spectraControlBean;
+    @Inject
+    private SpectraParamBean spectraParamBean;
+    @Inject
+    private SpectraUploadBean spectraUploadBean;
+
+    private static final String RAW_BUNDLE_NAME = "_ma_raw_bundle.zip";
+    private static final String RAW_MANIFEST_NAME = "_ma_raw_manifest.json";
+    private static final int STREAM_BUFFER_SIZE = 16 * 1024;
+    private static final DateTimeFormatter RAW_TITLE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm");
 
     // In DatasetController.java
     private List<DatasetRow> datasetTableAll = new ArrayList<>();
 
     public List<DatasetRow> getDatasetTableAll() {
         return datasetTableAll;
+    }
+
+    public boolean stageCurrentRawWorkspace() {
+        RawDatasetSnapshot snapshot = buildCurrentRawSnapshot();
+        if (snapshot == null) {
+            sb.addMessage("warn", "Raw dataset snapshot is not available.");
+            return false;
+        }
+        boolean staged = stageRawDataset(snapshot);
+        if (!staged) {
+            sb.addMessage("warn", "Failed to stage raw dataset bundle.");
+        }
+        return staged;
+    }
+
+    private RawDatasetSnapshot buildCurrentRawSnapshot() {
+        if (spectraProcessBean == null) {
+            return null;
+        }
+
+        RawDatasetSnapshot.Builder builder = RawDatasetSnapshot.builder();
+
+        String title = null;
+        if (pb != null && pb.getTitle() != null && !pb.getTitle().isBlank()) {
+            title = pb.getTitle().trim();
+        }
+        builder.title(title);
+
+        builder.containsMetadata(spectraProcessBean.isContainsMetaVal());
+        builder.uploadedArchives(spectraProcessBean.getUploadedFileNamesSaved());
+
+        if (spectraParamBean != null) {
+            String polarity = spectraParamBean.getPolarity();
+            if (polarity != null && !polarity.isBlank()) {
+                builder.polarity(polarity);
+            }
+        }
+
+        String msMode = spectraProcessBean.getMs2DataOpt();
+        if (msMode != null && !msMode.isBlank()) {
+            builder.msMode(msMode);
+        }
+
+        Map<String, Object> paramSummary = new LinkedHashMap<>();
+        if (spectraParamBean != null) {
+            putIfNotNull(paramSummary, "peakMethod", spectraParamBean.getPeakmeth());
+            putIfNotNull(paramSummary, "rtMethod", spectraParamBean.getRtmeth());
+            putIfNotNull(paramSummary, "mzTrimLower", spectraParamBean.getMztrimdown());
+            putIfNotNull(paramSummary, "mzTrimUpper", spectraParamBean.getMztrimup());
+            putIfNotNull(paramSummary, "fwhmThresh", spectraParamBean.getFwhmThresh());
+            putIfNotNull(paramSummary, "mzAbsoluteAdd", spectraParamBean.getMz_abs_add());
+            putIfNotNull(paramSummary, "corrEicThreshold", spectraParamBean.getCorr_eic_th());
+            putIfNotNull(paramSummary, "maxCharge", spectraParamBean.getMax_charge());
+            putIfNotNull(paramSummary, "maxIso", spectraParamBean.getMax_iso());
+        }
+        if (!paramSummary.isEmpty()) {
+            builder.extra("processingParams", paramSummary);
+        }
+
+        if (spectraProcessBean.isFromGoogleDrive()) {
+            builder.extra("fromGoogleDrive", Boolean.TRUE);
+        }
+
+        List<String> archives = spectraProcessBean.getUploadedFileNamesSaved();
+        if (archives != null) {
+            builder.extra("uploadedArchiveCount", archives.size());
+        }
+
+        List<String> spectraFiles = spectraProcessBean.getSpectraFiles();
+        if (spectraFiles != null) {
+            builder.extra("spectraFileCount", spectraFiles.size());
+        }
+
+        if (spectraControlBean != null) {
+            builder.extra("totalSamples", spectraControlBean.getTotalNumberOfSamples());
+        }
+
+        return builder.build();
     }
 
     private List<DatasetRow> datasetTableExample = new ArrayList<>();
@@ -143,74 +258,6 @@ public class DatasetController implements Serializable {
         }
     }
 
-    public UUID insertAndSaveDataset(String title,
-            int sampleNum,
-            List<org.primefaces.model.file.UploadedFile> uploaded,
-            List<String> roles) {
-        try {
-            // ---- guards ----
-            if (uploaded == null || uploaded.isEmpty()) {
-                sb.addMessage("Error", "No files were uploaded.");
-                return null;
-            }
-            if (roles == null || roles.size() != uploaded.size()) {
-                sb.addMessage("Error", "Roles list must match the number of files.");
-                return null;
-            }
-
-            final String email = fub.getEmail();
-            final String node = ab.getToolLocation();
-            final java.time.OffsetDateTime now = java.time.OffsetDateTime.now();
-
-            // ---- build file metadata (names & sizes BEFORE saving) ----
-            List<DatasetFile> files = new ArrayList<>(uploaded.size());
-            for (int i = 0; i < uploaded.size(); i++) {
-                var uf = uploaded.get(i);
-                if (uf == null || uf.getFileName() == null) {
-                    continue;
-                }
-
-                String safe = uf.getFileName();
-                String ext = extOf(safe);
-
-                DatasetFile df = new DatasetFile();
-                df.setRole(roles.get(i));                 // use roles exactly as provided
-                df.setFilename(safe);                     // same name will be used when saving to disk
-                df.setType(ext.isEmpty() ? "bin" : ext);
-                df.setSizeBytes(Math.max(0L, uf.getSize()));
-                df.setUploadedAt(now);
-                files.add(df);
-            }
-            if (files.isEmpty()) {
-                sb.addMessage("Error", "No valid uploaded files.");
-                return null;
-            }
-
-            // ---- title fallback to first filename if blank ----
-            String resolvedTitle = (title != null && !title.isBlank())
-                    ? title.trim()
-                    : files.get(0).getFilename();
-
-            // ---- CALL YOUR SPECIALIZED INSERT FUNCTION (DB or API) ----
-            String resp = db.insertDataset(email, node, resolvedTitle, sb.getAnalType(), sb.getDataType(), "metaboanalyst", sampleNum, files);
-
-            UUID datasetId = extractUUID(resp);
-            if (datasetId == null) {
-                sb.addMessage("Error", "Insert failed: " + resp);
-                return null;
-            }
-
-            saveDatasetFiles(email, datasetId, uploaded, roles);
-
-            sb.addMessage("info", "Dataset created: " + resolvedTitle);
-            return datasetId;
-
-        } catch (Exception e) {
-            sb.addMessage("Error", "Insert/save failed: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     private static java.util.UUID extractUUID(String msg) {
         if (msg == null) {
@@ -296,9 +343,6 @@ public class DatasetController implements Serializable {
     private List<DatasetRow> datasetTable = new ArrayList<>();
 
     private List<DatasetRow> selectedDatasets = new ArrayList<>();
-
-    // optional cache for row-expansion
-    private final Map<UUID, List<DatasetFile>> fileCache = new HashMap<>();
 
     /**
      * Called by Refresh button and can be wired to preRenderView.
@@ -414,6 +458,69 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     public void clearStaged() {
         stagedDataset = null;
         stagedFiles.clear();
+    }
+
+    public boolean stageRawDataset(RawDatasetSnapshot snapshot) {
+        if (snapshot == null) {
+            sb.addMessage("Error", "Cannot stage raw dataset: metadata snapshot is missing.");
+            return false;
+        }
+
+        if (sb.getCurrentUser() == null || sb.getCurrentUser().getHomeDir() == null) {
+            sb.addMessage("Error", "User workspace is not initialized.");
+            return false;
+        }
+
+        Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+        if (!Files.isDirectory(home)) {
+            sb.addMessage("Error", "User workspace folder is unavailable.");
+            return false;
+        }
+
+        try {
+            RawUploadSummary summary = summarizeRawWorkspace(home);
+            if (summary.sampleCount == 0) {
+                sb.addMessage("Error", "No spectra files were found under the upload directory.");
+                return false;
+            }
+
+            Path bundlePath = createRawBundleZip(home);
+            Path manifestPath = writeRawManifest(home, snapshot, summary, bundlePath);
+
+            DatasetFile bundleFile = datasetFileFor(bundlePath, "raw");
+            DatasetFile manifestFile = datasetFileFor(manifestPath, "manifest");
+
+            List<DatasetFile> files = new ArrayList<>(2);
+            files.add(bundleFile);
+            files.add(manifestFile);
+
+            List<Path> sources = List.of(bundlePath, manifestPath);
+
+            String resolvedTitle = snapshot.getTitle();
+            if (resolvedTitle == null || resolvedTitle.isBlank()) {
+                resolvedTitle = defaultRawDatasetTitle();
+            } else {
+                resolvedTitle = resolvedTitle.trim();
+            }
+
+            stageDatasetFromPaths(resolvedTitle, summary.sampleCount, files, sources);
+
+            if (stagedDataset != null) {
+                stagedDataset.setModule("raw");
+                stagedDataset.setDataType("spec");
+                try {
+                    stagedDataset.setFiles(new ArrayList<>(files));
+                } catch (Throwable ignore) {
+                }
+            }
+
+            sb.addMessage("info", "Raw dataset staged in memory.");
+            return true;
+        } catch (IOException | RuntimeException ex) {
+            sb.addMessage("Error", "Failed to prepare raw dataset bundle: " + ex.getMessage());
+            ex.printStackTrace();
+            return false;
+        }
     }
 
     /**
@@ -770,6 +877,446 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
     }
 
+    private RawUploadSummary summarizeRawWorkspace(Path home) throws IOException {
+        Map<String, List<String>> groups = new LinkedHashMap<>();
+        Path uploadDir = home.resolve("upload");
+        if (Files.isDirectory(uploadDir)) {
+            try (var groupStream = Files.list(uploadDir)) {
+                groupStream.filter(Files::isDirectory)
+                        .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
+                        .forEach(groupPath -> {
+                            try (var files = Files.list(groupPath)) {
+                                List<String> samples = files
+                                        .filter(Files::isRegularFile)
+                                        .sorted(Comparator.comparing(p -> p.getFileName().toString().toLowerCase(Locale.ROOT)))
+                                        .map(p -> p.getFileName().toString())
+                                        .collect(Collectors.toCollection(ArrayList::new));
+                                groups.put(groupPath.getFileName().toString(), samples);
+                            } catch (IOException ex) {
+                                throw new UncheckedIOException(ex);
+                            }
+                        });
+            } catch (UncheckedIOException ex) {
+                throw ex.getCause();
+            }
+        }
+
+        List<String> rootFiles = new ArrayList<>();
+        try (var rootStream = Files.list(home)) {
+            rootStream.filter(Files::isRegularFile)
+                    .map(path -> path.getFileName().toString())
+                    .filter(name -> !RAW_BUNDLE_NAME.equals(name) && !RAW_MANIFEST_NAME.equals(name))
+                    .sorted(String::compareToIgnoreCase)
+                    .forEach(rootFiles::add);
+        }
+
+        return new RawUploadSummary(groups, rootFiles);
+    }
+
+    private Path createRawBundleZip(Path home) throws IOException {
+        Path bundlePath = home.resolve(RAW_BUNDLE_NAME);
+        Files.deleteIfExists(bundlePath);
+
+        // Ensure previous manifest is removed so it isn't embedded
+        Files.deleteIfExists(home.resolve(RAW_MANIFEST_NAME));
+
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(bundlePath,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+            zos.setLevel(Deflater.DEFAULT_COMPRESSION);
+            java.util.Set<Path> visited = new HashSet<>();
+
+            try (var stream = Files.list(home)) {
+                for (Path entry : (Iterable<Path>) stream::iterator) {
+                    String name = entry.getFileName().toString();
+                    if (RAW_BUNDLE_NAME.equals(name) || RAW_MANIFEST_NAME.equals(name)) {
+                        continue;
+                    }
+                    addPathToZip(entry, name, zos, visited);
+                }
+            }
+        }
+        return bundlePath;
+    }
+
+    private void addPathToZip(Path path, String relative, ZipOutputStream zos, java.util.Set<Path> visited) throws IOException {
+        if (relative == null || relative.isBlank()) {
+            return;
+        }
+
+        if (Files.isSymbolicLink(path)) {
+            Path target;
+            try {
+                target = path.toRealPath();
+            } catch (IOException ex) {
+                System.err.println("Warning: failed to resolve symlink " + path + ": " + ex.getMessage());
+                return;
+            }
+            if (Files.isDirectory(target)) {
+                addDirectoryToZip(target, relative, zos, visited);
+            } else if (Files.isRegularFile(target)) {
+                addFileToZip(target, relative, zos);
+            }
+            return;
+        }
+
+        if (Files.isDirectory(path)) {
+            addDirectoryToZip(path, relative, zos, visited);
+            return;
+        }
+
+        if (Files.isRegularFile(path)) {
+            addFileToZip(path, relative, zos);
+        }
+    }
+
+    private void addDirectoryToZip(Path dir, String relative, ZipOutputStream zos, java.util.Set<Path> visited) throws IOException {
+        Path real = dir.toRealPath();
+        if (!visited.add(real)) {
+            return; // prevent cycles
+        }
+
+        String entryName = relative.endsWith("/") ? relative : relative + "/";
+        ZipEntry entry = new ZipEntry(entryName);
+        zos.putNextEntry(entry);
+        zos.closeEntry();
+
+        try (var stream = Files.list(dir)) {
+            for (Path child : (Iterable<Path>) stream::iterator) {
+                String childRelative = entryName + child.getFileName().toString();
+                addPathToZip(child, childRelative, zos, visited);
+            }
+        }
+    }
+
+    private void addFileToZip(Path file, String relative, ZipOutputStream zos) throws IOException {
+        ZipEntry entry = new ZipEntry(relative);
+        zos.putNextEntry(entry);
+        try (InputStream in = Files.newInputStream(file)) {
+            copyToZip(in, zos);
+        } finally {
+            zos.closeEntry();
+        }
+    }
+
+    private Path writeRawManifest(Path home,
+            RawDatasetSnapshot snapshot,
+            RawUploadSummary summary,
+            Path bundlePath) throws IOException {
+
+        Path manifestPath = home.resolve(RAW_MANIFEST_NAME);
+        Files.deleteIfExists(manifestPath);
+
+        Map<String, Object> manifest = new LinkedHashMap<>();
+
+        String resolvedTitle = snapshot.getTitle();
+        if (resolvedTitle == null || resolvedTitle.isBlank()) {
+            resolvedTitle = defaultRawDatasetTitle();
+        } else {
+            resolvedTitle = resolvedTitle.trim();
+        }
+
+        manifest.put("title", resolvedTitle);
+        manifest.put("createdAt", OffsetDateTime.now().toString());
+        manifest.put("module", "raw");
+        manifest.put("dataType", "spec");
+        manifest.put("sampleCount", summary.sampleCount);
+        manifest.put("ms2Count", summary.groupSamples.getOrDefault("MS2", Collections.emptyList()).size());
+        manifest.put("groups", summary.groupSamples);
+        manifest.put("rootFiles", summary.rootFiles);
+        manifest.put("containsMetadata", snapshot.isContainsMetadata());
+        manifest.put("uploadedArchives", snapshot.getUploadedArchives());
+        manifest.put("polarity", snapshot.getPolarity());
+        manifest.put("msMode", snapshot.getMsMode());
+        manifest.put("bundleFile", bundlePath.getFileName().toString());
+        manifest.put("bundleSizeBytes", Files.size(bundlePath));
+        String checksum = sha256Hex(bundlePath);
+        if (checksum != null) {
+            manifest.put("bundleSha256", checksum);
+        }
+        if (!snapshot.getExtras().isEmpty()) {
+            manifest.put("extras", snapshot.getExtras());
+        }
+
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        try (var writer = Files.newBufferedWriter(manifestPath,
+                StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING)) {
+            mapper.writeValue(writer, manifest);
+        }
+
+        return manifestPath;
+    }
+
+    private DatasetFile datasetFileFor(Path path, String role) throws IOException {
+        DatasetFile df = new DatasetFile();
+        df.setRole(role);
+        df.setFilename(path.getFileName().toString());
+        String ext = extOf(df.getFilename());
+        df.setType(ext.isEmpty() ? "bin" : ext);
+        df.setSizeBytes(Files.size(path));
+        df.setUploadedAt(OffsetDateTime.now());
+        return df;
+    }
+
+    private void copyToZip(InputStream in, ZipOutputStream out) throws IOException {
+        byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+    }
+
+    private String sha256Hex(Path file) {
+        try (InputStream in = Files.newInputStream(file)) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[STREAM_BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+            byte[] hash = digest.digest();
+            StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (Exception ex) {
+            System.err.println("Warning: unable to compute SHA-256 for " + file + " (" + ex.getMessage() + ")");
+            return null;
+        }
+    }
+
+    private String defaultRawDatasetTitle() {
+        return "Raw spectra " + OffsetDateTime.now().format(RAW_TITLE_FMT);
+    }
+
+    private Map<String, Object> restoreRawWorkspace(Path home) throws IOException {
+        if (home == null) {
+            return Collections.emptyMap();
+        }
+        Path bundle = home.resolve(RAW_BUNDLE_NAME);
+        if (Files.exists(bundle)) {
+            unzipInto(bundle, home);
+            try {
+                Files.deleteIfExists(bundle);
+            } catch (Exception ignore) {
+            }
+        }
+        Map<String, Object> manifest = readRawManifest(home);
+        applyRawManifest(manifest);
+        return manifest;
+    }
+
+    private Map<String, Object> readRawManifest(Path home) {
+        if (home == null) {
+            return Collections.emptyMap();
+        }
+        Path manifest = home.resolve(RAW_MANIFEST_NAME);
+        if (!Files.exists(manifest)) {
+            return Collections.emptyMap();
+        }
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        try (InputStream in = Files.newInputStream(manifest)) {
+            return mapper.readValue(in, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (Exception e) {
+            System.err.println("Warning: unable to read raw manifest: " + e.getMessage());
+            return Collections.emptyMap();
+        }
+    }
+
+    private void applyRawManifest(Map<String, Object> manifest) {
+        if (manifest == null || manifest.isEmpty()) {
+            return;
+        }
+
+        if (spectraControlBean != null) {
+            Object sampleCount = manifest.get("sampleCount");
+            if (sampleCount instanceof Number num) {
+                spectraControlBean.setTotalNumberOfSamples(num.intValue());
+            }
+            spectraControlBean.setDataConfirmed(true);
+        }
+
+        List<String> uploadedNames = null;
+        if (spectraProcessBean != null) {
+            Object containsMeta = manifest.get("containsMetadata");
+            if (containsMeta instanceof Boolean bool) {
+                spectraProcessBean.setContainsMetaVal(bool);
+            }
+
+            Object archives = manifest.get("uploadedArchives");
+            if (archives instanceof List<?> list) {
+                uploadedNames = list.stream()
+                        .map(obj -> Objects.toString(obj, ""))
+                        .filter(s -> !s.isBlank())
+                        .collect(Collectors.toCollection(ArrayList::new));
+                spectraProcessBean.setUploadedFileNamesSaved(uploadedNames);
+            }
+
+            Object msMode = manifest.get("msMode");
+            if (!(msMode instanceof String) || ((String) msMode).isBlank()) {
+                Object extras = manifest.get("extras");
+                if (extras instanceof Map<?, ?> extraMap) {
+                    Object alt = extraMap.get("ms2DataOption");
+                    if (alt instanceof String str && !str.isBlank()) {
+                        msMode = str;
+                    }
+                }
+            }
+            if (msMode instanceof String str && !str.isBlank()) {
+                spectraProcessBean.setMs2DataOpt(str);
+            }
+        }
+
+        if (spectraParamBean != null) {
+            Object polarity = manifest.get("polarity");
+            if (polarity instanceof String pol && !pol.isBlank()) {
+                spectraParamBean.setPolarity(pol);
+            }
+        }
+
+        if (spectraControlBean != null) {
+            Object groupsObj = manifest.get("groups");
+            List<String> includedFromManifest = new ArrayList<>();
+            if (groupsObj instanceof Map<?, ?> groupsMap) {
+                for (Object value : groupsMap.values()) {
+                    if (value instanceof List<?> list) {
+                        for (Object elem : list) {
+                            String name = Objects.toString(elem, "");
+                            if (!name.isBlank()) {
+                                includedFromManifest.add(name);
+                            }
+                        }
+                    }
+                }
+            }
+            if (!includedFromManifest.isEmpty()) {
+                String vector = DataUtils.createStringVector(includedFromManifest.toArray(new String[0]));
+                spectraControlBean.setIncludedFileNamesString(vector);
+            }
+        }
+
+        Object extrasObj = manifest.get("extras");
+        if (extrasObj instanceof Map<?, ?> extras) {
+            Object fromDrive = extras.get("fromGoogleDrive");
+            if (fromDrive instanceof Boolean bool && spectraProcessBean != null) {
+                spectraProcessBean.setFromGoogleDrive(bool);
+            }
+            Object params = extras.get("processingParams");
+            if (params instanceof Map<?, ?> paramMap) {
+                applyRawProcessingParams(paramMap);
+            }
+        }
+
+        if (spectraUploadBean != null) {
+            spectraUploadBean.setSpectraUploaded(true);
+            if (uploadedNames != null) {
+                spectraUploadBean.setUploadedFileNames(new ArrayList<>(uploadedNames));
+            }
+        }
+
+        sb.setAnalType("raw");
+        sb.setDataType("spec");
+        sb.setDataUploaded();
+        sb.setSaveEnabled(true);
+    }
+
+    private void applyRawInclusionDefaults() {
+        if (spectraControlBean == null || spectraProcessBean == null) {
+            return;
+        }
+        try {
+            List<SpecBean> beans = spectraProcessBean.getSpecBeans();
+            if (beans == null || beans.isEmpty()) {
+                return;
+            }
+            List<String> included = beans.stream()
+                    .filter(spec -> !spec.isDisabled() && spec.isInclude())
+                    .map(SpecBean::getName)
+                    .filter(name -> name != null && !name.isBlank())
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (included.isEmpty()) {
+                return;
+            }
+            String vector = DataUtils.createStringVector(included.toArray(new String[0]));
+            spectraControlBean.setIncludedFileNamesString(vector);
+            spectraControlBean.setDataConfirmed(true);
+        } catch (Exception ex) {
+            System.err.println("Warning: unable to derive inclusion defaults: " + ex.getMessage());
+        }
+    }
+
+    private void applyRawProcessingParams(Map<?, ?> paramMap) {
+        if (spectraParamBean == null || paramMap == null) {
+            return;
+        }
+        Object peakMethod = paramMap.get("peakMethod");
+        if (peakMethod instanceof String str && !str.isBlank()) {
+            spectraParamBean.setPeakmeth(str);
+        }
+        Object rtMethod = paramMap.get("rtMethod");
+        if (rtMethod instanceof String str && !str.isBlank()) {
+            spectraParamBean.setRtmeth(str);
+        }
+        Object mzLow = paramMap.get("mzTrimLower");
+        if (mzLow instanceof Number num) {
+            spectraParamBean.setMztrimdown(num.doubleValue());
+        }
+        Object mzHigh = paramMap.get("mzTrimUpper");
+        if (mzHigh instanceof Number num) {
+            spectraParamBean.setMztrimup(num.doubleValue());
+        }
+        Object fwhm = paramMap.get("fwhmThresh");
+        if (fwhm instanceof Number num) {
+            spectraParamBean.setFwhmThresh(num.doubleValue());
+        }
+        Object mzAbsAdd = paramMap.get("mzAbsoluteAdd");
+        if (mzAbsAdd instanceof Number num) {
+            spectraParamBean.setMz_abs_add(num.doubleValue());
+        }
+        Object corrTh = paramMap.get("corrEicThreshold");
+        if (corrTh instanceof Number num) {
+            spectraParamBean.setCorr_eic_th(num.doubleValue());
+        }
+        Object maxCharge = paramMap.get("maxCharge");
+        if (maxCharge instanceof Number num) {
+            spectraParamBean.setMax_charge(num.intValue());
+        }
+        Object maxIso = paramMap.get("maxIso");
+        if (maxIso instanceof Number num) {
+            spectraParamBean.setMax_iso(num.intValue());
+        }
+    }
+
+    private static final class RawUploadSummary {
+
+        private final Map<String, List<String>> groupSamples;
+        private final List<String> rootFiles;
+        private final int sampleCount;
+
+        private RawUploadSummary(Map<String, List<String>> groupSamples, List<String> rootFiles) {
+            Map<String, List<String>> groupCopy = new LinkedHashMap<>();
+            int total = 0;
+            for (Map.Entry<String, List<String>> entry : groupSamples.entrySet()) {
+                List<String> samples = new ArrayList<>(entry.getValue());
+                total += samples.size();
+                groupCopy.put(entry.getKey(), Collections.unmodifiableList(samples));
+            }
+            this.groupSamples = Collections.unmodifiableMap(groupCopy);
+            this.rootFiles = Collections.unmodifiableList(new ArrayList<>(rootFiles));
+            this.sampleCount = total;
+        }
+    }
+
+    private static void putIfNotNull(Map<String, Object> map, String key, Object value) {
+        if (map != null && key != null && value != null) {
+            map.put(key, value);
+        }
+    }
+
     public StreamedContent getDownloadSelected() {
         try {
             if (selected == null || selected.getId() == null || selected.getFilename() == null) {
@@ -916,6 +1463,14 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             }
 
             // 5) Load any java_history.json if present
+            if ("raw".equalsIgnoreCase(ds.getModule())) {
+                try {
+                    restoreRawWorkspace(dstDir);
+                } catch (IOException rawEx) {
+                    System.err.println("Warning: failed to restore raw workspace: " + rawEx.getMessage());
+                }
+            }
+
             File histFile = new File(sb.getCurrentUser().getHomeDir(), "java_history.json");
             if (histFile.exists()) {
                 try {
@@ -1161,11 +1716,17 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
                 // Raw mode expects a raw file
                 case "raw": {
-                    if (rawName == null) {
-                        sb.addMessage("Error", "No raw file (role=raw).");
-                        return false;
+                    Path home = Paths.get(sb.getCurrentUser().getHomeDir());
+                    restoreRawWorkspace(home);
+                    if (spectraProcessBean != null) {
+                        try {
+                            spectraProcessBean.reloadRawSpecBean();
+                        } catch (Exception reloadEx) {
+                            System.err.println("Warning: failed to reload raw spectra beans: " + reloadEx.getMessage());
+                        }
+                        applyRawInclusionDefaults();
                     }
-                    ok = RDataUtils.readTextDataReload(RC, rawName);
+                    ok = true;
                     break;
                 }
 
@@ -1536,6 +2097,45 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         }
         ds1.setFiles(ds1Files);
         ds1.setFileCount(ds1Files.size());
+
+        datasetTableExample.add(ds1);
+
+        // Example 4 - Raw spectra bundle
+        ds1 = new DatasetRow();
+        ds1.setId(UUID.fromString("f2c2f1af-1949-4ae5-bf85-222773d35f0b"));
+        ds1.setTitle("Raw spectra 20251102_2156");
+        ds1.setFilename("_ma_raw_bundle.zip");
+        ds1.setType("zip");
+        ds1.setSizeBytes(21_627_071L);
+        ds1.setUploadedAt(OffsetDateTime.now().minusDays(1));
+        ds1.setEmail("example");
+        ds1.setNode("vip2");
+        ds1.setSamplenum(10);
+        ds1.setModule("raw");
+        ds1.setDataType("spec");
+        ds1.setDescription("Example LC-MS raw spectra bundle for testing the raw workflow. Includes processed manifest and zipped uploads.");
+        ds1.setTags(List.of("spectra", "example"));
+        ds1.setOrigin("Example");
+
+        ds1Files = new ArrayList<>();
+        {
+            DatasetFile f1 = new DatasetFile();
+            f1.setRole("raw");
+            f1.setFilename("_ma_raw_bundle.zip");
+            f1.setType("zip");
+            f1.setSizeBytes(21_627_071L);
+            ds1Files.add(f1);
+
+            DatasetFile manifest = new DatasetFile();
+            manifest.setRole("manifest");
+            manifest.setFilename("_ma_raw_manifest.json");
+            manifest.setType("json");
+            manifest.setSizeBytes(2_048L);
+            ds1Files.add(manifest);
+        }
+        ds1.setFiles(ds1Files);
+        ds1.setFileCount(ds1Files.size());
+        ds1.setHasMetadata(false);
 
         datasetTableExample.add(ds1);
 

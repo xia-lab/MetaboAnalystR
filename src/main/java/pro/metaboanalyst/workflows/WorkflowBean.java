@@ -64,6 +64,7 @@ import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.models.SampleBean;
 import pro.metaboanalyst.utils.DataUtils;
+import pro.metaboanalyst.rwrappers.RCenter;
 
 @Named("workflowBean")
 @SessionScoped
@@ -2086,9 +2087,10 @@ public class WorkflowBean implements Serializable {
             ///////////////loading dataset
             boolean res = ds.load(ds.getSelected(), true);
 
-            /* if (res) {
+            if (res && ds.getSelected().getModule().equals("raw")) {
+                System.out.println("handledataset========");
                 boolean res2 = ds.handleDataset(ds.getSelected());
-            }*/
+            }
             ////////////////////
             ///loading workflow/
              final String fileName = (String) selectedWorkflow.get("filename");
@@ -2793,14 +2795,47 @@ public class WorkflowBean implements Serializable {
 
     public void viewRunResults(WorkflowRunModel run) {
         selectedWorkflowRun = run;
-        boolean res = fbc.loadProject(run.getProjectId(), "workflow");
-        if (res) {
-            DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?callFunc=checkPagesToVisit", ab);
-        } else {
-            sb.addMessage("error", "Unable to load project.");
+        try {
+            DatasetRow sel = null;
+            if (run.getDatasetId() != null) {
+                sel = ds.findById(run.getDatasetId());
+                if (sel == null) {
+                    ds.reloadTable();
+                    sel = ds.findById(run.getDatasetId());
+                }
+            }
 
+            boolean isRawDataset = sel != null && "raw".equalsIgnoreCase(nz(sel.getModule()));
+
+            boolean res = fbc.loadProject(run.getProjectId(), isRawDataset ? "project" : "workflow", isRawDataset);
+            if (!res) {
+                sb.addMessage("error", "Unable to load project.");
+                return;
+            }
+
+            if (isRawDataset) {
+                String folderName = nz(run.getProjectId());
+                if (!folderName.isEmpty()) {
+                    Path src = Paths.get("/data/glassfish/projects/metaboanalyst", folderName);
+                    Path dest = Paths.get(sb.getCurrentUser().getHomeDir());
+                    if (Files.isDirectory(src)) {
+                        DataUtils.createAndCopyFolder(src.toString(), dest.toString());
+                    }
+                }
+                try {
+                    RCenter.loadHistory(sb.getRConnection());
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, "Failed to load raw workflow history", ex);
+                }
+                dv.setWorkflowFinished(true);
+                DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml", ab);
+            } else {
+                DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?callFunc=checkPagesToVisit", ab);
+            }
+        } catch (Exception ex) {
+            sb.addMessage("error", "Unable to load project: " + ex.getMessage());
+            ex.printStackTrace();
         }
-
     }
 
     public String statusIcon(String status) {
@@ -3003,6 +3038,7 @@ public class WorkflowBean implements Serializable {
             }
         } catch (Exception ignored) {
         }
+        System.out.println("============" + v.toString());
         return v.toString();
     }
 }

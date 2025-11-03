@@ -414,6 +414,16 @@ public class FireBaseController implements Serializable {
         ProjectModel selectedProject = createProjectFromMap(docData);
         pb.setSelectedProject(selectedProject);
 
+        if ("raw".equalsIgnoreCase(sb.getAnalType()) && saveDataBoolean && !dc.hasStagedDataset()) {
+            try {
+                if (!dc.stageCurrentRawWorkspace()) {
+                    sb.addMessage("warn", "Unable to prepare raw dataset for saving. Proceeding without committing data files.");
+                }
+            } catch (Exception stageEx) {
+                sb.addMessage("warn", "Raw dataset staging failed: " + stageEx.getMessage());
+            }
+        }
+
         if (dc.hasStagedDataset() && saveDataBoolean) {
             dc.getStagedDataset().setSamplenum(RDataUtils.getSampleNum(sb.getRConnection()));
             java.util.UUID dsId = dc.commitStagedDataset();

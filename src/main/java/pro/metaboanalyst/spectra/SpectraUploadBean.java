@@ -27,6 +27,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.inject.Named;
+import pro.metaboanalyst.datacenter.DatasetController;
 import pro.metaboanalyst.utils.DataUtils;
 import org.primefaces.model.file.UploadedFile;
 import org.primefaces.event.FileUploadEvent;
@@ -68,6 +69,9 @@ public class SpectraUploadBean implements Serializable {
 
     @Inject
     private SpectraParamBean spb;
+    
+    @Inject
+    private DatasetController dc;
 
     @JsonIgnore
     @Inject
@@ -341,6 +345,9 @@ public class SpectraUploadBean implements Serializable {
         sb.setSaveEnabled(true);
         spb.setPolarity("negative");
         spectraUploaded = true;
+        if (dc != null) {
+            dc.stageCurrentRawWorkspace();
+        }
         return "Spectra check";
     }
 
@@ -383,6 +390,9 @@ public class SpectraUploadBean implements Serializable {
         pcb.setTotalNumberOfSamples(30);
         spb.setPolarity("positive");
         spectraUploaded = true;
+        if (dc != null) {
+            dc.stageCurrentRawWorkspace();
+        }
         return "Spectra check";
     }
 
@@ -427,6 +437,9 @@ public class SpectraUploadBean implements Serializable {
         pcb.setTotalNumberOfSamples(30);
         spb.setPolarity("positive");
         spectraUploaded = true;
+        if (dc != null) {
+            dc.stageCurrentRawWorkspace();
+        }
 
         return "Spectra check";
     }
@@ -473,6 +486,9 @@ public class SpectraUploadBean implements Serializable {
         pcb.setTotalNumberOfSamples(16);
         spb.setPolarity("negative");
         spectraUploaded = true;
+        if (dc != null) {
+            dc.stageCurrentRawWorkspace();
+        }
 
         return "Spectra check";
     }
@@ -557,6 +573,9 @@ public class SpectraUploadBean implements Serializable {
         pcb.setTotalNumberOfSamples(19);
         spb.setPolarity("negative");
         spectraUploaded = true;
+        if (dc != null) {
+            dc.stageCurrentRawWorkspace();
+        }
 
         return "Spectra check";
     }

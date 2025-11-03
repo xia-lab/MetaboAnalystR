@@ -280,7 +280,8 @@ public class MyPhaseListener implements PhaseListener {
         DiagramView dv = getBeanByName("diagramView", DiagramView.class);
         FireBaseController fbc = getBeanByName("fireBaseController", FireBaseController.class);
         MailService ms = getBeanByName("mailService", MailService.class);
-
+        DatabaseClient db = getBeanByName("databaseClient", DatabaseClient.class);
+        WorkflowBean wb = getBeanByName("workflowBean", WorkflowBean.class);
         try {
             String folderName = request.getParameter("folderName");
             String jobId = request.getParameter("jobId");
@@ -291,13 +292,16 @@ public class MyPhaseListener implements PhaseListener {
                 FireUserBean fu = getBeanByName("fireUserBean", FireUserBean.class);
                 fu.setEmail(email);
 
-                RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
-
                 PrimeFaces.current().executeScript("PF('rawWorkflowProgressDialog').hide()");
 
                 fbc.setFireDocName("Workflow Project");
                 boolean saveRes = fbc.saveProject("project");
                 if (saveRes) {
+                    RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("status", "completed");
+                    updates.put("project_id", sb.getShareToken());
+                    String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
                     RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
                             && Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {

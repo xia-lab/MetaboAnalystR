@@ -17,6 +17,9 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.diagram.ConnectEvent;
 import org.primefaces.event.diagram.ConnectionChangeEvent;
@@ -208,6 +212,23 @@ public class DiagramView implements Serializable {
 
     public Map<String, Boolean> getSelectionMap() {
         return selectionMap;
+    }
+
+    private boolean isRawWorkflowRequested() {
+        if (selectionMap.getOrDefault("LC-MS Spectra", false)) {
+            return true;
+        }
+        String dataType = sb.getDataType();
+        return dataType != null && dataType.equalsIgnoreCase("spec");
+    }
+
+    private void ensureRawModuleSelected() {
+        if (!isRawWorkflowRequested()) {
+            return;
+        }
+        selectionMap.put("Spectra Parameters Settings", true);
+        selectionMap.put("Spectra Processing", true);
+
     }
 
     public boolean isWorkflowFinished() {
@@ -1636,7 +1657,7 @@ public class DiagramView implements Serializable {
         RDataUtils.initDataObjects(sb.getRConnection(), sb.getDataType(), name, sb.isPaired());
         RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), name);
         String errMsg = "";
-        System.out.print("executemodule===========" + name); 
+        System.out.print("executemodule===========" + name);
         switch (name) {
             case "mf" -> {
 
@@ -1987,6 +2008,8 @@ public class DiagramView implements Serializable {
         if (okBool) {
             for (String nm : steps) {
                 try {
+                    sb.addMessage("info", "Executing workflow+++++=: " + nm);
+
                     int res = wfv.executeWorkflow(nm);
                     if (res == 0) {
                         sb.addMessage("error", "Error occured at this step: " + nm);
@@ -2185,7 +2208,9 @@ public class DiagramView implements Serializable {
         wb.setDataName(fileName);
         wb.setDataFormat("colu");
         wb.setDataType("disc");
+        sb.setDataFormat("colu");
         sb.setDataType("disc");
+        sb.setDataUploaded();
 
         RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "RAW_FINISHED");
         boolean res = resumeWorkflow();
@@ -2461,7 +2486,6 @@ public class DiagramView implements Serializable {
             }
             sb.setLoggedIn(false);
 
-
             StickyDTO sticky = dc.exportSticky();
 
             // reset other state you want cleared (optional)
@@ -2490,6 +2514,7 @@ public class DiagramView implements Serializable {
 
     public void submitWorkflowJob() {
 //ab.isOnZgyPc() ||
+        ensureRawModuleSelected();
         boolean res = false;
         if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isOnZgyPc()) {
             if (selectionMap.getOrDefault("Spectra Processing", false)) {
@@ -2510,7 +2535,7 @@ public class DiagramView implements Serializable {
                 updates.put("status", "running");
                 String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
                 wb.getSelectedWorkflowRun().setStatus("running");
-                
+
                 System.out.println("[workflow-run] " + msg);
             } else {
                 System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");
@@ -2585,8 +2610,7 @@ public class DiagramView implements Serializable {
 
         // 9) Show progress dialog & notify
         //PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");
-
-        sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.",false);
+        sb.addMessage("info", "Workflow has started processing... You will receive an email once it finishes.", false);
         return true;
     }
 
@@ -2911,7 +2935,6 @@ public class DiagramView implements Serializable {
         return moduleName;
     }
 
-    
     private static final Logger LOGGER = Logger.getLogger(DiagramView.class.getName());
 
     // === Convert Set<WorkflowParameters> to a deterministic List ===
@@ -3068,13 +3091,15 @@ public class DiagramView implements Serializable {
             return false;
         }
 
+        ensureRawModuleSelected();
+
         lastExecutedSteps = new LinkedHashSet<>();
         List<String> naviTypes = new ArrayList<>();
         List<String> origNaviTypes = new ArrayList<>();
         List<String> procs = new ArrayList<>();
 
         // Gather selected nodes
-                                    System.out.println("startworkflowanaltype======" + sb.getAnalType()  );
+        System.out.println("startworkflowanaltype======" + sb.getAnalType());
 
         for (Map.Entry<String, Boolean> entry : selectionMap.entrySet()) {
             String nodeName = entry.getKey();
@@ -3096,23 +3121,79 @@ public class DiagramView implements Serializable {
 
         // Persist modules and deduplicate (preserve order)
         wb.setModuleNames(naviTypes);
-        List<String> moduleNms = new ArrayList<>(new LinkedHashSet<>(wb.getModuleNames()));
 
-        if (moduleNms.size() > 1) {
+        // Preserve first occurrence mapping module -> UI node
+        Map<String, String> moduleToOrig = new LinkedHashMap<>();
+        for (int i = 0; i < naviTypes.size(); i++) {
+            String module = naviTypes.get(i);
+            if (!moduleToOrig.containsKey(module) && i < origNaviTypes.size()) {
+                moduleToOrig.put(module, origNaviTypes.get(i));
+            }
+        }
+
+        List<String> moduleSequence = new ArrayList<>(new LinkedHashSet<>(wb.getModuleNames()));
+        boolean rawPresent = moduleSequence.remove("raw");
+        if (rawPresent) {
+            moduleSequence.add(0, "raw");
+        }
+
+        List<String> origOrdered = moduleSequence.stream()
+                .map(m -> moduleToOrig.getOrDefault(m, convertToBlockName(m)))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        wb.setModuleNames(new ArrayList<>(moduleSequence));
+
+        if (moduleSequence.size() > 1) {
             wb.setReloadingWorkflow(false);
         }
 
-        // Early raw path
-        if (moduleNms.contains("raw")) {
+        if (rawPresent) {
             jeb.setStopStatusCheck(false);
-            executeModule("raw", "Spectra Processing");
-            return false;
+            boolean rawOk = executeModule("raw", origOrdered.isEmpty() ? "Spectra Processing" : origOrdered.get(0));
+            if (!rawOk) {
+                successExecutionMap.put("Spectra Processing", false);
+                return false;
+            }
+            successExecutionMap.put("Spectra Processing", true);
+            executionMap.put("Spectra Processing", true);
+
+            if (ab.shouldUseScheduler()) {
+                return false;
+            }
+
+            // Continue immediately with downstream modules (local execution)
+            if (!moduleSequence.isEmpty()) {
+                moduleSequence.remove(0);
+            }
+            if (!origOrdered.isEmpty()) {
+                origOrdered.remove(0);
+            }
+            Path processedTable = Paths.get(sb.getCurrentUser().getHomeDir(), "metaboanalyst_input.csv");
+            if (Files.exists(processedTable)) {
+                wb.setDataName("metaboanalyst_input.csv");
+                wb.setDataFormat("colu");
+                wb.setDataType("disc");
+                sb.setDataFormat("colu");
+                sb.setDataType("disc");
+            } else {
+                sb.addMessage("warn", "Spectra processing output (metaboanalyst_input.csv) was not found; downstream modules may fail.");
+            }
+            wb.setModuleNames(new ArrayList<>(moduleSequence));
         }
 
-        if (moduleNms.isEmpty()) {
+        if (moduleSequence.isEmpty()) {
+            if (rawPresent) {
+                workflowFinished = true;
+                updatingDiagramAfterFinish();
+                sb.addMessage("info", "Spectra processing has completed.");
+                return true;
+            }
             sb.addMessage("warn", "Please select at least an analysis module before proceeding4!");
             return false;
         }
+
+        List<String> moduleNms = moduleSequence;
+        origNaviTypes = origOrdered;
 
         // Build run plans
         Set<WorkflowParameters> wfOptsSet = wb.getWorkflowOptions(); // Set<>
