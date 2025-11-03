@@ -2008,8 +2008,6 @@ public class DiagramView implements Serializable {
         if (okBool) {
             for (String nm : steps) {
                 try {
-                    sb.addMessage("info", "Executing workflow+++++=: " + nm);
-
                     int res = wfv.executeWorkflow(nm);
                     if (res == 0) {
                         sb.addMessage("error", "Error occured at this step: " + nm);

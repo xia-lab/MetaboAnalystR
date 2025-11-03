@@ -295,7 +295,7 @@ public class MyPhaseListener implements PhaseListener {
                 PrimeFaces.current().executeScript("PF('rawWorkflowProgressDialog').hide()");
 
                 fbc.setFireDocName("Workflow Project");
-                boolean saveRes = fbc.saveProject("project");
+                boolean saveRes = fbc.saveProject("workflow");
                 if (saveRes) {
                     RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
                     Map<String, Object> updates = new HashMap<>();
@@ -692,7 +692,7 @@ public class MyPhaseListener implements PhaseListener {
             if (matchingEntry.isPresent()) {
                 Object token2 = matchingEntry.get().getValue();
                 try {
-                    boolean res1 = fbc.loadProject(token2 + "", "project", true);
+                    boolean res1 = fbc.loadProject(token2 + "", "workflow", true);
                     if (res1) {
                         fub.setEmail(email);
                         dv.setWorkflowFinished(true);

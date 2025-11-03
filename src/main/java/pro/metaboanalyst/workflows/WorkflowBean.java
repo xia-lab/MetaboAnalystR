@@ -2121,6 +2121,8 @@ public class WorkflowBean implements Serializable {
             fbc.setFireDocName(run.getName());
             fbc.setFireDocDescription(run.getDescription());
             System.out.println("selwfrun=====" + getSelectedWorkflowRun().getId());
+            fbc.setSaveDataBoolean(false);
+            fbc.setSaveWorkflowBoolean(false);
 
             dv.submitWorkflowJob();
 
@@ -2214,7 +2216,7 @@ public class WorkflowBean implements Serializable {
         sb.addMessage("warn", "No workflow found with id = " + id);
         return false;
     }
-    @JsonIgnore
+
     private WorkflowRunModel selectedWorkflowRun;
 
     public WorkflowRunModel getSelectedWorkflowRun() {
@@ -2809,7 +2811,7 @@ public class WorkflowBean implements Serializable {
 
             boolean isRawDataset = sel != null && "raw".equalsIgnoreCase(nz(sel.getModule()));
 
-            boolean res = fbc.loadProject(run.getProjectId(), isRawDataset ? "project" : "workflow", isRawDataset);
+            boolean res = fbc.loadProject(run.getProjectId(), "workflow");
             if (!res) {
                 sb.addMessage("error", "Unable to load project.");
                 return;

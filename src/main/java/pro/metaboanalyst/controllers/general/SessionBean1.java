@@ -1886,7 +1886,7 @@ public class SessionBean1 implements Serializable {
         final String kind = (type == null ? "info" : type).toLowerCase(java.util.Locale.ROOT);
         msg = DataUtils.replaceMarkup(msg); // your existing sanitizer
 
-        final boolean suppressGrowl = getWorkflowBean().isReloadingWorkflow() || showGrowl;
+        final boolean displayGrowl = showGrowl || !getWorkflowBean().isReloadingWorkflow();
 
         FacesMessage.Severity severity;
         String summary;
@@ -1899,11 +1899,9 @@ public class SessionBean1 implements Serializable {
                 summary = "Error";
                 colorCss = "red";
                 prefix = "[ERROR]: ";
-                //if (!suppressGrowl) { //error should always show!
-                    FacesContext.getCurrentInstance().addMessage(
-                            null, new FacesMessage(severity, summary, msg)
-                    );
-                //}
+                FacesContext.getCurrentInstance().addMessage(
+                        null, new FacesMessage(severity, summary, msg)
+                );
                 noticeSize++;
                 PrimeFaces.current().ajax().update("formBell");
             }
@@ -1913,7 +1911,7 @@ public class SessionBean1 implements Serializable {
                 summary = "Warning";
                 colorCss = "orange";
                 prefix = "[WARNING]: ";
-                if (!suppressGrowl) {
+                if (displayGrowl) {
                     FacesContext.getCurrentInstance().addMessage(
                             null, new FacesMessage(severity, summary, msg)
                     );
@@ -1926,7 +1924,7 @@ public class SessionBean1 implements Serializable {
                 summary = "OK";
                 colorCss = "#4BB543";
                 prefix = "[Success]: ";
-                if (!suppressGrowl) {
+                if (displayGrowl) {
                     FacesContext.getCurrentInstance().addMessage(
                             null, new FacesMessage(severity, summary, msg)
                     );

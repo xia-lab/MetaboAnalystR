@@ -805,6 +805,13 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         java.nio.file.Path home = java.nio.file.Paths.get(sb.getCurrentUser().getHomeDir());
         for (DatasetFile f : stagedFiles) {
             java.nio.file.Path p = home.resolve(f.getFilename());
+            if (!java.nio.file.Files.exists(p)) {
+                // try absolute path (raw staging can produce full path entries)
+                java.nio.file.Path abs = java.nio.file.Paths.get(f.getFilename()).normalize();
+                if (java.nio.file.Files.exists(abs)) {
+                    p = abs;
+                }
+            }
             guessed.add(p);
         }
         return guessed;
