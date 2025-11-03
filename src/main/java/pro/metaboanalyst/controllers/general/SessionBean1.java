@@ -1894,22 +1894,21 @@ public class SessionBean1 implements Serializable {
         String prefix;
 
         switch (kind) {
-            case "error":
+            case "error" -> {
                 severity = FacesMessage.SEVERITY_ERROR;
                 summary = "Error";
                 colorCss = "red";
                 prefix = "[ERROR]: ";
-                if (!suppressGrowl) {
+                //if (!suppressGrowl) { //error should always show!
                     FacesContext.getCurrentInstance().addMessage(
                             null, new FacesMessage(severity, summary, msg)
                     );
-                }
+                //}
                 noticeSize++;
                 PrimeFaces.current().ajax().update("formBell");
-                break;
+            }
 
-            case "warn":
-            case "warning":
+            case "warn", "warning" -> {
                 severity = FacesMessage.SEVERITY_WARN;
                 summary = "Warning";
                 colorCss = "orange";
@@ -1921,9 +1920,8 @@ public class SessionBean1 implements Serializable {
                 }
                 noticeSize++;
                 PrimeFaces.current().ajax().update("formBell");
-                break;
-
-            default:
+            }
+            default -> {
                 severity = FacesMessage.SEVERITY_INFO;
                 summary = "OK";
                 colorCss = "#4BB543";
@@ -1933,7 +1931,7 @@ public class SessionBean1 implements Serializable {
                             null, new FacesMessage(severity, summary, msg)
                     );
                 }
-                break;
+            }
         }
 
         // Keep only the most recent 25 entries if we exceed 50

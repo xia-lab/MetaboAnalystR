@@ -213,19 +213,30 @@ public class FireUserBean implements Serializable {
     private long lastLoginAttemptTime = 0; // Store the last successful execution time (in milliseconds)
 
     public void doUserLogin() {
-        long currentTime = System.currentTimeMillis();
-        long timeSinceLastAttempt = currentTime - lastLoginAttemptTime;
- 
-        if (timeSinceLastAttempt < 10000) {
-            // Too soon - calculate remaining wait time
-              long timeRemaining = (10000 - timeSinceLastAttempt) / 1000;
-              sb.addMessage("error", String.format("Please wait %d more seconds before trying again!", timeRemaining));
-              return; // Block the attempt     
+
+        if (email == null || email.trim().length() == 0) {
+            sb.addMessage("error", String.format("Please provide your email."));
+            return;
         }
         
+        if (password == null || password.trim().length() == 0) {
+            sb.addMessage("error", String.format("Please enter your password."));
+            return;
+        }
+        
+        long currentTime = System.currentTimeMillis();
+        long timeSinceLastAttempt = currentTime - lastLoginAttemptTime;
+
+        if (timeSinceLastAttempt < 10000) {
+            // Too soon - calculate remaining wait time
+            long timeRemaining = (10000 - timeSinceLastAttempt) / 1000;
+            sb.addMessage("error", String.format("Please wait %d more seconds before trying again!", timeRemaining));
+            return; // Block the attempt     
+        }
+
         lastLoginAttemptTime = currentTime;
         boolean res = doUserLoginLocal();
-   
+
         if (res) {
             Faces.addResponseCookie("user", email, "/", 3600);
             fb.getUserMap().put(email, this);
@@ -330,7 +341,6 @@ public class FireUserBean implements Serializable {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
             //System.out.println("Setting resetToken as: " + resetToken + sdf.format(ExpDate));
-
             String res2 = db.insertToken(email, resetToken, sdf.format(ExpDate));
             //System.out.println(res2);
             try {

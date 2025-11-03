@@ -124,6 +124,115 @@
         .assistant-message table tr:nth-child(even) {
             background-color: var(--surface-50);
         }
+
+        /* Floating Chat Button - Manual colors for reliable rendering */
+        .floating-chat-button {
+            position: fixed !important;
+            bottom: 50px;
+            right: 20px;
+            z-index: 9999;
+            width: 72px !important;
+            height: 72px !important;
+            border-radius: 50% !important;
+            background-color: tomato !important;
+            color: white !important;
+            font-size: 2.2rem !important;
+            border: none !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+        }
+
+        .floating-chat-button:hover {
+            background-color: #ff6347 !important;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+            transform: scale(1.1) !important;
+        }
+
+        .floating-chat-button .ui-button-text {
+            display: none !important;
+        }
+
+        .floating-chat-button .ui-button-icon-left {
+            font-size: 2.2rem !important;
+            margin: 0 !important;
+            position: static !important;
+        }
+
+        /* Responsive Design - Tablet (768px and below) */
+        @media (max-width: 768px) {
+            .floating-chat-button {
+                width: 60px !important;
+                height: 60px !important;
+                font-size: 1.8rem !important;
+                right: 15px;
+                bottom: 15px;
+            }
+
+            .floating-chat-button .ui-button-icon-left {
+                font-size: 1.8rem !important;
+            }
+
+            /* Make dialog fill most of screen on tablets */
+            .ui-dialog.ui-widget {
+                width: 95vw !important;
+                max-width: 95vw !important;
+            }
+
+            /* Adjust chat dialog height for tablets */
+            #formChat\\:scrollPanel {
+                width: 100% !important;
+                height: 50vh !important;
+            }
+
+            /* Adjust input field width */
+            #formChat\\:chatInput {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+        }
+
+        /* Responsive Design - Mobile (480px and below) */
+        @media (max-width: 480px) {
+            .floating-chat-button {
+                width: 56px !important;
+                height: 56px !important;
+                font-size: 1.6rem !important;
+                right: 10px;
+                bottom: 10px;
+            }
+
+            .floating-chat-button .ui-button-icon-left {
+                font-size: 1.6rem !important;
+            }
+
+            /* Full screen dialog on mobile */
+            .ui-dialog.ui-widget {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                margin: 0 !important;
+                top: 0 !important;
+                left: 0 !important;
+            }
+
+            /* Adjust chat panel for mobile */
+            #formChat\\:scrollPanel {
+                width: 100% !important;
+                height: calc(100vh - 250px) !important;
+            }
+
+            /* Full width input on mobile */
+            #formChat\\:chatInput {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+        }
     </style>
     <div class="layout-topbar">
         <div class="topbar-left">
@@ -156,11 +265,6 @@
                         </p:badge>
                     </h:form>
                 </li>
-                <li>
-                    <p:commandLink id="botlnk" title="Ask OmicsBot questions" onclick="PF('OmicsBotDialog').show()">
-                        <i class="pi pi-comments" style="color: tomato !important; font-size: 1.8rem;"/>
-                    </p:commandLink>
-                </li>
                 <li class="right-sidebar-item">
                     <a tabindex="0">
                         <i class="pi pi-align-right"></i>
@@ -173,6 +277,14 @@
             <p:commandButton id="checkWorkflowInput" action="#{workflowBean.checkWorkflowInput()}" style="display: none"/>
         </div>
     </div>
+
+    <!-- Floating Chat Button (Bottom Right) -->
+    <p:commandButton id="chatFloatingBtn"
+                     icon="pi pi-comments"
+                     styleClass="floating-chat-button"
+                     title="Open Omics Assistant chat dialog - Ask questions about MetaboAnalyst"
+                     onclick="PF('OmicsBotDialog').show();" />
+
     <p:dialog modal="false" widgetVar="OmicsBotDialog" 
               style="height:600px;width:670px;display: flex;flex-direction: column;" 
               dynamic="true"
@@ -180,16 +292,17 @@
               draggable="true" closable="true" resizable="true"> 
         <h:form id="formChat">
             <h:panelGroup layout="block" style="text-align: right; padding-right: 10px;">
-                <p:commandButton value="Reset" 
+                <p:commandButton value="Reset"
                                  icon="pi pi-refresh"
-                                 actionListener="#{myBot.initAssistant()}" style="margin-right: 10px;" 
-                                 styleClass="mt-3" update="formChat"/>
-                <p:commandButton value="#{myBot.modelName}"  style="margin-right: 10px;" 
-                                 actionListener="#{myBot.modifyModel()}" styleClass="mt-3"    
-                                 update="formChat"/>
+                                 actionListener="#{myBot.initAssistant()}" style="margin-right: 10px;"
+                                 styleClass="mt-3" update="formChat"
+                                 title="Reset conversation and start a new chat session"/>
+                <p:commandButton value="#{myBot.altMdlName}"  style="margin-right: 10px;"
+                                 actionListener="#{myBot.modifyModel()}" styleClass="mt-3"
+                                 update="formChat"
+                                 title="Toggle between Gemini 2.5 Flash and Flash Lite models"/>
                 <i class="pi pi-question-circle" alt="help" style="font-size: 1.5rem; padding-top: 2px"
-                   title="OmicsBot runs on Google Gemini 2.5 Flash enhanced with our specialized knowledge base. If you experience any issues, 
-                   you can Reset to start a new conversation or switch to gemini-2.5-flash-lite."/>
+                   title="OmicsBot runs on Gemini 2.5 Flash with our knowledge base. Try to reset or switch to gemini-2.5-flash-lite when there is any issue."/>
             </h:panelGroup>
 
             <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 670px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">
@@ -210,17 +323,19 @@
                 <div class="indeterminate-progress-bar__progress"></div>
             </div>
             <h:panelGrid columns="2" style="padding-top: 4px; width: 90%">
-                <p:inputText id="chatInput" value="#{myBot.promptMsg}" 
-                             style="width:80%; min-width: 560px" 
+                <p:inputText id="chatInput" value="#{myBot.promptMsg}"
+                             style="width:80%; min-width: 560px"
                              class="surface-100"
-                             placeholder="Enter your query here ..."/>
+                             placeholder="Enter your query here ..."
+                             title="Type your question about MetaboAnalyst"/>
 
-                <p:commandButton id="sendButton" value="Send" 
+                <p:commandButton id="sendButton" value="Send"
                                  icon="pi pi-send"
-                                 actionListener="#{myBot.sendMsg}" 
+                                 actionListener="#{myBot.sendUserQuery}"
                                  onstart="$('#progressBar').show();"
-                                 oncomplete="scrollToBottom();$('#progressBar').hide();" 
-                                 update="formChat" />
+                                 oncomplete="scrollToBottom();$('#progressBar').hide();"
+                                 update="formChat"
+                                 title="Send your message to the Omics Assistant" />
 
                 <p:defaultCommand target="sendButton" />
             </h:panelGrid>
