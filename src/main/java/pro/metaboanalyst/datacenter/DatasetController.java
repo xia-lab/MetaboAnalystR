@@ -2103,7 +2103,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         // Example 4 - Raw spectra bundle
         ds1 = new DatasetRow();
         ds1.setId(UUID.fromString("f2c2f1af-1949-4ae5-bf85-222773d35f0b"));
-        ds1.setTitle("Raw spectra 20251102_2156");
+        ds1.setTitle("Raw spectra Demo");
         ds1.setFilename("_ma_raw_bundle.zip");
         ds1.setType("zip");
         ds1.setSizeBytes(21_627_071L);

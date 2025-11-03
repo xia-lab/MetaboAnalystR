@@ -2120,6 +2120,8 @@ public class WorkflowBean implements Serializable {
             //FireProjectBean pb = (FireProjectBean) DataUtils.findBean("fireProjectBean");
             fbc.setFireDocName(run.getName());
             fbc.setFireDocDescription(run.getDescription());
+            System.out.println("selwfrun=====" + getSelectedWorkflowRun().getId());
+
             dv.submitWorkflowJob();
 
         } catch (Exception ex) {
@@ -2212,7 +2214,7 @@ public class WorkflowBean implements Serializable {
         sb.addMessage("warn", "No workflow found with id = " + id);
         return false;
     }
-
+    @JsonIgnore
     private WorkflowRunModel selectedWorkflowRun;
 
     public WorkflowRunModel getSelectedWorkflowRun() {

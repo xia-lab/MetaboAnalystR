@@ -39,8 +39,8 @@ public class WorkflowJobTimerService {
         jobTimerService.updateJobStatus(info.getJobId(), JobTimerService.Status.IN_PROGRESS);
         jobTimerService.rememberToken(info.getJobId(), info.getToken());
 
-        // persistent=true so it survives server restarts
-        timerService.createSingleActionTimer(0, new TimerConfig(info, true));
+        TimerConfig cfg = new TimerConfig(info, false);
+        timerService.createSingleActionTimer(0, cfg);
     }
 
     /** Called by the container when the timer fires. */

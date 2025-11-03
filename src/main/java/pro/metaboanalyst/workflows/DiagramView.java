@@ -2538,7 +2538,7 @@ public class DiagramView implements Serializable {
 
                 System.out.println("[workflow-run] " + msg);
             } else {
-                System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING.");
+                System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING. "+runId);
             }
         } catch (Exception ex) {
             System.out.println("[workflow-run] Failed to mark RUNNING: " + ex.getMessage());
