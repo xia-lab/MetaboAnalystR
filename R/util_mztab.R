@@ -58,15 +58,13 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   colnames(sml.data.frame) <- as.character(smh[1,])
   
   # sanity check to see if selected identifier is valid
-  # if more than 90% of names are null, switch to use m/z
-  # if more than 90% of m/z are null, switch to use sml_id
-  if(sum(is.null(sml.data.frame$chemical_name))/length(sml.data.frame$chemical_name) > 0.1) {
+  # if more than 50% of names are null, switch to use m/z
+  # if more than 50% of m/z are null, switch to use sml_id
+  if(identifier == "name" & mean(is.na(sml.data.frame$chemical_name) | sml.data.frame$chemical_name == "") > 0.5) {
     msg <- c(msg, "Too many missing chemical names, will use theoretical neutral mass instead!")
     identifier <- "mass"
-  }else if(sum(is.null(sml.data.frame$theoretical_neutral_mass))/length(sml.data.frame$theoretical_neutral_mass) > 0.1){
-    msg <- c(msg, "Too many missing m/z, will use mzTab SML_ID instead!")
-    identifier <- "sml_id"
-  }else if(sum(is.na(sml.data.frame$theoretical_neutral_mass))/length(sml.data.frame$theoretical_neutral_mass) > 0.1){ # sometime it's NA
+  }
+  if(identifier == "mass" & mean(is.na(sml.data.frame$theoretical_neutral_mass) | sml.data.frame$theoretical_neutral_mass == "") > 0.5){
     msg <- c(msg, "Too many missing m/z, will use mzTab SML_ID instead!")
     identifier <- "sml_id"
   }
