@@ -21,12 +21,19 @@ public class JobInfo implements Serializable {
     private String type;
     private String folderName;
     private String baseUrl;
+    private Integer workflowRunId;
 
     public JobInfo() {}
 
     public JobInfo(String jobId, String token, String email,
                    String appName, String node, String type,
                    String folderName, String baseUrl) {
+        this(jobId, token, email, appName, node, type, folderName, baseUrl, null);
+    }
+
+    public JobInfo(String jobId, String token, String email,
+                   String appName, String node, String type,
+                   String folderName, String baseUrl, Integer workflowRunId) {
         this.jobId = jobId;
         this.token = token;
         this.email = email;
@@ -35,6 +42,7 @@ public class JobInfo implements Serializable {
         this.type = type;
         this.folderName = folderName;
         this.baseUrl = baseUrl;
+        this.workflowRunId = workflowRunId;
     }
 
     public String getJobId() { return jobId; }
@@ -45,4 +53,5 @@ public class JobInfo implements Serializable {
     public String getType() { return type; }
     public String getFolderName() { return folderName; }
     public String getBaseUrl() { return baseUrl; }
+    public Integer getWorkflowRunId() { return workflowRunId; }
 }

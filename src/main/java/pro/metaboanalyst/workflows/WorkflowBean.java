@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.logging.Level;
@@ -1845,6 +1846,12 @@ public class WorkflowBean implements Serializable {
     private static final Set<String> UNTARGETED_DATAS = Set.of("spec", "specbin", "pktable", "nmrpeak", "mspeak", "table");
     private static final Set<String> REGRES_ANALS = Set.of("pathway", "enrich");
     private static final Set<String> RUN_STATUS_ALLOWED = Set.of("pending", "running", "completed", "failed");
+    private static final Map<String, Integer> RUN_STATUS_ORDER = Map.of(
+            "running", 0,
+            "pending", 1,
+            "completed", 2,
+            "failed", 3
+    );
 
     public boolean workflowCompatible(Map<String, Object> wf) {
         final String TAG = "[workflowCompatible]";
@@ -1993,6 +2000,37 @@ public class WorkflowBean implements Serializable {
         }
         String canonical = trimmed.toLowerCase(Locale.ROOT);
         return RUN_STATUS_ALLOWED.contains(canonical) ? canonical : null;
+    }
+
+    private int statusSortOrder(String status) {
+        if (status == null || status.isBlank()) {
+            return Integer.MAX_VALUE;
+        }
+        String key = normalizeRunStatus(status);
+        if (key == null) {
+            key = status.trim().toLowerCase(Locale.ROOT);
+        }
+        return RUN_STATUS_ORDER.getOrDefault(key, Integer.MAX_VALUE);
+    }
+
+    private OffsetDateTime parseIsoTimestamp(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(trimmed);
+        } catch (DateTimeParseException ex) {
+            try {
+                LocalDateTime local = LocalDateTime.parse(trimmed, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                return local.atZone(ZoneId.systemDefault()).toOffsetDateTime();
+            } catch (DateTimeParseException ignored) {
+                return null;
+            }
+        }
     }
 
     @JsonIgnore
@@ -2513,6 +2551,23 @@ public class WorkflowBean implements Serializable {
                 getWorkflowRunsTable().add(run);
             }
 
+            List<WorkflowRunModel> runs = getWorkflowRunsTable();
+            runs.sort(
+                    Comparator.comparingInt((WorkflowRunModel run) -> statusSortOrder(run.getStatus()))
+                            .thenComparing(
+                                    (WorkflowRunModel run) -> parseIsoTimestamp(run.getLastUpdated()),
+                                    Comparator.nullsLast(Comparator.reverseOrder())
+                            )
+                            .thenComparingInt(WorkflowRunModel::getId)
+            );
+
+            if (selectedWorkflowRun != null) {
+                WorkflowRunModel refreshed = findRunInModelById(selectedWorkflowRun.getId());
+                if (refreshed != null) {
+                    selectedWorkflowRun = refreshed;
+                }
+            }
+
             return true;
 
         } catch (Exception e) {
@@ -2540,7 +2595,10 @@ public class WorkflowBean implements Serializable {
         // Status & timing
         String statusRaw = trimToNull(safeStr(m.get("status")));
         String statusNormalized = normalizeRunStatus(statusRaw);
-        r.setStatus(statusNormalized != null ? statusNormalized : statusRaw);    // pending|running|completed|failed
+        String resolvedStatus = (statusNormalized != null)
+                ? statusNormalized
+                : (statusRaw != null ? statusRaw : "pending");
+        r.setStatus(resolvedStatus);    // pending|running|completed|failed
         r.setStartDate(safeStr(getAny(m, "startDate", "start_date")));
         r.setFinishDate(safeStr(getAny(m, "finishDate", "finish_date")));
         r.setLastUpdated(safeStr(getAny(m, "lastUpdated", "last_updated")));

@@ -11,10 +11,16 @@ import jakarta.enterprise.concurrent.ManagedExecutorService;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.nio.file.*;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
+import pro.metaboanalyst.lts.DatabaseController;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.models.JobInfo;
 import pro.metaboanalyst.utils.DataUtils;
@@ -33,6 +39,8 @@ public class JobTimerService {
 
     private final Map<String, Status> statuses = new ConcurrentHashMap<>();
     private final Map<String, String>  tokens = new ConcurrentHashMap<>();
+    private final Queue<JobInfo> pendingJobs = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean workerRunning = new AtomicBoolean(false);
 
     @Inject private ApplicationBean1 ab;
     @Inject private FireBase fb;
@@ -48,6 +56,7 @@ public class JobTimerService {
          //       + " folder=" + info.getFolderName());
 
         updateJobStatus(jobId, Status.IN_PROGRESS);
+        syncWorkflowRunStatus(info, "pending");
 
         if (info.getToken() != null) {
             rememberToken(jobId, info.getToken());
@@ -55,7 +64,7 @@ public class JobTimerService {
             System.out.println("[JobTimerService] schedule() no token supplied for jobId=" + jobId);
         }
 
-        timerService.createSingleActionTimer(0, new TimerConfig(info, true)); // persistent
+        timerService.createSingleActionTimer(0, new TimerConfig(info, false));
         //System.out.println("[JobTimerService] schedule() timer created (persistent) for jobId=" + jobId);
     }
 
@@ -131,27 +140,7 @@ public class JobTimerService {
         final String jobId = info.getJobId();
        // System.out.println("[JobTimerService] onTimeout() fired for jobId=" + jobId);
 
-        executor.submit(() -> {
-         //   System.out.println("[JobTimerService] execute() begin jobId=" + jobId);
-            try {
-                boolean ok = DataUtils.sendPostRequest(
-                        info.getNode(),
-                        info.getAppName(),
-                        info.getToken(),
-                        "executeWorkflowJob",
-                        info.getEmail(),
-                        info.getType(),
-                        info.getFolderName(),
-                        info.getJobId(),
-                        info.getBaseUrl()
-                );
-          //      System.out.println("[JobTimerService] execute() finished jobId=" + jobId + " ok=" + ok);
-                updateJobStatus(jobId, ok ? Status.COMPLETED : Status.FAILED);
-            } catch (Exception e) {
-                System.out.println("[JobTimerService] execute() EXCEPTION jobId=" + jobId + " msg=" + e.getMessage());
-                updateJobStatus(jobId, Status.FAILED);
-            }
-        });
+        enqueue(info);
     }
 
     /* ============ Marker files ============ */
@@ -201,6 +190,74 @@ public class JobTimerService {
         } catch (Exception e) {
             System.out.println("[JobTimerService] readMarker() ERROR jobId=" + jobId + " msg=" + e.getMessage());
             return null;
+        }
+    }
+
+    private void enqueue(JobInfo info) {
+        pendingJobs.add(info);
+        if (workerRunning.compareAndSet(false, true)) {
+            executor.submit(this::drainQueue);
+        }
+    }
+
+    private void drainQueue() {
+        try {
+            JobInfo next;
+            while ((next = pendingJobs.poll()) != null) {
+                runJob(next);
+            }
+        } finally {
+            workerRunning.set(false);
+            if (!pendingJobs.isEmpty() && workerRunning.compareAndSet(false, true)) {
+                executor.submit(this::drainQueue);
+            }
+        }
+    }
+
+    private void runJob(JobInfo info) {
+        String jobId = info.getJobId();
+        try {
+            syncWorkflowRunStatus(info, "running");
+            boolean ok = DataUtils.sendPostRequest(
+                    info.getNode(),
+                    info.getAppName(),
+                    info.getToken(),
+                    "executeWorkflowJob",
+                    info.getEmail(),
+                    info.getType(),
+                    info.getFolderName(),
+                    info.getJobId(),
+                    info.getBaseUrl()
+            );
+            syncWorkflowRunStatus(info, ok ? "completed" : "failed");
+            updateJobStatus(jobId, ok ? Status.COMPLETED : Status.FAILED);
+        } catch (Exception e) {
+            System.out.println("[JobTimerService] execute() EXCEPTION jobId=" + jobId + " msg=" + e.getMessage());
+            syncWorkflowRunStatus(info, "failed");
+            updateJobStatus(jobId, Status.FAILED);
+        }
+    }
+
+    private void syncWorkflowRunStatus(JobInfo info, String status) {
+        if (info == null || status == null) {
+            return;
+        }
+        Integer runId = info.getWorkflowRunId();
+        if (runId == null) {
+            return;
+        }
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("status", status);
+            String res = DatabaseController.updateWorkflowRunFlexible(runId, payload);
+            if (res == null || !"OK".equalsIgnoreCase(res.trim())) {
+                LOG.log(Level.WARNING, "[JobTimerService] workflow_run update returned ''{0}'' for id={1}, status={2}",
+                        new Object[]{res, runId, status});
+            }
+        } catch (Exception e) {
+            LOG.log(Level.WARNING,
+                    "[JobTimerService] workflow_run update failed for id=" + runId + ", status=" + status,
+                    e);
         }
     }
 }

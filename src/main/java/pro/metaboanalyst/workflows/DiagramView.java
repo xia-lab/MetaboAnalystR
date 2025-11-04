@@ -163,10 +163,6 @@ public class DiagramView implements Serializable {
 
     @JsonIgnore
     @Inject
-    private WorkflowJobTimerService wsv;
-
-    @JsonIgnore
-    @Inject
     pro.metaboanalyst.controllers.mummichog.PeakUploadBean pu;
 
     @JsonIgnore
@@ -2525,21 +2521,9 @@ public class DiagramView implements Serializable {
             res = startWorkflow();
         }
 
-        // --- NEW: flip the workflow run to RUNNING (and stamp start_date) ---
-        try {
-            Integer runId = wb.getSelectedWorkflowRun().getId();
-            if (runId != null) {
-                Map<String, Object> updates = new HashMap<>();
-                updates.put("status", "running");
-                String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
-                wb.getSelectedWorkflowRun().setStatus("running");
-
-                System.out.println("[workflow-run] " + msg);
-            } else {
-                System.out.println("[workflow-run] No matching PENDING row found to flip RUNNING. "+runId);
-            }
-        } catch (Exception ex) {
-            System.out.println("[workflow-run] Failed to mark RUNNING: " + ex.getMessage());
+        WorkflowRunModel activeRun = wb.getSelectedWorkflowRun();
+        if (activeRun != null) {
+            activeRun.setStatus("pending");
         }
 
     }
@@ -2588,6 +2572,9 @@ public class DiagramView implements Serializable {
         final String type = selectionMap.getOrDefault("LC-MS Spectra", false) ? "raw" : "other";
         final String folder = sb.getCurrentUser().getHomeDir();
         final String baseUrl = ab.getBaseUrlDyn();
+        final Integer workflowRunId = (wb.getSelectedWorkflowRun() != null)
+                ? wb.getSelectedWorkflowRun().getId()
+                : null;
 
         JobTimerService.Status existing = jsv.getStatus(jobId);
         if (existing == JobTimerService.Status.IN_PROGRESS) {
@@ -2601,10 +2588,8 @@ public class DiagramView implements Serializable {
         jeb.setCurrentJobId(jobId);
         jeb.setCurrentStartTime(DataUtils.obtainTimestampText());
         updateNoticeStartWorkflow();
-        JobInfo info = new JobInfo(jobId, token, email, appName, node, type, folder, baseUrl);
-
-        jsv.rememberToken(jobId, token);
-        wsv.schedule(info);
+        JobInfo info = new JobInfo(jobId, token, email, appName, node, type, folder, baseUrl, workflowRunId);
+        jsv.schedule(info);
 
         // 9) Show progress dialog & notify
         //PrimeFaces.current().executeScript("PF('workflowInfoDialog').show();");

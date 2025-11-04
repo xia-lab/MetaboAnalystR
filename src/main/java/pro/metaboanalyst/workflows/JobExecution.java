@@ -55,7 +55,7 @@ public class JobExecution implements Serializable {
 
     @JsonIgnore
     @Inject
-    private ApplicationBean1 ab;
+    private WorkflowBean wb;
 
     @JsonIgnore
     @Inject
@@ -141,9 +141,14 @@ public class JobExecution implements Serializable {
             case COMPLETED -> {
                 statusMsg = "<span style='color: green'>Job has finished!</span>";
                 stopStatusCheck = true;
+                System.out.println("updatingbecausereachedcomplete====================");
+                wb.setActiveIndex(1);
+                wb.setupWorkflowRunsTable();                
 
                 // Build the finish URL (same as before, but redirect on the CLIENT)
+                /*
                 String token = jobTimers.getTokenByJobId(jobId);  // ← fetch what you stored
+                
                 String url = DataUtils.constructNavigationURL(
                         ab.getToolLocation(), ab.getAppName(), token, "finishWorkflowJob", ab
                 );
@@ -159,6 +164,8 @@ public class JobExecution implements Serializable {
                         + // (optional) now do navigation or show a dialog — avoid diagram.refresh() here
                         "window.location.replace('" + url.replace("'", "\\'") + "');"
                 );
+                 */
+                 
             }
             case FAILED -> {
                 statusMsg = "<span style='color: red'>Job failed or encountered an error.</span>";
@@ -285,7 +292,7 @@ public class JobExecution implements Serializable {
                             } else {
                                 dv.getExecutionMap().put(entry.getKey(), true);
                             }
-                          //  System.out.println(entry.getKey() + "====trueExecution");
+                            //  System.out.println(entry.getKey() + "====trueExecution");
                         }
                     }
                     PrimeFaces.current().ajax().update(":finishDialogForm");

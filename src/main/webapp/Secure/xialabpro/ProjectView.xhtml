@@ -125,7 +125,7 @@
 
         </h:form>
         <h:form id="pollForm">
-            <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell :designForm" widgetVar="pollWidget" />
+            <p:poll interval="15" listener="#{jobExecution.checkJobStatus}" update="pollForm :formWorkflowInfo formBell :designForm :projectTabs" widgetVar="pollWidget" />
         </h:form>
 
         <h:panelGrid styleClass="my-content-panel">

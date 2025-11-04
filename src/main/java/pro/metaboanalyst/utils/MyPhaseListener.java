@@ -591,7 +591,6 @@ public class MyPhaseListener implements PhaseListener {
             String tokenId = request.getParameter("tokenId");
             String email = request.getParameter("email");
             String jobId = request.getParameter("jobId");
-            System.out.println("handleWorkflowStartRequest===tokenId====" + tokenId);
             boolean res = fbc.loadProject(tokenId, "workflow");
             if (res) {
                 boolean wfRes = dv.startWorkflow();
@@ -617,7 +616,6 @@ public class MyPhaseListener implements PhaseListener {
                         updates.put("project_id", tokenId);
                         String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
                         System.out.println("updateworkflowafterfinish-----" + msg);
-                        //je.checkJobStatus();
                         dv.sendRawResume(email, jobId, shareLink);
                     }
 
