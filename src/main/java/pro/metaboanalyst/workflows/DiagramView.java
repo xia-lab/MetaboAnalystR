@@ -2523,7 +2523,7 @@ public class DiagramView implements Serializable {
 
         WorkflowRunModel activeRun = wb.getSelectedWorkflowRun();
         if (activeRun != null) {
-            activeRun.setStatus("pending");
+            activeRun.setStatus("running");
         }
 
     }

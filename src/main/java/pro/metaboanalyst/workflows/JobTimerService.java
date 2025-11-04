@@ -56,7 +56,7 @@ public class JobTimerService {
          //       + " folder=" + info.getFolderName());
 
         updateJobStatus(jobId, Status.IN_PROGRESS);
-        syncWorkflowRunStatus(info, "pending");
+        syncWorkflowRunStatus(info, "running");
 
         if (info.getToken() != null) {
             rememberToken(jobId, info.getToken());

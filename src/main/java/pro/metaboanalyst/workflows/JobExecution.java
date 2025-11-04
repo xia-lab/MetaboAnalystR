@@ -143,7 +143,11 @@ public class JobExecution implements Serializable {
                 stopStatusCheck = true;
                 System.out.println("updatingbecausereachedcomplete====================");
                 wb.setActiveIndex(1);
-                wb.setupWorkflowRunsTable();                
+                wb.setupWorkflowRunsTable();
+                PrimeFaces pf = PrimeFaces.current();
+                if (pf != null) {
+                    pf.ajax().update(":projectTabs:dataTableForm");
+                }
 
                 // Build the finish URL (same as before, but redirect on the CLIENT)
                 /*

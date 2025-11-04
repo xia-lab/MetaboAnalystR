@@ -2551,15 +2551,6 @@ public class WorkflowBean implements Serializable {
                 getWorkflowRunsTable().add(run);
             }
 
-            List<WorkflowRunModel> runs = getWorkflowRunsTable();
-            runs.sort(
-                    Comparator.comparingInt((WorkflowRunModel run) -> statusSortOrder(run.getStatus()))
-                            .thenComparing(
-                                    (WorkflowRunModel run) -> parseIsoTimestamp(run.getLastUpdated()),
-                                    Comparator.nullsLast(Comparator.reverseOrder())
-                            )
-                            .thenComparingInt(WorkflowRunModel::getId)
-            );
 
             if (selectedWorkflowRun != null) {
                 WorkflowRunModel refreshed = findRunInModelById(selectedWorkflowRun.getId());
