@@ -2,15 +2,8 @@
 % Please edit documentation in R/general_proc_utils.R
 \name{PlotMissingDistr}
 \alias{PlotMissingDistr}
-\title{Plot Non-Missing Value Lollipop (inch dimensions)}
+\title{Plot Non-Missing Value Lollipop (auto-coloured by meta type)}
 \usage{
-PlotMissingLollipop(mSetObj = NA,
-                      imgName  = "miss_lollipop",
-                      format   = "png",
-                      dpi      = 300,
-                      width    = 8,
-                      height   = 6)
-
 PlotMissingLollipop(mSetObj = NA,
                       imgName  = "miss_lollipop",
                       format   = "png",
@@ -30,14 +23,8 @@ PlotMissingLollipop(mSetObj = NA,
 \item{width}{Width in inches; if \code{NA}, uses 0.25" per sample (≥ 8").}
 
 \item{groupCol}{Metadata column to colour by (default = first column or "Class").}
-
-\item{height}{Height **in inches** (default 6).}
 }
 \description{
-Generates a lollipop plot showing, for every sample, the percentage
-  of non-missing values.  The graphic device now uses inches
-  (default 8 × 6) rather than pixels.
-
 Generates a lollipop plot where stems and points are coloured by a
   user-selected metadata column.  If the column is marked
   \code{"cont"} in \code{mSetObj$dataSet$meta.types}, a

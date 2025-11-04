@@ -4,7 +4,7 @@
 \alias{doLogisticRegMdl}
 \title{Develop a Logistic Regression Model with all of the combined k-fold CV subsets}
 \usage{
-doLogisticRegMdl(x.train, y.train, x.test, y.test)
+doLogisticRegMdl(mSetObj, x.train, y.train, x.test, y.test)
 }
 \arguments{
 \item{x.train}{Input the X training set}
