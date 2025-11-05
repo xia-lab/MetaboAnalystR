@@ -102,7 +102,7 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   # sanity check to see if selected id is valid
   # if ids are still duplicates, switch to append sml_id
   if(sum(duplicated(id)) > 1){
-    if(exists(id.og)){
+    if(exists("id.og")){
       id <- paste(id.og, sml.data.frame$SML_ID, sep="_")
     }else{
       AddErrMsg(paste("Duplicate sample IDs are not allowed!", nms, collapse=" "));
