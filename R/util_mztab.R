@@ -1,4 +1,4 @@
-my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name", multi.factor=F) {
+my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
 
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$mztab.idtype <- identifier;
@@ -57,6 +57,7 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name", multi.fact
     if(nrow(sml) < 2){
       msg <- ("Small molecule table is empty or single-row. Using Small Molecule Feature table!")
       identifier <- "feature"
+    }
   }
   if (identifier == "feature"){
     smh <- mztab.table[startsWith(as.character(mztab.table$V1), "SFH"),,drop=FALSE]
