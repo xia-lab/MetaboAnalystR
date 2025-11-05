@@ -1245,7 +1245,8 @@ public class WorkflowBean implements Serializable {
                     datasetId, // null on purpose; see note above
                     datasetName,
                     otherJson,
-                    ab.getAppName()
+                    ab.getAppName(),
+                    ab.getToolLocation()
             );
 
             /*
@@ -1779,11 +1780,23 @@ public class WorkflowBean implements Serializable {
             String scaleNormOpt = safeGetString(map.get("scaleNormOpt"));
             String folderName = safeGetString(map.get("folderName"));
 
-            return new WorkflowParameters(
+            WorkflowParameters params = new WorkflowParameters(
                     removeMissing, missingImputeOpt, replaceVarOpt, imputeAlgOpt,
                     doQCFiltering, qcCutoff, varFilterOpt, filterCutoff,
                     intFilterOpt, intFilterCutoff, rowNormOpt, transNormOpt, scaleNormOpt, folderName
             );
+
+            params.setSpecNormSpecifed(safeGetBool(map.get("specNormSpecifed")));
+            params.setRefSmpl(safeGetString(map.get("refSmpl")));
+            params.setRefGrp(safeGetString(map.get("refGrp")));
+            params.setRefVar(safeGetString(map.get("refVar")));
+
+            String detailText = safeGetString(map.get("detailText"));
+            if (detailText != null) {
+                params.setDetailText(detailText);
+            }
+
+            return params;
         }
 
         // Unknown shape → return null; caller decides whether to add plan without params
@@ -2066,7 +2079,7 @@ public class WorkflowBean implements Serializable {
             String newId = dbc.insertWorkflowRun(
                     email, module, name, description, status,
                     startDateIso, finishDateIso, workflowId,
-                    datasetId, datasetName, other, tool
+                    datasetId, datasetName, other, tool, ab.getToolLocation()
             );
 
             // Refresh table & select the new row
@@ -2536,7 +2549,7 @@ public class WorkflowBean implements Serializable {
             final String email = fub.getEmail();
 
             // Fetch from DB/API (DatabaseClient delegates to Docker DB or REST)
-            ArrayList<HashMap<String, Object>> res = dbc.getAllWorkflowRuns(ab.getAppName(), email);
+            ArrayList<HashMap<String, Object>> res = dbc.getAllWorkflowRuns(ab.getAppName(), email, ab.getToolLocation());
             if (res == null) {
                 return false;
             }
@@ -3094,4 +3107,5 @@ public class WorkflowBean implements Serializable {
         System.out.println("============" + v.toString());
         return v.toString();
     }
+    
 }

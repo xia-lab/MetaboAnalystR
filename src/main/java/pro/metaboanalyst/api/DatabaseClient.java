@@ -830,39 +830,27 @@ public class DatabaseClient {
         return DatabaseController.detectDockerUserNum();
     }
 
-    public ArrayList<HashMap<String, Object>> getAllWorkflowRuns(String tool, String email) {
-        if (ab.isInDocker()) {
-            try {
-                // Direct DB call when running inside Docker
-                return DatabaseController.getAllWorkflowRuns(tool, email);
-            } catch (SQLException ex) {
-                System.getLogger(DatabaseClient.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                return new ArrayList<>();
+    
+    public ArrayList<HashMap<String, Object>> getAllWorkflowRuns(String module, String email, String node) {
 
-            }
-        } else {
-            try {
-                // Build payload
-                Map<String, String> payload = new HashMap<>();
-                payload.put("tool", tool);  // aligns with workflow_runs.module
-                payload.put("email", email);   // server can scope runs by owner
+        try {
+            // Build payload
+            Map<String, String> payload = new HashMap<>();
+            payload.put("module", module);  // aligns with workflow_runs.module
+            payload.put("tool", module);    // API expects tool for filtering
+            payload.put("email", email);   // server can scope runs by owner
+            payload.put("node", node);     // location filter
 
-                // POST to API and parse JSON -> List<Map<String,Object>>
-                String response = apiClient.post("/database/workflowruns/getall", toJson(payload));
-                return parseJsonToList(response);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error retrieving workflow runs", e);
-                return new ArrayList<>();
-            }
+            // POST to API and parse JSON -> List<Map<String,Object>>
+            String response = apiClient.post("/database/workflowruns/getall", toJson(payload));
+            return parseJsonToList(response);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving workflow runs", e);
+            return new ArrayList<>();
         }
+
     }
 
-    /**
-     * Insert a new workflow RUN row (workflow_runs). Dates should be ISO-8601
-     * strings (e.g., "2025-10-21T14:30:00Z" or "2025-10-21T10:30:00-04:00"). If
-     * a field is not applicable, pass null.
-     */
-    // ==== INSERT (now with `tool`) ====
     public String insertWorkflowRun(String email,
             String module,
             String name,
@@ -874,53 +862,48 @@ public class DatabaseClient {
             UUID datasetId, // <-- CHANGED: UUID (nullable)
             String datasetName, // nullable
             String other, // JSON string or plain text
-            String tool) {        // NEW
+            String tool,         // NEW
+            String node) {       // workflow location
         try {
             final String toolVal = tool;
 
-            if (ab.isInDocker()) {
-                // Direct DB path
-                return DatabaseController.insertWorkflowRun(
-                        email, module, name, description, status,
-                        startDateIso, finishDateIso, workflowId,
-                        datasetId, // pass UUID through
-                        datasetName, other, toolVal
-                ) + "";
-            } else {
-                // Build payload (as Strings for consistency with your existing toJson(..))
-                Map<String, String> payload = new HashMap<>();
-                payload.put("email", email);
-                payload.put("module", module);
-                payload.put("name", name == null ? "" : name);
-                payload.put("description", description == null ? "" : description);
-                if (status != null) {
-                    payload.put("status", status);
-                }
-                if (startDateIso != null) {
-                    payload.put("start_date", startDateIso);
-                }
-                if (finishDateIso != null) {
-                    payload.put("finish_date", finishDateIso);
-                }
-                if (workflowId != null) {
-                    payload.put("workflow_id", workflowId);
-                }
-                if (datasetId != null) {
-                    payload.put("dataset_id", datasetId.toString()); // UUID -> string
-                }
-                if (datasetName != null) {
-                    payload.put("dataset_name", datasetName);
-                }
-                if (other != null) {
-                    payload.put("other", other); // if JSON, server should store as jsonb
-                }
-                if (tool != null) {
-                    payload.put("tool", tool);
-                }
-                String res = apiClient.post("/database/workflowruns/insert", toJson(payload));
-                System.out.println(res);
-                return res;
+            // Build payload (as Strings for consistency with your existing toJson(..))
+            Map<String, String> payload = new HashMap<>();
+            payload.put("email", email);
+            payload.put("module", module);
+            payload.put("name", name == null ? "" : name);
+            payload.put("description", description == null ? "" : description);
+            if (status != null) {
+                payload.put("status", status);
             }
+            if (startDateIso != null) {
+                payload.put("start_date", startDateIso);
+            }
+            if (finishDateIso != null) {
+                payload.put("finish_date", finishDateIso);
+            }
+            if (workflowId != null) {
+                payload.put("workflow_id", workflowId);
+            }
+            if (datasetId != null) {
+                payload.put("dataset_id", datasetId.toString()); // UUID -> string
+            }
+            if (datasetName != null) {
+                payload.put("dataset_name", datasetName);
+            }
+            if (other != null) {
+                payload.put("other", other); // if JSON, server should store as jsonb
+            }
+            if (tool != null) {
+                payload.put("tool", tool);
+            }
+            if (node != null) {
+                payload.put("node", node);
+            }
+            String res = apiClient.post("/database/workflowruns/insert", toJson(payload));
+            System.out.println(res);
+            return res;
+
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error inserting workflow run", e);
             return "FAIL";
@@ -954,7 +937,6 @@ public class DatabaseClient {
     public String deleteWorkflowRun(int id) {
         return deleteWorkflowRun(String.valueOf(id));
     }
-
 
     public String updateWorkflowRunFields(String id, Map<String, Object> fields) {
         try {

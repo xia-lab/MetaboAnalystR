@@ -1720,19 +1720,19 @@ public class DatabaseController implements Serializable {
 
         final boolean filterNode = node != null && !node.isBlank();
 
-        final String sql =
-                "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
-              + "       d.email, d.node, d.samplenum, d.toolname, d.module, d.data_type, "
-              + "       COALESCE(df.file_count, 0) AS file_count, "
-              + "       COALESCE(df.has_metadata, false) AS has_metadata "
-              + "FROM datasets d "
-              + "LEFT JOIN ( "
-              + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
-              + "  FROM dataset_files GROUP BY dataset_id "
-              + ") df ON df.dataset_id = d.id "
-              + "WHERE d.email = ? AND d.toolname = ? "
-              + (filterNode ? "AND d.node = ? " : "")
-              + "ORDER BY d.uploaded_at DESC, d.node";
+        final String sql
+                = "SELECT d.id, d.title, d.filename, d.type, d.size_bytes, d.uploaded_at, "
+                + "       d.email, d.node, d.samplenum, d.toolname, d.module, d.data_type, "
+                + "       COALESCE(df.file_count, 0) AS file_count, "
+                + "       COALESCE(df.has_metadata, false) AS has_metadata "
+                + "FROM datasets d "
+                + "LEFT JOIN ( "
+                + "  SELECT dataset_id, COUNT(*) AS file_count, BOOL_OR(role = 'metadata') AS has_metadata "
+                + "  FROM dataset_files GROUP BY dataset_id "
+                + ") df ON df.dataset_id = d.id "
+                + "WHERE d.email = ? AND d.toolname = ? "
+                + (filterNode ? "AND d.node = ? " : "")
+                + "ORDER BY d.uploaded_at DESC, d.node";
 
         try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -1932,17 +1932,19 @@ public class DatabaseController implements Serializable {
             throws SQLException {
         try (Connection con = DatabaseConnectionPool.getDataSource().getConnection()) {
             // delegate; NOTE: do not close 'con' in the delegate
-            return getAllWorkflowRuns(con, tool, email);
+            return getAllWorkflowRuns(con, tool, email, "");
         }
     }
 
-    public static ArrayList<HashMap<String, Object>> getAllWorkflowRuns(Connection con, String tool, String email)
+    public static ArrayList<HashMap<String, Object>> getAllWorkflowRuns(Connection con, String tool, String email, String node)
             throws SQLException {
 
         final String base
                 = "SELECT id, module, name, description, status, start_date, finish_date, "
-                + "       workflow_id, dataset_id, dataset_name, other, last_updated, email, tool "
-                + // NEW cols
+                + "       workflow_id, dataset_id, dataset_name, other, last_updated, email, tool, "
+                + "       node, "
+                + "       project_id "
+                + // <-- added
                 "  FROM workflow_runs ";
 
         String where = "";
@@ -1951,6 +1953,9 @@ public class DatabaseController implements Serializable {
         }
         if (email != null && !email.isBlank()) {
             where += (where.isEmpty() ? "WHERE " : " AND ") + "email = ?";
+        }
+        if (node != null && !node.isBlank()) {
+            where += (where.isEmpty() ? "WHERE " : " AND ") + "node = ?";
         }
 
         final String sql = base + where + " ORDER BY id DESC";
@@ -1962,6 +1967,9 @@ public class DatabaseController implements Serializable {
             }
             if (email != null && !email.isBlank()) {
                 ps.setString(i++, email);
+            }
+            if (node != null && !node.isBlank()) {
+                ps.setString(i++, node);
             }
 
             ArrayList<HashMap<String, Object>> out = new ArrayList<>();
@@ -1976,12 +1984,41 @@ public class DatabaseController implements Serializable {
                     m.put("startDate", rs.getString("start_date"));
                     m.put("finishDate", rs.getString("finish_date"));
                     m.put("workflowId", rs.getString("workflow_id"));
-                    m.put("datasetId", rs.getObject("dataset_id") == null ? null : rs.getInt("dataset_id"));
+
+                    // dataset_id as UUID (nullable)
+                    UUID dsId = null;
+                    try {
+                        dsId = rs.getObject("dataset_id", java.util.UUID.class);
+                    } catch (SQLException e) {
+                        Object raw = rs.getObject("dataset_id");
+                        if (raw instanceof java.util.UUID) {
+                            dsId = (java.util.UUID) raw;
+                        } else if (raw != null) {
+                            try {
+                                dsId = java.util.UUID.fromString(raw.toString());
+                            } catch (Exception ignore) {
+                            }
+                        }
+                    }
+                    m.put("datasetId", dsId);
+
                     m.put("datasetName", rs.getString("dataset_name"));
-                    m.put("other", rs.getString("other"));
-                    m.put("lastUpdated", rs.getString("last_updated"));
-                    m.put("email", rs.getString("email"));   // NEW
-                    m.put("tool", rs.getString("tool"));     // NEW
+                    m.put("other", rs.getString("other")); // jsonb textual form
+
+                    // last_updated → "yyyy-MM-dd HH:mm"
+                    java.sql.Timestamp ts = rs.getTimestamp("last_updated");
+                    String lastUpdatedFmt = (ts == null)
+                            ? null
+                            : ts.toLocalDateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                    m.put("lastUpdated", lastUpdatedFmt);
+
+                    m.put("email", rs.getString("email"));
+                    m.put("tool", rs.getString("tool"));
+                    m.put("node", rs.getString("node"));
+
+                    // NEW: project_id as String (DB column type text/uuid acceptable)
+                    m.put("projectId", rs.getString("project_id"));
+
                     out.add(m);
                 }
             }
@@ -2139,7 +2176,8 @@ public class DatabaseController implements Serializable {
             UUID datasetId, // <-- UUID now
             String datasetName, // nullable
             String other, // JSON string or plain text
-            String tool) {          // tool name (MetaboAnalyst, etc.)
+            String tool, // tool name (MetaboAnalyst, etc.)
+            String node) {         // location identifier
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -2151,11 +2189,11 @@ public class DatabaseController implements Serializable {
                     = "INSERT INTO workflow_runs ("
                     + "  email, module, name, description, status,"
                     + "  start_date, finish_date, workflow_id,"
-                    + "  dataset_id, dataset_name, other, tool, last_updated"
+                    + "  dataset_id, dataset_name, other, tool, node, last_updated"
                     + ") VALUES ("
                     + "  ?,     ?,      ?,    ?,          ?,"
                     + "  ?,          ?,           ?,"
-                    + "  ?,         ?,           ?,    ?,   now()"
+                    + "  ?,         ?,           ?,    ?,   ?,   now()"
                     + ") RETURNING id";
 
             ps = con.prepareStatement(sql);
@@ -2224,6 +2262,11 @@ public class DatabaseController implements Serializable {
 
             // 7) tool
             ps.setString(12, tool == null ? "" : tool);
+            if (node != null && !node.isBlank()) {
+                ps.setString(13, node);
+            } else {
+                ps.setNull(13, Types.VARCHAR);
+            }
 
             rs = ps.executeQuery();
             con.commit();
