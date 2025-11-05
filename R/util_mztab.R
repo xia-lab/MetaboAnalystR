@@ -1,4 +1,4 @@
-my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
+my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name", multi.factor=F) {
 
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$dataSet$mztab.idtype <- identifier;
@@ -17,6 +17,9 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   # check if contains MTD, SMH and SML
   if(sum(sapply(c("MTD", "SMH", "SML"), grepl, unique(mztab.table$V1))) == 3){
     msg <- ("mzTab format ok!")
+  }else if(sum(sapply(c("MTD", "SFH", "SMF"), grepl, unique(mztab.table$V1))) == 3){
+    msg <- ("Small molecule table not found. Using Small Molecule Feature table!")
+    identifier <- "feature"
   }else{
     AddErrMsg("Invalid mzTab format! Make sure mzTab file has been validated!")
     return(0)
@@ -46,8 +49,19 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   }
   
   # second set up small molecule summary
-  smh <- mztab.table[startsWith(as.character(mztab.table$V1), "SMH"),,drop=FALSE]
-  sml <- mztab.table[startsWith(as.character(mztab.table$V1), "SML"),,drop=FALSE]
+  if (identifier != "feature"){
+    smh <- mztab.table[startsWith(as.character(mztab.table$V1), "SMH"),,drop=FALSE]
+    sml <- mztab.table[startsWith(as.character(mztab.table$V1), "SML"),,drop=FALSE]
+    
+    # Switch to Small Molecule Feature table if no SML table
+    if(nrow(sml) < 2){
+      msg <- ("Small molecule table is empty or single-row. Using Small Molecule Feature table!")
+      identifier <- "feature"
+  }
+  if (identifier == "feature"){
+    smh <- mztab.table[startsWith(as.character(mztab.table$V1), "SFH"),,drop=FALSE]
+    sml <- mztab.table[startsWith(as.character(mztab.table$V1), "SMF"),,drop=FALSE]
+  }
   
   if(nrow(sml) < 1){
     AddErrMsg("Invalid mzTab format! Make sure mzTab file has been validated!")
@@ -78,14 +92,21 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
     id.og <- id <- round(as.numeric(sml.data.frame$theoretical_neutral_mass), 5)
     dup.id <- paste( round(as.numeric(sml.data.frame$theoretical_neutral_mass), 5), sml.data.frame$adduct_ions, sep="_")
     id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] <- dup.id[which(duplicated(id, fromLast = TRUE) | duplicated(id))] 
-  }else{
+  }else if(identifier == "sml_id"){
     id <- sml.data.frame$SML_ID;
+  } else if(identifier == "feature"){
+    id <- sml.data.frame$SMF_ID;
   }
   
   # sanity check to see if selected id is valid
   # if ids are still duplicates, switch to append sml_id
   if(sum(duplicated(id)) > 1){
-    id <- paste(id.og, sml.data.frame$SML_ID, sep="_")
+    if(exists(id.og)){
+      id <- paste(id.og, sml.data.frame$SML_ID, sep="_")
+    }else{
+      AddErrMsg(paste("Duplicate sample IDs are not allowed!", nms, collapse=" "));
+      return(0);
+    }
   }
   
   assay_data <- trimws(unlist( lapply(variables.list, function(x) strsplit(x, "\\|")) ))
