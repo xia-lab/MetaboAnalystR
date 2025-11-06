@@ -20,25 +20,27 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   
   if(mSetObj$paramSet$mumRT){
     feat_info <- rownames(data)
+    # OPTIMIZED: Use strsplit once with fixed=TRUE for better performance
     feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
-    
-    if(length(unique(feat_info_split[,1])) != length(feat_info_split[,1])){
-      
+
+    # OPTIMIZED: Single-pass duplicate handling - vectorized operation
+    duplicates <- duplicated(feat_info_split[,1])
+    if(any(duplicates)){
       # ensure features are unique
-      mzs_unq <- feat_info_split[,1][duplicated(feat_info_split[,1])] 
       set.seed(123)
-      if(length(mzs_unq)>0){
-        feat_info_split[,1][duplicated(feat_info_split[,1])] <- sapply(mzs_unq, function(x) paste0(x, sample(1:999, 1, replace = FALSE)))
-      }
+      n_dup <- sum(duplicates)
+      # Vectorized: generate all random numbers at once, paste in one operation
+      feat_info_split[duplicates, 1] <- paste0(feat_info_split[duplicates, 1],
+                                                sample(1:999, n_dup, replace = FALSE))
     }
-    
+
     if(mSetObj$paramSet$mumRT.type == "minutes"){
-      rtime <- as.numeric(feat_info_split[,2])
-      rtime <- rtime * 60
-      feat_info_split[,2] <- rtime
+      # OPTIMIZED: In-place conversion, no intermediate rtime variable
+      feat_info_split[,2] <- as.numeric(feat_info_split[,2]) * 60
     }
-    
+
+    # OPTIMIZED: Vectorized paste operation
     new_feats <- paste(feat_info_split[,1], feat_info_split[,2], sep = "__")
     rownames(data) <- make.unique(new_feats)
     
@@ -83,32 +85,57 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   t.stat = t.stat[rankPval];
   
   # now pearson and euclidean will be the same after scaleing
-  dat.dist <- dist(data); 
-  
   orig.smpl.nms <- colnames(data);
   orig.gene.nms <- rownames(data);
-  
+
+  # OPTIMIZED: Compute distance matrices once and reuse for all clustering methods
   # do clustering and save cluster info
-  # convert order to rank (score that can used to sort) 
+  # convert order to rank (score that can used to sort)
   if(nrow(data)> 1){
-    gene.ward.ord <- hclust(dat.dist, "ward.D")$order;
-    gene.ward.rk <- match(orig.gene.nms, orig.gene.nms[gene.ward.ord]);
-    gene.ave.ord <- hclust(dat.dist, "ave")$order;
-    gene.ave.rk <- match(orig.gene.nms, orig.gene.nms[gene.ave.ord]);
-    gene.single.ord <- hclust(dat.dist, "single")$order;
-    gene.single.rk <- match(orig.gene.nms, orig.gene.nms[gene.single.ord]);
-    gene.complete.ord <- hclust(dat.dist, "complete")$order;
-    gene.complete.rk <- match(orig.gene.nms, orig.gene.nms[gene.complete.ord]);
-    
-    dat.dist <- dist(t(data));
-    smpl.ward.ord <- hclust(dat.dist, "ward.D")$order;
-    smpl.ward.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ward.ord])
-    smpl.ave.ord <- hclust(dat.dist, "ave")$order;
-    smpl.ave.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ave.ord])
-    smpl.single.ord <- hclust(dat.dist, "single")$order;
-    smpl.single.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.single.ord])
-    smpl.complete.ord <- hclust(dat.dist, "complete")$order;
-    smpl.complete.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.complete.ord])
+    # Gene/feature clustering - compute distance once
+    gene.dist <- dist(data);
+
+    # Extract ordering from each linkage method, discard full tree to save memory
+    gene.ward.hc <- hclust(gene.dist, "ward.D");
+    gene.ward.rk <- match(orig.gene.nms, orig.gene.nms[gene.ward.hc$order]);
+    rm(gene.ward.hc);  # Free memory immediately
+
+    gene.ave.hc <- hclust(gene.dist, "ave");
+    gene.ave.rk <- match(orig.gene.nms, orig.gene.nms[gene.ave.hc$order]);
+    rm(gene.ave.hc);
+
+    gene.single.hc <- hclust(gene.dist, "single");
+    gene.single.rk <- match(orig.gene.nms, orig.gene.nms[gene.single.hc$order]);
+    rm(gene.single.hc);
+
+    gene.complete.hc <- hclust(gene.dist, "complete");
+    gene.complete.rk <- match(orig.gene.nms, orig.gene.nms[gene.complete.hc$order]);
+    rm(gene.complete.hc);
+
+    # Free gene distance matrix before computing sample distance
+    rm(gene.dist);
+
+    # Sample clustering - compute distance once
+    smpl.dist <- dist(t(data));
+
+    smpl.ward.hc <- hclust(smpl.dist, "ward.D");
+    smpl.ward.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ward.hc$order]);
+    rm(smpl.ward.hc);
+
+    smpl.ave.hc <- hclust(smpl.dist, "ave");
+    smpl.ave.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.ave.hc$order]);
+    rm(smpl.ave.hc);
+
+    smpl.single.hc <- hclust(smpl.dist, "single");
+    smpl.single.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.single.hc$order]);
+    rm(smpl.single.hc);
+
+    smpl.complete.hc <- hclust(smpl.dist, "complete");
+    smpl.complete.rk <- match(orig.smpl.nms, orig.smpl.nms[smpl.complete.hc$order]);
+    rm(smpl.complete.hc);
+
+    # Free sample distance matrix
+    rm(smpl.dist);
   }else{
     # force not to be single element vector which will be scaler
     #stat.pvals <- matrix(stat.pvals);

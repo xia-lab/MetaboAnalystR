@@ -4,7 +4,7 @@
 \alias{GetFC}
 \title{Used by higher functions to calculate fold change}
 \usage{
-GetFC(mSetObj = NA, paired = FALSE, cmpType)
+GetFC(mSetObj = NA, paired = FALSE, cmpType, verbose = TRUE, top_k = 5)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

@@ -1109,34 +1109,7 @@ GetMissNumMsg <- function(mSetObj = NA) {
   return(msg)
 }
 
-#' Plot Non-Missing Value Lollipop (inch dimensions)
-#'
-#' @description
-#'   Generates a lollipop plot showing, for every sample, the percentage
-#'   of non-missing values.  The graphic device now uses inches
-#'   (default 8 × 6) rather than pixels.
-#'
-#' @usage
-#'   PlotMissingLollipop(mSetObj = NA,
-#'                       imgName  = "miss_lollipop",
-#'                       format   = "png",
-#'                       dpi      = 300,
-#'                       width    = 8,
-#'                       height   = 6)
-#'
-#' @param mSetObj  The working mSet object.
-#' @param imgName  Base file name (no extension).
-#' @param format   "png", "tiff", "pdf", or "svg" (default "png").
-#' @param dpi      Resolution (dots per inch).  Default 300.
-#' @param width    Width **in inches**.  If \code{NA}, a heuristic
-#'                 (0.25 in per sample, min 8 in) is applied.
-#' @param height   Height **in inches** (default 6).
-#'
-#' @import qs
-#' @import ggplot2
-#' @importFrom Cairo Cairo
-#' @export
-#'
+
 #' Plot Non-Missing Value Lollipop (auto-coloured by meta type)
 #'
 #' @description
