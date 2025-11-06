@@ -10,7 +10,6 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
 
   metadata <- .readDataTable(metafilename, FALSE)
   metadata[is.na(metadata)] <- "NA"
-
   if (inherits(metadata, "try-error")) {
     AddErrMsg("Failed to read the metadata file! Check format / NA cells.")
     return(0)

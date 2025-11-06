@@ -29,7 +29,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
                          clstDist="average", colorGradient="npj", 
                          fzCol, fzRow, fzAnno, annoPer, unitCol, unitRow,
                          rankingMethod="mean",
-                         topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F, maxFeature=2000) {
+                         topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, showColnm=T, showRownm=F, maxFeature=2000, viewOpt="overview") {
   
   mSetObj <- .get.mSet(mSetObj)
   meta.info <- mSetObj$dataSet$meta.info
@@ -270,213 +270,97 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   #print(plotjs)
   write(as_json, plotjs)
 
+  # always generate the static download using the requested format
+  includeRowNames <- isTRUE(showRownm)
+  static_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width)
+  static_h <- static_dims$height
+  static_w <- static_dims$width
+
+  if (format == "pdf") {
+    grDevices::pdf(file=imgName, width=static_w, height=static_h, bg="white", onefile=FALSE)
+  } else {
+    Cairo::Cairo(file=imgName, unit="in", dpi=dpi, width=static_w, height=static_h, type=format, bg="white")
+  }
+
+  static_ph <- pheatmap::pheatmap(t(hc.dat),
+                                  annotation=annotation,
+                                  fontsize_row=fzRow,
+                                  fontsize_col=fzCol,
+                                  clustering_distance_rows=smplDist,
+                                  clustering_method=clstDist,
+                                  border_color=border.col,
+                                  cluster_rows=TRUE,
+                                  cluster_cols=FALSE,
+                                  scale=scaleOpt,
+                                  legend=show.legend,
+                                  annotation_legend=show.annot.legend,
+                                  show_rownames=includeRowNames,
+                                  color=colors,
+                                  silent=TRUE)
+  static_ph$tree_row$order <- rev(static_ph$tree_row$order)
+
+  pheatmap::pheatmap(t(hc.dat),
+                     annotation=annotation,
+                     fontsize_row=fzRow,
+                     fontsize_col=fzCol,
+                     clustering_distance_rows=smplDist,
+                     clustering_method=clstDist,
+                     border_color=border.col,
+                     cluster_rows=static_ph$tree_row,
+                     cluster_cols=FALSE,
+                     scale=scaleOpt,
+                     legend=show.legend,
+                     annotation_legend=show.annot.legend,
+                     show_rownames=includeRowNames,
+                     color=colors)
+
+  grDevices::dev.off()
+
   mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist)
   return(.set.mSet(mSetObj))
 }
 
 #'Create high resolution static HeatMap for download only
-#'@description '@param #same as PlotHeatMap2
+#'@description Deprecated helper retained for backward compatibility. PlotHeatMap2 now generates both interactive JSON and static downloads.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
 
-PlotStaticHeatMap2<-function(mSetObj=NA, imgName, dataOpt="norm", 
-                       scaleOpt="row", format="png", dpi=default.dpi, 
-                       width=NA, smplDist="pearson", 
-                       clstDist="average", colorGradient="bwm", fzCol,fzRow,
-                       viewOpt="overview",rankingMethod="mean",
-                       topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T){
-  mSetObj <- .get.mSet(mSetObj);
-  meta.info <- mSetObj$dataSet$meta.info
-
-  if(length(meta.vec.hm2) == 0){
-    AddErrMsg("Please select at least one meta-data for annotation!");
-    return(0);
-  }else{
-    meta.vec.hm2 <- meta.vec.hm2[complete.cases(meta.vec.hm2)];
-    sel.meta.df <- as.data.frame(meta.info[, meta.vec.hm2, drop=FALSE]);
-    meta.inxs <- which(colnames(meta.info) %in% meta.vec.hm2);
-  }
-  
-  for(i in 1:length(meta.inxs)){
-    inx <- meta.inxs[i];
-    inx2 <- which(colnames(sel.meta.df) == meta.vec.hm2[i]);
-    if(mSetObj$dataSet$meta.types[inx] == "cont"){
-      sel.meta.df[,inx2] <- as.numeric(as.character(sel.meta.df[,inx2]));
-    }else{
-      if(mSetObj$dataSet$types.cls.lbl[inx] == "numeric"){
-        sel.meta.df[,inx2] <- as.factor( as.numeric( levels(sel.meta.df[,inx2]))[sel.meta.df[,inx2]]);
-      }
-    }
-  }
-  
-  if(length(sort.vec.hm2) == 0){
-    ord.vec <- 1;
-  }else{
-    ord.vec <- match(sort.vec.hm2, colnames(sel.meta.df));
-  }
-  
-  if(length(ord.vec) == 1){
-    ordInx <- order(sel.meta.df[, ord.vec]);
-  }else if(length(ord.vec) == 2){
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2]]);
-  }else if(length(ord.vec) == 3){
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]]);
-  }else{
-    ordInx <- order(sel.meta.df[,ord.vec[1]], sel.meta.df[,ord.vec[2] ], sel.meta.df[,ord.vec[3]] , sel.meta.df[,ord.vec[4]]);
-  } 
-  
-  annotation <- as.data.frame(sel.meta.df[ordInx, ]);
-  # set up data set
-  if(dataOpt=="norm"){
-    my.data <- mSetObj$dataSet$norm;
-  }else{
-    my.data <- qs::qread("prenorm.qs");
-  }
-  
-  data <- my.data[ordInx, ];
-  var.nms <- colnames(data);
-  
-  # set up parameter for heatmap
-   if(colorGradient=="gbr"){
-        colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
-    }else if(colorGradient == "heat"){
-        colors <- grDevices::heat.colors(256);
-    }else if(colorGradient == "topo"){
-        colors <- grDevices::topo.colors(256);
-    }else if(colorGradient == "gray"){
-        colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
-    }else if(colorGradient == "byr"){
-        colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
-    }else if(colorGradient == "viridis") {
-        colors <- rev(viridis::viridis(10))
-    }else if(colorGradient == "plasma") {
-        colors <- rev(viridis::plasma(10))
-    }else if(colorGradient == "npj"){
-        colors <- c("#00A087FF","white","#E64B35FF")
-    }else if(colorGradient == "aaas"){
-        colors <- c("#4DBBD5FF","white","#E64B35FF");
-    }else if(colorGradient == "d3"){
-        colors <- c("#2CA02CFF","white","#FF7F0EFF");
-    }else {
-        colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
-    }
-
-  if(drawBorder){
-    border.col<-"grey60";
-  }else{
-    border.col <- NA;
-  }
-  
-  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
-  mSetObj$imgSet$htmaptwo <- imgName;
-  
-  if(useTopFeature){
-    if(rankingMethod == "aov2"){
-      if(is.null(mSetObj$analSet$aov2$sig.mat)){
-        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-        return(0);
-      }
-      mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
-    }else if(rankingMethod == "lm"){
-      if(is.null(mSetObj$analSet$cov$sig.mat)){
-        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-        return(0);
-      }
-      mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
-    }else if(rankingMethod == "rf"){
-      if(is.null(mSetObj$analSet$cov$rf.sigmat)){
-        AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.");
-        return(0);
-      }
-      mat <- as.matrix(mSetObj$analSet$rf.sigmat);
-      
-    }else{ # "mean" or "iqr"
-      mat <- PerformFeatureFilter(data, rankingMethod, topFeature+1, mSetObj$analSet$type)$data;
-      mat <- t(mat);
-    }
-    
-    var.nms <- rownames(mat);
-    if(length(var.nms) > topFeature){
-      var.nms <- var.nms[c(1:topFeature)];
-    }
-    data <- data[, var.nms];
-  }
-  
-  hc.dat <- as.matrix(data);
-  
-  # need to control for very large data plotting
-  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
-    includeRowNames <- FALSE;
-  }
-  if(.on.public.web){
-    if(ncol(hc.dat) > 5000){
-      filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
-      rk <- rank(-filter.val, ties.method='random');
-      hc.dat <- hc.dat[,rk <=5000];
-      data <- data[,rk <=5000];
-      print("Data is reduced to 5000 vars based on IQR ..");
-    }
-  }
-  
-  # compute size for heatmap
-  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
-  h <- plot_dims$height;
-  w <- plot_dims$width;
-  
-  if(format=="pdf"){
-    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  }
-  
-  if(ncol(annotation)>1){
-    annotation <- annotation[,c(length(annotation):1)];
-  }else{
-    colnames(annotation) <- meta.vec.hm2[1];
-  }
-  
-  hc.dat <- hc.dat[rownames(annotation),]; #order data matrix per annotation
-  colnames(hc.dat) <- substr(colnames(data), 1, 18); # some names are too long
-  p<- pheatmap::pheatmap(t(hc.dat), 
-                     annotation=annotation, 
-                      fontsize_row=fzRow, 
-                       fontsize_col=fzCol,
-                     clustering_distance_rows = smplDist,
-                     #clustering_distance_cols = smplDist,
-                     clustering_method = clstDist, 
-                     border_color = border.col,
-                     cluster_rows = T, 
-                     cluster_cols = F,
-                     scale = scaleOpt,
-                     legend = show.legend,
-                     annotation_legend = show.annot.legend, 
-                     show_rownames=includeRowNames,
-                     color = colors,
-                     silent = TRUE);
-  p$tree_row$order <- rev(p$tree_row$order)
-  pheatmap::pheatmap(t(hc.dat), 
-                     annotation=annotation, 
-                      fontsize_row=fzRow, 
-                       fontsize_col=fzCol,
-                     clustering_distance_rows = smplDist,
-                     #clustering_distance_cols = smplDist,
-                     clustering_method = clstDist, 
-                     border_color = border.col,
-                     cluster_rows = p$tree_row, 
-                     cluster_cols = F,
-                     scale = scaleOpt,
-                     legend = show.legend,
-                     annotation_legend = show.annot.legend, 
-                     show_rownames=includeRowNames,
-                     color = colors);
-  
-  dev.off();
-  
-  mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
-  return(.set.mSet(mSetObj));
+PlotStaticHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm", 
+                               scaleOpt="row", format="png", dpi=default.dpi, 
+                               width=NA, smplDist="pearson", 
+                               clstDist="average", colorGradient="bwm", fzCol, fzRow,
+                               viewOpt="overview", rankingMethod="mean",
+                               topFeature=2000, useTopFeature=F, drawBorder=T, show.legend=T, show.annot.legend=T, includeRowNames=T) {
+  .Deprecated("PlotHeatMap2")
+  PlotHeatMap2(mSetObj=mSetObj,
+               imgName=imgName,
+               dataOpt=dataOpt,
+               scaleOpt=scaleOpt,
+               format=format,
+               dpi=dpi,
+               width=width,
+               smplDist=smplDist,
+               clstDist=clstDist,
+               colorGradient=colorGradient,
+               fzCol=fzCol,
+               fzRow=fzRow,
+               fzAnno=10,
+               annoPer=0.02,
+               unitCol=10,
+               unitRow=10,
+               rankingMethod=rankingMethod,
+               topFeature=topFeature,
+               useTopFeature=useTopFeature,
+               drawBorder=drawBorder,
+               show.legend=show.legend,
+               show.annot.legend=show.annot.legend,
+               showColnm=TRUE,
+               showRownm=includeRowNames,
+               maxFeature=2000,
+               viewOpt=viewOpt)
 }
 
 get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15, cellwidth = 15){
@@ -2205,4 +2089,3 @@ scale_rows = function(x){
   s = apply(x, 1, sd, na.rm = T)
   return((x - m) / s)
 }
-

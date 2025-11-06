@@ -574,7 +574,9 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 
   mSetObj <- .get.mSet(mSetObj);
   plotjs <- paste0(imgName, ".json");
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  baseName <- imgName;
+  imgName = paste(baseName, "dpi", dpi, ".", format, sep="");
+  includeRowNames <- showRownm
 
   mSetObj$imgSet$heatmap <- imgName;
   require(iheatmapr);
@@ -805,7 +807,11 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     write(as_json, plotjs)
 
 
-  return(.set.mSet(mSetObj));
+  mSetObj <- PlotStaticHeatMap(mSetObj, baseName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist,
+                               palette, fzCol, fzRow, viewOpt = "overview", rowV = rowV, colV = colV,
+                               var.inx = var.inx, border = border, grp.ave = grp.ave, show.legend = show.legend,
+                               show.annot.legend = show.annot.legend, includeRowNames = includeRowNames)
+  return(mSetObj);
 }
 
 #'Create high resolution static HeatMap for download only
@@ -916,11 +922,11 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
     border.col <- NA;
   }
   
-  if(format=="pdf"){
-    pdf(file = imgName, width=w, height=h, bg="white", onefile=FALSE);
-  }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  }
+
+  format <- tolower(format)
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  on.exit(grDevices::dev.off(), add = TRUE)
+
   if(cls.type == "disc"){    
     
     if(ordered.cls){
@@ -989,11 +995,10 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
                      annotation_legend = show.annot.legend, 
                      show_rownames=includeRowNames,
                      color = colors);
-  
   }else{
     heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+
   }
-  dev.off();
   return(.set.mSet(mSetObj));
 }
 
