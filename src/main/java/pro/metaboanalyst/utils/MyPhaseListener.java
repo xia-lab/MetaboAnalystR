@@ -298,11 +298,16 @@ public class MyPhaseListener implements PhaseListener {
                 boolean saveRes = fbc.saveProject("workflow");
                 if (saveRes) {
                     RDataUtils.updateRawJobStatusByFolder(sb.getRConnection(), folderName, "WORKFLOW_FINISHED");
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("status", "completed");
-                    updates.put("project_id", sb.getShareToken());
-                    String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
-                    RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
+                    Integer runId = (wb.getSelectedWorkflowRun() != null) ? wb.getSelectedWorkflowRun().getId() : null;
+                    if (runId != null && workflowRunCurrentlyFailed(db, runId)) {
+                        LOGGER.info("Workflow run {} already failed; skipping completion update.", runId);
+                    } else if (runId != null) {
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("status", "completed");
+                        updates.put("project_id", sb.getShareToken());
+                        String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
+                        RCenter.recordMessage(sb.getRConnection(), "Saving Project for Spectra Processing Workflow ------ <b>Finished!</b>");
+                    }
                     if (Files.isDirectory(Paths.get("/home/glassfish/payara6_micro"))
                             && Files.isRegularFile(Paths.get("/home/glassfish/payara6_micro/useVIP_2025R2"))) {
                         DataUtils.sendRawFinishEmail(ms, "vip2", email, jobId, folderName);
@@ -611,11 +616,17 @@ public class MyPhaseListener implements PhaseListener {
                     boolean saveRes = fbc.saveProject("workflow");
                     if (saveRes) {
                         jobTimerService.updateJobStatus(jobId, JobTimerService.Status.COMPLETED);
-                        Map<String, Object> updates = new HashMap<>();
-                        updates.put("status", "completed");
-                        updates.put("project_id", tokenId);
-                        String msg = db.updateWorkflowRunFields(String.valueOf(wb.getSelectedWorkflowRun().getId()), updates);
-                        System.out.println("updateworkflowafterfinish-----" + msg);
+                        Integer runId = (wb.getSelectedWorkflowRun() != null) ? wb.getSelectedWorkflowRun().getId() : null;
+                        System.out.println("===================================" + workflowRunCurrentlyFailed(db, runId));
+                        if (runId != null && workflowRunCurrentlyFailed(db, runId)) {
+                            LOGGER.info("Workflow run {} already failed; skipping completion update.", runId);
+                        } else if (runId != null) {
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("status", "completed");
+                            updates.put("project_id", tokenId);
+                            String msg = db.updateWorkflowRunFields(String.valueOf(runId), updates);
+                            System.out.println("updateworkflowafterfinish-----" + msg);
+                        }
                         dv.sendRawResume(email, jobId, shareLink);
                     }
 
@@ -631,6 +642,23 @@ public class MyPhaseListener implements PhaseListener {
             }
         } catch (Exception e) {
             LOGGER.error("handleFireBaseProjectLoad", e);
+        }
+    }
+
+    private boolean workflowRunCurrentlyFailed(DatabaseClient db, Integer runId) {
+        if (db == null || runId == null) {
+            System.out.println("runidnulllll==");
+            return false;
+        }
+        try {
+            Map<String, Object> run = db.getWorkflowRunById(String.valueOf(runId));
+            Object statusObj = run != null ? run.get("status") : null;
+            System.out.println(run.get("status") + "========status");
+
+            return statusObj != null && "failed".equalsIgnoreCase(statusObj.toString());
+        } catch (Exception e) {
+            LOGGER.warn("Unable to determine workflow run status for id {}. Proceeding with update.", runId, e);
+            return false;
         }
     }
 

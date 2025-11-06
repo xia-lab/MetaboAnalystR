@@ -450,8 +450,11 @@ public class SessionBean1 implements Serializable {
         }
 
         String myAnalType = analType;
-        if (analType.equals("mummichog")) {
-            myAnalType = dataType; //"mass_all" or "mass_table" for refined R function loading
+        if ("mummichog".equals(analType)) {
+            myAnalType = switch (dataType) {
+                case "mass_all", "mass_table" -> dataType;
+                default -> "mass_table";
+            };
         }
         //System.out.println("pro.metaboanalyst.controllers.general.SessionBean1.doLogin()" + analType);
         RC = getRConnection(myAnalType);

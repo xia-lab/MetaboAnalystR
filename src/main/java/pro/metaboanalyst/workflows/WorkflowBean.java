@@ -24,6 +24,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
@@ -2133,14 +2134,27 @@ public class WorkflowBean implements Serializable {
             }
             reloadingWorkflow = true;
 
-            ds.setSelected(ds.findById(getSelectedWorkflowRun().getDatasetId()));
+            DatasetRow datasetRow = ds.findById(getSelectedWorkflowRun().getDatasetId());
+            if (datasetRow == null) {
+                markSelectedRunFailed("Selected dataset could not be found. Workflow run marked as failed.");
+                return;
+            }
+            ds.setSelected(datasetRow);
 
             ///////////////loading dataset
-            boolean res = ds.load(ds.getSelected(), true);
+            boolean res = ds.load(datasetRow, true);
+            if (!res) {
+                markSelectedRunFailed("Initial data processing failed during dataset load. Workflow run marked as failed.");
+                return;
+            }
 
-            if (res && ds.getSelected().getModule().equals("raw")) {
+            if ("raw".equalsIgnoreCase(datasetRow.getModule())) {
                 System.out.println("handledataset========");
-                boolean res2 = ds.handleDataset(ds.getSelected());
+                boolean res2 = ds.handleDataset(datasetRow);
+                if (!res2) {
+                    markSelectedRunFailed("Initial data processing failed while preparing the raw dataset. Workflow run marked as failed.");
+                    return;
+                }
             }
             ////////////////////
             ///loading workflow/
@@ -2437,6 +2451,66 @@ public class WorkflowBean implements Serializable {
             }
         } catch (Exception e) {
             sb.addMessage("Error", "Failed to update workflow: " + e.getMessage());
+        }
+    }
+
+    public void markSelectedRunFailed(String reason) {
+        WorkflowRunModel run = getSelectedWorkflowRun();
+        if (run == null) {
+            System.out.println("markSelectedRunFailed====" + "ISNULL");
+            return;
+        }
+
+        boolean alreadyFailed = "failed".equalsIgnoreCase(String.valueOf(run.getStatus()));
+        String finishIso = OffsetDateTime.now(ZoneOffset.UTC).toString();
+
+        run.setStatus("failed");
+        run.setFinishDate(finishIso);
+        run.setLastUpdated(finishIso);
+
+        WorkflowRunModel tableRun = findRunInModelById(run.getId());
+        if (tableRun != null) {
+            tableRun.setStatus("failed");
+            tableRun.setFinishDate(finishIso);
+            tableRun.setLastUpdated(finishIso);
+        }
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("status", "failed");
+
+        try {
+            String msg = dbc.updateWorkflowRunFields(String.valueOf(run.getId()), updates);
+            System.out.println(msg);
+            if (!isUpdateSuccess(msg)) {
+                LOGGER.log(Level.WARNING,
+                        "DatabaseClient.updateWorkflowRunFields returned ''{0}'' for id {1}",
+                        new Object[]{msg, run.getId()});
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING,
+                    "Error updating workflow run status to failed for id " + run.getId(), e);
+        }
+
+        if (!alreadyFailed && reason != null && !reason.isBlank()) {
+            sb.addMessage("Error", reason);
+        }
+
+        try {
+            if (wf != null) {
+                wf.setStopStatusCheck(true);
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.FINE,
+                    "Failed to stop WorkflowView polling after failure", ex);
+        }
+
+        try {
+            if (dv != null) {
+                dv.abortActiveWorkflowRun(null);
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.FINE,
+                    "Failed to abort active workflow run after marking failed", ex);
         }
     }
 
@@ -2917,6 +2991,8 @@ public class WorkflowBean implements Serializable {
                 return "pi pi-spinner pi-spin text-blue-500";
             case "completed":
                 return "pi pi-check-circle text-green-500";
+            case "failed":
+                return "pi pi-times-circle text-red-500";
             default:
                 return "pi pi-tag text-500";
         }
@@ -2935,6 +3011,8 @@ public class WorkflowBean implements Serializable {
                 return "Running";
             case "completed":
                 return "Completed";
+            case "failed":
+                return "Failed";
             default:
                 return status;
         }

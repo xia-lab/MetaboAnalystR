@@ -598,16 +598,6 @@ public class DatabaseClient {
         }
     }
 
-    /**
-     * Convenience: accept a DatasetRow that already contains files[].
-     */
-    public String insertDataset(DatasetRow ds) {
-        return insertDataset(
-                ds.getEmail(), ds.getNode(), ds.getTitle(), sb.getAnalType(), sb.getDataType(), "metaboanalyst", ds.getSamplenum(),
-                ds.getFiles() == null ? java.util.List.of() : ds.getFiles()
-        );
-    }
-
     /* ---- small helpers (same as DAO) ---- */
     private static String nvl(String s, String def) {
         return (s == null || s.trim().isEmpty()) ? def : s;
@@ -830,7 +820,6 @@ public class DatabaseClient {
         return DatabaseController.detectDockerUserNum();
     }
 
-    
     public ArrayList<HashMap<String, Object>> getAllWorkflowRuns(String module, String email, String node) {
 
         try {
@@ -862,7 +851,7 @@ public class DatabaseClient {
             UUID datasetId, // <-- CHANGED: UUID (nullable)
             String datasetName, // nullable
             String other, // JSON string or plain text
-            String tool,         // NEW
+            String tool, // NEW
             String node) {       // workflow location
         try {
             final String toolVal = tool;
@@ -980,4 +969,47 @@ public class DatabaseClient {
             }
         }
     }
+
+    public Map<String, Object> getWorkflowRunById(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        try {
+            String response = apiClient.get("/database/workflowruns/" + id.trim());
+            if (response == null) {
+                return Collections.emptyMap();
+            }
+
+            String trimmed = response.trim();
+            if (trimmed.isEmpty()) {
+                return Collections.emptyMap();
+            }
+
+            LOGGER.log(Level.INFO,
+                    "workflow run payload for id={0}: {1}",
+                    new Object[]{id, previewResponse(trimmed)});
+
+            if (!trimmed.startsWith("{")) {
+                LOGGER.log(Level.FINE,
+                        "getWorkflowRunById returned non-object payload for id={0}: {1}",
+                        new Object[]{id, previewResponse(trimmed)});
+                return Collections.emptyMap();
+            }
+
+            Map<String, Object> run = parseJsonToMap(trimmed);
+            return run;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving workflow run by id", e);
+            return Collections.emptyMap();
+        }
+    }
+
+    private String previewResponse(String response) {
+        if (response.length() <= 120) {
+            return response;
+        }
+        return response.substring(0, 117) + "...";
+    }
+
 }
