@@ -165,7 +165,7 @@
         <hr class="style-one"/>
         <h:panelGrid id="hmPane" style="width: 95%; padding-left: 5%">
             <h:inputHidden id="mydir2" value="#{sessionBean1.getJsonDir('heatmap2')}"/>  
-               
+
             <p>
                 <b>Mouse over</b> to see the labels; <b>click and drag</b> to zoom-in and <b>double-click</b> to zoom-out completely
             </p>
@@ -295,21 +295,20 @@
                 }
             </script>
 
-            <h:panelGrid columns="3" cellspacing="5" style="text-align: right; margin-left: 540px;">
-                <p:commandButton value="SVG" 
-                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
-                                 onclick="export_image('svg')"  
-                                 icon="pi pi-download"/>  
+            <h:panelGrid columns="2" cellspacing="5" style="text-align: right; margin-left: 540px;">
 
-                <p:commandButton value="PNG" 
-                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
-                                 onclick="export_image('png')"
-                                 icon="pi pi-download"/>  
+                <p:commandLink actionListener="#{sessionBean1.graphicsLnk_action('heatmap2')}" 
+                               update=":myGraphPane"
+                               oncomplete="PF('graphDialog').show()"
+                               title="Customize the graphics output">
+                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                </p:commandLink>
 
-                <p:commandButton value="Reset" 
-                                 class="bg-primary border-primary-500 text-base border-1 border-solid border-round cursor-pointer transition-all transition-duration-200 hover:bg-primary-600 hover:border-primary-600 active:bg-primary-700 active:border-primary-700"
-                                 onclick="resetAxis()"
-                                 icon="pi pi-replay"/> 
+                <p:commandLink onclick="resetAxis()"
+                               title="Reset heatmap view"> 
+                    <i class="pi pi-replay" style="font-size: 1.1rem"/>
+                </p:commandLink>
+
             </h:panelGrid>
 
              <!--   <img onerror='this.style.display="none"' src="#{sessionBean1.getCurrentImageURL('heatmap')}" alt="HeatMapimage"/>-->
