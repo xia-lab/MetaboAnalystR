@@ -10,13 +10,11 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  var.size <- ncol(mSetObj$dataSet$norm);
-  if(var.size > 10){
-    var.size <- 10;# keep top 10 should be sufficient
-    contrib <- factoextra::get_pca_var(pca)$contrib[, 1:var.size]; 
-  }else{ 
-    contrib <- factoextra::get_pca_var(pca)$contrib;
+  contrib <- factoextra::get_pca_var(pca)$contrib;
+  if(ncol(contrib)>10){
+    contrib <- contrib[,1:10];# keep top 10 should be sufficient
   }
+  
   # obtain variance explained
   sum.pca <- summary(pca);
   imp.pca <- sum.pca$importance;
