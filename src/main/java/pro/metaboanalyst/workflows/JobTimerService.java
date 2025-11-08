@@ -19,8 +19,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jakarta.enterprise.context.control.RequestContextController;
+import jakarta.enterprise.inject.Instance;
+import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
-import pro.metaboanalyst.lts.DatabaseController;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.models.JobInfo;
 import pro.metaboanalyst.utils.DataUtils;
@@ -44,7 +46,8 @@ public class JobTimerService {
 
     @Inject private ApplicationBean1 ab;
     @Inject private FireBase fb;
-
+    @Inject private RequestContextController requestContextController;
+    @Inject private Instance<DatabaseClient> databaseClientProvider;
     /* ============ Public API ============ */
 
     /** Schedule a persistent single-shot job (fires immediately). */
@@ -246,11 +249,31 @@ public class JobTimerService {
         if (runId == null) {
             return;
         }
+        boolean activated = false;
         try {
+            if (databaseClientProvider == null || databaseClientProvider.isUnsatisfied()) {
+                LOG.log(Level.WARNING,
+                        "[JobTimerService] DatabaseClient bean not available; cannot update workflow_run id={0}",
+                        runId);
+                return;
+            }
+
+            activated = requestContextController != null && requestContextController.activate();
+            DatabaseClient client = databaseClientProvider.get();
+            if ("completed".equalsIgnoreCase(status)) {
+                Map<String, Object> existing = client.getWorkflowRunById(String.valueOf(runId));
+                Object currentStatus = existing != null ? existing.get("status") : null;
+                if (currentStatus != null && "failed".equalsIgnoreCase(currentStatus.toString())) {
+                    LOG.log(Level.INFO,
+                            "[JobTimerService] Skipping status update to completed for workflow_run id={0} because it is already failed.",
+                            runId);
+                    return;
+                }
+            }
             Map<String, Object> payload = new HashMap<>();
             payload.put("status", status);
-            String res = DatabaseController.updateWorkflowRunFlexible(runId, payload);
-            if (res == null || !"OK".equalsIgnoreCase(res.trim())) {
+            String res = client.updateWorkflowRunFields(String.valueOf(runId), payload);
+            if (res == null || res.isBlank() || !res.toLowerCase().contains("ok") && !res.toLowerCase().contains("\"updated\":true")) {
                 LOG.log(Level.WARNING, "[JobTimerService] workflow_run update returned ''{0}'' for id={1}, status={2}",
                         new Object[]{res, runId, status});
             }
@@ -258,6 +281,10 @@ public class JobTimerService {
             LOG.log(Level.WARNING,
                     "[JobTimerService] workflow_run update failed for id=" + runId + ", status=" + status,
                     e);
+        } finally {
+            if (activated && requestContextController != null) {
+                requestContextController.deactivate();
+            }
         }
     }
 }

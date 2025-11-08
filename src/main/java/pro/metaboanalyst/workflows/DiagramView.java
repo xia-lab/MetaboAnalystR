@@ -235,6 +235,34 @@ public class DiagramView implements Serializable {
         this.workflowFinished = workflowFinished;
     }
 
+    public void abortActiveWorkflowRun(String failReason) {
+        workflowFinished = true;
+        try {
+            if (jeb != null) {
+                jeb.setStopStatusCheck(true);
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(DiagramView.class.getName()).log(Level.FINE,
+                    "Failed to stop JobExecution polling", ex);
+        }
+
+        try {
+            if (sb.getCurrentUser() != null) {
+                String jobId = sb.getCurrentUser().getName();
+                if (jobId != null && !jobId.isBlank()) {
+                    jsv.updateJobStatus(jobId, JobTimerService.Status.FAILED);
+                }
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(DiagramView.class.getName()).log(Level.FINE,
+                    "Failed to update job timer status during abort", ex);
+        }
+
+        if (failReason != null && !failReason.isBlank()) {
+            sb.addMessage("Error", failReason);
+        }
+    }
+
     public Map<String, Boolean> getExecutionMap() {
         return executionMap;
     }
@@ -2006,12 +2034,15 @@ public class DiagramView implements Serializable {
                 try {
                     int res = wfv.executeWorkflow(nm);
                     if (res == 0) {
-                        sb.addMessage("error", "Error occured at this step: " + nm);
+                        //wb.markSelectedRunFailed("Workflow step '" + nm + "' failed. Workflow run marked as failed.");
+                        return false;
                     } else if (res == 1) {
                         this.lastExecutedSteps.add(nm);
                     }
                 } catch (Exception ex) {
+                    //wb.markSelectedRunFailed("Exception occurred while executing workflow step '" + nm + "'. Workflow run marked as failed.");
                     Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, null, ex);
+                    return false;
                 }
             }
         } else {
@@ -2020,7 +2051,7 @@ public class DiagramView implements Serializable {
                 errMsg = msg;
             }
             errorMessages.put(origName, errMsg);
-            sb.addMessage("Error", "The data is not appropriate for " + origName + " module: " + errMsg);
+            wb.markSelectedRunFailed("The data is not appropriate for " + origName + " module: " + errMsg);
             return false;
 
         }

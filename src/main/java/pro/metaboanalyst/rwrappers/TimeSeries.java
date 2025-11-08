@@ -58,7 +58,10 @@ public class TimeSeries {
             RCenter.recordRCommand(RC, rCommand);
             sb.recordRCommandFunctionInfo(rCommand, "Heatmap2");
 
-            sb.addGraphicsCMD("heatmap2", rCommand);
+            String metaAssign = "meta.vec.hm2 <- " + DataUtils.convertArrayToVecInR(selectedMetas);
+            String sortAssign = "sort.vec.hm2 <- " + DataUtils.convertArrayToVecInR(sortNames);
+            String combinedCmd = metaAssign + ";\n" + sortAssign + ";\n" + rCommand;
+            sb.addGraphicsCMD("heatmap2", combinedCmd);
             sb.addGraphicsMapLink("heatmap2", "/Secure/multifac/Heatmap2View.xhtml");
 
             return RC.eval(rCommand).asInteger();

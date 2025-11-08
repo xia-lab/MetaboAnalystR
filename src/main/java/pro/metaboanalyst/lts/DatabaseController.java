@@ -2456,4 +2456,70 @@ public class DatabaseController implements Serializable {
         }
     }
 
+    public static HashMap<String, Object> getWorkflowRunById(int id) {
+        final String sql
+                = "SELECT id, module, name, description, status, start_date, finish_date, "
+                + "       workflow_id, dataset_id, dataset_name, other, last_updated, email, tool, "
+                + "       node, project_id "
+                + "  FROM workflow_runs WHERE id = ?";
+
+        try (Connection con = DatabaseConnectionPool.getDataSource().getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                HashMap<String, Object> row = new HashMap<>();
+                row.put("id", rs.getInt("id"));
+                row.put("module", rs.getString("module"));
+                row.put("name", rs.getString("name"));
+                row.put("description", rs.getString("description"));
+                row.put("status", rs.getString("status"));
+                row.put("startDate", rs.getString("start_date"));
+                row.put("finishDate", rs.getString("finish_date"));
+                row.put("workflowId", rs.getString("workflow_id"));
+
+                // dataset_id as UUID (nullable)
+                java.util.UUID datasetUuid = null;
+                try {
+                    datasetUuid = rs.getObject("dataset_id", java.util.UUID.class);
+                } catch (SQLException primary) {
+                    Object raw = rs.getObject("dataset_id");
+                    if (raw instanceof java.util.UUID) {
+                        datasetUuid = (java.util.UUID) raw;
+                    } else if (raw != null) {
+                        try {
+                            datasetUuid = java.util.UUID.fromString(raw.toString());
+                        } catch (Exception ignore) {
+                        }
+                    }
+                }
+                row.put("datasetId", datasetUuid);
+
+                row.put("datasetName", rs.getString("dataset_name"));
+                row.put("other", rs.getString("other"));
+
+                java.sql.Timestamp ts = rs.getTimestamp("last_updated");
+                String lastUpdatedFmt = (ts == null)
+                        ? null
+                        : ts.toLocalDateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                row.put("lastUpdated", lastUpdatedFmt);
+
+                row.put("email", rs.getString("email"));
+                row.put("tool", rs.getString("tool"));
+                row.put("node", rs.getString("node"));
+                Object projectObj = rs.getObject("project_id");
+                row.put("projectId", projectObj == null ? null : projectObj.toString());
+
+                return row;
+            }
+        } catch (SQLException ex) {
+            System.err.println("getWorkflowRunById SQL error: " + ex.getMessage());
+            return null;
+        }
+    }
+
 }

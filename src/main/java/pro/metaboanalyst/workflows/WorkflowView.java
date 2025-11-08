@@ -17,6 +17,7 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
 import org.primefaces.PrimeFaces;
 import pro.metaboanalyst.api.DatabaseClient;
 import pro.metaboanalyst.controllers.general.ApplicationBean1;
@@ -140,6 +141,23 @@ public class WorkflowView implements Serializable {
 
     private String refactoredName = "";
 
+    private static final Set<String> NORMALIZATION_STEPS = Set.of(
+            "Normalization",
+            "Normalization_Table",
+            "Normalization Intensity"
+    );
+
+    private static final Set<String> CRITICAL_STEPS = Set.of(
+            "Data Processing",
+            "Sanity Check",
+            "Sanity Check Intensity",
+            "Sanity Check Peak",
+            "Sanity Check_Table",
+            "Normalization",
+            "Normalization_Table",
+            "Normalization Intensity"
+    );
+
     public int executeWorkflow(String str) throws Exception {
         //String str = "Using the split() method to convert a string to array in Java";
 
@@ -248,7 +266,10 @@ public class WorkflowView implements Serializable {
                         }
                         nb.performDataNormalization();
                         if (!nb.isNormPerformed()) {
+                            success = false;
                             sb.addNaviTrack("Normalization", "/Secure/process/NormalizationView.xhtml", false);
+                            wb.markSelectedRunFailed("Normalization step failed. Workflow run marked as failed.");
+                            return 0;
                         } else {
                             sb.addNaviTrack("Normalization", "/Secure/process/NormalizationView.xhtml", true);
                         }
@@ -1039,10 +1060,17 @@ public class WorkflowView implements Serializable {
                 }
 
             } catch (Exception e) {
+                success = false;
                 System.out.println("An error occurred during the execution of: " + func);
-                e.printStackTrace();
-                // Optionally, you can log the error or update a UI message
-                // sb.addMessage("Error", "An error occurred during the execution of: " + func);
+                Logger.getLogger(WorkflowView.class.getName()).log(Level.SEVERE,
+                        "executeStat failed for step " + func, e);
+                if (CRITICAL_STEPS.contains(func)) {
+                    String reason = NORMALIZATION_STEPS.contains(func)
+                            ? "Normalization step failed. Workflow run marked as failed."
+                            : "Critical workflow step '" + func + "' failed. Workflow run marked as failed.";
+                    wb.markSelectedRunFailed(reason);
+                    return 0;
+                }
             }
         }
 
