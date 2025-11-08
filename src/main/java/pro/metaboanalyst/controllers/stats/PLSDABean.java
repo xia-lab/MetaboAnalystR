@@ -347,7 +347,7 @@ public class PLSDABean implements Serializable {
 
     public void updatePLSDA() {
         ChemoMetrics.initPLS(sb);
-        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 150, plsPairNum);
+        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 96, plsPairNum);
         ChemoMetrics.plotPLS2DScore(sb, sb.getNewImage("pls_score2d"), "png", 150, 1, 2, 0.95, 1, 0, cexOpt);
         ChemoMetrics.plotPLS3DScore(sb, sb.getNewImage("pls_score3d"), "json", 150, 1, 2, 3);
         ChemoMetrics.plotPLSLoading(sb, sb.getNewImage("pls_loading"), "png", 150, 1, 2);
@@ -358,7 +358,7 @@ public class PLSDABean implements Serializable {
     }
 
     public void plsPairBtn_action() {
-        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 150, plsPairNum);
+        ChemoMetrics.plotPLSPairSummary(sb, sb.getNewImage("pls_pair"), "png", 96, plsPairNum);
     }
 
     public void plsScore2dBtn_action() {

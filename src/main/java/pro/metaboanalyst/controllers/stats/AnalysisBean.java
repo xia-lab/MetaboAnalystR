@@ -193,7 +193,7 @@ public class AnalysisBean implements Serializable {
 
     public void doDefaultPLSDA() {
         if (ChemoMetrics.initPLS(sb)) {
-            ChemoMetrics.plotPLSPairSummary(sb, sb.getCurrentImage("pls_pair"), "png", 150, ChemoMetrics.getDefaultPLSPairNumber(sb));
+            ChemoMetrics.plotPLSPairSummary(sb, sb.getCurrentImage("pls_pair"), "png", 96, ChemoMetrics.getDefaultPLSPairNumber(sb));
             ChemoMetrics.plotPLS2DScore(sb, sb.getCurrentImage("pls_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na");
             // ChemoMetrics.PlotPLS3DScore(sb, sb.getCurrentImage("pls_score3d"), "png", 150, 1, 2, 3, 40);
             ChemoMetrics.plotPLS3DScore(sb, sb.getCurrentImage("pls_score3d"), "json", 150, 1, 2, 3);
@@ -223,7 +223,7 @@ public class AnalysisBean implements Serializable {
     public void doDefaultSPLSDA() {
 
         ChemoMetrics.initSPLS(sb, 5, 10, "same", "Mfold", 5, "F");
-        ChemoMetrics.plotSPLSPairSummary(sb, sb.getCurrentImage("spls_pair"), "png", 150, ChemoMetrics.getDefaultSPLSPairNumber(sb));
+        ChemoMetrics.plotSPLSPairSummary(sb, sb.getCurrentImage("spls_pair"), "png", 96, ChemoMetrics.getDefaultSPLSPairNumber(sb));
         ChemoMetrics.plotSPLS2DScore(sb, sb.getCurrentImage("spls_score2d"), "png", 150, 1, 2, 0.95, 0, 0, "na");
         ChemoMetrics.plotSPLS3DScore(sb, sb.getCurrentImage("spls_score3d"), "json", 150, 1, 2, 3);
         ChemoMetrics.plotSPLSLoading(sb, sb.getCurrentImage("spls_loading"), "png", 150, 1, "overview");

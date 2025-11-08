@@ -262,7 +262,12 @@ public class GraphBean implements Serializable {
                     rcmd = rcmd.replace("default", mfb.getCovStyleOpt());
                 }
                 rcmd = rcmd.replace("png", formatOpt);
-                rcmd = rcmd.replace("150", mydpi + "");
+
+                if (key.contains("pca_pair") || key.contains("pls_pair")) {
+                    rcmd = rcmd.replace("96", mydpi + "");
+                } else {
+                    rcmd = rcmd.replace("150", mydpi + "");
+                }
                 rcmd = rcmd.replace("width=NA", "width=" + sb.getSizeOpt());
                 imgName = sb.getCurrentImage(key);
                 imgName = imgName.replaceAll("\\/", "_");
