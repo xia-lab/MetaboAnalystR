@@ -644,9 +644,9 @@ public class FireBaseController implements Serializable {
 
         RCenter.loadHistory(sb.getRConnection());
 
-        if (javaHistory.isEmpty()) {
+        //if (javaHistory.isEmpty()) {
             javaHistory = readJsonStringFromFile(sb.getCurrentUser().getOrigHomeDir() + File.separator + "java_history.json");
-        }
+        //}
         loadJavaHistory(javaHistory);
         System.out.println("wb.isReloadingWorkflow()===" + wb.isReloadingWorkflow());
         if (wb.isReloadingWorkflow() || type.equals("workflow")) {
@@ -662,6 +662,7 @@ public class FireBaseController implements Serializable {
 
         String naviType = sb.getNaviType();
         sb.setNaviTree(NaviUtils.createNaviTree(naviType));
+        System.out.println("sbdatanormed====" + sb.isDataNormed());
         return true;
     }
 
@@ -721,9 +722,18 @@ public class FireBaseController implements Serializable {
         // setAnalType should be called first
         for (Map.Entry<String, String> entry : javaHistory.entrySet()) {
             String[] splitString = entry.getKey().split("\\.");
-            myClass = splitString[0];
-            myMethod = splitString[1];
-            myParamType = splitString[2];
+            myClass = splitString.length > 0 ? splitString[0] : "";
+            myMethod = splitString.length > 1 ? splitString[1] : "";
+            myParamType = splitString.length > 2 ? splitString[2] : "noparam";
+
+            if ("dummy".equals(myMethod) && splitString.length > 2) {
+                myClass = splitString[2];
+                myParamType = splitString[2];
+                System.out.println("[loadJavaHistory] Snapshot entry detected -> Bean: " + myClass);
+            } else {
+                System.out.println("[loadJavaHistory] Method entry -> classToken=" + myClass + ", method=" + myMethod + ", paramToken=" + myParamType);
+            }
+
             myParam = entry.getValue();
             // now work with key and value...
 
@@ -775,10 +785,16 @@ public class FireBaseController implements Serializable {
         // Print debug information
         System.out.println("myClassType: " + myClassType + ", myMethod: " + myMethod + ", myParamType: " + myParamType + ", myParam: " + myParam);
         // Retrieve the bean from the map
-        Object obj = beanClassMap.get(myParamType);
+        Object obj = beanClassMap.get(myClassType);
         if (obj == null) {
-            LOGGER.error("Bean not found: " + myParamType);
-            return;
+            obj = beanClassMap.get(myParamType);
+            if (obj == null) {
+                LOGGER.error("Bean not found: " + myClassType + " / " + myParamType);
+                return;
+            }
+            System.out.println("[runJavaMethod] Fallback to param token -> " + myParamType);
+        } else {
+            System.out.println("[runJavaMethod] Resolved bean via class token -> " + myClassType);
         }
 
         Class<?> cls = obj.getClass();

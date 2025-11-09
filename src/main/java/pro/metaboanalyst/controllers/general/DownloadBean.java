@@ -294,13 +294,9 @@ public class DownloadBean implements Serializable {
                 number = Integer.parseInt(mIdx.group(1));
             }
 
-            System.out.printf("[SCAN] %-35s → base=%-20s idx=%d%n",
-                    picture, baseName, number);
 
             if (!highestNumberedImages.containsKey(baseName)) {
 
-                System.out.printf("[KEEP] first time for %-20s → %s%n",
-                        baseName, picture);
                 highestNumberedImages.put(baseName, picture);
 
             } else {
@@ -308,16 +304,11 @@ public class DownloadBean implements Serializable {
                 String prevPic = highestNumberedImages.get(baseName);
                 int prevIdx = getImageNumber(prevPic);
 
-                System.out.printf("[COMP] %-20s prev=%-30s(idx=%d)  vs  new=%s(idx=%d)%n",
-                        baseName, prevPic, prevIdx, picture, number);
 
                 if (prevIdx < number) {
-                    System.out.printf("[REPL] replacing %-20s with %s%n",
-                            baseName, picture);
+
                     highestNumberedImages.put(baseName, picture);
-                } else {
-                    System.out.printf("[SKIP] keeping existing for %-20s%n", baseName);
-                }
+                } 
             }
         }
 

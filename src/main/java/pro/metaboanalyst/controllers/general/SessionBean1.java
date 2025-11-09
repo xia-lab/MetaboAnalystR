@@ -261,6 +261,18 @@ public class SessionBean1 implements Serializable {
     private String dataClsOpt = "disc";
     private String dataFormat = "rowu";
 
+    public void setDataPreprocessed(boolean dataPreprocessed) {
+        this.dataPreprocessed = dataPreprocessed;
+    }
+
+    public void setDataNormed(boolean dataNormed) {
+        this.dataNormed = dataNormed;
+    }
+
+    public void setIntegChecked(boolean integChecked) {
+        this.integChecked = integChecked;
+    }
+
     public String getDataClsOpt() {
         return dataClsOpt;
     }
@@ -947,7 +959,6 @@ public class SessionBean1 implements Serializable {
         naviTree = new DefaultTreeNode("Root", null); // Initialize the root
 
         for (String key : naviTrack.keySet()) {
-            System.out.println("Keyset====" + key);
             if (!key.equals("Workflows") && !key.equals("Modules")) {
                 TreeNode node = new DefaultTreeNode(key, naviTree); // Add to root
                 node.setSelectable(true); // Make it selectable (optional)
