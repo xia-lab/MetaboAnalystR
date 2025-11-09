@@ -79,12 +79,12 @@
                 </p:tooltip>
                 <h:panelGrid style="text-align: center; width: 100%; padding-top: 20px">
                     <p:chart id="chart" widgetVar="chart" value="#{detailsBean.getModel2('aov')}"  
-                                    style="min-height:480px; height:50%; min-width:880px; width: 90%"
-                                    extender="extender">
+                             style="min-height:480px; height:50%; min-width:880px; width: 90%"
+                             extender="extender">
                         <p:ajax event="itemSelect" listener="#{detailsBean.itemSelect}" update=":hisTab:cmdPane" oncomplete="PF('FeatureView').show();"/>
                     </p:chart>
                     <p:commandButton id="toggleTm" style="display:none;" onclick="#{detailsBean.toggleTheme('aov')}" update="chart" />
-                      
+
                 </h:panelGrid>
             </h:panelGrid>  
         </h:panelGrid> 
@@ -118,6 +118,7 @@
             </h:form>
         </p:dialog>
         <ui:include src="/template/_feature_dialog.xhtml" />
+        <ui:include src="/template/_graphic_dialog.xhtml" />
         <script type="text/javascript">
                             var light;
                             var textColor;

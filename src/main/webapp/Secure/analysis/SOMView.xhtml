@@ -8,7 +8,7 @@
                 template="#{sessionBean1.templatePath}">
     <ui:define name="metaInfo">
         <f:event type="preRenderView" listener="#{analBean.performDefaultAnalysis('SOM')}"/> 
-                <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('SOM', '/Secure/analysis/SOMView.xhtml')}"/> 
+        <f:event type="preRenderView"  listener="#{sessionBean1.addNaviTrack('SOM', '/Secure/analysis/SOMView.xhtml')}"/> 
     </ui:define>
     <ui:define name="footerout"/>
     <ui:define name="content">
@@ -103,11 +103,12 @@
             </p:tabView>
         </h:panelGrid> 
         <p:dialog widgetVar="detailDialog" dynamic="true" modal="true" appendTo="@(body)" width="540"
-                   header="Cluster Membership"
+                  header="Cluster Membership"
                   hideEffect="explode" resizable="true"> 
             <h:panelGrid id="detailView" style="width:500px; padding: 20px; font-size: 12px">
                 <h:outputText escape="false" value="#{clusterBean.somTxt}"/>
             </h:panelGrid> 
         </p:dialog>
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>

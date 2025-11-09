@@ -120,7 +120,7 @@
                                 </p:commandLink>
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' 
-                                  style="width:9in; padding-left: 50px"
+                                 style="width:9in; padding-left: 50px"
                                  src="#{sessionBean1.getCurrentImageURL('spls_score2d')}" alt="SPLSScore2DImage"/>
                         </h:panelGrid>  
                     </h:form>
@@ -158,7 +158,7 @@
                             </p:commandLink>
                         </h:panelGrid>
                         <img onerror='this.style.display="none"' 
-                              style="width:9in; padding-left: 50px"
+                             style="width:9in; padding-left: 50px"
                              src="#{sessionBean1.getCurrentImageURL('spls_loading')}" alt="SPLSLoad2DImage"/>
                     </h:panelGrid>  
                 </p:tab>
@@ -192,16 +192,16 @@
                                 </p:selectOneMenu>
                             </h:panelGrid>
                             <h:panelGrid columns="2" style="padding-left: 20px; align-items: flex-start;">
-                                 <p:commandButton value="Submit"
+                                <p:commandButton value="Submit"
                                                  update=":ac:form55 :hisTab:cmdPane"
                                                  actionListener="#{splsBean.splsCvBtn_action()}" partialSubmit="true"/>
-                                 <p:commandLink style="padding-left: 10px;"
-                                                actionListener="#{sessionBean1.graphicsLnk_action('spls_cv')}"
-                                                update=":myGraphPane"
-                                                oncomplete="PF('graphDialog').show()"
-                                                title="Customize the graphics output">
-                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
-                                 </p:commandLink>
+                                <p:commandLink style="padding-left: 10px;"
+                                               actionListener="#{sessionBean1.graphicsLnk_action('spls_cv')}"
+                                               update=":myGraphPane"
+                                               oncomplete="PF('graphDialog').show()"
+                                               title="Customize the graphics output">
+                                    <i class="pi pi-palette" style="font-size: 1.1rem"/>
+                                </p:commandLink>
                             </h:panelGrid>
                         </h:panelGrid>
                         <img onerror='this.style.display="none"'
@@ -243,5 +243,6 @@
             </h:panelGrid>
         </p:dialog>
         <ui:include src="/template/_feature_dialog.xhtml" />
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>

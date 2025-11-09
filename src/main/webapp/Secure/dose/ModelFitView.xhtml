@@ -151,7 +151,7 @@
                 Please refer to
                 <a href="https://omicsforum.ca/t/how-to-choose-among-different-methods-for-curve-fitting-in-dose-response-analysis-continous-exposures/5994"
                    target="_blank" rel="noopener noreferrer"> our forum post</a> for more details. 
-                   
+
                 The recommended models have been selected by default. Any model fits with a poor fit are filtered out, and then the best fitting model is chosen based on AIC. The selected fit is 
                 used to compute the BMD. Please note that this process is computational intensive, and the more models you selected, the longer processing will be needed. 
                 A maximum of <b>1000</b> features can be used for curve fitting. 
@@ -251,7 +251,7 @@
                                        title="Customize the graphics output">
                             <i class="pi pi-palette" style="font-size: 1.1rem"/>
                         </p:commandLink>
-                        
+
                         <p:commandLink   id="img1x" 
                                          actionListener="#{sessionBean1.graphicsLnk_action('dr_barplot')}"
                                          oncomplete="PF('graphDialog').show()">
@@ -262,6 +262,7 @@
                 </h:panelGrid>
             </h:panelGrid>
         </h:panelGrid>
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>
 
