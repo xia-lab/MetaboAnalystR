@@ -615,17 +615,17 @@
         </navigation-case>
         <navigation-case>
             <from-outcome>MgwasParamView</from-outcome>
-            <to-view-id>/Secure/mgwas/ParamView.xhtml</to-view-id>
+            <to-view-id>/Secure/mgwas/MrParamView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>
         <navigation-case>
             <from-outcome>MR method</from-outcome>
-            <to-view-id>/Secure/mgwas/MethodView.xhtml</to-view-id>
+            <to-view-id>/Secure/mgwas/MrMethodView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>
         <navigation-case>
             <from-outcome>MgwasResultView</from-outcome>
-            <to-view-id>/Secure/mgwas/ResultView.xhtml</to-view-id>
+            <to-view-id>/Secure/mgwas/MrResultView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>
         <navigation-case>
