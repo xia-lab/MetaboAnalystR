@@ -6,11 +6,57 @@
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:p="http://primefaces.org/ui">
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        //<![CDATA[
+        // Progressive loading: hide sections initially, reveal after populateTables completes
+        var sectionsRevealed = false;
 
+        function revealSectionsProgressively() {
+            if (sectionsRevealed) return;
+            sectionsRevealed = true;
+
+            // Reveal tables section first
+            setTimeout(function() {
+                var tables = document.querySelector('.tables-section');
+                if (tables) {
+                    tables.style.opacity = '0';
+                    tables.style.display = 'block';
+                    setTimeout(function() { tables.style.opacity = '1'; }, 50);
+                }
+            }, 100);
+
+            // Reveal images section second
+            setTimeout(function() {
+                var images = document.querySelector('.images-section');
+                if (images) {
+                    images.style.opacity = '0';
+                    images.style.display = 'block';
+                    setTimeout(function() { images.style.opacity = '1'; }, 50);
+                }
+            }, 400);
+
+            // Reveal files section third
+            setTimeout(function() {
+                var files = document.querySelector('.files-section');
+                if (files) {
+                    files.style.opacity = '0';
+                    files.style.display = 'block';
+                    setTimeout(function() { files.style.opacity = '1'; }, 50);
+                }
+            }, 700);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
             setTimeout(populateTables, 500);
         });
+        //]]>
     </script>
+    <style type="text/css">
+        /* Progressive loading styles */
+        .tables-section, .images-section, .files-section {
+            display: none;
+            transition: opacity 0.5s ease-in;
+        }
+    </style>
     <style type="text/css">
         .hidden-header thead {
             display: none;
@@ -92,7 +138,7 @@
             <p:remoteCommand name="populateTables"
                              action="#{downloader.populateResTable()}"
                              onstart="PF('statusDialog').show();"
-                             oncomplete="PF('statusDialog').hide();"
+                             oncomplete="PF('statusDialog').hide(); revealSectionsProgressively();"
                              update=":form1"/>
 
             <p:selectOneRadio id="customRadio" value="#{downloader.mdlOpt}" layout="custom">
@@ -188,6 +234,9 @@
                     </p:panelGrid>
                 </ui:repeat>
             </p:panel>
+
+            <!-- Progressive loading wrapper for tables -->
+            <div class="tables-section">
             <h:panelGroup rendered="#{downloader.containsModule('roc')}">
                 <ui:include src="./table/_RocTables.xhtml" />
             </h:panelGroup>
@@ -229,6 +278,11 @@
                      class="surface-card text-800" rendered="#{downloader.containsModule('msetqea') and not empty msetBean.qeaBeans}">
                 <ui:include src="./table/_QeaView.xhtml" />
             </p:panel>
+            </div>
+            <!-- End tables section -->
+
+            <!-- Progressive loading wrapper for images -->
+            <div class="images-section">
             <p:panel styleClass="myPanel myDashboard" header="Graphical Outputs"  
                      class="surface-card text-800">
                 <p:dataView var="image" value="#{downloader.galleryImages}" rows="12" paginator="true"
@@ -256,6 +310,11 @@
 
                 </p:dataView>
             </p:panel>
+            </div>
+            <!-- End images section -->
+
+            <!-- Progressive loading wrapper for files -->
+            <div class="files-section">
             <p:panel styleClass="myPanel myDashboard" header="Result Files" class="surface-card text-800">
 
                 <p:dataTable style="width:100%; padding: 20px" var="dnld" value="#{downloader.downloads}" styleClass="hidden-header">  
@@ -281,8 +340,10 @@
                         </p:commandLink>
                         -->
                     </p:column>
-                </p:dataTable>  
+                </p:dataTable>
             </p:panel>
+            </div>
+            <!-- End files section -->
 
             <p:panel styleClass="myPanel myDashboard" header="New Journey" 
                      class="surface-card text-800">
