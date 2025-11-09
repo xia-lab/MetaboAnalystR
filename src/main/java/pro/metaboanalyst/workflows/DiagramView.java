@@ -2541,15 +2541,10 @@ public class DiagramView implements Serializable {
 //ab.isOnZgyPc() ||
         ensureRawModuleSelected();
         boolean res = false;
-        if (ab.isOnProServer() || ab.isOnQiangPc() || ab.isOnZgyPc()) {
-            if (selectionMap.getOrDefault("Spectra Processing", false)) {
-                res = startWorkflow();
-            } else {
-                res = submitWorkflowOther();
-            }
-        } else {
-            jeb.setStopStatusCheck(true);
+        if (selectionMap.getOrDefault("Spectra Processing", false)) {
             res = startWorkflow();
+        } else {
+            res = submitWorkflowOther();
         }
 
         WorkflowRunModel activeRun = wb.getSelectedWorkflowRun();
