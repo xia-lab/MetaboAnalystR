@@ -1630,14 +1630,12 @@ public class FireBaseController implements Serializable {
                 sb.setCurrentNaviUrl("/Secure/dose/FitResultView.xhtml");
             }
 
-            case "mr_results_merge" -> {
-                sb.setCurrentNaviUrl("/Secure/mgwas/ResultView.xhtml");
-            }
             case "harmonized_dat" -> {
-                sb.setCurrentNaviUrl("/Secure/mgwas/ParamView.xhtml");
+                sb.setCurrentNaviUrl("/Secure/mgwas/MrParamView.xhtml");
             }
-            case "mr_scatter_plot", "mr_forest_plot", "mr_leaveoneout_plot", "mr_funnel_plot" -> {
-                sb.setCurrentNaviUrl("/Secure/mgwas/ResultView.xhtml");
+            
+            case "mr_results_merge", "mr_scatter_plot", "mr_forest_plot", "mr_leaveoneout_plot", "mr_funnel_plot" -> {
+                sb.setCurrentNaviUrl("/Secure/mgwas/MrResultView.xhtml");
             }
             default -> {
                 res = false;

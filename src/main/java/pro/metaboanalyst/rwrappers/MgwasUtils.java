@@ -225,7 +225,7 @@ public class MgwasUtils {
             sb.addGraphicsCMD(exposure + "_mr_forest_plot", rCommand);
             sb.addGraphicsCMD("mr_forest_plot", rCommand);
 
-            sb.addGraphicsMapLink(exposure + "_mr_scatter_plot", "/Secure/mgwas/ResultView.xhtml");
+            sb.addGraphicsMapLink(exposure + "_mr_scatter_plot", "/Secure/mgwas/MrResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -242,7 +242,7 @@ public class MgwasUtils {
             sb.addGraphicsCMD(exposure + "_mr_leaveoneout_plot", rCommand);
             sb.addGraphicsCMD("mr_leaveoneout_plot", rCommand);
 
-            sb.addGraphicsMapLink(exposure + "_mr_leaveoneout_plot", "/Secure/mgwas/ResultView.xhtml");
+            sb.addGraphicsMapLink(exposure + "_mr_leaveoneout_plot", "/Secure/mgwas/MrResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {
@@ -259,7 +259,7 @@ public class MgwasUtils {
             sb.addGraphicsCMD(exposure + "_mr_funnel_plot", rCommand);
                         sb.addGraphicsCMD("mr_funnel_plot", rCommand);
 
-            sb.addGraphicsMapLink(exposure + "_mr_funnel_plot", "/Secure/mgwas/ResultView.xhtml");
+            sb.addGraphicsMapLink(exposure + "_mr_funnel_plot", "/Secure/mgwas/MrResultView.xhtml");
 
             return RC.eval(rCommand).asInteger();
         } catch (Exception rse) {

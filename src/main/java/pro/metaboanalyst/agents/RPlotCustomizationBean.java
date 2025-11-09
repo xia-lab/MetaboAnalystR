@@ -212,10 +212,10 @@ public class RPlotCustomizationBean implements Serializable {
             Map.entry("pathway_meta", "PlotPathwayMetaAnalysis"),
             Map.entry("asca_model", "PlotASCAModel"),
             Map.entry("asca_interaction", "PlotASCAInteraction"),
-            Map.entry("_mr_scatter_plot", "PlotScatter"), // unsupport plot type, perhaps should be `mr_scatter_plot`? (source: /mgwas/ResultView.xhtml)
-            Map.entry("_mr_forest_plot", "PlotForest"), // unsupport plot type, perhaps should be `mr_forest_plot`? (source: /mgwas/ResultView.xhtml)
-            Map.entry("_mr_leaveoneout_plot", "PlotLeaveOneOut"), // unsupport plot type, perhaps should be `mr_leaveoneout_plot`? (source: /mgwas/ResultView.xhtml)
-            Map.entry("_mr_funnel_plot", "PlotFunnel"), // unsupport plot type, perhaps should be `mr_funnel_plot`? (source: /mgwas/ResultView.xhtml)
+            Map.entry("_mr_scatter_plot", "PlotScatter"), // unsupport plot type, perhaps should be `mr_scatter_plot`? (source: /mgwas/MrResultView.xhtml)
+            Map.entry("_mr_forest_plot", "PlotForest"), // unsupport plot type, perhaps should be `mr_forest_plot`? (source: /mgwas/MrResultView.xhtml)
+            Map.entry("_mr_leaveoneout_plot", "PlotLeaveOneOut"), // unsupport plot type, perhaps should be `mr_leaveoneout_plot`? (source: /mgwas/MrResultView.xhtml)
+            Map.entry("_mr_funnel_plot", "PlotFunnel"), // unsupport plot type, perhaps should be `mr_funnel_plot`? (source: /mgwas/MrResultView.xhtml)
             Map.entry("fc", "PlotFC"), // ok
             Map.entry("opls_score2d", "PlotOPLS2DScore"), //ok
             Map.entry("opls_splot", "PlotOPLS.Splot"), // ok

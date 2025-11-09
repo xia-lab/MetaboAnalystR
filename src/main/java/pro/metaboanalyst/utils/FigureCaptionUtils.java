@@ -134,7 +134,7 @@ public class FigureCaptionUtils {
                 case "rf_imp_multifac", "rf_outlier_multifac", "km", "km_pca", "svm_imp", "svm_cls", "roc_univ", "roc_boxplot", "cls_roc", "cls_prob", "cls_accu", "cls_imp", "cls_test_roc", "cls_test_prob", "cls_test_accu", "roc_perm", "roc_new_samples", "power_stat", "power_profile", "ora", "ora_dot", "qea", "qea_dot", "meta_peaks_to_paths", "meta_peaks_to_paths_gsea", "peaks_to_paths", "integ_peaks", "peaks_to_paths_gsea", "network_MetaboNet", "path_view_integ", "aov2", "asca_scree", "asca_fa", "asca_fab", "asca_fb", "asca_impa", "asca_impab", "asca_impb", "dose_volcano", "enrichment_network", "network", "gene_metabolites", "metabo_phenotypes", "metabo_metabolites", "global", "dspc", "PlotDRHistogram", "PlotDRModelBars", "mr_results_merge" ->
                     text = RDataUtils.getImageDesc(sb.getRConnection(), analNavi);
                 case "mr_scatter_plot", "mr_forest_plot", "mr_leaveoneout_plot", "mr_funnel_plot" -> {
-                    sb.setCurrentNaviUrl("/Secure/mgwas/ResultView.xhtml");
+                    sb.setCurrentNaviUrl("/Secure/mgwas/MrResultView.xhtml");
                 }
                 default -> {
                     text = analNavi;
