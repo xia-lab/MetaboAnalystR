@@ -304,7 +304,7 @@ public class SPLSDABean implements Serializable {
 
         ChemoMetrics.initSPLS(sb, compNum, varNum, compVarOpt, validationOpt, foldNum, "F");
 
-        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 150, compNum);
+        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 96, compNum);
         ChemoMetrics.plotSPLS2DScore(sb, sb.getNewImage("spls_score2d"), "png", 150, 1, 2, 0.95, 1, 0, cexOpt);
         ChemoMetrics.plotSPLS3DScore(sb, sb.getNewImage("spls_score3d"), "json", 150, 1, 2, 3);
 
@@ -314,7 +314,7 @@ public class SPLSDABean implements Serializable {
     }
 
     public void splsPairBtn_action() {
-        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 150, splsPairNum);
+        ChemoMetrics.plotSPLSPairSummary(sb, sb.getNewImage("spls_pair"), "png", 96, splsPairNum);
     }
 
     public void splsScore2dBtn_action() {

@@ -10,30 +10,41 @@
 
         function copyShareLink() {
             var shareLink = document.getElementById('formShareLink:shareLink');
-            //console.log(shareLink)
-            if (shareLink) {
-                var fullLink = shareLink.href; // Get the full URL from the href attribute
+            if (!shareLink) {
+                console.error("Share link element not found.");
+                return;
+            }
 
-                if (!fullLink || fullLink === "undefined") {
-                    console.error("Full link not found.");
-                    return;
-                }
+            var fullLink = shareLink.href;
+            if (!fullLink || fullLink === "undefined") {
+                console.error("Full link not found.");
+                return;
+            }
 
+            // Helper function for success handling
+            var onSuccess = function() {
+                PF('partialLinkDialog').hide();
+                alert("Shareable link copied to clipboard!");
+            };
+
+            // Helper function for fallback copy
+            var fallbackCopy = function() {
                 var tempInput = document.createElement("input");
                 tempInput.style.position = "absolute";
                 tempInput.style.left = "-9999px";
-                tempInput.value = fullLink; // Copy the full link
-
+                tempInput.value = fullLink;
                 document.body.appendChild(tempInput);
                 tempInput.select();
                 document.execCommand("copy");
                 document.body.removeChild(tempInput);
+                onSuccess();
+            };
 
-                // Show confirmation message (optional)
-                PF('partialLinkDialog').hide();
-                alert("Shareable link copied to clipboard!");
+            // Use modern Clipboard API if available, otherwise fallback
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(fullLink).then(onSuccess).catch(fallbackCopy);
             } else {
-                console.error("Share link element not found.");
+                fallbackCopy();
             }
         }
     </script>

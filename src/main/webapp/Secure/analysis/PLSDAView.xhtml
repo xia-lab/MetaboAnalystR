@@ -206,7 +206,7 @@
                             </h:panelGrid>
                             <img onerror='this.style.display="none"' 
                                  style="width:10in;"
-                                 src="#{sessionBean1.getCurrentImageURL('pls_pair')}" alt="PLSPairImage"/>
+                                 src="#{sessionBean1.getCurrentImageURL96('pls_pair')}" alt="PLSPairImage"/>
                         </h:panelGrid>        
                     </h:form>
                 </p:tab>
@@ -571,5 +571,6 @@
             <image id="downloadimage"></image>  
         </p:dialog>
         <ui:include src="/template/_feature_dialog.xhtml" />
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>
