@@ -1770,11 +1770,9 @@ public class DataUtils {
         } else {
             urlString = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml?funcNm=" + funName;
         }
-
+        System.out.println("urlString======================================"  + urlString);
         try {
             HttpClient client = HttpClient.newHttpClient();
-            System.out.println(type);
-            System.out.println(folderName);
 
             // Add token and email as parameters
             String urlParameters = Map.of(
