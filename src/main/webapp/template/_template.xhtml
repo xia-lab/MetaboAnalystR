@@ -20,6 +20,11 @@
             <link rel="icon" href="#{request.contextPath}/resources/diamond-layout/images/favicon.ico" type="image/x-icon"/>
         </f:facet>
         <title>MetaboAnalyst Pro</title>
+
+        <h:outputStylesheet name="css/primeicons.css" library="diamond-layout"/>
+        <h:outputStylesheet name="css/primeflex.min.css" library="diamond-layout"/>
+        <h:outputStylesheet id="layout-scheme" name="css/layout-#{guestPreferences.scheme}.css" library="diamond-layout"/>
+
         <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/xialab_style_2.7.css" />
 
         <!-- Google tag (gtag.js) -->
@@ -318,9 +323,7 @@
             <div class="layout-mask modal-in"></div>
         </div>
 
-        <h:outputStylesheet name="css/primeicons.css" library="diamond-layout"/>
-        <h:outputStylesheet name="css/primeflex.min.css" library="diamond-layout"/>
-        <h:outputStylesheet id="layout-scheme" name="css/layout-#{guestPreferences.scheme}.css" library="diamond-layout"/>
+        <!-- REMOVED: CSS moved to <head> for better performance (KILLER #4 fix) -->
 
         <p:dialog modal="true" widgetVar="statusDialog" 
                   style="width: 200px; height:100px;" 
