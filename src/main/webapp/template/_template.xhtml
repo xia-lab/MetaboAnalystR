@@ -94,31 +94,32 @@
 
             var startFrom = 1800;//#{session.maxInactiveInterval};  // Total session time out setting eg 10 sec, Real implementation assign from session
             var loopTill = 20;//#{systemController.getSessionTimeoutAlertDuration()};  //Count down degins from 6 sec and starts after 4 sec ie 10-6
-            var reduce = 1;
             var handleDialog = null;
+            var pageTimerHandle = null;
             var redirectPage = "#{facesContext.externalContext.requestContextPath}/home.xhtml";
             var countDownDiv = "dialog-countdown";
 
             function resetPageTimer() {
                 PF('timeoutDialog').hide();
-                startPageTimer(startFrom, loopTill);
                 clearInterval(handleDialog);
+                clearTimeout(pageTimerHandle);
+                startPageTimer(startFrom, loopTill);
             }
 
             function startDialogTimer(wCounter, timeOutPage) {
-                var e = null;
-                if (!e)
-                    e = document.getElementById(countDownDiv);
+                var e = document.getElementById(countDownDiv);
+                if (!e) return;
+
                 e.innerHTML = wCounter;
                 handleDialog = setInterval(function () {
                     if (wCounter === 0) {
                         clearInterval(handleDialog);
                         window.location.href = timeOutPage;
                     } else {
-                        wCounter -= reduce;
+                        wCounter -= 1;
                         e.innerHTML = wCounter;
                     }
-                }, reduce * 1000);
+                }, 1000);
             }
 
             function start() {
@@ -139,17 +140,17 @@
                 };
             }
 
+            // OPTIMIZED SESSION TIMER: 99.9% less CPU usage
+            // Instead of checking every second for 30 minutes (1800 checks),
+            // use ONE setTimeout for the initial wait, then start countdown
             function startPageTimer(wFrom, wReach) {
-                var handle = null;
-                handle = setInterval(function () {
-                    if (wFrom === wReach) {
-                        clearInterval(handle);
-                        PF('timeoutDialog').show();
-                        startDialogTimer(loopTill, redirectPage);
-                    } else {
-                        wFrom -= reduce;
-                    }
-                }, reduce * 1000);
+                var waitTime = (wFrom - wReach) * 1000; // Time before showing dialog
+
+                // Single setTimeout instead of 1800 setInterval calls
+                pageTimerHandle = setTimeout(function () {
+                    PF('timeoutDialog').show();
+                    startDialogTimer(loopTill, redirectPage);
+                }, waitTime);
             }
             startPageTimer(startFrom, loopTill);
 
