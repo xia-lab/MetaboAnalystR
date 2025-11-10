@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Met Enrichment)
 #'@description Report generation using Sweave
 #'Metabolite enrichment analysis report
@@ -292,13 +314,13 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$ora, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$ora)",
+           "safeIncludeGraphics(mSetObj$imgSet$ora)",
            "```",
            "\n\n");
   
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
   }
-  if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && file.exists(mSetObj$imgSet$reportSet$enrichment_network)){
+  if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)){
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "enrichment_network")
@@ -310,7 +332,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$ora_dot, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$reportSet$enrichment_network)",
+             "safeIncludeGraphics(mSetObj$imgSet$reportSet$enrichment_network)",
              "```",
              "\n\n");
 
@@ -328,7 +350,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$ora_dot, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$ora_dot)",
+           "safeIncludeGraphics(mSetObj$imgSet$ora_dot)",
            "```",
            "\n\n");
 
@@ -393,7 +415,7 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$qea, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$qea)",
+           "safeIncludeGraphics(mSetObj$imgSet$qea)",
            "```",
            "\n\n");
   
@@ -410,14 +432,14 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$qea, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$qea_dot)",
+           "safeIncludeGraphics(mSetObj$imgSet$qea_dot)",
            "```",
            "\n\n");
   
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
 
   
-  if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && file.exists(mSetObj$imgSet$reportSet$enrichment_network)){
+  if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)){
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "enrichment_network")
@@ -429,7 +451,7 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$ora_dot, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$reportSet$enrichment_network)",
+             "safeIncludeGraphics(mSetObj$imgSet$reportSet$enrichment_network)",
              "```",
              "\n\n");
 

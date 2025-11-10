@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -195,7 +217,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
          "if (mSet$paramSet$report.format == 'html') {",
               "PlotlyPeaks2Paths(NA, '','png', 72, 9, 'default', 5, interactive=T)",
          "} else {",
-         "  knitr::include_graphics(mSet$imgSet$mummi.plot)",
+         "  safeIncludeGraphics(mSet$imgSet$mummi.plot)",
          "}",  
             "```",
               "\n\n")
@@ -219,7 +241,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     
     cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
 
-  if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && file.exists(mSetObj$imgSet$reportSet$network_mummichog)){
+  if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
         descr <- c("### - Network Visualization\n\n",
                  "Users can interactively explore the mapped LC-MS peaks within the global KEGG metabolic network.\n",
              " + Double click a node to view its matched peaks and adducts",
@@ -236,7 +258,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$network_mummichog, 
                      "', out.width = '", getFigWidth(mSetObj, width="800px"), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$reportSet$network_mummichog)",
+              "safeIncludeGraphics(mSetObj$imgSet$reportSet$network_mummichog)",
               "```",
               "\n\n");
         cat(fig8, file=rmdFile, append=TRUE, sep="\n");
@@ -280,7 +302,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
          "if (mSet$paramSet$report.format == 'html') {",
               "PlotlyPeaks2Paths(NA, '','png', 72, 9, 'default', 5, interactive=T)",
          "} else {",
-         "  knitr::include_graphics(mSet$imgSet$mummi.gsea.plot)",
+         "  safeIncludeGraphics(mSet$imgSet$mummi.gsea.plot)",
          "}",
             "```",
               "")
@@ -307,7 +329,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     
     cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
 
-    if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && file.exists(mSetObj$imgSet$reportSet$network_gsea)){
+    if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && safeFileExists(mSetObj$imgSet$reportSet$network_gsea)){
         reportLinks <- getReportLinks(link, "network_gsea");
 
         cat(reportLinks, file=rmdFile, append=TRUE);
@@ -317,7 +339,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$network_gsea, 
                      "', out.width = '", getFigWidth(mSetObj, width="800px"), "'}"),
-              "knitr::include_graphics(mSet$imgSet$reportSet$network_gsea)",
+              "safeIncludeGraphics(mSet$imgSet$reportSet$network_gsea)",
               "```",
               "\n\n");
         cat(fig9, file=rmdFile, append=TRUE, sep="\n");
@@ -335,7 +357,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
  
 
- if(!is.null(mSetObj$imgSet$reportSet$heatmap_mummichog) && file.exists(mSetObj$imgSet$reportSet$heatmap_mummichog)){
+ if(!is.null(mSetObj$imgSet$reportSet$heatmap_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_mummichog)){
   descr <- c("### - Exploratory Functional Analysis based on Clustering Heatmaps\n\n",
              "This interactive visualization tool provides an overview of the peak intensities across samples. 
               Users can first apply different clustering algorithms to identify strong patterns that are associated with group labels.
@@ -351,7 +373,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$heatmap_mummichog, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSet$imgSet$reportSet$heatmap_mummichog)",
+              "safeIncludeGraphics(mSet$imgSet$reportSet$heatmap_mummichog)",
               "```",
               "\n\n");
     cat(fig4, file=rmdFile, append=TRUE, sep="\n");
@@ -388,7 +410,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     "if (mSet$paramSet$report.format == 'html') {",
     "  PlotPSEAIntegPaths(NA, interactive=T)",
     "} else {",
-    "  knitr::include_graphics(mSet$imgSet$integpks.plot)",
+    "  safeIncludeGraphics(mSet$imgSet$integpks.plot)",
     "}",
     "\n```\n\n");
 
@@ -409,7 +431,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     
     cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
     
-    if(!is.null(mSetObj$imgSet$reportSet$network_integ) && file.exists(mSetObj$imgSet$reportSet$network_integ)){
+    if(!is.null(mSetObj$imgSet$reportSet$network_integ) && safeFileExists(mSetObj$imgSet$reportSet$network_integ)){
         reportLinks <- getReportLinks(link, "network_integ");
         cat(reportLinks, file=rmdFile, append=TRUE);
         cat("\n\n", file=rmdFile, append=TRUE);
@@ -420,7 +442,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$network_integ, 
                      "', out.width = '", getFigWidth(mSetObj, width="800px"), "'}"),
-              "knitr::include_graphics(mSet$imgSet$reportSet$network_integ)",
+              "safeIncludeGraphics(mSet$imgSet$reportSet$network_integ)",
               "```",
               "\n\n");
         cat(fig10, file=rmdFile, append=TRUE, sep="\n");

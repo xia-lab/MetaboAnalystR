@@ -161,7 +161,7 @@ CreateiPCAdoc_slides <- function(mSetObj = NA, file = "presentation.Rmd") {
     }
   
     # Add interactive 3D PCA plot slide if available
-    if (!is.null(mSetObj$imgSet$reportSet$ipca_3d) && file.exists(mSetObj$imgSet$reportSet$ipca_3d) ) {
+    if (!is.null(mSetObj$imgSet$reportSet$ipca_3d) && safeFileExists(mSetObj$imgSet$reportSet$ipca_3d) ) {
         pca3DSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$ipca_3d, "Screenshot of interactive 3-D PCA plot.")
         cat(pca3DSlide, file = file, append = TRUE)
         cat("\n\n---\n\n", file = file, append = TRUE)

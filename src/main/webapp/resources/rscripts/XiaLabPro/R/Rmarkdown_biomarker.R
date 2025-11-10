@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -211,7 +233,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
     cat(paste0("```{r figure_rocu2", i, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                ". The ROC curve of an individual biomarker...', ",
                "out.height='400px', out.width='", getFigWidth(mSetObj, "auto", "400px"), "'}\n"),
-        "knitr::include_graphics(mSetObj$imgSet$roc.univ.plot[",i,"])",
+        "safeIncludeGraphics(mSetObj$imgSet$roc.univ.plot[",i,"])",
         "\n```\n",
         file=rmdFile, append=TRUE)
     cat('\n\n', file=rmdFile, append=TRUE)
@@ -220,7 +242,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
     cat(paste0("```{r figure_boxu2", i, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                ". Box-plot of the concentrations of the selected feature...', ",
                "out.height='400px', out.width='", getFigWidth(mSetObj, "auto", "400px"), "'}\n"),
-        "knitr::include_graphics(mSetObj$imgSet$roc.univ.boxplot[",i,"])",
+        "safeIncludeGraphics(mSetObj$imgSet$roc.univ.boxplot[",i,"])",
         "\n```\n",
         file=rmdFile, append=TRUE)
     cat('\n\n', file=rmdFile, append=TRUE)
@@ -294,7 +316,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$roc.multi.plot, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$roc.multi.plot)",
+           "safeIncludeGraphics(mSetObj$imgSet$roc.multi.plot)",
            "```",
            "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -316,7 +338,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$roc.prob.plot, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.prob.plot)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.prob.plot)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -335,14 +357,14 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$roc.pred, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.pred)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.pred)",
             "```",
             "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
   
   # Sig features
-if (!is.null(mSetObj$imgSet$roc.imp.plot) && file.exists(mSetObj$imgSet$roc.imp.plot)) {
+if (!is.null(mSetObj$imgSet$roc.imp.plot) && safeFileExists(mSetObj$imgSet$roc.imp.plot)) {
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_imp", "cls_imp")
   cat(reportLinks, file=rmdFile, append=TRUE);
@@ -356,7 +378,7 @@ if (!is.null(mSetObj$imgSet$roc.imp.plot) && file.exists(mSetObj$imgSet$roc.imp.
                    " fig.lp='", 
                    mSetObj$imgSet$roc.imp.plot, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.imp.plot)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.imp.plot)",
             "```",
             "\n\n");
   cat(fig4, file=rmdFile, append=TRUE, sep="\n");
@@ -427,7 +449,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$roc.testcurve.plot, 
                    "', out.width = '", getFigWidth(mSetObj, width="780px"),"'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.testcurve.plot)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.testcurve.plot)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -449,7 +471,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$roc.testprob.plot, 
                    "', out.width = '",getFigWidth(mSetObj, width="780px"),"'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.testprob.plot)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.testprob.plot)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -468,7 +490,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$roc.testpred, 
                    "', out.width = '",getFigWidth(mSetObj, width="780px"),"'}"),
-            "knitr::include_graphics(mSetObj$imgSet$roc.testpred)",
+            "safeIncludeGraphics(mSetObj$imgSet$roc.testpred)",
             "```",
             "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
@@ -498,7 +520,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$roc.perm.plot, 
                      "', out.width = '", getFigWidth(mSetObj, width="780px"),"'}"),
-              "knitr::include_graphics(mSetObj$imgSet$roc.perm.plot)",
+              "safeIncludeGraphics(mSetObj$imgSet$roc.perm.plot)",
               "```",
               "\n\n");
     cat(fig4, file=rmdFile, append=TRUE, sep="\n");

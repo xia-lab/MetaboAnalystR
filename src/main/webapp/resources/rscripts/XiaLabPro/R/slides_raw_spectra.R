@@ -237,7 +237,7 @@ CreatePCA3D_slides <- function(){
                       "The 3D-PCA score plot illustrates the distribution of samples in the transformed feature space, highlighting the variance between different groups.\n\n")
   #cat(descrScore, file = rmdFile, append = TRUE)
   
-  if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && file.exists(mSetObj$imgSet$reportSet$scores_3d)){
+  if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && safeFileExists(mSetObj$imgSet$reportSet$scores_3d)){
     pca3DScoreSlide <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$scores_3d, "3D-PCA score. Samples from different groups are marked with different colors.")
     cat(pca3DScoreSlide, file = rmdFile, append = TRUE)
   } else {

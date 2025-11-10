@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 CreateDataProcSlides <- function(mSetObj = NA) {
   
   mSetObj <- .get.mSet(mSetObj)
@@ -186,7 +208,7 @@ CreateUpSetDoc_slides <- function(mSetObj = NA) {
     mSetObj <- .get.mSet(mSetObj);
     
     # Check if the UpSet plot exists
-    if (!is.null(mSetObj$imgSet$reportSet$upset) && file.exists(mSetObj$imgSet$reportSet$upset)) {
+    if (!is.null(mSetObj$imgSet$reportSet$upset) && safeFileExists(mSetObj$imgSet$reportSet$upset)) {
         link <- GetSharingLink(mSetObj)
 
         # Description of the UpSet plot for slides
@@ -206,7 +228,7 @@ CreateUpSetDoc_slides <- function(mSetObj = NA) {
 
     # image rendering in R Markdown
     img <- paste0("```{r figure_upset, echo=FALSE, fig.align='center', fig.pos='H', out.width='", getFigWidth(mSetObj), "'}\n",
-       "  knitr::include_graphics('", mSetObj$imgSet$reportSet$upset, "')\n",
+       "  safeIncludeGraphics('", mSetObj$imgSet$reportSet$upset, "')\n",
        "```",
        "\n\n---\n\n"
        )

@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Power)
 #'@description Report generation using Sweave
 #'Put together the analysis report
@@ -98,7 +120,7 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$powerstat, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$powerstat)",
+           "safeIncludeGraphics(mSetObj$imgSet$powerstat)",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -151,7 +173,7 @@ CreatePowerAnalDoc <- function(mSetObj){
                   " fig.lp='", 
                   mSetObj$imgSet$powerprofile, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$powerprofile)",
+           "safeIncludeGraphics(mSetObj$imgSet$powerprofile)",
            "```",
            "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");

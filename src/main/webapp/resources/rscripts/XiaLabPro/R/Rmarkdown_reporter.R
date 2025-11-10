@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 PrepareHTMLReportModule<-function(mSetObj=NA, usrName, link="NA", module="NA"){
     PrepareHTMLReport(mSetObj, usrName, link, module)
 }
@@ -789,7 +811,7 @@ CreateNORMdoc <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$norm, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$norm)",
+             "safeIncludeGraphics(mSetObj$imgSet$norm)",
              "```",
              "\n\n");
     
@@ -1153,7 +1175,7 @@ CreateUpSetDoc <- function(mSetObj=NA) {
   mSetObj <- .get.mSet(mSetObj);
   
   # Check if the heatmap key exists in the jsonNms
-  if (!is.null(mSetObj$imgSet$reportSet$upset) && file.exists(mSetObj$imgSet$reportSet$upset)) {
+  if (!is.null(mSetObj$imgSet$reportSet$upset) && safeFileExists(mSetObj$imgSet$reportSet$upset)) {
     link <- GetSharingLink(mSetObj)
 
     descr <- c(
@@ -1177,7 +1199,7 @@ CreateUpSetDoc <- function(mSetObj=NA) {
     img <- paste0("```{r figure_upset, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ",
        fig_num, 
        ": ", upset.desc, "', out.width='", getFigWidth(mSetObj), "'}\n",
-       "  knitr::include_graphics('", mSetObj$imgSet$reportSet$upset, "')\n",
+       "  safeIncludeGraphics('", mSetObj$imgSet$reportSet$upset, "')\n",
        "```",
        "\n\n")
 
@@ -1269,7 +1291,7 @@ AddFeatureImages <- function(mSetObj=NA) {
 
       img_block <- paste0(reportLinks, 
                           "\n\n", chunkOptions, "\n",
-                          sprintf("knitr::include_graphics('%s')", imgSet$featureList[[i]]),
+                          sprintf("safeIncludeGraphics('%s')", imgSet$featureList[[i]]),
                           "\n```\n")
       img_blocks[[i]] <- img_block
     }
@@ -1328,7 +1350,7 @@ CreateNetworkDoc <- function(mSetObj = NA){
         "fig.lp='", imgSet$reportSet$network, "', ",
         "out.width='", getFigWidth(mSetObj, width = '720px', widthPct = '100%'), "'}"
       ),
-      "knitr::include_graphics(mSetObj$imgSet$reportSet$network)",
+      "safeIncludeGraphics(mSetObj$imgSet$reportSet$network)",
       "```",
       "\n\n"
     )

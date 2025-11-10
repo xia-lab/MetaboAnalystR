@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report for statistical analysis module
 #'@description Report generation using Sweave
 #'Write .Rmd file template
@@ -207,7 +229,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                 "if (mSetObj$paramSet$report.format == 'html'  && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotFC(NA, '', 'png', 72, NA, interactive=T)",
                 "} else {",
-                "  knitr::include_graphics(mSetObj$imgSet$fc)",
+                "  safeIncludeGraphics(mSetObj$imgSet$fc)",
                 "}",
              "```",
              "\n\n");
@@ -256,7 +278,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                 "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotTT(NA, '', 'png', 72, NA, interactive=T)",
                 "} else {",
-                "  knitr::include_graphics(mSetObj$imgSet$tt)",
+                "  safeIncludeGraphics(mSetObj$imgSet$tt)",
                 "}",
                "```",
                "\n\n");
@@ -309,7 +331,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
                 "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
                    "PlotVolcano(NA, '', mSet$analSet$volcano.plot.config$plotLbl, mSet$analSet$volcano.plot.config$plotTheme, 'png', 72, NA, interactive=T)",
                 "} else {",
-                "  knitr::include_graphics(mSetObj$imgSet$volcano)",
+                "  safeIncludeGraphics(mSetObj$imgSet$volcano)",
                 "}",
              "```",
              "\n\n");
@@ -386,7 +408,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
       "if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm) < 1000) {",
       "  PlotANOVA(NA, interactive=T)",
       "} else {",
-      "  knitr::include_graphics(mSetObj$imgSet$anova)",
+      "  safeIncludeGraphics(mSetObj$imgSet$anova)",
       "}",
       "```",
       "\n\n"
@@ -460,13 +482,13 @@ CreateCorrDoc <- function(mSetObj=NA){
                           "p",
                  "```",
                  "\n\n");
-      }else if(file.exists(mSetObj$imgSet$corr.heatmap)){
+      }else if(safeFileExists(mSetObj$imgSet$corr.heatmap)){
         fig <- c(paste0("```{r figure_corr1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                         ". Correlation Heatmaps.', ",
                         " fig.lp='", 
                         mSetObj$imgSet$corr.heatmap, 
                         "', out.width = '90%'}"),
-                          "knitr::include_graphics(mSetObj$imgSet$corr.heatmap)",
+                          "safeIncludeGraphics(mSetObj$imgSet$corr.heatmap)",
                  "```",
                  "\n\n");
       }
@@ -508,7 +530,7 @@ CreateCorrDoc <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$corr, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$corr)",
+             "safeIncludeGraphics(mSetObj$imgSet$corr)",
              "```",
              "\n\n");
     
@@ -583,7 +605,7 @@ CreatePCAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$pca.pair, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$pca.pair)",
+           "safeIncludeGraphics(mSetObj$imgSet$pca.pair)",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -602,7 +624,7 @@ CreatePCAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$pca.scree, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$pca.scree)",
+           "safeIncludeGraphics(mSetObj$imgSet$pca.scree)",
            "```",
            "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -620,7 +642,7 @@ CreatePCAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$pca_score2d, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$pca_score2d)",
+           "safeIncludeGraphics(mSetObj$imgSet$pca_score2d)",
            "```",
            "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
@@ -639,13 +661,13 @@ CreatePCAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$pca.biplot, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$pca.biplot)",
+            "safeIncludeGraphics(mSetObj$imgSet$pca.biplot)",
             "```",
             "\n\n");
   cat(fig4, file=rmdFile, append=TRUE, sep="\n");
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
   
-  if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && file.exists(mSetObj$imgSet$reportSet$pca_3d) ){
+  if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && safeFileExists(mSetObj$imgSet$reportSet$pca_3d) ){
   reportLinks <- getReportLinks(link, "pca_3d", "pca_3d");
 
     cat(reportLinks, file=rmdFile, append=TRUE);
@@ -655,7 +677,7 @@ CreatePCAdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$pca_3d, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$reportSet$pca_3d)",
+              "safeIncludeGraphics(mSetObj$imgSet$reportSet$pca_3d)",
               "```",
               "\n\n");
     cat(fig5, file=rmdFile, append=TRUE, sep="\n");
@@ -757,7 +779,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$pls.pair, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$pls.pair)",
+           "safeIncludeGraphics(mSetObj$imgSet$pls.pair)",
            "```",
            "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -776,14 +798,14 @@ CreatePLSdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$pls.score2d, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$pls.score2d)",
+            "safeIncludeGraphics(mSetObj$imgSet$pls.score2d)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
   
   ### 3d
-  if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && file.exists(mSetObj$imgSet$reportSet$plsda_3d) ){
+  if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$plsda_3d) ){
   reportLinks <- getReportLinks(link, "plsda_3d");
 
     cat(reportLinks, file=rmdFile, append=TRUE);
@@ -793,7 +815,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$plsda_3d, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$reportSet$plsda_3d)",
+              "safeIncludeGraphics(mSetObj$imgSet$reportSet$plsda_3d)",
               "```",
               "\n\n");
     cat(fig3, file=rmdFile, append=TRUE, sep="\n");
@@ -813,7 +835,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$pls.loading, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$pls.loading)",
+            "safeIncludeGraphics(mSetObj$imgSet$pls.loading)",
             "```",
             "\n\n");
   cat(fig4, file=rmdFile, append=TRUE, sep="\n");
@@ -835,7 +857,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$pls.class, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$pls.class)",
+              "safeIncludeGraphics(mSetObj$imgSet$pls.class)",
               "```",
               "\n\n");
     cat(fig5, file=rmdFile, append=TRUE, sep="\n");
@@ -860,7 +882,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$pls.permut, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$pls.permut)",
+              "safeIncludeGraphics(mSetObj$imgSet$pls.permut)",
               "```",
               "\n\n");
     cat(fig6, file=rmdFile, append=TRUE, sep="\n");
@@ -880,7 +902,7 @@ CreatePLSdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$pls.imp, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$pls.imp)",
+            "safeIncludeGraphics(mSetObj$imgSet$pls.imp)",
             "```",
             "\n\n");
   cat(fig7, file=rmdFile, append=TRUE, sep="\n");
@@ -936,7 +958,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$spls.pair, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$spls.pair)",
+            "safeIncludeGraphics(mSetObj$imgSet$spls.pair)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -954,7 +976,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$spls.score2d, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$spls.score2d)",
+            "safeIncludeGraphics(mSetObj$imgSet$spls.score2d)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -972,14 +994,14 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$spls.imp, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$spls.imp)",
+            "safeIncludeGraphics(mSetObj$imgSet$spls.imp)",
             "```",
             "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
   cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
   
   ## 3d score plot
-  if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && file.exists(mSetObj$imgSet$reportSet$splsda_3d) ){
+  if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$splsda_3d) ){
   reportLinks <- getReportLinks(link, "splsda_3d");
 
     cat(reportLinks, file=rmdFile, append=TRUE);
@@ -989,7 +1011,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$reportSet$splsda_3d, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$reportSet$splsda_3d)",
+              "safeIncludeGraphics(mSetObj$imgSet$reportSet$splsda_3d)",
               "```",
               "\n\n");
     cat(fig4, file=rmdFile, append=TRUE, sep="\n");
@@ -1012,7 +1034,7 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$splsda.class, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$splsda.class)",
+              "safeIncludeGraphics(mSetObj$imgSet$splsda.class)",
               "```",
               "\n\n");
     cat(fig5, file=rmdFile, append=TRUE, sep="\n");
@@ -1072,7 +1094,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
                   " fig.lp='", 
                   mSetObj$imgSet$opls.score2d, 
                   "', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics(mSetObj$imgSet$opls.score2d)",
+           "safeIncludeGraphics(mSetObj$imgSet$opls.score2d)",
            "```",
            "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1090,7 +1112,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$opls.loading, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$opls.loading)",
+            "safeIncludeGraphics(mSetObj$imgSet$opls.loading)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -1108,7 +1130,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$opls.class, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$opls.class)",
+            "safeIncludeGraphics(mSetObj$imgSet$opls.class)",
             "```",
             "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
@@ -1127,7 +1149,7 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$opls.permut, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$opls.permut)",
+              "safeIncludeGraphics(mSetObj$imgSet$opls.permut)",
               "```",
               "\n\n");
     cat(fig4, file=rmdFile, append=TRUE, sep="\n");
@@ -1195,7 +1217,7 @@ CreateSAMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$sam.cmpd, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$sam.cmpd)",
+            "safeIncludeGraphics(mSetObj$imgSet$sam.cmpd)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1272,7 +1294,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$ebam.cmpd, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$ebam.cmpd)",
+            "safeIncludeGraphics(mSetObj$imgSet$ebam.cmpd)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1346,7 +1368,7 @@ CreateHCdoc <- function(mSetObj=NA){
                      " fig.lp='", 
                      mSetObj$imgSet$tree, 
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
-              "knitr::include_graphics(mSetObj$imgSet$tree)",
+              "safeIncludeGraphics(mSetObj$imgSet$tree)",
               "```",
               "\n\n");
     cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1371,7 +1393,7 @@ CreateHCdoc <- function(mSetObj=NA){
                          "fig.lp='", 
                          mSetObj$imgSet$heatmap, 
                          "', out.width ='",mSetObj$imgSet$heatmap_stats_param$width,"px', out.height ='",mSetObj$imgSet$heatmap_stats_param$height,"px'}"),
-                  "knitr::include_graphics(mSetObj$imgSet$reportSet$heatmap_static)",
+                  "safeIncludeGraphics(mSetObj$imgSet$reportSet$heatmap_static)",
                   "```",
                   "\n\n");
       } else {
@@ -1399,7 +1421,7 @@ CreateHCdoc <- function(mSetObj=NA){
                        "fig.lp='", 
                        mSetObj$imgSet$heatmap, 
                        "', out.width ='90%'}"),
-                        "knitr::include_graphics(mSetObj$imgSet$reportSet$heatmap_static)",
+                        "safeIncludeGraphics(mSetObj$imgSet$reportSet$heatmap_static)",
                         "```",
                         "\n\n");
     }
@@ -1454,7 +1476,7 @@ CreateSOMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$som, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$som)",
+            "safeIncludeGraphics(mSetObj$imgSet$som)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1524,7 +1546,7 @@ CreateKMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$kmeans, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$kmeans)",
+            "safeIncludeGraphics(mSetObj$imgSet$kmeans)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1541,7 +1563,7 @@ CreateKMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$kmeans.pca, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$kmeans.pca)",
+            "safeIncludeGraphics(mSetObj$imgSet$kmeans.pca)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -1610,7 +1632,7 @@ CreateRFdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$rf.cls, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$rf.cls)",
+            "safeIncludeGraphics(mSetObj$imgSet$rf.cls)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1640,7 +1662,7 @@ CreateRFdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$rf.imp, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$rf.imp)",
+            "safeIncludeGraphics(mSetObj$imgSet$rf.imp)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -1657,7 +1679,7 @@ CreateRFdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$rf.outlier, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$rf.outlier)",
+            "safeIncludeGraphics(mSetObj$imgSet$rf.outlier)",
             "```",
             "\n\n");
   cat(fig3, file=rmdFile, append=TRUE, sep="\n");
@@ -1712,7 +1734,7 @@ CreateSVMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$svm.class, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$svm.class)",
+            "safeIncludeGraphics(mSetObj$imgSet$svm.class)",
             "```",
             "\n\n");
   cat(fig1, file=rmdFile, append=TRUE, sep="\n");
@@ -1730,7 +1752,7 @@ CreateSVMdoc <- function(mSetObj=NA){
                    " fig.lp='", 
                    mSetObj$imgSet$svm, 
                    "', out.width = '", getFigWidth(mSetObj), "'}"),
-            "knitr::include_graphics(mSetObj$imgSet$svm)",
+            "safeIncludeGraphics(mSetObj$imgSet$svm)",
             "```",
             "\n\n");
   cat(fig2, file=rmdFile, append=TRUE, sep="\n");
@@ -1777,7 +1799,7 @@ CreateDSPCdoc <- function(mSetObj=NA){
         fig1 <- paste0(
           "```{r figure_dspc, echo=FALSE, fig.cap='Figure ", getFigCount(), 
           ". Screenshot of DSPC network. The nodes are input metabolites, while the edges represent the association measures.', out.width='", getFigWidth(mSetObj), "'}\n",
-          "knitr::include_graphics('dspc.png')\n",
+          "safeIncludeGraphics('dspc.png')\n",
           "```",
           "\n\n"
         )

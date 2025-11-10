@@ -181,7 +181,7 @@ CreateEnrichORAdoc_slides <- function(mSetObj = NA) {
     }
 
     # Enrichment Network
-    if (!is.null(mSetObj$imgSet$reportSet$enrichment_network) && file.exists(mSetObj$imgSet$reportSet$enrichment_network)) {
+    if (!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)) {
         enrichmentNetworkSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$enrichment_network, "Enrichment network from ORA showing the interconnectedness of significant metabolite sets.")
         cat(enrichmentNetworkSlide, file = rmdFile, append = TRUE)
     }

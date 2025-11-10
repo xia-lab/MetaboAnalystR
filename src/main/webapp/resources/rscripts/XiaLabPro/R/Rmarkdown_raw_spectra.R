@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report for raw spectra module
 #'@description Report generation using Sweave
 #'Write .Rnw file template
@@ -315,7 +337,7 @@ CreateTIC<- function(){
   fig <- c(paste0("```{r figure_tic1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_tic, 
                   ". Total Ion Chromatogram plot of raw spectral data.', ",
                   " fig.lp='TICS_72.png', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics('TICS_72.png')",
+           "safeIncludeGraphics('TICS_72.png')",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -344,7 +366,7 @@ CreateBPI<- function(){
   fig <- c(paste0("```{r figure_bpi1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_bpi, 
                   ". Base Peak Ion plot of raw spectral data.', ",
                   " fig.lp='BPIS_72.png', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics('BPIS_72.png')",
+           "safeIncludeGraphics('BPIS_72.png')",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -372,7 +394,7 @@ CreateIntensityStats<- function(){
   fig <- c(paste0("```{r figure_ints1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ints, 
                   ". Peak Intensity Statistics of all spectral files.', ",
                   " fig.lp='Peak_Intensity.png', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics('Peak_Intensity.png')",
+           "safeIncludeGraphics('Peak_Intensity.png')",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -402,7 +424,7 @@ CreatePCA<- function(){
   fig <- c(paste0("```{r figure_pca2d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pcaraw, 
                   ". Principal component analysis (PCA). Samples from different groups are marked with different colors.', ",
                   " fig.lp='PCA.png', out.width = '", getFigWidth(mSetObj), "'}"),
-           "knitr::include_graphics('PCA.png')",
+           "safeIncludeGraphics('PCA.png')",
            "```",
            "\n\n");
   cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -422,11 +444,11 @@ CreatePCA3D<- function(){
 
   print(paste0(mSetObj$imgSet$reportSet$scores_3d));
 
-  if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && file.exists(mSetObj$imgSet$reportSet$scores_3d)){
+  if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && safeFileExists(mSetObj$imgSet$reportSet$scores_3d)){
     fig <- c(paste0("```{r figure_pca3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pcaraw3d, 
                     ". 3D-PCA score. Samples from different groups are marked with different colors.', ",
                     " fig.lp='scores_3d.png', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$reportSet$scores_3d)",
+             "safeIncludeGraphics(mSetObj$imgSet$reportSet$scores_3d)",
              "```",
              "\n\n");
     cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -452,7 +474,7 @@ CreatePCA3D<- function(){
     fig <- c(paste0("```{r figure_pca3dloading, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pca3dloading, 
                     ". 3D-PCA loading plot. Samples from different groups are marked with different colors.', ",
                     " fig.lp='loadings3D.png', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics('loadings3D.png')",
+             "safeIncludeGraphics('loadings3D.png')",
              "```",
              "\n\n");
     cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -527,7 +549,7 @@ createSpectraTIC <- function(){
       fig <- c(paste0("```{r ", tic_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                       ". TIC plot of this spectra: ", gsub("_","-",sub(".png","",i)), ".', ",
                       " fig.lp='", paste0(i, ".png"), "', out.width = '", getFigWidth(mSetObj), "'}"),
-               paste0("knitr::include_graphics('", paste0(i, ".png"), "')"),
+               paste0("safeIncludeGraphics('", paste0(i, ".png"), "')"),
                "```",
                "\n\n");
       cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -611,7 +633,7 @@ createFeatureEIC <- function(){
       fig <- c(paste0("```{r ", eic_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                       ". EIC of feature of individual samples: ", gsub("_","-",sub(".png","",i)), ".', ",
                       " fig.lp='", i, "', out.width = '", getFigWidth(mSetObj), "'}"),
-               paste0("knitr::include_graphics('", i, "')"),
+               paste0("safeIncludeGraphics('", i, "')"),
                "```",
                "\n\n");
       cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -657,7 +679,7 @@ createFeatureEICStats <- function(){
         fig <- c(paste0("```{r ", eics_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                         ". Feature intensity statis box plot of different groups: ", gsub("@","__",sub(".png","",i)), ".', ",
                         " fig.lp='", i, "', out.width = '", getFigWidth(mSetObj), "'}"),
-                 paste0("knitr::include_graphics('", i, "')"),
+                 paste0("safeIncludeGraphics('", i, "')"),
                  "```",
                  "\n\n");
         cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -972,7 +994,7 @@ CreateMatchingPatterns <- function(mSetObj){
         fig <- c(paste0("```{r ", mir_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count,
                         ". Mirror plot of this spectra: ", this_legend, ".', ",
                         " fig.lp='", paste0(i), "', out.width = '", getFigWidth(mSetObj), "'}"),
-                 paste0("knitr::include_graphics(\"", i, "\")"),
+                 paste0("safeIncludeGraphics(\"", i, "\")"),
                  "```",
                  "\n\n");
       }

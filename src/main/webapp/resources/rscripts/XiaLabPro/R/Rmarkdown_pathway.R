@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Met Pathway)
 #'@description Report generation using Sweave
 #'Metabolomic pathway analysis
@@ -226,7 +248,7 @@ CreatePathResultDoc <- function(mSetObj=NA){
       "if (mSetObj$paramSet$report.format == 'html') {",
       "  PlotPathSummaryGG(NA, F ,interactive=T)",
       "} else {",
-      "  knitr::include_graphics(mSetObj$imgSet$path.overview)",
+      "  safeIncludeGraphics(mSetObj$imgSet$path.overview)",
       "}",
       "```",
       "\n\n"
@@ -306,7 +328,7 @@ CreatePathResultDoc <- function(mSetObj=NA){
         cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
     }
 }
-    if(!is.null(mSetObj$imgSet$reportSet$heatmap_pathway) && file.exists(mSetObj$imgSet$reportSet$heatmap_pathway)){
+    if(!is.null(mSetObj$imgSet$reportSet$heatmap_pathway) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_pathway)){
         reportLinks <- getReportLinks(link, "heatmap_pathway");
 
         cat(reportLinks, file=rmdFile, append=TRUE);
@@ -316,7 +338,7 @@ CreatePathResultDoc <- function(mSetObj=NA){
                          " fig.lp='", 
                          mSetObj$imgSet$reportSet$heatmap_pathway, 
                          "', out.width = '", getFigWidth(mSetObj), "'}"),
-                  "knitr::include_graphics(mSetObj$imgSet$reportSet$heatmap_pathway)",
+                  "safeIncludeGraphics(mSetObj$imgSet$reportSet$heatmap_pathway)",
                   "```",
                   "\n\n");
         cat(fig2, file=rmdFile, append=TRUE, sep="\n");

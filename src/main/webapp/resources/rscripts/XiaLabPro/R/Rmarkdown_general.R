@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 # Get result table
 
   
@@ -252,13 +274,13 @@ createEnrichmentTable <- function(mSetObj, type, description = "") {
 
 CreateKeggNetDoc <-function(mSetObj){
 
-  if (!is.null(mSetObj$imgSet$reportSet$network_MetaboNet) && file.exists(mSetObj$imgSet$reportSet$network_MetaboNet)) {
+  if (!is.null(mSetObj$imgSet$reportSet$network_MetaboNet) && safeFileExists(mSetObj$imgSet$reportSet$network_MetaboNet)) {
     if(mSetObj$paramSet$report.format == "slides"){
         # Insert Network Image
         networkImageSlide <- c(
             "## KEGG Global Metabolic Network Visualization\n\n",
             "```{r figure_kegg_network, echo=FALSE, fig.cap='', out.width='100%'}",
-            sprintf("knitr::include_graphics('%s')", mSetObj$imgSet$reportSet$network_MetaboNet),
+            sprintf("safeIncludeGraphics('%s')", mSetObj$imgSet$reportSet$network_MetaboNet),
             "```\n",
             "\n\n---\n\n"
         )
@@ -278,7 +300,7 @@ CreateKeggNetDoc <-function(mSetObj){
       paste0("```{r figure_kegg_net, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ",
              getFigCount() , 
              ": KEGG global metabolic network', out.width='", getFigWidth(mSetObj), "'}"),
-      sprintf("knitr::include_graphics('%s')", mSetObj$imgSet$reportSet$network_MetaboNet),
+      sprintf("safeIncludeGraphics('%s')", mSetObj$imgSet$reportSet$network_MetaboNet),
       "```",
       "\n\n")
     

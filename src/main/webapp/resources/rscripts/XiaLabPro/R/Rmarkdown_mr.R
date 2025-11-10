@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of Causal Analysis based on 2SMR
 #'@description Report generation using Sweave
 #'Put together the analysis report
@@ -329,7 +351,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     fig.count<<-fig.count+1;
     scatter_descr <- c(
       paste0("```{r diagnostic_plots_scatter_", i, ", echo=FALSE, out.width = '", getFigWidth(mSetObj), "', fig.cap='Figure ",fig.count,". Scatter plot of of exposure: ", exposure, "'}"), 
-      paste0("knitr::include_graphics('", scatter_plot, "')"),
+      paste0("safeIncludeGraphics('", scatter_plot, "')"),
       "```",
       "\n\n"
     )
@@ -347,7 +369,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     fig.count<<-fig.count+1;
     forest_descr <- c(
       paste0("```{r diagnostic_plots_forest_", i, ", echo=FALSE, out.width = '", getFigWidth(mSetObj), "', fig.cap='Figure ",fig.count,". Forest plot of of exposure: ", exposure, "'}"), 
-      paste0("knitr::include_graphics('", forest_plot, "')"),
+      paste0("safeIncludeGraphics('", forest_plot, "')"),
       "```",
       "\n\n"
     )
@@ -365,7 +387,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     fig.count<<-fig.count+1;
     leaveoneout_descr <- c(
       paste0("```{r diagnostic_plots_leaveoneout_", i, ", echo=FALSE, out.width = '", getFigWidth(mSetObj), "', fig.cap='Figure ",fig.count,". Leave-one-out plot of of exposure: ", exposure, "'}"), 
-      paste0("knitr::include_graphics('", leaveoneout_plot, "')"),
+      paste0("safeIncludeGraphics('", leaveoneout_plot, "')"),
       "```",
       "\n\n"
     )
@@ -383,7 +405,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
     fig.count<<-fig.count+1;
     funnel_descr <- c(
       paste0("```{r diagnostic_plots_funnel_", i, ", echo=FALSE, out.width = '", getFigWidth(mSetObj), "', fig.cap='Figure ",fig.count,". Funnel plot of of exposure: ", exposure, "'}"), 
-      paste0("knitr::include_graphics('", funnel_plot, "')"),
+      paste0("safeIncludeGraphics('", funnel_plot, "')"),
       "```",
       "\n\n"
     )

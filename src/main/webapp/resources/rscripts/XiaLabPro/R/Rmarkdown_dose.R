@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of Dose Response Analysis
 #'@description Report generation using Sweave
 #'Put together the analysis report
@@ -96,7 +118,7 @@ CreateDoseParametersDoc <- function(mSetObj=NA){
         " fig.lp='H', ",  # This sets the LaTeX placement specifier to 'H'
         "out.width = '", getFigWidth(mSetObj), "'}"
       ),
-      "knitr::include_graphics(mSetObj$imgSet$dose_volcano_filename)",
+      "safeIncludeGraphics(mSetObj$imgSet$dose_volcano_filename)",
       "```",
       "\n\n"
   )
@@ -145,7 +167,7 @@ CreateDoseAnalDoc <- function(mSetObj){
                   "```{r figure_best_fit_models, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ", fig_panar1, ": Frequency of statistical models among best fit curves', ",
                   "fig.lp='h', fig.pos='H',out.width = '",getFigWidth(),"'}"
                 ),
-                sprintf("knitr::include_graphics('%s')", imgSet$PlotDRModelBars),
+                sprintf("safeIncludeGraphics('%s')", imgSet$PlotDRModelBars),
                 "```",
                 "\n\n"
   )
@@ -162,7 +184,7 @@ hist.plot <- c(
     "```{r figure_fit_histo, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ", getFigCount(), ": Metabolite-level BMDs histogram. 20th feature: the mPOD is equal to the 20th lowest geneBMD value. 10th percentile: the mPOD is equal to the 10th percentile of the geneBMD values. Max 1st peak: the mPOD is equal to the mode of the first peak in the distribution of geneBMD values.', ",
     "fig.lp='h', fig.pos='H', out.width = '", getFigWidth(), "'}"
   ),
-  sprintf("knitr::include_graphics('%s')", imgSet$PlotDRHistogram),
+  sprintf("safeIncludeGraphics('%s')", imgSet$PlotDRHistogram),
   "```",
   "\n\n"
 )
@@ -270,7 +292,7 @@ AddDoseFeatureImages <- function(mSetObj=NA) {
     img_block <- paste0("<div style='display: flex; flex-direction: column; width: 75%; margin: 10px;'>",
                         reportLinks, 
                         "\n\n", chunkOptions, "\n",
-                        sprintf("knitr::include_graphics('%s')", imgSet$doseFeatureList[[i]]),
+                        sprintf("safeIncludeGraphics('%s')", imgSet$doseFeatureList[[i]]),
                         "\n```\n",
                         "</div>")
     img_blocks[[i]] <- img_block

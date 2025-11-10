@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -194,7 +216,7 @@ CreateMetaMummichogResults <- function(mSetObj){
                       " fig.lp='", 
                       mSetObj$imgSet$mummi.meta.path.plot, 
                       "', out.width = '", getFigWidth(mSetObj), "'}"),
-               "knitr::include_graphics(mSetObj$imgSet$mummi.meta.path.plot)",
+               "safeIncludeGraphics(mSetObj$imgSet$mummi.meta.path.plot)",
                "```",
                "\n\n");
       cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -282,7 +304,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
          "if (mSetObj$paramSet$report.format == 'html') {",
          "  PlotPeaks2Paths(NA, interactive=T)",
          "} else {",
-         "  knitr::include_graphics(mSetObj$imgSet$mummi.plot)",
+         "  safeIncludeGraphics(mSetObj$imgSet$mummi.plot)",
          "}",
          "```",
          "\n\n");
@@ -345,7 +367,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
       "if (mSetObj$paramSet$report.format == 'html') {",
       "  PlotPeaks2Paths(NA, interactive=T)",
       "} else {",
-      "  knitr::include_graphics(mSetObj$imgSet$mummi.gsea.plot)",
+      "  safeIncludeGraphics(mSetObj$imgSet$mummi.gsea.plot)",
       "}",
       "```",
       "\n\n"
@@ -399,7 +421,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$integpks.plot, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$integpks.plot)",
+             "safeIncludeGraphics(mSetObj$imgSet$integpks.plot)",
              "```",
              "\n\n");
     cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -461,13 +483,13 @@ detectPairedElementsUnique <- function(sampleNames) {
 
 CreateKeggNetDocMetaMummi <-function(mSetObj){
   
-  if (!is.null(mSetObj$imgSet$reportSet$network_mummichog) && file.exists(mSetObj$imgSet$reportSet$network_mummichog)) {
+  if (!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)) {
     if(mSetObj$paramSet$report.format == "slides"){
       # Insert Network Image
       networkImageSlide <- c(
         "## KEGG Global Metabolic Network Visualization\n\n",
         "```{r figure_kegg_network, echo=FALSE, fig.cap='', out.width='100%'}",
-        sprintf("knitr::include_graphics('%s')", mSetObj$imgSet$reportSet$network_mummichog),
+        sprintf("safeIncludeGraphics('%s')", mSetObj$imgSet$reportSet$network_mummichog),
         "```\n",
         "\n\n---\n\n"
       )
@@ -487,7 +509,7 @@ CreateKeggNetDocMetaMummi <-function(mSetObj){
         paste0("```{r figure_kegg_net, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ",
                getFigCount() , 
                ": KEGG global metabolic network', out.width='", getFigWidth(mSetObj), "'}"),
-        sprintf("knitr::include_graphics('%s')", mSetObj$imgSet$reportSet$network_mummichog),
+        sprintf("safeIncludeGraphics('%s')", mSetObj$imgSet$reportSet$network_mummichog),
         "```",
         "\n\n")
       

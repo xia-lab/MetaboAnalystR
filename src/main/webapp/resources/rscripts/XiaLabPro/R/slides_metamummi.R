@@ -292,7 +292,7 @@ split_vector_at_separator <- function(vector, separator) {
 
 CreateKeggNetDocMetaMummi_slides <-function(mSetObj){
   
-  if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && file.exists(mSetObj$imgSet$reportSet$network_mummichog)){
+  if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
     figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_mummichog, 
                                             paste0("KEGG Global Metabolic Network Visualization"))
     cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")

@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Meta-Analysis)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -255,7 +277,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                       " fig.lp='", 
                       mSetObj$imgSet$meta.anal$plot[s], 
                       "', out.width = '", getFigWidth(mSetObj), "'}"),
-               "knitr::include_graphics(mSetObj$imgSet$meta.anal$plot[", s, "])",
+               "safeIncludeGraphics(mSetObj$imgSet$meta.anal$plot[", s, "])",
                "```",
                "\n\n");
       cat(fig, file=rmdFile, append=TRUE, sep="\n");
@@ -275,7 +297,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                     " fig.lp='", 
                     mSetObj$imgSet$venn, 
                     "', out.width = '", getFigWidth(mSetObj), "'}"),
-             "knitr::include_graphics(mSetObj$imgSet$venn)",
+             "safeIncludeGraphics(mSetObj$imgSet$venn)",
              "```",
              "\n\n");
     cat(fig, file=rmdFile, append=TRUE, sep="\n");

@@ -1,4 +1,26 @@
 
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
+
 #'Create report of analyses (Biomarker)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -190,7 +212,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         cat(tableContent, file = rmdFile, append = TRUE, sep = "\n")
     }
     # Slide for Network Visualization
-    if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && file.exists(mSetObj$imgSet$reportSet$network_mummichog)){
+    if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
       figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_mummichog, paste0("Interactive network visualization by Mummichog."))
       cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
     }
@@ -230,7 +252,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
     }
     
     # Slide for Network Visualization
-    if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && file.exists(mSetObj$imgSet$reportSet$network_gsea)){
+    if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && safeFileExists(mSetObj$imgSet$reportSet$network_gsea)){
       networkVisualizationContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_gsea, "Interactive network visualization by GSEA.")
       cat(networkVisualizationContent, file = rmdFile, append = TRUE, sep = "\n")
     }
@@ -268,7 +290,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
     }
     
     # Slide for Network Visualization of Integrated Results
-    if(!is.null(mSetObj$imgSet$reportSet$network_integ) && file.exists(mSetObj$imgSet$reportSet$network_integ)){
+    if(!is.null(mSetObj$imgSet$reportSet$network_integ) && safeFileExists(mSetObj$imgSet$reportSet$network_integ)){
       networkVisualizationContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_integ, "Interactive network visualization of integrated results.")
       cat(networkVisualizationContent, file = rmdFile, append = TRUE, sep = "\n")
     }
@@ -279,7 +301,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
     mSetObj <- .get.mSet(mSetObj);
     link <- GetSharingLink(mSetObj);
     
-    if (!is.null(mSetObj$imgSet$reportSet$heatmap_mummichog) && file.exists(mSetObj$imgSet$reportSet$heatmap_mummichog)) {
+    if (!is.null(mSetObj$imgSet$reportSet$heatmap_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_mummichog)) {
       heatmapSlideContent <- c(
         "## Heatmap Visualization for Mummichog Analysis\n\n",
         "- **Purpose:** Provides an overview of clustering patterns of peak intensities across samples.",
@@ -294,7 +316,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
       heatmapFigureContent <- c(
         paste0("```{r figure_heatmap_mummichog, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), ": Interactive peak intensity heatmap visualization.',"),
         " out.width='100%', fig.align='center'}\n",
-        "knitr::include_graphics('", mSetObj$imgSet$reportSet$heatmap_mummichog, "')\n",
+        "safeIncludeGraphics('", mSetObj$imgSet$reportSet$heatmap_mummichog, "')\n",
         "```\n\n---\n\n"
       )
       cat(heatmapFigureContent, file = rmdFile, append = TRUE, sep = "")

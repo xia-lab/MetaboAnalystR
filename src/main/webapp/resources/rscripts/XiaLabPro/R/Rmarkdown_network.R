@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (Network Explorer)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -187,7 +209,7 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
       figCaption <- paste('Figure ', getFigCount(), '. Screenshot of ', net.name)
       figCode <- paste0("```{r figure_ntw", i, ", echo=FALSE, fig.pos='H', fig.cap='", figCaption, 
                         "', out.width='", getFigWidth(mSetObj), "'}\n",
-                        "knitr::include_graphics('", net.type, ".png')\n",
+                        "safeIncludeGraphics('", net.type, ".png')\n",
                         "```")
       cat(figCode, file=rmdFile, append=TRUE)
       cat("\n\n", file=rmdFile, append=TRUE)

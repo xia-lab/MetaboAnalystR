@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 #'Create report of analyses (IntegPathwayAnalysis)
 #'@description Report generation using Sweave
 #'Puts together the analysis report
@@ -223,7 +245,7 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
          "if (mSetObj$paramSet$report.format == 'html') {",
          "  PlotPathSummaryGG(NA, F ,interactive=T)",
          "} else  {",
-         "  knitr::include_graphics(mSetObj$imgSet$path.overview)",
+         "  safeIncludeGraphics(mSetObj$imgSet$path.overview)",
          "}",
          "```",
          "\n\n");
@@ -250,7 +272,7 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
                     " fig.lp='", 
                     path.img, 
                     "', out.width = '630px'}"),
-             "knitr::include_graphics(mSetObj$imgSet$pathinteg.path)",
+             "safeIncludeGraphics(mSetObj$imgSet$pathinteg.path)",
              "```",
              "\n\n");
     cat(fig, file=rmdFile, append=TRUE, sep="\n");

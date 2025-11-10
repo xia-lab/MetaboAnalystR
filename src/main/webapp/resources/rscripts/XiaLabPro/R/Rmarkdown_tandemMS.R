@@ -1,3 +1,25 @@
+
+if (!exists("safeFileExists", mode = "function")) {
+  safeFileExists <- function(path) {
+    if (is.null(path) || length(path) != 1 || !is.character(path)) {
+      return(FALSE)
+    }
+    if (is.na(path) || path == "") {
+      return(FALSE)
+    }
+    file.exists(path)
+  }
+}
+
+if (!exists("safeIncludeGraphics", mode = "function")) {
+  safeIncludeGraphics <- function(path) {
+    if (!safeFileExists(path)) {
+      return(NULL)
+    }
+    knitr::include_graphics(path)
+  }
+}
+
 # Process tandemMS module report
 
 #'Create report for raw spectra module
@@ -321,7 +343,7 @@ CreateMatchingPatterns <- function(mSetObj){
                         ". Mirror plot of this spectra: ", gsub("mirror_plotting_[0-9]+_","",sub("_72.png","",i)), 
                         ". Compound name: ", compound_name, ". Formula: ", formulas_name, ". InchiKey: ", inchikey_name,  ".' , ",
                         " fig.lp='", paste0(i), "', out.width = '", getFigWidth(mSetObj), "'}"),
-                 paste0("knitr::include_graphics(\"", i, "\")"),
+                 paste0("safeIncludeGraphics(\"", i, "\")"),
                  "```",
                  "\n\n");
       }

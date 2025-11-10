@@ -189,7 +189,7 @@ CreateCorrSlides <- function(mSetObj = NA) {
     cat(descr, file = rmdFile, append = TRUE)
 
     # Correlation Heatmaps
-    if(!is.null(mSetObj$imgSet$corr.heatmap) && file.exists(mSetObj$imgSet$corr.heatmap) ){
+    if(!is.null(mSetObj$imgSet$corr.heatmap) && safeFileExists(mSetObj$imgSet$corr.heatmap) ){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$corr.heatmap, 'Correlation heatmaps showing significant features selected by statistical methods.')
         cat(slideContent, file = rmdFile, append = TRUE)
     }
@@ -274,7 +274,7 @@ CreatePCASlides <- function(mSetObj = NA) {
     cat(slideContent, file = rmdFile, append = TRUE)
 
     # 3D PCA plot
-    if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && file.exists(mSetObj$imgSet$reportSet$pca_3d) ) {
+    if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && safeFileExists(mSetObj$imgSet$reportSet$pca_3d) ) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$pca_3d, sprintf("PCA Interactive 3D plot of the first three principal components."))
         cat(slideContent, file = rmdFile, append = TRUE)
     }
@@ -338,7 +338,7 @@ CreateSPLSDASlides <- function(mSetObj = NA) {
     cat(slideContent, file = rmdFile, append = TRUE)
 
     # 3D score plot, if available
-    if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && file.exists(mSetObj$imgSet$reportSet$splsda_3d) ) {
+    if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$splsda_3d) ) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$splsda_3d, "Screenshot of interactive 3-D plot.")
         cat(slideContent, file = rmdFile, append = TRUE)
     }
@@ -455,7 +455,7 @@ CreateHCSlides <- function(mSetObj = NA) {
     }
 
     # Create content for heatmap if available
-    if (!is.null(mSetObj$imgSet$reportSet$heatmap_static) && file.exists(mSetObj$imgSet$reportSet$heatmap_static)) {
+    if (!is.null(mSetObj$imgSet$reportSet$heatmap_static) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_static)) {
 
         heatmapSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$heatmap_static, paste0("Clustering result shown as heatmap (distance measure using `", 
                                                                        paste0(mSetObj$analSet$htmap$dist.par, "` and clustering algorithm using `", 
@@ -620,7 +620,7 @@ CreatePLSSlides <- function(mSetObj = NA) {
     cat(slideContent, file = rmdFile, append = TRUE)
 
     # 3D scores plot, if available
-    if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && file.exists(mSetObj$imgSet$reportSet$plsda_3d)) {
+    if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$plsda_3d)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$plsda_3d, "3D scores plot between selected components.")
         cat(slideContent, file = rmdFile, append = TRUE)
     }
