@@ -1194,8 +1194,8 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
     input.data <- input.data[, colnames(input.data) != varName, drop = FALSE]
   } else {                                   # target is metadata
     if (!varName %in% colnames(covariates)) {
-      AddErrMsg("Metadata variable not found!")
-      return(0)
+      AddErrMsg("Metadata variable not found! Using the first metadata.")
+      varNm <- colnames(covariates[1]);
     }
     tgt.var <- covariates[, varName]
   }

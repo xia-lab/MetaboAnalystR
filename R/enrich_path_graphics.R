@@ -89,7 +89,6 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
     if(!is.null(mSetObj$analSet$qea.hits)){
       hit.cmpds <- mSetObj$analSet$qea.hits[[path.id]];
       # now plotting summary graphs for each compounds
-      print(head(mSetObj$dataSet$norm.path));
       for(i in 1:length(hit.cmpds)){
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;

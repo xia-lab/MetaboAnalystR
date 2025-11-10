@@ -108,7 +108,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         mSetObj$dataSet$exposure.ldp.org <-  exposure.dat
        mSetObj$dataSet$outcome.dat.org <- outcome.dat
        }
-      print(rownames(dat))
+      #print(rownames(dat))
       .set.mSet(mSetObj)
   
       return(res);

@@ -155,7 +155,6 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   qs::qsave(resTable, "limma.sig.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
   mSetObj$dataSet$main.var <- main.var;
-  print(mSetObj$dataSet$cls)
   return(.set.mSet(mSetObj))
 }
 

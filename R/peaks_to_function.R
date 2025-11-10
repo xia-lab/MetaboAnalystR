@@ -3225,7 +3225,6 @@ PerformCurrencyMapping <- function(mSetObj = NA){
   
   if(num_hits == 0){
     mSetObj$mummi$curr.msg <- c("No currency metabolites were selected or mapped!")
-    print(mSetObj$mummi$curr.msg)
     return(0)
   }
   

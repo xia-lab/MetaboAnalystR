@@ -159,8 +159,6 @@ data.mean   <- data.mean [sel.idx, , drop = FALSE]
 item        <- item      [sel.idx]
 res         <- res       [sel.idx,  ]
 
-  print(nrow(data.select));
-  print("data.select======");
 
   mSetObj$dataSet$itemselect <- structure(list(data = data.select, dose = dose,
                   item = item, data.mean = data.mean, itemselect.res = res), class="itemselect");  

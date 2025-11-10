@@ -1423,9 +1423,6 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
     miss.mat <- miss.mat[1:40, , drop = FALSE]
   }
 
-  print(head(miss.mat))
-  print(dim(miss.mat));
-
   feature.names <- colnames(miss.mat)
   sample.names <- rownames(miss.mat)
 
