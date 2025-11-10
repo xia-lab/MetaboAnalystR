@@ -442,25 +442,26 @@ public class MultifacBean implements Serializable {
                 return;
             }
         }
+
         List<MetaDataBean> beans = getMetaDataBeans();
         for (int i = 0; i < beans.size(); i++) {
             MetaDataBean bean = beans.get(i);
+            /*
             if (boxMeta.equals(bean.getName()) && bean.getParam().equals("cont")) {
                 sb.addMessage("Error", "Primary factor can not be of continuous type.");
                 return;
             }
+             */
         }
-
         UniVarTests.setCmpdSummaryType(sb.getRConnection(), sb.getCmpdSummaryType());
         String cmpdName = UniVarTests.plotCmpdSummary(sb, boxId, boxMeta, boxMeta2, boxMetaVersionNum, "png", 150 + "");
         String imgUrl = "/MetaboAnalyst/resources/users/" + DataUtils.getJustFileName(sb.getCurrentUser().getHomeDir()) + File.separator + cmpdName;
-        //System.out.println(imgUrl);
+        System.out.println(imgUrl);
         sb.setBoxplotUrl(imgUrl);
-        sb.setCmpdSummaryNm(cmpdName);
         sb.setCurrentCmpdName(boxId);//important for high resolution image export
         boxMetaVersionNum = boxMetaVersionNum + 1;
         //sb.setLinMod(false);
-        //
+        //PrimeFaces.current().executeScript("PF('FeatureView').show();");
     }
 
     public void updateMultiFacBoxplotMeta(String type) {

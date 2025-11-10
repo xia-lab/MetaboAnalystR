@@ -1697,6 +1697,9 @@ public class DiagramView implements Serializable {
                 sb.setRegression(false);
                 if (RDataUtils.readTextDataTs(sb.getRConnection(), wb.getDataName(), sb.getDataFormat())) {
                     if (RDataUtils.readMetaData(sb.getRConnection(), wb.getMetaName())) {
+                        String tsDesign = sb.getTsDesign();
+                        RConnection RC = sb.getRConnection();
+                        RDataUtils.setDesignType(RC, tsDesign);
                         sb.setDataUploaded();
                         steps = new ArrayList<>(Arrays.asList(
                                 "Sanity Check",
@@ -3066,7 +3069,6 @@ public class DiagramView implements Serializable {
         }
 
         successExecutionMap.put(rp.getOrigNaviType(), ok);
-
 
         // Save R images & history into current working directory (no subfolder)
         try {
