@@ -16,7 +16,6 @@ CheckDetailsTablePerformed <-function(type){
   }else if(type == "anova"){
     performed <- !is.null(mSetObj$analSet$aov$sig.mat);
   }else if(type == "anova2"){
-    print(mSetObj$analSet$aov2);
     performed <- !is.null(mSetObj$analSet$aov2$sig.mat);
   }else if(type == "multirf"){
     performed <- !is.null(mSetObj$analSet$rf.sigmat.mf);
@@ -39,7 +38,6 @@ CheckDetailsTablePerformed <-function(type){
   }else if(type == "ora"){
     performed <- !is.null(mSetObj$analSet$ora.mat);
   }else if(type == "match_integ"){
-    print(head(mSetObj$analSet$integ.match.tbl));
     performed <- !is.null(mSetObj$analSet$integ.match.tbl);
   }else if(endsWith(type, "_enr")){
     type_cleaned <- gsub("_enr", "", type);
@@ -78,7 +76,6 @@ CheckMumExists <- function(mSetObj=NA, type) {
 }
 
 GetViewData <- function(dataname){
-  print(dataname)
   mSetObj <- .get.mSet(mSetObj);
     #fileName <- paste0(dataname,".csv")
  
@@ -150,8 +147,6 @@ GetMatchIntegColNames <-function(){
 GetMatchIntegSetIDs <-function(inx){
     mSetObj <- .get.mSet(mSetObj);
     tbl <- as.data.frame(mSetObj$analSet$integ.match.tbl);
-    print(head(unlist(tbl[,inx])))
-    print("matchInteg2");
     return(unlist(tbl[,inx]));
 }
 
@@ -172,10 +167,7 @@ GetEnrQueryType <- function(type){
 GetEnrFunType <- function(type){
     mSetObj <- .get.mSet(mSetObj);
     imgSet <- mSetObj$imgSet;
-    print(type);
     res <- imgSet$enrTables[[type]]$library
-    print(res);
-
     return(res);
 }
 

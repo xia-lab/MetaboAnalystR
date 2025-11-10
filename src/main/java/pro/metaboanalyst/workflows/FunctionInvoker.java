@@ -96,8 +96,10 @@ public class FunctionInvoker {
             try {
                 Object convertedValue = convertValue(value, paramType, propertyName);
                 setter.invoke(bean, convertedValue);
+                /*
                 System.out.println(clazz.getSimpleName() + "." + setterName
                         + " (param=" + paramType.getSimpleName() + ") invoked.");
+*/
             } catch (Exception ex) {
                 System.out.println("Failed to invoke setter " + clazz.getSimpleName() + "." + setterName
                         + " with value type " + (value == null ? "null" : value.getClass().getName())

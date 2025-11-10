@@ -1957,14 +1957,14 @@ public class SessionBean1 implements Serializable {
 
         // HTML5-safe color styling
         notice.add("<span style='color:" + colorCss + "'>" + prefix + msg + "</span>");
-
+        /*
         System.out.println(
                 "addMessage kind=" + kind
                 + " reloading=" + getWorkflowBean().isReloadingWorkflow()
                 + " showGrowl=" + showGrowl
                 + " msg=" + msg
         );
-
+        */
         PrimeFaces.current().ajax().update("globalGrowl");
     }
 

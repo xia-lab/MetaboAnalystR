@@ -118,6 +118,10 @@ public class WorkflowView implements Serializable {
     @JsonIgnore
     @Inject
     private DiagramView dv;
+    
+    @JsonIgnore
+    @Inject
+    private LimmaBean lm;
 
     private int activeIndex = 0;
 
@@ -695,6 +699,8 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
+                                                lm.getAnalysisMeta();
+                        lm.getReferenceGroupFromAnalysisMeta();
                         MetaProcBean mp = (MetaProcBean) DataUtils.findBean("mprocBean");
                         mp.metacheck_proceed();
                     }
@@ -703,6 +709,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
+                        
                         MetaHeatmapBean mh = (MetaHeatmapBean) DataUtils.findBean("mhmBean");
                         success = mh.metaOverviewBn_action();
                         sb.addNaviTrack("Metadata", "/Secure/multifac/MetaDataView.xhtml", success);
@@ -744,6 +751,7 @@ public class WorkflowView implements Serializable {
                     case "Linear Models" -> {
                         boolean resBool = checkWorkflowContained(func);
                         if (!resBool && wb.isReloadingWorkflow()) {
+                            System.out.println("===============linearmodels not present");
                             return 2;
                         }
                         MultifacBean mf = (MultifacBean) DataUtils.findBean("multifacBean");
@@ -763,18 +771,19 @@ public class WorkflowView implements Serializable {
                         if (!sb.isContainsTime()) {
                             sb.addMessage("Error", "MEBA only work on time-series data.");
                             success = false;
-                            sb.addNaviTrack("MEBA", "/Secure/multifac/TimeCourseView.xhtml", success);
 
                         } else {
-                            MebaBean meba = (MebaBean) DataUtils.findBean("mebaBean");
-                            FunctionInvoker.invokeFunction(wb.getFunctionInfos().get("MEBA"));
+                            checkWorkflowContained("MEBA");
                         }
+                        sb.addNaviTrack("MEBA", "/Secure/multifac/TimeCourseView.xhtml", success);
+
                     }
                     case "Random Forest2" -> {
                         boolean resBool = checkWorkflowContained("Random Forest2");
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
+                        System.out.println("++++++++++++++++++++++++++++++reached RandomForest2");
                         MultiRfBean rf = (MultiRfBean) DataUtils.findBean("mrfBean");
                         success = rf.rfBn_action_time();
                         sb.addNaviTrack("RandomForest", "/Secure/multifac/MultifacRFView.xhtml", success);
@@ -1087,7 +1096,7 @@ public class WorkflowView implements Serializable {
 
         if (functionInfo != null) {
             try {
-                //System.out.println("FunctionInfo found: " + functionType);
+                System.out.println("FunctionInfo found: " + functionType);
                 if (wb.getReloadingParameters().equals("saved") || !wb.isReloadingWorkflow()) {
                     FunctionInvoker.callSetters(functionInfo);
                 }

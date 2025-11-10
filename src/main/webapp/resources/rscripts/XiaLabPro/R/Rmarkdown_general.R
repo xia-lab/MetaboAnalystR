@@ -126,8 +126,8 @@
       res <- mSetObj$analSet$path.ora.mat;
 
       rownames(res)<-GetORA.pathNames(mSetObj);
-      print("pathoramat");
-      print(res);
+      #print("pathoramat");
+      #print(res);
 
       return(res)
       # print(xtable::xtable(res,align="p{5cm}|l|l|l|l||ll|l|l", display=c("s","d","f","d","E","E", "E","E", "f"),

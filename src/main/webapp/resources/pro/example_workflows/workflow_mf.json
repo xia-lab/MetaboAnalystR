@@ -63,7 +63,7 @@
     "function" : "mrfBean.rfBn_action_time",
     "description" : "Executes and times a Random Forest analysis.",
     "parameters" : {
-      "mrfBean.rfMeta" : "Time",
+      "mrfBean.rfMeta" : "Diagnosis",
       "mrfBean.tryNum" : "7",
       "mrfBean.treeNum" : "500",
       "mrfBean.rfRandom" : "1",
@@ -71,9 +71,9 @@
     },
     "rCommands" : [ "meta.vec.rf <- c(\"\")", "PlotRF.ClassifyMeta(NA, \"rf_cls_meta_0_\", \"png\", 150, width=NA)", "PlotRF.VIPMeta(NA, \"rf_imp_meta_0_\", \"png\", 150, width=NA)" ]
   },
-  "RF.AnalMeta(NA, 500,-1,1, \"Time\")" : {
-    "name" : "RF.AnalMeta(NA, 500,-1,1, \"Time\")",
-    "function" : "RF.AnalMeta(NA, 500,-1,1, \"Time\")",
+  "RF.AnalMeta(NA, 500,-1,1, \"Diagnosis\")" : {
+    "name" : "RF.AnalMeta(NA, 500,-1,1, \"Diagnosis\")",
+    "function" : "RF.AnalMeta(NA, 500,-1,1, \"Diagnosis\")",
     "description" : "No description available",
     "parameters" : { },
     "rCommands" : [ "meta.vec.rf <- c(\"\")" ]
@@ -116,11 +116,11 @@
       "mCorrBean.ptnDistMeasure" : "pearson",
       "mCorrBean.ptnMetaCov" : null,
       "mCorrBean.covType" : "none",
-      "mCorrBean.ptnMeta" : "Time",
+      "mCorrBean.ptnMeta" : "Diagnosis",
       "mCorrBean.ptnFeature" : "",
       "mCorrBean.tgtType" : "metaNm"
     },
-    "rCommands" : [ "FeatureCorrelationMeta(NA, \"pearson\", \"metaNm\", \"Time\")" ]
+    "rCommands" : [ "FeatureCorrelationMeta(NA, \"pearson\", \"metaNm\", \"Diagnosis\")" ]
   },
   "Linear Models" : {
     "name" : "Linear Models",
@@ -128,14 +128,14 @@
     "description" : "Performs linear modeling with covariate adjustment",
     "parameters" : {
       "lmBean.covPThresh" : "0.05",
-      "lmBean.referenceGroupFromAnalysisMeta" : "--- NA ---",
-      "lmBean.analysisMeta" : "Time",
+      "lmBean.referenceGroupFromAnalysisMeta" : "NA",
+      "lmBean.analysisMeta" : "Diagnosis",
       "lmBean.contrastFromAnalysisMeta" : "anova",
       "lmBean.blockFac" : "NA",
       "lmBean.covStyleOpt" : "default",
       "lmBean.adjustedMeta" : [ ]
     },
-    "rCommands" : [ "adj.vec <- c(\"\")", "CovariateScatter.Anal(NA, \"covariate_plot_0_dpi150.png\", \"png\", \"Time\", \"--- NA ---\", \"NA\" , 0.05, \"fdr\", \"anova\")", "PlotCovariateMap(NA, \"default\", \"covariate_plot_0_dpi150.png\", \"png\", 150)" ]
+    "rCommands" : [ "adj.vec <- c(\"\")", "CovariateScatter.Anal(NA, \"covariate_plot_0_dpi150.png\", \"png\", \"Diagnosis\", \"NA\", \"NA\" , 0.05, \"fdr\", \"anova\")", "PlotCovariateMap(NA, \"default\", \"covariate_plot_0_dpi150.png\", \"png\", 150)" ]
   },
   "Heatmap2" : {
     "name" : "Heatmap2",
@@ -143,15 +143,15 @@
     "description" : "Performs Heatmap visualization of multifactor data",
     "parameters" : {
       "hm2Bean.fontSizeCol" : "8",
-      "hm2Bean.smplSortOpt" : [ "Time" ],
+      "hm2Bean.smplSortOpt" : [ "Diagnosis" ],
       "hm2Bean.topThresh" : 25,
-      "hm2Bean.smplSortOptList" : [ "Time" ],
+      "hm2Bean.smplSortOptList" : [ "Diagnosis" ],
       "hm2Bean.fontSizeRow" : "8",
-      "hm2Bean.selectedMetas" : [ "Time", "Subject" ],
+      "hm2Bean.selectedMetas" : [ "Diagnosis", "Treatment" ],
       "hm2Bean.maxFeatureNum" : 5000,
       "hm2Bean.useTopFeature" : false
     },
-    "rCommands" : [ "meta.vec.hm2 <- c(\"Time\",\"Subject\")", "sort.vec.hm2 <- c(\"Time\")", "PlotHeatMap2(NA, \"heatmap2_0_\", \"norm\", \"row\", \"png\", 150, width=NA, \"euclidean\",\"ward.D\",\"bwn\", 8,8, 10.0,0.015,10, 10, \"mean\",25, F,  F, T, T, T, F, 5000)" ]
+    "rCommands" : [ "meta.vec.hm2 <- c(\"Diagnosis\",\"Subject\")", "sort.vec.hm2 <- c(\"Diagnosis\")", "PlotHeatMap2(NA, \"heatmap2_0_\", \"norm\", \"row\", \"png\", 150, width=NA, \"euclidean\",\"ward.D\",\"bwn\", 8,8, 10.0,0.015,10, 10, \"mean\",25, F,  F, T, T, T, F, 5000)" ]
   },
   "PCA" : {
     "name" : "PCA",

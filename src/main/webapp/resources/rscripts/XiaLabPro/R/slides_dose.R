@@ -145,7 +145,6 @@ AddDoseFeatureImages_slides <- function(mSetObj = NA) {
         }
         cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
     }
-    print(imgSet$doseFeatureList);
     # Image rendering in R Markdown
     for (i in seq_along(imgSet$doseFeatureList)) {
         slide <- CreateTwoColumnFigureSlide(imgSet$doseFeatureList[[i]], paste("Curve fitting result for feature:", imgSet$doseFeatureList[[i]]))

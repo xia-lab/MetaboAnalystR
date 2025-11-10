@@ -55,6 +55,7 @@ import pro.metaboanalyst.controllers.general.NormBean;
 import pro.metaboanalyst.controllers.general.ProcessBean;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.mnet.MnetLoadBean;
+import pro.metaboanalyst.controllers.multifac.LimmaBean;
 import pro.metaboanalyst.datacenter.DatasetController;
 import pro.metaboanalyst.lts.FireBase;
 import pro.metaboanalyst.lts.FireBaseController;
@@ -160,6 +161,10 @@ public class DiagramView implements Serializable {
     @JsonIgnore
     @Inject
     private JobTimerService jsv;
+
+    @JsonIgnore
+    @Inject
+    private LimmaBean lm;
 
     @JsonIgnore
     @Inject
@@ -2035,7 +2040,7 @@ public class DiagramView implements Serializable {
                     int res = wfv.executeWorkflow(nm);
                     if (res == 0) {
                         //wb.markSelectedRunFailed("Workflow step '" + nm + "' failed. Workflow run marked as failed.");
-                        return false;
+                        //return false;
                     } else if (res == 1) {
                         this.lastExecutedSteps.add(nm);
                     }
@@ -3062,16 +3067,6 @@ public class DiagramView implements Serializable {
 
         successExecutionMap.put(rp.getOrigNaviType(), ok);
 
-        // If "stat" not selected anywhere, run PCA/Volcano once
-        if (!moduleNms.contains("stat")) {
-            try {
-                RDataUtils.loadRscriptsOnDemand(sb.getRConnection(), "stat");
-                wfv.executeWorkflow("PCA");
-                wfv.executeWorkflow("Volcano");
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "PCA/Volcano failed (single plan)", ex);
-            }
-        }
 
         // Save R images & history into current working directory (no subfolder)
         try {

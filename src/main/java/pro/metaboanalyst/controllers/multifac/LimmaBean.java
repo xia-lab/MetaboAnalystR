@@ -189,7 +189,6 @@ public class LimmaBean implements Serializable {
     }
 
     public void covScatterButton_action() {
-        jrd.record_covScatterButton_action(this);
         double sigThresh = Double.parseDouble(covPThresh);
         String newName = sb.getNewImage("covariate_plot") + "dpi150";
         String imgName = newName + ".png";
@@ -211,7 +210,7 @@ public class LimmaBean implements Serializable {
         }
 
         if (mfb.getCompDesign().equals("cov")) {
-            if (referenceGroupFromAnalysisMeta.equals(contrastFromAnalysisMeta)) {
+            if (getReferenceGroupFromAnalysisMeta().equals(contrastFromAnalysisMeta)) {
                 sb.addMessage("Error", "Please make sure the reference group is not the same as the contrast group.");
                 return;
             }
@@ -288,6 +287,8 @@ public class LimmaBean implements Serializable {
         mfb.setCovJsonName(covJsonName);
         mfb.setCovJsonName(covJsonName);
         mfb.setCovPerformed(true);
+        jrd.record_covScatterButton_action(this);
+
     }
 
     public void doDefaultLm() {
