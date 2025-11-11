@@ -398,12 +398,12 @@
                             </p:column>
 
                             <p:column headerText="Start" style="text-align:center;">
-                            <p:commandLink actionListener="#{workflowBean.prepareStartRun(run)}"
-                                           onclick="PF('workStartDialog').hide();
+                                <p:commandLink actionListener="#{workflowBean.prepareStartRun(run)}"
+                                               onclick="PF('workStartDialog').hide();
                                                    PF('statusDialog').show();"
-                                           disabled="#{workflowBean.isRunInProgress(run)}"
-                                           update=":projectTabs:dataTableForm"
-                                           oncomplete="PF('statusDialog').hide(); if (args.confirmOverwrite) { PF('overwriteDlg').show(); }">
+                                               disabled="#{workflowBean.isRunInProgress(run)}"
+                                               update=":projectTabs:dataTableForm"
+                                               oncomplete="PF('statusDialog').hide(); if (args.confirmOverwrite) { PF('overwriteDlg').show(); }">
                                     <i class="pi pi-arrow-circle-right" style="font-size:1.4rem; color: orangered"></i>
                                 </p:commandLink>
                             </p:column>
@@ -424,8 +424,7 @@
                             </p:column>
 
                             <p:column headerText="Delete" style="text-align:center;">
-                                <p:commandLink id="delRunBn" onclick="PF('runDelDialog').show();"
-                                               >
+                                <p:commandLink id="delRunBn" oncomplete="PF('runDelForm').show();" update="">
                                     <i class="pi pi-trash" style="font-size:1.4rem; color:orangered"></i>
                                     <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
                                 </p:commandLink>
@@ -762,25 +761,27 @@
         </p:dialog>
 
         <p:dialog widgetVar="runDelDialog" modal="true" header="Delete Workflow Run" appendTo="@(body)" closable="true">
-            <h:panelGrid style="width:420px; line-height:1.6; font-size:14px;">
-                <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
-                    <h:panelGroup>
-                        <i class="pi pi-exclamation-triangle" style="font-size:42px;color:#f97316"></i>
-                    </h:panelGroup>
-                    <h:panelGroup>
-                        This action will permanently delete run <b>#{workflowBean.selectedWorkflowRun.id}</b>.
-                        Continue?
-                    </h:panelGroup>
+            <h:form id="runDelForm">
+                <h:panelGrid style="width:420px; line-height:1.6; font-size:14px;">
+                    <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
+                        <h:panelGroup>
+                            <i class="pi pi-exclamation-triangle" style="font-size:42px;color:#f97316"></i>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            This action will permanently delete run <b>#{workflowBean.selectedWorkflowRun.id}</b>.
+                            Continue?
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="2" style="width:100%; text-align:center;">
+                        <p:commandButton value="Cancel" onclick="PF('runDelDialog').hide();return false;"/>
+                        <p:commandButton value="Yes, delete" styleClass="ui-button-danger"
+                                         onstart="PF('statusDialog').show();"
+                                         oncomplete="PF('statusDialog').hide();PF('runDelDialog').hide();"
+                                         update=":projectTabs:dataTableForm"
+                                         actionListener="#{workflowBean.deleteSelectedRun}"/>
+                    </h:panelGrid>
                 </h:panelGrid>
-                <h:panelGrid columns="2" style="width:100%; text-align:center;">
-                    <p:commandButton value="Cancel" onclick="PF('runDelDialog').hide();return false;"/>
-                    <p:commandButton value="Yes, delete" styleClass="ui-button-danger"
-                                     onstart="PF('statusDialog').show();"
-                                     oncomplete="PF('statusDialog').hide();PF('runDelDialog').hide();"
-                                     update=":projectTabs:dataTableForm"
-                                     actionListener="#{workflowBean.deleteSelectedRun}"/>
-                </h:panelGrid>
-            </h:panelGrid>
+            </h:form> 
         </p:dialog>
 
         <p:dialog id="dlgByDataset" widgetVar="dlgByDataset" header="Select Dataset"
@@ -798,20 +799,23 @@
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
                              emptyMessage="No datasets found." styleClass="surface-card shadow-1">
                     <p:column headerText="Name" sortBy="#{ds.title}" width="35%">
-                        <p:outputPanel layout="flex"
-                                       style="align-items:center; justify-content:space-between; width:100%; border:0; padding:0;">
-                            <h:outputText value="#{ds.title}" style="flex:1 1 auto;"/>
-
-                            <p:tag value="Example"
-                                   severity="info"
-                                   rendered="#{ds.origin eq 'Example'}"
-                                   style="margin-left:auto;"/>
-                        </p:outputPanel>
+                        <h:outputText value="#{ds.title}" />
                     </p:column>
 
                     <p:column headerText="File" sortBy="#{ds.filename}">
                         <h:outputText value="#{ds.filename}"/>
                     </p:column>
+
+                    <p:column headerText="Created" width="20%" sortBy="#{ds.uploadedAt}">
+                        <p:outputPanel layout="flex" style="align-items:center; gap:.5rem;">
+                            <h:outputText value="#{workflowBean.fmtCreatedAt(ds.uploadedAt)}"
+                                          rendered="#{ds.origin ne 'Example'}"/>
+                            <p:tag value="Example"
+                                   severity="info"
+                                   rendered="#{ds.origin eq 'Example'}"/>
+                        </p:outputPanel>
+                    </p:column>
+
                     <p:column headerText="Samples" width="10%" sortBy="#{ds.samplenum}">
                         <h:outputText value="#{ds.samplenum == 0 ? 'NA' : ds.samplenum}"/>
                     </p:column>
@@ -887,7 +891,12 @@
                     </p:column>
 
                     <p:column headerText="Created" width="30%" sortBy="#{wf['created_at']}">
-                        <h:outputText value="#{workflowBean.fmtCreatedAt(wf['created_at'])}" />
+                        <p:outputPanel layout="flex" style="align-items:center; gap:.5rem;">
+                            <h:outputText value="#{workflowBean.fmtCreatedAt(wf['created_at'])}" />
+                            <p:tag value="Example"
+                                   severity="info"
+                                   rendered="#{wf['type'] eq 'Example'}"/>
+                        </p:outputPanel>
                     </p:column>
 
                     <p:column headerText="Action" width="120" style="text-align:center;">
