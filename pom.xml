@@ -141,6 +141,12 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.4</version>
         </dependency>
+        <!-- PostgreSQL async notification support for LISTEN/NOTIFY -->
+        <dependency>
+            <groupId>com.impossibl.pgjdbc-ng</groupId>
+            <artifactId>pgjdbc-ng</artifactId>
+            <version>0.8.9</version>
+        </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
