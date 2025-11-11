@@ -2208,6 +2208,34 @@ public class WorkflowBean implements Serializable {
         return null;
     }
 
+    public void prepareStartRun(WorkflowRunModel run) {
+        PrimeFaces pf = PrimeFaces.current();
+        if (run == null) {
+            sb.addMessage("warn", "No workflow run selected.");
+            pf.ajax().addCallbackParam("confirmOverwrite", false);
+            return;
+        }
+
+        if ("completed".equalsIgnoreCase(normalizeRunStatus(run.getStatus()))) {
+            pendingStartRun = run;
+            pf.ajax().addCallbackParam("confirmOverwrite", true);
+            return;
+        }
+        pf.ajax().addCallbackParam("confirmOverwrite", false);
+        startRun(run);
+    }
+
+    public void confirmStartRun() {
+        if (pendingStartRun != null) {
+            startRun(pendingStartRun);
+            pendingStartRun = null;
+        }
+    }
+
+    public void cancelStartRun() {
+        pendingStartRun = null;
+    }
+
     public void startRun(WorkflowRunModel run) {
         try {
             if (run == null) {
@@ -2393,6 +2421,7 @@ public class WorkflowBean implements Serializable {
     }
 
     private WorkflowRunModel selectedWorkflowRun;
+    private WorkflowRunModel pendingStartRun;
 
     public WorkflowRunModel getSelectedWorkflowRun() {
         return selectedWorkflowRun;
@@ -2404,6 +2433,14 @@ public class WorkflowBean implements Serializable {
             String normalized = normalizeRunStatus(this.selectedWorkflowRun.getStatus());
             this.selectedWorkflowRun.setStatus(normalized);
         }
+    }
+
+    public WorkflowRunModel getPendingStartRun() {
+        return pendingStartRun;
+    }
+
+    public void clearPendingStartRun() {
+        this.pendingStartRun = null;
     }
 // Simple filters (optional)
     private String dsFilter, wfFilter;

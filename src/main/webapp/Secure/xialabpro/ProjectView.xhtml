@@ -398,12 +398,12 @@
                             </p:column>
 
                             <p:column headerText="Start" style="text-align:center;">
-                                <p:commandLink actionListener="#{workflowBean.startRun(run)}"
-                                               onclick="PF('workStartDialog').hide();
-                                                       PF('statusDialog').show();"
-                                               disabled="#{workflowBean.isRunInProgress(run)}"
-                                               update=":projectTabs:dataTableForm"
-                                               oncomplete="PF('statusDialog').hide();">
+                            <p:commandLink actionListener="#{workflowBean.prepareStartRun(run)}"
+                                           onclick="PF('workStartDialog').hide();
+                                                   PF('statusDialog').show();"
+                                           disabled="#{workflowBean.isRunInProgress(run)}"
+                                           update=":projectTabs:dataTableForm"
+                                           oncomplete="PF('statusDialog').hide(); if (args.confirmOverwrite) { PF('overwriteDlg').show(); }">
                                     <i class="pi pi-arrow-circle-right" style="font-size:1.4rem; color: orangered"></i>
                                 </p:commandLink>
                             </p:column>
@@ -425,7 +425,6 @@
 
                             <p:column headerText="Delete" style="text-align:center;">
                                 <p:commandLink id="delRunBn" onclick="PF('runDelDialog').show();"
-                                               disabled="#{workflowBean.isRunInProgress(run)}"
                                                >
                                     <i class="pi pi-trash" style="font-size:1.4rem; color:orangered"></i>
                                     <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
@@ -469,6 +468,23 @@
                 </h:panelGrid>
             </h:form>
         </p:dialog>
+
+        <p:confirmDialog header="Confirm" widgetVar="overwriteDlg" appendTo="@(body)"
+                         style="width:700px"
+                         closeOnEscape="true"  message="Starting again will overwrite the existing run results. Continue?">
+            <h:panelGrid columns="2" style="width:100%; text-align: center">
+
+                <p:commandButton value="Yes, overwrite"
+                                 actionListener="#{workflowBean.confirmStartRun()}"
+                                 onstart="PF('statusDialog').show();"
+                                 oncomplete="PF('statusDialog').hide(); PF('overwriteDlg').hide();"
+                                 update=":projectTabs:dataTableForm" />
+                <p:commandButton value="No"
+                                 onclick="PF('overwriteDlg').hide(); return false;"
+                                 actionListener="#{workflowBean.cancelStartRun}" />
+            </h:panelGrid>
+
+        </p:confirmDialog>
 
         <p:dialog header="Update Project Info" widgetVar="projectEditDialog" dynamic="true" modal="true" appendTo="@(body)" onShow="PF('statusDialog').hide()"
                   hideEffect="explode" resizable="true"> 
