@@ -252,6 +252,8 @@ public class WorkflowView implements Serializable {
                                         return 2;
                                     }
                                     pb.performMissingImpute();
+                                    sb.addNaviTrack("Missing value", "/Secure/process/ProcMissing.xhtml", true);
+
                                 }
                                 sb.addNaviTrack("Data filter", "/Secure/process/FilterView.xhtml", true);
                             }
