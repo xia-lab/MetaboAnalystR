@@ -1,0 +1,4 @@
+Rmarkdown figure generation safety
+- Added safeIncludeGraphics/safeFileExists helpers across XiaLabPro Rmarkdown scripts.
+- Replaced all knitr::include_graphics calls with safe wrappers to avoid missing-image crashes.
+- Ensured heatmap story uses safeFileExists before writing include_graphics lines.

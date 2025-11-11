@@ -74,6 +74,10 @@ public class StateSaver implements Serializable {
     }
 
     public void saveState() {
+        saveState(true);
+    }
+
+    public void saveState(boolean includeWorkflow) {
 
     PeakUploadBean pub = bean(PeakUploadBean.class);
     SessionBean1 sb = bean(SessionBean1.class);
@@ -113,7 +117,9 @@ public class StateSaver implements Serializable {
         hb.getJavaHistory().put("NA.dummy.SessionBean1", DataUtils.convertObjToJson(sb));
         hb.getJavaHistory().put("NA.dummy.MsetBean", DataUtils.convertObjToJson(mstb));
         hb.getJavaHistory().put("NA.dummy.UtilsBean", DataUtils.convertObjToJson(utb));
-        hb.getJavaHistory().put("NA.dummy.WorkflowBean", DataUtils.convertObjToJson(wb));
+        if (includeWorkflow) {
+            hb.getJavaHistory().put("NA.dummy.WorkflowBean", DataUtils.convertObjToJson(wb));
+        }
         hb.getJavaHistory().put("NA.dummy.DiagramView", DataUtils.convertObjToJson(dv));
 
         List<String> modules = new ArrayList();

@@ -81,6 +81,7 @@ import pro.metaboanalyst.rwrappers.SearchUtils;
 import pro.metaboanalyst.spectra.SpectraControlBean;
 import pro.metaboanalyst.spectra.SpectraParamBean;
 import pro.metaboanalyst.spectra.SpectraUploadBean;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import pro.metaboanalyst.spectra.SpectraProcessBean;
 
 /**
@@ -92,6 +93,8 @@ import pro.metaboanalyst.spectra.SpectraProcessBean;
 public class DatasetController implements Serializable {
 
     private DatasetRow selected;
+    private String studyDesignPrimary;
+    private java.util.List<String> studyDesignCovariates = new java.util.ArrayList<>();
     @Inject
     private DatabaseClient db;
     @Inject
@@ -125,6 +128,7 @@ public class DatasetController implements Serializable {
     private static final String RAW_MANIFEST_NAME = "_ma_raw_manifest.json";
     private static final int STREAM_BUFFER_SIZE = 16 * 1024;
     private static final DateTimeFormatter RAW_TITLE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmm");
+    private static final ObjectMapper STUDY_DESIGN_MAPPER = new ObjectMapper();
 
     // In DatasetController.java
     private List<DatasetRow> datasetTableAll = new ArrayList<>();
@@ -731,7 +735,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 sb.addMessage("warn", "RloadSanity.RData was not found after save request; continuing.");
             }
 
-            stateSaver.saveState();
+            stateSaver.saveState(false);
 
             // --- Ensure/attach java_history.json ---
             fc.saveJavaHistory();
@@ -1880,6 +1884,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             System.out.println("sb.analtype=====" + sb.getAnalType());
             String mode = restoredFromZip ? "restored" : "loaded";
             sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").");
+            loadStudyDesign(Paths.get(sb.getCurrentUser().getHomeDir()));
         } catch (Exception e) {
             sb.addMessage("Error", "Load failed: " + e.getMessage());
             e.printStackTrace();
@@ -1954,11 +1959,24 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     }
 
     public void deleteSelected() {
-        boolean res = db.deleteDatasetFilesFolderOk(selected.getId(), fub.getEmail());
-        if (res) {
-            sb.addMessage("info", "Successfully deleted!");
-        } else {
-            sb.addMessage("warn", "Failed to delete!");
+        if (selected == null) {
+            //sb.addMessage("warn", "No dataset selected to delete.");
+            return;
+        }
+        try {
+            Map<String, Object> resp = db.deleteDatasetFilesFolder(selected.getId(), fub.getEmail());
+            String status = resp != null ? String.valueOf(resp.get("status")) : null;
+            String msg = resp != null ? trimToNull(String.valueOf(resp.get("message"))) : null;
+            if ("ok".equalsIgnoreCase(status)) {
+                sb.addMessage("info", "Dataset deleted successfully." + (msg != null ? " " + msg : ""));
+            } else {
+                sb.addMessage("warn", "Dataset deletion failed." + (msg != null ? " " + msg : ""));
+            }
+            selected = null;
+            setupDataTable();
+        } catch (Exception e) {
+            sb.addMessage("error", "Failed to delete dataset: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -2640,6 +2658,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             String mode = restoredFromZip ? "restored" : "loaded";
             sb.addMessage("info", "Workspace " + mode + ". Opening Data: “" + dataPath.getFileName() + "”"
                     + (hasMetadataTab ? ("; Metadata: “" + metaPath.getFileName() + "”.") : "."));
+            loadStudyDesign(dstDir);
             return true;
 
         } catch (Exception e) {
@@ -2816,6 +2835,36 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
     private Map<String, Integer> metaRowIndexById = new HashMap<>();
     private String editorMetaText; // for JSON/YAML/TXT
 
+    public String getStudyDesignPrimary() {
+        return studyDesignPrimary;
+    }
+
+    public void setStudyDesignPrimary(String studyDesignPrimary) {
+        this.studyDesignPrimary = (studyDesignPrimary != null && studyDesignPrimary.isBlank()) ? null : studyDesignPrimary;
+    }
+
+    public List<String> getStudyDesignCovariates() {
+        return studyDesignCovariates;
+    }
+
+    public void setStudyDesignCovariates(List<String> studyDesignCovariates) {
+        this.studyDesignCovariates = new ArrayList<>();
+        if (studyDesignCovariates != null) {
+            for (String cov : studyDesignCovariates) {
+                if (cov != null && !cov.isBlank()) {
+                    this.studyDesignCovariates.add(cov);
+                }
+            }
+        }
+    }
+
+    public List<String> getStudyDesignMetaOptions() {
+        if (metaCols == null || metaCols.size() <= 1) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(metaCols.subList(1, metaCols.size()));
+    }
+
     public int getEditorActiveIndex() {
         return editorActiveIndex;
     }
@@ -2879,6 +2928,14 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
         return p;
     }
 
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
     private void buildDataSheetModel() {
         int cols = dataCols.size();
         dataSheetRows = new ArrayList<>();
@@ -2910,6 +2967,64 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             metaSheetRows.add(sr);
             metaRowIndexById.put(sr.getId(), i);
         }
+    }
+
+    private Path studyDesignPath(Path workspaceDir) {
+        if (workspaceDir == null) {
+            return null;
+        }
+        return workspaceDir.resolve("study_design.json");
+    }
+
+    private void loadStudyDesign(Path workspaceDir) {
+        resetStudyDesign();
+        Path designPath = studyDesignPath(workspaceDir);
+        if (designPath == null || !Files.exists(designPath)) {
+            return;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = STUDY_DESIGN_MAPPER.readValue(designPath.toFile(), Map.class);
+            Object primary = map.get("primary");
+            if (primary != null) {
+                studyDesignPrimary = primary.toString();
+            }
+            studyDesignCovariates.clear();
+            Object covariates = map.get("covariates");
+            if (covariates instanceof List<?>) {
+                for (Object cov : (List<?>) covariates) {
+                    if (cov != null && !cov.toString().isBlank()) {
+                        studyDesignCovariates.add(cov.toString());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load study design: " + e.getMessage());
+        }
+    }
+
+    private void persistStudyDesign(Path workspaceDir) {
+        if (workspaceDir == null) {
+            return;
+        }
+        Path designPath = studyDesignPath(workspaceDir);
+        if (designPath == null) {
+            return;
+        }
+        try {
+            Files.createDirectories(designPath.getParent());
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("primary", studyDesignPrimary);
+            map.put("covariates", new ArrayList<>(studyDesignCovariates));
+            STUDY_DESIGN_MAPPER.writeValue(designPath.toFile(), map);
+        } catch (IOException e) {
+            System.err.println("Failed to save study design: " + e.getMessage());
+        }
+    }
+
+    private void resetStudyDesign() {
+        studyDesignPrimary = null;
+        studyDesignCovariates.clear();
     }
 
     public void saveEditedFile() {
@@ -2953,21 +3068,27 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
             } else if ("text".equals(metaMode) && editorMetaText != null) {
                 writeTextToFile(editorMetaText, metaPath);
             } else {
-                sb.addMessage("warn", "Unknown metadata mode; nothing saved.");
-                return;
-            }
+            sb.addMessage("warn", "Unknown metadata mode; nothing saved.");
+            return;
+        }
 
-            // Copy only metadata file into canonical storage
-            Path outDir = Paths.get(fb.getProjectPath(), "user_folders", email, datasetId.toString());
-            Files.createDirectories(outDir);
+        persistStudyDesign(home);
+        // Copy only metadata file into canonical storage
+        Path outDir = Paths.get(fb.getProjectPath(), "user_folders", email, datasetId.toString());
+        Files.createDirectories(outDir);
 
-            Path src = metaPath;
+        Path src = metaPath;
             if (!Files.exists(src)) {
                 sb.addMessage("Error", "Metadata file was not written to workspace.");
                 return;
             }
             Path dst = outDir.resolve(src.getFileName().toString());
             Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
+
+            Path designSrc = home.resolve("study_design.json");
+            if (Files.exists(designSrc)) {
+                Files.copy(designSrc, outDir.resolve("study_design.json"), StandardCopyOption.REPLACE_EXISTING);
+            }
 
             // Prepare DB update (metadata only)
             List<DatasetFile> editedFilesForDb = new ArrayList<>(1);
@@ -3064,7 +3185,6 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
                 return null;
             }
             for (DatasetFile f : fs) {
-                System.out.println("f.getRole()====" + f.getRole());
                 if (f != null && f.getRole() != null && role.equalsIgnoreCase(f.getRole())) {
                     return f.getFilename();
                 }
@@ -3212,7 +3332,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
 // Save is allowed only if metadata tab exists AND it's not an example dataset
     public boolean isCanSave() {
-        return hasMetadataTab && !isSelectedExample();
+        return hasMetadataTab;
     }
 
     private DatasetFile selectedFile;

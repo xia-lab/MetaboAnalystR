@@ -118,7 +118,7 @@ public class WorkflowView implements Serializable {
     @JsonIgnore
     @Inject
     private DiagramView dv;
-    
+
     @JsonIgnore
     @Inject
     private LimmaBean lm;
@@ -230,18 +230,10 @@ public class WorkflowView implements Serializable {
                         pb.setSanityChecked(false);
                         pb.performSanityCheck();
                         pb.skipButton_action_default();
-                        if (!sb.isMissingDisabled()) {
-                            boolean resBool = checkWorkflowContained("performMissingImpute");
-                            if (!resBool && wb.isReloadingWorkflow()) {
-                                return 2;
-                            }
-                            pb.performMissingImpute();
-                        }
+
                     }
                     case "Filtering", "Filtering_Table", "Filtering Intensity" -> {
-                        if (sb.isMissingDisabled()) {
-                            return 1;
-                        }
+
                         ProcessBean pb = (ProcessBean) DataUtils.findBean("procBean");
                         if (pb != null) {
                             boolean resBool = checkWorkflowContained("Filtering");
@@ -254,6 +246,13 @@ public class WorkflowView implements Serializable {
                                 success = false;
                                 sb.addNaviTrack("Data filter", "/Secure/process/FilterView.xhtml", false);
                             } else {
+                                if (!sb.isMissingDisabled()) {
+                                    boolean resBool2 = checkWorkflowContained("performMissingImpute");
+                                    if (!resBool2 && wb.isReloadingWorkflow()) {
+                                        return 2;
+                                    }
+                                    pb.performMissingImpute();
+                                }
                                 sb.addNaviTrack("Data filter", "/Secure/process/FilterView.xhtml", true);
                             }
                         }
@@ -699,7 +698,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                                                lm.getAnalysisMeta();
+                        lm.getAnalysisMeta();
                         lm.getReferenceGroupFromAnalysisMeta();
                         MetaProcBean mp = (MetaProcBean) DataUtils.findBean("mprocBean");
                         mp.metacheck_proceed();
@@ -709,7 +708,7 @@ public class WorkflowView implements Serializable {
                         if (!resBool && wb.isReloadingWorkflow()) {
                             return 2;
                         }
-                        
+
                         MetaHeatmapBean mh = (MetaHeatmapBean) DataUtils.findBean("mhmBean");
                         success = mh.metaOverviewBn_action();
                         sb.addNaviTrack("Metadata", "/Secure/multifac/MetaDataView.xhtml", success);

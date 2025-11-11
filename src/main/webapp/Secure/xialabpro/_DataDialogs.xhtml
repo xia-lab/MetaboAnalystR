@@ -81,7 +81,7 @@
                 </h:panelGrid>
                 <h:panelGrid columns="2" style="width:100%; text-align:center;">
                     <p:commandButton value="Cancel" onclick="PF('delDialog').hide();return false;"/>
-                    <p:commandButton value="Yes, delete" styleClass="ui-button-danger" onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('delDialog').hide();" update=":msgs :dataTableForm" actionListener="#{datasetController.deleteSelected}"/>
+                    <p:commandButton value="Yes, delete" styleClass="ui-button-danger" onstart="PF('statusDialog').show();" oncomplete="PF('statusDialog').hide();PF('delDialog').hide();" ajax="false" actionListener="#{datasetController.deleteSelected}"/>
                 </h:panelGrid>
             </h:panelGrid>
         </h:form>
@@ -150,6 +150,31 @@
                     </h:panelGroup>
                 </p:tab>
 
+                <p:tab title="Study design" rendered="#{datasetController.hasMetadataTab}">
+                    <h:panelGroup style="padding: 18px 20px 10px 30px; width:720px; line-height:1.7;">
+                        <p style="font-size:12px;">
+                            The stored study design feeds into workflows. Choose a primary metadata factor and any covariates you want to lock for this dataset.
+                            Leave them blank to keep the system’s automatic selections.
+                        </p>
+                    </h:panelGroup>
+                    <h:panelGrid columns="2" cellpadding="3" style="padding: 0 20px 20px 30px; width:720px; line-height:2;">
+                        <h:panelGroup layout="block" style="width:180px">
+                            <h:outputLabel style="font-weight: bold" value="Primary metadata factor"/>
+                        </h:panelGroup>
+                        <p:selectOneMenu value="#{datasetController.studyDesignPrimary}" styleClass="menu" panelStyleClass="panel" style="max-width:360px;">
+                            <f:selectItem itemValue="#{null}" itemLabel="Auto-detect from metadata"/>
+                            <f:selectItems var="col" value="#{datasetController.studyDesignMetaOptions}" itemLabel="#{col}" itemValue="#{col}"/>
+                        </p:selectOneMenu>
+
+                        <h:panelGroup layout="block" style="width:180px">
+                            <h:outputLabel style="font-weight: bold" value="Covariates"/>
+                        </h:panelGroup>
+                        <p:selectCheckboxMenu value="#{datasetController.studyDesignCovariates}" styleClass="menu" panelStyleClass="panel" multiple="true" label="&nbsp;-- None selected --&nbsp;" style="max-width:360px;">
+                            <f:selectItems var="col" value="#{datasetController.studyDesignMetaOptions}" itemLabel="#{col}" itemValue="#{col}"/>
+                        </p:selectCheckboxMenu>
+                    </h:panelGrid>
+                </p:tab>
+
             </p:tabView>
 
             <h:panelGrid columns="2" style="width:100%; text-align:center; margin-top:8px;">
@@ -166,4 +191,3 @@
     </p:dialog>
 
 </ui:composition>
-

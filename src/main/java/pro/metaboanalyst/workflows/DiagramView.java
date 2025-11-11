@@ -2376,7 +2376,6 @@ public class DiagramView implements Serializable {
     }
 
     public void selectNode(String elementName, boolean isSelected) {
-        System.out.println("selectNode=====" + elementName);
         // Clean up the element name (remove checkmark and trim spaces)
 
         // Find the element in the diagram model

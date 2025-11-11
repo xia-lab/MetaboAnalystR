@@ -1900,7 +1900,7 @@ public class SessionBean1 implements Serializable {
         final String kind = (type == null ? "info" : type).toLowerCase(java.util.Locale.ROOT);
         msg = DataUtils.replaceMarkup(msg); // your existing sanitizer
 
-        final boolean displayGrowl = showGrowl || !getWorkflowBean().isReloadingWorkflow();
+        final boolean displayGrowl = "error".equals(kind) || showGrowl || !getWorkflowBean().isReloadingWorkflow();
 
         FacesMessage.Severity severity;
         String summary;

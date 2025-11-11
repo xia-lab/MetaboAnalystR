@@ -65,6 +65,7 @@ import static pro.metaboanalyst.lts.FireBaseController.safeIntFromDoubleLike;
 import pro.metaboanalyst.lts.FireUserBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.models.SampleBean;
+import pro.metaboanalyst.models.MetaDataBean;
 import pro.metaboanalyst.utils.DataUtils;
 import pro.metaboanalyst.rwrappers.RCenter;
 
@@ -1140,6 +1141,14 @@ public class WorkflowBean implements Serializable {
         }
     }
 
+    public boolean isRunInProgress(WorkflowRunModel run) {
+        if (run == null || run.getStatus() == null) {
+            return false;
+        }
+        String status = run.getStatus().trim().toLowerCase(Locale.ROOT);
+        return "running".equals(status);
+    }
+
     public void setFunctionInfos(Map<String, ?> rawFunctionInfos) {
         // Always reset the internal map
         this.functionInfos = new LinkedHashMap<>();
@@ -1161,6 +1170,95 @@ public class WorkflowBean implements Serializable {
 
                 } // else: silently ignore or throw, depending on your policy
             }
+        }
+        applyStudyDesignToFunctionInfos();
+    }
+
+    private void applyStudyDesignToFunctionInfos() {
+        if (functionInfos == null || functionInfos.isEmpty()) {
+            return;
+        }
+        String primary = resolveStudyDesignPrimary();
+        List<String> covariates = resolveStudyDesignCovariates(primary);
+
+        if (primary != null) {
+            updateFunctionParameter("Linear Models", "lmBean.analysisMeta", primary);
+            updateFunctionParameter("Linear Models", "lmBean.adjustedMeta", covariates);
+        }
+
+        List<String> heatmapMetas = new ArrayList<>();
+        if (primary != null) {
+            heatmapMetas.add(primary);
+        }
+        /*
+        heatmapMetas.addAll(covariates);
+        if (!heatmapMetas.isEmpty()) {
+            updateFunctionParameter("Heatmap2", "hm2Bean.selectedMetas", heatmapMetas);
+            updateFunctionParameter("Heatmap2", "hm2Bean.smplSortOpt", heatmapMetas);
+            updateFunctionParameter("Heatmap2", "hm2Bean.smplSortOptList", heatmapMetas);
+        }
+        */
+        String[] anovaMetas = new String[]{"NA", "NA"};
+        if (primary != null) {
+            anovaMetas[0] = primary;
+        }
+        if (!covariates.isEmpty()) {
+            anovaMetas[1] = covariates.get(0);
+        }
+        updateFunctionParameter("Multifactor anova", "aov2Bean.selectedMetasAnova", anovaMetas);
+    }
+
+    private String resolveStudyDesignPrimary() {
+        String primary = ds != null ? ds.getStudyDesignPrimary() : null;
+        if (primary != null && !primary.isBlank()) {
+            return primary;
+        }
+        if (mf != null) {
+            List<MetaDataBean> beans = mf.getMetaDataBeans();
+            if (beans != null && !beans.isEmpty()) {
+                return beans.get(0).getName();
+            }
+        }
+        return null;
+    }
+
+    private List<String> resolveStudyDesignCovariates(String primary) {
+        List<String> covariates = ds != null ? ds.getStudyDesignCovariates() : new ArrayList<>();
+        List<String> result = new ArrayList<>();
+        if (covariates != null) {
+            for (String cov : covariates) {
+                if (cov != null && !cov.isBlank() && !cov.equals(primary)) {
+                    result.add(cov);
+                }
+            }
+        }
+        if (result.isEmpty() && mf != null) {
+            List<MetaDataBean> beans = mf.getMetaDataBeans();
+            if (beans != null) {
+                for (MetaDataBean bean : beans) {
+                    String name = bean.getName();
+                    if (name == null || name.equals(primary)) {
+                        continue;
+                    }
+                    if (!result.contains(name)) {
+                        result.add(name);
+                    }
+                    if (result.size() >= 2) {
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private void updateFunctionParameter(String functionName, String parameterKey, Object value) {
+        if (value == null) {
+            return;
+        }
+        FunctionInfo info = functionInfos.get(functionName);
+        if (info != null) {
+            info.addParameter(parameterKey, value);
         }
     }
 
@@ -1404,7 +1502,7 @@ public class WorkflowBean implements Serializable {
             DataUtils.doRedirectWithGrowl(sb,
                     "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowView.xhtml?faces-redirect=true&tabWidgetId=tabWidget&activeInx=1",
                     "info",
-                    "Dataset <b>" + title + "</b> succesfully deleted.");
+                    "Workflow <b>" + title + "</b> succesfully deleted.");
         } catch (Exception e) {
             sb.addMessage("error", "Delete failed: " + e.getMessage());
         }
@@ -2112,8 +2210,20 @@ public class WorkflowBean implements Serializable {
 
     public void startRun(WorkflowRunModel run) {
         try {
+            if (run == null) {
+                sb.addMessage("warn", "No workflow run selected.");
+                return;
+            }
             if (ds.getDatasetTableAll().isEmpty()) {
                 ds.reloadTable();
+            }
+
+            setupWorkflowRunsTable();
+            if (run != null) {
+                WorkflowRunModel fresh = findRunInModelById(run.getId());
+                if (fresh != null) {
+                    run = fresh;
+                }
             }
 
             if (workflowList.isEmpty()) {
@@ -2457,7 +2567,6 @@ public class WorkflowBean implements Serializable {
     public void markSelectedRunFailed(String reason) {
         WorkflowRunModel run = getSelectedWorkflowRun();
         if (run == null) {
-            System.out.println("markSelectedRunFailed====" + "ISNULL");
             return;
         }
 
@@ -2480,7 +2589,7 @@ public class WorkflowBean implements Serializable {
 
         try {
             String msg = dbc.updateWorkflowRunFields(String.valueOf(run.getId()), updates);
-            System.out.println(msg);
+            System.out.println("markSelectedRunFailed===========" + reason);
             if (!isUpdateSuccess(msg)) {
                 LOGGER.log(Level.WARNING,
                         "DatabaseClient.updateWorkflowRunFields returned ''{0}'' for id {1}",
@@ -2685,7 +2794,6 @@ public class WorkflowBean implements Serializable {
         r.setDescription(trimToNull(safeStr(m.get("description"))));
         r.setOtherJson(safeStr(m.get("other")));                // JSON blob for extra info
         r.setProjectId(trimToNull(safeStr(getAny(m, "projectId", "project_id"))));
-        System.out.println("run===projectid===" + r.getProjectId());
 
         // Convenience: derive a readable title if none provided
         if (r.getName() == null || r.getName().isBlank()) {

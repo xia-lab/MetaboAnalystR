@@ -186,7 +186,6 @@ public class JobMonitor {
 
                 RC.close();
                 try {
-                    System.out.println("loopJobMonitor=====");
                     Thread.sleep(15000);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(JobMonitor.class.getName()).log(Level.SEVERE, null, ex);

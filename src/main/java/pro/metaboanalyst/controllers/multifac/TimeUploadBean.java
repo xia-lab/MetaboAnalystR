@@ -55,7 +55,6 @@ public class TimeUploadBean implements Serializable {
     private UploadedFile csvFile;
     private UploadedFile metaFile;
     private String tsDataType = "conc";
-    private String tsFormat = "colmf";
     private String timeDataOpt = "pkcovid";
     /*
      * Handle Metabolone XLSX datasheet
@@ -84,14 +83,6 @@ public class TimeUploadBean implements Serializable {
 
     public void setTsDataType(String tsDataType) {
         this.tsDataType = tsDataType;
-    }
-
-    public String getTsFormat() {
-        return tsFormat;
-    }
-
-    public void setTsFormat(String tsFormat) {
-        this.tsFormat = tsFormat;
     }
 
     public String getTimeDataOpt() {
@@ -124,8 +115,7 @@ public class TimeUploadBean implements Serializable {
                 if (fileName == null) {
                     return null;
                 }
-                if (RDataUtils.readTextDataTs(RC, fileName, tsFormat)) {
-                    sb.setDataFormat(tsFormat);
+                if (RDataUtils.readTextDataTs(RC, fileName, sb.getDataFormat())) {
                     String metaName = DataUtils.uploadFile(sb, metaFile, sb.getCurrentUser().getHomeDir(), null, ab.isOnProServer());
                     if (metaName == null) {
                         return null;
@@ -170,7 +160,7 @@ public class TimeUploadBean implements Serializable {
         String fileName;
         String testMetaFile;
         String tsDesign;
-
+        String tsFormat;
         switch (timeDataOpt) {
             case "pkcovid" -> {
                 tsDataType = "pktable";
@@ -219,6 +209,8 @@ public class TimeUploadBean implements Serializable {
             }
         }
 
+        sb.setDataFormat(tsFormat);
+
         if (!wb.isReloadingWorkflow()) {
             if (!sb.doLogin(tsDataType, "mf", false, false)) {
                 sb.addMessage("Error", "Analysis start failed!");
@@ -237,7 +229,6 @@ public class TimeUploadBean implements Serializable {
 
             // Read from local home paths
             if (!RDataUtils.readTextDataTs(RC, destData.toString(), tsFormat)) {
-                sb.setDataFormat(tsFormat);
                 sb.addMessage("Error", RDataUtils.getErrMsg(RC));
                 return null;
             }
@@ -377,7 +368,7 @@ public class TimeUploadBean implements Serializable {
         RConnection RC = sb.getRConnection();
         tsDataType = "pktable";
         String tsDesign = "multi";
-        tsFormat = "rowmf";
+        sb.setDataFormat("rowmf");
         boolean res = RDataUtils.parseMetabolonData(RC, "all_mf", getDefaultchemid());
         if (!res) {
             sb.addMessage("Error", "Fail to format your data. Please check your data format or post your data to OmicsForum!");
@@ -386,7 +377,7 @@ public class TimeUploadBean implements Serializable {
 
         sb.setTsDesign(tsDesign);
         RDataUtils.setDesignType(RC, tsDesign);
-        if (RDataUtils.readTextDataTs(RC, "metaboanalyst_input.csv", tsFormat)) {
+        if (RDataUtils.readTextDataTs(RC, "metaboanalyst_input.csv", sb.getDataFormat())) {
             sb.setDataUploaded();
             boolean resx = RDataUtils.readMetaData(RC, "metaboanalyst_input_meta.csv");
             if (!resx) {

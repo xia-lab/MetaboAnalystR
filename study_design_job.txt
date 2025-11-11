@@ -1,0 +1,4 @@
+Study design synchronization
+- Added study design persistence via DatasetController.
+- New tab in editor dialog for primary metadata and covariate selection.
+- WorkflowBean overrides metadata-specific FunctionInfo parameters.

@@ -718,6 +718,17 @@ public class DatabaseClient {
                 String url = "/database/datasets/" + datasetId + "/files?email="
                         + URLEncoder.encode(email, StandardCharsets.UTF_8);
                 String json = apiClient.delete(url);
+                if (json == null) {
+                    out.put("status", "error");
+                    out.put("message", "empty response from delete API");
+                    return out;
+                }
+                String trimmed = json.trim();
+                if (!trimmed.startsWith("{")) {
+                    out.put("status", "ok");
+                    out.put("message", trimmed);
+                    return out;
+                }
 
                 ObjectMapper om = new ObjectMapper().registerModule(new JavaTimeModule())
                         .findAndRegisterModules();
