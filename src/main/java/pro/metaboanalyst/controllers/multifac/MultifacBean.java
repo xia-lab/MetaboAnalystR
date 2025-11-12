@@ -116,7 +116,7 @@ public class MultifacBean implements Serializable {
     public void initMetaData() {
         RConnection RC = sb.getRConnection();
         if (!RDataUtils.hasMetaData(RC)) {
-            sb.addMessage("Error", "This dataset does not include a metadata file (e.g., 'ewaste_metadata.csv').");
+            //sb.addMessage("Error", "This dataset does not include a metadata file (e.g., 'ewaste_metadata.csv').");
             metaDataBeans = Collections.emptyList();
             return;
         }

@@ -1496,7 +1496,7 @@ String res = insertDataset("guangyan.zhou@mcgill.ca", "ca-east-1",
 
             // 6) Notify + redirect to module selection
             String mode = restoredFromZip ? "restored" : "loaded";
-            sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").",false);
+            //sb.addMessage("info", "Workspace " + mode + " (" + copied + " file" + (copied == 1 ? "" : "s") + ").",false);
             DataUtils.doRedirectWithGrowl(
                     sb,
                     "/" + ab.getAppName() + "/Secure/ModuleSelectionView.xhtml",
