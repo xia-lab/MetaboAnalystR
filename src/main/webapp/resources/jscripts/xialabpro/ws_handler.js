@@ -3,7 +3,7 @@
 
 (function () {
   if (!window.__wfWs) {
-    window.__wfWs = { ws: null, initOnce: false, lastEventTs: 0, stallTimer: null, reconnectAttempts: 0 };
+    window.__wfWs = { ws: null, initOnce: false, reconnectAttempts: 0 };
   }
   const S = window.__wfWs;
 
@@ -98,35 +98,6 @@
     return null;
   }
 
-  function startStallWatchdog() {
-    stopStallWatchdog();
-    S.lastEventTs = Date.now();
-    S.stallTimer = setInterval(function () {
-      if (!S.ws || S.ws.readyState !== WebSocket.OPEN) return;
-
-      // Check if we haven't received anything in 30 seconds
-      if (Date.now() - S.lastEventTs > 30000) {
-        console.warn("[WS] No messages for 30s, reconnecting");
-        reconnect();
-        return;
-      }
-
-      // Send ping to keep connection alive
-      try {
-        S.ws.send("ping");
-      } catch (e) {
-        console.warn("[WS] Failed to send ping:", e);
-      }
-    }, 10000); // Check every 10 seconds
-  }
-
-  function stopStallWatchdog() {
-    if (S.stallTimer) {
-      clearInterval(S.stallTimer);
-      S.stallTimer = null;
-    }
-  }
-
   function connect() {
     // Don't reconnect if already open or connecting
     if (S.ws && (S.ws.readyState === WebSocket.OPEN || S.ws.readyState === WebSocket.CONNECTING)) {
@@ -149,9 +120,7 @@
         console.log("[WS] ========== CONNECTION OPENED ==========");
         console.log("[WS] Session ID:", session);
         console.log("[WS] Ready state:", ws.readyState);
-        S.lastEventTs = Date.now();
         S.reconnectAttempts = 0;
-        startStallWatchdog();
       };
 
       ws.onmessage = function (event) {
@@ -159,8 +128,6 @@
         console.log("[WS] Raw data:", event.data);
         console.log("[WS] Data type:", typeof event.data);
         console.log("[WS] Data length:", event.data ? event.data.length : 0);
-
-        S.lastEventTs = Date.now();
 
         if (!event.data || event.data.length === 0) {
           console.warn("[WS] Empty message received!");
@@ -206,7 +173,6 @@
 
       ws.onclose = function (event) {
         console.warn("[WS] Closed (code: " + event.code + ", reason: " + event.reason + ")");
-        stopStallWatchdog();
         S.ws = null;
 
         // Reconnect with exponential backoff
@@ -226,7 +192,6 @@
       if (S.ws) S.ws.close();
     } catch (e) {}
     S.ws = null;
-    stopStallWatchdog();
     setTimeout(connect, 300 + Math.random() * 700);
   }
 
@@ -255,7 +220,6 @@
 
   // Cleanup on page unload
   window.addEventListener("beforeunload", function () {
-    stopStallWatchdog();
     try {
       if (S.ws) S.ws.close();
     } catch (e) {}

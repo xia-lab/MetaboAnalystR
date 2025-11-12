@@ -104,30 +104,6 @@ public class WorkflowWebSocketEndpoint {
     @OnMessage
     public void onMessage(String message, Session session) {
         LOGGER.info("[WS] >>> Received message from client: '" + message + "' (session: " + session.getId() + ", open: " + session.isOpen() + ")");
-
-        // Client can send ping messages to keep connection alive
-        if ("ping".equals(message)) {
-            try {
-                String pong = "{\"type\":\"pong\"}";
-                LOGGER.info("[WS] >>> Sending pong: " + pong);
-                session.getBasicRemote().sendText(pong);
-                LOGGER.info("[WS] >>> Pong sent successfully");
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "[WS] Failed to send pong", e);
-            }
-        } else if ("test".equals(message)) {
-            // Test message to verify WebSocket is working
-            try {
-                String testPayload = "{\"type\":\"workflow-status\",\"data\":{\"runId\":999,\"status\":\"testing\",\"projectId\":\"test\"}}";
-                LOGGER.info("[WS] >>> Sending test message: " + testPayload);
-                session.getBasicRemote().sendText(testPayload);
-                LOGGER.info("[WS] >>> Test message sent successfully to session: " + session.getId());
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "[WS] Failed to send test message", e);
-            }
-        } else {
-            LOGGER.warning("[WS] Unknown message type: " + message);
-        }
     }
 
     @OnClose

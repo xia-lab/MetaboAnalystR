@@ -12,6 +12,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.enterprise.context.RequestScoped;
@@ -29,6 +30,7 @@ import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.datacenter.DatasetFile;
 import pro.metaboanalyst.lts.DatabaseController;
 import pro.metaboanalyst.datacenter.DatasetRow;
+import pro.metaboanalyst.workflows.WorkflowNotificationService;
 
 @RequestScoped
 @Named("databaseClient")
@@ -45,6 +47,10 @@ public class DatabaseClient {
     @JsonIgnore
     @Inject
     private SessionBean1 sb;
+
+    @JsonIgnore
+    @Inject
+    private WorkflowNotificationService workflowNotificationService;
 
     private static final Logger LOGGER = Logger.getLogger(DatabaseClient.class.getName());
     private final ApiClient apiClient;
@@ -948,13 +954,19 @@ public class DatabaseClient {
                 return "Error updating workflow run: payload is empty.";
             }
 
+            String response;
             if (ab.isInDocker()) {
-                return DatabaseController.updateWorkflowRunFlexible(runId, fields);
+                response = DatabaseController.updateWorkflowRunFlexible(runId, fields);
             } else {
                 final Map<String, Object> payload = new HashMap<>(fields);
                 payload.put("id", runId);
-                return apiClient.post("/database/workflowruns/update", toJson(payload));
+                response = apiClient.post("/database/workflowruns/update", toJson(payload));
             }
+
+            if (isWorkflowUpdateSuccess(response)) {
+                emitWorkflowRunUpdate(runId, fields);
+            }
+            return response;
         } catch (NumberFormatException nfe) {
             LOGGER.log(Level.SEVERE, "updateWorkflowRunFields: invalid id '" + id + "'", nfe);
             return "Error updating workflow run: 'id' must be an integer.";
@@ -1014,6 +1026,43 @@ public class DatabaseClient {
             LOGGER.log(Level.SEVERE, "Error retrieving workflow run by id", e);
             return Collections.emptyMap();
         }
+    }
+
+    private boolean isWorkflowUpdateSuccess(String response) {
+        if (response == null) {
+            return false;
+        }
+        String normalized = response.trim().toLowerCase(Locale.ROOT);
+        return normalized.equals("ok")
+                || normalized.equals("success")
+                || normalized.contains("\"updated\":true")
+                || normalized.contains("\"status\":\"ok\"");
+    }
+
+    private void emitWorkflowRunUpdate(int runId, Map<String, Object> updates) {
+        if (runId <= 0 || workflowNotificationService == null) {
+            return;
+        }
+        Map<String, Object> latest = Collections.emptyMap();
+        try {
+            latest = getWorkflowRunById(String.valueOf(runId));
+        } catch (Exception ignored) {
+        }
+
+        if (latest == null || latest.isEmpty()) {
+            latest = new HashMap<>();
+            latest.put("id", runId);
+            if (sb != null && sb.getCurrentUser() != null && sb.getCurrentUser().getName() != null) {
+                String email = sb.getCurrentUser().getName();
+                latest.put("userId", email);
+                latest.put("email", email);
+            }
+        }
+
+        Map<String, Object> safeUpdates = (updates == null)
+                ? Collections.emptyMap()
+                : new HashMap<>(updates);
+        workflowNotificationService.broadcastWorkflowUpdate(latest, safeUpdates);
     }
 
     private String previewResponse(String response) {
