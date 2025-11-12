@@ -1,0 +1,9 @@
+# Payara Micro Post-Boot Commands
+# These commands run after Payara Micro starts up
+
+# Set HTTP listener idle timeout to 15 minutes (900 seconds) to support SSE connections
+# Default is ~30 seconds which is too short for Server-Sent Events
+set configs.config.server-config.network-config.network-listeners.network-listener.http-listener.idle-timeout-seconds=900
+
+# Set max HTTP header size to 16KB (useful for large cookies/tokens)
+set configs.config.server-config.network-config.protocols.protocol.http-listener.http.header-buffer-length-bytes=16384

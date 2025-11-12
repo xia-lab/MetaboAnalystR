@@ -60,11 +60,14 @@
     </ui:define>
     <ui:define name="myscript">
         <h:outputStylesheet library="css" name="dataset-cards.css"/>
+        <script>window.__appCtx = '#{facesContext.externalContext.requestContextPath}';</script>
 
         <link type="text/css" rel="stylesheet" href="#{facesContext.externalContext.requestContextPath}/resources/css/workflow.css" />
 
         <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
+
         <script type="text/javascript">
+
             window.onload = function () {
                 PF("workflowProgressDialog").hide();
                 localStorage.removeItem('pagesToVisit');
@@ -81,7 +84,7 @@
                 //<![CDATA[
                 function getURLParameter(name) {
                     return decodeURIComponent(
-                            (new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')
+                            (new RegExp('[?|&amp;]' + name + '=' + '([^&amp;;]+?)(&amp;|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')
                             ) || null;
                 }
                 //]]>
@@ -99,142 +102,15 @@
                  }, POLL_MS);
                  */
 
-                // Initialize Server-Sent Events for real-time workflow status updates
-                initWorkflowEventStream();
             };
 
-            // ===================================================================
-            // Real-time Workflow Status Updates via Server-Sent Events (SSE)
-            // ===================================================================
-
-            var workflowEventSource = null;
-
-            /**
-             * Initialize Server-Sent Events connection for real-time workflow updates.
-             * Replaces polling mechanism with push-based notifications.
-             */
-            function initWorkflowEventStream() {
-                // Close existing connection if any
-                if (workflowEventSource) {
-                    workflowEventSource.close();
-                }
-
-                var contextPath = '#{request.contextPath}';
-                var sseUrl = contextPath + '/api/workflow/events';
-
-                console.log('Connecting to workflow event stream:', sseUrl);
-
-                try {
-                    workflowEventSource = new EventSource(sseUrl);
-
-                    // Connection established
-                    workflowEventSource.addEventListener('connected', function(e) {
-                        console.log('Workflow event stream connected:', e.data);
-                        var data = JSON.parse(e.data);
-                        console.log('User ID:', data.userId);
-                    });
-
-                    // Workflow status update received
-                    workflowEventSource.addEventListener('workflow-status', function(e) {
-                        console.log('Workflow status update received:', e.data);
-
-                        try {
-                            var data = JSON.parse(e.data);
-                            console.log('Parsed data:', data);
-
-                            // Update the UI with new status
-                            updateWorkflowRunUI(data.runId, data.status, data.projectId);
-
-                        } catch (err) {
-                            console.error('Error parsing workflow status data:', err);
-                        }
-                    });
-
-                    // Error handling
-                    workflowEventSource.addEventListener('error', function(e) {
-                        if (e.target.readyState === EventSource.CLOSED) {
-                            console.warn('SSE connection closed, will auto-reconnect...');
-                        } else if (e.target.readyState === EventSource.CONNECTING) {
-                            console.log('SSE reconnecting...');
-                        } else {
-                            console.error('SSE error:', e);
-                        }
-                        // EventSource automatically reconnects
-                    });
-
-                } catch (err) {
-                    console.error('Failed to create EventSource:', err);
-                }
-            }
-
-            /**
-             * Update the workflow run UI when status changes.
-             *
-             * @param runId The workflow run ID
-             * @param status New status (running, completed, failed)
-             * @param projectId Project ID (if completed)
-             */
-            function updateWorkflowRunUI(runId, status, projectId) {
-                console.log('Updating UI for run #' + runId + ' to status: ' + status);
-
-                // Update the datatable to reflect new status
-                // Use PrimeFaces AJAX to update just the table
-                PrimeFaces.ajax.Request.handle({
-                    source: 'projectTabs:dataTableForm:dtTable',
-                    process: '@this',
-                    update: 'projectTabs:dataTableForm:dtTable',
-                    oncomplete: function() {
-                        console.log('Table updated for run #' + runId);
-                    }
-                });
-
-                // Show notification based on status
-                if (status === 'completed' && projectId) {
-                    PF('growlWidget').show([{
-                        severity: 'success',
-                        summary: 'Workflow Complete',
-                        detail: 'Run #' + runId + ' has finished successfully. Click "View" to see results.',
-                        sticky: false
-                    }]);
-
-                    // Play notification sound (optional)
-                    // playNotificationSound();
-
-                } else if (status === 'failed') {
-                    PF('growlWidget').show([{
-                        severity: 'error',
-                        summary: 'Workflow Failed',
-                        detail: 'Run #' + runId + ' encountered an error.',
-                        sticky: true
-                    }]);
-                } else if (status === 'running') {
-                    PF('growlWidget').show([{
-                        severity: 'info',
-                        summary: 'Workflow Running',
-                        detail: 'Run #' + runId + ' is now processing...',
-                        sticky: false
-                    }]);
-                }
-            }
-
-            // Cleanup SSE connection on page unload
-            window.addEventListener('beforeunload', function() {
-                if (workflowEventSource) {
-                    console.log('Closing SSE connection...');
-                    workflowEventSource.close();
-                }
-            });
-
-            // Reconnect if page becomes visible again (user returns to tab)
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden && workflowEventSource &&
-                    workflowEventSource.readyState === EventSource.CLOSED) {
-                    console.log('Page visible again, reconnecting SSE...');
-                    initWorkflowEventStream();
-                }
-            });
 
         </script>
+        <script type="text/javascript">
+            // Expose userId to WebSocket handler
+            window.__userId = "#{fireUserBean.email}";
+        </script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/ws_handler.js"></script>
 
     </ui:define>
     <ui:define name="content">
@@ -244,6 +120,11 @@
                              process="@this"
                              update=""
                              actionListener="#{datasetController.afterResetInit}" />
+
+            <p:remoteCommand name="refreshWorkflowRunTable"
+                             process="@this"
+                             actionListener="#{workflowBean.setupWorkflowRunsTable}"
+                             update=":projectTabs:dataTableForm" />
 
             <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
             <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
@@ -266,7 +147,12 @@
         -->
 
         <h:panelGrid styleClass="my-content-panel">
-            <p:growl id="msgs" showDetail="true" />
+            <h:panelGroup rendered="#{applicationBean1.toolLocation eq 'localhost'}" layout="block" style="margin-bottom:1rem">
+                <h3 class="text-700">Local tunnel notice</h3>
+                <p style="margin:0 0 .5rem;">
+                    You're running MetaboAnalyst locally. Point your client at the SSH tunnel <code>ssh -f -N -L 5433:127.0.0.1:5432 gyan@34.133.74.138</code> so it can reach the remote Postgres instance.
+                </p>
+            </h:panelGroup>
 
             <h2>
                 Project Management
@@ -537,7 +423,7 @@
                             <p:column headerText="Start" style="text-align:center;">
                                 <p:commandLink actionListener="#{workflowBean.prepareStartRun(run)}"
                                                onclick="PF('workStartDialog').hide();
-                                                   PF('statusDialog').show();"
+                                                       PF('statusDialog').show();"
                                                disabled="#{workflowBean.isRunInProgress(run)}"
                                                update=":projectTabs:dataTableForm"
                                                oncomplete="PF('statusDialog').hide(); if (args.confirmOverwrite) { PF('overwriteDlg').show(); }">
@@ -697,7 +583,8 @@
                                      onclick="PF('switchProjDialog').hide()"/>
 
                     <p:commandButton style="width:100px; font-size: 13px;" value="Proceed"
-                                     onclick="PF('switchProjDialog').hide();PF('statusDialog').show();"
+                                     onclick="PF('switchProjDialog').hide();
+                                             PF('statusDialog').show();"
                                      action="#{fireProjectBean.settingProceedType('load')}"
                                      update=":projectTabs:projForm"
                                      oncomplete ="PF('statusDialog').hide();"/>
@@ -730,7 +617,8 @@
                                      onclick="PF('switchServerDialog').hide()"/>
 
                     <p:commandButton style="width:100px; font-size: 13px;" value="Proceed"
-                                     onclick="PF('switchServerDialog').hide();PF('statusDialog').show();"
+                                     onclick="PF('switchServerDialog').hide();
+                                             PF('statusDialog').show();"
                                      action="#{fireProjectBean.settingProceedType('load')}"
                                      oncomplete="PF('statusDialog').hide();"
                                      update=":projectTabs:projForm" />
@@ -759,7 +647,8 @@
                     <p>Please choose one of the following options:</p>
                 </h:panelGrid>
                 <p:commandButton style="width:160px; font-size: 13px; margin-left: 20%; margin-right: 0px" value="Save and log off"
-                                 onclick="PF('logoutProjDialog').hide();PF('statusDialog').show();"
+                                 onclick="PF('logoutProjDialog').hide();
+                                         PF('statusDialog').show();"
                                  action="#{projCtrl.saveProject()}"
                                  oncomplete ="PF('statusDialog').hide();"/>
 
@@ -910,7 +799,8 @@
                         </h:panelGroup>
                     </h:panelGrid>
                     <h:panelGrid columns="2" style="width:100%; text-align:center;">
-                        <p:commandButton value="Cancel" onclick="PF('runDelDialog').hide();return false;"/>
+                        <p:commandButton value="Cancel" onclick="PF('runDelDialog').hide();
+                                return false;"/>
                         <p:commandButton value="Yes, delete" styleClass="ui-button-danger"
                                          onstart="PF('statusDialog').show();"
                                          oncomplete="PF('statusDialog').hide();PF('runDelDialog').hide();"

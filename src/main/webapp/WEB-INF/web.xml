@@ -1,45 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="5.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd">
+<web-app version="5.0"
+         xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd">
+
+    <!-- App/config params -->
     <context-param>
         <param-name>APP_LOCATION</param-name>
         <param-value>local</param-value>
     </context-param>
     <context-param>
-        <param-name>primefaces.COOKIE_SAMESITE</param-name> 
-        <param-value>lax</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>jakarta.faces.ENABLE_WEBSOCKET_ENDPOINT</param-name>
-        <param-value>true</param-value>
-    </context-param>
-    <context-param>
         <param-name>PROJECT_PATH</param-name>
         <param-value>/mnt/disks/launchpad/</param-value>
     </context-param>
-    <context-param>
-        <param-name>jakarta.faces.FACELETS_LIBRARIES</param-name>
-        <param-value>/WEB-INF/primefaces-diamond.taglib.xml</param-value>
-    </context-param>
-    <context-param>
-        <param-name>primefaces.THEME</param-name>
-        <param-value>diamond-#{guestPreferences.componentTheme}-#{guestPreferences.scheme}</param-value>
-    </context-param>
+
+    <!-- JSF / PrimeFaces -->
     <context-param>
         <param-name>jakarta.faces.PROJECT_STAGE</param-name>
         <param-value>Production</param-value>
-    </context-param>
-    <context-param>
-        <param-name>primefaces.MOVE_SCRIPTS_TO_BOTTOM</param-name>
-        <param-value>true</param-value>
-    </context-param>
-    <context-param>
-        <param-name>jakarta.faces.FACELETS_REFRESH_PERIOD</param-name>
-        <param-value>-1</param-value>
-    </context-param>
-    <context-param>
-        <param-name>com.sun.faces.enableRestoreView11Compatibility</param-name>
-        <param-value>true</param-value>
     </context-param>
     <context-param>
         <param-name>jakarta.faces.STATE_SAVING_METHOD</param-name>
@@ -50,8 +28,42 @@
         <param-value>true</param-value>
     </context-param>
     <context-param>
+        <param-name>jakarta.faces.FACELETS_REFRESH_PERIOD</param-name>
+        <param-value>-1</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jakarta.faces.FACELETS_LIBRARIES</param-name>
+        <param-value>/WEB-INF/primefaces-diamond.taglib.xml</param-value>
+    </context-param>
+    <context-param>
+        <param-name>primefaces.THEME</param-name>
+        <param-value>diamond-#{guestPreferences.componentTheme}-#{guestPreferences.scheme}</param-value>
+    </context-param>
+    <context-param>
+        <param-name>primefaces.MOVE_SCRIPTS_TO_BOTTOM</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <context-param>
+        <param-name>primefaces.SUBMIT</param-name>
+        <param-value>partial</param-value>
+    </context-param>
+    <context-param>
+        <param-name>primefaces.COOKIE_SAMESITE</param-name>
+        <param-value>lax</param-value>
+    </context-param>
+    <context-param>
+        <param-name>jakarta.faces.ENABLE_WEBSOCKET_ENDPOINT</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <context-param>
+        <param-name>org.omnifaces.SOCKET_ENDPOINT_ENABLED</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <!-- JSF tuning -->
+    <context-param>
         <param-name>com.sun.faces.defaultResourceMaxAge</param-name>
-        <param-value>2592000000</param-value> <!-- 30 days -->  
+        <param-value>2592000000</param-value> <!-- 30 days -->
     </context-param>
     <context-param>
         <param-name>com.sun.faces.numberOfLogicalViews</param-name>
@@ -62,45 +74,50 @@
         <param-value>5</param-value>
     </context-param>
     <context-param>
-        <param-name>primefaces.SUBMIT</param-name>
-        <param-value>partial</param-value>
-    </context-param>
-    <context-param>
-        <param-name>org.omnifaces.SOCKET_ENDPOINT_ENABLED</param-name>
+        <param-name>com.sun.faces.enableRestoreView11Compatibility</param-name>
         <param-value>true</param-value>
     </context-param>
+
+    <!-- EXTRA safety: exclude SSE path from OmniFaces gzip via context-param as well -->
+    <context-param>
+        <param-name>org.omnifaces.GzipResponseFilter.excludedPaths</param-name>
+        <param-value>/api/workflow/events,/api/workflow/events/*</param-value>
+    </context-param>
+
+    <!-- Faces Servlet -->
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
+        <async-supported>true</async-supported>
     </servlet>
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>
         <url-pattern>*.xhtml</url-pattern>
         <url-pattern>/faces/*</url-pattern>
     </servlet-mapping>
+
+    <!-- Login servlet -->
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>ca.xialab.LoginServlet</servlet-class>
+        <async-supported>true</async-supported>
     </servlet>
     <servlet-mapping>
         <servlet-name>LoginServlet</servlet-name>
         <url-pattern>/loginExternal/</url-pattern>
     </servlet-mapping>
-    <mime-mapping>  
-        <extension>woff2</extension>  
-        <mime-type>application/x-font-woff2</mime-type>  
-    </mime-mapping>
+ 
+    <!-- GZIP filter (exclude SSE endpoints explicitly) -->
     <filter>
         <filter-name>gzipResponseFilter</filter-name>
         <filter-class>org.omnifaces.filter.GzipResponseFilter</filter-class>
+        <async-supported>true</async-supported>
         <init-param>
-            <description>The threshold size in bytes. Must be a number between 0 and 9999. Defaults to 150.</description>
             <param-name>threshold</param-name>
             <param-value>150</param-value>
         </init-param>
         <init-param>
-            <description>The mimetypes which needs to be compressed. Must be a commaseparated string. Defaults to the below values.</description>
             <param-name>mimetypes</param-name>
             <param-value>
                 text/plain, text/html, text/xml, text/css, text/javascript, text/csv, text/rtf,
@@ -113,64 +130,28 @@
         <filter-name>gzipResponseFilter</filter-name>
         <url-pattern>/*</url-pattern>
         <dispatcher>REQUEST</dispatcher>
+        <dispatcher>ASYNC</dispatcher>
         <dispatcher>ERROR</dispatcher>
     </filter-mapping>
-    <context-param>
-        <param-name>com.sun.faces.enableRestoreView11Compatibility</param-name>
-        <param-value>true</param-value>
-    </context-param>
-    <mime-mapping>
-        <extension>ttf</extension>
-        <mime-type>application/font-sfnt</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>woff</extension>
-        <mime-type>application/font-woff</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>woff2</extension>
-        <mime-type>application/font-woff2</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>eot</extension>
-        <mime-type>application/vnd.ms-fontobject</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>eot?#iefix</extension>
-        <mime-type>application/vnd.ms-fontobject</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg#exosemibold</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg#exobolditalic</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg#exomedium</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg#exoregular</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
-    <mime-mapping>
-        <extension>svg#fontawesomeregular</extension>
-        <mime-type>image/svg+xml</mime-type>
-    </mime-mapping>
+
+    <!-- Mime mappings -->
+    <mime-mapping><extension>ttf</extension><mime-type>application/font-sfnt</mime-type></mime-mapping>
+    <mime-mapping><extension>woff</extension><mime-type>application/font-woff</mime-type></mime-mapping>
+    <mime-mapping><extension>woff2</extension><mime-type>application/font-woff2</mime-type></mime-mapping>
+    <mime-mapping><extension>eot</extension><mime-type>application/vnd.ms-fontobject</mime-type></mime-mapping>
+    <mime-mapping><extension>eot?#iefix</extension><mime-type>application/vnd.ms-fontobject</mime-type></mime-mapping>
+    <mime-mapping><extension>svg</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>svg#exosemibold</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>svg#exobolditalic</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>svg#exomedium</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>svg#exoregular</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>svg#fontawesomeregular</extension><mime-type>image/svg+xml</mime-type></mime-mapping>
+    <mime-mapping><extension>woff2</extension><mime-type>application/x-font-woff2</mime-type></mime-mapping>
+
+    <!-- Session / listeners / error pages -->
     <session-config>
-        <session-timeout>
-            45
-        </session-timeout>
+        <session-timeout>45</session-timeout>
     </session-config>
-    <welcome-file-list>
-        <welcome-file>home.xhtml</welcome-file>
-    </welcome-file-list>
     <listener>
         <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
     </listener>
@@ -178,4 +159,8 @@
         <exception-type>jakarta.faces.application.ViewExpiredException</exception-type>
         <location>/home.xhtml</location>
     </error-page>
+
+    <welcome-file-list>
+        <welcome-file>home.xhtml</welcome-file>
+    </welcome-file-list>
 </web-app>

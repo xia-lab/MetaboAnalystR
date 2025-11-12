@@ -1,0 +1,14 @@
+# Payara Micro Post-Deploy Commands
+# Configure HTTP listener for SSE long-lived connections
+
+# Set idle timeout to 15 minutes (900 seconds) - default is 30 seconds
+set configs.config.server-config.network-config.network-listeners.network-listener.http-listener.idle-timeout-seconds=900
+
+# Set request timeout to 15 minutes
+set configs.config.server-config.network-config.protocols.protocol.http-listener.http.timeout-seconds=900
+
+# Set max connections to allow more concurrent SSE streams
+set configs.config.server-config.network-config.network-listeners.network-listener.http-listener.max-connections=512
+
+# Disable request timeout for SSE (set to -1 for unlimited)
+set configs.config.server-config.network-config.protocols.protocol.http-listener.http.request-timeout-seconds=-1

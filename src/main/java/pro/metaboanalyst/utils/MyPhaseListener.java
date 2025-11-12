@@ -124,6 +124,7 @@ public class MyPhaseListener implements PhaseListener {
     @Override
     public void afterPhase(PhaseEvent event) {
         FacesContext context = event.getFacesContext();
+
         if (context == null) {
             System.out.println("FacesContext is null");
             return;
@@ -138,6 +139,12 @@ public class MyPhaseListener implements PhaseListener {
         HttpServletRequest request = (HttpServletRequest) extContext.getRequest();
         String ajaxFunction = request.getParameter("function");
         String path = request.getRequestURI();
+
+        if (path != null && path.startsWith("/api/")) {
+                        System.out.println("Response is API.");
+
+            return; // do not touch REST
+        }
 
         if (ajaxFunction != null) {
             System.out.println("AJAX request for function: " + ajaxFunction);

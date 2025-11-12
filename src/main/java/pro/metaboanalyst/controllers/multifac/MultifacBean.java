@@ -26,6 +26,7 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -114,6 +115,11 @@ public class MultifacBean implements Serializable {
 
     public void initMetaData() {
         RConnection RC = sb.getRConnection();
+        if (!RDataUtils.hasMetaData(RC)) {
+            sb.addMessage("Error", "This dataset does not include a metadata file (e.g., 'ewaste_metadata.csv').");
+            metaDataBeans = Collections.emptyList();
+            return;
+        }
         String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
         String[] metaDataStatus = RDataUtils.getMetaDataStatus(RC);
 

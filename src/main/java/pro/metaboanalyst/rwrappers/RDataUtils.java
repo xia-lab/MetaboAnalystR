@@ -2551,6 +2551,16 @@ public class RDataUtils {
         return res;
     }
 
+    public static boolean hasMetaData(RConnection RC) {
+        try {
+            String rCommand = "!is.null(mSet$dataSet$meta.info)";
+            return RC.eval(rCommand).asInteger() == 1;
+        } catch (Exception e) {
+            LOGGER.error("hasMetaData", e);
+        }
+        return false;
+    }
+
     public static String[] getMetaDataGroups(RConnection RC) {
         try {
             String rCommand = "colnames(mSet$dataSet$meta.info)";

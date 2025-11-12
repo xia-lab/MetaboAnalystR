@@ -46,6 +46,17 @@
             <version>4.0.2</version> 
         </dependency>
         <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>3.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-sse</artifactId>
+            <version>3.1.6</version> <!-- or match your Payara/Jersey version -->
+        </dependency>
+        <dependency>
             <groupId>org.omnifaces</groupId>
             <artifactId>omnifaces</artifactId>
             <version>4.6.5</version>
@@ -141,12 +152,6 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.4</version>
         </dependency>
-        <!-- PostgreSQL async notification support for LISTEN/NOTIFY -->
-        <dependency>
-            <groupId>com.impossibl.pgjdbc-ng</groupId>
-            <artifactId>pgjdbc-ng</artifactId>
-            <version>0.8.9</version>
-        </dependency>
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
@@ -228,6 +233,10 @@
                         <option>
                             <key>--deploy</key>
                             <value>${project.build.directory}/${project.build.finalName}</value>
+                        </option>
+                        <option>
+                            <key>--systemproperties</key>
+                            <value>${project.basedir}/src/main/webapp/WEB-INF/payara-system.properties</value>
                         </option>
                     </commandLineOptions>
                 </configuration>

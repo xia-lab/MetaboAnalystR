@@ -188,7 +188,7 @@ Payload: {"runId":999,"status":"test"}
 
 Call the health check endpoint:
 ```bash
-curl http://your-server/MetaboAnalyst/api/workflow/status
+curl http://zgy-optiplex-7040.ht.home:8081//MetaboAnalyst/api/workflow/status
 ```
 
 Response:

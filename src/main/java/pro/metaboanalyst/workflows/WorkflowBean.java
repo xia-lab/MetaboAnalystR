@@ -2328,6 +2328,7 @@ public class WorkflowBean implements Serializable {
             fbc.setSaveWorkflowBoolean(false);
 
             dv.submitWorkflowJob();
+            //PrimeFaces.current().executeScript("ensureWorkflowStream();");
 
         } catch (Exception ex) {
             Logger.getLogger(WorkflowBean.class.getName())
