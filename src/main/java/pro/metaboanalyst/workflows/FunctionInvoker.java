@@ -46,11 +46,12 @@ public class FunctionInvoker {
         try {
             JsonNode rootNode = MAPPER.readTree(new File(filePath));
 
-            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                String functionName = field.getValue().get("function").asText();
-                JsonNode parameters = field.getValue().get("parameters");
+            Iterator<String> fieldNames = rootNode.fieldNames();
+            while (fieldNames.hasNext()) {
+                String fieldName = fieldNames.next();
+                JsonNode field = rootNode.get(fieldName);
+                String functionName = field.get("function").asText();
+                JsonNode parameters = field.get("parameters");
 
                 FunctionInfo functionInfo = new FunctionInfo(
                         functionName.split("\\.")[1],
@@ -278,11 +279,10 @@ public class FunctionInvoker {
             return;
         }
 
-        Iterator<Map.Entry<String, JsonNode>> it = parameters.fields();
-        while (it.hasNext()) {
-            Map.Entry<String, JsonNode> entry = it.next();
-            String key = entry.getKey();
-            JsonNode value = entry.getValue();
+        Iterator<String> fieldNames = parameters.fieldNames();
+        while (fieldNames.hasNext()) {
+            String key = fieldNames.next();
+            JsonNode value = parameters.get(key);
 
             Object paramValue = convertJsonNode(value);
             functionInfo.addParameter(key, paramValue);

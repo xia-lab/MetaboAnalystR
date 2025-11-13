@@ -408,15 +408,14 @@
                             </p:column>
 
 
-                            <p:column headerText="Status">
+                            <p:column headerText="Status" width="120px">
                                 <span class="mr-4">
                                     <i class="#{workflowBean.statusIcon(run.status)}" style="vertical-align:middle;"></i>
                                     <span class="ml-1">#{workflowBean.statusLabel(run.status)}</span>
                                 </span>
-
                             </p:column>
 
-                            <p:column headerText="Last Updated" sortBy="#{run.lastUpdated}" width="160px">
+                            <p:column headerText="Last Updated" sortBy="#{run.lastUpdated}" width="140px">
                                 <h:outputText value="#{run.lastUpdated}" />
                             </p:column>
 
@@ -721,7 +720,7 @@
         <p:dialog modal="true" widgetVar="workStartDialog" 
                   style="width: 400px; " 
                   dynamic="true"
-                  header="Start a workflow run:" 
+                  header="Start a workflow project:" 
                   appendTo="@(body)" 
                   draggable="false" closable="true" resizable="false"> 
             <h:form id="formWorkDoc">
@@ -745,7 +744,7 @@
             </h:form>
         </p:dialog>
 
-        <p:dialog header="Edit Workflow Run" widgetVar="runEditDialog" dynamic="true" modal="true"
+        <p:dialog header="Workflow Project" widgetVar="runEditDialog" dynamic="true" modal="true"
                   appendTo="@(body)" resizable="true" onShow="PF('statusDialog').hide()">
             <h:form id="runEditDialogForm">
                 <ui:fragment rendered="#{not empty workflowBean.selectedWorkflowRun}">
@@ -771,9 +770,9 @@
                         </h:panelGrid>
 
                         <h:panelGrid columns="2" style="width:100%; text-align: center">
-                            <p:commandButton value="Cancel" type="button"
+                            <p:commandButton value="Cancel" type="button"  style="width:80px"
                                              onclick="PF('runEditDialog').hide()"/>
-                            <p:commandButton id="runEditBn" value="Update" style="width:80px"
+                            <p:commandButton id="runEditBn" value="OK" style="width:80px"
                                              process="@form"
                                              update=":projectTabs:dataTableForm"
                                              action="#{workflowBean.updateRunInfo}"
@@ -880,7 +879,7 @@
                                            update=":projectTabs:dataTableForm"
                                            onstart="PF('statusDialog').show();"
                                            oncomplete="PF('statusDialog').hide(); PF('dlgByDataset').hide();">
-                                <i class="pi pi-plus-circle" style="font-size:1.1rem"></i>
+                                <i class="pi pi-play" style="font-size:1.1rem"></i>
 
                             </p:commandLink>
                         </div>
@@ -902,7 +901,7 @@
                              paginator="true" rows="10" rowsPerPageTemplate="10,20,50"
                              emptyMessage="No workflows found." styleClass="surface-card shadow-1">
 
-                    <p:column headerText="Name" sortBy="#{wf['name']}" width="25%">
+                    <p:column headerText="Name" sortBy="#{wf['name']}" width="280px">
                         <p:outputPanel layout="flex"
                                        style="align-items:center; justify-content:space-between; width:100%; border:0;">
                             <h:outputText value="#{empty wf['name'] ? '[Untitled Workflow]' : wf['name']}" />
@@ -926,8 +925,8 @@
                         </p:outputPanel>
                     </p:column>
 
-                    <p:column headerText="Action" width="120" style="text-align:center;">
-                        <div class="flex justify-content-center align-items-center gap-4">
+                    <p:column headerText="View/Edit" width="80px" style="text-align:center;">
+                      
                             <!--
                             <p:commandLink id="viewWfJson"
                                            title="View workflow JSON"
@@ -950,7 +949,10 @@
                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
                             </p:commandLink>
                             <p:tooltip for="viewWf" value="Open workflow details" position="top" />
-
+                      
+                    </p:column>
+                    <p:column headerText="Select" width="72px" style="text-align:center;">
+      
                             <p:commandLink id="runWf"
                                            title="Use this workflow"
                                            process="@this"
@@ -961,7 +963,7 @@
                                 <i class="pi pi-play" style="font-size:1.1rem"></i>
                             </p:commandLink>
                             <p:tooltip for="runWf" value="Select this workflow" position="top" />
-                        </div>
+                    
                     </p:column>
                 </p:dataTable>
             </h:form>

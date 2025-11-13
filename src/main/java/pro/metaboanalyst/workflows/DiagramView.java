@@ -64,7 +64,6 @@ import static pro.metaboanalyst.lts.FireBaseController.saveJsonStringToFile;
 import pro.metaboanalyst.lts.FireProjectBean;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.lts.HistoryBean;
-import pro.metaboanalyst.lts.JobScheduler;
 import pro.metaboanalyst.lts.MailService;
 import pro.metaboanalyst.project.ProjectModel;
 import pro.metaboanalyst.rwrappers.RCenter;
@@ -113,10 +112,6 @@ public class DiagramView implements Serializable {
     @JsonIgnore
     @Inject
     private WorkflowView wfv;
-
-    @JsonIgnore
-    @Inject
-    private JobScheduler js;
 
     @JsonIgnore
     @Inject
