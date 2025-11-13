@@ -929,7 +929,7 @@
                                            title="View and update parameters"
                                            ajax="false"
                                            onclick="PF('statusDialog').show();"
-                                           action="#{workflowBean.goToWorkflowDetails}">
+                                           action="#{workflowBean.goToWorkflowDetails(wf)}">
                                 <i class="pi pi-cog" style="font-size:1.1rem"></i>
                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
                             </p:commandLink>
