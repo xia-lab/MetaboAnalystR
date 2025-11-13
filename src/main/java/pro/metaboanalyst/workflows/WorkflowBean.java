@@ -1179,6 +1179,10 @@ public class WorkflowBean implements Serializable {
         if (functionInfos == null || functionInfos.isEmpty()) {
             return;
         }
+        if (mf != null && mf.isMetaDataLoadFailed()) {
+            LOGGER.info("Skipping study design application because metadata fetching failed.");
+            return;
+        }
         String primary = resolveStudyDesignPrimary();
         List<String> covariates = resolveStudyDesignCovariates(primary);
 
@@ -1283,8 +1287,9 @@ public class WorkflowBean implements Serializable {
                     dv.selectNode(dv.convertToBlockName(moduleName), true);
                 }
             }
+            activeIndex = 1;
             DataUtils.doRedirectWithGrowl(sb,
-                    "/" + ab.getAppName() + "/Secure/xialabpro/WorkflowProjectView.xhtml",
+                    "/" + ab.getAppName() + "/Secure/xialabpro/ProjectView.xhtml",
                     "info",
                     "Parameters updated successfully! You can proceed to run the workflow.");
         } catch (Exception ex) {

@@ -19,6 +19,7 @@ import pro.metaboanalyst.models.SampleBean;
 import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.REngineException;
 import org.rosuda.REngine.RList;
+import org.rosuda.REngine.REXPNull;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 import org.apache.logging.log4j.LogManager;
@@ -2574,11 +2575,15 @@ public class RDataUtils {
     public static String[] getMetaDataStatus(RConnection RC) {
         try {
             String rCommand = "unname(mSet$dataSet$meta.status)";
-            return RC.eval(rCommand).asStrings();
+            REXP result = RC.eval(rCommand);
+            if (result == null || result.isNull() || result instanceof REXPNull) {
+                return new String[0];
+            }
+            return result.asStrings();
         } catch (Exception e) {
             LOGGER.error("getMetaDataStatus", e);
         }
-        return null;
+        return new String[0];
     }
 
     public static int setMetaTypes(RConnection RC, String[] metaTypes) {

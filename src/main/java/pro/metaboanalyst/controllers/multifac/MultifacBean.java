@@ -96,6 +96,7 @@ public class MultifacBean implements Serializable {
     private boolean radioDisabled = false;
     private boolean disableInter = false;
     private boolean disableTwofac = false;
+    private boolean metaDataLoadFailed = false;
 
     public boolean isDisableMetaSelection() {
         return disableMetaSelection;
@@ -122,11 +123,16 @@ public class MultifacBean implements Serializable {
         }
         String[] metaDataGroups = RDataUtils.getMetaDataGroups(RC);
         String[] metaDataStatus = RDataUtils.getMetaDataStatus(RC);
-
+        if (metaDataStatus.length == 0) {
+            //sb.addMessage("warn", "Unable to fetch metadata info.");
+            metaDataLoadFailed = true;
+            return;
+        }
         metaDataBeans = new ArrayList();
         String[] metatypes = RDataUtils.getMetaTypes(RC);
         if (metaDataGroups == null || metaDataStatus == null || metatypes == null) {
             sb.addMessage("Error", "Failed to parse the metadata information!");
+            metaDataLoadFailed = true;
             return;
         }
         for (int i = 0; i < metaDataGroups.length; i++) {
@@ -149,7 +155,12 @@ public class MultifacBean implements Serializable {
         }
 
         selectedMetaDataBean = metaDataBeans.get(0);
+        metaDataLoadFailed = false;
 
+    }
+
+    public boolean isMetaDataLoadFailed() {
+        return metaDataLoadFailed;
     }
 
     public MetaDataBean getSelectedMetaDataBean() {

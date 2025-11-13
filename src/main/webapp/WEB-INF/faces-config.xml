@@ -587,11 +587,6 @@
             <to-view-id>/Secure/spectra/ProjectView.xhtml</to-view-id>
             <redirect/>
         </navigation-case>  
-        <navigation-case>
-            <from-outcome>WorkflowProjectView</from-outcome>
-            <to-view-id>/Secure/xialabpro/WorkflowProjectView.xhtml</to-view-id>
-            <redirect/>
-        </navigation-case>  
               
         <navigation-case>
             <from-outcome>Dose Analysis</from-outcome>

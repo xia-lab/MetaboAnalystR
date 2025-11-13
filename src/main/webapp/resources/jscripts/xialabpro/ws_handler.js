@@ -14,7 +14,7 @@
     // Fallback: extract from current page URL
     if (!ctx) {
       var path = window.location.pathname;
-      console.log("[WS] Current pathname:", path);
+      //console.log("[WS] Current pathname:", path);
 
       // Look for /MetaboAnalyst specifically, or extract before /Secure or /resources
       if (path.indexOf('/MetaboAnalyst') === 0) {
@@ -42,12 +42,12 @@
       for (var i = 0; i < scripts.length; i++) {
         var src = scripts[i].src;
         if (src && src.indexOf('ws_handler.js') > -1) {
-          console.log("[WS] Found script URL:", src);
+          //console.log("[WS] Found script URL:", src);
           // Extract context from script URL like "http://host/MetaboAnalyst/resources/..."
           var match = src.match(/\/\/[^\/]+(\/[^\/]+)\/resources/);
           if (match) {
             ctx = match[1];
-            console.log("[WS] Extracted context from script URL:", ctx);
+            //console.log("[WS] Extracted context from script URL:", ctx);
           }
           break;
         }
@@ -66,7 +66,7 @@
       }
     }
 
-    console.log("[WS] Final detected context path:", ctx || "(root)");
+    //console.log("[WS] Final detected context path:", ctx || "(root)");
 
     var protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     var host = window.location.host;
@@ -110,24 +110,24 @@
     } catch (e) {}
 
     const url = wsUrl();
-    console.log("[WS] Connecting:", url);
+    //console.log("[WS] Connecting:", url);
 
     try {
       const ws = new WebSocket(url);
       S.ws = ws;
 
       ws.onopen = function () {
-        console.log("[WS] ========== CONNECTION OPENED ==========");
-        console.log("[WS] Session ID:", session);
-        console.log("[WS] Ready state:", ws.readyState);
+        //console.log("[WS] ========== CONNECTION OPENED ==========");
+        //console.log("[WS] Session ID:", session);
+        //console.log("[WS] Ready state:", ws.readyState);
         S.reconnectAttempts = 0;
       };
 
       ws.onmessage = function (event) {
-        console.log("[WS] ========== MESSAGE RECEIVED ==========");
-        console.log("[WS] Raw data:", event.data);
-        console.log("[WS] Data type:", typeof event.data);
-        console.log("[WS] Data length:", event.data ? event.data.length : 0);
+        //console.log("[WS] ========== MESSAGE RECEIVED ==========");
+        //console.log("[WS] Raw data:", event.data);
+        //console.log("[WS] Data type:", typeof event.data);
+        //console.log("[WS] Data length:", event.data ? event.data.length : 0);
 
         if (!event.data || event.data.length === 0) {
           console.warn("[WS] Empty message received!");
@@ -136,30 +136,30 @@
 
         try {
           const msg = JSON.parse(event.data);
-          console.log("[WS] Parsed JSON:", msg);
-          console.log("[WS] Message type:", msg.type);
+          //console.log("[WS] Parsed JSON:", msg);
+          //console.log("[WS] Message type:", msg.type);
 
           // Handle different message types
           if (msg.type === "connected") {
-            console.log("[WS] Connection confirmed:", msg.message);
+            //console.log("[WS] Connection confirmed:", msg.message);
           } else if (msg.type === "ping") {
-            console.log("[WS] Received PING from server");
+            //console.log("[WS] Received PING from server");
             // Heartbeat from server - just update timestamp
             return;
           } else if (msg.type === "pong") {
-            console.log("[WS] Received PONG from server");
+            //console.log("[WS] Received PONG from server");
             // Response to our ping
             return;
           } else if (msg.type === "workflow-status" && msg.data) {
-            console.log("[WS] Workflow update (wrapped):", msg.data);
+            //console.log("[WS] Workflow update (wrapped):", msg.data);
             // Workflow update with wrapped data
             handleWorkflowUpdate(msg.data);
           } else if (msg.runId && msg.status) {
-            console.log("[WS] Workflow update (direct):", msg);
+            //console.log("[WS] Workflow update (direct):", msg);
             // Direct workflow update (not wrapped)
             handleWorkflowUpdate(msg);
           } else {
-            console.log("[WS] Unknown message type:", msg);
+            //console.log("[WS] Unknown message type:", msg);
           }
         } catch (err) {
           console.error("[WS] JSON parse error:", err);
@@ -178,7 +178,7 @@
         // Reconnect with exponential backoff
         S.reconnectAttempts++;
         const delay = Math.min(1000 * Math.pow(2, S.reconnectAttempts - 1), 30000);
-        console.log("[WS] Reconnecting in " + (delay / 1000) + "s (attempt " + S.reconnectAttempts + ")");
+        //console.log("[WS] Reconnecting in " + (delay / 1000) + "s (attempt " + S.reconnectAttempts + ")");
         setTimeout(connect, delay);
       };
     } catch (e) {
@@ -196,7 +196,7 @@
   }
 
   function handleWorkflowUpdate(data) {
-    console.log("[WS] Workflow update:", data);
+    //console.log("[WS] Workflow update:", data);
 
     if (typeof updateWorkflowRunUI === "function") {
       updateWorkflowRunUI(data.runId, data.status, data.projectId);
@@ -214,7 +214,7 @@
       console.error("[WS TEST] WebSocket not connected!");
       return;
     }
-    console.log("[WS TEST] Sending test message...");
+    //console.log("[WS TEST] Sending test message...");
     S.ws.send('test');
   };
 
@@ -248,7 +248,7 @@
 
   // UI update function - refreshes table from server
   function updateWorkflowRunUI(runId, status, projectId) {
-    console.log('[WS] Updating UI for run #' + runId + ' to status: ' + status + ', projectId: ' + projectId);
+    //console.log('[WS] Updating UI for run #' + runId + ' to status: ' + status + ', projectId: ' + projectId);
 
     // Refresh the table
     if (typeof refreshWorkflowRunTable === 'function') {
@@ -257,7 +257,7 @@
 
     // Show notification
     if (typeof PF === 'function' && PF('growlWidget')) {
-      console.log('[WS] Showing growl notification for status: ' + status);
+      //console.log('[WS] Showing growl notification for status: ' + status);
 
       if (status === 'completed') {
         PF('growlWidget').show([{

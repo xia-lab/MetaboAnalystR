@@ -34,6 +34,7 @@
                 if (getURLParameter('callFunc') !== null) {
                     checkPagesToVisit([]);
                 }
+                //setTimeout(setupDownloadTable, 0);
             };
             //]]>
         </script>
@@ -41,12 +42,17 @@
     </ui:define>
     <ui:define name="leftpane">
         <h:form id="hiddenForm">
-            <p:remoteCommand 
-                name="checkPagesToVisit" 
-                actionListener="#{diagramView.checkPagesToVisit}" 
-                oncomplete="console.log('Remote command executed successfully');"
-                onerror="console.error('Error during remote command execution');"
-                />
+            <!--
+                <p:remoteCommand name="setupDownloadTable" process="@this"
+                                 actionListener="{downloader.setupDownloadTableWrapper}"
+                                 onstart="console.debug('loading dashboard table asynchronously');" />
+            -->
+                <p:remoteCommand 
+                    name="checkPagesToVisit" 
+                    actionListener="#{diagramView.checkPagesToVisit}" 
+                    oncomplete="console.log('Remote command executed successfully');"
+                    onerror="console.error('Error during remote command execution');"
+                    />
         </h:form>
         <h:form id="treeForm">
             <h:panelGrid style="text-align: center" class="cyan-100 text-800">
@@ -93,7 +99,7 @@
         </h:panelGroup>
         <h:panelGroup>
             <ui:include src="/template/_feature_dialog.xhtml" />
-        <ui:include src="/template/_graphic_dialog.xhtml" />
+            <ui:include src="/template/_graphic_dialog.xhtml" />
 
             <ui:include src="./dialog/_msetDialog.xhtml" />
         </h:panelGroup>
