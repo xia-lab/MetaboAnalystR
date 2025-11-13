@@ -92,16 +92,6 @@
                     checkPagesToVisit([]);
                 }
 
-                /*
-                 const POLL_MS = 10000;
-                 const pollTimer = setInterval(() => {
-                 try {
-                 pingJob();
-                 } catch (e) {
-                 }
-                 }, POLL_MS);
-                 */
-
             };
 
 
@@ -147,12 +137,6 @@
         -->
 
         <h:panelGrid styleClass="my-content-panel">
-            <h:panelGroup rendered="#{applicationBean1.toolLocation eq 'localhost'}" layout="block" style="margin-bottom:1rem">
-                <h3 class="text-700">Local tunnel notice</h3>
-                <p style="margin:0 0 .5rem;">
-                    You're running MetaboAnalyst locally. Point your client at the SSH tunnel <code>ssh -f -N -L 5433:127.0.0.1:5432 gyan@34.133.74.138</code> so it can reach the remote Postgres instance.
-                </p>
-            </h:panelGroup>
 
             <h2>
                 Project Management

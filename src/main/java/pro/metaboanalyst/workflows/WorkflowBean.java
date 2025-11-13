@@ -44,6 +44,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 import org.postgresql.util.PGobject;
 import org.primefaces.PrimeFaces;
@@ -2237,6 +2238,10 @@ public class WorkflowBean implements Serializable {
     }
 
     public void startRun(WorkflowRunModel run) {
+        if (!startRunLock.compareAndSet(false, true)) {
+            LOGGER.info("[WorkflowBean] startRun already in progress, ignoring duplicate invocation");
+            return;
+        }
         try {
             if (run == null) {
                 sb.addMessage("warn", "No workflow run selected.");
@@ -2334,6 +2339,8 @@ public class WorkflowBean implements Serializable {
             Logger.getLogger(WorkflowBean.class.getName())
                     .log(Level.SEVERE, "startFromDetails failed", ex);
             sb.addMessage("Error", "Failed to start from details: " + ex.getMessage());
+        } finally {
+            startRunLock.set(false);
         }
     }
 
@@ -2423,6 +2430,7 @@ public class WorkflowBean implements Serializable {
 
     private WorkflowRunModel selectedWorkflowRun;
     private WorkflowRunModel pendingStartRun;
+    private final AtomicBoolean startRunLock = new AtomicBoolean(false);
 
     public WorkflowRunModel getSelectedWorkflowRun() {
         return selectedWorkflowRun;
