@@ -53,11 +53,11 @@
     </context-param>
     <context-param>
         <param-name>jakarta.faces.ENABLE_WEBSOCKET_ENDPOINT</param-name>
-        <param-value>true</param-value>
+        <param-value>false</param-value>
     </context-param>
     <context-param>
         <param-name>org.omnifaces.SOCKET_ENDPOINT_ENABLED</param-name>
-        <param-value>true</param-value>
+        <param-value>false</param-value>
     </context-param>
 
     <!-- JSF tuning -->
@@ -78,10 +78,10 @@
         <param-value>true</param-value>
     </context-param>
 
-    <!-- EXTRA safety: exclude SSE path from OmniFaces gzip via context-param as well -->
+    <!-- EXTRA safety: exclude SSE path and OmniFaces WebSocket from gzip -->
     <context-param>
         <param-name>org.omnifaces.GzipResponseFilter.excludedPaths</param-name>
-        <param-value>/api/workflow/events,/api/workflow/events/*</param-value>
+        <param-value>/api/workflow/events,/api/workflow/events/*,/omnifaces.push,/omnifaces.push/*</param-value>
     </context-param>
 
     <!-- Faces Servlet -->

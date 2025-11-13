@@ -1043,10 +1043,12 @@ public class DatabaseClient {
         if (runId <= 0 || workflowNotificationService == null) {
             return;
         }
+
         Map<String, Object> latest = Collections.emptyMap();
         try {
             latest = getWorkflowRunById(String.valueOf(runId));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to retrieve workflow run: " + runId, e);
         }
 
         if (latest == null || latest.isEmpty()) {
@@ -1056,6 +1058,14 @@ public class DatabaseClient {
                 String email = sb.getCurrentUser().getName();
                 latest.put("userId", email);
                 latest.put("email", email);
+            }
+        } else {
+            if (!latest.containsKey("userId") && !latest.containsKey("email")) {
+                if (sb != null && sb.getCurrentUser() != null && sb.getCurrentUser().getName() != null) {
+                    String email = sb.getCurrentUser().getName();
+                    latest.put("userId", email);
+                    latest.put("email", email);
+                }
             }
         }
 
