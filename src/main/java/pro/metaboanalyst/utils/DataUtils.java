@@ -77,7 +77,6 @@ import org.primefaces.model.StreamedContent;
 import org.primefaces.model.file.UploadedFile;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.omnifaces.util.Faces;
-import org.quartz.JobExecutionException;
 import org.rosuda.REngine.Rserve.RserveException;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 import pro.metaboanalyst.controllers.multifac.HeatMap2Bean;
@@ -1562,8 +1561,7 @@ public class DataUtils {
 
         ObjectMapper mapper = new ObjectMapper()
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.NON_EMPTY, JsonInclude.Include.NON_EMPTY))
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.DEFAULT);
 
         /* ---- custom filter: drop “getter-only” props ---------------- */
@@ -1763,7 +1761,7 @@ public class DataUtils {
         }
     }
 
-    public static boolean sendPostRequest(String node, String appName, String token, String funName, String email, String type, String folderName, String jobId, String baseUrl) throws JobExecutionException {
+    public static boolean sendPostRequest(String node, String appName, String token, String funName, String email, String type, String folderName, String jobId, String baseUrl) {
         String urlString;
 
         if (node.equals("localhost")) {
@@ -1771,7 +1769,7 @@ public class DataUtils {
         } else {
             urlString = "https://" + node + "." + appName.toLowerCase() + ".ca/" + appName + "/faces/AjaxHandler.xhtml?funcNm=" + funName;
         }
-        System.out.println("urlString======================================"  + urlString);
+        //System.out.println("urlString======================================"  + urlString);
         try {
             HttpClient client = HttpClient.newHttpClient();
 
