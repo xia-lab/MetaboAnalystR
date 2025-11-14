@@ -1163,6 +1163,10 @@ public class WorkflowBean implements Serializable {
                     // Convert map → FunctionInfo
                     FunctionInfo info = new ObjectMapper().convertValue(value, FunctionInfo.class);
 
+                    if (info.getFunction() == null || !info.getFunction().contains(".")) {
+                        info.setFunction(funcToArgumentMap.getOrDefault(key, info.getFunction()));
+                    }
+
                     this.functionInfos.put(key, info);
 
                 } else if (value instanceof FunctionInfo info) {
