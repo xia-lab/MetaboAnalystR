@@ -688,10 +688,10 @@ public class MyPhaseListener implements PhaseListener {
                 if (wfb.getRunPlans().size() > 1) {
                     fbc.reloadUserInfo();
                     wfb.setActiveIndex(1);
-                    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/ProjectView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1", "info", "Workflow run completed!");
+                    DataUtils.doRedirectWithGrowl(sb, "/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1", "info", "Workflow run completed!");
                 } else {
                     wfb.setActiveIndex(1);
-                    DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/ProjectView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1", ab);
+                    DataUtils.doRedirect("/MetaboAnalyst/Secure/xialabpro/DashboardView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=1", ab);
                 }
             } else {
                 dv.setStatusMsg("<b style='color: green'>Workflow Failed.</b>");

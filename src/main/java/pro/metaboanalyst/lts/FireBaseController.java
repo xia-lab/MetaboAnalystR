@@ -645,7 +645,7 @@ public class FireBaseController implements Serializable {
         RCenter.loadHistory(sb.getRConnection());
 
         //if (javaHistory.isEmpty()) {
-            javaHistory = readJsonStringFromFile(sb.getCurrentUser().getOrigHomeDir() + File.separator + "java_history.json");
+        javaHistory = readJsonStringFromFile(sb.getCurrentUser().getOrigHomeDir() + File.separator + "java_history.json");
         //}
         loadJavaHistory(javaHistory);
         System.out.println("wb.isReloadingWorkflow()===" + wb.isReloadingWorkflow());
@@ -663,6 +663,9 @@ public class FireBaseController implements Serializable {
         String naviType = sb.getNaviType();
         sb.setNaviTree(NaviUtils.createNaviTree(naviType));
         System.out.println("sbdatanormed====" + sb.isDataNormed());
+        fub.setEmail(email);
+        Faces.addResponseCookie("user", email, "/", 3600);
+        fb.getUserMap().put(email, fub);
         return true;
     }
 
@@ -1633,7 +1636,7 @@ public class FireBaseController implements Serializable {
             case "harmonized_dat" -> {
                 sb.setCurrentNaviUrl("/Secure/mgwas/MrParamView.xhtml");
             }
-            
+
             case "mr_results_merge", "mr_scatter_plot", "mr_forest_plot", "mr_leaveoneout_plot", "mr_funnel_plot" -> {
                 sb.setCurrentNaviUrl("/Secure/mgwas/MrResultView.xhtml");
             }
