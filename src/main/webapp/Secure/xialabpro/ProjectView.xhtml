@@ -64,7 +64,8 @@
 
         <link type="text/css" rel="stylesheet" href="#{facesContext.externalContext.requestContextPath}/resources/css/workflow.css" />
 
-        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script> 
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_diagram.js"></script>
+        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/workflow_status_poller.js"></script>
 
         <script type="text/javascript">
 
@@ -95,15 +96,33 @@
             };
 
 
+            // Handle tab changes - only poll on Workflow Projects tab
+            function handleTabChange() {
+                // Get the active tab index
+                var activeIndex = PF('tabWidget').getActiveIndex();
+
+                console.log('[TAB] Active tab index: ' + activeIndex);
+
+                if (activeIndex === 1) {
+                    // Workflow Projects tab (index 1)
+                    console.log('[TAB] Workflow Projects tab active - starting polling');
+                    if (window.workflowStatusPoller) {
+                        window.workflowStatusPoller.start();
+                    }
+                } else {
+                    // Other tabs
+                    console.log('[TAB] Other tab active - stopping polling');
+                    if (window.workflowStatusPoller) {
+                        window.workflowStatusPoller.stop();
+                    }
+                }
+            }
+
         </script>
-        <script type="text/javascript">
-            // Expose userId to WebSocket handler
-            window.__userId = "#{fireUserBean.email}";
-        </script>
-        <script type="text/javascript" src="#{facesContext.externalContext.requestContextPath}/resources/jscripts/xialabpro/ws_handler.js"></script>
 
     </ui:define>
     <ui:define name="content">
+
         <h:form id="formHidden1">
 
             <p:remoteCommand name="afterResetCmd"
@@ -113,8 +132,10 @@
 
             <p:remoteCommand name="refreshWorkflowRunTable"
                              process="@this"
+                             global="true"
                              actionListener="#{workflowBean.setupWorkflowRunsTable}"
-                             update=":projectTabs:dataTableForm" />
+                             update=":projectTabs:dataTableForm:dtTable"
+                             oncomplete="console.log('[Remote] Table refreshed successfully');" />
 
             <h:inputHidden id="domainUrl" value="#{applicationBean1.domainURL}" />
             <h:inputHidden id="analType" value="#{sessionBean1.analType}" />
@@ -143,6 +164,7 @@
             </h2>
 
             <p:tabView id="projectTabs" widgetVar="tabWidget" activeIndex="#{workflowBean.activeIndex}">
+                <p:ajax event="tabChange" oncomplete="handleTabChange();" />
                 <p:tab title="Saved Projects">
                     <p>
                         Your saved projects are shown below. 
@@ -287,7 +309,7 @@
                 </p:tab>
                 <p:tab title="Workflow Projects">
                     <h:form id="dataTableForm">
-                        <p:growl id="msgs" showDetail="true" /> 
+                        <p:growl id="msgs" widgetVar="growlWidget" showDetail="true" /> 
                         <p>
                             You can analyze your data using a workflow (batch processing). To do this, you need to 
                             create a workflow project. The basic steps:
