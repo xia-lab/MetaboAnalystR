@@ -1202,7 +1202,7 @@ public class WorkflowBean implements Serializable {
             updateFunctionParameter("Heatmap2", "hm2Bean.smplSortOpt", heatmapMetas);
             updateFunctionParameter("Heatmap2", "hm2Bean.smplSortOptList", heatmapMetas);
         }
-        */
+         */
         String[] anovaMetas = new String[]{"NA", "NA"};
         if (primary != null) {
             anovaMetas[0] = primary;
@@ -1768,6 +1768,16 @@ public class WorkflowBean implements Serializable {
         String input = (String) selectedWorkflow.get("module");
         System.out.println("input========" + input);
         if (input.equals("msetora") || input.equals("qeaora")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isDisplayPathParams() {
+        String input = (String) selectedWorkflow.get("module");
+        System.out.println("input========" + input);
+        if (input.equals("pathora") || input.equals("pathqea")) {
             return true;
         } else {
             return false;
@@ -2798,7 +2808,6 @@ public class WorkflowBean implements Serializable {
                 getWorkflowRunsTable().add(run);
             }
 
-
             if (selectedWorkflowRun != null) {
                 WorkflowRunModel refreshed = findRunInModelById(selectedWorkflowRun.getId());
                 if (refreshed != null) {
@@ -3344,5 +3353,5 @@ public class WorkflowBean implements Serializable {
         System.out.println("============" + v.toString());
         return v.toString();
     }
-    
+
 }
