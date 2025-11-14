@@ -92,6 +92,7 @@
                 if (getURLParameter('callFunc') !== null) {
                     checkPagesToVisit([]);
                 }
+
             };
 
 
@@ -157,12 +158,6 @@
         -->
 
         <h:panelGrid styleClass="my-content-panel">
-            <h:panelGroup rendered="#{applicationBean1.toolLocation eq 'localhost'}" layout="block" style="margin-bottom:1rem">
-                <h3 class="text-700">Local tunnel notice</h3>
-                <p style="margin:0 0 .5rem;">
-                    You're running MetaboAnalyst locally. Point your client at the SSH tunnel <code>ssh -f -N -L 5433:127.0.0.1:5432 gyan@34.133.74.138</code> so it can reach the remote Postgres instance.
-                </p>
-            </h:panelGroup>
 
             <h2>
                 Project Management
@@ -955,7 +950,7 @@
                                            title="View and update parameters"
                                            ajax="false"
                                            onclick="PF('statusDialog').show();"
-                                           action="#{workflowBean.goToWorkflowDetails}">
+                                           action="#{workflowBean.goToWorkflowDetails(wf)}">
                                 <i class="pi pi-cog" style="font-size:1.1rem"></i>
                                 <f:setPropertyActionListener value="#{wf}" target="#{workflowBean.selectedWorkflow}" />
                             </p:commandLink>

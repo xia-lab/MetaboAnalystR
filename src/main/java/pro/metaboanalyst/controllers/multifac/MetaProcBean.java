@@ -88,6 +88,10 @@ public class MetaProcBean implements Serializable {
 
     public String metacheck_proceed() {
         String[] metaDataStatus = RDataUtils.getMetaDataStatus(sb.getRConnection());
+        if (metaDataStatus.length == 0) {
+            sb.addMessage("warn", "Unable to fetch metadata info.");
+            return null;
+        }
         for (String metaDataStatu : metaDataStatus) {
             if (!metaDataStatu.equals("OK")) {
                 PrimeFaces.current().executeScript("PF('confDialog').show();");
@@ -110,6 +114,10 @@ public class MetaProcBean implements Serializable {
 
     public void metacheck_proceed4batch() {
         String[] metaDataStatus = RDataUtils.getMetaDataStatus(sb.getRConnection());
+        if (metaDataStatus.length == 0) {
+            sb.addMessage("warn", "Unable to fetch metadata info.");
+            return;
+        }
         for (String metaDataStatu : metaDataStatus) {
             if (!metaDataStatu.equals("OK")) {
                 PrimeFaces.current().executeScript("PF('confDialog').show();");
