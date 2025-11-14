@@ -35,7 +35,6 @@ public class RPlotCustomizationBean implements Serializable {
     private String prompt;
     private String aiResponse;
 
-
     public String getPlaceholder() {
         return String.join("\n",
                 "Describe how you want to customize the plot.",
@@ -46,7 +45,7 @@ public class RPlotCustomizationBean implements Serializable {
                 "- Add features (e.g., 'Add a grid to the background')"
         );
     }
-    
+
     private List<Message> messages;
 
     public List<Message> getMessages() {
@@ -60,7 +59,6 @@ public class RPlotCustomizationBean implements Serializable {
     public void setMessages(List<Message> messages) {
         this.messages = messages;
     }
-
 
     public String getPrompt() {
         return prompt;
@@ -154,7 +152,12 @@ public class RPlotCustomizationBean implements Serializable {
                 return rcb.getRocUnivBPImg() + "?t=" + System.currentTimeMillis();
             }
             default -> {
-                return ab.getRootContext() + sb.getCurrentUser().getRelativeDir() + File.separator + sb.getCurrentImage(plotSource) + "dpi150.png" + "?t=" + System.currentTimeMillis();
+                String myDpi = "dpi150.png";
+                if (plotSource.contains("pca_pair") || plotSource.contains("pls_pair")) {
+                    myDpi = "dpi96.png";
+                }
+                return ab.getRootContext() + sb.getCurrentUser().getRelativeDir()
+                        + File.separator + sb.getCurrentImage(plotSource) + myDpi + "?t=" + System.currentTimeMillis();
             }
         }
     }
