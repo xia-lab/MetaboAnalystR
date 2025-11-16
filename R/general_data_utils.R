@@ -1324,35 +1324,6 @@ GetPrimaryInfo <-function(mSetObj=NA, metadata){
   return(paste0(fac," [",cls,"]"))
 }
 
-
-TableFormatCoerce <- function(oriFile = NULL, oriFormat = "Unknown", targetModule = "mummichog", sampleIn = "col"){
-  
-  df <- read.csv(oriFile);
-  df[is.na(df)] <- df[df == ""] <- 0;
-  
-  if (targetModule == "mummichog") {
-    ## This is used to convert the data format from Spectral Processing to Mummichog
-    if (oriFormat == "OptiLCMS") {
-      if (sampleIn == "col") {
-        newFea <- strsplit(df[, 1], "@")
-        
-        newFea <- lapply(newFea, function(x) {
-          return(paste0(x[1], "__", x[2]))
-        })
-      } else {
-        # cannot be in row for OptiLCMS source
-      }
-      
-      df[, 1] <- unlist(newFea)
-      df[1, 1] <- "Label"  
-    }
-  }
-  
-  fast.write.csv(df, file = oriFile, row.names = FALSE)
-  
-}
-
-
 checkDataGenericFormat <- function() {
   
   if(!file.exists("data_orig.qs")) return(0)

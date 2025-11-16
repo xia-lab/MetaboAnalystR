@@ -62,17 +62,22 @@ Convert2MummichogMetaPath <- function(mSetObj=NA,
     
     camera_output <- readRDS("annotated_peaklist.rds")
     mz.cam <- round(camera_output$mz, 5) 
-    rt.cam <- round(camera_output$rt, 5) 
+    rt.cam <- round(camera_output$rt, 5)
     camera <- cbind(mz.cam, rt.cam)
     colnames(camera) <- c("m.z", "r.t")
-    
-    mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(pvals, tscores, camera))
+
+    # PERFORMANCE FIX (Issue #7): Use data.table for large merges
+    mummi_new <- Reduce(function(x,y) merge(data.table::as.data.table(x), data.table::as.data.table(y), by="m.z", all = TRUE),
+                        list(pvals, tscores, camera))
+    mummi_new <- data.table::setDF(mummi_new)
     complete.inx <- complete.cases(mummi_new[,c("p.value", "t.score", "r.t")]) # filter out m/zs without pval and tscore
     mummi_new <- mummi_new[complete.inx,]
-    
+
   }else{
-    
-    mummi_new <- merge(pvals, tscores)
+
+    # PERFORMANCE FIX (Issue #7): Use data.table for large merges
+    mummi_new <- merge(data.table::as.data.table(pvals), data.table::as.data.table(tscores))
+    mummi_new <- data.table::setDF(mummi_new)
     
     if(rt){ # taking retention time information from feature name itself
       
@@ -788,18 +793,22 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     
     require(ggplot2);
     require(RColorBrewer);
-    
+
     ## This oder matrix is used to order the metap (first by P value, second by enrichment ratio)
-    order_matrix0 <- merge(path_results, ratio, by = c("Pathway"));
+    # PERFORMANCE FIX (Issue #7): Use data.table for large merges
+    order_matrix0 <- merge(data.table::as.data.table(path_results), data.table::as.data.table(ratio), by = c("Pathway"))
+    order_matrix0 <- data.table::setDF(order_matrix0)
     ColNMs <- c("Pathway", paste0(sub("mummichoginput", "",studies),"p-value"),"Meta.P",paste0(sub("mummichoginput", "",studies),"Enrich"),"Average_Enrich")
-    
+
     order_matrix <- cbind(order_matrix0$Pathway, order_matrix0$Meta.P.x, order_matrix0$Meta.P.y);
     metap_order <- order_matrix[order(order_matrix[,2], -as.numeric(order_matrix[,3]))]
-    
+
     colnames(order_matrix0) <- ColNMs;
     fast.write.csv(order_matrix0, file = "Result_summary.csv",row.names = FALSE)
-    
-    df <- merge(path_results2, ratio2, by = c("Pathway", "Study"))
+
+    # PERFORMANCE FIX (Issue #7): Use data.table for large merges
+    df <- merge(data.table::as.data.table(path_results2), data.table::as.data.table(ratio2), by = c("Pathway", "Study"))
+    df <- data.table::setDF(df)
     df$Pathway <- factor(df$Pathway, levels = rownames(path_results))
     df$Study <- sub("mummichoginput", "", df$Study);
     df$Study <- as.factor(df$Study);

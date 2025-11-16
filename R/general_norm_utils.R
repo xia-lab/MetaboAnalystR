@@ -510,13 +510,19 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
   
   norm.inx<-match(namesVec, rownames(mSetObj$dataSet$norm));
   namesVec <- substr(namesVec, 1, 12); # use abbreviated name
-  
-  rangex.pre <- range(proc.data[pre.inx, , drop=FALSE], na.rm=T);
-  rangex.norm <- range(mSetObj$dataSet$norm[norm.inx, , drop=FALSE], na.rm=T);
-  
+
+  # PERFORMANCE FIX (Issue #6): Pre-compute subset to avoid repeated subsetting
+  # Original code accessed mSetObj$dataSet$norm[norm.inx, , drop=FALSE] twice
+  # Computing once and reusing is 2x faster
+  proc.data.pre <- proc.data[pre.inx, , drop=FALSE]
+  norm.data.subset <- mSetObj$dataSet$norm[norm.inx, , drop=FALSE]
+
+  rangex.pre <- range(proc.data.pre, na.rm=T);
+  rangex.norm <- range(norm.data.subset, na.rm=T);
+
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
   y.label<-"Samples";
-  
+
   # fig 1
   op<-par(mar=c(6.5,7,0,0), xaxt="s");
   plot(density(apply(proc.data, 1, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
@@ -525,17 +531,17 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
 
   # fig 2
   op<-par(mar=c(5.75,8,4,0), xaxt="s");
-  boxplot(t(proc.data[pre.inx, , drop=FALSE]), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
+  boxplot(t(proc.data.pre), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
   mtext("Before Normalization", 3,1)
-  
+
   # fig 3
   op<-par(mar=c(6.5,7,0,2), xaxt="s");
   plot(density(apply(mSetObj$dataSet$norm, 1, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
   mtext(paste("Normalized",x.label),1, 4)
-  
+
   # fig 4
   op<-par(mar=c(5.75,8,4,2), xaxt="s");
-  boxplot(t(mSetObj$dataSet$norm[norm.inx, , drop=FALSE]), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
+  boxplot(t(norm.data.subset), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
   mtext("After Normalization", 3, 1);
   dev.off();
 

@@ -413,26 +413,36 @@ Convert2Mummichog <- function(mSetObj=NA,
     rt.cam <- round(camera_output$rt, 5) 
     camera <- cbind(mz.cam, rt.cam)
     colnames(camera) <- c("m.z", "r.t")
-    
+
+    # PERFORMANCE FIX (Issue #7): Use data.table for large merges instead of base R merge
+    # data.table merge is 5-50x faster for large datasets and handles multiple merges efficiently
     if(test == "tt"){
-      mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(pvals, tscores, camera))
+      mummi_new <- Reduce(function(x,y) merge(data.table::as.data.table(x), data.table::as.data.table(y), by="m.z", all = TRUE),
+                          list(pvals, tscores, camera))
+      mummi_new <- data.table::setDF(mummi_new)
       complete.inx <- complete.cases(mummi_new[,c("p.value", "t.score", "r.t")]) # filter out m/zs without pval and tscore
     }else if(test == "es"){
-      mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(esize, camera))
-      complete.inx <- complete.cases(mummi_new[,c("effect.size", "r.t")]) 
+      mummi_new <- merge(data.table::as.data.table(esize), data.table::as.data.table(camera), by="m.z", all = TRUE)
+      mummi_new <- data.table::setDF(mummi_new)
+      complete.inx <- complete.cases(mummi_new[,c("effect.size", "r.t")])
     }else if(test == "all"){
-      mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(pvals, tscores, fcs, esize, camera))
+      mummi_new <- Reduce(function(x,y) merge(data.table::as.data.table(x), data.table::as.data.table(y), by="m.z", all = TRUE),
+                          list(pvals, tscores, fcs, esize, camera))
+      mummi_new <- data.table::setDF(mummi_new)
       complete.inx <- complete.cases(mummi_new[,c("p.value", "t.score", "log2.fc", "effect.size", "r.t")]) # filter out m/zs without pval and tscore
     }else if(test == "fc"){
-      mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(fcs, camera))
+      mummi_new <- merge(data.table::as.data.table(fcs), data.table::as.data.table(camera), by="m.z", all = TRUE)
+      mummi_new <- data.table::setDF(mummi_new)
       complete.inx <- complete.cases(mummi_new[,c("log2.fc", "r.t")])
     }else if(test == "aov"){
-      mummi_new <- Reduce(function(x,y) merge(x,y,by="m.z", all = TRUE), list(pvals, camera))
+      mummi_new <- merge(data.table::as.data.table(pvals), data.table::as.data.table(camera), by="m.z", all = TRUE)
+      mummi_new <- data.table::setDF(mummi_new)
       complete.inx <- complete.cases(mummi_new[,c("p.value", "r.t")])
    }else if (test == "cov") {
       ## merge p-values  +  t-scores  +  CAMERA RT table
-      mummi_new  <- Reduce(function(x, y) merge(x, y, by = "m.z", all = TRUE),
+      mummi_new  <- Reduce(function(x, y) merge(data.table::as.data.table(x), data.table::as.data.table(y), by = "m.z", all = TRUE),
                            list(pvals, tscores, camera))
+      mummi_new <- data.table::setDF(mummi_new)
       ## keep rows that have p-value, t-score, and RT
       complete.inx <- complete.cases(mummi_new[ , c("p.value", "t.score", "r.t")])
       mummi_new    <- mummi_new[complete.inx, ]
@@ -441,19 +451,24 @@ Convert2Mummichog <- function(mSetObj=NA,
     
   } else {
     
+    # PERFORMANCE FIX (Issue #7): Use data.table for merges
     if(test=="tt"){
-      mummi_new <- merge(pvals, tscores);
+      mummi_new <- merge(data.table::as.data.table(pvals), data.table::as.data.table(tscores))
+      mummi_new <- data.table::setDF(mummi_new)
     }else if(test=="es"){
       mummi_new <- esize;
     }else if(test=="all"){
-      mummi_new <- Reduce(merge, list(pvals, tscores, fcs, esize));
+      mummi_new <- Reduce(function(x,y) merge(data.table::as.data.table(x), data.table::as.data.table(y)),
+                          list(pvals, tscores, fcs, esize))
+      mummi_new <- data.table::setDF(mummi_new)
       mummi_new[] <- lapply(mummi_new, as.character);
     }else if(test=="fc"){
       mummi_new <- fcs;
     }else if(test=="aov"){
       mummi_new <- pvals;
     } else if (test == "cov") {
-      mummi_new <- merge(pvals, tscores)
+      mummi_new <- merge(data.table::as.data.table(pvals), data.table::as.data.table(tscores))
+      mummi_new <- data.table::setDF(mummi_new)
   }
 
     if(rt){ # taking retention time information from feature name itself
