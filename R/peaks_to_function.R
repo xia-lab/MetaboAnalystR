@@ -3737,7 +3737,7 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
   # --- 4) Colorize display names ----------------------------------------
   nms <- display
   if (length(red.inx))  nms[red.inx]  <- paste0('<font color="red"><b>',  nms[red.inx],  "</b></font>")
-  if (length(blue.inx)) nms[blue.inx] <- paste0('<font color="blue"><b>', nms[blue.inx], "</b></font>")
+  if (length(blue.inx)) nms[blue.inx] <- paste0('<font color="cyan"><b>', nms[blue.inx], "</b></font>")
 
   # If very large, keep only referenced ones
   if (length(nms) > 200) {
