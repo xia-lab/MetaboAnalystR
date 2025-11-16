@@ -81,12 +81,13 @@
                             </h:panelGroup>
                         </h:panelGrid>
                     </p:outputPanel>
+                    <!--
                     <p:commandButton styleClass="btnCirc ui-button-help"
                                      rendered="#{datasetController.hasStagedDataset()}"
                                      style="margin-left: 80px; font-weight: bold; font-size: 15px"
                                      actionListener="#{fireBaseController.saveDataAndGoToWorkflow()}"
                                      value="Workflow"/>
-
+                    -->
                 </h:panelGrid>
                 <p:remoteCommand name="rcViewRsd"              
                                  actionListener="#{procBean.viewRsdPlot()}"
