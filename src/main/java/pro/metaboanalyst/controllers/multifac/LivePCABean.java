@@ -57,7 +57,11 @@ public class LivePCABean implements Serializable {
 
     public String getColOpt() {
         if (colOpt == null) {
-            colOpt = mfb.getMetaDataBeans().get(0).getName();
+            List<MetaDataBean> beans = mfb.getMetaDataBeans();
+            if (beans.isEmpty()) {
+                return null;
+            }
+            colOpt = beans.get(0).getName();
         }
         return colOpt;
     }
@@ -79,7 +83,7 @@ public class LivePCABean implements Serializable {
             List<MetaDataBean> beans = mfb.getMetaDataBeans();
             for (int i = 1; i < beans.size(); i++) {
                 if (!beans.get(i).getParam().equals("cont")) {
-                    shapeOpt = mfb.getMetaDataBeans().get(i).getName();
+                    shapeOpt = beans.get(i).getName();
                     break;
                 }
             }
@@ -97,8 +101,13 @@ public class LivePCABean implements Serializable {
             sb.addNaviTrack(pageID, "/Secure/multifac/LivePCAView.xhtml");
             ChemoMetrics.initPCA(sb);
 
+            if (!hasMetaData()) {
+                sb.addMessage("Error", "Metadata is required for iPCA.");
+                return;
+            }
+
             TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 96, pcaPairNum, getColOpt(), getShapeOpt());
-            TimeSeries.plotPCA2DScoreMeta(sb, sb.getCurrentImage("pca_score2d_meta"), "png", 150, 1, 2, 0.95, 0, 0, "na", getColOpt(), getShapeOpt());
+                TimeSeries.plotPCA2DScoreMeta(sb, sb.getCurrentImage("pca_score2d_meta"), "png", 150, 1, 2, 0.95, 0, 0, "na", getColOpt(), getShapeOpt());
 
             TimeSeries.initIPCA(sb.getRConnection(), sb.getCurrentImage("ipca_3d") + ".json", colOpt, shapeOpt, "blue");
         } else {
@@ -138,5 +147,10 @@ public class LivePCABean implements Serializable {
 
         TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair_meta"), "pca_pair_meta", "png", 96, pcaPairNum, colOpt, shapeOpt);
         return null;
+    }
+
+    public boolean hasMetaData() {
+        List<MetaDataBean> beans = mfb.getMetaDataBeans();
+        return beans != null && !beans.isEmpty();
     }
 }

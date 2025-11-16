@@ -298,7 +298,7 @@ public class JavaRecord {
     }
 
     public void record_samBtn1_action(SigVarBean b) {
-        FunctionInfo functionInfo = new FunctionInfo("Random Forest", "classBean.samBtn1_action", "Performs Significance Analysis of Metabolomics (SAM)");
+        FunctionInfo functionInfo = new FunctionInfo("SAM", "classBean.samBtn1_action", "Performs Significance Analysis of Metabolomics (SAM)");
 
         functionInfo.addParameter("sigBean.nonParSam", b.isNonParSAM());
         functionInfo.addParameter("sigBean.pairedAnal", b.getPairedAnal());

@@ -316,6 +316,10 @@ public class WorkflowView implements Serializable {
                         sb.addNaviTrack("PCA", "/Secure/multifac/LivePCAView.xhtml");
 
                         LivePCABean lp = (LivePCABean) DataUtils.findBean("livePcaBean");
+                        if (lp == null || !lp.hasMetaData()) {
+                            sb.addMessage("Error", "Metadata is required for integrated PCA.");
+                            return 0;
+                        }
                         lp.initPCA3D();
                     }
                     case "ANOVA" -> {

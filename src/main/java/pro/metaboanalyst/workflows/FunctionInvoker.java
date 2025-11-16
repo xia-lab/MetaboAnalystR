@@ -15,10 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import pro.metaboanalyst.lts.FunctionInfo;
 import pro.metaboanalyst.utils.DataUtils;
 
 public class FunctionInvoker {
+
+    private static final Logger LOGGER = Logger.getLogger(FunctionInvoker.class.getName());
 
     // Reusable ObjectMapper
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -260,11 +264,28 @@ public class FunctionInvoker {
     }
 
     public static void callSetters(FunctionInfo functionInfo) throws Exception {
+        if (functionInfo == null) {
+            return;
+        }
         String functionName = functionInfo.getFunction();
-        Map<String, Object> parameters = functionInfo.getParameters();
+        if (functionName == null || !functionName.contains(".")) {
+            LOGGER.log(Level.WARNING, "Skipping setter binding because function name is invalid: {0}", functionName);
+            return;
+        }
 
-        String beanName = functionName.split("\\.")[0];
+        Map<String, Object> parameters = functionInfo.getParameters();
+        String[] parts = functionName.split("\\.", 2);
+        if (parts.length != 2 || parts[0].isBlank()) {
+            LOGGER.log(Level.WARNING, "Skipping setter binding because bean name could not be parsed: {0}", functionName);
+            return;
+        }
+
+        String beanName = parts[0];
         Object bean = DataUtils.findBean(beanName);
+        if (bean == null) {
+            LOGGER.log(Level.WARNING, "No bean found for name \"{0}\" while binding parameters", beanName);
+            return;
+        }
 
         setParameters(bean, parameters);
     }

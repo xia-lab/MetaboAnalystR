@@ -452,7 +452,7 @@
                             </p:column>
 
                             <p:column headerText="Delete" style="text-align:center;">
-                                <p:commandLink id="delRunBn" oncomplete="PF('runDelForm').show();" update="">
+                                <p:commandLink id="delRunBn" oncomplete="PF('runDelDialog').show();" update="runDelForm">
                                     <i class="pi pi-trash" style="font-size:1.4rem; color:orangered"></i>
                                     <f:setPropertyActionListener value="#{run}" target="#{workflowBean.selectedWorkflowRun}" />
                                 </p:commandLink>
@@ -470,7 +470,7 @@
                   appendTo="@(body)" onShow="PF('statusDialog').hide()"
                   hideEffect="fade" resizable="true"> 
 
-            <h:form>
+            <h:form id="formDelete">
                 <h:panelGrid  style="width:400px; line-height: 150%; padding: 10px; font-size: 14px">
                     <h:panelGrid columns="2" style="width:100%;" cellspacing="10">
                         <h:panelGroup>
