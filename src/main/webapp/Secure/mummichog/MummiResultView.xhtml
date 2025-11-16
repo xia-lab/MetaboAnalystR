@@ -35,8 +35,6 @@
                         <canvas id='canvas1' width='720px' height='670px' style='width:720px;height:670px'/>
                     </h:panelGrid>
                     <h:panelGrid style="width:400px; height: 360px; padding-left: 100px; font-size: 15px">   
-
-
                         <p:commandButton value="Enrich Network" 
                                          ajax="false" 
                                          icon="pi pi-caret-right"
@@ -215,31 +213,28 @@
         </h:panelGrid> 
         <p:dialog header="Match Details" widgetVar="msetDialog" dynamic="true" modal="true" 
                   appendTo="@(body)" hideEffect="explode" resizable="true"> 
-            <h:panelGrid id="detailView" style="width:540px; font-size: 12px; padding: 10px" class="surface-card shadow-1 p-4 text-800">  
+            <h:panelGrid id="detailView" style="width:560px; font-size: 12px; padding: 10px" class="surface-card shadow-1 p-4 text-800">  
                 <p>
                     The colored compounds indicate potential matches from the user's input, 
-                    with red colors indicating significant hits and blue colors indicating non-significant hits. 
+                    with red colors indicating significant hits and cyan colors indicating non-significant hits. 
                     Note for users running V2, the number of hits listed in the results table will be lower
                     than the number of compounds shown below. This is because the analysis is performed in the 
                     Empirical Compound space, and for the sake of interpretability, we show which compounds
                     were matched instead. Please search OmicsForum using "empirical compound #metaboanalyst".
                 </p>
-                <h:form id="summaryForm">
-                    <p:dataTable var="set" value="#{mummiAnalBean.currentPathSet}"
-                                 class="surface-card shadow-1 p-0 text-800">
-                        <p:column headerText="Pathway">  
-                            <h:outputText escape="false" value="#{set.name}"/>  
-                        </p:column>  
-                        <p:column headerText="Metabolites">  
-                            <h:outputText escape="false" value="#{set.members}"/>
-                        </p:column>   
-                    </p:dataTable> 
-                </h:form>
+                <h:panelGrid id="summaryForm" columns="2" cellspacing="5" cellpadding="5"
+                             style="width:100%; font-size: 12px"
+                             class="surface-card shadow-1 p-3 text-800">
+                    <h:outputLabel value="Pathway:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{mummiAnalBean.currentPathSet.name}"/>
+
+                    <h:outputLabel value="Metabolites:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{mummiAnalBean.currentPathSet.members}"/>
+                </h:panelGrid>
             </h:panelGrid> 
         </p:dialog>
         <script type="text/javascript">
             showMummichog();
-
         </script>
         <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>

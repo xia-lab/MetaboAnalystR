@@ -346,12 +346,10 @@ public class MsetBean implements Serializable {
     }
 
     @JsonIgnore
-    public MetSetBean[] getCurrentMsetLib() {
+    public MetSetBean getCurrentMset() {
         //System.out.println(msetNm + "=====getCurrentMsetLib");
         String[] details = REnrichUtils.getHTMLMetSet(sb.getRConnection(), msetNm);
-        ArrayList<MetSetBean> libVec = new ArrayList();
-        libVec.add(new MetSetBean(details[0], details[1], details[2]));
-        return libVec.toArray(MetSetBean[]::new);
+        return (new MetSetBean(details[0], details[1], details[2]));
     }
 
     public String getImgOpt() {

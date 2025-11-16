@@ -209,12 +209,10 @@ public class MummiAnalBean implements Serializable {
     }
 
     @JsonIgnore
-    public MetSetBean[] getCurrentPathSet() {
+    public MetSetBean getCurrentPathSet() {
         String pathname = sb.getCurrentPathName();
         String[] details = REnrichUtils.getMummichogHTMLPathSet(sb.getRConnection(), pathname);
-        ArrayList<MetSetBean> libVec = new ArrayList();
-        libVec.add(new MetSetBean(details[0], details[1], ""));
-        return libVec.toArray(MetSetBean[]::new);
+        return(new MetSetBean(details[0], details[1], ""));
     }
 
     public boolean isDoMumFilter() {

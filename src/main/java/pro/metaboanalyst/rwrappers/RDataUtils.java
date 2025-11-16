@@ -2477,16 +2477,6 @@ public class RDataUtils {
         return false;
     }
 
-    public static void CoerceTable(RConnection RC, String oriFile, String oriFormat, String targetModule) {
-        try {
-            String rCommand = "TableFormatCoerce(" + "\"" + oriFile + "\", \"" + oriFormat + "\", \"" + targetModule + "\");";
-            RCenter.recordRCommand(RC, rCommand);
-            RC.eval(rCommand);
-        } catch (Exception rse) {
-            LOGGER.error("CoerceTable", rse);
-        }
-    }
-
     public static void saveFilesInclusion(SessionBean1 sb, String files, int number) {
         try {
             RConnection RC = sb.getRConnection();

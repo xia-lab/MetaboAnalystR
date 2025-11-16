@@ -13,19 +13,19 @@
         <h:panelGrid id="detailView" style="width:540px; font-size: 13px; padding: 10px">
             <h:outputText escape="false" value="Current metabolite set: "/>
             <h:form id="summaryForm">
-                <p:dataTable style="width:100%; font-size: 12px" var="set" 
-                             class="surface-card shadow-1 p-0 text-800"
-                             value="#{msetBean.currentMsetLib}">
-                    <p:column headerText="Set Name" style="width:100px">  
-                        <h:outputText escape="false" value="#{set.name}"/>  
-                    </p:column>  
-                    <p:column headerText="Metabolites" style="width:320px">  
-                        <h:outputText escape="false" value="#{set.members}"/>
-                    </p:column>  
-                    <p:column headerText="References" style="width:100px">  
-                        <h:outputText escape="false" value="#{set.refs}"/>
-                    </p:column>  
-                </p:dataTable> 
+                <h:panelGrid columns="2" cellspacing="5" cellpadding="5"
+                             style="width:100%; font-size: 12px"
+                             class="surface-card shadow-1 p-3 text-800">
+                    <h:outputLabel value="Set Name:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.name}"/>
+
+                    <h:outputLabel value="Metabolites:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.members}"/>
+
+                    <h:outputLabel value="References:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.refs}"/>
+                </h:panelGrid>
+
                 <h:panelGrid style="width:100%; text-align: center">
                     <p:commandButton value="OK" onclick="PF('msetDialog').hide()"/>
                 </h:panelGrid>
@@ -33,6 +33,40 @@
         </h:panelGrid> 
     </p:dialog>
     <p:remoteCommand name="updateMset" process="@this" update=":summaryForm"/>
+
+    <p:dialog widgetVar="msetQeaDialog" dynamic="true" appendTo="@(body)" modal="false" 
+              width="8in" height="6in" header="Match Details"
+              draggable="true"
+              onShow="updateMsetQea()"
+              hideEffect="explode" resizable="true"> 
+        <h:panelGrid id="detailViewQea" style="padding: 8px; font-size: 12px; with:100%">
+            <h:outputText escape="false" value="Current metabolite set: "/>
+            <h:panelGrid style="text-align: center; width: 100%;">
+                <img onerror='this.style.display="none"' 
+                     style="width:7in;"
+                     src="#{msetBean.msetImgPath}" alt="MsetImage"/>
+            </h:panelGrid>
+            <h:form id="summaryQeaForm">
+
+                <h:panelGrid columns="2"  cellspacing="5" cellpadding="5"
+                             style="width:100%; font-size: 12px"
+                             class="surface-card shadow-1 p-3 text-800">
+                    <h:outputLabel value="Set Name:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.name}"/>
+
+                    <h:outputLabel value="Metabolites:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.members}"/>
+
+                    <h:outputLabel value="References:" style="font-weight: bold;"/>
+                    <h:outputText escape="false" value="#{msetBean.currentMset.refs}"/>
+                </h:panelGrid>
+                <h:panelGrid style="width:100%; text-align: center">
+                    <p:commandButton value="OK" onclick="PF('msetQeaDialog').hide()"/>
+                </h:panelGrid>
+            </h:form>
+        </h:panelGrid> 
+    </p:dialog>
+    <p:remoteCommand name="updateMsetQea" process="@this" update=":summaryQeaForm"/>
 
     <p:dialog widgetVar="msetPathDialog" dynamic="true" modal="true" appendTo="@(body)" 
               onShow="updatePathMset()"
