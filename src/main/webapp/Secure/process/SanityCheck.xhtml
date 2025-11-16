@@ -13,6 +13,7 @@
     <ui:define name="myscript">
 
         <script type="text/javascript">
+            //instead of prerenderview, load page then performsanity Async.
             (function () {
                 if (window.__sanityBooted)
                     return;
@@ -88,43 +89,10 @@
                                      value="Workflow"/>
 
                 </h:panelGrid>
-                <p:remoteCommand name="rcViewRsd"              
-                                 actionListener="#{procBean.viewRsdPlot()}"
-                                 update=":hisTab:cmdPane"
-                                 onstart="PF('statusDialog').show();"
-                                 oncomplete="PF('statusDialog').hide();
-                                 PF('rsdDialog').show();" />
             </h:form>
         </h:panelGrid>
 
 
-
-        <p:dialog modal="true" widgetVar="fireBatchSaveDialog" 
-                  style="width: 400px; " 
-                  dynamic="true"
-                  appendTo="@(body)" 
-                  draggable="false" closable="true" resizable="false"> 
-            <h:form id="formFireDocx">
-                <h:panelGrid  style="width:100%; line-height: 25px; padding: 10px 20px 20px 20px; font-size: 13px">
-                    <h1 style="font-size: 25px;"> 
-                        <i class="pi pi-save" style="font-size: 2.0rem;"></i>
-                        Create your batch project
-                    </h1>    
-                    <p style="font-size: 14px">Resume later through your "Analysis Launchpad"</p>
-                    <h:panelGrid columns="2" style="width:360px;">
-                        <h4 style="color:#000000;">Title</h4>
-                        <p:inputText id="float-input" value="#{fireBaseController.fireDocName}"/>
-                        <h4 style="color:#000000;">Description</h4>
-                        <p:inputTextarea rows="6" cols="33" value="#{fireBaseController.fireDocDescription}"/>
-                    </h:panelGrid>
-                    <h:panelGrid style=" text-align: center; padding-top:10px;width:100%">
-                        <p:commandButton value="Save"
-                                         actionListener="#{batchprocess.exeBatchProcessing()}"
-                                         oncomplete="PF('fireBatchSaveDialog').hide();"/>
-                    </h:panelGrid>
-                </h:panelGrid>
-            </h:form>
-        </p:dialog>
 
         <p:dialog widgetVar="smplGrpDialog" 
                   header="Edit Group"
@@ -153,7 +121,6 @@
 
             </h:form>         
         </p:dialog>
-        <ui:include src="/template/_qc_rsd_dialog.xhtml" />
 
         <p:dialog widgetVar="viewDataDialog" header="Data View" dynamic="true" modal="true" appendTo="@(body)" height="460"
                   width="880px" hideEffect="explode" resizable="true">
