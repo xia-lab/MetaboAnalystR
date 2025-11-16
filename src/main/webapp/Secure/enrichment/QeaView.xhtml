@@ -202,12 +202,12 @@
                         <h:outputText escape="false" value="#{qb.fdrPval}"/>
                     </p:column> 
                     <p:column headerText="Details">  
-                        <p:commandLink value="View" update=":detailView :hisTab:cmdPane" oncomplete="PF('msetDialog').show()">  
+                        <p:commandLink value="View" update=":detailViewQea :hisTab:cmdPane" oncomplete="PF('msetQeaDialog').show()">  
                             <f:setPropertyActionListener value="#{qb.setName}" target="#{msetBean.msetNm}" /> 
                         </p:commandLink>
                     </p:column>   
                 </p:dataTable>     
-                <p:remoteCommand name="updateMset" process="@this" update=":detailView" oncomplete="PF('msetDialog').show()"/>
+                <p:remoteCommand name="updateMsetQea" process="@this" update=":detailViewQea" oncomplete="PF('msetQeaDialog').show()"/>
                 <h:panelGrid style="width: 95%; text-align: center; padding: 10px">
                     <p:commandButton value="Proceed" ajax="false" 
                                      icon="pi pi-angle-double-right" 
