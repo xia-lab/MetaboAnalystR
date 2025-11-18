@@ -19,7 +19,7 @@
 #'@export
 
 CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T, 
-                             chebi=F, kegg=T, metlin=F, lipid=F){
+                             chebi=F, kegg=T, metlin=F, lipid=F, mixed=F){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -37,10 +37,10 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
   
   if(.on.public.web){
     .set.mSet(mSetObj);
-    MetaboliteMappingExact(mSetObj, q.type, lipid);
+    MetaboliteMappingExact(mSetObj, q.type, lipid, mixed);
     mSetObj <- .get.mSet(mSetObj);
   }else{
-    mSetObj <- MetaboliteMappingExact(mSetObj, q.type, lipid);
+    mSetObj <- MetaboliteMappingExact(mSetObj, q.type, lipid, mixed);
   }
   
   # do some sanity check
@@ -83,7 +83,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
+MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F, mixed = F){
 
   mSetObj <- .get.mSet(mSetObj);
   
@@ -101,6 +101,10 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F){
   
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
+  }else if(anal.type %in% c("msetora", "msetssp", "msetqea") & mixed){
+    cmpd.db_met <- MetaboAnalystR:::.get.my.lib("compound_db.qs")
+    cmpd.db_lipid <- MetaboAnalystR:::.get.my.lib("lipid_compound_db.qs")
+    cmpd.db <- unique(rbind(cmpd.db_met, cmpd.db_lipid[,1:8]))
   }else if(anal.type == "utils"){
     cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
