@@ -102,8 +102,8 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F, mixed = F){
   if(anal.type %in% c("msetora", "msetssp", "msetqea") & lipid){
     cmpd.db <- .get.my.lib("lipid_compound_db.qs");
   }else if(anal.type %in% c("msetora", "msetssp", "msetqea") & mixed){
-    cmpd.db_met <- MetaboAnalystR:::.get.my.lib("compound_db.qs")
-    cmpd.db_lipid <- MetaboAnalystR:::.get.my.lib("lipid_compound_db.qs")
+    cmpd.db_met <- .get.my.lib("compound_db.qs")
+    cmpd.db_lipid <- .get.my.lib("lipid_compound_db.qs")
     cmpd.db <- unique(rbind(cmpd.db_met, cmpd.db_lipid[,1:8]))
   }else if(anal.type == "utils"){
     cmpd.db <- .get.my.lib("master_compound_db.qs");
