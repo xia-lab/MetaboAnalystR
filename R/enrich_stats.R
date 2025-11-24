@@ -18,35 +18,25 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  # make a clean dataSet$cmpd data based on name mapping
-  # only valid hmdb name will be used
-
-  # SSP input for enrich is different
+  # --- 1. Prepare Query ---
   if(mSetObj$analSet$type=="msetssp"){
-      ora.vec <- mSetObj$dataSet$cmpd;
+    ora.vec <- mSetObj$dataSet$cmpd;
   }else{
-     nm.map <- GetFinalNameMap(mSetObj);
-     valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
-     ora.vec <- nm.map$hmdb[valid.inx];
+    nm.map <- GetFinalNameMap(mSetObj);
+    valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
+    ora.vec <- nm.map$hmdb[valid.inx];
   }
   
-  q.size<-length(ora.vec);
-  
+  q.size <- length(ora.vec);
   if(all(is.na(ora.vec)) || q.size==0) {
     AddErrMsg("No valid HMDB compound names found!");
     return(0);
   }
-
-  # move to api only if R package + KEGG msets
+  
+  # --- 2. Handle KEGG API ---
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
-    
-    # make this lazy load
-    if(!exists("my.hyperscore.kegg")){ # public web on same user dir
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
+    if(!exists("my.hyperscore.kegg")){ .load.scripts.on.demand("util_api.Rc"); }
     mSetObj$api$oraVec <- ora.vec; 
-    
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
       toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter,
@@ -59,77 +49,75 @@ CalculateHyperScore <- function(mSetObj=NA){
     saveRDS(toSend, "tosend.rds")
     return(my.hyperscore.kegg());
   }
-
-    if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
-    }
-
   
+  # --- 3. Load Library (Memory Safe) ---
+  req.lib.name <- mSetObj$analSet$msetlibname
+  
+  need_reload <- !exists("current.msetlib", envir = .GlobalEnv) || 
+                 !exists("current.msetlib.name", envir = .GlobalEnv) || 
+                 get("current.msetlib.name", envir = .GlobalEnv) != req.lib.name
+  
+  if(need_reload){
+    if(exists("current.msetlib", envir = .GlobalEnv)){ rm(current.msetlib, envir = .GlobalEnv) }
+    gc() 
+    
+    # Load from disk (which Step 1 repaired)
+    loaded_lib <- qs::qread("current.msetlib.qs");
+    assign("current.msetlib", loaded_lib, envir = .GlobalEnv)
+    assign("current.msetlib.name", req.lib.name, envir = .GlobalEnv)
+  }
+  
+  current.msetlib <- get("current.msetlib", envir = .GlobalEnv)
   current.mset <- current.msetlib$member;
   
-  # make a clean metabilite set based on reference metabolome filtering
-  # also need to update ora.vec to the updated mset
+  # --- 4. Filter Sets ---
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.mset, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
   }
 
-  set.size<-length(current.mset);
-  if(set.size ==1){
-    AddErrMsg("Cannot perform enrichment analysis on a single metabolite set!");
+  set.size <- length(current.mset);
+  if(set.size <= 1){
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite set! Please re-run the library selection step.");
     return(0);
   }
   
-  # now perform enrichment analysis
-
-  # update data & parameters for ORA stats, based on suggestion
-  # https://github.com/xia-lab/MetaboAnalystR/issues/168
-  # https://github.com/xia-lab/MetaboAnalystR/issues/96
-  # https://github.com/xia-lab/MetaboAnalystR/issues/34
-
-  # the universe based on reference metabolome (should not matter, because it is already filtered based on the reference previously)
-
+  # --- 5. Stats ---
   my.univ <- unique(unlist(current.mset, use.names=FALSE));
   if(!is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     my.univ <- unique(mSetObj$dataSet$metabo.filter.hmdb);
   }
   uniq.count <- length(my.univ);
-  ora.vec <- ora.vec[ora.vec %in% my.univ];
-  q.size <- length(ora.vec); 
   
-  hits<-lapply(current.mset, function(x){x[x %in% ora.vec]});  
-  hit.num<-unlist(lapply(hits, function(x) length(x)), use.names = FALSE);
+  ora.vec.filtered <- ora.vec[ora.vec %in% my.univ];
+  q.size <- length(ora.vec.filtered);
   
-  if(sum(hit.num>0)==0){
+  hits <- lapply(current.mset, function(x){x[x %in% ora.vec.filtered]});  
+  hit.num <- unlist(lapply(hits, length), use.names = FALSE);
+  
+  if(sum(hit.num > 0) == 0){
     AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
   }
   
-  set.num<-unlist(lapply(current.mset, length), use.names = FALSE);
+  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
   
-  # prepare for the result table
-  res.mat<-matrix(NA, nrow=set.size, ncol=6);        
-  rownames(res.mat)<-names(current.mset);
-  colnames(res.mat)<-c("total", "expected", "hits", "Raw p", "Holm p", "FDR");
-  for(i in 1:set.size){
-    res.mat[i,1]<-set.num[i];
-    res.mat[i,2]<-q.size*(set.num[i]/uniq.count);
-    res.mat[i,3]<-hit.num[i];
-    
-    # use lower.tail = F for P(X>x)
-    # phyper("# of white balls drawn", "# of white balls in the urn", "# of black balls in the urn", "# of balls drawn")
-    res.mat[i,4]<-phyper(hit.num[i]-1, set.num[i], uniq.count-set.num[i], q.size, lower.tail=F);
-  }
+  res.mat <- matrix(NA, nrow=set.size, ncol=6);        
+  rownames(res.mat) <- names(current.mset);
+  colnames(res.mat) <- c("total", "expected", "hits", "Raw p", "Holm p", "FDR");
   
-  # adjust for multiple testing problems
+  res.mat[,1] <- set.num
+  res.mat[,2] <- q.size * (set.num / uniq.count)
+  res.mat[,3] <- hit.num
+  res.mat[,4] <- phyper(hit.num - 1, set.num, uniq.count - set.num, q.size, lower.tail = FALSE);
   res.mat[,5] <- p.adjust(res.mat[,4], "holm");
   res.mat[,6] <- p.adjust(res.mat[,4], "fdr");
   
-  res.mat <- res.mat[hit.num>0,];
-  
-  ord.inx<-order(res.mat[,4]);
-  mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx,],3);
+  res.mat <- res.mat[hit.num > 0, , drop=FALSE];
+  ord.inx <- order(res.mat[,4]);
+  mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx, , drop=FALSE], 3);
   mSetObj$analSet$ora.hits <- hits;
+  
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   return(.set.mSet(mSetObj));
 }

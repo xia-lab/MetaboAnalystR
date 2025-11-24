@@ -243,14 +243,27 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=default.dpi, width=NA)
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA){
+PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA, topN = 25){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  #calculate the enrichment fold change
-  folds <- mSetObj$analSet$ora.mat[,3]/mSetObj$analSet$ora.mat[,2];
-  names(folds) <- GetShortNames(rownames(mSetObj$analSet$ora.mat));
-  pvals <- mSetObj$analSet$ora.mat[,4];
+  # --- 1. PREPARE DATA FOR NETWORK (Use ALL data, Keep Original IDs) ---
+  # The network needs the IDs (rownames) to match the database, not English names.
+  res.mat.all <- mSetObj$analSet$ora.mat;
+  folds.all <- res.mat.all[,3]/res.mat.all[,2];
+  pvals.all <- res.mat.all[,4];
+  # Note: We do NOT rename folds.all, so it keeps IDs (e.g. hsa00123)
+  
+  # --- 2. PREPARE DATA FOR BARPLOT (Use TopN, Rename to Short Names) ---
+  res.mat.plot <- res.mat.all;
+  if(nrow(res.mat.plot) > topN){
+    res.mat.plot <- res.mat.plot[1:topN, ];
+  }
+  
+  folds.plot <- res.mat.plot[,3]/res.mat.plot[,2];
+  # Rename to human readable names ONLY for the barplot
+  names(folds.plot) <- GetShortNames(rownames(res.mat.plot));
+  pvals.plot <- res.mat.plot[,4];
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
@@ -263,17 +276,19 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, wi
   }
   h <- w;
   
-  #record img
+  # record img
   mSetObj$imgSet$ora <- imgName
   mSetObj$imgSet$current.img <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
-  PlotMSEA.Overview(folds, pvals);
+  # Use the TopN / Renamed data for the barplot
+  PlotMSEA.Overview(folds.plot, pvals.plot);
   dev.off();
   
   if(.on.public.web){
-    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds, pvals);
+    # Use the ALL / Original ID data for the network
+    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
   }
   
   return(.set.mSet(mSetObj));
@@ -295,14 +310,28 @@ PlotORA<-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, wi
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA){
+PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA, topN=25){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  #calculate the enrichment fold change
-  folds <- mSetObj$analSet$qea.mat[,3]/mSetObj$analSet$qea.mat[,4];
-  names(folds) <- GetShortNames(rownames(mSetObj$analSet$qea.mat));
-  pvals <- mSetObj$analSet$qea.mat[, "Raw p"];
+  # FIX: Need to load the QEA matrix (was missing in snippet)
+  res.mat.all <- mSetObj$analSet$qea.mat; 
+  
+  # --- 1. PREPARE DATA FOR NETWORK (Use ALL data, Keep Original IDs) ---
+  folds.all <- res.mat.all[,3]/res.mat.all[,4];
+  pvals.all <- res.mat.all[, "Raw p"];
+  
+  # --- 2. PREPARE DATA FOR BARPLOT (Use TopN, Rename to Short Names) ---
+  res.mat.plot <- res.mat.all;
+  if(nrow(res.mat.plot) > topN){
+    res.mat.plot <- res.mat.plot[1:topN, ];
+  }
+  
+  folds.plot <- res.mat.plot[,3]/res.mat.plot[,4];
+  # Rename for barplot
+  names(folds.plot) <- GetShortNames(rownames(res.mat.plot));
+  pvals.plot <- res.mat.plot[, "Raw p"];
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -315,11 +344,14 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=defau
   h <- w;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  PlotMSEA.Overview(folds, pvals);
+  
+  # Use TopN data for Barplot
+  PlotMSEA.Overview(folds.plot, pvals.plot);
   dev.off();
   
   if(.on.public.web){
-    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds, pvals);
+    # Use ALL data for Network
+    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
   }
   
   mSetObj$imgSet$qea <-imgName;
@@ -341,19 +373,19 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=defau
 PlotMSEA.Overview <- function(folds, pvals){
   
   # due to space limitation, plot top 50 if more than 50 were given
-  title <- "Metabolite Sets Enrichment Overview";
+  title <- "Enrichment Overview";
   ht.col <- GetMyHeatCols(length(folds));
-  if(length(folds) > 25){
-    folds <- folds[1:25];
-    pvals <- pvals[1:25];
-    ht.col <- ht.col[1:25];
-    title <- "Enrichment Overview (top 25)";
+  
+  if(length(folds) <= 25){
+     title <- paste0(title, " (top ", length(folds), ")");
   }
   
   op <- par(mar=c(5,20,4,6), oma=c(0,0,0,4));
   
+  # FIX: Changed space=c(0.5, 0.5) to space=0.5 to fix warning 
+  # "longer object length is not a multiple of shorter object length"
   barplot(rev(folds), horiz=T, col=rev(ht.col),
-          xlab="Enrichment Ratio", las=1, cex.name=0.75, space=c(0.5, 0.5),
+          xlab="Enrichment Ratio", las=1, cex.name=0.75, space=0.5,
           main= title);
   
   minP <- min(pvals);
@@ -382,7 +414,7 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'License: GNU GPL (>= 2)
 #'@export
 
-PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA, maxNameLen = 40){
+PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA, maxNameLen = 40, topN=25){
   
   mSetObj <- .get.mSet(mSetObj)
   if(.on.public.web){ load_ggplot() }
@@ -399,9 +431,9 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   if(enrichType == "ora"){
     results <- mSetObj$analSet$ora.mat
     my.cols <- GetMyHeatCols(nrow(results))
-    if(nrow(results) > 25){
-      results <- results[1:25,]
-      my.cols <- my.cols[1:25]
+    if(nrow(results) > topN){
+      results <- results[1:topN,]
+      my.cols <- my.cols[1:topN]
     }
     orig_names <- rownames(results)
     disp_names <- .trunc_unique(orig_names, maxNameLen)
@@ -416,9 +448,9 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   } else if(enrichType == "qea"){
     results <- mSetObj$analSet$qea.mat
     my.cols <- GetMyHeatCols(nrow(results))
-    if(nrow(results) > 25){
-      results <- results[1:25,]
-      my.cols <- my.cols[1:25]
+    if(nrow(results) > topN){
+      results <- results[1:topN,]
+      my.cols <- my.cols[1:topN]
     }
     orig_names <- rownames(results)
     disp_names <- .trunc_unique(orig_names, maxNameLen)

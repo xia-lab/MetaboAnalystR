@@ -29,68 +29,90 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@export
 
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
-
+  
+  print(paste("add current mset lib: ", libname, "======="));
   mSetObj <- .get.mSet(mSetObj);
-
-  if(libname=="self"){
+  
+  # 1. Handle "Self" (User Uploaded)
+  if(libname == "self"){
     ms.list <- mSetObj$dataSet$user.mset;
     ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
-    current.msetlib <- vector("list", 3)
-    names(current.msetlib) <- c("name", "member", "reference")
+
+    user.msetlib <- list();
+    user.msetlib$name <- names(ms.list);
+    user.msetlib$member <- ms.list;
+    user.msetlib$reference <- rep("User-uploaded", length(ms.list));
+
     mSetObj$analSet$msetlibname <- libname;
+
+    # Clear old and assign to global environment explicitly
+    if(exists("current.msetlib", envir = .GlobalEnv)){ rm(current.msetlib, envir = .GlobalEnv); }
+    if(exists("current.msetlib.name", envir = .GlobalEnv)){ rm(current.msetlib.name, envir = .GlobalEnv); }
+    assign("current.msetlib", user.msetlib, envir = .GlobalEnv);
+    assign("current.msetlib.name", libname, envir = .GlobalEnv);
+    qs::qsave(user.msetlib, "current.msetlib.qs");
+    return(.set.mSet(mSetObj));
+  }
+  
+  # 2. Handle KEGG (API-based)
+  if(!.on.public.web & grepl("kegg", libname)){ 
+    mSetObj$api$libname <- libname
+    mSetObj$api$excludeNum = excludeNum
+    mSetObj$analSet$msetlibname <- libname
+    return(.set.mSet(mSetObj));
+  }
+  
+  # 3. Handle Standard Libraries 
+  # Always download/load the RAW data to a local variable first
+  destfile <- paste(libname, ".qs", sep = "");
+  if(.on.public.web){
+      my.qs  <- paste(rpath, "libs/msets/", destfile, sep="");
+      raw.lib <- qs::qread(my.qs); 
   } else {
-    if(!.on.public.web & grepl("kegg", libname)){ # api only for KEGG msets
-      mSetObj$api$libname <- libname
-      mSetObj$api$excludeNum = excludeNum
-      mSetObj$analSet$msetlibname <- libname
-      return(.set.mSet(mSetObj));
-    }
-    
-    # feature enhancement https://omicsforum.ca/t/error-in-setcurrentmsetlib-function-in-r/2058
-    if(!exists("current.msetlib") || is.null(mSetObj$analSet$msetlibname) || mSetObj$analSet$msetlibname != libname) {
-        destfile <- paste(libname, ".qs", sep = "");
-        if(.on.public.web){
-            my.qs  <- paste(rpath, "libs/msets/", destfile, sep="");
-            current.msetlib <- qs::qread(my.qs);
-        } else {
-            my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
-            if(!file.exists(destfile)){
-                download.file(my.qs, destfile, method = "curl");
-            }
-            current.msetlib <- qs::qread(destfile);
-        }
-        mSetObj$analSet$msetlibname <- libname;
-    }
-    # create a named list, use the ids for list names
-    # https://github.com/xia-lab/MetaboAnalystR/issues/172
-    ms.list <- iconv(current.msetlib[, 3], from = 'utf8', to = 'utf8');
-    ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
-    names(ms.list) <- current.msetlib[,2];
+      my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
+      if(!file.exists(destfile)){
+          tryCatch({
+              download.file(my.qs, destfile, method = "curl", mode="wb");
+          }, error=function(e){
+              print(paste("Download failed:", e));
+          })
+      }
+      raw.lib <- qs::qread(destfile);
   }
 
+  # 4. Process the Raw Data
+  # Convert IDs (Column 3) to List
+  # Use [[]] to ensure we get a vector (works for both tibble and data.frame)
+  ms.list <- iconv(raw.lib[[3]], from = 'utf8', to = 'utf8');
+  ms.list <- lapply(ms.list, function(x) unique(unlist(strsplit(x, "; ", fixed=TRUE))));
+  names(ms.list) <- raw.lib[[2]]; # Use names from Column 2
+  
+  # 5. Apply Filtering
   if(excludeNum > 0){
     cmpd.count <- lapply(ms.list, length);
     sel.inx <- cmpd.count >= excludeNum;
     ms.list <- ms.list[sel.inx];
-    
-    if(libname!="self"){
-      current.msetlib <- current.msetlib[sel.inx,];
-    }
   }
   
-  # total uniq cmpds in the mset lib
   mSetObj$dataSet$uniq.count <- length(unique(unlist(ms.list, use.names = FALSE)));
   
-  # update current.mset and push to global env
-  current.msetlib$member <- ms.list;
+  # 6. Construct Clean List Object
+  final.msetlib <- list();
+  final.msetlib$member <- ms.list;
   
-  if(libname=="self"){
-    current.msetlib$name <- names(ms.list)
-    current.msetlib$reference <- rep("User-uploaded", length(ms.list))
-  }
+  # 7. Update Global State & Save to Disk
+  if(exists("current.msetlib", envir = .GlobalEnv)){ rm(current.msetlib, envir = .GlobalEnv); }
+  if(exists("current.msetlib.name", envir = .GlobalEnv)){ rm(current.msetlib.name, envir = .GlobalEnv); }
+  gc();
 
-  current.msetlib <<- current.msetlib;
-  qs::qsave(current.msetlib, "current.msetlib.qs");
+  # Use explicit assign to ensure we're writing to .GlobalEnv
+  assign("current.msetlib", final.msetlib, envir = .GlobalEnv);
+  assign("current.msetlib.name", libname, envir = .GlobalEnv);
+  mSetObj$analSet$msetlibname <- libname;
+
+  # Save to disk
+  qs::qsave(final.msetlib, "current.msetlib.qs");
+  
   return(.set.mSet(mSetObj));
 }
 
