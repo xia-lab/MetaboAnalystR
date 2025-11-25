@@ -599,6 +599,7 @@ GetSSPTable<-function(mSetObj=NA){
 #'@export
 #'
 GetHTMLMetSet<-function(mSetObj=NA, msetNm){
+
   mSetObj <- .get.mSet(mSetObj);
   
   hits <- NULL;
@@ -629,7 +630,11 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
       mset[grey.inx] <- paste("<font color=\"grey\">", "<b>", mset[grey.inx], "</b>", "</font>",sep="");
   }
   # get references
-  matched.inx <- match(tolower(msetNm), tolower(current.msetlib$name))[1];
+  if(is.null(current.msetlib$name)){
+    matched.inx <- match(tolower(msetNm), tolower(names(current.msetlib$member)))[1];
+  }else{
+    matched.inx <- match(tolower(msetNm), tolower(current.msetlib$name))[1];
+  }
   return(cbind(msetNm, paste(mset, collapse="; "), current.msetlib$reference[matched.inx]));
 }
 
