@@ -224,7 +224,7 @@ public class OptionBean {
 
     public SelectItem[] getFeatOpts() {
         SelectItem[] featOpts = new SelectItem[3];
-        featOpts[0] = new SelectItem("none", "--- Not Specified ---");
+        featOpts[0] = new SelectItem("mixed", "General");
         featOpts[1] = new SelectItem("met", "Metabolites");
         featOpts[2] = new SelectItem("lipid", "Lipids");
         return featOpts;

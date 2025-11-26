@@ -38,12 +38,23 @@
                                 </p:selectOneMenu>
 
                                 <p:outputLabel style="font-weight: bold" value="Try Example:"/>
-                                <p:selectOneRadio value="#{enrichLoader.exampleType}">
+                                
+                                    <!--
+                                    <p:selectOneRadio value="#{enrichLoader.exampleType}">
                                     <f:selectItem itemLabel="None" itemValue="none"/>
                                     <f:selectItem itemLabel="List 1 (metabolites)" itemValue="met"/>
                                     <f:selectItem itemLabel="List 2 (lipids)" itemValue="lipid"/>
                                     <p:ajax update=":ac:form1" event="change" listener="#{enrichLoader.updateOraArea()}"/>
-                                </p:selectOneRadio>
+                                        </p:selectOneRadio>
+                                    -->
+                                    <p:selectOneMenu value="#{enrichLoader.exampleType}" panelStyleClass="panel" style="width:180px" >
+                                        <f:selectItem itemLabel="None" itemValue="none"/>
+                                        <f:selectItem itemLabel="List 1 (general)" itemValue="mixed"/>
+                                        <f:selectItem itemLabel="List 2 (metabolites)" itemValue="met"/>
+                                        <f:selectItem itemLabel="List 3 (lipids)" itemValue="lipid"/>
+                                        <p:ajax update=":ac:form1" event="change" listener="#{enrichLoader.updateOraArea()}"/>
+                                    </p:selectOneMenu>
+                            
                             </h:panelGrid>
                             <h:panelGrid style="padding-left: 160px; padding-top: 10px; padding-bottom: 5px;">
                                 <p:commandButton value="Submit" ajax="false" 

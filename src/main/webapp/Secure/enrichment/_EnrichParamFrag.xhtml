@@ -23,6 +23,7 @@
                 your platform to eliminate the former effects. 
             </p>
             <p:selectOneRadio id="msetLib" value="#{msetBean.msetOpt}" layout="custom">  
+                <!--
                 <f:selectItem itemLabel="Pathway-associated metabolite sets (SMPDB)" itemValue="smpdb_pathway" />
                 <f:selectItem itemLabel="Pathway-associated metabolite sets (KEGG) (Dec2023)" itemValue="kegg_pathway" />
                 <f:selectItem itemLabel="Disease-associated metabolite sets (Blood)" itemValue="blood" />
@@ -42,6 +43,30 @@
                 <f:selectItem itemLabel="Pathway-associated lipid sets (WikiPathways - Mouse)" itemValue="wiki_mmu" />
                 <f:selectItem itemLabel="Pathway-associated metabolite sets (RaMP)" itemValue="RaMP_pathway" />
                 <f:selectItem itemLabel="Exposure-based metabolite sets" itemValue="exposure" />
+                -->
+
+                <f:selectItem itemLabel="Pathway-associated metabolite sets (SMPDB)" itemValue="smpdb_pathway" />
+                <f:selectItem itemLabel="Pathway-associated metabolite sets (KEGG)" itemValue="kegg_pathway" />
+                <f:selectItem itemLabel="Pathway-associated metabolite sets (KEGG-2023)" itemValue="kegg_pathway_2023" />
+                <f:selectItem itemLabel="Drug-pathway-associated metabolite sets" itemValue="drug" />
+                <f:selectItem itemLabel="Pathway-associated metabolite sets (RaMP)" itemValue="RaMP_pathway" />
+                <f:selectItem itemLabel="Pathway-associated metabolite sets (Lipid)" itemValue="lipid_pathway" />
+
+                <f:selectItem itemLabel="Disease-associated metabolite sets (Blood)" itemValue="blood" />
+                <f:selectItem itemLabel="Disease-associated metabolite sets (Urine)" itemValue="urine" />
+                <f:selectItem itemLabel="Disease-associated metabolite sets (CSF)" itemValue="csf" />
+                <f:selectItem itemLabel="Disease-associated metabolite sets (Feces)" itemValue="fecal" />
+
+                <f:selectItem itemLabel="Chemical class metabolite sets (Super-class)" itemValue="super_class" />
+                <f:selectItem itemLabel="Chemical class metabolite sets (Main-class)" itemValue="main_class" />
+                <f:selectItem itemLabel="Chemical class metabolite sets (Sub-class)" itemValue="sub_class" />  
+
+                <f:selectItem itemLabel="SNP-associated metabolite sets" itemValue="snp" />
+                <f:selectItem itemLabel="Exposure-based metabolite sets" itemValue="exposure" />                    
+                <f:selectItem itemLabel="Predicted metabolite sets" itemValue="predicted" />
+                <f:selectItem itemLabel="Location-based metabolite sets" itemValue="location" />
+
+                <f:selectItem itemLabel="Self-defined metabolite sets" itemValue="self" />
             </p:selectOneRadio>
 
             <p:selectOneRadio id="refLib" value="#{msetBean.libOpt}" layout="custom">  
@@ -51,13 +76,14 @@
 
             <h:panelGrid style="padding-left: 20px; width: 100%">
                 <p:outputLabel style="font-weight: bold; font-size: 14px" value="Please select a metabolite set library"/>
-                <p:panelGrid columns="2" layout="tabular" styleClass="myPanelGrid" style="width: 900px;">
+                <p:panelGrid columns="2" layout="tabular" styleClass="myPanelGrid" style="width: 1000px;">
 
                     <h:panelGroup layout="block" style="padding-left: 30px; width:180px">
                         <h:outputLabel style="font-weight: bold" value="Pathway based"/>
                     </h:panelGroup>
 
                     <h:panelGrid columns="3">
+                        <!--
                         <p:radioButton for="msetLib" itemIndex="0"/>
                         <h:panelGroup layout="block" style="width:100px">
                             <h:outputLabel value="SMPDB"/>   
@@ -80,19 +106,46 @@
                             <h:outputText value="pathways from RaMP (integrating HMDB, KEGG, Reactome, WikiPathways)."/>
                         </h:panelGroup>
 
-                        <!--<p:radioButton for="msetLib" itemIndex="14"/>
+                        <p:radioButton for="msetLib" itemIndex="14"/>
                         <h:outputLabel value="WikiPathways - Human"/>
                         <h:outputText value="6 lipid sets based on lipid pathways from WikiPathways."/>
 
                         <p:radioButton for="msetLib" itemIndex="15"/>
                         <h:outputLabel value="WikiPathways - Mouse"/>
-                        <h:outputText value="8 lipid sets based on lipid pathways from WikiPathways."/>-->
+                        <h:outputText value="8 lipid sets based on lipid pathways from WikiPathways."/>
+                        -->
+                        <p:radioButton for="msetLib" itemIndex="0"/>
+                        <h:panelGroup layout="block" style="width:100px">
+                            <h:outputLabel value="SMPDB"/>   
+                        </h:panelGroup>
+                        <h:outputText value="99 metabolite sets based on normal human metabolic pathways"/>  
+
+                        <p:radioButton for="msetLib" itemIndex="1"/>
+                        <h:outputLabel value="KEGG"/>
+                        <h:outputText value="81 metabolite sets based on KEGG human metabolic pathways (Nov. 2025)"/>
+
+                        <p:radioButton for="msetLib" itemIndex="2"/> <!-- To be retired -->
+                        <h:outputLabel value="KEGG 2023"/>
+                        <h:outputText value="80 metabolite sets based on KEGG human metabolic pathways (Dec. 2023) [Deprecated]"/>
+
+                        <p:radioButton for="msetLib" itemIndex="3"/>
+                        <h:outputLabel value="Drug related"/>
+                        <h:outputText value="461 metabolite sets based on drug pathways from SMPDB."/>
+
+                        <p:radioButton for="msetLib" itemIndex="4"/>
+                        <h:outputLabel value="RaMP-DB"/>
+                        <h:outputText value="3425 metabolite sets based on RaMP-DB pathways."/>
+
+                        <p:radioButton for="msetLib" itemIndex="5"/>
+                        <h:outputLabel value="Lipidomics"/>
+                        <h:outputText value="817 metabolite sets integrating PathBank, Reactome, WikiPathways, and KEGG (Nov. 2025)."/>
                     </h:panelGrid>
 
                     <h:panelGroup layout="block" style="padding-left: 30px; width:180px">
                         <h:outputLabel style="font-weight: bold" value="Disease signatures"/>
                     </h:panelGroup>
                     <h:panelGrid columns="3">
+                        <!--
                         <p:radioButton for="msetLib" itemIndex="2"/>
                         <h:panelGroup layout="block" style="width:100px">
                             <h:outputLabel value="Blood"/>
@@ -110,12 +163,54 @@
                         <p:radioButton for="msetLib" itemIndex="5"/>
                         <h:outputLabel value="Feces"/>
                         <h:outputText value="67 metabolite sets reported in human feces."/>
+                        -->
+                        <p:radioButton for="msetLib" itemIndex="6"/>
+                        <h:panelGroup layout="block" style="width:100px">
+                            <h:outputLabel value="Blood"/>
+                        </h:panelGroup>
+                        <h:outputText value="480 metabolite sets reported in human blood."/>
+
+                        <p:radioButton for="msetLib" itemIndex="7"/>
+                        <h:outputLabel value="Urine"/>
+                        <h:outputText value="385 metabolite sets reported in human urine."/>
+
+                        <p:radioButton for="msetLib" itemIndex="8"/>
+                        <h:outputLabel value="CSF"/>
+                        <h:outputText value="174 metabolite sets reported in human cerebral spinal fluid (CSF)."/>
+
+                        <p:radioButton for="msetLib" itemIndex="9"/>
+                        <h:outputLabel value="Feces"/>
+                        <h:outputText value="67 metabolite sets reported in human feces."/>
                     </h:panelGrid>
 
                     <h:panelGroup layout="block" style="padding-left: 30px; width:180px">
                         <h:outputLabel style="font-weight: bold" value="Chemcial structures"/>
                     </h:panelGroup>
                     <h:panelGrid columns="3">
+                        <!--
+                        <p:radioButton for="msetLib" itemIndex="10"/>
+                        <h:panelGroup layout="block" style="width:100px">
+                            <h:outputLabel escape="true" value="Super-class"/>   
+                        </h:panelGroup>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="39 super chemical class metabolite sets "/>
+                            <font style="color: orange">or lipid sets</font>
+                        </h:panelGroup>
+
+                        <p:radioButton for="msetLib" itemIndex="11"/>
+                        <h:outputLabel value="Main-class"/>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="617 main chemical class metabolite sets "/>
+                            <font style="color: orange">or lipid sets</font>
+                        </h:panelGroup>
+
+                        <p:radioButton for="msetLib" itemIndex="12"/>
+                        <h:outputLabel value="Sub-class"/>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="1250 sub chemical class metabolite sets "/>  
+                            <font style="color: orange">or lipid sets</font>
+                        </h:panelGroup>
+                        -->
                         <p:radioButton for="msetLib" itemIndex="10"/>
                         <h:panelGroup layout="block" style="width:100px">
                             <h:outputLabel escape="true" value="Super-class"/>   
@@ -144,6 +239,7 @@
                         <h:outputLabel style="font-weight: bold" value="Other types"/>
                     </h:panelGroup>
                     <h:panelGrid columns="3">
+                        <!--
                         <p:radioButton for="msetLib" itemIndex="6"/>
                         <h:panelGroup layout="block" style="width:100px">
                             <h:outputLabel value="SNPs"/>
@@ -163,14 +259,43 @@
                         </h:panelGroup>
                         <p:radioButton for="msetLib" itemIndex="17"/>
                         <h:outputLabel value="Exposure"/>
-                        <h:outputText value="62 metabolite sets based on dietary and chemical exposures."/>                            
+                        <h:outputText value="62 metabolite sets based on dietary and chemical exposures."/>       
+                        -->
+                        <p:radioButton for="msetLib" itemIndex="13"/>
+                        <h:panelGroup layout="block" style="width:100px">
+                            <h:outputLabel value="SNPs"/>
+                        </h:panelGroup>
+                        <h:outputText value="4,598 metabolite sets based on their associations with SNPs loci. "/>
+
+                        <p:radioButton for="msetLib" itemIndex="14"/>
+                        <h:outputLabel value="Exposure"/>
+                        <h:outputText value="62 metabolite sets based on dietary and chemical exposures."/>   
+
+                        <p:radioButton for="msetLib" itemIndex="15"/>
+                        <h:outputLabel value="Predicted"/>
+                        <h:outputText value="912 metabolic sets predicted to change in the case of dysfunctional enzymes."/>
+
+                        <p:radioButton for="msetLib" itemIndex="16"/>
+                        <h:outputLabel value="Locations"/>
+                        <h:panelGroup layout="block">
+                            <h:outputText value="78 metabolite "/>
+                            <font style="color: orange">and lipid </font>
+                            <h:outputText value="sets based on organ, tissue, and subcellular localizations."/>
+                        </h:panelGroup> 
                     </h:panelGrid>
 
                     <h:panelGroup layout="block" style="padding-left: 30px; width:180px">
                         <h:outputLabel style="font-weight: bold" value="Self defined"/>
                     </h:panelGroup>
                     <h:panelGrid columns="3">
+                        <!--
                         <p:radioButton for="msetLib" itemIndex="13"/>
+                        <h:panelGroup layout="block" style="width:100px">
+                            <p:commandLink value="Upload here" onclick="PF('msetUploadDialog').show()"/>
+                        </h:panelGroup>
+                        <h:outputText value="define your own customized metabolite sets"/>
+                        -->
+                        <p:radioButton for="msetLib" itemIndex="17"/>
                         <h:panelGroup layout="block" style="width:100px">
                             <p:commandLink value="Upload here" onclick="PF('msetUploadDialog').show()"/>
                         </h:panelGroup>
@@ -199,7 +324,7 @@
                     <p:commandLink value="Upload a reference metabolome based on your analytical platform" onclick="PF('libUploadDialog').show()"/>
                 </h:panelGrid>
 
-                <h:panelGrid style="width: 800px; text-align: center; padding-top: 10px">
+                <h:panelGrid style="width: 900px; text-align: center; padding-top: 10px">
                     <p:commandButton value="Submit" ajax="false" style="width:80px" rendered="#{!workflowBean.editMode}"
                                      onclick="PF('statusDialog').show()" 
                                      oncomplete="PF('statusDialog').hide()"                              

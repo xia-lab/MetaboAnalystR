@@ -104,24 +104,32 @@ public class EnrichUploadBean implements Serializable {
 
     public void updateOraArea() {
         switch (exampleType) {
+            case "mixed" -> {
+                sb.setCmpdIDType("name");
+                featType = "mixed";
+                msetOraList = "5-Phosphoribosylamine\nAcetyl-CoA\n8,9-Epoxyeicosatrienoic acid\nFructose 6-phosphate\nCer(d18:0/18:0)\nFatty acid\n"
+                        + "L-Isolucine\nD-Glucose\nL-Serine\nMG(18:1(9Z)/0:0/0:0)\nPropionic acid\nPyruvic acid\nbeta-Carotene\n(2Z,4E,6Z)-Decatrienoylcarnitine\n"
+                        + "Sphingosine 1-phosphate\n11-Dodecenoylcarnitine\nKynurenine\nLactic acid\nMethylarsonite";
+            }
             case "met" -> {
                 sb.setCmpdIDType("name");
                 featType = "met";
                 msetOraList = "Acetoacetic acid\nBeta-Alanine\nCreatine\nDimethylglycine\nFumaric acid\nGlycine\nHomocysteine\nL-Cysteine\n"
-                        + "L-Isolucine\nL-Phenylalanine\nL-Serine\nL-Threonine\nL-Tyrosine\nL-Valine\nPhenylpyruvic acid\nPropionic acid\nPyruvic acid\nSarcosine";
+                        + "L-Isolucine\nL-Phenylalanine\nL-Serine\nL-Threonine\nL-Tyrosine\nL-Valine\nPhenylpyruvic acid\nPropionic acid\nPyruvic acid\nSarcosine\n"
+                        + "Arsenic\nBenzene\nCaffeic acid\nCotinine\nCadmium\nLead\nThiocyanate";
             }
             case "lipid" -> {
                 sb.setCmpdIDType("name");
                 featType = "lipid";
-                msetOraList = "CerP(d18:1/26:1)\nDG(18:0/15:0)\nDG(18:2/19:0)\nLysoPC(10:0)\nLysoPC(17:0)\nLysoPE(22:2)\nPA(18:1/18:0)\nPA(18:1/21:0)\n"
-                        + "PA(20:4/20:0)\nPA(22:2/24:0)\nPA(22:6/18:1)\nPC(20:5/18:2)\nPC(P-18:0/18:1)\nPE(18:1/22:1)\nPE(18:2/16:0)\nPE(18:2/21:0)\n"
+                msetOraList = "CerP(d18:1/26:1(17Z))\nDG(18:0/15:0)\nDG(16:0_16:0)\nLysoPC(10:0)\nLysoPC(16:0/0:0)\nLysoPA(16:0/0:0)\nPA(18:1/18:0)\nPA(16:0/16:0)\n"
+                        + "PA(20:4/20:0)\nPA(22:2/24:0)\nPA(22:6/18:1)\nPC(32:0)\nCL(16:0/16:0/16:0/16:0)\nPE(16:0/16:0)\nPE(18:2/16:0)\nPE(18:2/21:0)\n"
                         + "PE(18:2/22:1)\nPE(20:2/18:2)\nPE(20:3/20:2)\nPE(20:3/22:0)\nPE(20:4/18:0)\nPE(20:4/20:0)\nPE(P-16:0/18:0)\nPE(P-18:0/13:0)\n"
-                        + "PE(P-18:0/17:0)\nPE(P-18:0/20:4)\nPE(P-18:0/20:5)\nPE(P-18:0/22:1)\nPE(P-20:0/22:6)\nPG(18:0/16:0)\nPG(18:1/18:0)\nPG(22:6/20:1)\n"
-                        + "PI(18:2/18:1)\nPI(22:2/16:0)\nPS(18:0/21:0)\nPS(18:1/20:3)\nPS(18:1/22:0)\nPS(18:1/24:1)\nPS(18:2/22:1)\nPS(20:1/18:0)\nPS(20:3/21:0)\n"
-                        + "PS(22:6/17:2)\nPS(22:6/18:0)\nSQDG(18:0/12:0)";
+                        + "PE(P-18:0/17:0)\nPE(P-18:0/20:4)\nPE(18:1/20:5)\nPE(P-18:0/22:1)\nPE(P-20:0/22:6)\nPG(18:0/16:0)\nPG(18:1/18:0)\nPG(16:0/16:0)\n"
+                        + "PI(18:2/18:1)\nPI(16:0/16:0)\nPS(18:0/21:0)\nPS(18:1/20:7)\nPS(18:1/22:0)\nPS(16:0/16:0)\nPS(18:2/22:1)\nPS(20:1/18:0)\nPS(20:3/21:0)\n"
+                        + "PS(22:6/17:2)\nPS(22:6/18:0)\nPGP(16:0/16:0)";
             }
             default -> {
-                featType = "none";
+                featType = "mixed";
                 msetOraList = "";
             }
         }
