@@ -2582,7 +2582,7 @@ public class DiagramView implements Serializable {
         // 2) Ensure project is saved
         boolean saveSuccess = false;
         try {
-            saveSuccess = fcb.saveProject("share");
+            saveSuccess = fcb.saveProject("workflow");
         } catch (Exception ex) {
             Logger.getLogger(DiagramView.class.getName()).log(Level.SEVERE, "Error saving project", ex);
         }
