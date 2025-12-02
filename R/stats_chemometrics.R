@@ -37,14 +37,14 @@ PCA.Anal <- function(mSetObj=NA){
 
   data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
-  if (cls.type == "cont") {                  
+  if (cls.type == "cont") {
     if (!is.numeric(grp))
       stop("'grp' must be numeric when cls.type = \"cont\"")
 
-    res <- vegan::adonis2(data.dist ~ grp)   
-    pair.res <- NULL                              
+    res <- vegan::adonis2(data.dist ~ grp)
+    pair.res <- NULL
 
-  } else {                                      
+  } else {
     grp      <- as.factor(grp)
     res      <- vegan::adonis2(data.dist ~ grp)
 
@@ -3070,13 +3070,13 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999, cls.type = "d
 ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = 999) {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
-  
+
   # Calculate PERMANOVA significance
   res <- .calculateDistSig(pc.mat, cls, cls.type)
-  
+
   # Extract the main results
   resTab <- res[[1]][1, ]
-  
+
   return(signif(resTab$Pr, 5))
 }
 
