@@ -342,6 +342,7 @@ Read.TextDataTs <- function(mSetObj=NA, filePath, format="rowu"){
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   
   qs::qsave(conc, file="data_orig.qs");
+  qs::qsave(conc, file="data_orig_0.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   
