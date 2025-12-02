@@ -466,7 +466,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
       if(lbl.type == "qc"){
         rownames(dat) <- smpl.nms;
         #mSetObj$dataSet$orig <- dat;
-        qs::qsave(dat, file="data_orig.qs");
+        qs::qsave(dat, file="data_orig_0.qs");
         mSetObj$dataSet$cmpd <- colnames(dat);
         return(1);
       }
@@ -671,7 +671,7 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
 
   #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   # save a copy for reproducible analysis
-  qs::qsave(conc, file="data_orig.qs");
+  qs::qsave(conc, file="data_orig_0.qs");
   mSetObj$dataSet$cls_orig <- mSetObj$dataSet$orig.cls;
 
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
@@ -1326,9 +1326,9 @@ GetPrimaryInfo <-function(mSetObj=NA, metadata){
 
 checkDataGenericFormat <- function() {
   
-  if(!file.exists("data_orig.qs")) return(0)
+  if(!file.exists("data_orig_0.qs")) return(0)
   
-  dt <- qs::qread("data_orig.qs");
+  dt <- qs::qread("data_orig_0.qs");
   if(all(sapply(colnames(dt), FUN = function(x) {grepl("__",x)}))) {
     return(1)
   } 
@@ -1475,7 +1475,7 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
     mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
     mSetObj <- .get.mSet(mSetObj);
 
-    conc <- qs::qread(file="data_orig.qs");
+    conc <- qs::qread(file="data_orig_0.qs");
     int.mat <- conc;
     dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
 
@@ -1504,7 +1504,7 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
     mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
     mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
 
-    qs::qsave(int.mat, file="data_orig.qs");
+    qs::qsave(int.mat, file="data_orig_0.qs");
     return(.set.mSet(mSetObj));
 } 
 
@@ -1516,7 +1516,7 @@ Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="ro
     mSetObj <- ReadMetaData(mSetObj, metaPath);
     mSetObj <- .get.mSet(mSet);
 
-    conc <- qs::qread(file="data_orig.qs");
+    conc <- qs::qread(file="data_orig_0.qs");
     int.mat <- conc;
     dose <- as.numeric(gsub(".*_", "", as.character(mSetObj$dataSet$cls)))
 
@@ -1545,7 +1545,7 @@ Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="ro
     mSetObj$dataSet$orig.cls <- mSetObj$dataSet$cls <- meta.reorder;
     mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[order(dose)];
     mSetObj[["dataSet"]][["cls.type"]] <- lbl.type;
-    qs::qsave(int.mat, file="data_orig.qs");
+    qs::qsave(int.mat, file="data_orig_0.qs");
     return(.set.mSet(mSetObj));
 }
 

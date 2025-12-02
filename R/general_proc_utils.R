@@ -19,8 +19,8 @@
 SanityCheckData <- function(mSetObj=NA){
   #save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
-  if(file.exists("data_orig.qs")){  
-    orig.data <- qs::qread("data_orig.qs");
+  if(file.exists("data_orig_0.qs")){  
+    orig.data <- qs::qread("data_orig_0.qs"); # use the original version
   } else {
     return(0);
   }  
@@ -185,7 +185,7 @@ SanityCheckData <- function(mSetObj=NA){
     
     
     ord.inx <- order(mSetObj$dataSet$orig.cls);
-    mSetObj$dataSet$orig.cls <- cls[ord.inx];
+    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$orig.cls[ord.inx];
     mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[ord.inx];
     if(!is.null(mSetObj$dataSet$meta.info)){
       mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
