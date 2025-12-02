@@ -58,9 +58,18 @@
     cls.type2 <- "none"             # marker meaning “no shape mapping”
   }
   
+  ## Limit PCs for large datasets to avoid performance issues ----------
+  n.samples <- nrow(data)
+  if (n.samples > 300) {
+    pc.num <- min(pc.num, 3)
+    data <- data[, 1:pc.num, drop = FALSE]
+    pclabels <- pclabels[1:pc.num]
+  }
+
   ## PERMANOVA p-values for all PC pairs ------------------------------
   pc.mat   <- as.matrix(data)
   pval.mat <- matrix(NA_real_, pc.num, pc.num)
+
   for (i in 1:(pc.num - 1))
     for (j in (i + 1):pc.num)
       pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j],
