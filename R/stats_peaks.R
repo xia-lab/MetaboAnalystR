@@ -154,6 +154,7 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   
   #mSetObj$dataSet$orig <- t(values);
   qs::qsave(t(values), file="data_orig.qs");
+  qs::qsave(t(values), file="data_orig_0.qs");
   mSetObj$msgSet$proc.msg <- msg;
   mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
   mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);

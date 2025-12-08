@@ -235,6 +235,7 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   rownames(conc) <- smpl.nms;
   colnames(conc) <- var.nms;
   qs::qsave(conc, file="data_orig.qs");
+  qs::qsave(conc, file="data_orig_0.qs");
   
   # check for class labels at least two replicates per class
   if(min(table(cls.lbl)) < 3){
