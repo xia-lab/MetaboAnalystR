@@ -467,6 +467,7 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
         rownames(dat) <- smpl.nms;
         #mSetObj$dataSet$orig <- dat;
         qs::qsave(dat, file="data_orig_0.qs");
+        qs::qsave(conc, file="data_orig.qs");
         mSetObj$dataSet$cmpd <- colnames(dat);
         return(1);
       }
@@ -672,6 +673,7 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   #mSetObj$dataSet$orig <- conc; # copy to be processed in the downstream
   # save a copy for reproducible analysis
   qs::qsave(conc, file="data_orig_0.qs");
+  qs::qsave(conc, file="data_orig.qs");
   mSetObj$dataSet$cls_orig <- mSetObj$dataSet$orig.cls;
 
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
