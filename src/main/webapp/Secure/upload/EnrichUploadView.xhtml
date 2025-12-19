@@ -22,7 +22,7 @@
                                 <p:outputLabel style="font-size: 14px; font-weight: bold" value="Please enter a one-column compound list: "/>
                             </h:panelGrid>
                             <h:panelGrid id="msetArea" style="padding-left:20px;">
-                                <p:inputTextarea  autoResize="false" value="#{enrichLoader.msetOraList}" rows="16" cols="36" />
+                                <p:inputTextarea  autoResize="false" value="#{enrichLoader.msetOraList}" rows="18" cols="36"/>
                             </h:panelGrid>
                             <h:panelGrid id="parPane" columns="2" style="height: 100%; padding-top: 5px;">
                                 <h:panelGroup layout="block" style="width: 110px">
@@ -38,15 +38,7 @@
                                 </p:selectOneMenu>
 
                                 <p:outputLabel style="font-weight: bold" value="Try Example:"/>
-                                
-                                    <!--
-                                    <p:selectOneRadio value="#{enrichLoader.exampleType}">
-                                    <f:selectItem itemLabel="None" itemValue="none"/>
-                                    <f:selectItem itemLabel="List 1 (metabolites)" itemValue="met"/>
-                                    <f:selectItem itemLabel="List 2 (lipids)" itemValue="lipid"/>
-                                    <p:ajax update=":ac:form1" event="change" listener="#{enrichLoader.updateOraArea()}"/>
-                                        </p:selectOneRadio>
-                                    -->
+                      
                                     <p:selectOneMenu value="#{enrichLoader.exampleType}" panelStyleClass="panel" style="width:180px" >
                                         <f:selectItem itemLabel="None" itemValue="none"/>
                                         <f:selectItem itemLabel="List 1 (general)" itemValue="mixed"/>
