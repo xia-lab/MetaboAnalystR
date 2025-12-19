@@ -757,7 +757,25 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     if(smplDist=="correlation"){
       my.dist2 <- cor(data1sc, method="pearson")
       my.dist2 <- 1-my.dist2 
-      my.dist2 <- as.dist(my.dist2, diag = FALSE, upper = F)
+      my.dist2 <- as.dist(my.dist2, diag = FALSE, upper = F);
+
+    } else if (smplDist == "bray") { # Bray-Curtis requires the vegan package
+        library(vegan)
+        
+        # 1. Transpose data (Features x Samples -> Samples x Features)
+        # vegan requires samples as rows
+        dat.t <- t(data1sc)
+        
+        # 2. Check for negative values (common in normalized data)
+        if (min(dat.t, na.rm=TRUE) < 0) {
+            # Shift data to be non-negative: X_new = X + |min|
+            print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
+            dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
+        }
+        
+        # 3. Calculate Distance
+        my.dist2 <- vegan::vegdist(dat.t, method = "bray")
+
     }else{
       my.dist2 = dist(t(data1sc), method = smplDist)
     }
@@ -770,6 +788,25 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       my.dist <- cor(t(data1sc), method="pearson")
       my.dist <- 1-my.dist 
       my.dist <- as.dist(my.dist, diag = FALSE, upper = F)
+
+  } else if (smplDist == "bray") { # Bray-Curtis requires the vegan package
+
+        library(vegan)
+        
+        # 1. Transpose data (Features x Samples -> Samples x Features)
+        # vegan requires samples as rows
+        dat.t <- data1sc;
+        
+        # 2. Check for negative values (common in normalized data)
+        if (min(dat.t, na.rm=TRUE) < 0) {
+            # Shift data to be non-negative: X_new = X + |min|
+            print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
+            dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
+        }
+        
+        # 3. Calculate Distance
+        my.dist <- vegan::vegdist(dat.t, method = "bray")
+
     }else{
       my.dist = dist(data1sc, method = smplDist)
     }
@@ -822,7 +859,231 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@import qs
 #'@export
 #'
+
 PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
+                        width=NA, dataOpt, scaleOpt, smplDist, 
+                        clstDist, palette, fzCol,fzRow, viewOpt="detail", rowV=T, 
+                        colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
+
+  mSetObj <- .get.mSet(mSetObj);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$heatmap <- imgName;
+  
+  cls <- mSetObj$dataSet$cls;
+  cls.type <- mSetObj$dataSet$cls.type;
+  cls.class <- mSetObj$dataSet$type.cls.lbl;
+  
+  ordered.cls <- is.ordered(cls);
+  
+  # record the paramters
+  mSetObj$analSet$htmap <- list(dist.par=smplDist, clust.par=clstDist);
+  
+  # set up data set
+  if(dataOpt=="norm"){
+    my.data <- mSetObj$dataSet$norm;
+  }else{
+    my.data <- qs::qread("prenorm.qs");
+  }
+  
+  if(is.null(var.inx)){
+    hc.dat<-as.matrix(my.data);
+  }else{
+    hc.dat<-as.matrix(my.data[,var.inx]);
+  }
+  
+  # need to control for very large data plotting
+  if(ncol(hc.dat) > 1000 & viewOpt!="detail"){
+    includeRowNames <- FALSE;
+  }
+  if(.on.public.web){
+    if(ncol(hc.dat) > 5000){
+      filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+      rk <- rank(-filter.val, ties.method='random');
+      hc.dat <- hc.dat[,rk <=5000];
+      print("Data is reduced to 5000 vars based on IQR ..");
+    }
+  }
+  
+  colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
+  
+  if(!ordered.cls && cls.class == "integer"){
+    hc.cls <- as.factor(as.numeric(levels(cls))[cls]);
+  }else{
+    hc.cls <- cls;
+  }
+  
+  # set up colors for heatmap
+  if(palette=="gbr"){
+    colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
+  }else if(palette == "heat"){
+    colors <- grDevices::heat.colors(256);
+  }else if(palette == "topo"){
+    colors <- grDevices::topo.colors(256);
+  }else if(palette == "gray"){
+    colors <- grDevices::colorRampPalette(c("grey90", "grey10"), space="rgb")(256);
+  }else if(palette == "byr"){
+    colors <- rev(grDevices::colorRampPalette(RColorBrewer::brewer.pal(10, "RdYlBu"))(256));
+  }else if(palette == "viridis") {
+    colors <- rev(viridis::viridis(10))
+  }else if(palette == "plasma") {
+    colors <- rev(viridis::plasma(10))
+  }else if(palette == "npj"){
+    colors <- c("#00A087FF","white","#E64B35FF")
+  }else if(palette == "aaas"){
+    colors <- c("#4DBBD5FF","white","#E64B35FF");
+  }else if(palette == "d3"){
+    colors <- c("#2CA02CFF","white","#FF7F0EFF");
+  }else {
+    colors <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256));
+  }
+  
+  if(cls.type == "disc"){
+    annotation <- data.frame(class = hc.cls);
+    rownames(annotation) <- rownames(hc.dat); 
+  }else{
+    annotation <- NA;
+  }
+  # compute size for heatmap
+  plot_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width);
+  h <- plot_dims$height;
+  w <- plot_dims$width;
+  
+  # make the width smaller for group average
+  if(grp.ave){
+    w <- length(levels(cls))*25 + 300;
+    w <- round(w/72,2);
+  }
+  
+  if(border){
+    border.col<-"grey60";
+  }else{
+    border.col <- NA;
+  }
+  
+
+  format <- tolower(format)
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  on.exit(grDevices::dev.off(), add = TRUE)
+
+  if(cls.type == "disc"){    
+    
+    if(ordered.cls){
+      ord.inx <- order(hc.cls);
+      hc.cls <- hc.cls[ord.inx];
+      hc.dat <- hc.dat[ord.inx,];
+    }else if(cls.class =="integer"){
+      hc.cls <- as.factor(as.numeric(levels(hc.cls))[hc.cls]);
+    }
+    # set up color schema for samples
+    
+    col.def <- GetColorSchema(hc.cls, palette == "gray");
+    cols <- ExpandSchema(cls, col.def);
+
+    uniq.cols <- col.def;  
+    names(uniq.cols) <- unique(as.character(hc.cls));
+    ann_colors <- list(class= uniq.cols);
+    if(grp.ave){ # only use group average
+      lvs <- levels(cls);
+      my.mns <- matrix(ncol=ncol(hc.dat),nrow=length(lvs));
+      for(i in 1:length(lvs)){
+        my.mns[i,]<- colMeans(hc.dat[hc.cls==lvs[i], ]);
+      }
+      rownames(my.mns) <- lvs;
+      colnames(my.mns) <- colnames(hc.dat);
+      hc.dat <- my.mns;
+      hc.cls <- as.factor(lvs);
+      annotation <- data.frame(class = hc.cls);
+      rownames(annotation) <- rownames(hc.dat); 
+    }
+    
+    # ------------- UPDATED BLOCK START -------------
+    # Default distances (passed as strings if not Bray)
+    dist.for.rows <- smplDist
+    dist.for.cols <- smplDist
+
+    if(smplDist == "bray"){
+        library(vegan)
+        
+        # 1. APPLY SCALING FIRST
+        # Critical: PlotHeatMap calculates Bray on the SCALED data. 
+        # We must replicate this to get identical clusters.
+        # Note: We assume scale_mat is available in the environment.
+        dat.for.dist <- scale_mat(t(hc.dat), scaleOpt)
+        
+        # 2. FEATURE DISTANCE (For Heatmap Rows)
+        # Input: Features x Samples (scaled)
+        # vegdist calculates distance between ROWS of the input.
+        feat.mat <- dat.for.dist
+        if (min(feat.mat, na.rm=TRUE) < 0) {
+            feat.mat <- feat.mat + abs(min(feat.mat, na.rm=TRUE))
+        }
+        dist.for.rows <- vegan::vegdist(feat.mat, method = "bray")
+        
+        # 3. SAMPLE DISTANCE (For Heatmap Cols)
+        # Input: Samples x Features (scaled)
+        # vegdist needs Samples as ROWS.
+        smpl.mat <- t(dat.for.dist)
+        if (min(smpl.mat, na.rm=TRUE) < 0) {
+            smpl.mat <- smpl.mat + abs(min(smpl.mat, na.rm=TRUE))
+        }
+        dist.for.cols <- vegan::vegdist(smpl.mat, method = "bray")
+    }
+    # ------------- UPDATED BLOCK END -------------
+
+    p<- pheatmap::pheatmap(t(hc.dat), 
+                      annotation=annotation, 
+                      fontsize_row=fzRow, 
+                      fontsize_col=fzCol,
+                      
+                      # Use the calculated distance objects (or strings)
+                      clustering_distance_rows = dist.for.rows,
+                      clustering_distance_cols = dist.for.cols,
+                      
+                      clustering_method = clstDist, 
+                      border_color = border.col,
+                      cluster_rows = colV, 
+                      cluster_cols = rowV,
+                      scale = scaleOpt,
+                      legend = show.legend,
+                      annotation_legend = show.annot.legend, 
+                      show_rownames=includeRowNames,
+                      color = colors,
+                      silent = TRUE);
+                      
+    if(colV){
+      p$tree_row$order <- rev(p$tree_row$order)
+      colV <-  p$tree_row
+    }else{
+      hc.dat <- hc.dat[,ncol(hc.dat):1]
+    }
+    
+    pheatmap::pheatmap(t(hc.dat), 
+                      annotation=annotation, 
+                      annotation_colors = ann_colors,
+                      fontsize_row=fzRow, 
+                      fontsize_col=fzCol,
+                      
+                      # Use the calculated distance objects (or strings)
+                      clustering_distance_rows = dist.for.rows,
+                      clustering_distance_cols = dist.for.cols,
+                      
+                      clustering_method = clstDist, 
+                      border_color = border.col,
+                      cluster_rows =  colV, 
+                      cluster_cols = rowV,
+                      scale = scaleOpt,
+                      legend = show.legend,
+                      annotation_legend = show.annot.legend, 
+                      show_rownames=includeRowNames,
+                      color = colors);
+  }else{
+    heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
+
+  }
+  return(.set.mSet(mSetObj));
+}
+
+PlotStaticHeatMap_old <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
                         width=NA, dataOpt, scaleOpt, smplDist, 
                         clstDist, palette, fzCol,fzRow, viewOpt="detail", rowV=T, 
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){

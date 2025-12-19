@@ -216,15 +216,41 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   sz <- max(as.numeric(annoPer) / 100, 0.015)
   bf <- min(0.01, (sz / 3))
 
+  # ----------------------------------------------------
+  # CALCULATE DISTANCE (Used for BOTH Interactive and Static)
+  # ----------------------------------------------------
   if (smplDist == "correlation") {
     my.dist <- cor(t(data1sc), method="pearson")
     my.dist <- 1 - my.dist
-    my.dist <- as.dist(my.dist, diag=FALSE, upper=FALSE)
+    my.dist <- as.dist(my.dist, diag=FALSE, upper=FALSE);
+
+  } else if (smplDist == "bray") { # Bray-Curtis requires the vegan package
+      # Note: vegan::vegdist calculates distance between rows
+      # data1sc rows are samples (since data1sc = t(hc.dat) and hc.dat cols were samples?) 
+      # Actually data1sc is Samples x Features here based on iheatmap usage.
+      
+      library(vegan)
+      dat.t <- data1sc;
+      
+      # Check for negative values (common in normalized data)
+      if (min(dat.t, na.rm=TRUE) < 0) {
+          # Shift data to be non-negative: X_new = X + |min|
+          print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
+          dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
+      }
+      
+      # Calculate Distance
+      my.dist <- vegan::vegdist(dat.t, method = "bray")
+
   } else {
     my.dist <- dist(data1sc, method=smplDist)
   }
 
   dend_row <- hclust(my.dist, method=clstDist)
+  
+  # ----------------------------------------------------
+  # INTERACTIVE PLOT (iheatmapr)
+  # ----------------------------------------------------
   p <- iheatmap(data1sc, name="value", x_categorical=TRUE,
                 layout=list(font=list(size=fzAnno)),
                 colors=colors,
@@ -267,10 +293,11 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   as_json <- attr(as_list, "TOJSON_FUNC")(as_list)
   as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
 
-  #print(plotjs)
   write(as_json, plotjs)
 
-  # always generate the static download using the requested format
+  # ----------------------------------------------------
+  # STATIC PLOT (pheatmap)
+  # ----------------------------------------------------
   includeRowNames <- isTRUE(showRownm)
   static_dims <- get_pheatmap_dims(t(hc.dat), annotation, viewOpt, width)
   static_h <- static_dims$height
@@ -282,11 +309,12 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
     Cairo::Cairo(file=imgName, unit="in", dpi=dpi, width=static_w, height=static_h, type=format, bg="white")
   }
 
+  # KEY FIX: Pass 'my.dist' to clustering_distance_rows instead of 'smplDist'
   static_ph <- pheatmap::pheatmap(t(hc.dat),
                                   annotation=annotation,
                                   fontsize_row=fzRow,
                                   fontsize_col=fzCol,
-                                  clustering_distance_rows=smplDist,
+                                  clustering_distance_rows=my.dist, # Use the calculated distance object
                                   clustering_method=clstDist,
                                   border_color=border.col,
                                   cluster_rows=TRUE,
@@ -297,13 +325,14 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
                                   show_rownames=includeRowNames,
                                   color=colors,
                                   silent=TRUE)
+  
   static_ph$tree_row$order <- rev(static_ph$tree_row$order)
 
   pheatmap::pheatmap(t(hc.dat),
                      annotation=annotation,
                      fontsize_row=fzRow,
                      fontsize_col=fzCol,
-                     clustering_distance_rows=smplDist,
+                     clustering_distance_rows=my.dist, # Use the calculated distance object
                      clustering_method=clstDist,
                      border_color=border.col,
                      cluster_rows=static_ph$tree_row,
@@ -316,7 +345,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
 
   grDevices::dev.off()
 
-  mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist)
+  mSetObj$analSet$htmap2 <- list(dist.par=smplDist, clust.par=clstDist);
   return(.set.mSet(mSetObj))
 }
 
