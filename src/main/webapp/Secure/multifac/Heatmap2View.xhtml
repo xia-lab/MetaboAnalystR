@@ -53,7 +53,8 @@
                         <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.distOpt}">
                             <f:selectItem itemLabel="Euclidean" itemValue="euclidean"/> 
                             <f:selectItem itemLabel="Pearson" itemValue="correlation"/> 
-                            <f:selectItem itemLabel="Minkowski" itemValue="minkowski"/>                         
+                            <f:selectItem itemLabel="Minkowski" itemValue="minkowski"/>    
+                            <f:selectItem itemLabel="Bray-Curtis" itemValue="bray"/> 
                         </p:selectOneMenu>
                         <h:outputLabel style="font-weight: bold" value="Clustering algorithm:"/>
                         <p:selectOneMenu styleClass="menu" panelStyleClass="panel" value="#{hm2Bean.clusterOpt}">
@@ -317,6 +318,6 @@
 
 
         </h:panelGrid> 
-                <ui:include src="/template/_graphic_dialog.xhtml" />
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>

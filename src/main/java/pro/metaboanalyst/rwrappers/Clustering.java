@@ -39,8 +39,9 @@ public class Clustering {
             RConnection RC = sb.getRConnection();
             String rCommand = "PlotHeatMap(NA" + ", \"" + imgName + "\", \""
                     + format + "\", " + dpi + ", width=NA, \"" + dataOpt + "\", \"" + scaleOpt + "\", \""
-                    + smplDist + "\", \"" + clstDist + "\",\"" + colors + "\", " + fzCol + "," + fzRow + ", " + annoFz + "," + annoHeight + "," + unitCol + ", " + unitRow + ", " + rowV + ", "
-                    + colV + ", NULL, " + drawBorder + ", " + grpAve + ", " + showLegend + ", " + showAnnotLegend + ",  "
+                    + smplDist + "\", \"" + clstDist + "\",\"" + colors + "\", " + fzCol + "," + fzRow + ", " + annoFz + "," + annoHeight + "," 
+                    + unitCol + ", " + unitRow + ", " + rowV + ", " + colV + ", NULL, " + drawBorder + ", " + grpAve + ", " 
+                    + showLegend + ", " + showAnnotLegend + ",  "
                     + showColNames + "," + showRowNames + "," + maxFeatureNum + ")";
             RCenter.recordRCommand(RC, rCommand);
             sb.recordRCommandFunctionInfo(rCommand, "Heatmap");
@@ -69,35 +70,6 @@ public class Clustering {
         }
     }
 
-    /*
-    public static void plotHeatMap(SessionBean1 sb, String imgName, String format, int dpi, String dataOpt, String scaleOpt, String smplDist, String clstDist, String colors, int fontSize, String viewOpt, String rowV, String colV, String drawBorder, String grpAve, String showLegend, String showAnnotLegend, String showRowNames) {
-        try {
-            RConnection RC = sb.getRConnection();
-            String rCommand = "PlotHeatMap(NA" + ", \"" + imgName + "\", \"" + 
-                    format + "\", " + dpi + ", width=NA, \"" + dataOpt + "\", \"" + scaleOpt + "\", \"" + 
-                    smplDist + "\", \"" + clstDist + "\",\"" + colors + "\", " + fontSize + ", \"" + viewOpt + "\", " + rowV + ", " + 
-                    colV + ", NULL, " + drawBorder + ", " + grpAve + ", " + showLegend + ", " + showAnnotLegend + ", " + showRowNames + ")";
-            RCenter.recordRCommand(RC, rCommand);
-            sb.addGraphicsCMD("heatmap", rCommand);
-            RC.voidEval(rCommand);
-        } catch (RserveException rse) {
-            System.out.println(rse);
-        }
-    }
-
-    public static void plotSubHeatMap(SessionBean1 sb, String imgName, String format, int dpi, String dataOpt, String scaleOpt, String smplDist,
-            String clstDist, String colors, int fontSize, String method, int num, String viewOpt, String rowV, String colV, String drawBorder, String grpAve, String showLegend, String showAnnotLegend, String showRowNames) {
-        try {
-            RConnection RC = sb.getRConnection();
-            String rCommand = "PlotSubHeatMap(NA" + ", \"" + imgName + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + dataOpt + "\", \"" + scaleOpt + "\", \"" + smplDist + "\", \"" + clstDist + "\",\"" + colors + "\", " + fontSize + ", \"" + method + "\", " + num + ", \"" + viewOpt + "\", " + rowV + ", " + colV + ", " + drawBorder + ", " + grpAve + ", " + showLegend + ", " + showAnnotLegend + ", " + showRowNames + ")";
-            RCenter.recordRCommand(RC, rCommand);
-            sb.addGraphicsCMD("heatmap", rCommand);
-            RC.voidEval(rCommand);
-        } catch (RserveException rse) {
-            System.out.println(rse);
-        }
-    }
-     */
     public static void plotKmeans(SessionBean1 sb, String imgName, String format, int dpi, int clustNum, String colPal, String kmFacet) {
         try {
             RConnection RC = sb.getRConnection();
