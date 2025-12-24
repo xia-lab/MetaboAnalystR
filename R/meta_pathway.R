@@ -1957,11 +1957,6 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
 
   }
   
-  # print(paste0("--------- mSetNormedNM to save is --->", mSetNormedNM))
-  # mSet$cmdSet <<- NULL;
-  # mSetObj$cmdSet <- NULL;
-  # qs::qsave(mSetObj, file = mSetNormedNM)
-
   if(.on.public.web){
     .set.mSet(mSetObj)
     return(1)

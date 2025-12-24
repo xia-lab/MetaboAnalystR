@@ -806,25 +806,6 @@ cleanMem <- function() {
     gc(); 
 }
 
-#'Retrieve last command from the Rhistory.R file
-#'@description Fetches the last command from the Rhistory.R file
-#'@param regexp Retrieve last command from Rhistory file
-#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
-#'McGill University, Canada
-#'License: GNU GPL (>= 2)
-GetCMD<-function(regexp){
-  # store all lines into a list object
-  all.lines<-readLines("Rhistory.R");
-  
-  all.matches<-grep(regexp, all.lines, value=T);
-  if(length(all.matches)==0){
-    return(NULL);
-  }else{
-    # only return the last command
-    return(all.matches[length(all.matches)]);
-  }
-}
-
 # Memory functions
 ShowMemoryUse <- function(..., n=40) {
     library(pryr);
