@@ -555,12 +555,12 @@ perf.splsda <- function(object,
   if (!(logratio %in% c("none", "CLR")))
     stop("Choose one of the two following logratio transformation: 'none' or 'CLR'")
   #fold is checked in 'MCVfold'
-  
+
   if(!missing(cpus))
   {
     if(!is.numeric(cpus) | length(cpus)!=1)
       stop("'cpus' must be a numerical value")
-    
+
     parallel = TRUE
     cl = makeCluster(cpus, type = "SOCK")
     clusterExport(cl, c("splsda","selectVar"))
@@ -1006,7 +1006,7 @@ MCVfold.splsda = function(
       result = parLapply(cl, 1: M, fonction.j.folds)
     } else {
       result = lapply(1: M, fonction.j.folds)
-      
+
     }
     
     # combine the results

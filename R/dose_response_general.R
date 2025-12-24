@@ -107,7 +107,7 @@ PrepareSigDRItems <- function(mSetObj=NA, deg.pval = 1, FC = 1.5, deg.FDR = FALS
   # Apply Williams trend test to features that pass all other filters
   # parallel or sequential computation
   if (wtt){
-    if (parallel != "no") 
+    if (parallel != "no")
     {
       if (parallel == "snow") type <- "PSOCK"
       else if (parallel == "multicore") type <- "FORK"
@@ -603,7 +603,7 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
                        return(tmp);
                      }
                    };
-  if (ncpus != 1) 
+  if (ncpus != 1)
   {
     clus <- parallel::makeCluster(ncpus, type = "FORK")
     res <- parallel::parLapply(clus, 1:nselect, my.fitoneitem)
@@ -1074,7 +1074,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   
   # Loop on items
   # parallel or sequential computation
-  if (ncpus != 1) 
+  if (ncpus != 1)
   {
     clus <- parallel::makeCluster(ncpus, type = "FORK")
     res <- parallel::parSapply(clus, 1:nselect, bmdoneitem)

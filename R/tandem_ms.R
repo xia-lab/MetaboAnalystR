@@ -923,43 +923,43 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   }
   
   if(ncores == 1){
-    results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2, 
+    results <- SpectraSearchingBatch(Concensus_spec, 0:(length(spec_set_prec)-1), peak_mtx, ppm1, ppm2,
                                      ion_mode_idx, dbpath, database_opt, useEntropy = useEntropy)
   } else {
     # for multiple cores
     require(parallel);
     cl <- makeCluster(getOption("cl.cores", ncores))
     clusterExport(cl, c("Concensus_spec", "peak_mtx", "spec_set_prec",
-                        "ppm1", "ppm2", "ion_mode_idx", "dbpath", 
+                        "ppm1", "ppm2", "ion_mode_idx", "dbpath",
                         "database_opt", "SpectraSearchingBatch", "useEntropy"), envir = environment())
     res1 <- list()
-    res1 <- parLapply(cl, 
-                      1:ncores, 
-                      function(x, Concensus_spec, peak_mtx,  
-                               ppm1, ppm2, ion_mode_idx, dbpath, 
+    res1 <- parLapply(cl,
+                      1:ncores,
+                      function(x, Concensus_spec, peak_mtx,
+                               ppm1, ppm2, ion_mode_idx, dbpath,
                                database_opt, ncores, useEntropy){
                         length_data <- length(Concensus_spec[[1]])
                         lg_pcore <- ceiling(length_data/ncores)
-                        
+
                         if(ncores == x){
                           vec_idx <- ((x-1)*lg_pcore+1):length_data
                         } else {
                           vec_idx <- ((x-1)*lg_pcore+1):(x*lg_pcore)
                         }
-                        
+
                         Concensus_spec0 <- Concensus_spec
                         Concensus_spec0[[1]] <- 0:length(vec_idx)
                         Concensus_spec0[[2]] <- Concensus_spec0[[2]][vec_idx]
-                        
+
                         if(length(vec_idx)==1){
                           peak_mtx_input <- matrix(peak_mtx[vec_idx,], ncol = 4)
                         } else {
                           peak_mtx_input <- peak_mtx[vec_idx,]
                         }
-                        
-                        res0 <- SpectraSearchingBatch(Concensus_spec0, 
-                                                      0:(length(vec_idx)-1), 
-                                                      peak_mtx_input, 
+
+                        res0 <- SpectraSearchingBatch(Concensus_spec0,
+                                                      0:(length(vec_idx)-1),
+                                                      peak_mtx_input,
                                                       ppm1, ppm2, ion_mode_idx, dbpath, database_opt, useEntropy = useEntropy)
                         cat("=", file = "progress_value_parallel.txt", append = TRUE)
                         res0},
@@ -978,7 +978,7 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
     for(i in 1:ncores){
       res <- c(res, res1[[i]])
     }
-    res -> results
+    results <- res
   }
   
   results_clean <- lapply(results, msmsResClean)

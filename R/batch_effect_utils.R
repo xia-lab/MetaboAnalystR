@@ -2765,23 +2765,23 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
     inputedData <- x_new
     
   }else if(method == "rf"){
-    ## A data matrix with missing values. 
-    ## The columns correspond to the variables and the rows to the 
+    ## A data matrix with missing values.
+    ## The columns correspond to the variables and the rows to the
     ## observations.
     ## Please note that this method is very time-consuming.
-    
+
     if(cpu>1){
       cat("do missForest cpu=(",cpu,") ...\n")
       cl <- makeCluster(cpu)
       registerDoParallel(cl)
-      # xmis: a data matrix with missing values. 
-      # The columns correspond to the variables and the rows 
+      # xmis: a data matrix with missing values.
+      # The columns correspond to the variables and the rows
       # to the observations.
       mvd <- missForest(xmis = x,parallelize = "variables")
       #print(mvd$OOBerror)
       inputedData <- mvd$ximp
       stopCluster(cl)
-      
+
     }else{
       cat("do missForest ...\n")
       mvd <- missForest(xmis = x)
