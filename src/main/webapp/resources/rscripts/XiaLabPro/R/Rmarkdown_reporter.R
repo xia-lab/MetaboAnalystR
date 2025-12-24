@@ -819,29 +819,6 @@ CreateNORMdoc <- function(mSetObj=NA){
   }
 }
 
-#'Create report of analyses
-#'@description Report generation using Sweave
-#'Create footer
-#'@author Jeff Xia \email{jeff.xia@xialab.ca}
-#'XiaLab Analytics
-#'All rights reserved
-#'@export
-CreateRHistAppendix_old <- function(mSetObj=NA){
-  mSetObj <- .get.mSet(mSetObj);
-  
-  # Corrected file existence check
-  if(file.exists("Rhistory.R")){
-    if(length(mSetObj$cmdSet) == 0){
-      cmdhist <- "No commands found";
-    } else {
-      cmdhist <- mSetObj$cmdSet;
-    }
-    cmdhist <- c("```{r cmd_hist2, eval=FALSE}",
-                 cmdhist,
-                 "```", "\n\n")
-    cat(cmdhist, file=rmdFile, append=TRUE, sep="\n");
-  }
-}
 
 #'Create report of analyses
 #'@description Report generation using Sweave
