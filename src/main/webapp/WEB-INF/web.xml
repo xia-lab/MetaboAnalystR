@@ -13,7 +13,10 @@
         <param-name>PROJECT_PATH</param-name>
         <param-value>/mnt/disks/launchpad/</param-value>
     </context-param>
-
+    <context-param>
+        <param-name>analytics.id</param-name>
+        <param-value>G-WNPNCNH1RT</param-value> 
+    </context-param>
     <!-- JSF / PrimeFaces -->
     <context-param>
         <param-name>jakarta.faces.PROJECT_STAGE</param-name>

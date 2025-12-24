@@ -53,12 +53,10 @@ public class FireBase implements Serializable {
             projectPath = "/mnt/disks/launchpad/"; //lab workstation
         } else if (Files.isDirectory(Paths.get("/Users/xialab/Dropbox/"))) {
             projectPath = "/Users/xialab/Dropbox/OmicSquareProject/"; //xia local1
-        } else if (Files.isDirectory(Paths.get("/Users/jeffxia/Dropbox/"))) {
-            projectPath = "/Users/jeffxia/Dropbox/OmicSquareProject/"; //xia local1
         } else {
             projectPath = servletContext.getInitParameter("PROJECT_PATH");
         }
-        System.out.println("App Location: " + projectPath); // Debugging line
+        //System.out.println("App Location: " + projectPath); // Debugging line
         if (ab.isOnQiangPc() || ab.isOnZgyPc() ||ab.isOnVipServer() || ab.isOnVipServer2()) {
             initJobMonitor();
         }

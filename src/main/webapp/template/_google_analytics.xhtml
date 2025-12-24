@@ -1,0 +1,195 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:ui="http://java.sun.com/jsf/facelets">
+
+    <style>
+        #my-cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #dbe6f6;
+            color: #333;
+            padding: 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            border-top: 4px solid #de690c;
+        }
+        .cookie-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .cookie-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-cookie {
+            padding: 8px 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .btn-accept {
+            background-color: #de690c;
+            color: white;
+        }
+        .btn-reject {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .btn-reject:hover {
+            background-color: #d0d0d0;
+        }
+    </style>
+
+    <div id="my-cookie-banner">
+        <div class="cookie-content">
+            <div>
+                <strong>We use cookies.</strong> 
+                Essential session cookies are required for the site to function.
+                <a href="https://marketingplatform.google.com/about/analytics/terms/gb/" target="_blank" style="color:#de690c; margin-left:5px;">Google Analytics</a> 
+                is used to understand website traffic
+            </div>
+            <div class="cookie-buttons">
+                <button type="button" id="btn-accept" class="btn-cookie btn-accept">OK</button>
+                <button type="button" id="btn-reject" class="btn-cookie btn-reject">Essential Only</button>
+            </div>
+        </div>
+    </div>
+
+  <script type="text/javascript">
+    //<![CDATA[
+        // --- HELPER: Set Cookie (Backup for LocalStorage) ---
+        function setCookie(name, value, days) {
+            var expires = "";
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        // --- HELPER: Get Cookie ---
+        function getCookie(name) {
+            var nameEQ = name + "=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // --- A. CLEANUP FUNCTION ---
+        function deleteAnalyticsCookies() {
+            var cookies = document.cookie.split(";");
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                var eqPos = cookie.indexOf("=");
+                var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                name = name.trim();
+                if (name.indexOf("_ga") === 0 || name.indexOf("_gid") === 0 || name.indexOf("_gat") === 0) {
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+                    var domain = location.hostname.replace(/^www\./i, "");
+                    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + domain;
+                }
+            }
+        }
+
+        // --- B. LOADER FUNCTION ---
+        function loadGoogleAnalytics() {
+            if (window.ga_initialized) return;
+            var gaId = '#{initParam["analytics.id"]}';
+            if (!gaId || gaId.trim() === "") return; 
+
+            var script = document.createElement('script');
+            script.async = true;
+            script.src = "https://www.googletagmanager.com/gtag/js?id=" + gaId;
+            document.head.appendChild(script);
+
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', gaId);
+            window.ga_initialized = true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var banner = document.getElementById('my-cookie-banner');
+            var btnAccept = document.getElementById('btn-accept');
+            var btnReject = document.getElementById('btn-reject');
+
+            // --- C. CHECK CONSENT ---
+            // Check both LocalStorage AND Cookie (robustness)
+            var consent = localStorage.getItem('my_consent');
+            if (!consent) {
+                consent = getCookie('my_consent');
+            }
+
+            if (consent === 'denied') {
+                deleteAnalyticsCookies();
+            } else if (consent === 'granted') {
+                loadGoogleAnalytics();
+            } else {
+                // If neither granted nor denied, show banner
+                if (banner) {
+                    banner.style.display = 'block';
+                }
+            }
+
+            // --- D. BUTTON LISTENERS ---
+            
+            // 1. OK / ACCEPT
+            if(btnAccept) {
+                btnAccept.addEventListener('click', function(e) {
+                    e.preventDefault(); // Stop form submission
+                    e.stopPropagation(); 
+                    console.log("Consent GRANTED");
+
+                    localStorage.setItem('my_consent', 'granted');
+                    setCookie('my_consent', 'granted', 365); // Backup 1 year
+
+                    if(banner) banner.style.display = 'none';
+                    loadGoogleAnalytics();
+                });
+            }
+
+            // 2. ESSENTIAL ONLY (OPT-OUT)
+            if(btnReject) {
+                btnReject.addEventListener('click', function(e) {
+                    e.preventDefault(); // Stop form submission
+                    e.stopPropagation();
+                    console.log("Consent DENIED");
+
+                    localStorage.setItem('my_consent', 'denied');
+                    setCookie('my_consent', 'denied', 365); 
+
+                    if(banner) banner.style.display = 'none';
+                    deleteAnalyticsCookies();
+                    location.reload(); 
+                });
+            }
+        });
+
+        // --- E. RESET FUNCTION ---
+        window.openCookiePreferences = function() {
+            localStorage.removeItem('my_consent');
+            document.cookie = "my_consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            deleteAnalyticsCookies();
+            location.reload();
+            return false;
+        }
+    //]]>
+    </script>
+</ui:composition>

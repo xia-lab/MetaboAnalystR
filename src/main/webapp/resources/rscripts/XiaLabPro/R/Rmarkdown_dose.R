@@ -299,19 +299,30 @@ AddDoseFeatureImages <- function(mSetObj=NA) {
   }
   
   # Create HTML structure for a grid layout with two units per row
+  # OPTIMIZED: Pre-allocate list to avoid O(n²) vector growing with c()
   html_start <- '<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
   html_end <- '</div>'
-  html_content <- c(html_start)
-  
+
+  # Calculate number of row divs needed (ceiling division)
+  num_rows <- ceiling(length(img_blocks) / 2)
+  html_parts <- vector("list", num_rows + 2)  # +2 for start and end
+  html_parts[[1]] <- html_start
+
+  part_idx <- 2
   for (i in seq(1, length(img_blocks), by=2)) {
-    html_content <- c(html_content, 
-                      '<div style="display: flex; width: 100%;">',
-                      img_blocks[[i]],
-                      if (i+1 <= length(img_blocks)) img_blocks[[i+1]] else '',
-                      '</div>')
+    html_parts[[part_idx]] <- paste0(
+      '<div style="display: flex; width: 100%;">',
+      img_blocks[[i]],
+      if (i+1 <= length(img_blocks)) img_blocks[[i+1]] else '',
+      '</div>'
+    )
+    part_idx <- part_idx + 1
   }
-  
-  html_content <- c(html_content, html_end)
-  
+
+  html_parts[[part_idx]] <- html_end
+
+  # OPTIMIZED: Single combination instead of repeated c() calls
+  html_content <- unlist(html_parts[1:part_idx])
+
   cat(html_content, file = rmdFile, append = TRUE, sep="\n")
 }
