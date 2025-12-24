@@ -166,7 +166,11 @@
                                 </p:selectOneMenu>
                                 <h:outputLabel style="font-weight: bold" value=" PCs"/>
                             </h:panelGroup>
-                            <p:commandButton value="Update" update=":ac:form1:pairPane  :hisTab:cmdPane" actionListener="#{pcaBean.pcaPairBtn_action()}"/>   
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update=":ac:form1:pairPane  :hisTab:cmdPane" 
+                                             actionListener="#{pcaBean.pcaPairBtn_action()}" partialSubmit="true"/>  
                         </h:panelGrid>
                         <h:panelGrid id="pairPane" style="text-align: center; width: 1000px;">
                             <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
