@@ -256,7 +256,7 @@ createEnrichmentTable <- function(mSetObj, type, description = "") {
                     table_code,
                     '```',
                     "\n---\n\n");  # Slide separator for R Markdown
-      cat(slideStr, file = rmdFile, append = TRUE, sep = "\n");
+      .buffer_add(slideStr, collapse="\n");
     } else {
       # Existing function for non-slide formats
       table_code <- sprintf("create_dt(%s, '%s')",
@@ -265,7 +265,7 @@ createEnrichmentTable <- function(mSetObj, type, description = "") {
       tableStr <- c('```{r echo=FALSE, results="asis"}',
                     table_code,
                     '```');
-      cat(tableStr, file = rmdFile, append = TRUE, sep = "\n");
+      .buffer_add(tableStr, collapse="\n");
     }
   }
 }
@@ -284,17 +284,17 @@ CreateKeggNetDoc <-function(mSetObj){
             "```\n",
             "\n\n---\n\n"
         )
-        cat(networkImageSlide, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(networkImageSlide, collapse="\n")
 
     }else{
     descr <- c("\n\n#### Global KEGG Metabolic Network\n\n",
              "This interactive visualization allows users to interactively view their data in a global KEGG metabolic network.", "\n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
 
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "network_MetaboNet")
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     img <- c(
       paste0("```{r figure_kegg_net, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ",
@@ -304,7 +304,7 @@ CreateKeggNetDoc <-function(mSetObj){
       "```",
       "\n\n")
     
-    cat(img, file = rmdFile, append = TRUE, sep="\n");
+    .buffer_add(img, collapse="\n");
   }
 }
 }
@@ -396,7 +396,7 @@ getReportLinks <- function(link, analNavi="", imgCmd="", cmpd=""){
         }
     }
     return(reportLinks);
-    #cat(reportLinks, file=rmdFile, append=TRUE, sep="\n")
+    #.buffer_add(reportLinks, collapse="\n")
 }
 
 getReportMS2MirrorLinks <- function(link, feature ="", moduleType="ms2"){
@@ -417,13 +417,13 @@ getReportMS2MirrorLinks <- function(link, feature ="", moduleType="ms2"){
 
 addReportLinks <- function(link, analNavi="", imgCmd=""){
     linkStr <- getReportLinks(link, analNavi, imgCmd);
-    cat(linkStr, file=rmdFile, append=TRUE, sep="\n")
+    .buffer_add(linkStr, collapse="\n")
 }
 
 
 addDownloadLink <- function(link, fileName){ 
     reportLinks <- getDownloadLink(link, fileName);
-    cat(reportLinks, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(reportLinks, collapse="\n");
 }
 
 getDownloadLink<- function(link, fileName){
@@ -441,7 +441,7 @@ getDownloadLink<- function(link, fileName){
 
 addPageBegin <- function(){
     if (mSet$paramSet$report.format == "pdf") {
-        cat("\\newpage", file=rmdFile, append=TRUE, sep="\n")
+        .buffer_add("\\newpage", collapse="\n")
     }
 }
 

@@ -279,7 +279,9 @@
 
                                             <h:panelGroup  style="width:180px" layout="block">
                                                 <p:outputLabel value="Mass Tolerance (ppm):"/>
-                                                <p:graphicImage id="formatIcon1" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>
+                                                <h:panelGroup id="formatIcon1" style="margin-left: 10px;">
+                                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                                </h:panelGroup>
                                             </h:panelGroup>
                                             <h:panelGroup>
                                                 <p:selectOneMenu value="#{integProcesser.ppmVal}" style = "width:110px" editable="true">
@@ -312,7 +314,9 @@
 
                                             <h:panelGroup>
                                                 <p:outputLabel value="Data File:"/>
-                                                <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help" style="width:12px"/>
+                                                <h:panelGroup id="formatIcon" style="margin-left: 10px;">
+                                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                                </h:panelGroup>
                                             </h:panelGroup>
                                             <h:panelGroup>
                                                 <p:fileUpload value="#{integProcesser.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px">

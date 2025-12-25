@@ -75,7 +75,7 @@ CreateMummichogIntro <- function(){
              has shown that ~30% annotation rate is sufficient to achieve high recall (~90% based on mummichog) of perturbed pathways in LC-HRMS data. 
              This module offers the mummichog algorithm (based on ORA), and an adapted GSEA method for LC-HRMS global metabolomics data. The module also includes an expanded knowledge base 
              of 128 organisms for pathway analysis as well as 10 metabolite set libraries.\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 
@@ -112,14 +112,14 @@ CreateMummichogInputDoc <- function(mSetObj=NA){
                " such as Orbitrap, or Fourier Transform (FT)-MS instruments as recommended by the original mummichog implementation.",
              " \n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   check.msgs <- paste("*", mSetObj$msgSet$check.msg);
   check.msgs <- paste0(check.msgs, collapse = "\\\n");
 
   descr <- c("A summary of your data input parameters: \n",
              check.msgs, "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
 }
 
@@ -143,12 +143,12 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              "The pre-defined functional libraries are primarily curated from recent KEGG, with a few from BioCyc and GEM models as provided by the original mummichog libraries.",
              "These libraries currently cover 128 species, with 10 additional metabolite set libraries based on chemical classes and other information such as ",
              "diseases, genetic associations, locations, etc.\n");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
     
     descr <- c("The selected library: ```", gsub("_", ".", mSetObj$lib.organism), "```.",
                "The selected p-value cutoff: ```", mSetObj$dataSet$cutoff , "```.",
                "\n");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
   if(!is.null(mSetObj$curr.cust) && mSetObj$curr.cust){
     
@@ -157,8 +157,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                     onto these pre-defined functions to predict their activities. Here, the assumption is that if a list of significant m/z features truly reflects
                     biological activities, then the underlying metabolites will show enrichment on the pathways/networks, while falsely matched 
                     metabolites will be more randomly distributed. Advanced users can further customized the default settings. \n");
-    cat(descr.cust, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr.cust);
+    .buffer_add("\n\n");
     
     descr.curr <- c("#### - Analysis Customization: Currency Metabolites\n\n",
                     "Currency metabolites are abundant compound species such as water and carbon dioxide known to occur in normal 
@@ -166,18 +166,18 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                     they will be removed from further analysis. There is no formal consensus of a set of currency metabolites, 
                     therefore users who are unsatisfied with the default list of currency metabolites can further customize the metabolites 
                     to considered as currency compounds.\n");
-    cat(descr.curr, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr.curr);
+    .buffer_add("\n\n");
     
     curr.desc <- paste("The user's selected list of currency metabolites is: ", currency, ".");
-    cat(curr.desc, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(curr.desc, collapse="\n");
     
     descr.add <- c("#### - Analysis Customization: Adducts\n\n",
                    "In addition to pathway information, the mummichog libraries contain a set of adducts commonly seen from the 
                    MS instruments. These options however, may not be optimal for users' data, therefore users are provided the option
                    to customize the adduct list used in the mummichog analysis.\n");
-    cat(descr.add, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr.add);
+    .buffer_add("\n\n");
     
   }
 
@@ -200,13 +200,13 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                 enriched in the user-uploaded data. The table includes the total number of hits per pathway (all, significant, and expected), the raw p-values
                (hypergeometric), and the p-value modeled on user data using a Gamma distribution.",
                 "\n\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(descr, collapse="\n");
+      .buffer_add("\n\n");
       
       link <- GetSharingLink(mSetObj)
       reportLinks <- getReportLinks(link, "peaks_to_paths",  "peaks_to_paths");
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       
         fig <- c(paste0("```{r figure_mummi, echo=FALSE, fig.pos='H', fig.cap='Figure ", getCurrentFigCount(), 
                      ". Summary of Mummichog pathway analysis', ",
@@ -222,14 +222,14 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
             "```",
               "\n\n")
 
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     
       
       link <- GetSharingLink(mSetObj)
       reportLinks <- getReportLinks(link, "mum_resTbl");
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
 
     descr <- c(
       "```{r table_mm, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -239,7 +239,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Results of the Mummichog Pathway Analysis.')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
+    .buffer_add(descr, collapse="\n"); 
 
   if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
         descr <- c("### - Network Visualization\n\n",
@@ -248,11 +248,11 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              " + Click on a pathway name in the left table to show its compounds with potential hits. Solid circles indicate significant compounds, while empty circles indicate compounds detected but not significant.",
              "Note the KEGG global map may not contain all the compounds for certain pathways.",
              "\n\n");
-        cat(descr, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(descr, collapse="\n");
         reportLinks <- getReportLinks(link, "network_mummichog");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         fig8 <- c(paste0("```{r figure_network_mummichog, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                      ". Screenshot of interactive network visualization displaying enriched pathways from functional prediction by Mummichog in the context of KEGG global metabolic network.',",
                      " fig.lp='", 
@@ -261,8 +261,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$network_mummichog)",
               "```",
               "\n\n");
-        cat(fig8, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig8, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
     }   
   }
 
@@ -281,12 +281,12 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                to its p-value and enrichment factor, respectively. The result table contains ranked pathways that are enriched in 
                the user-uploaded data. It includes the total number of hits (all and expected), their raw p-values, adjusted p-values and NES.",
                "\n\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
       
       link <- GetSharingLink(mSetObj)
       reportLinks <- getReportLinks(link, "peaks_to_paths_gsea",  "peaks_to_paths_gsea");
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
 
       # Set the global variable for analysis type outside of the chunk
       mSet$paramSet$anal.type <<- 'gsea'
@@ -310,14 +310,14 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
         # Concatenate all parts and separate them by new line
         finalFigCode <- paste(fig2, collapse="\n")
       
-      cat(finalFigCode, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(finalFigCode, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
       
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "gsea_resTbl",  "peaks_to_paths_gsea");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     descr <- c(
       "```{r table_gsea, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -327,13 +327,13 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Results of the GSEA pathway analysis.')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
+    .buffer_add(descr, collapse="\n"); 
 
     if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && safeFileExists(mSetObj$imgSet$reportSet$network_gsea)){
         reportLinks <- getReportLinks(link, "network_gsea");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         fig9 <- c(paste0("```{r figure_network_gsea, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                      ". Screenshot of interactive network visualization displaying enriched pathways from functional prediction by GSEA in the context of KEGG global metabolic network.',",
                      " fig.lp='", 
@@ -342,8 +342,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
               "safeIncludeGraphics(mSet$imgSet$reportSet$network_gsea)",
               "```",
               "\n\n");
-        cat(fig9, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig9, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
     }
   }
 
@@ -353,8 +353,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              "The output of the MS Peaks to Pathways module also consists of a comprehensive table containing the compound matching",
              " information for all user-uploaded m/z features. The table has four columns, containing the Query.Mass of each feature, the predicted Matched.Compound for each feature,",
              "the Matched.Form, and the Mass.Diff. You can access the file here: ", reportLinks ," \n");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
  
 
  if(!is.null(mSetObj$imgSet$reportSet$heatmap_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_mummichog)){
@@ -363,11 +363,11 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
               Users can first apply different clustering algorithms to identify strong patterns that are associated with group labels.
               Then use a mouse to drag-select one or more metabolic patterns of interest from the Overview (left) to the Focus View (middle). 
               The functional analysis will be performed on the basis of the selected metabolic patterns in the Focus View as shown below. \n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
     reportLinks <- getReportLinks(link, "heatmap_mummichog");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig4 <- c(paste0("```{r figure_heatmap_mummichog, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                      ". Screenshot of interactive peak intensity heatmap.',",
                      " fig.lp='", 
@@ -376,8 +376,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
               "safeIncludeGraphics(mSet$imgSet$reportSet$heatmap_mummichog)",
               "```",
               "\n\n");
-    cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig4, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
     createEnrichmentTable(mSetObj, "mumEnr");
 
   }
@@ -392,13 +392,13 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                "Pathway analysis results are summarized in Figure ", figCount, 
                "and Table ", table.count <<- table.count+1,
                ".\n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
     #integ_peaks
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "integ_peaks",  "integ_peaks");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     #imagePath <- mSetObj$imgSet$integpks.plot
 
@@ -414,12 +414,12 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     "}",
     "\n```\n\n");
 
-    cat(fig3, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig3, collapse="\n");
 
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "integ_resTbl");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     descr <- c(
       "```{r table_integ, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -429,12 +429,12 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Meta-Analysis of Mummichog and GSEA Results.')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
+    .buffer_add(descr, collapse="\n"); 
     
     if(!is.null(mSetObj$imgSet$reportSet$network_integ) && safeFileExists(mSetObj$imgSet$reportSet$network_integ)){
         reportLinks <- getReportLinks(link, "network_integ");
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
 
 
         fig10 <- c(paste0("```{r figure_network_integ, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
@@ -445,8 +445,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
               "safeIncludeGraphics(mSet$imgSet$reportSet$network_integ)",
               "```",
               "\n\n");
-        cat(fig10, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig10, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
     }
   }
 }

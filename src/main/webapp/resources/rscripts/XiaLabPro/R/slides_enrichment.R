@@ -51,7 +51,7 @@ CreateEnrichIntr_slides <- function(mSetObj = NA) {
         "- Utilizes over-representation analysis (ORA) to check for enrichment in a given list of compounds.",
         "- Applies GlobalTest to examine if metabolite sets' abundance profiles are associated with the study condition directly from a compound concentration table.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(intro, collapse="\n")
 
     # Conditional content based on selected analysis type
     if (mSetObj$analSet$type == "msetora") {
@@ -72,8 +72,8 @@ CreateEnrichIntr_slides <- function(mSetObj = NA) {
     }
 
     # Combine and append descriptions
-    cat(input_descr, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(input_descr, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -88,7 +88,7 @@ CreateEnrichProcessDoc_slides <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   descr <- GetNameMappingSlides();
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -124,8 +124,8 @@ CreateEnrichSSPDoc_slides <- function(mSetObj = NA) {
             paste0("create_dt(dt_ssp, caption = 'Table ", table.count, ". Comparison with Reference Concentrations.')"),
             "```"
         )
-        cat(tableSSPContent, file = rmdFile, append = TRUE, sep = "\n")
-      cat("\n\n---\n\n", file = rmdFile, append = TRUE);
+        .buffer_add(tableSSPContent, collapse="\n")
+      .buffer_add("\n\n---\n\n");
 
 }
 
@@ -147,8 +147,8 @@ CreateEnrichAnalDoc_slides <- function(mSetObj = NA) {
         "- Results aid in understanding metabolic pathways or functions impacted.\n",
         "- Selected Library: `", mSetObj$analSet$msetlibname
     )
-    cat(enrichmentAnalysis, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(enrichmentAnalysis, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -171,25 +171,25 @@ CreateEnrichORAdoc_slides <- function(mSetObj = NA) {
         "- Utilizes hypergeometric test to check if metabolite sets are more represented than expected by chance.",
         "- P-values are adjusted for multiple testing to highlight significant findings.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # ORA Summary Plot
     if (!is.null(mSetObj$imgSet$ora)) {
         oraSummarySlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$ora, "Summary of Over Representation Analysis results showing significant metabolite sets.")
-        cat(oraSummarySlide, file = rmdFile, append = TRUE)
+        .buffer_add(oraSummarySlide)
     }
 
     # Enrichment Network
     if (!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)) {
         enrichmentNetworkSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$enrichment_network, "Enrichment network from ORA showing the interconnectedness of significant metabolite sets.")
-        cat(enrichmentNetworkSlide, file = rmdFile, append = TRUE)
+        .buffer_add(enrichmentNetworkSlide)
     }
 
     # ORA Dot Plot
     if (!is.null(mSetObj$imgSet$ora_dot)) {
         oraDotPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$ora_dot, "Dot plot summary from ORA indicating the significance and impact of each metabolite set.")
-        cat(oraDotPlotSlide, file = rmdFile, append = TRUE)
+        .buffer_add(oraDotPlotSlide)
     }
 
     # ORA Results Table
@@ -202,8 +202,8 @@ CreateEnrichORAdoc_slides <- function(mSetObj = NA) {
             "```\n"
         )
 
-        cat(tableORA, file = rmdFile, append = TRUE)
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(tableORA)
+        .buffer_add("\n\n---\n\n")
     }
 }
 
@@ -228,18 +228,18 @@ CreateEnrichQEAdoc_slides <- function(mSetObj = NA) {
         "- Utilizes 'globaltest' package to estimate a Q-statistic for each metabolite set.",
         "- Correlates compound concentrations with clinical outcomes.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Display summary plot
     if (!is.null(mSetObj$imgSet$qea)) {
         summaryPlot <- CreateTwoColumnFigureSlide(mSetObj$imgSet$qea, "Summary plot for Quantitative Enrichment Analysis (QEA).")
-        cat(summaryPlot, file = rmdFile, append = TRUE)
+        .buffer_add(summaryPlot)
     }
 
     # Display summary dot plot
     if (!is.null(mSetObj$imgSet$qea_dot)) {
         summaryDotPlot <- CreateTwoColumnFigureSlide(mSetObj$imgSet$qea_dot, "Summary dot plot for Quantitative Enrichment Analysis (QEA).")
-        cat(summaryDotPlot, file = rmdFile, append = TRUE)
+        .buffer_add(summaryDotPlot)
     }
 }

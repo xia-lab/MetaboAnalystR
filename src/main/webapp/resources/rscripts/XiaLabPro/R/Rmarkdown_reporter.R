@@ -54,24 +54,9 @@ PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
     print(head(mSetObj$dataSet$meta.info))
     }
 
-  # create the Rnw file
-  if(module != "NA"){
-    if(mSet$paramSet$report.format == "slides"){
-    file.create(paste0("Analysis_Presentation_",module, ".Rmd"));
-    rmdFile <<- file(paste0("Analysis_Presentation_",module, ".Rmd"), "w")
-    }else{
-    file.create(paste0("Analysis_Report_",module, ".Rmd"));
-    rmdFile <<- file(paste0("Analysis_Report_",module, ".Rmd"), "w")
-    }
-  }else{
-    if(mSet$paramSet$report.format == "slides"){
-    file.create("Analysis_Presentation.Rmd");
-    rmdFile <<- file("Analysis_Presentation.Rmd", "w")
-    }else{
-    file.create("Analysis_Report.Rmd");
-    rmdFile <<- file("Analysis_Report.Rmd", "w")
-    }
-  }
+  # --- OPTIMIZATION: Use Memory Buffer instead of File Handle ---
+  # This list acts as a virtual file in RAM. We append strings here.
+  .rmd_buffer <<- list()
 
   # create a global counter to label figures
   fig.count <<- 0;
@@ -155,8 +140,29 @@ PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
     }
   }
 
-  # close opened files
-  close(rmdFile);
+  # --- OPTIMIZATION: Write to Disk Once ---
+  # Determine output filename
+  if(module != "NA"){
+    if(mSet$paramSet$report.format == "slides"){
+      output_file <- paste0("Analysis_Presentation_", module, ".Rmd")
+    }else{
+      output_file <- paste0("Analysis_Report_", module, ".Rmd")
+    }
+  }else{
+    if(mSet$paramSet$report.format == "slides"){
+      output_file <- "Analysis_Presentation.Rmd"
+    }else{
+      output_file <- "Analysis_Report.Rmd"
+    }
+  }
+
+  tryCatch({
+    # Unlist the buffer to a single character vector and write
+    # usage of writeLines ensures proper line endings on all OS
+    writeLines(unlist(.rmd_buffer), output_file)
+  }, error = function(e) {
+    stop("Failed to write ", output_file, ": ", e$message)
+  })
 
   # find out pandoc
   pandoc_path <- sub("pandoc:", "", system("whereis pandoc",intern = T));
@@ -173,21 +179,24 @@ PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
   Sys.setenv(RSTUDIO_PANDOC=pandoc_path)
   #save.image("rmd.RData");
 
-if(module != "NA"){
-  if(mSet$paramSet$report.format == "slides"){
-    rmarkdown::render(paste0("Analysis_Presentation_",module, ".Rmd"))
-  }else{
-    rmarkdown::render(paste0("Analysis_Report_",module, ".Rmd"))
-  }
-}else{
+  # Render the file
+  rmarkdown::render(output_file)
 
-  if(mSet$paramSet$report.format == "slides"){
-    rmarkdown::render("Analysis_Presentation.Rmd")
-  }else{
-    rmarkdown::render("Analysis_Report.Rmd")
-  }
-}
+  # Clean up memory
+  .rmd_buffer <<- NULL; # Release buffer to free memory
+
   return(1);
+}
+
+# --- Internal Helper for Performance ---
+# Replaces 'cat' to append to global buffer
+.buffer_add <- function(..., collapse="\n") {
+  content <- paste(..., collapse = collapse)
+  # Ensure strict newline to prevent Markdown syntax errors (tables merging with text)
+  if (!grepl("\n$", content)) {
+    content <- paste0(content, "\n")
+  }
+  .rmd_buffer[[length(.rmd_buffer) + 1]] <<- content
 }
 
 # this is for PDF report generation from bash
@@ -426,7 +435,7 @@ writeLines(html_content, "custom-scripts.html")
            # "**Completed**: `r date()`",
             "\n\n")
   }
-  cat(header, file=rmdFile, sep="\n", append=TRUE);
+  .buffer_add(header, collapse="\n");
   
   if (mSet$paramSet$report.format %in% c("html")) {
     container_css <- c(
@@ -463,7 +472,7 @@ writeLines(html_content, "custom-scripts.html")
     }
 
     </style>\n\n")
-    cat(container_css, file=rmdFile, sep="\n", append=TRUE)
+    .buffer_add(container_css, collapse="\n")
 
     ## ── unified setup chunk (TMPDIR + figure dir + device) ─────────────
     setup_chunk <- c(
@@ -484,13 +493,13 @@ writeLines(html_content, "custom-scripts.html")
       "options(bitmapType = 'cairo')",
       "```"
     )
-    cat(setup_chunk, file = rmdFile, sep = "\n", append = TRUE)
+    .buffer_add(setup_chunk, collapse="\n")
   }
-  
+
   code_settings <- c("```{r echo=FALSE}",
                      "knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)",
                      "```")
-  cat(code_settings, file=rmdFile, sep="\n", append=TRUE)
+  .buffer_add(code_settings, collapse="\n")
   
 }
 
@@ -559,7 +568,7 @@ CreateSummaryTable <- function(mSetObj=NA){
 #'
 CreateDataProcdoc <- function(mSetObj=NA){
   
-  cat("<hr/>", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("<hr/>", collapse="\n");
 
   mSetObj <- .get.mSet(mSetObj);
 
@@ -569,7 +578,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
             or machine learning algorithms. Some steps are optional depending on your data type. For instance, missing value estimation and 
             data filtering are primarily for untargeted metabolomics data which typically contain a lot of missing values and noises. 
             \n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   # error checking
   proc.ok <- TRUE;
@@ -585,7 +594,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
 
   if(!proc.ok){
       descr <- c("Could not find your data.\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
       return();
   }
 
@@ -623,7 +632,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
   descr <- c("### - Data integrity check \n\n",
                "A data integrity check is performed to make sure that all the necessary information has been collected. A summary of your data is below:\n\n",
                 data.type, read.msgs, "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   # need to add metadata check
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
@@ -634,14 +643,14 @@ CreateDataProcdoc <- function(mSetObj=NA){
     descr <- c("### - Metadata integrity check\n\n",
                "A metadata integrity check is performed to make sure that all the necessary information has been collected. A summary of your metadata is below: \n",
                 read.msgs, "\n");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "metainfo");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
 
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
 
     # now the metadata table
     cmdhist2 <- c(
@@ -651,7 +660,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
             table.count<<-table.count+1, ". Summary of metadata.', table.name='pathora')"),
         "```", "\n\n")
 
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(cmdhist2, collapse="\n");
   }
   
   # the data filtering
@@ -663,14 +672,14 @@ CreateDataProcdoc <- function(mSetObj=NA){
               "<u>low-variance filter</u> discards near-constant features; and <u>low-abundance filter</u> excludes features with baseline-level intensities.", 
               "Data filter is strongly recommended for datasets with large number of variables especially for untargeted metabolomics data.",
              "\n");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   filt.msg <- mSetObj$msgSet$filter.msg;
   miss.filt.msg <- mSetObj$msgSet$miss.filter.msg
 
   if(is.null(filt.msg)){
-    cat("No data filtering was performed.\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("No data filtering was performed.\n\n", collapse="\n");
   }else{
 
     if(!is.null(miss.filt.msg)){
@@ -679,7 +688,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
     descr <- c("\n",
                 miss.filt.msg,
                 "\n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     }
 
     filt.msg <- paste("*", filt.msg);
@@ -687,7 +696,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
     descr <- c("\n",
                 filt.msg,
                 "\n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
 
 
   }
@@ -710,7 +719,7 @@ CreateDataProcdoc <- function(mSetObj=NA){
               "\n\n",
              missingMsg,
              "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 GetNameMappingDoc <- function(){
@@ -743,7 +752,7 @@ CreateNORMdoc <- function(mSetObj=NA){
     errorMsg <- c("It seems that data normalization has not been performed yet.",
                   "Please choose a proper data normalization to proceed.",
                   "You can also turn off normalization by selecting the ```None``` option.");
-    cat(errorMsg, file=rmdFile, sep="\n", append=TRUE);
+    .buffer_add(errorMsg, collapse="\n");
     return();
   }
   
@@ -757,7 +766,7 @@ CreateNORMdoc <- function(mSetObj=NA){
               "\n\n",
               "The normalization consists of the following options:\n\n");
   
-  cat(descr1, file=rmdFile, append=TRUE);
+  .buffer_add(descr1);
   
   if(!is.null(mSetObj$dataSet[["rownorm.method"]])){
     norm.desc <- paste("Sample normalization: ```", mSetObj$dataSet$rownorm.method, "```; ",
@@ -795,14 +804,14 @@ CreateNORMdoc <- function(mSetObj=NA){
                 paste("Figure", fig.count<<-fig.count+1," shows the effects before and after normalization.\n\n");
               })
   
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr2, collapse="\n");
   
   if(exists("norm", where=mSetObj$imgSet)){
     # norm view (box plots + kernal density)
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "norm", "norm");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig <- c(paste0("```{r figure_sn, echo=FALSE, fig.pos='H', fig.cap='Figure ", 
                     fig.count, 
@@ -815,7 +824,7 @@ CreateNORMdoc <- function(mSetObj=NA){
              "```",
              "\n\n");
     
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
   }
 }
 
@@ -831,13 +840,13 @@ CreateRHistAppendix <- function(mSetObj=NA){
   #cmdSet <- readSet(cmdSet, "cmdSet")
   mSetObj <- .get.mSet(mSetObj);
   descr <- c("\n\n## Appendix: R Command History\n\n")
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
   if(mSetObj$paramSet$report.format == "pdf"){
     # Corrected file existence check
 
       cmdhist <- "To access R Command history, please download it from your project folder."
-      cat(cmdhist, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(cmdhist, collapse="\n");
     
   }else{
   cmdhist_js_safe <- jsonlite::toJSON(mSetObj$cmdSet, auto_unbox = TRUE)
@@ -863,7 +872,7 @@ CreateRHistAppendix <- function(mSetObj=NA){
 [Download R Command History](javascript:downloadCmdHist())
 ', cmdhist_js_safe)
   
-  cat(js_code, file=rmdFile, append=TRUE)
+  .buffer_add(js_code)
 }
 }
 
@@ -885,7 +894,7 @@ CreateFooter <- function(){
   end <- c("<br/>\n\n--------------------------------<br/>\n\n", 
            "The report was generated on `r date()` with OS system: `r Sys.info()['sysname']`, version: `r gsub('#[0-9]+', '', Sys.info()['version'])`");
   
-  cat(end, file=rmdFile, append=TRUE);
+  .buffer_add(end);
 }
 
 SetReportImgMap <- function(mSetObj=NA, mapStr){
@@ -1109,33 +1118,33 @@ CreateRHistSlides <- function(mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   # Start of the R Command History Slide
-  cat("## R Command History Overview\n\n", file = rmdFile, append = TRUE)
+  .buffer_add("## R Command History Overview\n\n")
   
   # Simplified content for slide presentation
-  cat("This section provides an overview of the key R commands used during the analysis. For a detailed command history, please refer to the downloadable file provided below.\n\n", file = rmdFile, append = TRUE)
-  
+  .buffer_add("This section provides an overview of the key R commands used during the analysis. For a detailed command history, please refer to the downloadable file provided below.\n\n")
+
   # Provide a conditional approach for command history availability
   if(file.exists("Rhistory.R") && length(mSetObj$cmdSet) > 0) {
     # Assuming a limited set of key commands is summarized
-    cat("### Key Commands Used:\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("### Key Commands Used:\n\n")
     # Example: Displaying a few key commands or steps
     keyCommands <- head(mSetObj$cmdSet, 5)  # Adjust as necessary
     for(cmd in keyCommands) {
-      cat("- `", cmd, "`\n", file = rmdFile, append = TRUE, sep = "")
+      .buffer_add("- `", cmd, "`\n")
     }
-    cat("\n", file = rmdFile, append = TRUE)
-    
+    .buffer_add("\n")
+
     # Provide a download link for the full command history
-    cat("For the full list of commands, please download the R Command History file.\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("For the full list of commands, please download the R Command History file.\n\n")
     
     # Assuming a mechanism to provide a download link, simplified for slides
-    cat("[Download Full R Command History](path/to/Rhistory.R)\n\n", file = rmdFile, append = TRUE)  # Adjust link/path as necessary
+    .buffer_add("[Download Full R Command History](path/to/Rhistory.R)\n\n")  # Adjust link/path as necessary
   } else {
     # Case where command history is not available or not performed
-    cat("No commands were recorded or the analysis has not been performed yet.\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("No commands were recorded or the analysis has not been performed yet.\n\n")
   }
   
-  cat("\n---\n\n", file = rmdFile, append = TRUE)  # Slide separator for ioslides or similar formats
+  .buffer_add("\n---\n\n")  # Slide separator for ioslides or similar formats
 }
 
 
@@ -1163,10 +1172,10 @@ CreateUpSetDoc <- function(mSetObj=NA) {
        and interpretable representation of set intersections, particularly when dealing with a large number of sets 
        and/or complex overlapping relationships among them. In this case, we are looking at the overlap of significant compounds from each dataset and meta-analysis result",
       "\n");
-    cat(descr, file = rmdFile, append = TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
     reportLinks <- getReportLinks(link, "upset");
-    cat(paste(reportLinks, "\n\n"), file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks, "\n\n");
 
     upset.desc <- paste("Upset diagram comparing multiple results. Each bar indicates the number of significant features identified in",
                    "individual datasets. The dots underneath the bars show where each list came from. Each row corresponds to one dataset.",
@@ -1181,7 +1190,7 @@ CreateUpSetDoc <- function(mSetObj=NA) {
        "\n\n")
 
     
-    cat(img, file = rmdFile, append = TRUE, sep="\n");
+    .buffer_add(img, collapse="\n");
   }
 }
 
@@ -1243,7 +1252,7 @@ AddFeatureImages <- function(mSetObj=NA) {
       "\n"
     )
     
-    cat(descr, file = rmdFile, append = TRUE, sep="\n")
+    .buffer_add(descr, collapse="\n")
 
     # Image rendering in R Markdown
     img_blocks <- list()
@@ -1299,7 +1308,7 @@ AddFeatureImages <- function(mSetObj=NA) {
     # OPTIMIZED: Single combination instead of repeated c() calls
     html_content <- unlist(html_parts[1:part_idx])
 
-    cat(html_content, file = rmdFile, append = TRUE, sep="\n")
+    .buffer_add(html_content, collapse="\n")
   }
 }
 
@@ -1317,8 +1326,8 @@ CreateNetworkDoc <- function(mSetObj = NA){
   link <- GetSharingLink(mSetObj)
 
   reportLinks <- getReportLinks(link, "network")
-  cat(reportLinks, file = rmdFile, append = TRUE)
-  cat("\n\n", file = rmdFile, append = TRUE)
+  .buffer_add(reportLinks)
+  .buffer_add("\n\n")
 
   # short description
   descr <- c("### - Enrichment network\n\n",
@@ -1327,7 +1336,7 @@ CreateNetworkDoc <- function(mSetObj = NA){
     "Node size reflects matched-gene counts; node color reflects significance;",
     "edges reflect overlap between sets.\n\n"
   )
-  cat(descr, file = rmdFile, append = TRUE)
+  .buffer_add(descr)
 
   # include the saved screenshot if present (same chunk style as your example)
   if (!is.null(imgSet$reportSet$network) && file.exists(imgSet$reportSet$network)) {
@@ -1342,7 +1351,7 @@ CreateNetworkDoc <- function(mSetObj = NA){
       "```",
       "\n\n"
     )
-    cat(figChunk, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(figChunk, collapse="\n")
   }
 
   invisible()

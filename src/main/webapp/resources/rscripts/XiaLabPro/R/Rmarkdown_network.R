@@ -68,7 +68,7 @@ CreateNetworkExplorerIntr <- function(){
              Note only data from *human (including human associated microbiome)* are currently supported since the underlying 
              knowledge networks are based on human studies.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 
@@ -92,14 +92,14 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
   }
   descr <- c("## 2. Data Processing\n\n",
              "### Name mapping\n", descr2, "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  #cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr, collapse="\n");
+  #.buffer_add("\n\n");
   
   if(exists('map.table', where=mSetObj$dataSet)){
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "name_map_network");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     table.count <<- table.count+1;
     cmdhist2 <- c(
@@ -110,8 +110,8 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
              ". Compound Name Mapping.', 'namemap')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if (exists('gene.map.table', where=mSetObj$dataSet)){
@@ -119,8 +119,8 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "name_map_network_gene");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     table.count <<- table.count+1;
     cmdhist2 <- c(
@@ -131,11 +131,11 @@ CreateNetworkExplorerInputDoc <- function(mSetObj=NA){
              ". Gene Name Mapping.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 
@@ -175,8 +175,8 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
              (see <a href='https://doi.org/10.1093/bioinformatics/btx012' target='_blank'>Basu et al.</a>)",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
  # netSel <- "";
  # net.sel <- FALSE;
@@ -192,7 +192,7 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
   #if(net.sel){
   #  descr2 <- c("You have selected the following interaction network(s): \n\n", netSel);
   #  descr2 <- c(descr2, "\n\n");
-  #  cat(descr2, file=rmdFile, append=TRUE)
+  #  .buffer_add(descr2)
   #}
 
   CreateKeggNetDoc(mSetObj);
@@ -202,17 +202,17 @@ CreateNetworkExplorerDoc <- function(mSetObj=NA){
     net.type <- network.types[i];
     net.name <- network.names[i];
     if(file.exists(paste0(net.type, ".png"))){
-      cat(paste("\n\n####", net.name, "\n\n"),file=rmdFile, append=TRUE);
+      .buffer_add("\n\n####", net.name, "\n\n");
       link <- GetSharingLink(mSetObj);
       reportLinks <- getReportLinks(link, net.type);
-      cat(paste(reportLinks, "\n\n"), file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks, "\n\n");
       figCaption <- paste('Figure ', getFigCount(), '. Screenshot of ', net.name)
       figCode <- paste0("```{r figure_ntw", i, ", echo=FALSE, fig.pos='H', fig.cap='", figCaption, 
                         "', out.width='", getFigWidth(mSetObj), "'}\n",
                         "safeIncludeGraphics('", net.type, ".png')\n",
                         "```")
-      cat(figCode, file=rmdFile, append=TRUE)
-      cat("\n\n", file=rmdFile, append=TRUE)
+      .buffer_add(figCode)
+      .buffer_add("\n\n")
       
       createEnrichmentTable(mSetObj, net.type)
     }

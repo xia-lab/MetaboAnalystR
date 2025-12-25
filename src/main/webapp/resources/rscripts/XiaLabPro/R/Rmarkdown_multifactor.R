@@ -68,7 +68,7 @@ CreateMultiFacIntr<-function(mSetObj=NA){
               It is often necessary to take into account of these factors during exploratory data analysis to see if they play a role in the primary condition. 
               Statistical analyses that take these metadata information into account can lead to increased power and more robust conclusions about the relationships 
               between the primary condition and the omics data.\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Pathway)
@@ -83,7 +83,7 @@ InitMultiFacAnal <- function(){
              "\n\n## 3. Multi-factor Statistical Analysis\n\n",
              "For metabolomics data accompanied by complex metadata, MetaboAnalyst offers several carefully selected methods for",
              " data analysis. They include:\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr2 <- c(
     "1. Data and metadata overview:",
@@ -101,8 +101,8 @@ InitMultiFacAnal <- function(){
     " + Random Forest",
     "\n",
     "*Please note: MEBA is only applicable to time-series data analysis.*");
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 #'Create null analysis message for time-series sweave report
@@ -110,7 +110,7 @@ InitMultiFacAnal <- function(){
 #'@export
 CreateTimeSeriesAnalNullMsg<-function(){
   descr <- c("No analysis was performed on your data.\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 ##### DATA AND METADATA OVERVIEW SECTIONS #####
@@ -139,14 +139,14 @@ CreateMetaOverview <- function(mSetObj=NA){
              "This section supports multiple methods for calculating distance, correlation, and clustering,",
              "and the heatmap can be viewed in either overview or detail mode.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   # fig 1
   link <- GetSharingLink(mSetObj);
   reportLinks <- getReportLinks(link, "metaCorrHeatmap", "metaCorrHeatmap");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs1 <- fig.count <<- fig.count+1;
   fig <- c(paste0("```{r figure_mfs1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs1, 
@@ -157,15 +157,15 @@ CreateMetaOverview <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$meta.corhm)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 2
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "metaHeatmap", "metaHeatmap");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs2 <- fig.count <<- fig.count+1;
   fig <- c(paste0("```{r figure_mfs2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs2, 
@@ -182,8 +182,8 @@ CreateMetaOverview <- function(mSetObj=NA){
                   "}",           
             "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }
 
 #'Create report of analyses 
@@ -215,13 +215,13 @@ CreateiPCAdoc <- function(mSetObj=NA){
              Clicking any of the data points in the loading plot will show a boxplot summary of its distribution across different sample groups.",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   # fig 3
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pca_pair_meta", "pca_pair_meta");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs3 <- fig.count <<- fig.count+1;
   fig <- c(paste0("```{r figure_mfs3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs3, 
@@ -232,16 +232,16 @@ CreateiPCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$pca.pair)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
 if (!is.null(mSetObj$imgSet$pca_score2d_meta) &&
     safeFileExists(mSetObj$imgSet$pca_score2d_meta)) {
 
   # Add cross-links (uses your existing helper)
   reportLinks <- getReportLinks(link, "pca_score2d_meta", "pca_score2d_meta")
-  cat(reportLinks, file = rmdFile, append = TRUE)
-  cat("\n\n", file = rmdFile, append = TRUE)
+  .buffer_add(reportLinks)
+  .buffer_add("\n\n")
 
   # Knit chunk that embeds the saved PNG
   fig2d <- c(
@@ -256,15 +256,15 @@ if (!is.null(mSetObj$imgSet$pca_score2d_meta) &&
     "```",
     "\n\n"
   )
-  cat(fig2d, file = rmdFile, append = TRUE, sep = "\n")
-  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(fig2d, collapse="\n")
+  .buffer_add("\n\n", collapse="\n")
 }
 
   if(!is.null(mSetObj$imgSet$reportSet$ipca_3d) && safeFileExists(mSetObj$imgSet$reportSet$ipca_3d)){
     
     reportLinks <- getReportLinks(link, "ipca_3d");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig2 <- c(paste0("```{r figure_ipca3, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                      ". Screenshot of interactive 3-D plot.',",
                      " fig.lp='", 
@@ -273,8 +273,8 @@ if (!is.null(mSetObj$imgSet$pca_score2d_meta) &&
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$ipca_3d)",
               "```",
               "\n\n");
-    cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig2, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
 }
 
@@ -302,15 +302,15 @@ CreateCorHeatmap <- function(mSetObj=NA){
              "used for primary ordering. Users can choose to switch the order.",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 4 - heatmap2
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "heatmap2", "heatmap2");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs4 <- fig.count <<- fig.count+1;
   if (mSetObj$paramSet$report.format == 'html'){
@@ -349,8 +349,8 @@ CreateCorHeatmap <- function(mSetObj=NA){
     fig <- "";
     }
   }
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }
 
 ##### UNIVARIATE ANALYSIS SECTIONS #####
@@ -385,13 +385,13 @@ CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
              paste0("- P-value cutoff: ```", params$p.thresh, "``` type: ```", params$pval.type, "```"),
              paste0("- Number of sig features: ```", params$sig.num, "```"),
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
                 
   # fig 5
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "covariate_plot", "covariate_plot");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs5 <- fig.count <<- fig.count+1;
   fig <- c(
@@ -406,14 +406,14 @@ CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
   "```",
   "\n\n"
 )
-cat(paste0(fig, "\n\n"), file=rmdFile, append=TRUE, sep="\n");
+.buffer_add(fig, "\n\n");
 
 
     link <- GetSharingLink(mSetObj)
 
     reportLinks <- getReportLinks(link, "covariate_table");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
   table.count <<- table.count+1;
   
@@ -425,8 +425,8 @@ cat(paste0(fig, "\n\n"), file=rmdFile, append=TRUE, sep="\n");
            ". Significant features identified by linear modeling')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 
@@ -460,13 +460,13 @@ CreateCorAnalysis <- function(mSetObj=NA){
              paste0("\n- Selected covariates: ```", paste(params$cov.vec, collapse="; "), "```;"),
              paste0("\n- Correlation Measure: ```", params$dist.name, "```;"),
             "\n\n");  
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 
   # fig 6
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "ptn_multifac", "ptn");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   fig_mfs6 <- fig.count <<- fig.count+1;
   fig <- c(paste0("```{r figure_mfs6, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs6, 
@@ -477,8 +477,8 @@ CreateCorAnalysis <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$corr)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }
 
 #'Create report of analyses 
@@ -524,13 +524,13 @@ descr <- c("#### - Two-way ANOVA\n\n",
           );
 
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   # fig 7
   link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "aov2", "aov2");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs7, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs7, 
                   ". Plot of important features selected by two-way ANOVA.', ",
@@ -540,19 +540,19 @@ descr <- c("#### - Two-way ANOVA\n\n",
            "safeIncludeGraphics(mSetObj$imgSet$anova2)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   #Significant features identified by advanced ANOVA
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
   
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "aov2_table");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   cmdhist2 <- c(
     "```{r table_mfs3, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -562,8 +562,8 @@ descr <- c("#### - Two-way ANOVA\n\n",
            ". Significant features identified by advanced ANOVA.')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 ##### MULTIVARIATE ANALYSIS SECTIONS #####
@@ -645,16 +645,16 @@ CreateASCAdoc <- function(mSetObj=NA){
              asca.tab3,
              "The other details are available as .csv documents in your downloaded zip file.");
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 11
   if(!is.null(mSetObj$imgSet$asca.scree)){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_scree", "asca_scree");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   fig <- c(paste0("```{r fig_mfs11, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs11, 
                   ". Scree plots for each sub model.', ",
                   " fig.lp='", 
@@ -664,16 +664,16 @@ CreateASCAdoc <- function(mSetObj=NA){
            "```",
            "\n\n");
 
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
   
   # fig 12
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_fa", "asca_fa");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs12, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs12, 
                   ". Major patterns associated with ",mSetObj$dataSet$facA.lbl, ".', ",
@@ -683,16 +683,16 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.modelA)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 13
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_fb", "asca_fb");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs13, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs13, 
                   ". Major patterns associated with ",mSetObj$dataSet$facB.lbl, ".', ",
@@ -702,8 +702,8 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.modelB)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 14
     if(!is.null(mSetObj$imgSet$asca.modelAB)){
@@ -711,8 +711,8 @@ CreateASCAdoc <- function(mSetObj=NA){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_fab", "asca_fab");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs14, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs14, 
                   ". Major patterns associated with the Interaction between the two factors.', ",
@@ -722,8 +722,8 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.modelAB)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
   # fig 15
   if(!is.null(mSetObj$imgSet$asca.perm)){
@@ -731,8 +731,8 @@ CreateASCAdoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "asca_perm", "asca_perm");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig <- c(paste0("```{r fig_mfs15, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs15, 
                     ". Model validation through permutations.', ",
@@ -742,8 +742,8 @@ CreateASCAdoc <- function(mSetObj=NA){
              "safeIncludeGraphics(mSetObj$imgSet$asca.perm)",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
 
       if(!is.null(mSetObj$imgSet$asca.impA)){
@@ -753,8 +753,8 @@ CreateASCAdoc <- function(mSetObj=NA){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_impa", "asca_impa");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs16, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs16, 
                   ". Important variables associated with ", mSetObj$dataSet$facA.lbl, ".', ",
@@ -764,8 +764,8 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.impA)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
   # fig 17
         if(!is.null(mSetObj$imgSet$asca.impB)){
@@ -773,8 +773,8 @@ CreateASCAdoc <- function(mSetObj=NA){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_impb", "asca_impb");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs17, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs17, 
                   ". Important variables associated with ", mSetObj$dataSet$facB.lbl, ".', ",
@@ -784,8 +784,8 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.impB)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
 
   # fig 18
@@ -794,8 +794,8 @@ CreateASCAdoc <- function(mSetObj=NA){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "asca_impab", "asca_impab");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r fig_mfs18, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs18, 
                   ". Variables important in interaction between the two factors.', ",
@@ -805,19 +805,19 @@ CreateASCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$asca.impAB)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
   
   if(!is.null(asca.tab1)){
     
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
 
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "asca.sigA");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     table.count <<- table.count+1;
     
@@ -829,19 +829,19 @@ CreateASCAdoc <- function(mSetObj=NA){
              ". Important features identified by ASCA.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if(!is.null(asca.tab2)){
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
 
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "asca.sigB", "asca.sigB");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     table.count <<- table.count+1;
     
@@ -853,18 +853,18 @@ CreateASCAdoc <- function(mSetObj=NA){
              ". Important features identified by ASCA.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if(!is.null(asca.tab3)){
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
 
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "asca.sigAB");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     table.count <<- table.count+1;
     
@@ -876,8 +876,8 @@ CreateASCAdoc <- function(mSetObj=NA){
              ". Important features identified by ASCA.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
 }
 
@@ -911,15 +911,15 @@ CreateMBdoc <- function(mSetObj=NA){
               paste0("\n- Selected metadata: `", paste(mSetObj$analSet$MB$selected.meta, collapse=", "), "`;"),
               "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 
     link <- GetSharingLink(mSetObj)
 
     reportLinks <- getReportLinks(link, "meba");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
   table.count <<- table.count+1;
   
@@ -931,8 +931,8 @@ CreateMBdoc <- function(mSetObj=NA){
            ". Significant features identified by advanced MEBA.')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 
@@ -966,14 +966,14 @@ CreateRandomForest <- function(mSetObj=NA){
              paste0("\n- Randomness: `", mSetObj$analSet$rf.random, "`;")
             );
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   # fig 21
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_cls_multifac", "rf_cls_meta");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs21  <- fig.count<<-fig.count+1;
   fig <- c(paste0("```{r fig_mfs21, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs21, 
@@ -984,16 +984,16 @@ CreateRandomForest <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$rf.cls)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 22
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_imp_multifac", "rf_imp_meta");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs22  <- fig.count<<-fig.count+1;
   fig <- c(paste0("```{r fig_mfs22, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs22, 
@@ -1004,15 +1004,15 @@ CreateRandomForest <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$rf.imp)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # fig 23
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_outlier_multifac", "rf_outlier_meta");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig_mfs23  <- fig.count<<-fig.count+1;
   fig <- c(paste0("```{r fig_mfs23, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mfs23, 
@@ -1023,6 +1023,6 @@ CreateRandomForest <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$rf.outlier)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }

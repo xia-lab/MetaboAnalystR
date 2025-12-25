@@ -52,7 +52,9 @@
                                 <p:validateFile sizeLimit="104857600" allowTypes="/(\.|\/)(xlsx|XLSX)$/"/>
                             </p:fileUpload>
                             <p:spacer width="10px"/>
-                            <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="formatIcon3" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
                         <p:commandButton value="Submit" ajax="false" 
                                          onclick="PF('statusDialog').show()" 
@@ -67,7 +69,9 @@
                             <h:panelGroup id="cc6" layout="block" style="padding-right: 180px">
                                 <p:inputText style="width:140px" value="#{uploader.nmdrStudyId}"/> 
                                 <p:spacer width="10px"/>
-                                <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="formatIcon2" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                             </h:panelGroup>
                         </h:panelGrid>
                         <p:commandButton value="Submit" ajax="false" 

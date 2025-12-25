@@ -72,7 +72,7 @@ CreateIntegratedPathwayAnalIntr <- function(){
              To address this issue, the current implementation of this omic integration module allows users to explore the enriched pathways based either 
              on joint evidence or on the evidence obtained from one particular omic platform for comparison.\n\n"
   );
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create integrated pathway  report: Data Input
@@ -94,16 +94,16 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
              " will be mapped to the respective databases collected within MetaboAnalyst. ",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   if(exists('map.table', where=mSetObj$dataSet)){
     
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "name_map_pathinteg_cmpd")
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
 
     table.count <<- table.count+1;
@@ -119,8 +119,8 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
     );
 
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if (exists('gene.map.table', where=mSetObj$dataSet)){
@@ -128,8 +128,8 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "name_map_pathinteg")
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     table.count <<- table.count+1;
 
@@ -144,11 +144,11 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
     );
 
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }  
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 #'Create a x-table for compound name mapping
@@ -217,7 +217,7 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
              " driven by significant genes or metabolites, respectively.",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   # PlotInmexPath
   descr <- c("The results from pathway analysis are presented graphically as well as in a detailed table.",
@@ -229,13 +229,13 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
              paste("Figure", fig_lp <- fig.count<<-fig.count+1, " shows the last pathway you inspected."),
              "\n\n"
             );
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "path_view_integ", "path_view");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
 fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ov, 
                 ". Summary of Joint Pathway Analysis', ",
@@ -250,8 +250,8 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
          "```",
          "\n\n");
 
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # PlotReKEGGPath
   if(!is.null(mSetObj$imgSet$pathinteg.path)){
@@ -261,8 +261,8 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
                           '<a href="', link, '&format=pdf&imgCmd=plot_kegg_graph" target="_blank">PDF</a> ',
                           '<a href="', link, '&format=svg&imgCmd=plot_kegg_graph" target="_blank">SVG</a>',
                           '</div>')
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     path.img <- mSetObj$imgSet$pathinteg.path; 
     fig <- c(paste0("```{r figure_pars2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_lp, 
@@ -275,8 +275,8 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
              "safeIncludeGraphics(mSetObj$imgSet$pathinteg.path)",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   if(is.null(mSetObj$dataSet$path.mat)){
@@ -285,8 +285,8 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
    
   link <- GetSharingLink(mSetObj);
   reportLinks <- getReportLinks(link, "path_view_integ");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
     table.count <<- table.count+1;
     
@@ -301,14 +301,14 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
     );
 
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
 
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "path_view_integ");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
 
     table.count <<- table.count+1;
@@ -323,7 +323,7 @@ fig <- c(paste0("```{r figure_pars1, echo=FALSE, fig.pos='H', fig.cap='Figure ",
       "\n\n"
     );
 
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(cmdhist2, collapse="\n");
 
   }
 }

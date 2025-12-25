@@ -52,7 +52,7 @@ CreateStatIntrSlides <- function() {
              "5. Statistical analysis and visualization",
              "  - including t-tests, ANOVA, volcano plot, PCA, PLSDA, heatmaps, Random Forests, SVM, etc.",
              "\n\n---\n\n");
-  cat(slide_text, file = rmdFile, append = TRUE,sep="\n")
+  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
 }
 
 CreateUNIVSlides <- function(mSetObj = NA) {
@@ -66,16 +66,16 @@ CreateUNIVSlides <- function(mSetObj = NA) {
   
     #descr <- c("# Univariate Analysis",
     #           "\n\n---\n\n")
-    #cat(descr, file = rmdFile, append = TRUE)
+    #.buffer_add(descr)
   
     # Fold Change Analysis
     if(!is.null(mSetObj$imgSet$fc)){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$fc, 'Important features selected by fold-change analysis.')
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
 
         title_fc <- sprintf('## Table %d. Important features identified by Fold Change analysis', getTableCount())
-        cat(title_fc, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)  # Ensures there is a newline after the title
+        .buffer_add(title_fc)
+        .buffer_add("\n\n")  # Ensures there is a newline after the title
 
         # Create the R code chunk for the table
         r_code_chunk_fc <- paste0(
@@ -89,17 +89,17 @@ CreateUNIVSlides <- function(mSetObj = NA) {
         )
 
         # Write the R code chunk to the R Markdown file for PowerPoint slides
-        cat(r_code_chunk_fc, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_fc)
 
     }
   
     # T-tests
     if(!is.null(mSetObj$imgSet$tt)){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$tt, 'Important features selected by T-tests.')
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
         title_tt <- sprintf('## Table %d. Important features identified by T-tests', getTableCount())
-        cat(title_tt, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(title_tt)
+        .buffer_add("\n\n")
 
         r_code_chunk_tt <- paste0(
           "```{r table_tt_analysis, echo=FALSE, results='asis'}\n",
@@ -110,18 +110,18 @@ CreateUNIVSlides <- function(mSetObj = NA) {
           "```\n",
           "\n\n---\n\n"
         )
-        cat(r_code_chunk_tt, file = rmdFile, append = TRUE);
+        .buffer_add(r_code_chunk_tt);
     }
   
     # Volcano Plot
     if(!is.null(mSetObj$analSet$volcano$sig.mat)){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$volcano, 'Important features identified by volcano plot.')
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
 
         # Define the title as a markdown heading and write it to the Rmd file
         title_volcano <- sprintf('## Table %d. Important features identified by Volcano Plot analysis', getTableCount())
-        cat(title_volcano, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)  # Ensures there is a newline after the title
+        .buffer_add(title_volcano)
+        .buffer_add("\n\n")  # Ensures there is a newline after the title
 
         # Create the R code chunk for the table
         r_code_chunk_volcano <- paste0(
@@ -135,7 +135,7 @@ CreateUNIVSlides <- function(mSetObj = NA) {
         )
 
         # Write the R code chunk to the R Markdown file for PowerPoint slides
-        cat(r_code_chunk_volcano, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_volcano)
 
     }
 }
@@ -150,18 +150,18 @@ CreateANOVASlides <- function(mSetObj = NA) {
 
     descr <- c("# ANOVA",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # ANOVA figure description and image
     anovaFigureDescription <- 'Significant features selected by ANOVA. The p values are transformed by -log10 so that the more significant features are higher on the graph.'
     anovaFigurePath <- mSetObj$imgSet$anova  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(anovaFigurePath, anovaFigureDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # ANOVA table rendering
     title_anov <- sprintf('## Table %d. Important features identified by One-way ANOVA and post-hoc analysis', getTableCount())
-    cat(title_anov, file = rmdFile, append = TRUE)
-    cat("\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(title_anov)
+    .buffer_add("\n\n")
 
     r_code_chunk_anov <- paste0(
         "```{r table_anov, echo=FALSE, results='asis'}\n",
@@ -172,7 +172,7 @@ CreateANOVASlides <- function(mSetObj = NA) {
         "```\n",
         "\n\n---\n\n"
     )
-    cat(r_code_chunk_anov, file = rmdFile, append = TRUE)
+    .buffer_add(r_code_chunk_anov)
 
 }
 
@@ -186,26 +186,26 @@ CreateCorrSlides <- function(mSetObj = NA) {
 
     descr <- c("# Correlation Analysis",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # Correlation Heatmaps
     if(!is.null(mSetObj$imgSet$corr.heatmap) && safeFileExists(mSetObj$imgSet$corr.heatmap) ){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$corr.heatmap, 'Correlation heatmaps showing significant features selected by statistical methods.')
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 
     # Pattern Hunter Analysis
     if(!is.null(mSetObj$analSet$corr$cor.mat) && !isEmptyMatrix(mSetObj$analSet$corr$cor.mat)){
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$corr, 'Pattern Hunter analysis showing significant correlations with features of interest.')
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 
     # Result Table for Correlation Analysis
     if(!is.null(mSetObj$analSet$corr$cor.mat)){
         # R code chunk for Correlation Analysis
         title_corr <- sprintf('## Table %d. Important features identified by correlation analysis', getTableCount())
-        cat(title_corr, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(title_corr)
+        .buffer_add("\n\n")
 
         r_code_chunk_corr <- paste0(
             "```{r table_corr_analysis, echo=FALSE, results='asis'}\n",
@@ -216,11 +216,11 @@ CreateCorrSlides <- function(mSetObj = NA) {
             "```\n",
             "\n\n---\n\n"
         )
-        cat(r_code_chunk_corr, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_corr)
 
     }
 
-    cat("\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("\n\n")
 }
 
 
@@ -235,13 +235,13 @@ CreateDSPCSlides <- function(mSetObj = NA) {
 
     descr <- c("# Debiased Sparse Partial Correlation (DSPC) Analysis",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # Use CreateTwoColumnFigureSlide function for DSPC network figure
     dspcFigurePath <- 'dspc.png'  # Ensure this is the correct path to your DSPC network figure
     dspcFigureCaption <- sprintf("Screenshot of DSPC network. The nodes are input metabolites, while the edges represent the association measures.")
     slideContent <- CreateTwoColumnFigureSlide(dspcFigurePath, dspcFigureCaption)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 }
 
 
@@ -255,28 +255,28 @@ CreatePCASlides <- function(mSetObj = NA) {
 
     descr <- c("# Principal Component Analysis (PCA)",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # Pairwise score plots
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca.pair, sprintf("PCA Pairwise score plots showing significant features selected by statistical methods."))
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Scree plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca.scree, sprintf("PCA Scree plot shows the variance explained by each principal component."))
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # PCA 2D Scores Plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca_score2d, sprintf("PCA 2D scores plot showing the distribution of samples in the space defined by the first two principal components."))
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # PCA biplot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pca.biplot, sprintf("PCA Biplot showing the distribution of samples and loading of variables on the first two principal components."))
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # 3D PCA plot
     if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && safeFileExists(mSetObj$imgSet$reportSet$pca_3d) ) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$pca_3d, sprintf("PCA Interactive 3D plot of the first three principal components."))
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 }
 
@@ -294,20 +294,20 @@ CreateOPLSDASlides <- function(mSetObj = NA) {
   
     # Score plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$opls.score2d, "OPLS-DA score plot of all metabolite features.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # S plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$opls.loading, "OPLS-DA loadings S-plot showing the variable importance in a model.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Classification
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$opls.class, "Model overview of the OPLS-DA model for the provided dataset.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
     
     # Permutation
     if(!is.null(mSetObj$imgSet$opls.permut)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$opls.permut, "Permutation analysis, showing the observed and cross-validated R2Y and Q2 coefficients.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 }
 
@@ -321,32 +321,32 @@ CreateSPLSDASlides <- function(mSetObj = NA) {
     }
   
     # sPLS-DA Description
-    cat("# Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Sparse Partial Least Squares - Discriminant Analysis (sPLS-DA)")
+    .buffer_add("\n\n---\n\n")
   
   
     # Score plot overview
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$spls.pair, "Pairwise scores plots between the selected components.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # 2D score plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$spls.score2d, "Scores plot between the selected PCs.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Loading VIP plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$spls.imp, "Plot showing the variables selected by the sPLS-DA model for a given component.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # 3D score plot, if available
     if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$splsda_3d) ) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$splsda_3d, "Screenshot of interactive 3-D plot.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
   
     # Cross-validation, if available
     if(!is.null(mSetObj$imgSet$splsda.class)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$splsda.class, "Plot of the performance of the sPLS-DA model evaluated using cross validations.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 }
 
@@ -360,22 +360,22 @@ CreateSAMSlides <- function(mSetObj = NA) {
     }
 
     # SAM Description
-    cat("# Significance Analysis of Microarray (SAM)\n\n", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Significance Analysis of Microarray (SAM)\n\n")
+    .buffer_add("\n\n---\n\n")
     
   
     # SAM significant features figure
     if(!is.null(mSetObj$imgSet$sam.cmpd)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$sam.cmpd, "Significant features identified by SAM. The green circles represent features that exceed the specified threshold.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
   
     # SAM Table
     # Assuming GetSigTableRMD_SAM is a function returning significant features table
     if(!isEmptyMatrix(mSetObj$analSet$sam.cmpds)) {
         title_sam <- sprintf('## Table %d. Important features identified by Significance Analysis of Microarray analysis', getTableCount())
-        cat(title_sam, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(title_sam)
+        .buffer_add("\n\n")
 
         r_code_chunk_sam <- paste0(
             "```{r table_sam, echo=FALSE, results='asis', warning=FALSE}\n",
@@ -386,7 +386,7 @@ CreateSAMSlides <- function(mSetObj = NA) {
             "```\n",
             "\n\n---\n\n"
         )
-        cat(r_code_chunk_sam, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_sam)
 
     }
 }
@@ -401,8 +401,8 @@ CreateEBAMSlides <- function(mSetObj=NA){
 
     # Introduction to EBAM
     descr <- c("# Empirical Bayesian Analysis of Microarray (EBAM)");
-    cat(descr, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(descr)
+    .buffer_add("\n\n---\n\n")
 
 
     # EBAM figure and table
@@ -411,11 +411,11 @@ CreateEBAMSlides <- function(mSetObj=NA){
         ebamFigureDescription <- 'Significant features identified by EBAM. The green circles represent features that exceed the specified threshold.'
         ebamFigurePath <- mSetObj$imgSet$ebam.cmpd  # Ensure this is the correct path
         slideContent <- CreateTwoColumnFigureSlide(ebamFigurePath, ebamFigureDescription)
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
 
         title_ebam <- sprintf('## Table %d. Important features identified by Empirical Bayesian Analysis of Microarray analysis', getTableCount())
-        cat(title_ebam, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(title_ebam)
+        .buffer_add("\n\n")
 
         r_code_chunk_ebam <- paste0(
             "```{r table_ebam_analysis, echo=FALSE, results='asis'}\n",
@@ -426,7 +426,7 @@ CreateEBAMSlides <- function(mSetObj=NA){
             "```\n",
             "\n\n---\n\n"
         )
-        cat(r_code_chunk_ebam, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_ebam)
 
 
     }
@@ -440,8 +440,8 @@ CreateHCSlides <- function(mSetObj = NA) {
         return()
     }
 
-    cat("# Hierarchical Clustering analysis\n\n", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Hierarchical Clustering analysis\n\n")
+    .buffer_add("\n\n---\n\n")
 
 
     # Create content for dendrogram if available
@@ -450,8 +450,8 @@ CreateHCSlides <- function(mSetObj = NA) {
                                                                          paste0(mSetObj$analSet$tree$dist.par, "` and clustering algorithm using `", 
                                                                          mSetObj$analSet$tree$clust.par, "`).")))
         # Append slide content to Rmd file
-        cat(dendrogramSlide, file = rmdFile, append = TRUE, sep = "\n")
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(dendrogramSlide, collapse="\n")
+        .buffer_add("\n\n---\n\n")
     }
 
     # Create content for heatmap if available
@@ -461,8 +461,8 @@ CreateHCSlides <- function(mSetObj = NA) {
                                                                        paste0(mSetObj$analSet$htmap$dist.par, "` and clustering algorithm using `", 
                                                                        mSetObj$analSet$htmap$clust.par, "`).")))
         # Append slide content to Rmd file
-        cat(heatmapSlide, file = rmdFile, append = TRUE, sep = "\n")
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(heatmapSlide, collapse="\n")
+        .buffer_add("\n\n---\n\n")
     }
 
 }
@@ -479,19 +479,19 @@ CreateKMSlides <- function(mSetObj=NA){
     # Introduction to K-means Clustering
     descr <- c("# K-means Clustering",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # K-means clustering results figure
     kmeansDescription <- 'K-means cluster analysis. The x-axes are variable indices and y-axes are relative intensities...'
     kmeansPath <- mSetObj$imgSet$kmeans  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(kmeansPath, kmeansDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # K-means PCA results figure
     kmeansPCADescription <- 'K-means cluster analysis, shown as PCA score plot...'
     kmeansPCAPath <- mSetObj$imgSet$kmeans.pca  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(kmeansPCAPath, kmeansPCADescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Define the title as a markdown heading and write it to the Rmd file
     title_km <- sprintf('## Table %d. Clustering result using K-means', getTableCount())
@@ -526,29 +526,29 @@ CreateRFSlides <- function(mSetObj=NA){
     # Introduction to Random Forest
     descr <- c("# Random Forest (RF)",
                "\n\n---\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
 
     # Error rate figure
     rfErrorDescription <- 'Cumulative error rates by Random Forest classification...'
     rfErrorPath <- mSetObj$imgSet$rf.cls  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(rfErrorPath, rfErrorDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Variable importance figure
     rfImportanceDescription <- 'Significant features identified by Random Forest...'
     rfImportancePath <- mSetObj$imgSet$rf.imp  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(rfImportancePath, rfImportanceDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Outlier measure figure
     rfOutlierDescription <- 'Potential outliers identified by Random Forest...'
     rfOutlierPath <- mSetObj$imgSet$rf.outlier  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(rfOutlierPath, rfOutlierDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     title_rf <- sprintf('## Table %d. Random Forest Classification Performance', getTableCount())
-    cat(title_rf, file = rmdFile, append = TRUE)
-    cat("\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(title_rf)
+    .buffer_add("\n\n")
 
     r_code_chunk_rf <- paste0(
         "```{r table_rf_analysis, echo=FALSE, results='asis'}\n",
@@ -559,7 +559,7 @@ CreateRFSlides <- function(mSetObj=NA){
         "```\n",
         "\n\n---\n\n"
     )
-    cat(r_code_chunk_rf, file = rmdFile, append = TRUE)
+    .buffer_add(r_code_chunk_rf)
 
 
 }
@@ -573,13 +573,13 @@ CreateSVMSlides <- function(mSetObj = NA) {
         return()  # Exit if SVM was not performed
     }
 
-    cat("# Support Vector Machine (SVM)\n\n", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Support Vector Machine (SVM)\n\n")
+    .buffer_add("\n\n---\n\n")
 
     show=F
     if(show){
     # SVM Description
-    cat("## Support Vector Machine (SVM)\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("## Support Vector Machine (SVM)\n\n")
     cat("SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. ",
         "The SVM-based recursive feature selection and classification is performed using R-SVM script. The process is performed recursively using decreasing series of feature subsets so that different classification models can be calculated. ",
         "Feature importance is evaluated based on its frequencies being selected in the best classifier identified by recursive classification and cross-validation. ",
@@ -590,13 +590,13 @@ CreateSVMSlides <- function(mSetObj = NA) {
     svmClassPath <- mSetObj$imgSet$svm.class  # Ensure this is the correct path
     svmClassCaption <- "Recursive classification with SVM. The red circle indicates the best classifier."
     slideContent <- CreateTwoColumnFigureSlide(svmClassPath, svmClassCaption)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
   
     # Significant Features by SVM
     svmFeaturesPath <- mSetObj$imgSet$svm  # Ensure this is the correct path
     svmFeaturesCaption <- "Significant features identified by R-SVM. Features are ranked by their frequencies of being selected in the classifier."
     slideContent <- CreateTwoColumnFigureSlide(svmFeaturesPath, svmFeaturesCaption)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 }
 
 CreatePLSSlides <- function(mSetObj = NA) {
@@ -608,42 +608,42 @@ CreatePLSSlides <- function(mSetObj = NA) {
     }
 
 
-    cat("# Partial Least Squares - Discriminant Analysis (PLS-DA)\n\n", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Partial Least Squares - Discriminant Analysis (PLS-DA)\n\n")
+    .buffer_add("\n\n---\n\n")
 
     # Pairwise score plots
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.pair, "Pairwise scores plots between the selected components.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # 2D score plots
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.score2d, "Scores plot between the selected PCs.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # 3D scores plot, if available
     if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$plsda_3d)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$reportSet$plsda_3d, "3D scores plot between selected components.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 
     # Loading plots
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.loading, "Loading plot between the selected PCs.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     # Classification performance
     if(!is.null(mSetObj$imgSet$pls.class)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.class, "Classification performance with different number of components.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 
     # Permutation test
     if(!is.null(mSetObj$imgSet$pls.permut)) {
         slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.permut, "Results of permutation test for model validation.")
-        cat(slideContent, file = rmdFile, append = TRUE)
+        .buffer_add(slideContent)
     }
 
     # VIP features
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pls.imp, "Important features identified by PLS-DA.")
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 }
 
 CreateSOMSlides <- function(mSetObj=NA){
@@ -654,18 +654,18 @@ CreateSOMSlides <- function(mSetObj=NA){
         return()  # Exit if SOM analysis was not performed
     }
 
-    cat("# Self Organizing Map (SOM)\n\n", file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("# Self Organizing Map (SOM)\n\n")
+    .buffer_add("\n\n---\n\n")
 
     # SOM clustering results figure
     somDescription <- 'SOM cluster analysis. The x-axes are features and y-axes are relative intensities...'
     somPath <- mSetObj$imgSet$som  # Ensure this is the correct path
     slideContent <- CreateTwoColumnFigureSlide(somPath, somDescription)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
 
     title_som <- sprintf('## Table %d. Clustering result using SOM', getTableCount())
-    cat(title_som, file = rmdFile, append = TRUE)
-    cat("\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(title_som)
+    .buffer_add("\n\n")
 
     r_code_chunk_som <- paste0(
         "```{r table_som_analysis, echo=FALSE, results='asis'}\n",
@@ -676,7 +676,7 @@ CreateSOMSlides <- function(mSetObj=NA){
         "```\n",
         "\n\n---\n\n"
     )
-    cat(r_code_chunk_som, file = rmdFile, append = TRUE)
+    .buffer_add(r_code_chunk_som)
 
 }
 

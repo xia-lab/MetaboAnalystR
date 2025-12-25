@@ -113,7 +113,9 @@
                             <p:spacer style="width: 10px;" />
 
                             <!-- Hoverable info icon -->
-                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                            <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                             <p:tooltip for="helpIcon" styleClass="helpTip">
                                 <h:outputText value="This table provides a detailed comparison of different normalization methods. Each column contains the following information:" 
                                               style="display: block; font-size: 14px; margin-top: 5px;" />

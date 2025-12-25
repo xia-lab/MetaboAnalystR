@@ -46,7 +46,7 @@ CreatePowerIntr_slides <- function() {
         "- **Reference:** For detailed methodology, see [van Iterson et al.](https://pubmed.ncbi.nlm.nih.gov/19758461/).\n",
         "\n---\n\n"
     )
-    cat(introSlide, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(introSlide, collapse="\n")
 }
 
 
@@ -69,13 +69,13 @@ CreatePowerParametersDoc_slides <- function(mSetObj=NA) {
         "- **Distribution Expectation**: Test-statistics should resemble a near-normal distribution.",
         "- **P-value Distribution**: Majority should be close to zero for sufficient normalization.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
     
     # Diagnostic Plots
     diagnosticPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$powerstat, "Various diagnostic plots assessing normalization sufficiency and data distribution.")
-    cat(diagnosticPlotSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(diagnosticPlotSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -98,13 +98,13 @@ CreatePowerAnalDoc_slides <- function(mSetObj=NA) {
     intro <- c(
         "# Power Analysis Overview\n\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Power Analysis Plots and Tables
     powerAnalysisSlide1 <- CreateTwoColumnFigureSlide(mSetObj$imgSet$powerprofile, "Predicted power curve based on the average cross validation performance.")
-    cat(powerAnalysisSlide1, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(powerAnalysisSlide1)
+    .buffer_add("\n\n---\n\n")
 
     # Additional slides can be appended similarly for other plots and tables if necessary
 }

@@ -59,7 +59,9 @@
                         </h:panelGrid>
                         <h:panelGrid columns="2">
                             <h:outputLabel style="font-weight: bold" value="Correlation cutoff:"/>
-                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                            <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGrid>  
                         <h:panelGrid columns="2">
                             <p:inputText id="txt2" value="#{univBean.corrThresh}" style="width:60px"/>

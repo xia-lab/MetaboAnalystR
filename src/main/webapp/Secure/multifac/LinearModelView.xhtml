@@ -282,7 +282,9 @@
                         <p:commandLink title="Reset Zoom" onclick="myChart.resetZoom()">
                             <i class="pi pi-undo"></i>
                         </p:commandLink>
-                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                        </h:panelGroup>
                     </h:panelGrid>
                     <p:tooltip for="helpIcon" styleClass="helpTip">
                         <p>

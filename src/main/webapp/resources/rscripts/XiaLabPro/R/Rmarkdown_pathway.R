@@ -76,7 +76,7 @@ CreatePathIntr<-function(){
               The second column must be phenotype labels (binary, multi-group, or continuous). The table is uploaded as 
               comma separated values (.csv).",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 
@@ -97,13 +97,13 @@ CreatePathProcessDoc <- function(mSetObj=NA){
              "\n\n## 2. Data Processing\n\n",
              GetNameMappingDoc(),
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "name_map");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   descr <- c(
     "```{r table_cnm, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -112,7 +112,7 @@ CreatePathProcessDoc <- function(mSetObj=NA){
            ". Result from Compound Name Mapping.')"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
+  .buffer_add(descr, collapse="\n\n");
 }
 
 #'Create report of analyses (Met Pathway)
@@ -130,7 +130,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
   
   descr <- c("\n\n<hr/>",
              "\n\n## 3. Pathway Analysis\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   if(mSetObj$analSet$type == "pathora") {
     descr <- c("#### - Over Representation Analysis (ORA)\n\n",
@@ -169,7 +169,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
                "\n\n"
     );
   }
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr <- c("#### - Pathway Topology Analysis\n\n",
              "The structure of biological pathways represent our knowledge about the complex relationships among molecules",
@@ -193,7 +193,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
              "\n\n",
              mSetObj$msgSet$topo.msg,
              "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   descr <- c("#### - Pathway Library Selection\n\n",
              "A total of 128 pathway libraries are currently supported, covering 11 organism group:\n",
@@ -211,7 +211,7 @@ CreatePathAnalDoc <- function(mSetObj=NA){
              "\n\n",
              paste("Your selected pathway library (KEGG code): ```", mSetObj$paramSet$lib.nm, "```"),
              "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Pathway)
@@ -231,15 +231,15 @@ CreatePathResultDoc <- function(mSetObj=NA){
              "The results from pathway analysis are presented graphically below. **Mouse over** a particular node to view the pathway name. 
              Two tables are provided - the pathway analysis result table shows the numerical details of the scatter plot; while the 
              pathway mapping table shows individual compounds that are assigned to different pathways. \n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   #path_view
   if(!is.null(mSetObj$imgSet$path.overview)){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "path_view", "path_view");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     fig <- c(
       paste0("```{r figure_pr, echo=FALSE, fig.pos='H', fig.cap='Figure 1. Summary of Pathway Analysis.', ",
@@ -254,8 +254,8 @@ CreatePathResultDoc <- function(mSetObj=NA){
       "\n\n"
     )
 
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   
   descr <- c(
     "The table below shows the detailed results from the pathway analysis. Since",
@@ -269,13 +269,13 @@ CreatePathResultDoc <- function(mSetObj=NA){
     "* the **FDR p** is the p value adjusted using False Discovery Rate;",
     "* the **Impact** is the pathway impact value calculated from pathway topology analysis.",
     "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   link <- GetSharingLink(mSetObj);
   reportLinks <- getReportLinks(link, "path_view_restbl");
   #save.image("pathrmd.RData");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   #print(mSetObj$analSet$type);
   #print("analType=======");
   if(mSetObj$analSet$type == "pathora"){
@@ -290,7 +290,7 @@ CreatePathResultDoc <- function(mSetObj=NA){
              ". Result from ORA Pathway Analysis.', table.name='pathora')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(descr, collapse="\n\n");
 
   }else{
     # Result from Quantitative Enrichment Analysis
@@ -301,7 +301,7 @@ CreatePathResultDoc <- function(mSetObj=NA){
              ". Result from Quantitative Enrichment Analysis.', table.name='pathqea')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(descr, collapse="\n\n");
 
   }
 
@@ -314,8 +314,8 @@ CreatePathResultDoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "path_view_restbl");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
         cmdhist2 <- c(
           "```{r table_mtb4, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -325,14 +325,14 @@ CreatePathResultDoc <- function(mSetObj=NA){
                  ". Pathway mapping details table.')"),
           "```", "\n\n");
 
-        cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(cmdhist2, collapse="\n");
     }
 }
     if(!is.null(mSetObj$imgSet$reportSet$heatmap_pathway) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_pathway)){
         reportLinks <- getReportLinks(link, "heatmap_pathway");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         fig2 <- c(paste0("```{r figure_heatmap_pathway, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
                          ". Screenshot of interactive peak heatmap.',",
                          " fig.lp='", 
@@ -341,8 +341,8 @@ CreatePathResultDoc <- function(mSetObj=NA){
                   "safeIncludeGraphics(mSetObj$imgSet$reportSet$heatmap_pathway)",
                   "```",
                   "\n\n");
-        cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig2, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
     }
 }
 

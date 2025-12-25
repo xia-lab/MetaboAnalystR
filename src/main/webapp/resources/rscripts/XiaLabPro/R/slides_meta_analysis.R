@@ -45,7 +45,7 @@ CreateMetaAnalysisIntr_slides <- function(mSetObj) {
         "- It is tailored for two-group comparisons (e.g., control vs. disease).",
         "- Acceptable data formats include compound concentration tables, spectral binned data, or peak intensity tables.")
 
-    cat(introSlide, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(introSlide, collapse="\n")
 }
 
 #'Create MetaAnalysis analysis report: Data Input
@@ -65,8 +65,8 @@ CreateMetaAnalysisInputDoc_slides <- function(mSetObj=NA){
         "- The process checks for appropriate class labels and deals with missing values, zeros, and negative values.",
         "- Ensures data consistency across datasets for accurate comparative analysis."
     )
-    cat(integrityCheckSlide, file=rmdFile, append=TRUE, sep="\n")
-    cat("\n\n---\n\n", file=rmdFile, append=TRUE)  # Slide break
+    .buffer_add(integrityCheckSlide, collapse="\n")
+    .buffer_add("\n\n---\n\n")  # Slide break
 }
 
 
@@ -100,8 +100,8 @@ CreateMetaAnalysisNORMdoc_slides <- function(mSetObj=NA){
 
     # Combine all elements into one slide content
     slideContent <- c(normalizationSlide, normDetails, autoscaleInfo)
-    cat(slideContent, file=rmdFile, append=TRUE, sep="\n")
-    cat("\n\n---\n\n", file=rmdFile, append=TRUE)  # Slide break for next section
+    .buffer_add(slideContent, collapse="\n")
+    .buffer_add("\n\n---\n\n")  # Slide break for next section
 }
 
 
@@ -128,8 +128,8 @@ CreateMetaAnalysisDEdoc_slides <- function(mSetObj = NA) {
     } else {
         deDetails <- "No differential expression analysis was performed.\n\n"
     }
-    cat(deAnalysisDetails, deDetails, file = rmdFile, append = TRUE, sep="")
-    cat("\n\n---\n\n", file=rmdFile, append=TRUE)  # Slide break for next section
+    .buffer_add(deAnalysisDetails, deDetails, collapse="")
+    .buffer_add("\n\n---\n\n")  # Slide break for next section
 }
 
 #'Create MetaAnalysis analysis report: Data Normalization
@@ -183,7 +183,7 @@ CreateMetaAnalysisOutput_slides <- function(mSetObj = NA) {
         title <- paste0("## Table ", 
                  table.count, 
                  tableDescription)
-        cat(title, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(title, collapse="\n")
         table.count <<- table.count+1;
 
         cmdhist2 <- c(
@@ -193,8 +193,8 @@ CreateMetaAnalysisOutput_slides <- function(mSetObj = NA) {
           "```", 
           "\n\n"
         );
-        cat(cmdhist2, file = rmdFile, append = TRUE, sep = "\n")
-        cat("\n\n---\n\n", file=rmdFile, append=TRUE)  # Slide break for next section
+        .buffer_add(cmdhist2, collapse="\n")
+        .buffer_add("\n\n---\n\n")  # Slide break for next section
     }
 
     # Box Plots for Selected Features
@@ -202,14 +202,14 @@ CreateMetaAnalysisOutput_slides <- function(mSetObj = NA) {
         for(s in 1:length(mSetObj$imgSet$meta.anal$ids)) {
             featureName <- mSetObj$imgSet$meta.anal$feature
             featureSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$meta.anal$plot[s], "Expression pattern of the selected feature between groups.")
-            cat(featureSlide, file = rmdFile, append = TRUE)
+            .buffer_add(featureSlide)
         }
     }
 
     # Venn Diagram Slide
     if(!is.null(mSetObj$imgSet$venn)){
         vennDiagramSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$venn, "Venn diagram of differentially expressed features.")
-        cat(vennDiagramSlide, file = rmdFile, append = TRUE)
+        .buffer_add(vennDiagramSlide)
     }
 
     # Table for Venn Diagram DE Features
@@ -226,8 +226,8 @@ CreateMetaAnalysisOutput_slides <- function(mSetObj = NA) {
           "```", 
           "\n\n"
         );
-        cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(cmdhist2, collapse="\n");
+        .buffer_add("\n\n---\n\n")
     }
 }
 

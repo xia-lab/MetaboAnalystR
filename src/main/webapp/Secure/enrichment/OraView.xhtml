@@ -147,7 +147,9 @@
             <h:form>
                 <p:panel styleClass="myPanel" header="Network View" style="width:90%; margin-bottom:20px;">
                     <h:panelGrid columns="3" style="width: 800px; padding-left: 600px">
-                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help" />
+                        <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                        </h:panelGroup>
                         <p:commandLink value="SIF" ajax="false" style="background:none; border:none;"
                                        onclick="PrimeFaces.monitorDownload(start, stop);">  
                             <p:fileDownload value="#{msetBean.getSifFile()}" />  

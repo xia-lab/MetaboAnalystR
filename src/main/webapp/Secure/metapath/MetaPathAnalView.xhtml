@@ -38,7 +38,9 @@
 
                                 <h:panelGroup layout="block">
                                     <h:outputLabel value="Version:"/>
-                                    <p:graphicImage id="helpIcon01" url="/resources/images/ui-help.png"  alt="help"/>     
+                                    <h:panelGroup id="helpIcon01" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>     
                                 </h:panelGroup>
                                 <p:selectOneMenu value="#{pMetaStatBean.pathAlgVersion}">
                                     <f:selectItem itemLabel="Version 1" itemValue="v1"/>
@@ -47,7 +49,9 @@
 
                                 <h:panelGroup layout="block">
                                     <h:outputLabel value="P-value Integration:"/>
-                                    <p:graphicImage id="helpIcon0" url="/resources/images/ui-help.png"  alt="help"/>     
+                                    <h:panelGroup id="helpIcon0" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>     
                                 </h:panelGroup>
                                 <p:selectOneMenu value="#{pMetaStatBean.pvalmethod}">
                                     <f:selectItem itemLabel="Fisher" itemValue="fisher"/>
@@ -117,7 +121,9 @@
 
                                 <h:panelGroup layout="block">
                                     <h:outputLabel value="Version:"/>
-                                    <p:graphicImage id="helpIcon01" url="/resources/images/ui-help.png"  alt="help"/>     
+                                    <h:panelGroup id="helpIcon01" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>     
                                 </h:panelGroup>
                                 <p:selectOneMenu value="#{pMetaStatBean.poolAlgVersion}">
                                     <f:selectItem itemLabel="Version 1" itemValue="v1"/>
@@ -126,7 +132,9 @@
 
                                 <h:panelGroup layout="block">
                                     <p:outputLabel value="P-value cutoff:"/>
-                                    <p:graphicImage id="helpIcon02" url="/resources/images/ui-help.png"  alt="help"/>     
+                                    <h:panelGroup id="helpIcon02" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>     
                                 </h:panelGroup>
                                 <p:inputText value="#{pMetaStatBean.pvalCutoff}"/>
 

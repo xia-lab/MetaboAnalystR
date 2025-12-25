@@ -25,8 +25,8 @@ CreateDataProcSlides <- function(mSetObj = NA) {
   mSetObj <- .get.mSet(mSetObj)
   
   # Slide start: Data Type
-  cat("## Processing Parameters\n\n", file = rmdFile, append = TRUE)
-  cat("Data Type\n\n", file = rmdFile, append = TRUE)
+  .buffer_add("## Processing Parameters\n\n")
+  .buffer_add("Data Type\n\n")
   # Determine and print data type in the desired format
     data.type <- switch(mSetObj$dataSet$type,
                         "conc" = "- `Concentration Table`",
@@ -38,23 +38,23 @@ CreateDataProcSlides <- function(mSetObj = NA) {
                         "mztab" = "- `mzTab-M 2.0 Format`",
                         "- `Peak Intensity Table`") # Default case
 
-    cat(data.type, "\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(data.type, "\n\n")
 
     # Print the chosen method for missing value imputation in the desired format
     if (!is.null(mSetObj$msgSet$replace.msg)) {
         missingMsg <- paste("Missing Value Imputation Method:\n\n  - `", mSetObj$msgSet$replace.msg, "`", sep="")
-        cat(missingMsg, "\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(missingMsg, "\n\n")
     }
 
     # Check if filtering was performed and summarize in the desired format
     if (is.null(mSetObj$msgSet$filter.msg)) {
-        cat("Data Filtering:\n\n  - `No data filtering was performed.`\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("Data Filtering:\n\n  - `No data filtering was performed.`\n\n")
     } else {
         filt.msg <- paste("Data Filtering Method:\n  - `", mSetObj$msgSet$filter.msg, "`", sep="")
-        cat(filt.msg, "\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(filt.msg, "\n\n")
     }
 
-  cat("\n---\n\n", file=rmdFile, append=TRUE)  # Slide separator for ioslides or similar formats
+  .buffer_add("\n---\n\n")  # Slide separator for ioslides or similar formats
 }
 
 
@@ -93,7 +93,7 @@ CreateNORMSlides <- function(mSetObj = NA) {
                   "- Please choose a proper data normalization to proceed.",
                   "- You can also turn off normalization by selecting the `None` option.\n\n",
                   "---\n\n");
-    cat(errorMsg, file=rmdFile, sep="\n", append=TRUE);
+    .buffer_add(errorMsg, collapse="\n");
     return()
   }
   
@@ -103,7 +103,7 @@ CreateNORMSlides <- function(mSetObj = NA) {
                to be more suitable for statistical analysis and visualization.",
               "\n\n",
               "The normalization consists of the following options:\n\n");
-  cat(descr1, file=rmdFile, append=TRUE)
+  .buffer_add(descr1)
 
   cat("- **Row-wise Procedures:**\n",
       "   + Sample specific (e.g., by dry weight, volume)\n",
@@ -127,14 +127,14 @@ CreateNORMSlides <- function(mSetObj = NA) {
   } else {
     "- **Applied Methods:** No normalization methods were applied.\n\n---\n\n"
   }
-  cat(normMethod, file=rmdFile, append=TRUE)
+  .buffer_add(normMethod)
   
   # Visualization Slide (if applicable)
   if(exists("norm", where=mSetObj$imgSet)){
     # Extract and write the caption as standalone text
     caption <- "Data distribution before and after normalization";
     slideContent <- CreateTitleFigureSlide(mSetObj$imgSet$norm, caption)
-    cat(slideContent, file = rmdFile, append = TRUE)
+    .buffer_add(slideContent)
   }
 }
 
@@ -191,7 +191,7 @@ CreateSlideFooter <- function(){
         "* Make sure to include sufficient details (data and analysis steps) in order to reproduce the issue.",
         "\n\n---\n\n"    
     );
-    cat(end, file = rmdFile, append = TRUE, sep = "\n");
+    .buffer_add(end, collapse="\n");
 }
 
 
@@ -218,13 +218,13 @@ CreateUpSetDoc_slides <- function(mSetObj = NA) {
             "- This plot is used here to analyze the overlap of significant features identified across different datasets.",
             "- Each bar represents the number of significant features for a particular combination of datasets.\n"
         )
-        cat(descr, file = rmdFile, append = TRUE, sep = "\n")
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE) # Slide separator
+        .buffer_add(descr, collapse="\n")
+        .buffer_add("\n\n---\n\n") # Slide separator
 
         # Insert the UpSet plot image into the slides
 
     upset.desc <- paste("## Figure ", getFigCount(), ": Upset diagram comparing multiple results.");
-    cat(upset.desc, file = rmdFile, append = TRUE, sep="\n");
+    .buffer_add(upset.desc, collapse="\n");
 
     # image rendering in R Markdown
     img <- paste0("```{r figure_upset, echo=FALSE, fig.align='center', fig.pos='H', out.width='", getFigWidth(mSetObj), "'}\n",
@@ -234,7 +234,7 @@ CreateUpSetDoc_slides <- function(mSetObj = NA) {
        )
 
     
-    cat(img, file = rmdFile, append = TRUE, sep="\n");
+    .buffer_add(img, collapse="\n");
   }
     
 }
@@ -249,7 +249,7 @@ CreateTitleTableSlide <- function(tableStr, tableName) {
     "```",  # Close R code chunk
     "\n\n---\n\n"  # Slide division
   )
-  cat(descr_table, file=rmdFile, append=TRUE, sep="\n\n")  # Write to R Markdown file
+  .buffer_add(descr_table, collapse="\n\n")  # Write to R Markdown file
 }
 
 
@@ -275,7 +275,7 @@ AddFeatureImages_slides <- function(mSetObj=NA) {
             "\n\n---\n\n",  # End of slide
             sep = ""
         )
-        cat(descr, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(descr, collapse="\n")
         
         # Iteratively render images of selected features
         for (i in 1:length(imgSet$featureList)) {

@@ -35,7 +35,7 @@ CreateCausalIntr_slides <- function() {
     "GWAS links genetic variants to phenotypes, and mGWAS links genotypes to metabolites. MR analysis in MetaboAnalyst uses the 2SMR approach with summary statistics to estimate causal relationships.",
     "\n\n---\n\n"
   )
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+  .buffer_add(descr, collapse="\n\n")
 }
 
 #'Create MR analysis report: Input selection
@@ -55,18 +55,18 @@ CreateCausalInputDoc_slides <- function(mSetObj = NA) {
     "\n\n---\n\n"
   )
   
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+  .buffer_add(descr, collapse="\n\n")
   
   selected_exposure <- unique(mSetObj$dataSet$exposure$`Common Name`)[1]
   selected_outcome <- unique(mSetObj$dataSet$outcome$trait)[1]
   
   exposure_text <- paste("### Selected Exposure\n\n", paste("`", selected_exposure, "`", sep=""), "\n\n")
-  cat(exposure_text, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(exposure_text)
   
   outcome_text <- paste("### Selected Outcome\n\n", paste("`", selected_outcome, "`", sep=""), "\n\n")
-  cat(outcome_text, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(outcome_text)
   
-  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add("\n\n", collapse="\n")
 }
 
 #'Create MR analysis report: Parameter setting
@@ -89,7 +89,7 @@ CreateCausalParametersDoc_slides <- function(mSetObj = NA) {
     "\n\n---\n\n"
   )
   
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+  .buffer_add(descr, collapse="\n\n")
   
   snp_filter_params <- mSetObj$dataSet$snp_filter_params
   params_descr <- paste(
@@ -104,7 +104,7 @@ CreateCausalParametersDoc_slides <- function(mSetObj = NA) {
     "\n\n---\n\n"
   )
   
-  cat(params_descr, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(params_descr, collapse="\n")
   
   table.count <<- table.count + 1
   harmonized_data <- mSetObj$dataSet$harmonized.dat
@@ -136,7 +136,7 @@ CreateCausalAnalDoc_slides <- function(mSetObj) {
     "\n\n---\n\n"
   )
   
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(descr, collapse="\n")
   
   exposures <- unique(mSetObj$dataSet$mr_results_merge$exposure)
   
@@ -162,18 +162,18 @@ CreateCausalAnalDoc_slides <- function(mSetObj) {
     
     # Scatter plot
     slide <- CreateTwoColumnFigureSlide(scatter_plot, "Scatter plot for MR analysis")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
     
     # Forest plot
     slide <- CreateTwoColumnFigureSlide(forest_plot, "Forest plot for MR analysis")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
     
     # Leave-one-out plot
     slide <- CreateTwoColumnFigureSlide(leaveoneout_plot, "Leave-one-out plot for MR analysis")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
     
     # Funnel plot
     slide <- CreateTwoColumnFigureSlide(funnel_plot, "Funnel plot for MR analysis")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
   }
 }

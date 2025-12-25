@@ -19,7 +19,9 @@
                                          disabled="#{not sessionBean1.containsBlank}"
                                          itemLabel="#{procBean.blankLbl}"
                                          style="line-height: 18px"/>
-                <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                <h:panelGroup id="formatIcon3" style="margin-left: 10px;">
+                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                </h:panelGroup>
                 <p:tooltip for="formatIcon3" styleClass="helpTip">
                     <p>
                         The is based on the ratio of the average intensity of the samples to that of the BLANK samples.

@@ -31,7 +31,7 @@ CreateDoseIntr_slides <- function() {
   )
   
   # Assuming 'cat' writes to a Markdown file for slides
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+  .buffer_add(descr, collapse="\n\n")
 }
 
 #'Create dose response analysis report: Parameter Selection
@@ -51,11 +51,11 @@ CreateDoseParametersDoc_slides <- function(mSetObj = NA) {
         paste("Figure", fig_ppw <- fig.count <<- fig.count + 1, "shows the average fold change between each dose and the control."),
         "\n\n---\n\n"
     )
-    cat(slide_content, file = rmdFile, append = TRUE, sep = "\n\n")
+    .buffer_add(slide_content, collapse="\n\n")
 
     # Volcano plot slide using CreateTwoColumnFigureSlide
     slide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$dose_volcano_filename, "Volcano plot showing significant features identified from DE analysis.")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
 
 }
 
@@ -80,15 +80,15 @@ CreateDoseAnalDoc_slides <- function(mSetObj = NA) {
         "\n\n---\n\n"
     )
 
-    cat(slide_content, file = rmdFile, append = TRUE, sep = "\n\n")
+    .buffer_add(slide_content, collapse="\n\n")
 
     # Bar plot slide using CreateTwoColumnFigureSlide
     slide <- CreateTwoColumnFigureSlide(imgSet$PlotDRModelBars, "Frequency of statistical models among best fit curves")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
 
     # Density plot slide using CreateTwoColumnFigureSlide
     slide <- CreateTwoColumnFigureSlide(imgSet$PlotDRHistogram, "Metabolite-level BMDs histogram")
-    cat(slide, file = rmdFile, append = TRUE)
+    .buffer_add(slide)
 
     # Results Table slide (if applicable)
     if (!is.null(mSetObj$dataSet$comp.res)) {
@@ -112,7 +112,7 @@ AddDoseFeatureImages_slides <- function(mSetObj = NA) {
             "Below, you will find the curve fitting result of key features that have been saved during the analysis.",
             "\n\n---\n\n"
         )
-        cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+        .buffer_add(descr, collapse="\n\n")
     } else {
         descr <- c(
             "## Top Features",
@@ -143,11 +143,11 @@ AddDoseFeatureImages_slides <- function(mSetObj = NA) {
             )
             imgSet$doseFeatureList[[ids[i]]] <- imgName
         }
-        cat(descr, file = rmdFile, append = TRUE, sep = "\n\n")
+        .buffer_add(descr, collapse="\n\n")
     }
     # Image rendering in R Markdown
     for (i in seq_along(imgSet$doseFeatureList)) {
         slide <- CreateTwoColumnFigureSlide(imgSet$doseFeatureList[[i]], paste("Curve fitting result for feature:", imgSet$doseFeatureList[[i]]))
-        cat(slide, file = rmdFile, append = TRUE)
+        .buffer_add(slide)
     }
 }

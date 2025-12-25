@@ -218,7 +218,9 @@
 
                         <p:tab title="PCA Visualization">
                             <h:panelGrid style="text-align: right; position: absolute; top:55px; right:50px">
-                                <p:graphicImage id="boxIcon0" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon0" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon0"  style="width: 360px" styleClass="helpTip">
                                     <p>
                                         Principal Component Analysis Score plot of all samples (Double-click the sample nodes to show the <b>TIC</b>). 
@@ -297,7 +299,9 @@
                                                style = "padding-right: 80px">
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
-                                <p:graphicImage id="boxIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon2" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon2" styleClass="helpTip" style="width: 240px">
                                     <p>
                                         Signal intensity across samples.
@@ -320,7 +324,9 @@
                                                style = "padding-right: 80px">
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
-                                <p:graphicImage id="boxIcon5" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon5" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon5" styleClass="helpTip" style="width: 360px">
                                     <p>
                                         Retention Time Correction Result for all samples. The x-axis is the retention time (RT) range, while y-axis is the difference between
@@ -343,7 +349,9 @@
                                                style = "padding-right: 80px">
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
-                                <p:graphicImage id="boxIcon7" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon7" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon7" styleClass="helpTip" style="width: 240px">
                                     <p>
                                         Total Ion Chromatogram (TIC) plot of all samples.
@@ -364,7 +372,9 @@
                                                style = "padding-right: 80px">
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
-                                <p:graphicImage id="boxIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon3" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon3" styleClass="helpTip" style="width: 240px">
                                     <p>
                                         Base Peak Ion (BPI) plot of all samples.
@@ -385,7 +395,9 @@
                                                style = "padding-right: 80px">
                                     <i class="pi pi-palette" style="font-size: 1.1rem"/>
                                 </p:commandLink>
-                                <p:graphicImage id="boxIcon4" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="boxIcon4" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="boxIcon4" styleClass="helpTip" style="width: 260px">
                                     <p>
                                         Base Peak Ion (BPI) plot of all samples after peak alignment. 
@@ -753,7 +765,10 @@
                                                        style = "padding-left: 10px;">
                                             <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
                                         </p:commandLink>
-                                        <p:graphicImage id="EICIcon2" url="/resources/images/ui_help.png" alt="help" style = "padding-left: 10px"/>
+                                        <h:panelGroup id="EICIcon2" style="margin-left: 10px;">
+                                            <i class="pi pi-question-circle" style="font-size: 1.2rem; color: #2980b9"/>
+                                        </h:panelGroup>
+
                                         <p:tooltip for="EICIcon2" styleClass="helpTip" style="width: 320px">
                                             <p>
                                                 The box plot and Extracted Ion Chromatograms (EICs/XICs) can be exported as high-resolution images.

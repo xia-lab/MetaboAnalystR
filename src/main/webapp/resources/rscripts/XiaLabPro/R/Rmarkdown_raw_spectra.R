@@ -76,7 +76,7 @@ CreateRawIntr <- function(){
              "reading and processing raw spectra, parameter optimization/customization, ",
              "peak picking, peak alignment, peak gap filing and peak annotation.");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 ### Section 2 - Method Description
@@ -88,8 +88,8 @@ CreateSpectraIOdoc <- function(){
              "The Data Integrity Check is performed before the data processing starts. The basic information",
              "of all spectra is summarized in Table", table.count<<-table.count+1,"shows the details of all spectra."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "\n\n",
@@ -100,8 +100,8 @@ CreateSpectraIOdoc <- function(){
            ". Summary of data uploading raw spectra data')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n\n");
+  .buffer_add("\n\n");
 
 };
 
@@ -177,7 +177,7 @@ CreateRawAnalMethod <- function(){
              "MetaboAnalyst offers several algorithms to process the spectral raw file, 
              including MatchedFilter, centWave and Massifquant for peak pciking, and obiwarp and loess for Retention time alignment.", 
              "Here the detailed algorithms and parameters' used in this study.");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   table.count <<- table.count+1;
   
@@ -189,14 +189,14 @@ CreateRawAnalMethod <- function(){
            ". Summary of all parameters used in this analysis.')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
   
   descr3 <- "All parameters used to do the raw spectral processing are shown as above. 
     The detailed usage of every parameters are explanied below."
   
-  cat(descr3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr3, collapse="\n");
+  .buffer_add("\n\n");
 
   descr2 <- c(
     "1. Peak Picking Algorithm -- centWave (For high resolution):",
@@ -230,7 +230,7 @@ CreateRawAnalMethod <- function(){
     " + max charge: maximum number of charge for adducts annotation.",
     " + max iso: maximum number of charge for isotopes annotation.",
     " + rmConts: whether to remove the potentail contaminants for further parameters' optimization.");
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr2, collapse="\n");
 };
 
 CreateRawAnalyworkflow <- function(){
@@ -253,7 +253,7 @@ CreateRawAnalyworkflow <- function(){
              In details, all formulas are firstly predicted based on the ppm and annotation results (adducts and/or isotopes). 
              Then, HMDB database will be used to searching the potential compounds. 
              All matched compounds were returned as the putative chemical ID of the feature. Complete chemical annotation results are summarized in the later section.\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
 }
 
@@ -280,8 +280,8 @@ CreateRawAnalDetails <- function(){
              "\n\n",
              "Please cite this publication if you are using this module to do your processing.");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 ### Section 3 - Processing result
@@ -291,7 +291,7 @@ CreateSampleSum <- function(){
              "All sample processing result are shown as below, including the Base Peak Ion (BPI), Total Ion Chromatogram (TIC),
              Peak intensity stats and a breif PCA display (under log transformation). 
              Meanwhile, the statistics of all spectra files has also been provided in this section.\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   descr1 <- c(
     "Here is a brief content of this section:\n",
@@ -301,8 +301,8 @@ CreateSampleSum <- function(){
     " - Principal Component Analysis (PCA).",
     " - Spectral peaks summary.")
   
-  cat(descr1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr1, collapse="\n");
+  .buffer_add("\n\n");
   
   CreateTIC(); # Done
   CreateBPI(); # Done
@@ -322,8 +322,8 @@ CreateTIC<- function(){
              "The spectra TIC signal (ion) flow of all files is displayed in Figure", fig_tic <- fig.count<<-fig.count+1,", as below."
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   # TICs
   link <- GetSharingLink(mSetObj)
@@ -331,8 +331,8 @@ CreateTIC<- function(){
                         '<a href="', link, '&format=pdf&imgCmd=raw_spec_tic" target="_blank">PDF</a> ',
                         '<a href="', link, '&format=svg&imgCmd=raw_spec_tic" target="_blank">SVG</a>',
                         '</div>')
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_tic1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_tic, 
                   ". Total Ion Chromatogram plot of raw spectral data.', ",
@@ -340,8 +340,8 @@ CreateTIC<- function(){
            "safeIncludeGraphics('TICS_72.png')",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 };
 CreateBPI<- function(){
   
@@ -351,8 +351,8 @@ CreateBPI<- function(){
              "The spectra signal (ion) flow of all files is displayed in Figure", fig_bpi <- fig.count<<-fig.count+1,", as below."
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   # BPIs
   link <- GetSharingLink(mSetObj)
@@ -360,8 +360,8 @@ CreateBPI<- function(){
                         '<a href="', link, '&format=pdf&imgCmd=raw_spec_bpi" target="_blank">PDF</a> ',
                         '<a href="', link, '&format=svg&imgCmd=raw_spec_bpi" target="_blank">SVG</a>',
                         '</div>')
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_bpi1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_bpi, 
                   ". Base Peak Ion plot of raw spectral data.', ",
@@ -369,8 +369,8 @@ CreateBPI<- function(){
            "safeIncludeGraphics('BPIS_72.png')",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 };
 CreateIntensityStats<- function(){
   
@@ -379,8 +379,8 @@ CreateIntensityStats<- function(){
              "The statistics all spectral peaks is displayed in Figure", fig_ints <- fig.count<<-fig.count+1,", as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   # intensity
   link <- GetSharingLink(mSetObj)
@@ -388,8 +388,8 @@ CreateIntensityStats<- function(){
                         '<a href="', link, '&format=pdf&imgCmd=raw_spec_int" target="_blank">PDF</a> ',
                         '<a href="', link, '&format=svg&imgCmd=raw_spec_int" target="_blank">SVG</a>',
                         '</div>')
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_ints1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ints, 
                   ". Peak Intensity Statistics of all spectral files.', ",
@@ -397,8 +397,8 @@ CreateIntensityStats<- function(){
            "safeIncludeGraphics('Peak_Intensity.png')",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 };
 CreatePCA<- function(){
   
@@ -409,8 +409,8 @@ CreatePCA<- function(){
              "Please try to play your data with different modules (e.g. Statistic Analysis) to find out more statistic sense.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   # PCA
   link <- GetSharingLink(mSetObj)
@@ -418,8 +418,8 @@ CreatePCA<- function(){
                         '<a href="', link, '&format=pdf&imgCmd=raw_spec_pca" target="_blank">PDF</a> ',
                         '<a href="', link, '&format=svg&imgCmd=raw_spec_pca" target="_blank">SVG</a>',
                         '</div>')
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_pca2d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pcaraw, 
                   ". Principal component analysis (PCA). Samples from different groups are marked with different colors.', ",
@@ -427,8 +427,8 @@ CreatePCA<- function(){
            "safeIncludeGraphics('PCA.png')",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 };
 
 CreatePCA3D<- function(){
@@ -439,8 +439,8 @@ CreatePCA3D<- function(){
              "The 3D-PCA score plot is shown in ", fig_pcaraw3d <- fig.count<<-fig.count+1,", as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
 
   print(paste0(mSetObj$imgSet$reportSet$scores_3d));
 
@@ -451,14 +451,14 @@ CreatePCA3D<- function(){
              "safeIncludeGraphics(mSetObj$imgSet$reportSet$scores_3d)",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
 
   } else {
     descr3 <- c("\n\nNo 3D-PCA Score is presented. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n", file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr3);
+    .buffer_add("\n");
+    .buffer_add("\n\n", collapse="\n");
   }
 
   ## Loading plot
@@ -468,8 +468,8 @@ CreatePCA3D<- function(){
              "The 3D-PCA loading plot is shown in ", fig_pca3dloading <- fig.count<<-fig.count+1,", as below."
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   if(file.exists("loadings3D.png")){
     fig <- c(paste0("```{r figure_pca3dloading, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pca3dloading, 
                     ". 3D-PCA loading plot. Samples from different groups are marked with different colors.', ",
@@ -477,12 +477,12 @@ CreatePCA3D<- function(){
              "safeIncludeGraphics('loadings3D.png')",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   } else {
     descr3 <- c("\n\nNo 3D-PCA Loading is presented. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
   }
 };
 createSpectraSumDoc<- function(){
@@ -491,8 +491,8 @@ createSpectraSumDoc<- function(){
              "The peaks information from different spectra after processing is summarized in Table ", 
              table.count<<-table.count+1,", as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_rawsum3, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -502,8 +502,8 @@ createSpectraSumDoc<- function(){
            ". Summary of peaks information of all spectra after processing.')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 };
 createSpectraSumTableRMD <- function(){
   if(file.exists("peak_result_summary.txt")){
@@ -520,16 +520,16 @@ createSpectraTIC <- function(){
              "The TIC plots you are interested in are shown as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   
   load("mSet.rda");
   files <- mSet@rawOnDisk@phenoData@data[["sample_name"]];
   
   if(!any(file.exists(paste0(files, ".png")))){
     descr3 <- c("\n\nNo Spectral TIC was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
   }
   
   for (i in files){
@@ -543,8 +543,8 @@ createSpectraTIC <- function(){
                             '<a href="', link, '&format=pdf&imgCmd=raw_spec_stic_', i, '" target="_blank">PDF</a> ',
                             '<a href="', link, '&format=svg&imgCmd=raw_spec_stic_', i, '" target="_blank">SVG</a>',
                             '</div>')
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       
       fig <- c(paste0("```{r ", tic_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                       ". TIC plot of this spectra: ", gsub("_","-",sub(".png","",i)), ".', ",
@@ -552,12 +552,12 @@ createSpectraTIC <- function(){
                paste0("safeIncludeGraphics('", paste0(i, ".png"), "')"),
                "```",
                "\n\n");
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
   }
 
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 };
 
 ### Section 4 - Processing feature
@@ -566,15 +566,15 @@ CreateFeatureSum <- function(){
              "All spectra files included for processing in this module have been processed.",
              "All features processing result across the different spectra are shown as below, including peak feature summary,
               and the corresponding Extracted Ion Chromatogram (EIC/XIC) of the features you are interested in. \n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   descr1 <- c(
     "Here is a brief content of this section: \n",
     " - EIC/XIC;",
     " - Feature (EIC/XIC) Stats;")
   
-  cat(descr1, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr1);
+  .buffer_add("\n\n");
 
   createFeatureEIC(); # Done
   createFeatureEICStats(); # Done
@@ -589,15 +589,15 @@ createFeatureEIC <- function(){
              "The ones you are interested in at the analyzing stage are shown as below."
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   
   files <- list.files(pattern = "^EIC_.*group_[0-9]+")
   
   if(length(files) == 0){
     descr3 <- c("\n\nNo features' EIC was viewed by you. Please try to explore from Spectra result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n");
   }
   
   featureNums <- vapply(files, function(x){
@@ -627,8 +627,8 @@ createFeatureEIC <- function(){
                             '<a href="', link, '&format=pdf&imgCmd=raw_spec_sxic_', fns, '" target="_blank">PDF</a> ',
                             '<a href="', link, '&format=svg&imgCmd=raw_spec_sxic_', fns, '" target="_blank">SVG</a>',
                             '</div>')
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       
       fig <- c(paste0("```{r ", eic_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                       ". EIC of feature of individual samples: ", gsub("_","-",sub(".png","",i)), ".', ",
@@ -636,8 +636,8 @@ createFeatureEIC <- function(){
                paste0("safeIncludeGraphics('", i, "')"),
                "```",
                "\n\n");
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
   }
  
@@ -648,16 +648,16 @@ createFeatureEICStats <- function(){
              "The ones you are interested in at the analyzing stage are shown as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   files <- list.files(pattern = "^[^(EIC)].*mz@.*s*.png")
   
   if(length(files) == 0){
     
     descr3 <- c("\n\nNo features' EIC stats was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n");
     
   }
   
@@ -673,8 +673,8 @@ createFeatureEICStats <- function(){
                               '<a href="', link, '&format=pdf&imgCmd=raw_spec_msf_', ix, '" target="_blank">PDF</a> ',
                               '<a href="', link, '&format=svg&imgCmd=raw_spec_msf_', ix, '" target="_blank">SVG</a>',
                               '</div>')
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         
         fig <- c(paste0("```{r ", eics_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                         ". Feature intensity statis box plot of different groups: ", gsub("@","__",sub(".png","",i)), ".', ",
@@ -682,8 +682,8 @@ createFeatureEICStats <- function(){
                  paste0("safeIncludeGraphics('", i, "')"),
                  "```",
                  "\n\n");
-        cat(fig, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
       }
     }
   }
@@ -694,11 +694,11 @@ createFeatureSumDoc <- function(){
   descr <- c("\n\n## Feature Annotation Summary\n\n",
              "The features basic information and its annotation results after processing is summarized in as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   descr2 <- createResSumText();
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr2, collapse="\n");
 };
 createResSumText <- function(){
   txts <- PerformResultSummary();
@@ -709,8 +709,8 @@ createFeatureAnnoSum <- function() {
              "The features annotation (adducts and isotopes) is summarized in as below in Table ", 
              table.count<<-table.count+1, "."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_rawres1, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -720,15 +720,15 @@ createFeatureAnnoSum <- function() {
            ". Summary of features annotation (adduct and isotope level).')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 
   descr2 <- c("\n\n## Compound Identification Results\n\n",
              "The putative compounds based on MS1 m/z are summarized below in Table ",
              table.count<<-table.count+1, "."
   );
-  cat(descr2, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr2);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_rawres2, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -738,8 +738,8 @@ createFeatureAnnoSum <- function() {
            ". Summary of features annotation (putative compound level).')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
   
 }
 createFeatureAnnotationSumTableRMD <- function(){
@@ -874,15 +874,15 @@ createMSnIntr <- function(){
              "This module is designed to provide an automated workflow to process the raw MS2 spectra data in four steps, including ",
              "raw spectra importing, integrity checking, database searching and result summary. The detailed algorithm and introduction on the workflows are included in [MetaboAnalystR 4.0](https://www.nature.com/articles/s41467-024-48009-6) publication.\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
 }
 
 CreateMSnAnalMethod <- function(){
   descr <- c("\n\n### MS/MS Spectra Searching Parameters\n\n",
              "MetaboAnalyst offers multiple database options and two algorithms for spectra searching. Besides, there are also several parameters need to be customized.", 
              "Here the detailed algorithms and parameters' used in this study. Explanations on these parameters are also included below.");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   table.count <<- table.count+1;
   
@@ -898,13 +898,13 @@ CreateMSnAnalMethod <- function(){
            ".  Parameters for MS2 spectra searching of single spectrum.')"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
   
   descr3 <- "All parameters used to do the MS2 database searching are shown as below."
   
-  cat(descr3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr3, collapse="\n");
+  .buffer_add("\n\n");
   
   descr4 <- c(
     "1. ppm values:",
@@ -926,7 +926,7 @@ CreateMSnAnalMethod <- function(){
     " + Window size of MS/MS acquisition.",
     "8. Threshold of Intensity:",
     " + Threshold of Intensity of MS/MS acquisition.");
-  cat(descr4, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr4, collapse="\n");
 }
 
 CreateMSnAnalResults <- function(){
@@ -935,8 +935,8 @@ CreateMSnAnalResults <- function(){
              "The MS2 spectral searching results is summarized in Table ", 
              table.count<<-table.count+1,", as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_results1, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -947,8 +947,8 @@ CreateMSnAnalResults <- function(){
            ". Summary of all MS2 spectra searching results.', escape = FALSE)"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 CreateMatchingPatterns <- function(mSetObj){
@@ -957,23 +957,23 @@ CreateMatchingPatterns <- function(mSetObj){
              "The mirror plots you are interested in are shown as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   
   files <- unique(mSetObj[["imgSet"]][["msmsmirror"]][["imageNM"]])
   legends <- unique(mSetObj[["imgSet"]][["msmsmirror"]][["legend"]])
 
   if(is.null(files)){
     descr3 <- c("\n\nNo Spectral mirror plots was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
     return();
   }
   
   if(!any(file.exists(files))){
     descr3 <- c("\n\nNo Spectral mirror plots was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
   }
   
   for (i in files){
@@ -999,12 +999,12 @@ CreateMatchingPatterns <- function(mSetObj){
                  "\n\n");
       }
       
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
   }
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 SummarizeMSnTable <- function(sum_dt){

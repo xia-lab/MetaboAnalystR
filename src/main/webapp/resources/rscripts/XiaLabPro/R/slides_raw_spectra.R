@@ -49,8 +49,8 @@ CreateRawIntr_slides <- function() {
              "peak picking, peak alignment, peak gap filling, and peak annotation.")
   
   # Writing the combined text to the specified R Markdown file
-  cat(descr, file = rmdFile, append = TRUE)  # Ensure the append flag is TRUE to add content without overwriting existing data
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(descr)  # Ensure the append flag is TRUE to add content without overwriting existing data
+  .buffer_add("\n\n---\n\n") 
 }
 
 
@@ -66,11 +66,11 @@ CreateSpectraIOdoc_slides <- function() {
              ", which shows the details of all spectra.")
   
   # Writing the description to the R Markdown file
-  #cat(descr, file = rmdFile, append = TRUE)
-  cat("\n\n", file = rmdFile, append = TRUE)  # Add extra line breaks for better formatting
+  #.buffer_add(descr)
+  .buffer_add("\n\n")  # Add extra line breaks for better formatting
   
   # R code for creating and displaying the table of raw spectra data
-  cat(paste0("## Table ", getTableCount(), ". Summary of raw spectra data files. \n\n"), file = rmdFile, append = TRUE);
+  .buffer_add(paste0("## Table ", getTableCount(), ". Summary of raw spectra data files. \n\n"));
   cmdhist2 <- c(
     "```{r table_rawt1, echo=FALSE, out.width='100%', results='asis', out.height='100%', warning=FALSE}",
     "sum_dt <- CreateSpectraInfoTableRMD();",  # Assuming this is a user-defined function to create a data table
@@ -78,8 +78,8 @@ CreateSpectraIOdoc_slides <- function() {
     "```", "\n\n---\n\n")
   
   # Writing the R code to the R Markdown file
-  cat(cmdhist2, file = rmdFile, append = TRUE, sep = "\n")
-  cat("\n\n", file = rmdFile, append = TRUE)  # Add extra line breaks for spacing
+  .buffer_add(cmdhist2, collapse="\n")
+  .buffer_add("\n\n")  # Add extra line breaks for spacing
 }
 
 CreateRawAnalMethod_slides <- function() {
@@ -89,19 +89,19 @@ CreateRawAnalMethod_slides <- function() {
              "and Massifquant for peak picking, and obiwarp and loess for retention time alignment. ",
              "Below are the detailed algorithms and parameters used in this study.")
   # Write the introduction to the R Markdown file
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n")
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(descr, collapse="\n")
+  .buffer_add("\n\n---\n\n", collapse="\n")
   # Increment the global table counter
   
   # R code to create and display the table summarizing all parameters used in the analysis
-  cat(paste0("## Table ", getTableCount(), ". Summary of all parameters used in this analysis."), file = rmdFile, append = TRUE, sep = "\n");
+  .buffer_add(paste0("## Table ", getTableCount(), ". Summary of all parameters used in this analysis."), collapse = "\n");
   cmdhist2 <- c(
     "```{r table_raw2, echo=FALSE, out.width='100%', results='asis', out.height='100%', warning=FALSE}",
     "sum_dt <- CreateParamsSumTableRMD();",  # This function should return a summary data table of parameters
     paste0("create_dt(sum_dt)"),
     "```", "\n\n---\n\n")
   # Write the R code block for the table to the R Markdown file
-  cat(cmdhist2, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(cmdhist2, collapse="\n")
 }
 
 CreateRawAnalyworkflow_slides <- function() {
@@ -113,8 +113,8 @@ CreateRawAnalyworkflow_slides <- function() {
                    "- **Peak Annotation**: Reduces redundancy by annotating isotopes and adducts using the CAMERA package. Enhances data clarity and utility.",
                    "- **Chemical Identification**: Predicts formulas based on ppm, isotopes, and adducts, then matches against the HMDB database for compound identification. \n\n");
   # Write the slide content to the R Markdown file
-  cat(descrSlides, file = rmdFile, append = TRUE, sep = "\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE, sep = "\n");
+  .buffer_add(descrSlides, collapse="\n");
+  .buffer_add("\n\n---\n\n", collapse="\n");
 
 }
 
@@ -130,8 +130,8 @@ CreateRawAnalDetails_slides <- function(){
              "\n\n",
              "Please cite this publication if you are using this module to do your processing.");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE, sep = "\n");
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n---\n\n", collapse="\n");
 
 }
 
@@ -143,8 +143,8 @@ CreateSampleSum_slides <- function(){
     " - Spectral Intensity Stats.\n",
     " - Principal Component Analysis (PCA).\n",
     " - Spectral peaks summary.\n")
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n--\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n--\n\n");
 
 
   CreateTIC_slides(); # Done
@@ -166,14 +166,14 @@ CreateTIC_slides <- function() {
                       "* Includes all signals: noise and peak components.");  # Use paste0 for dynamic text
   
   # Write the TIC section introduction to the R Markdown file
-  #cat(descrTICSlides, file = rmdFile, append = TRUE);
+  #.buffer_add(descrTICSlides);
   
   # Inserting TIC figure
   figTICSlides <- CreateTitleFigureSlide("TICS_72.png", paste0("Total Ion Chromatogram plot of raw spectral data."))  # Corrected syntax
-  cat(figTICSlides, file = rmdFile, append = TRUE);
+  .buffer_add(figTICSlides);
   
   
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE); # End of slide
+  .buffer_add("\n\n---\n\n"); # End of slide
 }
 
 
@@ -186,11 +186,11 @@ CreateBPI_slides <- function() {
              )
   
   # Writing the BPI section introduction to the R Markdown file
-  #cat(descr, file = rmdFile, append = TRUE)
+  #.buffer_add(descr)
   
   # Inserting the BPI figure
   basePeakContent <- CreateTitleFigureSlide("BPIS_72.png", "Base Peak Ion plot of raw spectral data.")
-  cat(basePeakContent, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(basePeakContent, collapse="\n")
 }
 
 CreateIntensityStats_slides <- function() {
@@ -209,7 +209,7 @@ CreateIntensityStats_slides <- function() {
     intensityStatsSlide <- CreateTitleFigureSlide(imagePath, "Statistics of all spectral peaks")
     
     # Write the slide to the R Markdown file
-    cat(intensityStatsSlide, file = rmdFile, append = TRUE)
+    .buffer_add(intensityStatsSlide)
 }
 
 CreatePCA_slides <- function(){
@@ -224,7 +224,7 @@ CreatePCA_slides <- function(){
   pcaSlideContent <- CreateTitleFigureSlide(pcaImagePath, pcaFigureCaption)
   
   # Write the slide content to the R Markdown file
-  cat(pcaSlideContent, file = rmdFile, append = TRUE)
+  .buffer_add(pcaSlideContent)
 }
 
 CreatePCA3D_slides <- function(){
@@ -235,26 +235,26 @@ CreatePCA3D_slides <- function(){
                       "PCA can also be shown in a 3-dimensional style to provide additional depth to the data interpretation. ",
                       "Here, a primary 3D-PCA was performed with the log-transformed data. ",
                       "The 3D-PCA score plot illustrates the distribution of samples in the transformed feature space, highlighting the variance between different groups.\n\n")
-  #cat(descrScore, file = rmdFile, append = TRUE)
+  #.buffer_add(descrScore)
   
   if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && safeFileExists(mSetObj$imgSet$reportSet$scores_3d)){
     pca3DScoreSlide <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$scores_3d, "3D-PCA score. Samples from different groups are marked with different colors.")
-    cat(pca3DScoreSlide, file = rmdFile, append = TRUE)
+    .buffer_add(pca3DScoreSlide)
   } else {
-    cat("No 3D-PCA Score plot is presented. Please check the data or explore from the results page.\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("No 3D-PCA Score plot is presented. Please check the data or explore from the results page.\n\n---\n\n")
   }
 
   # Description for the PCA 3D loading section
   descrLoading <- paste("## Principal Component Analysis (PCA) - Loading Plot\n\n",
                         "The 3D-PCA loading plot showcases the features contributing to the differentiation among samples. ",
                         "These loadings can help identify which variables carry the weight in the separation observed in the PCA score plot.\n\n")
-  #cat(descrLoading, file = rmdFile, append = TRUE)
+  #.buffer_add(descrLoading)
   
   if(file.exists("loadings3D.png")) {
     pca3DLoadingSlide <- CreateTitleFigureSlide("loadings3D.png", "Figure: 3D-PCA loading plot. Features contributing to sample differentiation are highlighted.")
-    cat(pca3DLoadingSlide, file = rmdFile, append = TRUE)
+    .buffer_add(pca3DLoadingSlide)
   } else {
-    #cat("No 3D-PCA Loading plot is presented. Please check the data or explore from the results page.\n\n---\n\n", file = rmdFile, append = TRUE)
+    #.buffer_add("No 3D-PCA Loading plot is presented. Please check the data or explore from the results page.\n\n---\n\n")
   }
 }
 
@@ -262,17 +262,17 @@ createSpectraSumDoc_slides <- function(){
   # Spectra Summary description
   descr <- paste("## Spectra Summary\n\n",
                  "The information of peaks from different spectra after processing is summarized below. This includes key metrics and statistics that provide an overview of the spectral data quality and characteristics.\n\n---\n\n")
-  cat(descr, file = rmdFile, append = TRUE)
+  .buffer_add(descr)
   
   # Inserting the table of spectra summary
-  cat(paste0("## Table ", table.count, ": Summary of peaks information from all spectra after processing."), file = rmdFile, append = TRUE, sep = "\n");
+  .buffer_add(paste0("## Table ", table.count, ": Summary of peaks information from all spectra after processing."), collapse="\n");
   cmdhist2 <- c("```{r table_rawsum3, echo=FALSE, out.width='100%', results='asis', warning=FALSE}",
                 "sum_dt <- createSpectraSumTableRMD();",  # Ensure this function is correctly defined to create summary table
                 paste0("create_dt(sum_dt)"),
                 "```",
                 "\n\n---\n\n")  # Denote the end of a section or slide
   
-  cat(cmdhist2, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(cmdhist2, collapse="\n")
 }
 
 
@@ -290,7 +290,7 @@ createSpectraTIC_slides <- function() {
     # Introduction to the TIC of individual spectra
     descr <- c("## TIC of Individual Spectra\n\n",
                "The Total Ion Chromatogram (TIC) plots for individual spectra are shown below. TIC provides a comprehensive view of all ions present in the sample throughout the entire analysis.\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
    
     # Load the dataset
     load("mSet.rda")
@@ -299,7 +299,7 @@ createSpectraTIC_slides <- function() {
     # Check if any TIC files have been viewed
     if(!any(file.exists(paste0(files, ".png")))) {
         descr3 <- "No Spectral TIC was viewed by you. Please try to explore from the result page.\n\n---\n\n"
-        cat(descr3, file = rmdFile, append = TRUE)
+        .buffer_add(descr3)
     } else {
         for (i in files) {
             if(file.exists(paste0(i, ".png"))) {
@@ -311,7 +311,7 @@ createSpectraTIC_slides <- function() {
                 # Generate the two-column slide content for the TIC plot
                 ticSlideContent <- CreateTitleFigureSlide(image_path, tic_caption)
                 # Write the slide content to the R Markdown file
-                cat(ticSlideContent, file = rmdFile, append = TRUE)
+                .buffer_add(ticSlideContent)
             }
         }
     }
@@ -324,7 +324,7 @@ CreateFeatureSum_slides <- function(){
              "All spectra files included for processing in this module have been processed.",
              "All features processing result across the different spectra are shown as below, including peak feature summary,
               and the corresponding Extracted Ion Chromatogram (EIC/XIC) of the features you are interested in. \n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   descr1 <- c(
     "Here is a brief content of this section: \n",
@@ -332,8 +332,8 @@ CreateFeatureSum_slides <- function(){
     " - Feature (EIC/XIC) Stats;",
     "\n\n---\n\n")
   
-  cat(descr1, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr1);
+  .buffer_add("\n\n");
 
   createFeatureEIC_slides(); # Done
   createFeatureEICStats_slides(); # Done
@@ -347,14 +347,14 @@ createFeatureEIC_slides <- function() {
     # Introduction to the EIC/XIC of individual features
     descr <- c("## EIC/XIC of Individual Features\n\n",
                "The Extracted Ion Chromatograms (EIC) or XIC for features of interest during the analysis stage are presented below.\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
     
     # Retrieve the list of EIC files
     files <- list.files(pattern = "^EIC_.*group_[0-9]+.png$")
     
     # Check if there are EIC files to display
     if(length(files) == 0) {
-        cat("No features' EIC was viewed by you. Please try to explore from the Spectra result page.\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("No features' EIC was viewed by you. Please try to explore from the Spectra result page.\n\n---\n\n")
     } else {
         # Process and present each EIC file
         for (i in files) {
@@ -369,7 +369,7 @@ createFeatureEIC_slides <- function() {
             eicSlideContent <- CreateTitleFigureSlide(eic_file_path, eic_caption)
             
             # Write the slide content to the R Markdown file
-            cat(eicSlideContent, file = rmdFile, append = TRUE)
+            .buffer_add(eicSlideContent)
         }
     }
 }
@@ -378,14 +378,14 @@ createFeatureEICStats_slides <- function() {
     # Introduction to the EIC/XIC Stats section
     descr <- c("## EIC/XIC Stats of Individual Features\n\n",
                "Statistical insights into the Extracted Ion Chromatograms (EIC) or XIC for selected features are presented below.\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
     
     # Retrieve files following the specific naming pattern
     files <- list.files(pattern = "^[^(EIC)].*mz@.*s*.png$")
     
     # Check if there are EIC stats files to display
     if(length(files) == 0) {
-        cat("No features' EIC stats were viewed by you. Please try to explore from the result page.\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("No features' EIC stats were viewed by you. Please try to explore from the result page.\n\n---\n\n")
     } else {
         # Process and present each EIC stats file
         for (i in files) {
@@ -400,7 +400,7 @@ createFeatureEICStats_slides <- function() {
                 eicStatsSlideContent <- CreateTitleFigureSlide(i, eicStatsCaption)
                 
                 # Write the slide content to the R Markdown file
-                cat(eicStatsSlideContent, file = rmdFile, append = TRUE)
+                .buffer_add(eicStatsSlideContent)
             }
         }
     }
@@ -411,12 +411,12 @@ createFeatureSumDoc_slides <- function(){
   descr <- c("\n\n## Feature Annotation Summary\n\n",
              "The features basic information and its annotation results after processing is summarized in as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   descr2 <- createResSumText();
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr2, collapse="\n");
+  .buffer_add("\n\n---\n\n");
 };
 
 createResSumText <- function(){
@@ -427,7 +427,7 @@ createResSumText <- function(){
 createFeatureAnnoSum_slides <- function() {
     # Introduction to the Feature Annotation Results section
     descr <- c("## Table ", getTableCount(), ": Summary of the annotation of features (including adducts and isotopes)\n\n")
-    cat(descr, file = rmdFile, append = TRUE)
+    .buffer_add(descr)
     
     # Dynamic creation of annotation summary table
     cmdhist2 <- c(
@@ -437,11 +437,11 @@ createFeatureAnnoSum_slides <- function() {
         "```",
         "\n\n---\n\n"
     )
-    cat(cmdhist2, file = rmdFile, append = TRUE, sep = "\n")  # Note the 'sep = "\n"' to ensure new lines
+    .buffer_add(cmdhist2, collapse="\n")  # Note the 'sep = "\n"' to ensure new lines
     
     # Introduction to the Compound Putative Annotation Results section
     descr2 <- paste0("## Table ", getTableCount(), ": Summary of feature annotations at the putative compound level.\n\n")
-    cat(descr2, file = rmdFile, append = TRUE)
+    .buffer_add(descr2)
     
     # Dynamic creation of compound annotation summary table
     cmdhist3 <- c(
@@ -451,7 +451,7 @@ createFeatureAnnoSum_slides <- function() {
         "```",
         "\n\n---\n\n"
     )
-    cat(cmdhist3, file = rmdFile, append = TRUE, sep = "\n")  # Using 'sep = "\n"' for proper line breaks
+    .buffer_add(cmdhist3, collapse="\n")  # Using 'sep = "\n"' for proper line breaks
 }
 
 

@@ -49,7 +49,7 @@ CreateBiomarkerIntr_slides <- function() {
         "- It supports algorithms like PLS-DA, SVM, and Random Forests, and utilizes ROC curves, MCCV, and permutation tests for performance assessment.",
         "\n\n---\n\n"    
     );
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n");
+    .buffer_add(intro, collapse="\n");
 }
 
 
@@ -74,8 +74,8 @@ CreateBiomarkerRatioOverview_slides <- function(mSetObj = NA) {
         "- **Note**: This process may introduce overfitting due to selection based on p-values. Independent validation is recommended.",
         "- Log normalization is applied during this computation.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     if (mSetObj$dataSet$use.ratio) {
         table_rocrr <- table.count <<- table.count + 1
@@ -87,14 +87,14 @@ CreateBiomarkerRatioOverview_slides <- function(mSetObj = NA) {
             "```", 
             "\n\n---\n\n"
         )
-        cat(tableContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(tableContent, collapse="\n")
     } else {
         noRatios <- c(
             "## Ratios Computation\n\n",
             "- No ratios between metabolite concentration pairs were computed.\n",
             "\n\n---\n\n"
         )
-        cat(noRatios, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(noRatios, collapse="\n")
     }
 }
 
@@ -138,8 +138,8 @@ CreateUnivarBiomarkersDoc_slides <- function(mSetObj = NA) {
         "- Highlights the sensitivity and specificity for classifying conditions.",
         "- Note: Performance might appear optimistic due to training and testing on the same data without cross-validation.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Check if feature ranking matrix exists and create a slide for the univariate analysis table
     if(exists("feat.rank.mat")) {
@@ -151,13 +151,13 @@ CreateUnivarBiomarkersDoc_slides <- function(mSetObj = NA) {
         for(i in seq_along(mSetObj$imgSet$roc.univ.name)) {
             ft_name <- mSetObj$imgSet$roc.univ.name[i]
             rocCurveSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.univ.plot[[i]], paste0("ROC Curve Analysis for ", ft_name))
-            cat(rocCurveSlide, file = rmdFile, append = TRUE, sep = "\n")
+            .buffer_add(rocCurveSlide, collapse="\n")
             boxPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.univ.boxplot[[i]], paste0("Concentration Distribution for ", ft_name))
-            cat(boxPlotSlide, file = rmdFile, append = TRUE, sep = "\n")
+            .buffer_add(boxPlotSlide, collapse="\n")
         }
     } else {
         # Handle the case where no univariate ROC plots are generated
-        cat("## No Univariate ROC Plots Generated\n\nNo univariate ROC plots were generated for the selected biomarkers.\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("## No Univariate ROC Plots Generated\n\nNo univariate ROC plots were generated for the selected biomarkers.\n\n---\n\n")
     }
 }
 
@@ -185,36 +185,36 @@ CreateMultiBiomarkersDoc_slides <- function(mSetObj=NA) {
         paste0("- **Number of latent variables (PLS-DA only):** `", mSetObj$analSet$exp.lvNum, "`\n"),
         "\n---\n\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(intro, collapse="\n")
     
     # ROC Curve Slide
     rocCurveSlide <- CreateTwoColumnFigureSlide(
         figurePath = mSetObj$imgSet$roc.multi.plot,
         caption = "ROC curves for all or a single biomarker model based on average MCCV performance."
     )
-    cat(rocCurveSlide, file = rmdFile, append = TRUE)
+    .buffer_add(rocCurveSlide)
     
     # Predicted Class Probabilities Slide
     classProbSlide <- CreateTwoColumnFigureSlide(
         figurePath = mSetObj$imgSet$roc.prob.plot,
         caption = "Predicted class probabilities for all samples using a selected biomarker model."
     )
-    cat(classProbSlide, file = rmdFile, append = TRUE)
+    .buffer_add(classProbSlide)
     
     # Predictive Accuracy Slide
     predAccuracySlide <- CreateTwoColumnFigureSlide(
         figurePath = mSetObj$imgSet$roc.pred,
         caption = "Predictive accuracy of biomarker models with an increasing number of features."
     )
-    cat(predAccuracySlide, file = rmdFile, append = TRUE)
+    .buffer_add(predAccuracySlide)
     
     # Significant Features Slide
     sigFeaturesSlide <- CreateTwoColumnFigureSlide(
         figurePath = mSetObj$imgSet$roc.imp.plot,
         caption = "Most important features of a selected model ranked by importance."
     )
-    cat(sigFeaturesSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(sigFeaturesSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -242,7 +242,7 @@ CreateModelBiomarkersDoc_slides <- function(mSetObj = NA) {
         "- A balanced number of samples from both groups is recommended for validation.\n",
         "\n---\n\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(intro, collapse="\n")
     
     # Slide for selected parameters
     paramsSlide <- c(
@@ -252,20 +252,20 @@ CreateModelBiomarkersDoc_slides <- function(mSetObj = NA) {
         "- **Number of latent variables (PLS-DA only):** `", mSetObj$analSet$tester.lvNum, "`\n",
         "\n---\n\n"
     )
-    cat(paramsSlide, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(paramsSlide, collapse="\n")
     
     # Slides for ROC curve, Probability, Accuracy, and Permutation
     roc.test <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.testcurve.plot, "ROC curve for the created biomarker model based upon its average cross-validation performance.")
-    cat(roc.test, file = rmdFile, append = TRUE)
+    .buffer_add(roc.test)
     roc.test2 <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.testprob.plot, "Predicted class probabilities for all samples using the created biomarker model.")
-    cat(roc.test2, file = rmdFile, append = TRUE)
+    .buffer_add(roc.test2)
     if(!is.null(mSetObj$imgSet$roc.testpred.plot)){
     roc.test3 <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.testpred.plot, "Predictive accuracy of the created biomarker model.")
-    cat(roc.test3, file = rmdFile, append = TRUE)
+    .buffer_add(roc.test3)
     }
     if (!is.null(mSetObj$imgSet$roc.perm.plot)) {
         roc.test4 <- CreateTwoColumnFigureSlide(mSetObj$imgSet$roc.perm.plot, "Results of permutation tests for the user-created biomarker model.")
-        cat(roc.test4, file = rmdFile, append = TRUE)
+        .buffer_add(roc.test4)
     }
 
     # Check for predicted class labels and probabilities for new samples
@@ -276,7 +276,7 @@ CreateModelBiomarkersDoc_slides <- function(mSetObj = NA) {
             "- Provides class predictions and probabilities for new unlabeled samples within the dataset.\n",
             "\n---\n\n"
         )
-        cat(predictedLabelsSlide, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(predictedLabelsSlide, collapse="\n")
         # You can add code here to create a table slide for new samples if applicable
     }
 }

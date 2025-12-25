@@ -73,7 +73,7 @@ CreateMetaAnalysisIntr<-function(){
              "5. selection of the statistical method and perform meta-analysis;\n",
              "6. visual exploration of shared or unique features between different datasets.\n",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 #'Create MetaAnalysis analysis report: Data Input
@@ -97,14 +97,14 @@ CreateMetaAnalysisInputDoc <- function(mSetObj=NA){
              "or may either be .csv or .txt files.",
              " \n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr<-c("### - Data Integrity Check\n\n",
            " Before data analysis, a data quality check is performed to make sure that all of the necessary",
            " information has been collected. The class labels must be present and must contain only two classes for meta-analysis.",
            " By default, all missing values, zeros and negative values will be replaced by the half of the minimum positive value",
            " found within the data (see next section).\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
 }
 
@@ -123,21 +123,21 @@ CreateMetaAnalysisNORMdoc <- function(mSetObj=NA){
            " Before differential expression analysis, datasets may be normalized using Log2 transformation.",
            " Additionally, users may choose to auto-scale their data.\n\n"
            );
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   if(exists("norm.msg")){
     norm.desc <- paste(norm.msg);
   }else{
     norm.desc <- " No normalization methods were applied.";
   } 
-  cat(norm.desc, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(norm.desc, collapse="\n");
   
   if(mSetObj$dataSet$auto_opt == 1){
     autoscale <- "```Autoscaling``` of data was performed.\n";
   }else{
     autoscale <- " No data autoscaling was performed.\n";
   }
-  cat(autoscale, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(autoscale, collapse="\n");
 }
 
 #'Create MetaAnalysis analysis report: Data Normalization
@@ -155,23 +155,23 @@ CreateMetaAnalysisDEdoc <- function(mSetObj=NA){
            " Before meta-analysis, differential expression analysis using linear models (Limma) may be performed",
            " for exploratory analysis. Here, users must specify the p-value (FDR) cut-off and the fold-change (FC) cutoff.\n\n"
   );
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   if(!is.null(mSetObj$dataSet[["deparam"]])){
     de.desc <- paste(mSetObj$dataSet$deparam);
   }else{
     de.desc <- " No differential-expression analysis was performed."
   } 
-  cat(de.desc, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(de.desc, collapse="\n");
   
   if(!is.null(mSetObj$dataSet[["desig"]])){
-    cat("Please refer to **Table 2** below for the numbers of sig features from individual datasets.\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("Please refer to **Table 2** below for the numbers of sig features from individual datasets.\n", collapse="\n");
   }
 
   descr<-c("### - Final data integrity check\n\n",
            " Before performing meta-analysis, one final data integrity check is performed to ensure meta-data are consistent between datasets and",
            " that there are at least more than 25 percent common features between the collective datasets.\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create MetaAnalysis analysis report: Data Normalization
@@ -207,12 +207,12 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
             data processing procedures that can mask true underlying differences. It is therefore highly suggested that this approach be used only when 
             individual data are very similar (i.e. from the same lab, same platform without batch effects).",
             "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   resTitle <- c("\n\n",
               "#### - Meta-analysis Result Table", 
               "\n\n");
-  cat(resTitle, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(resTitle, collapse="\n");
     
   if(mSetObj$dataSet$metastat.method =="metap"){
     method <- paste("P-value combination was the selected method to perform meta-analysis.\n", 
@@ -227,7 +227,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                     "The p-value significance threshold is: ```", mSetObj$dataSet$pvalcutoff, "```\n");
     
   }
-  cat(method, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(method, collapse="\n");
   
   if(is.null(mSetObj$analSet$meta.mat)){
     return();
@@ -236,9 +236,9 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "metastat_restbl");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
 
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
     table.count <<- table.count+1;
 
     cmdhist2 <- c(
@@ -250,7 +250,7 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
       "```", 
       "\n\n"
     );
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(cmdhist2, collapse="\n");
   }
   
   metafeature <- mSetObj$imgSet$meta.anal$feature
@@ -265,8 +265,8 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                             '<a href="', link, '&format=pdf&imgCmd=meta_ft_' , snm, '" target="_blank">PDF</a> ',
                             '<a href="', link, '&format=svg&imgCmd=meta_ft_' , snm, '" target="_blank">SVG</a>',
                             '</div>')
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       
       fig <- c(paste0("```{r figure_metap1", s, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mp1, 
                       ". Box plot of the expression pattern of the selected feature between the two experimental groups across all studies.", 
@@ -280,8 +280,8 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
                "safeIncludeGraphics(mSetObj$imgSet$meta.anal$plot[", s, "])",
                "```",
                "\n\n");
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
   }  
 
@@ -300,8 +300,8 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
              "safeIncludeGraphics(mSetObj$imgSet$venn)",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
 
   if(!is.null(mSetObj$analSet$sigfeat.matrix)){
@@ -317,9 +317,9 @@ CreateMetaAnalysisOutput <- function(mSetObj=NA){
       "```", 
       "\n\n"
     );
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(cmdhist2, collapse="\n");
   }
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("\n\n", collapse="\n");
 
 }
 
