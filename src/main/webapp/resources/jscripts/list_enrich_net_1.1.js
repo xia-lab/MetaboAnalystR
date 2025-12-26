@@ -128,7 +128,7 @@ function showSigmaNetwork() {
     $('#network-parent').css("height", $(window).height() - 40);
     currentEnrichFile = netNm.substring(0, netNm.length - 5).replace("enrichNet", "enrichment");
     $("#gseaRow").css('display', 'disabled');
-
+    console.log(jobinfo)
     //setEnrichOpts(org);
     sigInst = new sigma({
         renderers: [

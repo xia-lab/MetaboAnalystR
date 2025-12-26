@@ -1437,6 +1437,8 @@ public class FireBaseController implements Serializable {
                 }
                 sb.setCurrentNaviUrl("/Secure/mummichog/KeggNetView.xhtml");
             }
+            case "network_enr" ->
+                sb.setCurrentNaviUrl("/Secure/viewer/EnrichNetwork.xhtml");
             case "norm" ->
                 sb.setCurrentNaviUrl("/Secure/process/NormalizationView.xhtml?funcNm=OpenDialog&cmd=normResDialog");
             case "correlation_heatmap" ->
@@ -1617,6 +1619,11 @@ public class FireBaseController implements Serializable {
 
                 sb.setVisMode(analNavi);
                 sb.setCurrentNaviUrl("/Secure/network/MphenoNetView.xhtml");
+            }
+
+            case "keggNetwork" -> {
+                //MnetResBean mnb = (MnetResBean) DataUtils.findBean("mnetResBean");
+                sb.setCurrentNaviUrl("/Secure/mummichog/KeggNetView.xhtml");
             }
             case "enrichment_network" -> {
                 sb.setCurrentNaviUrl("/Secure/enrichment/OraView.xhtml");

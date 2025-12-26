@@ -391,7 +391,7 @@ public class AjaxCallServlet extends HttpServlet {
                     File outputfile = new File(dir + "/" + fileNm + ".png");
                     ImageIO.write(img, "png", outputfile);
                 }
-                //System.out.println("receiveimagedata====" + fileNm);
+                System.out.println("receiveimagedata====" + fileNm);
                 sb.getReportImgMap().put(fileNm, fileNm + "." + format);
 
             } catch (IOException ex) {

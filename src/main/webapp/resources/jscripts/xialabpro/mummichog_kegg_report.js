@@ -48,6 +48,7 @@ function handleSaveEvent(sendJsonFlag) {
     savedState.cmpdnameOpt = $("#cmpdnameOpt").val();
     savedState.selectedRows = $('#dg2').datagrid('getSelections');
     let dataStr = JSON.stringify(savedState);
+    
     sendJsonToServer(dataStr, "network_" + alg, sendJsonFlag);
 }
 

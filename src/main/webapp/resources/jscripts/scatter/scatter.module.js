@@ -8461,6 +8461,7 @@ function sendImageToServerFull(dataURL, type, format, callback = null) {
 }
 
 function sendJsonToServer(jsonData, type, generateReport) {
+    console.log("sendJsonToServer: " + type);
     $.ajax({
         beforeSend: function () {
             parent.PF("statusDialog").show();

@@ -36,9 +36,10 @@ PrepareHTMLReportModule<-function(mSetObj=NA, usrName, link="NA", module="NA"){
 #'All rights reserved
 #'@export
 #'
-PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
-  mSetObj <- .get.mSet(mSetObj);
+PrepareHTMLReport <- function(mSetObj = NA, usrName, link = "NA", module = "NA") {
 
+    mSetObj <- .get.mSet(mSetObj);
+    
     if (file.exists('mSet.rda') && file.exists('Rload.RData')) {
         if (module != "raw") {
             print("LOADING RLOAD=========");
@@ -46,148 +47,147 @@ PrepareHTMLReport<-function(mSetObj=NA, usrName, link="NA", module="NA"){
             load("Rload.RData")
             mSetObj <- .get.mSet(mSetObj);
         }
-    }else{
-  mSetObj <- .get.mSet(mSetObj);
-
-    }
-    if(!is.null(mSetObj$dataSet$meta.info)){
-    print(head(mSetObj$dataSet$meta.info))
-    }
-
-  # create the Rnw file
-  if(module != "NA"){
-    if(mSet$paramSet$report.format == "slides"){
-    file.create(paste0("Analysis_Presentation_",module, ".Rmd"));
-    rmdFile <<- file(paste0("Analysis_Presentation_",module, ".Rmd"), "w")
-    }else{
-    file.create(paste0("Analysis_Report_",module, ".Rmd"));
-    rmdFile <<- file(paste0("Analysis_Report_",module, ".Rmd"), "w")
-    }
-  }else{
-    if(mSet$paramSet$report.format == "slides"){
-    file.create("Analysis_Presentation.Rmd");
-    rmdFile <<- file("Analysis_Presentation.Rmd", "w")
-    }else{
-    file.create("Analysis_Report.Rmd");
-    rmdFile <<- file("Analysis_Report.Rmd", "w")
-    }
-  }
-
-  # create a global counter to label figures
-  fig.count <<- 0;
-  table.count <<- 0;
-  if(module != "NA"){
-  anal.type <- module;
-  }else{
-  anal.type <- mSetObj$analSet$type;
-  }
-  anal.type <<- anal.type;
-
-  if(mSet$paramSet$report.format == "slides"){
-    if(anal.type == "stat" ){
-      CreateStatRmdReportSlides(mSetObj, usrName);
-    }else if(anal.type == "mf"){
-      CreateMultiFacRnwReport_slides(mSetObj, usrName);
-    }else if(substr(anal.type, 0, 4) == "mset"){
-      CreateEnrichRmdReport_slides(mSetObj, usrName);
-    }else if(anal.type == "power"){
-      CreatePowerRnwReport_slides(mSetObj, usrName)
-    }else if(anal.type == "roc"){
-      CreateBiomarkerRnwReport_slides(mSetObj, usrName)
-    }else if(anal.type == "pathinteg"){
-      CreateIntegPathwayAnalysisRnwReport_slides(mSetObj, usrName);
-    }else if(substr(anal.type, 0, 4) == "path"){ # must be after pathiteg
-      CreatePathRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "network"){
-      CreateNetworkExplorerRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "mummichog" || anal.type == "mass_table" || anal.type == "mass_all"  ){
-      CreateMummichogRmdReport_slides(mSetObj, usrName);
-    }else if(anal.type == "metapaths"){
-      CreateMetaPathRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "metadata"){
-      CreateMetaAnalysisRnwReport_slides(mSetObj, usrName, link);
-    }else if(anal.type == "raw"){
-      CreateRawAnalysisRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "tandemMS"){
-      CreateTandemMSAnalysisRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "dose"){
-      CreateDoseRnwReport_slides(mSetObj, usrName);
-    }else if(anal.type == "mgwas"){
-      CreateCausalRnwReport_slides(mSetObj, usrName);
-    }else{
-      AddErrMsg(paste("No template found for this module:", anal.type));
-      return(0);
-    }
-  }else{
-    if(anal.type == "stat" ){
-      CreateStatRmdReport(mSetObj, usrName);
-    }else if(anal.type == "mf"){
-      CreateMultiFacRnwReport(mSetObj, usrName);
-    }else if(substr(anal.type, 0, 4) == "mset"){
-      CreateEnrichRmdReport(mSetObj, usrName);
-    }else if(anal.type == "power"){
-      CreatePowerRnwReport(mSetObj, usrName)
-    }else if(anal.type == "roc"){
-      CreateBiomarkerRnwReport(mSetObj, usrName)
-    }else if(anal.type == "pathinteg"){
-      CreateIntegPathwayAnalysisRnwReport(mSetObj, usrName);
-    }else if(substr(anal.type, 0, 4) == "path"){ # must be after pathiteg
-      CreatePathRnwReport(mSetObj, usrName);
-    }else if(anal.type == "network"){
-      CreateNetworkExplorerRnwReport(mSetObj, usrName);
-    }else if(anal.type == "mummichog" || anal.type == "mass_table" || anal.type == "mass_all"  ){
-      CreateMummichogRmdReport(mSetObj, usrName);
-    }else if(anal.type == "metapaths"){
-      CreateMetaPathRnwReport(mSetObj, usrName);
-    }else if(anal.type == "metadata"){
-      CreateMetaAnalysisRnwReport(mSetObj, usrName, link);
-    }else if(anal.type == "raw"){
-      CreateRawAnalysisRnwReport(mSetObj, usrName);
-    }else if(anal.type == "tandemMS"){
-      CreateTandemMSAnalysisRnwReport(mSetObj, usrName);
-    }else if(anal.type == "dose"){
-      CreateDoseRnwReport(mSetObj, usrName);
-    }else if(anal.type == "mgwas"){
-      CreateCausalRnwReport(mSetObj, usrName);
-    }else{
-      AddErrMsg(paste("No template found for this module:", anal.type));
-      return(0);
-    }
-  }
-
-  # close opened files
-  close(rmdFile);
-
-  # find out pandoc
-  pandoc_path <- sub("pandoc:", "", system("whereis pandoc",intern = T));
-  if(pandoc_path == ""){
-    if(file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools")){ # for ubuntu with rstudio
-        pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools";
     } else {
-        warning("You must install pandoc or specify the path here !")
+        mSetObj <- .get.mSet(mSetObj);
     }
-    if(file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64/pandoc")){
-        pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64";
+    
+    if (!is.null(mSetObj$dataSet$meta.info)) {
+        print(head(mSetObj$dataSet$meta.info))  
     }
-  }
-  Sys.setenv(RSTUDIO_PANDOC=pandoc_path)
-  #save.image("rmd.RData");
 
-if(module != "NA"){
-  if(mSet$paramSet$report.format == "slides"){
-    rmarkdown::render(paste0("Analysis_Presentation_",module, ".Rmd"))
-  }else{
-    rmarkdown::render(paste0("Analysis_Report_",module, ".Rmd"))
-  }
-}else{
+    # create the Rmd file
+    if (module != "NA") {
+        if (mSet$paramSet$report.format == "slides") {
+            file.create(paste0("Analysis_Presentation_", module, ".Rmd"));
+            rmdFile <<- file(paste0("Analysis_Presentation_", module, ".Rmd"), "w")
+        } else {
+            file.create(paste0("Analysis_Report_", module, ".Rmd"));
+            rmdFile <<- file(paste0("Analysis_Report_", module, ".Rmd"), "w")
+        }
+    } else {
+        if (mSet$paramSet$report.format == "slides") {
+            file.create("Analysis_Presentation.Rmd");
+            rmdFile <<- file("Analysis_Presentation.Rmd", "w")
+        } else {
+            file.create("Analysis_Report.Rmd");
+            rmdFile <<- file("Analysis_Report.Rmd", "w")
+        }
+    }
 
-  if(mSet$paramSet$report.format == "slides"){
-    rmarkdown::render("Analysis_Presentation.Rmd")
-  }else{
-    rmarkdown::render("Analysis_Report.Rmd")
-  }
-}
-  return(1);
+    # create a global counter to label figures
+    fig.count <<- 0;
+    table.count <<- 0;
+    if (module != "NA") {
+        anal.type <- module;
+    } else {
+        anal.type <- mSetObj$analSet$type;
+    }
+    anal.type <<- anal.type;
+
+    if (mSet$paramSet$report.format == "slides") {
+        if (anal.type == "stat") {
+            CreateStatRmdReportSlides(mSetObj, usrName);
+        } else if (anal.type == "mf") {
+            CreateMultiFacRnwReport_slides(mSetObj, usrName);
+        } else if (substr(anal.type, 0, 4) == "mset") {
+            CreateEnrichRmdReport_slides(mSetObj, usrName);
+        } else if (anal.type == "power") {
+            CreatePowerRnwReport_slides(mSetObj, usrName)
+        } else if (anal.type == "roc") {
+            CreateBiomarkerRnwReport_slides(mSetObj, usrName)
+        } else if (anal.type == "pathinteg") {
+            CreateIntegPathwayAnalysisRnwReport_slides(mSetObj, usrName);
+        } else if (substr(anal.type, 0, 4) == "path") { # must be after pathinteg
+            CreatePathRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "network") {
+            CreateNetworkExplorerRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "mummichog" || anal.type == "mass_table" || anal.type == "mass_all") {
+            CreateMummichogRmdReport_slides(mSetObj, usrName);
+        } else if (anal.type == "metapaths") {
+            CreateMetaPathRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "metadata") {
+            CreateMetaAnalysisRnwReport_slides(mSetObj, usrName, link);
+        } else if (anal.type == "raw") {
+            CreateRawAnalysisRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "tandemMS") {
+            CreateTandemMSAnalysisRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "dose") {
+            CreateDoseRnwReport_slides(mSetObj, usrName);
+        } else if (anal.type == "mgwas") {
+            CreateCausalRnwReport_slides(mSetObj, usrName);
+        } else {
+            AddErrMsg(paste("No template found for this module:", anal.type));
+            return(0);
+        }
+    } else {
+        if (anal.type == "stat") {
+            CreateStatRmdReport(mSetObj, usrName);
+        } else if (anal.type == "mf") {
+            CreateMultiFacRnwReport(mSetObj, usrName);
+        } else if (substr(anal.type, 0, 4) == "mset") {
+            CreateEnrichRmdReport(mSetObj, usrName);
+        } else if (anal.type == "power") {
+            CreatePowerRnwReport(mSetObj, usrName)
+        } else if (anal.type == "roc") {
+            CreateBiomarkerRnwReport(mSetObj, usrName)
+        } else if (anal.type == "pathinteg") {
+            CreateIntegPathwayAnalysisRnwReport(mSetObj, usrName);
+        } else if (substr(anal.type, 0, 4) == "path") { # must be after pathinteg
+            CreatePathRnwReport(mSetObj, usrName);
+        } else if (anal.type == "network") {
+            CreateNetworkExplorerRnwReport(mSetObj, usrName);
+        } else if (anal.type == "mummichog" || anal.type == "mass_table" || anal.type == "mass_all") {
+            CreateMummichogRmdReport(mSetObj, usrName);
+        } else if (anal.type == "metapaths") {
+            CreateMetaPathRnwReport(mSetObj, usrName);
+        } else if (anal.type == "metadata") {
+            CreateMetaAnalysisRnwReport(mSetObj, usrName, link);
+        } else if (anal.type == "raw") {
+            CreateRawAnalysisRnwReport(mSetObj, usrName);
+        } else if (anal.type == "tandemMS") {
+            CreateTandemMSAnalysisRnwReport(mSetObj, usrName);
+        } else if (anal.type == "dose") {
+            CreateDoseRnwReport(mSetObj, usrName);
+        } else if (anal.type == "mgwas") {
+            CreateCausalRnwReport(mSetObj, usrName);
+        } else {
+            AddErrMsg(paste("No template found for this module:", anal.type));
+            return(0);
+        }
+    }
+
+    # close opened files
+    close(rmdFile);
+
+    # find out pandoc
+    pandoc_path <- sub("pandoc:", "", system("whereis pandoc", intern = T));
+    if (pandoc_path == "") {
+        if (file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools")) { # for ubuntu with rstudio
+            pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools";
+        } else {
+            warning("You must install pandoc or specify the path here !")
+        }
+        if (file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64/pandoc")) {
+            pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64";
+        }
+    }
+    Sys.setenv(RSTUDIO_PANDOC = pandoc_path)
+    #save.image("rmd.RData");
+
+    if (module != "NA") {
+        if (mSet$paramSet$report.format == "slides") {
+            rmarkdown::render(paste0("Analysis_Presentation_", module, ".Rmd"))
+        } else {
+            rmarkdown::render(paste0("Analysis_Report_", module, ".Rmd"))
+        }
+    } else {
+        if (mSet$paramSet$report.format == "slides") {
+            rmarkdown::render("Analysis_Presentation.Rmd")
+        } else {
+            rmarkdown::render("Analysis_Report.Rmd")
+        }
+    }
+    return(1);
 }
 
 # this is for PDF report generation from bash
@@ -427,66 +427,59 @@ writeLines(html_content, "custom-scripts.html")
             "\n\n")
   }
   cat(header, file=rmdFile, sep="\n", append=TRUE);
-  
+
   if (mSet$paramSet$report.format %in% c("html")) {
+    ## Additional HTML-specific setup
+    html_setup <- c(
+      "```{r html-setup, include=FALSE}",
+      "# HTML-specific: figure dir, device, and rendering options",
+      "dir.create('figure', showWarnings = FALSE, recursive = TRUE)",
+      "dev_choice <- if (requireNamespace('ragg', quietly = TRUE)) 'ragg_png' else 'png'",
+      "knitr::opts_chunk$set(",
+      "  fig.path = 'figure/', dev = dev_choice, dpi = 150",
+      ")",
+      "options(bitmapType = 'cairo')",
+      "```"
+    )
+    cat(html_setup, file = rmdFile, sep = "\n", append = TRUE)
+
     container_css <- c(
-   
+
    "<style type='text/css'>
      .main-container {
         max-width: 2000px;
         margin-left: auto;
         margin-right: auto;
      }
-    
+
      .book .book-body .page-inner {
        max-width: 2000px;
      }
-    
+
     .book .book-body .page-inner section.normal table {
       width: 100%;
       margin-left: auto;
       margin-right: auto;
     }
-    
+
     .book .book-body .page-inner section.normal .dataTables_wrapper .table-wrapper {
       margin-top: 0px;
       width: 100%;
     }
-    
+
     .book .book-body .page-inner section.normal .figure {
       text-align: center;
       margin: auto;
     }
 
     .iheatmapr.html-widget.html-fill-item.html-widget-static-bound.js-plotly-plot {
-            margin: 0 auto; 
+            margin: 0 auto;
     }
 
     </style>\n\n")
     cat(container_css, file=rmdFile, sep="\n", append=TRUE)
-
-    ## ── unified setup chunk (TMPDIR + figure dir + device) ─────────────
-    setup_chunk <- c(
-      "```{r setup, include=FALSE}",
-      "# Stable temp & figure directories to avoid /tmp cleanup issues",
-      "if (!nzchar(Sys.getenv('TMPDIR'))) Sys.setenv(TMPDIR = file.path(getwd(), 'tmp'))",
-      "dir.create(Sys.getenv('TMPDIR'), showWarnings = FALSE, recursive = TRUE)",
-      "dir.create('figure', showWarnings = FALSE, recursive = TRUE)",
-      "",
-      "# Device: prefer ragg, fall back to png; set DPI and default fig path",
-      "dev_choice <- if (requireNamespace('ragg', quietly = TRUE)) 'ragg_png' else 'png'",
-      "knitr::opts_chunk$set(",
-      "  echo = FALSE, warning = FALSE, message = FALSE,",
-      "  fig.path = 'figure/', dev = dev_choice, dpi = 150",
-      ")",
-      "",
-      "# Headless bitmap safety (Cairo on Linux servers)",
-      "options(bitmapType = 'cairo')",
-      "```"
-    )
-    cat(setup_chunk, file = rmdFile, sep = "\n", append = TRUE)
   }
-  
+
   code_settings <- c("```{r echo=FALSE}",
                      "knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message=FALSE)",
                      "```")
@@ -1322,13 +1315,13 @@ CreateNetworkDoc <- function(mSetObj = NA){
   imgSet   <- mSetObj$imgSet;
 
   # skip if network step never ran
-  if (is.null(imgSet$reportSet$network)) {
+  if (is.null(imgSet$reportSet$network_enr) || !file.exists(imgSet$reportSet$network_enr)) {
       invisible()
   }
 
   link <- GetSharingLink(mSetObj)
 
-  reportLinks <- getReportLinks(link, "network")
+  reportLinks <- getReportLinks(link, "network_enr")
   cat(reportLinks, file = rmdFile, append = TRUE)
   cat("\n\n", file = rmdFile, append = TRUE)
 
@@ -1342,15 +1335,15 @@ CreateNetworkDoc <- function(mSetObj = NA){
   cat(descr, file = rmdFile, append = TRUE)
 
   # include the saved screenshot if present (same chunk style as your example)
-  if (!is.null(imgSet$reportSet$network) && file.exists(imgSet$reportSet$network)) {
+  if (!is.null(imgSet$reportSet$network_enr) && file.exists(imgSet$reportSet$network_enr)) {
     figChunk <- c(
       paste0(
         "```{r figure_enrichment_network, echo=FALSE, fig.align='center', fig.pos='H', ",
         "fig.cap='Figure ", getFigCount(), ": Enrichment Network', ",
-        "fig.lp='", imgSet$reportSet$network, "', ",
+        "fig.lp='", imgSet$reportSet$network_enr, "', ",
         "out.width='", getFigWidth(mSetObj, width = '720px', widthPct = '100%'), "'}"
       ),
-      "safeIncludeGraphics(mSetObj$imgSet$reportSet$network)",
+      "safeIncludeGraphics(mSetObj$imgSet$reportSet$network_enr)",
       "```",
       "\n\n"
     )

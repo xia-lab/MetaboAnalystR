@@ -430,6 +430,27 @@ public class DownloadBean implements Serializable {
             if (!existing.isEmpty()) {
                 DataUtils.deleteFile(usr, "Download.zip");
                 DataUtils.createZipFile(existing.toArray(new File[0]), "Download.zip", mainFolderPath);
+
+                // For workflow mode: also create Download.zip in parent folder if we're in a subfolder
+                // Check if current homeDir is different from origHomeDir (indicates we're in a subfolder)
+                if (usr.getOrigHomeDir() != null && !usr.getHomeDir().equals(usr.getOrigHomeDir())) {
+                    String parentFolderPath = usr.getOrigHomeDir();
+                    System.out.println("Workflow subfolder detected. Creating Download.zip in parent: " + parentFolderPath);
+                    File parentFolder = new File(parentFolderPath);
+                    File[] parentFiles = parentFolder.listFiles(new OnlyExt(true));
+                    if (parentFiles != null && parentFiles.length > 0) {
+                        List<File> parentExisting = new ArrayList<>();
+                        for (File f : parentFiles) {
+                            if (f != null && f.exists() && f.isFile()) {
+                                parentExisting.add(f);
+                            }
+                        }
+                        if (!parentExisting.isEmpty()) {
+                            DataUtils.createZipFile(parentExisting.toArray(new File[0]), "Download.zip", parentFolderPath);
+                            System.out.println("Successfully created Download.zip in parent folder");
+                        }
+                    }
+                }
             } else {
                 System.out.println("No existing files to archive in " + mainFolderPath);
             }

@@ -20,7 +20,7 @@ function initReportFunctions() {
 
 
 function handleSaveEvent(sendJsonFlag) {
-    sendImageToServer(export2Image(0.8), "network");
+    sendImageToServer(export2Image(0.8), "network_enr");
 
     var nodesArr = [];
     sigInst.graph.nodes().forEach(function (node) {

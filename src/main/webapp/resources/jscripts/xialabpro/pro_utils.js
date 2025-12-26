@@ -24,6 +24,8 @@ function sendImageToServer(dataURL, name, format = "png", callback) {
 
 
 function sendJsonToServer(jsonData, type, generateReport) {
+        console.log("sendJsonToServer: " + type);
+
     $.ajax({
         dataType: "html",
         type: "POST",
@@ -37,9 +39,15 @@ function sendJsonToServer(jsonData, type, generateReport) {
         success: function () {
             console.log("Success: JSON saving");
             //console.log(generateReport)
-            if ($(parent.window.document).find("#sidebar-form\\:m_report")) {
+            if ($(parent.window.document).find("#sidebar-form\\:m_report").length > 0) {
                 if (generateReport) {
-                    parent.generateReportFromJS();
+                    // Call the PrimeFaces remote command from parent window
+                    if (typeof parent.generateReportFromJS === 'function') {
+                        parent.generateReportFromJS();
+                    } else {
+                        // Try calling through PrimeFaces remote command directly
+                        parent.window.PrimeFaces.ab({s: "sidebar-form:generateReportFromJS", f: "sidebar-form"});
+                    }
                     parent.PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Report successfully updated! Now, generating report..."}]);
 
                 } else {
@@ -47,7 +55,9 @@ function sendJsonToServer(jsonData, type, generateReport) {
                 }
             } else {
                 if (generateReport) {
-                    generateReportFromJS();
+                    if (typeof generateReportFromJS === 'function') {
+                        generateReportFromJS();
+                    }
                     PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Report successfully updated! Now, generating report..."}]);
                 } else {
                     PF('growlWidget').show([{severity: "info", summary: "INFO", detail: "Report successfully updated!"}]);
