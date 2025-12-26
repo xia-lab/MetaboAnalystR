@@ -35,7 +35,7 @@ CreateMultiFacIntr_slides <- function() {
              "4. Data normalization",
              "5. Statistical analysis and visualization",
              "\n\n---\n\n");
-  cat(slide_text, file = rmdFile, append = TRUE,sep="\n")
+  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
 }
 
 CreateMultiFacIntr_slides <- function() {
@@ -48,7 +48,7 @@ CreateMultiFacIntr_slides <- function() {
              "5. Statistical analysis and visualization",
              "  - including metadata overview, covariate adjustment, PCA, heatmaps, Random Forests, etc.",
              "\n\n---\n\n");
-  cat(slide_text, file = rmdFile, append = TRUE,sep="\n")
+  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
 }
 
 #'Create report of analyses (Met Pathway)
@@ -63,7 +63,7 @@ InitMultiFacAnal <- function(){
              "\n\n## 3. Multi-factor Statistical Analysis\n\n",
              "For metabolomics data accompanied by complex metadata, MetaboAnalyst offers several carefully selected methods for",
              " data analysis. They include:\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr2 <- c(
     "1. Data and metadata overview:",
@@ -81,8 +81,8 @@ InitMultiFacAnal <- function(){
     " + Random Forest",
     "\n",
     "*Please note: MEBA is only applicable to time-series data analysis.*");
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 #'Create null analysis message for time-series sweave report
@@ -90,7 +90,7 @@ InitMultiFacAnal <- function(){
 #'@export
 CreateTimeSeriesAnalNullMsg<-function(){
   descr <- c("No analysis was performed on your data.\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 ##### DATA AND METADATA OVERVIEW SECTIONS #####
@@ -119,18 +119,18 @@ CreateMetaOverview_slides <- function(mSetObj = NA) {
         "- Supports various methods for calculating distance, correlation, and clustering.",
         "- Heatmaps can be displayed in overview or detail mode for comprehensive analysis.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Metadata Correlation Heatmap Slide
     metaCorrHeatmapSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$meta.corhm, "Correlation heatmap displaying relationship between metadata.")
-    cat(metaCorrHeatmapSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(metaCorrHeatmapSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Metadata Heatmap Slide
     metaHeatmapSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$metahtmaptwo, "Metadata heatmap displaying relationship between metadata.")
-    cat(metaHeatmapSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(metaHeatmapSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -193,16 +193,16 @@ CreateCorHeatmap_slides <- function(mSetObj = NA) {
         "- Samples are ordered by two factors, with the primary factor used for initial ordering.",
         "- Option to switch the ordering of factors for a different perspective.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Metadata Heatmap Slide
     heatmapSlide <- CreateTwoColumnFigureSlide(
         mSetObj$imgSet$htmap2,
         "Metadata heatmap displaying relationship between metabolites and metadata."
     )
-    cat(heatmapSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(heatmapSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -233,23 +233,23 @@ CreateCovAdj_slides <- function(mSetObj = NA) {
         "- P-value cutoff: `", params$p.thresh, "` type: `", params$pval.type, "`;",
         "- Number of significant features: `", params$sig.num, "`.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Covariate Adjustment Plot Slide
     covAdjSlide <- CreateTwoColumnFigureSlide(
         mSetObj$imgSet$covAdj,
         "P-values for metabolites with and without covariate adjustment."
     )
-    cat(covAdjSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(covAdjSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Significant features table slide
     table.count <<- table.count + 1;
 
     # Define the title as a markdown heading and write it to the Rmd file
     title_limma <- sprintf('## Table %d. Important features identified by linear models', table.count)
-    cat(paste0(title_limma, "\n\n"), file = rmdFile, append = TRUE)
+    .buffer_add(paste0(title_limma, "\n\n"))
 
     sigFeaturesSlide <- paste0(
         "```{r table_mylimma, echo=FALSE, results='asis', warning=FALSE}\n",
@@ -258,7 +258,7 @@ CreateCovAdj_slides <- function(mSetObj = NA) {
         "```\n\n",
         "\n\n---\n\n"  # Slide/page separator for R Markdown documents
     )
-    cat(sigFeaturesSlide, file = rmdFile, append = TRUE);
+    .buffer_add(sigFeaturesSlide);
 }
 
 
@@ -289,14 +289,14 @@ CreateCorAnalysis_slides <- function(mSetObj = NA) {
         sprintf("- Selected covariates: `%s`;", paste(params$cov.vec, collapse = "; ")),
         sprintf("- Correlation Measure: `%s`.\n", params$dist.name)
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Correlation Coefficients Slide
     if (!is.null(mSetObj$imgSet$corr)) {
         corrCoeffSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$corr, "Correlation coefficients for metadata of interest.")
-        cat(corrCoeffSlide, file = rmdFile, append = TRUE)
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(corrCoeffSlide)
+        .buffer_add("\n\n---\n\n")
     }
 }
 
@@ -327,21 +327,21 @@ CreateAOV2doc_slides <- function(mSetObj = NA) {
         sprintf("- Multiple correction method: `%s`;", params$multi.c),
         sprintf("- P-value threshold: `%s`.\n", params$raw.thresh)
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Two-way ANOVA Results Slide
     if (!is.null(mSetObj$imgSet$anova2)) {
         aov2Slide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$anova2, "Important features selected by two-way ANOVA.")
-        cat(aov2Slide, file = rmdFile, append = TRUE)
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(aov2Slide)
+        .buffer_add("\n\n---\n\n")
     }
 
     # Table for Significant Features from Two-way ANOVA
     if (!is.null(mSetObj$analSet$aov2$sig.mat)) {
         title_aov2 <- sprintf('## Table %d. Significant features identified by two-way ANOVA', getTableCount())
-        cat(title_aov2, file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)  # Ensure there's a break line after the title
+        .buffer_add(title_aov2)
+        .buffer_add("\n\n")  # Ensure there's a break line after the title
 
         r_code_chunk_aov2 <- paste0(
             "```{r table_aov2_analysis, echo=FALSE, results='asis'}\n",
@@ -354,7 +354,7 @@ CreateAOV2doc_slides <- function(mSetObj = NA) {
         )
 
         # Write the R code chunk to the R Markdown file for PowerPoint slides
-        cat(r_code_chunk_aov2, file = rmdFile, append = TRUE)
+        .buffer_add(r_code_chunk_aov2)
     }
 }
 
@@ -385,51 +385,51 @@ CreateASCAdoc_slides <- function(mSetObj = NA) {
         "- It partitions variance into components related to factors and interactions in two-factor designs.",
         "- Visual analysis through PCA scores plots of each component enables major pattern detection.\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Additional ASCA analysis results slides
     # Replace following with actual slide creation or image inclusion as per your data and analysis
 if (!is.null(mSetObj$analSet$asca)) {
     # Scree Plots Slide
     screePlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.scree, "Scree plots for each sub-model in ASCA analysis.")
-    cat(screePlotSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(screePlotSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Factor A Patterns Slide
     factorAPatternsSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.modelA, "Major patterns associated with Factor A in ASCA analysis.")
-    cat(factorAPatternsSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(factorAPatternsSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Factor B Patterns Slide
     factorBPatternsSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.modelB, "Major patterns associated with Factor B in ASCA analysis.")
-    cat(factorBPatternsSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(factorBPatternsSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Interaction Patterns Slide
     interactionPatternsSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.modelAB, "Major patterns associated with Interaction between factors in ASCA analysis.")
-    cat(interactionPatternsSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(interactionPatternsSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Model Validation Slide
     modelValidationSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.perm, "Model validation through permutations in ASCA analysis.")
-    cat(modelValidationSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(modelValidationSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Important Features for Factor A Slide
     impFeaturesAFactorSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.impA, "Important variables associated with Factor A in ASCA analysis.")
-    cat(impFeaturesAFactorSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(impFeaturesAFactorSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Important Features for Factor B Slide
     impFeaturesBFactorSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.impB, "Important variables associated with Factor B in ASCA analysis.")
-    cat(impFeaturesBFactorSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(impFeaturesBFactorSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Important Features for Interaction Slide
     impFeaturesInteractionSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$asca.impAB, "Variables important in interaction between the two factors in ASCA analysis.")
-    cat(impFeaturesInteractionSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(impFeaturesInteractionSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 }
@@ -457,8 +457,8 @@ CreateMBdoc_slides <- function(mSetObj = NA) {
         "- Higher statistical values indicate more distinct time-course profiles across conditions.",
         "\n\nSelected metadata: ", paste("`", mSetObj$analSet$MB$selected.meta, "`", collapse=", "), "\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Significant features table slide
     table.count <<- table.count + 1
@@ -469,8 +469,8 @@ CreateMBdoc_slides <- function(mSetObj = NA) {
         "create_dt(sum_dt)\n",
         "```\n\n"
     )
-    cat(sigFeaturesSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(sigFeaturesSlide)
+    .buffer_add("\n\n---\n\n")
 }
 
 
@@ -499,22 +499,22 @@ CreateRandomForest_slides <- function(mSetObj = NA) {
         "Predictor(s) metadata: ", mSetObj$analSet$meta.vec.rf, "\n",
         "Randomness: ", mSetObj$analSet$rf.random, "\n"
     )
-    cat(intro, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(intro, collapse="\n")
+    .buffer_add("\n\n---\n\n")
 
     # Classification error vs number of trees slide
     classificationErrorSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$rf.cls, "Classification error vs. number of trees")
-    cat(classificationErrorSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(classificationErrorSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Features ranked by their contributions to classification accuracy slide
     featuresRankSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$rf.imp, "Features ranked by their contributions to classification accuracy")
-    cat(featuresRankSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(featuresRankSlide)
+    .buffer_add("\n\n---\n\n")
 
     # Potential outliers flagged by random forest algorithm slide
     outliersSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$rf.outlier, "Up to five potential outliers flagged by random forest algorithm")
-    cat(outliersSlide, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(outliersSlide)
+    .buffer_add("\n\n---\n\n")
 }
 

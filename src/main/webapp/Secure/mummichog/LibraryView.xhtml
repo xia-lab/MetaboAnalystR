@@ -83,7 +83,9 @@
                                     <f:selectItem itemLabel="2.0" itemValue="v2"/>
                                     <f:selectItem itemLabel="1.0" itemValue="v1"/>
                                 </p:selectOneRadio>
-                                <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png"  alt="help"/>     
+                                <h:panelGroup id="helpIcon2" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>     
                             </h:panelGrid>
                         </h:panelGrid>
                         <p:checkbox for="customCheck" itemIndex="1" disabled="#{mummiAnalBean.disabledGsea}"/>
@@ -115,7 +117,9 @@
                     <h:panelGroup layout="block"  style="width: 180px">
                         <p:outputLabel style="color: #EC7505; font-family: Arial,Helvetica,sans-serif; font-size: 14px; padding-left: 30px" 
                                        value="Advanced options"/> &nbsp;
-                        <p:graphicImage id="custIcon" url="/resources/images/ui-help.png"  alt="help"/>  
+                        <h:panelGroup id="custIcon" style="margin-left: 10px;">
+                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                        </h:panelGroup>  
                     </h:panelGroup>
                     <h:panelGrid style="font-size: 12px; height: 60px; padding-left: 20px; width: 540px; padding-top: 6px; padding-bottom: 4px">
                         <p:commandLink value="Edit Currency Metabolites" onclick="PF('currDialog').show()"/>
@@ -154,14 +158,18 @@
                             <p:radioButton for="customRadio" itemIndex="0"/>
                             <h:panelGrid columns="2">
                                 <p:outputLabel value="Homo sapiens (human) [Human1]"/>
-                                <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="formatIcon3" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                             </h:panelGrid>
                             -->
                             <p:radioButton for="customRadio" itemIndex="1"/>
                             <h:panelGroup>
                                 <p:outputLabel value="Homo sapiens (human) [MFN]"/>
                                 <p:spacer style="width:5px"/>
-                                <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="formatIcon" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                             </h:panelGroup>                        
                             <p:radioButton for="customRadio" itemIndex="2"/><p:outputLabel value="Homo sapiens (human) [BioCyc]"/>
                             <p:radioButton for='customRadio' itemIndex='3'/><p:outputLabel value='Homo sapiens (human) [KEGG]'/>
@@ -200,7 +208,9 @@
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Danio rerio (zebrafish) [MTF]"/>
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="formatIcon2" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
                         <p:radioButton for='customRadio' itemIndex='25'/><p:outputLabel value='Danio rerio (zebrafish) [KEGG]'/>
                         <p:radioButton for='customRadio' itemIndex='26'/><p:outputLabel value='Nothobranchius furzeri (turquoise killifish) [KEGG]'/>
@@ -369,70 +379,90 @@
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Lipids - Main Chemical Class"/>
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="mainLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="mainLipidIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="139"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Lipids - Sub Chemical Class"/>
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="subLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="subLipidIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="140"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Non-Lipids - Main Chemical Class"/>
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="mainNonLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="mainNonLipidIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="141"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Non-Lipids - Sub Chemical Class"/>   
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="subNonLipidIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="subNonLipidIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="142"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Disease-associated Metabolite Sets (Blood)"/>  
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="bloodIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="bloodIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="143"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Disease-associated Metabolite Sets (CSF)"/> 
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="csfIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="csfIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="144"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Disease-associated Metabolite Sets (Urine)"/>  
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="urineIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="urineIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="145"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="SNP-associated Metabolite Sets"/>  
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="snpIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="snpIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>
 
                         <p:radioButton for="customRadio" itemIndex="146"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Location-based Metabolite Sets"/>  
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="locIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="locIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>      
 
                         <p:radioButton for="customRadio" itemIndex="147"/>
                         <h:panelGroup layout="block">
                             <p:outputLabel value="Predicted Metabolite Sets"/> 
                             <p:spacer style="width:5px"/>
-                            <p:graphicImage id="predIcon" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="predIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGroup>    
                     </h:panelGrid>
                 </p:panelGrid>

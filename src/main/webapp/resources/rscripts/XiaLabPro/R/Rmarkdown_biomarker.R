@@ -80,7 +80,7 @@ CreateBiomarkerIntr<-function(){
              validation (MCCV) through balanced subsampling (Explorer), and permutation tests for model evaluation (Tester). 
              Please refer to <a href='https://link.springer.com/article/10.1007/s11306-012-0482-9' target='_blank'> Xia et al. </a> for a comprehensive tutorial.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 
@@ -102,7 +102,7 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
              <u>there is a potential overfitting issue associated with this procedure</u> since the  p-value is used for selection. Therefore users will need to validate their performance 
              in future, independent studies. Log normalization of the data will be performed during the process.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   if(!is.null(mSetObj$dataSet$use.ratio) && mSetObj$dataSet$use.ratio){
 
@@ -118,18 +118,18 @@ CreateBiomarkerRatioOverview <- function(mSetObj=NA){
       "\n\n"
     )
 
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
     
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   else{
     rationo <- "No ratios between metabolite concentration pairs were computed.";
-    cat(rationo, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(rationo);
+    .buffer_add("\n\n", collapse="\n");
   }
   
-  cat("<hr/>","## 3. Biomarker Analysis\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("<hr/>","## 3. Biomarker Analysis\n\n");
 }
 
 #'Create report of analyses 
@@ -174,14 +174,14 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
              the data itself (training and testing on the same data), not using cross validation (CV) as done in generating the multivariate ROC curve. 
              The performance is too optimistic (i.e. overfitting).",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   if(exists("feat.rank.mat")){
     
     link <- GetSharingLink(mSetObj);
     reportLinks <- getReportLinks(link, "uniroc_table", "", "");
         
-    cat(paste(reportLinks, "\n\n"), file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks, "\n\n");
 
     colnames(feat.rank.mat) <- c("Area-under-the-curve", "T-test", "Log 2 Fold-Change", "Cluster")
     # AUC, Log2FC, T-test and K-Means Cluster for univariate biomarker analysis
@@ -196,11 +196,11 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
       "\n\n" # Two line breaks
     )
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
   }
 
   if(is.null(mSetObj$imgSet$roc.univ.plot)){
-      cat( "No unvariate ROC plot was generated.", file=rmdFile, append=TRUE);
+      .buffer_add( "No unvariate ROC plot was generated.");
       return();
   }
 
@@ -210,24 +210,24 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
     
     ft.name <- mSetObj$imgSet$roc.univ.name[i];
     
-    cat('<div style="display: flex; justify-content: space-around;">', file=rmdFile, append=TRUE)
+    .buffer_add('<div style="display: flex; justify-content: space-around;">')
     # roc_univ_+featNm
     link <- GetSharingLink(mSetObj)
     
     reportLinks <- getReportLinks(link, "roc_unic", paste0("roc_univ_",ft.name), ft.name)
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     reportLinks <- getReportLinks(link, "roc_boxplot", paste0("roc_boxplot_",ft.name), ft.name)
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
-    cat('</div>', file=rmdFile, append=TRUE)
+    .buffer_add('</div>')
 
 
-    cat('<div style="display: flex; justify-content: space-around;">', file=rmdFile, append=TRUE)
-    cat('\n\n', file=rmdFile, append=TRUE)
+    .buffer_add('<div style="display: flex; justify-content: space-around;">')
+    .buffer_add('\n\n')
 
     # First figure (ROC curve)
     cat(paste0("```{r figure_rocu2", i, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
@@ -236,7 +236,7 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
         "safeIncludeGraphics(mSetObj$imgSet$roc.univ.plot[",i,"])",
         "\n```\n",
         file=rmdFile, append=TRUE)
-    cat('\n\n', file=rmdFile, append=TRUE)
+    .buffer_add('\n\n')
 
     # Second figure (Box plot)
     cat(paste0("```{r figure_boxu2", i, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
@@ -245,10 +245,10 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
         "safeIncludeGraphics(mSetObj$imgSet$roc.univ.boxplot[",i,"])",
         "\n```\n",
         file=rmdFile, append=TRUE)
-    cat('\n\n', file=rmdFile, append=TRUE)
+    .buffer_add('\n\n')
 
     # Close the HTML container
-    cat('</div>', file=rmdFile, append=TRUE)
+    .buffer_add('</div>')
   }
 }
 
@@ -289,7 +289,7 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
              paste("Figure", fig_smi <- fig.count <<- fig.count+1, ". shows the significant features of single biomarker model ranked by importance."),
              "\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
    descr <- c("* Selected algorithm:",
                 paste0("`",mSetObj$analSet$exp.method,"`"),
@@ -299,14 +299,14 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
                 paste0("`",mSetObj$analSet$exp.lvNum,"`"),
                 "\n\n");
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
   # ROC plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_roc", "cls_roc")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   modelindex <- paste(mSetObj$imgSet$roc.multi.model);
   
@@ -319,16 +319,16 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$roc.multi.plot)",
            "```",
            "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
   # Prob
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_prob", "cls_prob")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   modelindex2 <- paste(mSetObj$imgSet$roc.prob.name);
   
@@ -341,15 +341,15 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$roc.prob.plot)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # Pred
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_accu", "cls_accu")
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_pab, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pab, 
                    ". Plot of the predictive accuracy of biomarker models with an increasing number of features. ",
@@ -360,15 +360,15 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$roc.pred)",
             "```",
             "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # Sig features
 if (!is.null(mSetObj$imgSet$roc.imp.plot) && safeFileExists(mSetObj$imgSet$roc.imp.plot)) {
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_imp", "cls_imp")
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   modelindex3 <- paste(mSetObj$imgSet$roc.imp.name);
   
@@ -381,8 +381,8 @@ if (!is.null(mSetObj$imgSet$roc.imp.plot) && safeFileExists(mSetObj$imgSet$roc.i
             "safeIncludeGraphics(mSetObj$imgSet$roc.imp.plot)",
             "```",
             "\n\n");
-  cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig4, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   }
 }
 
@@ -416,7 +416,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
              paste("Figure", fig_mptm <- fig.count<<-fig.count+1, ". shows the results of the permutation tests for the user-created biomarker model."),
              "\n\n");
   
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
   
     # selected parameters 
     descr <- c("* Selected features:",
@@ -429,16 +429,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
                 paste0("```",mSetObj$analSet$tester.lvNum,"```"),
                 "\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
     
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("\n\n", collapse="\n");
 
   # ROC plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_test_roc", "cls_test_roc")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   modelindex <- paste(mSetObj$imgSet$roc.testcurve.name)
   modelmethod <- paste(mSetObj$imgSet$roc.testcurve.method)
@@ -452,16 +452,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$roc.testcurve.plot)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
   # Probability
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_test_prob", "cls_test_prob")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   modelindex2 <- paste(mSetObj$imgSet$roc.testprob.name)
   
@@ -474,16 +474,16 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$roc.testprob.plot)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # Accuracy
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "cls_test_accu", "cls_test_accu")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_mpab, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mpab, 
                    ". Box plot of the predictive accuracy of the created biomarker model. ', ",
@@ -493,8 +493,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$roc.testpred)",
             "```",
             "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
 
   # Permutation
@@ -508,8 +508,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "roc_perm", "roc_perm")
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig4 <- c(paste0("```{r figure_mptm, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mptm, 
                      ". Plot of the permutations tests using the area under the ROC curve or the predictive accuracy", 
@@ -523,8 +523,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$roc.perm.plot)",
               "```",
               "\n\n");
-    cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig4, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   if(is.null(mSetObj$analSet$ROCtest$pred.samples.table)){
@@ -535,8 +535,8 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "roc_new_samples")
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     table_roclb <- table.count <<- table.count + 1;
 
@@ -549,7 +549,7 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
       "```", # End of R chunk
       "\n\n" # Two line breaks
     )
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
   }
 }
 

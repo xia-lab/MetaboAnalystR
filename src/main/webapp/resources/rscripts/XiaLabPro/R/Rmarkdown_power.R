@@ -70,7 +70,7 @@ CreatePowerIntr <- function(){
              which uses the average power of all metabolites, and to correct for multiple testing using false discovery rate (FDR) 
              instead of raw p-values. For more information, please refer to the original paper by <a href='https://pubmed.ncbi.nlm.nih.gov/19758461/' target='_blank'>van Iterson et al.</a>.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 
@@ -94,8 +94,8 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
              " The shape of the test-statistic should follow a near-normal distribution, and the majority of p-values",
              " should be close to zero. \n", 
              paste("Figure", fig_ppw <- fig.count<<-fig.count+1, "shows various diagnostic plots of the pilot data for power analysis."));
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   # power_stat
   link <- GetSharingLink(mSetObj)
@@ -103,8 +103,8 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
   reportLinks <- getReportLinks(link, "power_stat", "power_stat");
 
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_ppw, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ppw, 
                   ". Various plots overviewing the test-statistics and p-values calculated from the pilot data",
@@ -123,8 +123,8 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$powerstat)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
 }
 
@@ -151,21 +151,21 @@ CreatePowerAnalDoc <- function(mSetObj){
              paste("Figure", fig_panar1 <- fig.count<<-fig.count+1," shows the predicted power curve."),
             "\n\n");
 
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
     descr <- c("The specified false discovery rate (FDR):  ```", mSetObj$analSet$power$fdr.lvl, "```.",
                "The specified max sample size (per group): ```", mSetObj$analSet$power$smplSize, "```.",
                "\n",
                "Note the FDR threshold may be adjusted automatically if it is too stringent requiring larger sample size than the max specified.");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
 
   # power_profile
   if(!is.null(mSetObj$imgSet$powerprofile)){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "power_profile", "power_profile");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   fig1 <- c(paste0("```{r figure_ppwana, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_panar1, 
                   ". Plot of the predicted power curve.", 
@@ -176,7 +176,7 @@ CreatePowerAnalDoc <- function(mSetObj){
            "safeIncludeGraphics(mSetObj$imgSet$powerprofile)",
            "```",
            "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
   }
    # show the power table
     descr <- c(
@@ -186,6 +186,6 @@ CreatePowerAnalDoc <- function(mSetObj){
              table.count <<- table.count + 1,  ". Sample sizes and their predicted powers.')"),
       "```", "\n\n")
     
-    cat(paste(descr, "\n\n"), file=rmdFile, append=TRUE, sep="\n"); 
+    .buffer_add(descr, "\n\n"); 
 }
 

@@ -22,7 +22,7 @@
                                 <p:outputLabel style="font-size: 14px; font-weight: bold" value="Please enter a one-column compound list: "/>
                             </h:panelGrid>
                             <h:panelGrid id="msetArea" style="padding-left:20px;">
-                                <p:inputTextarea  autoResize="false" value="#{enrichLoader.msetOraList}" rows="16" cols="36" />
+                                <p:inputTextarea  autoResize="false" value="#{enrichLoader.msetOraList}" rows="18" cols="36"/>
                             </h:panelGrid>
                             <h:panelGrid id="parPane" columns="2" style="height: 100%; padding-top: 5px;">
                                 <h:panelGroup layout="block" style="width: 110px">
@@ -38,15 +38,7 @@
                                 </p:selectOneMenu>
 
                                 <p:outputLabel style="font-weight: bold" value="Try Example:"/>
-                                
-                                    <!--
-                                    <p:selectOneRadio value="#{enrichLoader.exampleType}">
-                                    <f:selectItem itemLabel="None" itemValue="none"/>
-                                    <f:selectItem itemLabel="List 1 (metabolites)" itemValue="met"/>
-                                    <f:selectItem itemLabel="List 2 (lipids)" itemValue="lipid"/>
-                                    <p:ajax update=":ac:form1" event="change" listener="#{enrichLoader.updateOraArea()}"/>
-                                        </p:selectOneRadio>
-                                    -->
+                      
                                     <p:selectOneMenu value="#{enrichLoader.exampleType}" panelStyleClass="panel" style="width:180px" >
                                         <f:selectItem itemLabel="None" itemValue="none"/>
                                         <f:selectItem itemLabel="List 1 (general)" itemValue="mixed"/>
@@ -166,7 +158,9 @@
                                     <h:panelGroup layout="block" style="width: 180px">
                                         <p:outputLabel style="font-size:13px; font-weight: bold" value="Study ID:"/> 
                                         <p:spacer width="5px"/>
-                                        <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                        <h:panelGroup id="formatIcon2" style="margin-left: 10px;">
+                                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                        </h:panelGroup>
                                     </h:panelGroup>
                                     <p:inputText style="width:180px" value="#{enrichLoader.nmdrStudyId}"/> 
                                 </h:panelGrid>
@@ -190,7 +184,9 @@
                                     <h:panelGroup layout="block" style="width:180px">
                                         <p:outputLabel style="font-size:12px; font-weight: bold;" value="Data File:"/>
                                         <p:spacer width="5px"/>
-                                        <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                        <h:panelGroup id="formatIcon3" style="margin-left: 10px;">
+                                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                        </h:panelGroup>
                                     </h:panelGroup>                        
                                     <p:fileUpload value="#{enrichLoader.metabolonFile}" mode="simple" skinSimple="true" style="line-height: 18px">
                                         <p:validateFile sizeLimit="26214400" allowTypes="/(\.|\/)(xlsx|XLSX)$/"/>

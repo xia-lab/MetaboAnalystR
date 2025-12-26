@@ -75,7 +75,7 @@ CreateEnrichIntr <- function(){
              compounds</u> based on **over-representation analysis (ORA)**, or test whether the abundance profiles of these metabolite sets 
              are significantly associated with the study condition based on **GlobalTest** directly from a <u>compound concentration table</u>.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -97,7 +97,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
             "* A compound concentration table as a comma separated (.csv) file for ```Quantitative Enrichment Analysis (QEA)```\n",
             "\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   if(mSetObj$analSet$type == "msetora"){
     descr <- c("You selected Over Representation Analysis (ORA) which requires a list of compound",
@@ -115,7 +115,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
     );
   }
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -134,12 +134,12 @@ CreateEnrichProcessDoc <- function(mSetObj=NA){
             "## 2. Data Processing\n\n",
             GetNameMappingDoc(),
             "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "name_map")
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   table.count <<- table.count+1;
   descr <- c("```{r table1, echo=FALSE, out.width = '60%', results='asis'}", 
@@ -150,7 +150,7 @@ CreateEnrichProcessDoc <- function(mSetObj=NA){
            "\n\n");
 
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
  # descr <- c("The second step is to check concentration values. For SSP analysis,",
  #            "the concentration must be measured in *umol* for blood and CSF samples.",
@@ -160,7 +160,7 @@ CreateEnrichProcessDoc <- function(mSetObj=NA){
  #            "Users can upload either the original concentration data or normalized data. Missing or negative values",
  #            "are allowed (coded as *NA*) for QEA. \n\n"
  # );
- # cat(descr, file=rmdFile, append=TRUE, sep="\n");
+ # .buffer_add(descr, collapse="\n");
 
 }
 
@@ -198,7 +198,7 @@ CreateEnrichSSPdoc <- function(mSetObj=NA){
     "subsequent enrichment analysis, while *1* means the corresponding",
     "compound was selected.\n\n"
   );
-  cat(descr, file=rmdFile, append=TRUE, sep="\n")
+  .buffer_add(descr, collapse="\n")
   
   table.count <<- table.count+1;
   
@@ -216,7 +216,7 @@ descr <- c(
 )
 
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -235,7 +235,7 @@ CreateEnrichAnalDoc <- function(){
              "\n\nBefore proceeding to enrichment analysis, a metabolite set library has to be chosen.",
              "There are seven built-in libraries offered by MSEA:\n\n"
   );
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr <- c("1. Metabolite set libraries based on pathways: ",
              " + SMPDB, containing 99 metabolite sets based on normal human metabolic pathways; ",
@@ -260,7 +260,7 @@ CreateEnrichAnalDoc <- function(){
              " + Location, containing 73 metabolite sets based on locations",
              "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   descr <- c("The built-in libraries are mainly from human studies. For data from subjects other than human being, 
              users are suggested to upload their self-defined metabolite set libraries for enrichment analysis.
@@ -271,9 +271,9 @@ CreateEnrichAnalDoc <- function(){
              "\n\n",
              paste("Your library choice: ```", mSetObj$analSet$msetlibname, "```"),
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
-  cat(paste("\n\n<hr/>", "\n\n## 4. Enrichment Analysis\n\n"),file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("\n\n<hr/>", "\n\n## 4. Enrichment Analysis\n\n", collapse="\n");
 }
 
 #'Create report of analyses (Met Enrichment)
@@ -301,14 +301,14 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
     metabolite set is represented more than expected by chance within the given compound list.
     One-tailed p values are provided after adjusting for multiple testing. The figures below
     summarizes the result.\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 
   if(!is.null(mSetObj$imgSet$ora)){
 
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "ora", "ora")
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_ora1, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), ". Summary plot for Over Representation Analysis (ORA).', ",
                   " fig.lp='", 
@@ -318,15 +318,15 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
            "```",
            "\n\n");
   
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
   }
   if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)){
     
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "enrichment_network")
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     fig2 <-c(paste0("```{r figure_ora2, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), ". Enrichment network for Over Representation Analysis (ORA).', ",
                     " fig.lp='", 
@@ -336,15 +336,15 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
              "```",
              "\n\n");
 
-    cat(fig2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig2, collapse="\n");
   }
 
     if(!is.null(mSetObj$imgSet$ora_dot)){
 
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "ora_dot", "ora_dot");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <-c(paste0("```{r figure_ora3, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), ". Summary dot plot for Over Representation Analysis (ORA).', ",
                   " fig.lp='", 
@@ -354,14 +354,14 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
            "```",
            "\n\n");
 
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
   }
       if(!is.null(mSetObj$analSet$ora.mat)){
 
   reportLinks <- getReportLinks(link, "ora_resTbl");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
   table.count <<- table.count+1;
   
@@ -375,7 +375,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
     )
 
 
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 }
 
@@ -403,13 +403,13 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
     "for a metabolite set is the average of the Q statistics for each metabolite in the set.",
     "**Figure 2** below summarizes the result.\n\n"
   );
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "qea", "qea");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <-c(paste0("```{r figure_qea1, echo=FALSE, fig.pos='H', fig.cap='Figure 1. Summary plot for Quantitative Enrichment Analysis (QEA).', ",
                   " fig.lp='", 
@@ -419,14 +419,14 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
            "```",
            "\n\n");
   
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
   
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "qea_dot", "qea_dot")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_qea2, echo=FALSE, fig.pos='H', fig.cap='Figure 2. Summary dot plot for Quantitative Enrichment Analysis (QEA).', ",
                   " fig.lp='", 
@@ -436,7 +436,7 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
            "```",
            "\n\n");
   
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
 
   
   if(!is.null(mSetObj$imgSet$reportSet$enrichment_network) && safeFileExists(mSetObj$imgSet$reportSet$enrichment_network)){
@@ -444,8 +444,8 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "enrichment_network")
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     fig2 <-c(paste0("```{r figure_ora2, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), ". Enrichment network for Over Representation Analysis (ORA).', ",
                     " fig.lp='", 
@@ -455,13 +455,13 @@ CreateEnrichQEAdoc<-function(mSetObj=NA){
              "```",
              "\n\n");
 
-    cat(fig2, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig2, collapse="\n");
   }
   
   reportLinks <- getReportLinks(link, "qea_resTbl")
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
 
 
 descr <- c(
@@ -475,5 +475,5 @@ descr <- c(
 )
 
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }

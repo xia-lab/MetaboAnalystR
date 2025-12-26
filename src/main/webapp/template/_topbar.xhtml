@@ -293,13 +293,13 @@
     <p:commandButton id="chatFloatingBtn"
                      icon="pi pi-comments"
                      styleClass="floating-chat-button"
-                     title="Open Omics Assistant chat dialog - Ask questions about MetaboAnalyst"
+                     title="Talk to OmicsBot"
                      onclick="PF('OmicsBotDialog').show();" />
 
     <p:dialog modal="false" widgetVar="OmicsBotDialog" 
               style="height:600px;width:670px;display: flex;flex-direction: column;" 
               dynamic="true"
-              appendTo="@(body)" header="Omics Assistant (beta)" 
+              appendTo="@(body)" header="OmicsBot" 
               draggable="true" closable="true" resizable="true"> 
         <h:form id="formChat">
             <h:panelGroup layout="block" style="text-align: right; padding-right: 10px;">
@@ -311,9 +311,9 @@
                 <p:commandButton value="#{myBot.altMdlName}"  style="margin-right: 10px;"
                                  actionListener="#{myBot.modifyModel()}" styleClass="mt-3"
                                  update="formChat"
-                                 title="Toggle between Gemini 2.5 Flash and Flash Lite models"/>
+                                 title="Toggle between Gemini 3.0 and 2.5 Flash models"/>
                 <i class="pi pi-question-circle" alt="help" style="font-size: 1.5rem; padding-top: 2px"
-                   title="OmicsBot runs on Gemini 2.5 Flash with our knowledge base. Try to reset or switch to gemini-2.5-flash-lite when there is any issue."/>
+                   title="OmicsBot runs on Gemini 3.0 Flash with our knowledge base. Try to reset or switch to gemini-2.5-flash when there is any issue."/>
             </h:panelGroup>
 
             <p:scrollPanel id="scrollPanel" style="height: 50vh; width: 670px; line-height: 23px; font-family: Arial, Helvetica, Geneva;" mode="native">

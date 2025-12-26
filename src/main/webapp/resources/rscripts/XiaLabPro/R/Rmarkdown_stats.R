@@ -83,7 +83,7 @@ CreateStatIntr <- function(){
               please use the *LC-MS Spectra Processing* module to first obtain a peak intensity table.
               For complex study design with many factors (treatment, time, gender, BMI, etc), please use the 
               *Statistics [metadata table]* module.\n") 
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Introduction for statistical analysis module report
@@ -91,12 +91,12 @@ CreateStatIntr <- function(){
 #'@export
 InitStatAnalMode <- function(){
 
-  cat("<hr/>", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("<hr/>", collapse="\n");
 
   descr <- c("## 3. Exploratory Statistical Data Analysis\n\n",
              "MetaboAnalyst offers a variety of methods commonly used for metabolomic data analyses.",
              "They include:\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   descr2 <- c(
     "1. Classical univariate analysis methods:",
     " + Fold Change Analysis",
@@ -127,8 +127,8 @@ InitStatAnalMode <- function(){
     " + Support Vector Machine (SVM)",
     "\n",
     "*Please note some methods are available only for two-group analysis*");
-  cat(descr2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr2, collapse="\n");
+  .buffer_add("\n\n");
 }
 
 
@@ -138,7 +138,7 @@ InitStatAnalMode <- function(){
 #'@export
 CreateAnalNullMsg <- function(){
   descr <- c("No analysis was performed on your data.\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses
@@ -197,7 +197,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
              is a starting point before conducting more advanced analysis.",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   # Fold change
   if(!(isEmptyMatrix(mSetObj$analSet$fc$sig.mat))){
@@ -212,14 +212,14 @@ CreateUNIVdoc <- function(mSetObj=NA){
                     nrow(mSetObj$analSet$fc$sig.mat), "``` significant features were identified.",
                "\n\n");
 
-        cat(descr, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(descr, collapse="\n");
 
         link <- GetSharingLink(mSetObj)
         reportLinks <- getReportLinks(link, "fc", "fc");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
-        cat("<div style='text-align: center;'>\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
+        .buffer_add("<div style='text-align: center;'>\n\n");
 
         fig <- c(paste0("```{r figure_fc, echo=FALSE,  fig.pos='H', fig.cap='Figure ", fig_fc, 
                     ". Important features selected by fold-change analysis',", 
@@ -233,14 +233,14 @@ CreateUNIVdoc <- function(mSetObj=NA){
                 "}",
              "```",
              "\n\n");
-        cat(fig, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig, collapse="\n");
 
-        cat("</div>\n\n", file=rmdFile, append=TRUE);
+        .buffer_add("</div>\n\n");
 
         reportLinks <- getReportLinks(link, "fc_table");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         descr <- c(
             "```{r table_fc, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
             "dt_res <- as.data.frame(GetSigTableRMD_FC(mSet));",
@@ -249,7 +249,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
              ". Result from Fold Change Analysis.')"),
              "```", "\n\n")
     
-        cat(descr, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(descr, collapse="\n");
 
     }
   }
@@ -263,13 +263,13 @@ CreateUNIVdoc <- function(mSetObj=NA){
                mSetObj$analSet$tt$raw.thresh, "```, type ```", mSetObj$analSet$tt$pval.type, "```. ",
                "A total of ```", mSetObj$analSet$tt$sig.num, "``` significant features were identified.",
                "\n\n");
-        cat(descr, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(descr, collapse="\n");
 
         # tt view
         reportLinks <- getReportLinks(link, "tt", "tt");
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
-        cat("<div style='text-align: center;'>\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
+        .buffer_add("<div style='text-align: center;'>\n\n");
 
         fig <- c(paste0("```{r figure_tt, echo=FALSE,  fig.pos='H', fig.cap='Figure ", fig_tt, 
                       ". Significant features selected by T-tests. The p values are transformed by -log10 so that the more significant features are higher on the graph.',", 
@@ -283,20 +283,20 @@ CreateUNIVdoc <- function(mSetObj=NA){
                "```",
                "\n\n");
 
-        cat(fig, file=rmdFile, append=TRUE, sep="\n");
-        cat("</div>\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(fig, collapse="\n");
+        .buffer_add("</div>\n\n");
 
         reportLinks <- getReportLinks(link, "tt_table");
 
-        cat(reportLinks, file=rmdFile, append=TRUE);
-        cat("\n\n", file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks);
+        .buffer_add("\n\n");
         descr <- c(
             "```{r table_tt, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
             "dt_res <- as.data.frame(GetSigTableRMD_TT(mSet));",
             paste0("create_dt(dt_res,  caption = 'Table ", 
             table_tt, ". Result from T test Analysis.')"),
             "```", "\n\n");
-        cat(descr, file=rmdFile, append=TRUE, sep="\n"); 
+        .buffer_add(descr, collapse="\n"); 
     }
   }
   
@@ -310,18 +310,18 @@ CreateUNIVdoc <- function(mSetObj=NA){
                "``` significant features were identified. Note both fold changes and p values are log transformed. 
                The further its position away from the (0,0), the more significant the feature is.",
                "\n\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
 
 
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "volcano", "volcano");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     plotLabel = mSetObj$analSet$volcano.plot.config$plotLbl
     plotTheme = mSetObj$analSet$volcano.plot.config$plotTheme
-    cat("<div style='text-align: center;'>\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("<div style='text-align: center;'>\n\n");
 
     fig <- c(paste0("```{r figure_volcano, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_vc, 
                     ". Important features selected by volcano plot', ",
@@ -336,14 +336,14 @@ CreateUNIVdoc <- function(mSetObj=NA){
              "```",
              "\n\n");
     
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("</div>\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("</div>\n\n");
 
     
     reportLinks <- getReportLinks(link, "volcano_table");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     descr <- c(
       "```{r table_vc, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
       "dt_res <- as.data.frame(GetSigTableRMD_Volcano(mSet));",
@@ -352,7 +352,7 @@ CreateUNIVdoc <- function(mSetObj=NA){
              ". Result from volcano plotting.')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
   }
 }
 
@@ -395,9 +395,9 @@ CreateANOVAdoc <- function(mSetObj=NA){
              anova.tab,
              "\n\n");
 
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
-  cat("<div style='text-align: center;'>\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("<div style='text-align: center;'>\n\n");
   # ANOVA
   fig <- c(
       paste0("```{r figure_anov, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
@@ -415,10 +415,10 @@ CreateANOVAdoc <- function(mSetObj=NA){
     )
 
   
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("</div>\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("</div>\n\n");
 
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   descr <- c(
     "```{r table_anov, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -429,7 +429,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
            ". Important features identified by One-way ANOVA and post-hoc analysis.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   addPageBegin();
 }
 
@@ -463,14 +463,14 @@ CreateCorrDoc <- function(mSetObj=NA){
                #paste("Figure", fig.count<<-fig.count+1, "shows the overall correlation heatmap."),
                "\n\n");
     
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
     # corr view
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "correlation_heatmap", "corr");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig <- "";
     if (mSetObj$paramSet$report.format == 'html' && ncol(mSetObj$dataSet$norm)<1000){
         fig <- c(paste0("```{r figure_corr1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count<<-fig.count+1, 
@@ -493,7 +493,7 @@ CreateCorrDoc <- function(mSetObj=NA){
                  "\n\n");
       }
 
-    cat(fig, file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(fig, collapse="\n\n");
   }
   
   if(!is.null(mSetObj$analSet$corr$cor.mat)){
@@ -517,13 +517,13 @@ CreateCorrDoc <- function(mSetObj=NA){
                cor.tab,
                "\n");
     
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
     # ptn view
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "ptn", "ptn");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig <- c(paste0("```{r figure_corr2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count, 
                     ". Important features selected by correlation analysis with light purple indicates positive correlation and blue indicate negative correlations.', ",
@@ -534,14 +534,14 @@ CreateCorrDoc <- function(mSetObj=NA){
              "```",
              "\n\n");
     
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
     
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("\n\n", collapse="\n");
     
     reportLinks <- getReportLinks(link, "ptn_table");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     descr <- c(
       "```{r table_corr, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -552,10 +552,10 @@ CreateCorrDoc <- function(mSetObj=NA){
              ". Important features identified by Pattern search using correlation analysis.')}"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
   }
   
-  cat("\\clearpage", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add("\\clearpage", collapse="\n");
 }
 
 #'Create report of analyses
@@ -591,14 +591,14 @@ CreatePCAdoc <- function(mSetObj=NA){
              paste("Figure", fig_bp <- fig.count<<-fig.count+1,"shows the biplot between the selected PCs.\n"),
              paste("Figure", fig_3d <- fig.count<<-fig.count+1,"shows screenshot of interactive 3-D plot.\n"));
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   # pca view
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pca_pair", "pca_pair");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0("```{r figure_pca1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pw, 
                   ". Pairwise score plots between the selected PCs. The explained variance of each PC is shown in the corresponding diagonal cell.', ",
@@ -608,15 +608,15 @@ CreatePCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$pca.pair)",
            "```",
            "\n\n");
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # pca scree
   link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "pca_scree", "pca_scree");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_pca2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_st, 
                   ". Scree plot shows the variance explained by PCs. The green line on top shows the accumulated variance explained; ",
@@ -627,15 +627,15 @@ CreatePCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$pca.scree)",
            "```",
            "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # pca scree
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pca_score2d", "pca_score2d");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_pca3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_2s, 
                   ". Scores plot between the selected PCs. The explained variances are shown in brackets.', ",
@@ -645,15 +645,15 @@ CreatePCAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$pca_score2d)",
            "```",
            "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # pca biplot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pca_biplot", "pca_biplot");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig4 <- c(paste0("```{r figure_pca4, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_bp, 
                    ". PCA biplot between the selected PCs. Note, you may want to test different centering and scaling",
@@ -664,14 +664,14 @@ CreatePCAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$pca.biplot)",
             "```",
             "\n\n");
-  cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig4, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && safeFileExists(mSetObj$imgSet$reportSet$pca_3d) ){
   reportLinks <- getReportLinks(link, "pca_3d", "pca_3d");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig5 <- c(paste0("```{r figure_pca5, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_3d, 
                      ". Screenshot of interactive 3-D plot.',",
                      " fig.lp='", 
@@ -680,8 +680,8 @@ CreatePCAdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$pca_3d)",
               "```",
               "\n\n");
-    cat(fig5, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig5, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   ###
    # "\\begin{figure}[htp]",
@@ -748,7 +748,7 @@ CreatePLSdoc <- function(mSetObj=NA){
              paste("Figure", fig_pls_2d <- fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
              paste("Figure", fig_pls_3d <- fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
              paste("Figure", fig_pls_ld <- fig.count<<-fig.count+1,"shows the loading plot between the selected components;"));
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   descr <- c()
   if(!is.null(mSetObj$imgSet$pls.class)){
@@ -764,15 +764,15 @@ CreatePLSdoc <- function(mSetObj=NA){
                paste("Figure", fig_pls_if <- fig.count<<-fig.count+1,"shows important features identified by PLS-DA.\n"));
   }
 
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   ### overview
   # PLSDA view
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pls_pair", "pls_pair");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_pls1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_ov, 
                   ". Pairwise scores plots between the selected components. The explained variance of each component is shown in the corresponding diagonal cell.', ",
@@ -782,16 +782,16 @@ CreatePLSdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$pls.pair)",
            "```",
            "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ### 2d
   # PLSDA 2D score
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pls_score2d", "pls_score2d");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_pls2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_2d, 
                    ". Scores plot between the selected PCs. The explained variances are shown in brackets.', ",
@@ -801,15 +801,15 @@ CreatePLSdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$pls.score2d)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ### 3d
   if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$plsda_3d) ){
   reportLinks <- getReportLinks(link, "plsda_3d");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig3 <- c(paste0("```{r figure_pls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_3d, 
                      ". Screenshot of interactive 3-D plot.',",
                      " fig.lp='", 
@@ -818,8 +818,8 @@ CreatePLSdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$plsda_3d)",
               "```",
               "\n\n");
-    cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig3, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   ### loading
@@ -827,8 +827,8 @@ CreatePLSdoc <- function(mSetObj=NA){
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pls_loading", "pls_loading");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig4 <- c(paste0("```{r figure_pls4, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_ld, 
                    ". Loadings plot between the selected PCs.', ",
@@ -838,8 +838,8 @@ CreatePLSdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$pls.loading)",
             "```",
             "\n\n");
-  cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig4, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   
   ## Optional plots - classification + permutation
@@ -849,8 +849,8 @@ CreatePLSdoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pls_cv", "pls_cv");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig5 <- c(paste0("```{r figure_pls5, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_cp, 
                      ". PLS-DA classification using different number of components. The red star indicates the best classifier.', ",
@@ -860,8 +860,8 @@ CreatePLSdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$pls.class)",
               "```",
               "\n\n");
-    cat(fig5, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig5, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   ### permutation
@@ -871,8 +871,8 @@ CreatePLSdoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "pls_perm", "pls_perm");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig6 <- c(paste0("```{r figure_pls6, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_mv, 
                      ". PLS-DA model validation by permutation tests based on ", mSetObj$analSet$plsda$permut.type, ". ",
@@ -885,16 +885,16 @@ CreatePLSdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$pls.permut)",
               "```",
               "\n\n");
-    cat(fig6, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig6, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   ### VIP
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "pls_imp", "pls_imp");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig7 <- c(paste0("```{r figure_pls7, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_if, 
                    ". Important features identified by PLS-DA. ",
@@ -905,8 +905,8 @@ CreatePLSdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$pls.imp)",
             "```",
             "\n\n");
-  cat(fig7, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig7, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
 }
 
@@ -943,15 +943,15 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
     descr <- c(descr,
                paste("Figure", fig_spls_cv <- fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluated using cross-validations;"))
   }
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   ## score plot overview
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "spls_pair", "spls_pair");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_spls1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_sc, 
                    ". Pairwise scores plots between the selected components. The explained variance of each component is shown in the corresponding diagonal cell.', ",
@@ -961,15 +961,15 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$spls.pair)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ## 2d score plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "spls_score2d", "spls_score2d");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_spls2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_2d, 
                    ". Scores plot between the selected PCs. The explained variances are shown in brackets.', ",
@@ -979,15 +979,15 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$spls.score2d)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ## loading VIP plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "spls_loading", "spls_loading");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_spls3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_lp, 
                    ". Plot showing the variables selected by the sPLS-DA model for a given component. The variables are ranked by the absolute values of their loadings.', ",
@@ -997,15 +997,15 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$spls.imp)",
             "```",
             "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ## 3d score plot
   if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$splsda_3d) ){
   reportLinks <- getReportLinks(link, "splsda_3d");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     fig4 <- c(paste0("```{r figure_spls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_3d, 
                      ". Screenshot of interactive 3-D plot.',",
                      " fig.lp='", 
@@ -1014,8 +1014,8 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$splsda_3d)",
               "```",
               "\n\n");
-    cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig4, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   ## cross-validation
@@ -1024,8 +1024,8 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "spls_cv", "spls_cv");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig5 <- c(paste0("```{r figure_spls5, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_cv, 
                      ". Plot of the performance of the sPLS-DA model evaluated using cross validations (CV) with increasing numbers ", 
@@ -1037,8 +1037,8 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$splsda.class)",
               "```",
               "\n\n");
-    cat(fig5, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig5, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
 }
 
@@ -1079,15 +1079,15 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
     descr <- c(descr, 
                paste("Figure", fig_opp <- fig.count<<-fig.count+1,"shows the results of the permutation tests for the models;"))
   }
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   # score plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "opls_score2d", "opls_score2d");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_opls1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ops, 
                   ". OPLS-DA score plot of all metabolite features.', ",
@@ -1097,15 +1097,15 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
            "safeIncludeGraphics(mSetObj$imgSet$opls.score2d)",
            "```",
            "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # s plot
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "opls_splot", "opls_splot");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_opls2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_opv, 
                    ". OPLS-DA loadings S-plot showing the variable importance in a model, combining the covariance and the correlation (p(corr)) loading profile.', ",
@@ -1115,15 +1115,15 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$opls.loading)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # classification
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "opls_mdl", "opls_mdl");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_opls3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_opm, 
                    ". Model overview of the OPLS-DA model for the provided dataset. It shows the R2X, R2Y, and Q2 coefficients for the groups.', ",
@@ -1133,16 +1133,16 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$opls.class)",
             "```",
             "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   # permutation
   if(!is.null(mSetObj$imgSet$opls.permut)){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "opls_perm", "opls_perm");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig4 <- c(paste0("```{r figure_opls4, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_opp, 
                      ". Permutation analysis, showing the observed and cross-validated R2Y and Q2 coefficients.', ",
@@ -1152,8 +1152,8 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$opls.permut)",
               "```",
               "\n\n");
-    cat(fig4, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig4, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
     
   }
   
@@ -1200,7 +1200,7 @@ CreateSAMdoc <- function(mSetObj=NA){
              sam.tab,
              "\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   
   ## Figure SAM
@@ -1209,8 +1209,8 @@ CreateSAMdoc <- function(mSetObj=NA){
 
     reportLinks <- getReportLinks(link, "sam", "sam_imp");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_sam1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_sam, 
                    ".Significant features identified by SAM. The green circles represent features that exceed the specified threshold.', ",
@@ -1220,13 +1220,13 @@ CreateSAMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$sam.cmpd)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
     reportLinks <- getReportLinks(link, "sam_table");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   ## Table sam
   descr <- c(
@@ -1238,7 +1238,7 @@ CreateSAMdoc <- function(mSetObj=NA){
            ". Important features identified by Significance Analysis of Microarray analysis.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
 }
 
@@ -1281,13 +1281,13 @@ CreateEBAMdoc <- function(mSetObj=NA){
              ebam.tab,
              "\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "ebam", "ebam_imp");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_ebam1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ebam, 
                    ".Significant features identified by EBAM. The green circles represent features that exceed the specified threshold.', ",
@@ -1297,13 +1297,13 @@ CreateEBAMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$ebam.cmpd)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   reportLinks <- getReportLinks(link, "ebam_table");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   ## Table ebam
   descr <- c(
@@ -1315,7 +1315,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
            ". Important features identified by Empirical Bayesian Analysis of Microarray analysis.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 #'Create report of analyses
@@ -1350,14 +1350,14 @@ CreateHCdoc <- function(mSetObj=NA){
              paste("Figure", fig_hc <- fig.count<<-fig.count+1,"shows the clustering result in the form of a dendrogram."),
              paste("Figure", fig_cr <- fig.count<<-fig.count+1,"shows the clustering result in the form of a heatmap.\n"));
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   if(!is.null(mSetObj$analSet$tree)){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "tree", "tree");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     fig1 <- c(paste0("```{r figure_hc1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_hc, 
                      ".Clustering result shown as dendrogram (distance measure using", 
@@ -1371,16 +1371,16 @@ CreateHCdoc <- function(mSetObj=NA){
               "safeIncludeGraphics(mSetObj$imgSet$tree)",
               "```",
               "\n\n");
-    cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig1, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   }
   
   if(!is.null(mSetObj$analSet$htmap)){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "static_heatmap", "heatmap");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     if(!is.null(mSetObj$imgSet$reportSet$heatmap_static)){
     if (mSetObj$paramSet$report.format == 'html' ){
       if(mSetObj$dataSet$proc.feat.num>1000){
@@ -1425,13 +1425,13 @@ CreateHCdoc <- function(mSetObj=NA){
                         "```",
                         "\n\n");
     }
-    cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig2, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
     }
 
 
   }
-  cat("\\clearpage", file=rmdFile, append=TRUE);
+  .buffer_add("\\clearpage");
 }
 
 #'Create report of analyses
@@ -1464,11 +1464,11 @@ CreateSOMdoc <- function(mSetObj=NA){
              paste("Table", table.count<<-table.count+1,"shows the members in each cluster from SOM analysis."),
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
      reportLinks <- getReportLinks(link, "som");
 
-  cat(reportLinks, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(reportLinks, collapse="\n");
 
   fig1 <- c(paste0("```{r figure_som1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_som, 
                    ". SOM cluster analysis. The x-axes are features and y-axes are relative", 
@@ -1479,13 +1479,13 @@ CreateSOMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$som)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
      reportLinks <- getReportLinks(link, "som_table");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   descr <- c(
     "```{r table_som, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
     "dt_res <- as.data.frame(GetAllSOMClusterMembersRMD(mSet));",
@@ -1495,8 +1495,8 @@ CreateSOMdoc <- function(mSetObj=NA){
            ". Clustering result using SOM.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
 }
 
@@ -1532,13 +1532,13 @@ CreateKMdoc <- function(mSetObj=NA){
              paste("Figure", fig_kpca <- fig.count<<-fig.count+1,"shows clustering the results."),
              paste("Table", table.count<<-table.count+1,"shows the members in each cluster from K-means analysis.\n"));
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   link <- GetSharingLink(mSetObj)
      reportLinks <- getReportLinks(link, "km", "km");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_km1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_kcr, 
                    ". K-means cluster analysis. The x-axes are variable indices and y-axes", 
@@ -1549,14 +1549,14 @@ CreateKMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$kmeans)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "km_pca", "km_pca");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_km2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_kpca, 
                    ". K-means cluster analysis, shown as PCA score plot.', ",
@@ -1566,8 +1566,8 @@ CreateKMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$kmeans.pca)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   descr <- c(
     "```{r table_km, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -1578,8 +1578,8 @@ CreateKMdoc <- function(mSetObj=NA){
            ". Clustering result using K-means.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 
 }
 
@@ -1618,13 +1618,13 @@ CreateRFdoc <- function(mSetObj=NA){
              paste("Figure", fig_rfi <- fig.count<<-fig.count+1,"shows the important features ranked by random forest.\n"),
              paste("Figure", fig_rfo <- fig.count<<-fig.count+1,"shows the outlier measures of all samples for the given parameters.\n"));
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_cls", "rf_cls");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_rf1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_rfg, 
                    ". Cumulative error rates by Random Forest classification. The overall error rate is shown", 
@@ -1635,8 +1635,8 @@ CreateRFdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$rf.cls)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   descr <- c(
     "```{r table_rf, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -1647,14 +1647,14 @@ CreateRFdoc <- function(mSetObj=NA){
            ". Random Forest Classification Performance.')}"),
     "```", "\n\n")
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_imp", "rf_imp");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_rf2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_rfi, 
                    ". Significant features identified by Random Forest. The features are ranked by the mean", 
@@ -1665,14 +1665,14 @@ CreateRFdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$rf.imp)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "rf_outlier", "rf_outlier");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig3 <- c(paste0("```{r figure_rf3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_rfo, 
                    ". Potential outliers identified by Random Forest. Only the top five are labeled.', ",
@@ -1682,8 +1682,8 @@ CreateRFdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$rf.outlier)",
             "```",
             "\n\n");
-  cat(fig3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig3, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }
 
 #'Create report of analyses
@@ -1718,16 +1718,16 @@ CreateSVMdoc <- function(mSetObj=NA){
              paste("Figure", fig_svm <- fig.count<<-fig.count+1, "shows the SVM classification performance using recursive feature selection."),
              paste("Figure", fig_sig <- fig.count<<-fig.count+1, "shows the signicant features used by the best classifiers.\n"));
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
   
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "svm_cls", "svm_cls");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig1 <- c(paste0("```{r figure_svm1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_svm, 
                    ". Recursive classification with SVM. The red circle indicates the best classifier.', ",
@@ -1737,15 +1737,15 @@ CreateSVMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$svm.class)",
             "```",
             "\n\n");
-  cat(fig1, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig1, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
   ## 
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "svm_imp", "svm_imp");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig2 <- c(paste0("```{r figure_svm2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_sig, 
                    ". Significant features identified by R-SVM. Features are ranked by their frequencies of being selected in the classifer.', ",
@@ -1755,8 +1755,8 @@ CreateSVMdoc <- function(mSetObj=NA){
             "safeIncludeGraphics(mSetObj$imgSet$svm)",
             "```",
             "\n\n");
-  cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig2, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
 }
 
 
@@ -1789,13 +1789,13 @@ CreateDSPCdoc <- function(mSetObj=NA){
             #"- Edge number: ", nrow(pheno.net$edge.data), 
             "\n\n");
   
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
   
     if(file.exists('dspc.png')){
         link <- GetSharingLink(mSetObj)
         reportLinks <- getReportLinks(link, net.type);
 
-        cat(paste0(reportLinks, "\n\n"), file=rmdFile, append=TRUE);
+        .buffer_add(reportLinks, "\n\n");
         fig1 <- paste0(
           "```{r figure_dspc, echo=FALSE, fig.cap='Figure ", getFigCount(), 
           ". Screenshot of DSPC network. The nodes are input metabolites, while the edges represent the association measures.', out.width='", getFigWidth(mSetObj), "'}\n",
@@ -1803,11 +1803,11 @@ CreateDSPCdoc <- function(mSetObj=NA){
           "```",
           "\n\n"
         )
-        cat(fig1, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig1, collapse="\n");
     }else{
-        cat("No network image was created. Please make sure that you have visited the page.", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add("No network image was created. Please make sure that you have visited the page.", collapse="\n");
     }
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("\n\n", collapse="\n");
  
 }
 

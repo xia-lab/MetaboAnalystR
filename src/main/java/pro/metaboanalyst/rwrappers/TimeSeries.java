@@ -71,34 +71,6 @@ public class TimeSeries {
         return 0;
     }
 
-    /*
-    public static int plotHeatMap2(SessionBean1 sb, String imgName, String dataOpt, String scaleOpt, String format, int dpi, String smplDist, String clstDist, String colors, int fontSize, String viewOpt, String rankMethod, int topFeature, String[] sortNames, String useSigFeature, String drawBorder, String showLegend, String showAnnotLegend, String includeRowNames, String[] selectedMetas) {
-        try {
-            RConnection RC = sb.getRConnection();
-            RC.assign("meta.vec.hm2", selectedMetas);
-            String rcmd = "meta.vec.hm2 <<- " + Arrays.toString(selectedMetas);
-            rcmd = rcmd.replace("[", "c(\"");
-            rcmd = rcmd.replace(", ", "\",\"");
-            rcmd = rcmd.replace("]", "\")");
-            RCenter.recordRCommand(RC, rcmd);
-            
-            RC.assign("sort.vec.hm2", sortNames);
-            String rcmd2 = "sort.vec.hm2 <<- " + Arrays.toString(sortNames);
-            rcmd2 = rcmd2.replace("[", "c(\"");
-            rcmd2 = rcmd2.replace(", ", "\",\"");
-            rcmd2 = rcmd2.replace("]", "\")");            
-            RCenter.recordRCommand(RC, rcmd2);
-            String rCommand = "PlotHeatMap2(NA" + ", \"" + imgName + "\", \"" + dataOpt + "\", \"" + scaleOpt + "\", \"" + format + "\", " + dpi + ", width=NA, \"" + smplDist + "\",\"" + clstDist + "\",\"" + colors + "\", " + fontSize +", \"" + viewOpt + "\",\"" + rankMethod + "\"," + topFeature + ", " + useSigFeature + ",  " 
-                    + drawBorder + ", " + showLegend + ", " + showAnnotLegend  + ", " + includeRowNames + ")";
-            RCenter.recordRCommand(RC, rCommand);
-            sb.addGraphicsCMD("heatmap2", rCommand);
-            return RC.eval(rCommand).asInteger();
-        } catch (Exception rse) {
-            System.out.println(rse);
-        }
-        return 0;
-    }
-     */
     public static void plotPCAPairSummaryMeta(SessionBean1 sb, String imageName, String code, String format, int dpi, int pcNum, String meta, String metaShape) {
         try {
             RConnection RC = sb.getRConnection();

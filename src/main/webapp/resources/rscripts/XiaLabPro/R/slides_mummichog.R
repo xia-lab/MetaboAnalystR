@@ -79,7 +79,7 @@ CreateMummichogIntro_slides <- function() {
     "- Interactive visual exploration of results via metabolic networks and heatmaps.\n",
     "---\n\n"
   )
-  cat(introContent, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(introContent, collapse="\n")
 }
 
 
@@ -125,8 +125,8 @@ CreateMummichogInputDoc_slides <- function(mSetObj = NA) {
   )
   
   # Combine all parts and write to the Rmd file
-  cat(slideContent, file = rmdFile, append = TRUE, sep = "\n")
-  cat(dataInputParams, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(slideContent, collapse="\n")
+  .buffer_add(dataInputParams, collapse="\n")
 }
 
 
@@ -151,7 +151,7 @@ CreateMummichogAnalysisIntroDoc_slides<-function(){
              " - Functional library: ```", gsub("_", ".", mSetObj$lib.organism), "```.\n",
              "Advanced users can also adjust default values for currency metabolites and adducts.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 }
 
 
@@ -170,7 +170,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "- **User selected:** ", currency,
         "---\n\n"
       )
-      cat(currencyMetabolitesContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(currencyMetabolitesContent, collapse="\n")
       
     }
   }
@@ -193,13 +193,13 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "- **Figure Summary:** Showcases significant pathways impacted in the uploaded data set.\n",
         "---\n\n"
       )
-      cat(mummichogSlideContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(mummichogSlideContent, collapse="\n")
       
       figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$mummi.plot, paste0("Pathway analysis using Mummichog using `", mSetObj$paramSet$mummi.lib ,"` p-value threshold: `", mSetObj$dataSet$cutoff, "`"))
-      cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(figureContent, collapse="\n")
            
-        cat("## Table ", getTableCount() , " Mummichog Result table", file = rmdFile, append = TRUE)
-        cat("\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("## Table ", getTableCount() , " Mummichog Result table")
+        .buffer_add("\n\n")
 
         # Assemble and write the table content
         tableContent <- c(
@@ -209,12 +209,12 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
           "```",
           "\n\n"
         )
-        cat(tableContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(tableContent, collapse="\n")
     }
     # Slide for Network Visualization
     if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
       figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_mummichog, paste0("Interactive network visualization by Mummichog."))
-      cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(figureContent, collapse="\n")
     }
   }
   
@@ -231,14 +231,14 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "- **Results Interpretation:** Pathways displayed as circles vary by color and size based on their enrichment significance and factor.\n",
         "---\n\n"
       )
-      cat(gseaSlideContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(gseaSlideContent, collapse="\n")
       
       # Include figure and table
       figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$mummi.gsea.plot, paste0("Summary of GSEA Pathway Analysis using `", mSetObj$paramSet$gsea.lib, "`"))
-      cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(figureContent, collapse="\n")
       
-      cat(paste0("## Table ", getTableCount(), ". Results of the GSEA Pathway Analysis."), file = rmdFile, append = TRUE)
-      cat("\n\n", file = rmdFile, append = TRUE)
+      .buffer_add(paste0("## Table ", getTableCount(), ". Results of the GSEA Pathway Analysis."))
+      .buffer_add("\n\n")
 
       # Table of GSEA Results
       resultsTableContent <- paste0(
@@ -248,13 +248,13 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "```\n",
         "---\n\n"
       )
-      cat(resultsTableContent, file = rmdFile, append = TRUE)
+      .buffer_add(resultsTableContent)
     }
     
     # Slide for Network Visualization
     if(!is.null(mSetObj$imgSet$reportSet$network_gsea) && safeFileExists(mSetObj$imgSet$reportSet$network_gsea)){
       networkVisualizationContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_gsea, "Interactive network visualization by GSEA.")
-      cat(networkVisualizationContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(networkVisualizationContent, collapse="\n")
     }
   }
   
@@ -270,13 +270,13 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "- **Visualization:** Highlights pathways with combined p-values indicating significant perturbation.\n",
         "---\n\n"
       )
-      cat(integSlideContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(integSlideContent, collapse="\n")
       
       figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$integpks.plot, paste0("Summary of integrated pathway analysis combining Mummichog and GSEA using `",mSetObj$paramSet$integ.lib,"` and p-value threshold `",mSetObj$dataSet$cutoff ,"`"))
-      cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(figureContent, collapse="\n")
       
-      cat(paste0("## Table ", getTableCount(), ". Meta-Analysis of Mummichog and GSEA Results."), file = rmdFile, append = TRUE)
-      cat("\n\n", file = rmdFile, append = TRUE)
+      .buffer_add(paste0("## Table ", getTableCount(), ". Meta-Analysis of Mummichog and GSEA Results."))
+      .buffer_add("\n\n")
 
       # Table of Integrated Results
       resultsTableContent <- paste0(
@@ -286,13 +286,13 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "```\n",
         "---\n\n"
       )
-      cat(resultsTableContent, file = rmdFile, append = TRUE)
+      .buffer_add(resultsTableContent)
     }
     
     # Slide for Network Visualization of Integrated Results
     if(!is.null(mSetObj$imgSet$reportSet$network_integ) && safeFileExists(mSetObj$imgSet$reportSet$network_integ)){
       networkVisualizationContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_integ, "Interactive network visualization of integrated results.")
-      cat(networkVisualizationContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(networkVisualizationContent, collapse="\n")
     }
   }
   
@@ -310,7 +310,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "- **Interactive Feature:** Users can explore specific data points within the MetaboAnalyst platform.\n",
         "---\n\n"
       )
-      cat(heatmapSlideContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(heatmapSlideContent, collapse="\n")
       
       # Include the heatmap figure
       heatmapFigureContent <- c(
@@ -319,7 +319,7 @@ CreateAnalCustomization_slides <- function(mSetObj = NA) {
         "safeIncludeGraphics('", mSetObj$imgSet$reportSet$heatmap_mummichog, "')\n",
         "```\n\n---\n\n"
       )
-      cat(heatmapFigureContent, file = rmdFile, append = TRUE, sep = "")
+      .buffer_add(heatmapFigureContent)
 
       createEnrichmentTable(mSetObj, "mumEnr");
     }

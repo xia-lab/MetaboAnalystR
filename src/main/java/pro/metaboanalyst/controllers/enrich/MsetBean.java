@@ -430,7 +430,7 @@ public class MsetBean implements Serializable {
                                 .setStacked(false)
                                 .setTicks(new CartesianTickOptions()
                                         .setAutoSkip(true)
-                                        .setMirror(true)))
+                                        .setMirror(false)))
                         )
                 ).toJson();
     }

@@ -516,12 +516,21 @@ public class GenericControllers implements Serializable {
                 return myCmds;
             }
 
+            //normal order
+            for (int i = 0; i < cmds.length; i++) {
+                String c = cmds[i];
+                if (c != null && !(c = c.trim()).isEmpty()) {
+                    // Use (i + 1) to maintain the 1-based step count
+                    myCmds.add(new RcmdBean(String.valueOf(i + 1), c));
+                }
+            }
+            /*
             for (int i = cmds.length - 1, step = 1; i >= 0; i--, step++) {
                 String c = cmds[i];
                 if (c != null && !(c = c.trim()).isEmpty()) {
                     myCmds.add(new RcmdBean(String.valueOf(step), c));
                 }
-            }
+            }*/
         } catch (Throwable t) {
             // Keep logs clean; no noisy client stack traces
             LOGGER.warn("getCmdVec failed; returning empty list. Cause: {}", t.toString());

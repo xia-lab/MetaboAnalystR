@@ -27,17 +27,6 @@
 
         <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/xialab_style_2.7.css" />
 
-        <!-- Google tag (gtag.js) -->
-        <script async='async' src="https://www.googletagmanager.com/gtag/js?id=G-WNPNCNH1RT"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-            gtag('js', new Date());
-
-            gtag('config', 'G-WNPNCNH1RT');
-        </script>
         <script type="text/javascript">
             document.addEventListener('DOMContentLoaded', function () {
                 // Function to get URL parameters
@@ -81,13 +70,13 @@
             // FIXED KILLER #5: Use function reference instead of string eval
             // This is 10x faster and more secure (no eval overhead)
             function delayShow() {
-                setTimeout(function() {
+                setTimeout(function () {
                     PF('statusDialog').show();
                 }, 100);
             }
 
             function delayHide() {
-                setTimeout(function() {
+                setTimeout(function () {
                     PF('statusDialog').hide();
                 }, 100);
             }
@@ -108,7 +97,8 @@
 
             function startDialogTimer(wCounter, timeOutPage) {
                 var e = document.getElementById(countDownDiv);
-                if (!e) return;
+                if (!e)
+                    return;
 
                 e.innerHTML = wCounter;
                 handleDialog = setInterval(function () {
@@ -267,6 +257,7 @@
     </h:head>
 
     <h:body styleClass="#{guestPreferences.inputStyleClass}">
+        <ui:include src="/template/_google_analytics.xhtml" />
         <h:form id="formHidden">
             <h:inputHidden id="selectedTheme" value="#{guestPreferences.scheme}" />
         </h:form>
@@ -315,13 +306,31 @@
                         </flex>
                     </ui:insert> 
                     <ui:insert name="myfooter">
-                        <div class="layout-footer">
-                            <div class="footer-logo-container">
-                                <p:graphicImage id="footer-logo" library="diamond-layout"
-                                                name="images/xialab_logo_s.png"/>
-                                <span styleClass="copyright" style="margin-left:10px">MetaboAnalyst Pro</span>
+                        <div class="layout-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1.5rem; border-top: 1px solid orange; height: 40px;">
+
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <p:graphicImage name="images/xialab_logo_s.png" library="diamond-layout" style="height: 20px; opacity: 0.8;"/>
+                                <span style="font-weight: 600; font-size: 12px; font-family: 'Segoe UI', Arial, sans-serif;">
+                                    XiaLab Analytics Platform
+                                </span>
+                                <span style="color: #dee2e6;">|</span>
+                                <span style="font-size: 11px;">&#169; 2026</span>
                             </div>
-                            <h:outputText styleClass="copyright" value="&#169; XiaLab Analytics - 2025"/>
+
+                            <div style="display: flex; align-items: center; gap: 15px; font-size: 11px;">
+                                <span title="System Health: Good" style="display: flex; align-items: center; gap: 4px;">
+                                    <span style="color: #28a745; font-size: 8px;">&#9679;</span> 
+                                    <span>Operational</span>
+                                </span>
+                                <span style="color: #dee2e6;">|</span>
+                                <a href="#" onclick="return window.openCookiePreferences();" style="text-decoration:none; margin-left: 15px;">Cookies</a>
+                                <span style="color: #dee2e6;">|</span>
+                                <a href="#" 
+                                   onclick="window.location.href = 'mailto:' + 'support' + '@' + 'xialab.ca'; return false;"
+                                   style="text-decoration:none; margin-left: 15px;">
+                                    Support
+                                </a>
+                            </div>
                         </div>
                     </ui:insert>
                 </div>

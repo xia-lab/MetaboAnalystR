@@ -70,7 +70,7 @@ CreatePathIntr_slides <- function() {
   )
 
   # Output the slide content
-  cat(slideContent, file=rmdFile, append=TRUE)
+  .buffer_add(slideContent)
 }
 
 
@@ -89,8 +89,8 @@ CreatePathProcessDoc_slides <- function(mSetObj = NA) {
     
     # Assuming GetNameMappingDoc() is adapted for slides
     descr <- GetNameMappingDoc();
-    cat(descr, file = rmdFile, append = TRUE)
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+    .buffer_add(descr)
+    .buffer_add("\n\n---\n\n")
 
     # Check if name mapping is available
     if(exists('map.table', where = mSetObj$dataSet)) {
@@ -98,7 +98,7 @@ CreatePathProcessDoc_slides <- function(mSetObj = NA) {
         
         # Slide for Compound Name Mapping
         table.count <<- table.count + 1
-        cat("## Table ", table.count, ". Compound Name Mapping Results.\n\n", file = rmdFile, append = TRUE)
+        .buffer_add("## Table ", table.count, ". Compound Name Mapping Results.\n\n")
         nameMappingSlide <- paste(
             "```{r name_mapping_table, echo=FALSE, results='asis'}\n",
             "dt_res <- as.data.frame(GetMapTableRMD(mSetObj))\n",
@@ -108,10 +108,10 @@ CreatePathProcessDoc_slides <- function(mSetObj = NA) {
         )
         
         # Output the name mapping slide content
-        cat(nameMappingSlide, file = rmdFile, append = TRUE)
+        .buffer_add(nameMappingSlide)
     }
     
-    cat("\n\n", file = rmdFile, append = TRUE)
+    .buffer_add("\n\n")
 }
 
 
@@ -134,7 +134,7 @@ CreatePathAnalDoc_slides <- function(mSetObj = NA) {
         "quantitative enrichment analysis (QEA), and pathway topology analysis.\n",
         "\n\n---\n\n"
     )
-    cat(pathwayAnalysisIntro, file = rmdFile, append = TRUE)
+    .buffer_add(pathwayAnalysisIntro)
     
     # ORA or QEA based on analysis type
     if (mSetObj$analSet$type == "pathora") {
@@ -145,7 +145,7 @@ CreatePathAnalDoc_slides <- function(mSetObj = NA) {
             "This analysis helps identify significantly enriched pathways based on the compounds involved.\n\n",
             "---\n\n"
         )
-        cat(oraContent, file = rmdFile, append = TRUE)
+        .buffer_add(oraContent)
     } else {
         qeaContent <- paste(
             "### Quantitative Enrichment Analysis (QEA)\n\n",
@@ -153,7 +153,7 @@ CreatePathAnalDoc_slides <- function(mSetObj = NA) {
             "It is based on methods such as GlobalTest and GlobalAncova, suitable for various phenotypes.\n\n",
             "---\n\n"
         )
-        cat(qeaContent, file = rmdFile, append = TRUE)
+        .buffer_add(qeaContent)
     }
 
     # Slide for Pathway Topology Analysis
@@ -163,7 +163,7 @@ CreatePathAnalDoc_slides <- function(mSetObj = NA) {
         "- It employs degree and betweenness centrality measures to assess the impact of each node.\n\n",
         "---\n\n"
     )
-    cat(topologyAnalysisContent, file = rmdFile, append = TRUE)
+    .buffer_add(topologyAnalysisContent)
 
     # Slide for Pathway Library Selection
     librarySelectionContent <- paste(
@@ -173,7 +173,7 @@ CreatePathAnalDoc_slides <- function(mSetObj = NA) {
         "Selected Pathway Library: ", mSetObj$paramSet$lib.nm, "\n\n",
         "---\n\n"
     )
-    cat(librarySelectionContent, file = rmdFile, append = TRUE)
+    .buffer_add(librarySelectionContent)
 }
 
 
@@ -194,16 +194,16 @@ CreatePathResultDoc_slides <- function(mSetObj=NA){
              "The results from pathway analysis are presented graphically below.
              Two tables are provided - the pathway analysis result table shows the numerical details of the scatter plot; while the 
              pathway mapping table shows individual compounds that are assigned to different pathways. \n\n--\n\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   #path_view
   if(!is.null(mSetObj$imgSet$path.overview)){
 
     overviewSlideContent <- CreateTitleFigureSlide(mSetObj$imgSet$path.overview, "Overview of all pathways correlated with your data.")
-    cat(overviewSlideContent, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(overviewSlideContent, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
   
-    cat("## Detailed result table", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add("## Detailed result table", collapse="\n");
 
   descr <- c(
     "The table below shows the detailed results from the pathway analysis.",
@@ -215,37 +215,37 @@ CreatePathResultDoc_slides <- function(mSetObj=NA){
     "* the **FDR p** is the p value adjusted using False Discovery Rate;",
     "* the **Impact** is the pathway impact value calculated from pathway topology analysis.",
     "\n");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
 
   if(mSetObj$analSet$type == "pathora"){
     # Result from Pathway Analysis
     table.count <<- table.count+1;
-    cat(paste0("Table ", table.count,". Result from ORA Pathway Analysis."), file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(paste0("Table ", table.count,". Result from ORA Pathway Analysis."), collapse="\n\n");
     descr <- c(
       "```{r table_paa, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
       "dt_res <- as.data.frame(GetORATableRMD(mSet));",
       paste0("create_dt(dt_res, table.name='pathora')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(descr, collapse="\n\n");
 
   }else{
     table.count <<- table.count+1;
 
     # Result from Quantitative Enrichment Analysis
-    cat(paste0("## Table ", table.count, ". Result from Quantitative Enrichment Analysis."), file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(paste0("## Table ", table.count, ". Result from Quantitative Enrichment Analysis."), collapse="\n\n");
     descr <- c(
       "```{r table_pqea, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
       "dt_res <- as.data.frame(GetQEATableRMD(mSet));",
       paste0("create_dt(dt_res, table.name='pathqea')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
+    .buffer_add(descr, collapse="\n\n");
 
   }
 
 
-    cat(paste0("## Table ", table.count, ". Pathway mapping details table."), file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(paste0("## Table ", table.count, ". Pathway mapping details table."), collapse="\n");
     sum_dt2 <- mSet$analSet$pathwayMemberTable;
     if(nrow(sum_dt2) > 0){
         table.count <<- table.count+1;
@@ -256,11 +256,11 @@ CreatePathResultDoc_slides <- function(mSetObj=NA){
           paste0("create_dt(sum_dt2)"),
           "```", "\n\n");
 
-        cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(cmdhist2, collapse="\n");
     }
 }
     if(!is.null(mSetObj$imgSet$reportSet$heatmap_pathway) && safeFileExists(mSetObj$imgSet$reportSet$heatmap_pathway)){
-        cat("## Figure ", getFigCount(), ". Screenshot of interactive peak heatmap.", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add("## Figure ", getFigCount(), ". Screenshot of interactive peak heatmap.", collapse="\n");
         fig2 <- c(paste0("```{r figure_heatmap_pathway, echo=FALSE, fig.pos='H',",
                          " fig.lp='", 
                          mSetObj$imgSet$reportSet$heatmap_pathway, 
@@ -268,7 +268,7 @@ CreatePathResultDoc_slides <- function(mSetObj=NA){
                   "safeIncludeGraphics(mSetObj$imgSet$reportSet$heatmap_pathway)",
                   "```",
                   "\n\n");
-        cat(fig2, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig2, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
     }
 }

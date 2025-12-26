@@ -45,6 +45,7 @@
                             <f:selectItem itemLabel="Euclidean" itemValue="euclidean"/> 
                             <f:selectItem itemLabel="Pearson" itemValue="correlation"/> 
                             <f:selectItem itemLabel="Minkowski" itemValue="minkowski"/> 
+                            <f:selectItem itemLabel="Bray-Curtis" itemValue="bray"/> 
                         </p:selectOneMenu>
                         <h:outputLabel style="font-weight: bold" value="Clustering method"/>
                         <p:selectOneMenu styleClass="menu" panelStyleClass="panel" widgetVar="clustOpts" value="#{clusterBean.hmMethodOpt}">
@@ -108,7 +109,9 @@
                         <h:panelGrid >
                             <h:panelGrid columns="6">
                                 <p:outputLabel value="Height:"/>
-                                <p:graphicImage id="formatIcon5" url="/resources/images/ui-help.png"  alt="help" />
+                                <h:panelGroup id="formatIcon5" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <h:panelGroup>
                                     <p:inputText id="annoHeight" value="#{clusterBean.annoHeight}" style="width: 60px" required="true" requiredMessage="Must set the size of annotation bar!"/>
                                     <p:slider for="annoHeight" minValue="0.015" maxValue="0.1" step="0.001" style="width: 60px" />

@@ -58,7 +58,7 @@ CreateMetaMummichogIntro_slides <- function() {
     )
     
     # Write the content to the R Markdown file for slides
-    cat(introContent, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(introContent, collapse="\n")
 }
 
 
@@ -80,7 +80,7 @@ CreateMetaMummichogInputDoc_slides <- function(mSetObj = NA) {
         "- Ensures consistency across datasets for accurate analysis.\n",
         "\n\n---\n\n"
     )
-    #cat(dataProcessingContent, file = rmdFile, append = TRUE, sep = "\n")
+    #.buffer_add(dataProcessingContent, collapse="\n")
     
     # Iterate through dataset sanity checks and prepare content
     dataNMs <- names(mSetObj)[grepl("MetaData", names(mSetObj))]
@@ -100,14 +100,14 @@ CreateMetaMummichogInputDoc_slides <- function(mSetObj = NA) {
             formatted_msg <- first_part
         }
         sanity_msg[[i]] <- paste0("## Data Check for ", gsub("_", "", mSetObj[[i]]$name), ":\n\n", paste0("* ", formatted_msg, collapse = "\n"), "\n\n---\n\n")
-            cat(sanity_msg[[i]], file = rmdFile, append = TRUE)
+            .buffer_add(sanity_msg[[i]])
         }
 
   }else{
     for(i in dataNMs) {
         formatted_messages <- gsub(" \\* ", "", mSetObj[[i]]$check.msg)  # Remove leading bullet points from messages if they exist.
         sanity_msg[[i]] <- paste0("## Data Check for ", gsub("_", "", mSetObj[[i]]$name), ":\n\n", paste0("* ", formatted_messages, collapse = "\n"), "\n\n---\n\n")
-            cat(sanity_msg[[i]], file = rmdFile, append = TRUE)
+            .buffer_add(sanity_msg[[i]])
 
     }
 }
@@ -140,7 +140,7 @@ CreateMetaMummichogInputDoc_slides <- function(mSetObj = NA) {
             )
         }
 
-        cat(slideContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(slideContent, collapse="\n")
 
     }
 }
@@ -170,7 +170,7 @@ CreateMetaMummichogResults_slides <- function(mSetObj){
           "- Goal: Create a unified matrix of pathway-level results for robust meta-signature identification.\n\n",
           "---\n\n"
       )
-      cat(introContent, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(introContent, collapse="\n")
     }
     
     # Check if there are pathway integration plot results
@@ -178,7 +178,7 @@ CreateMetaMummichogResults_slides <- function(mSetObj){
       
       # Create a slide for the bubble plot
       bubblePlotSlide <- CreateTitleFigureSlide(mSetObj$imgSet$mummi.meta.path.plot, "Summary of Pathway-Level Integration Meta-Analysis")
-      cat(bubblePlotSlide, file = rmdFile, append = TRUE)
+      .buffer_add(bubblePlotSlide)
 
       # Results Slide
       table.count <<- table.count+1;
@@ -194,7 +194,7 @@ CreateMetaMummichogResults_slides <- function(mSetObj){
           "\n\n---\n\n"
         );
       
-      cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(cmdhist2, collapse="\n");
     }
   } else {
     # Pooled Peaks Results Slide
@@ -205,7 +205,7 @@ CreateMetaMummichogResults_slides <- function(mSetObj){
         "- Processes all uploaded peaks for annotation and pathway activity prediction.\n\n",
         "---\n\n"
     )
-    cat(poolingPeaksContent, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(poolingPeaksContent, collapse="\n")
     
     # Insert the specific mummichog analysis results for pooled peaks
     CreateMummichogAnalysisDoc_slides(mSetObj)  # Assume there is a corresponding slides version of the function
@@ -247,14 +247,14 @@ CreateMummichogAnalysisDoc_slides <- function(mSetObj = NA) {
             "- Results offer a comprehensive understanding of metabolic models/pathways.\n\n",
             "---\n\n"
         )
-        cat(introContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(introContent, collapse="\n")
 
         # Slide for Mummichog Pathway Analysis Plot
         if (!is.null(mSetObj$imgSet$mummi.plot)) {
             
             # Create a slide for the pathway analysis plot
             pathwayPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$mummi.plot, "Summary of Mummichog Pathway Analysis")
-            cat(pathwayPlotSlide, file = rmdFile, append = TRUE)
+            .buffer_add(pathwayPlotSlide)
         }
 
         # GSEA Analysis Slide (if applicable)
@@ -263,7 +263,7 @@ CreateMummichogAnalysisDoc_slides <- function(mSetObj = NA) {
             # Create a slide for the GSEA pathway analysis plot
             if (!is.null(mSetObj$imgSet$mummi.gsea.plot)) {
                 gseaPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$mummi.gsea.plot, "Summary of GSEA Pathway Analysis")
-                cat(gseaPlotSlide, file = rmdFile, append = TRUE)
+                .buffer_add(gseaPlotSlide)
             }
         }
 
@@ -272,7 +272,7 @@ CreateMummichogAnalysisDoc_slides <- function(mSetObj = NA) {
             # Create a slide for the integrated pathway analysis plot
             if (!is.null(mSetObj$imgSet$integpks.plot)) {
                 integPlotSlide <- CreateTwoColumnFigureSlide(mSetObj$imgSet$integpks.plot, "Summary of Integrated Pathway Analysis")
-                cat(integPlotSlide, file = rmdFile, append = TRUE)
+                .buffer_add(integPlotSlide)
             }
         }
     }
@@ -295,8 +295,8 @@ CreateKeggNetDocMetaMummi_slides <-function(mSetObj){
   if(!is.null(mSetObj$imgSet$reportSet$network_mummichog) && safeFileExists(mSetObj$imgSet$reportSet$network_mummichog)){
     figureContent <- CreateTitleFigureSlide(mSetObj$imgSet$reportSet$network_mummichog, 
                                             paste0("KEGG Global Metabolic Network Visualization"))
-    cat(figureContent, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(figureContent, collapse="\n")
     networkImageSlide <- c("\n\n---\n\n")
-    cat(networkImageSlide, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(networkImageSlide, collapse="\n")
   }
 }

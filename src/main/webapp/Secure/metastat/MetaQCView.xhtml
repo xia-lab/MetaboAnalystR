@@ -73,7 +73,9 @@
                                                      oncomplete="PF('graphDialog').show()">
                                         <i class="pi pi-palette"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="pcaIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="pcaIcon" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                     <p:tooltip for="pcaIcon" styleClass="helpTip">
                                         <p>
                                             Principal Component Analysis (PCA) is a popular technique to project high-dimensional data into lower dimensions to visually identify patterns. It highlights similarities and differences between the different samples using linear transformation.
@@ -99,7 +101,9 @@
                                                      oncomplete="PF('graphDialog').show()">
                                         <i class="pi pi-download"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="denIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="denIcon" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                     <p:tooltip for="denIcon" styleClass="helpTip">
                                         <p>
                                             Plot of density against log2 of read counts. It displays the relative distribution of different counts in each group.

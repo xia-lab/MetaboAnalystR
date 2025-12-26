@@ -61,7 +61,9 @@
                                        oncomplete="PF('graphDialog').show()" title="Customize the graphics output">
                             <i class="pi pi-palette" style="font-size: 1.1rem"/>
                         </p:commandLink>
-                        <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                        <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                            <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                        </h:panelGroup>
                         <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
                             <i class="pi pi-undo"></i>
                         </p:commandLink>

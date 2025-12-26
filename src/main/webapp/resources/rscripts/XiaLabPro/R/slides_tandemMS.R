@@ -63,22 +63,22 @@ CreateMS2Intr_slides <- function(){
               using various analytical techniques. Liquid chromatography - mass spectrometry (LC-MS) has been the primary analytical platform 
               for global or untargeted metabolomics and exposomics. Following spectra acquisition, spectra processing and compound identification
               are two critical steps to explore significant signatures\n\n")
-  cat(descr0, file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE);
+  .buffer_add(descr0);
+  .buffer_add("\n\n---\n\n");
   
   descr1 <- c("To facilitate both quantitative analysis and compound identification, LC-MS untargeted metabolomics are typically conducted with MS1 full scans 
               coupled with tandem MS (MS/MS or MS2) using data-dependent acquisition (DDA) or data-independent acquisition (DIA) methods. MetaboAnalyst aims to provide two efficient pipelines to process MS2 spectra: \n\n ")
-  cat(descr1, file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE);
+  .buffer_add(descr1);
+  .buffer_add("\n\n---\n\n");
   
   descr2 <- c("+ (1) an auto-optimized DDA data deconvolution workflow to deal with chimeric spectra; \n\n+ (2) an efficient SWATH-DIA data deconvolution pipeline; \n\n")
-  cat(descr2, file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE);
+  .buffer_add(descr2);
+  .buffer_add("\n\n---\n\n");
   
   descr <- c("This module is designed to provide an automated workflow to process the raw MS2 spectra data in four steps, including ",
              "raw spectra importing, integrity checking, database searching and result summary. The detailed algorithm and introduction on the workflows are included in [MetaboAnalystR 4.0](https://www.nature.com/articles/s41467-024-48009-6) publication.\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(descr);
+  .buffer_add("\n\n---\n\n") 
 }
 
 ### Section 2 - Spectra IO summary and sanity check
@@ -88,18 +88,18 @@ CreateMS2SpecIOdoc_slides <- function(mSetObj){
              "MetaboAnalyst MS2 Annotation Module accepts either single spectrum or multiple spectra (in common open MS formats: msp or mgf) ",
              "All of these options require the information of precursor ions and their corresponding MS/MS spectra. All empty spectra will be exclided automatically.",
              "The Data Integrity Check is performed before the data processing starts. ");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(descr);
+  .buffer_add("\n\n");
+  .buffer_add("\n\n---\n\n") 
   
   if(!is.null(mSetObj$dataSet$spectrum_dataframe)){ # single spectrum
     descr <- c("\n\n## MS/MS Spectra input spectrum\n\n");
-    cat(descr, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr);
+    .buffer_add("\n\n");
     
     descr1 <- c( "You have uploaded a single spectrum. The basic information of this spectrum is provided below.\n\n")
-    cat(descr1, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr1);
+    .buffer_add("\n\n");
     
     table.count <<- table.count+1;
     
@@ -112,20 +112,20 @@ CreateMS2SpecIOdoc_slides <- function(mSetObj){
              ". Input spectrum for MS2 annotation searching.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
     
   } else if(!is.null(mSetObj[["dataSet"]][["prec_mzrt_all"]])){ # multiple spectra
     descr1 <- c( "You have uploaded multiple spectra. The detailed information of all spectra is summarized below.\n\n")
-    cat(descr1, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr1);
+    .buffer_add("\n\n");
     
     descr2 <- mSet[["msgSet"]][["sanity_msgvec"]];
     descr2 <- paste0("+ ", descr2)
-    cat(descr2, file=rmdFile, append=TRUE, sep = "\n\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr2, collapse="\n\n");
+    .buffer_add("\n\n");
   }
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add("\n\n---\n\n") 
 }
 
 ### Section 3 - MS2 searching method and params
@@ -133,12 +133,12 @@ CreateMS2AnalMethod_slides <- function(mSetObj){
   descr <- c("\n\n## MS/MS Spectra Searching Parameters\n\n",
              "MetaboAnalyst offers multiple database options and two algorithms for spectra searching. Besides, there are also several parameters need to be customized.", 
              "Here the detailed algorithms and parameters' used in this study. Explanations on these parameters are also included below.");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(descr, collapse="\n");
+  .buffer_add("\n\n---\n\n") 
   
   descr <- c("\n\n## MS/MS Spectra Searching Parameters\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   table.count <<- table.count+1;
   if(!is.null(mSetObj$dataSet$spectrum_dataframe)){ # single spectrum
@@ -153,8 +153,8 @@ CreateMS2AnalMethod_slides <- function(mSetObj){
              ".  Parameters for MS2 spectra searching of single spectrum.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   } else {
     cmdhist2 <- c(
       "```{r table_raw3, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -167,15 +167,15 @@ CreateMS2AnalMethod_slides <- function(mSetObj){
              ".  Parameters for MS2 spectra searching of multiple spectra.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add("\n\n---\n\n") 
   
   descr3 <- "All parameters used are shown as below."
   
-  cat(descr3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr3, collapse="\n");
+  .buffer_add("\n\n");
   
   descr4 <- c(
     "1. ppm values:",
@@ -184,24 +184,24 @@ CreateMS2AnalMethod_slides <- function(mSetObj){
     "2. Database:",
     " + All: All databases have been used for MS2-based annotation.",
     " + other: specifying one or more customized database for searching.");
-  cat(descr4, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+  .buffer_add(descr4, collapse="\n");
+  .buffer_add("\n\n---\n\n")
   
   descr5 <- c("3. Similarity Method:",
     " + Dot product: A traditional similarity calculation method for MS. This is a vector-similarity based method ([Details](https://pubs.acs.org/doi/10.1016/1044-0305%2894%2987009-8))",
     " + Spectral Entroy: A newly-developed similarity evaluation method. This method is based on the accuracy of spectral entropy similarity evaluation ([Details](https://www.nature.com/articles/s41592-021-01331-z)).",
     "4. mz of Precursor (for single spectrum only):",
     " + mz value of the corresponding precursor. If you upload multiple spectra, this value will be 0.");
-  cat(descr5, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE);
+  .buffer_add(descr5, collapse="\n");
+  .buffer_add("\n\n---\n\n");
   
   descr6 <- c("5. Ion Mode:",
               " + ESI ion modes: can be either positive or negative.",
               "6. Units for MZ deviation:",
               " + ppm:  parts per million.",
               " + da: Dalton, showing the absolute deviation.");
-  cat(descr6, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(descr6, collapse="\n");
+  .buffer_add("\n\n---\n\n") 
   
 }
 
@@ -212,8 +212,8 @@ CreateMS2AnalResults_slides <- function(mSetObj){
              "The MS2 spectral searching results is summarized in Table ", 
              table.count<<-table.count+1,", as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_results1, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -223,9 +223,9 @@ CreateMS2AnalResults_slides <- function(mSetObj){
            ". Summary of all MS2 spectra searching results.', escape = FALSE, rmRowNM = TRUE)"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
-  cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
+  .buffer_add("\n\n---\n\n") 
 }
 
 createMS2SumTableRMD_slides <- function(mSetObj){
@@ -282,15 +282,15 @@ CreateMatchingPatterns_slides <- function(mSetObj){
              "The mirror plots you are interested in are shown as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   
   files <- unique(mSetObj[["imgSet"]][["msmsmirror"]][["imageNM"]])
   
   if(!any(file.exists(files))){
     descr3 <- c("\n\nNo Spectral mirror plots was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
   }
   
   for (i in files){
@@ -316,8 +316,8 @@ CreateMatchingPatterns_slides <- function(mSetObj){
                  paste0("p1 <- readRDS('", paste0(i, ".rds"), "'); p1"),
                  "```",
                  "\n\n");
-        cat(fig, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(fig, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
         
       } else {
         fig <- c(paste0("```{r ", mir_nm, ", echo=FALSE, fig.pos='H', fig.cap='Figure ", fig.count,
@@ -328,14 +328,14 @@ CreateMatchingPatterns_slides <- function(mSetObj){
                  "```",
                  "\n\n");
         
-        cat(fig, file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE) 
+        .buffer_add(fig, collapse="\n");
+        .buffer_add("\n\n", collapse="\n");
+        .buffer_add("\n\n---\n\n") 
       }
     }
   }
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 

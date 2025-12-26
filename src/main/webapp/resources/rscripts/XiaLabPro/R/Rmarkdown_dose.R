@@ -74,7 +74,7 @@ CreateDoseIntr <- function(){
              (iv) computing BMD values for each feature based on the selected model. The algorithm for dose–response analysis was adapted from the algorithm we developed for transcriptomics BMD analysis. 
              For more information, please refer to the paper by <a href='https://doi.org/10.1093/bioinformatics/btaa700' target='_blank'>Ewald et al.</a>.",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 
@@ -103,14 +103,14 @@ CreateDoseParametersDoc <- function(mSetObj=NA){
              If there is a strong effect, we recommend increasing the threshold values to control the total number of features to be 
              evaluated in the next step.\n");
 
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr);
+  .buffer_add("\n\n", collapse="\n");
   
   link <- GetSharingLink(mSetObj)
   reportLinks <- getReportLinks(link, "dose_volcano");
 
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   fig <- c(paste0(
         "```{r figure_dose_volcano, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_ppw, 
@@ -123,8 +123,8 @@ CreateDoseParametersDoc <- function(mSetObj=NA){
       "\n\n"
   )
 
-  cat(fig, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(fig, collapse="\n");
+  .buffer_add("\n\n", collapse="\n");
   
 }
 
@@ -157,11 +157,11 @@ CreateDoseAnalDoc <- function(mSetObj){
              You can view the detailed curve fitting results of each feature in the detailed result table.",
             "\n\n");
 
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   reportLinks <- getReportLinks(link=link, analNavi="PlotDRModelBars");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
      # show the curve fitting summary image
   bar.plot <- c(paste0(
                   "```{r figure_best_fit_models, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ", fig_panar1, ": Frequency of statistical models among best fit curves', ",
@@ -172,11 +172,11 @@ CreateDoseAnalDoc <- function(mSetObj){
                 "\n\n"
   )
     
-    cat(paste(bar.plot, "\n\n"), file=rmdFile, append=TRUE, sep="\n"); 
+    .buffer_add(bar.plot, "\n\n"); 
 
   reportLinks <- getReportLinks(link=link, analNavi="PlotDRHistogram");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
 hist.plot <- c(
   "Below is a density plot showing the distribution of data, in this case, metabolite-level BMDs. It is normalized so that the area under the curve is equal to 1, and thus the units on the y-axis are of little interest. The colored vertical lines show the metabolomic-level BMDs. The main statistic of interest is usually the dose at which the whole metabolome is responding to an exposure, or the metabolomic point-of-departure (mPOD). This is adapted from the concept of transcriptomic point-of-departure (tPOD). \n\n",
@@ -190,8 +190,8 @@ hist.plot <- c(
 )
 
   
-    cat(hist.plot, file=rmdFile, append=TRUE, sep="\n")
-  cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(hist.plot, collapse="\n")
+  .buffer_add("\n\n");
 
     table.count <<- table.count+1;
     descr <- c(
@@ -202,8 +202,8 @@ hist.plot <- c(
              ". Detailed result table of feature-level BMDs', table.name='fitres')"),
       "```", "\n\n")
     
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr, collapse="\n\n");
+  .buffer_add("\n\n");
 
 
    # show the BMD from selected metabolites or top 4 
@@ -226,8 +226,8 @@ AddDoseFeatureImages <- function(mSetObj=NA) {
       "Below, you will find the curve fitting result of key features that have been saved during the analysis.",
       "\n"
     )
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n")
-    cat("\n\n", file=rmdFile, append=TRUE)
+    .buffer_add(descr, collapse="\n\n")
+    .buffer_add("\n\n")
   } else {
     # Descriptive text about the top features
     descr <- c(
@@ -265,8 +265,8 @@ AddDoseFeatureImages <- function(mSetObj=NA) {
       )
       imgSet$doseFeatureList[[ids[i]]] <- imgName
     }
-    cat(descr, file=rmdFile, append=TRUE, sep="\n\n")
-    cat("\n\n", file=rmdFile, append=TRUE)
+    .buffer_add(descr, collapse="\n\n")
+    .buffer_add("\n\n")
   }
 
   # Image rendering in R Markdown
@@ -299,19 +299,30 @@ AddDoseFeatureImages <- function(mSetObj=NA) {
   }
   
   # Create HTML structure for a grid layout with two units per row
+  # OPTIMIZED: Pre-allocate list to avoid O(n²) vector growing with c()
   html_start <- '<div style="display: flex; flex-wrap: wrap; gap: 10px;">'
   html_end <- '</div>'
-  html_content <- c(html_start)
-  
+
+  # Calculate number of row divs needed (ceiling division)
+  num_rows <- ceiling(length(img_blocks) / 2)
+  html_parts <- vector("list", num_rows + 2)  # +2 for start and end
+  html_parts[[1]] <- html_start
+
+  part_idx <- 2
   for (i in seq(1, length(img_blocks), by=2)) {
-    html_content <- c(html_content, 
-                      '<div style="display: flex; width: 100%;">',
-                      img_blocks[[i]],
-                      if (i+1 <= length(img_blocks)) img_blocks[[i+1]] else '',
-                      '</div>')
+    html_parts[[part_idx]] <- paste0(
+      '<div style="display: flex; width: 100%;">',
+      img_blocks[[i]],
+      if (i+1 <= length(img_blocks)) img_blocks[[i+1]] else '',
+      '</div>'
+    )
+    part_idx <- part_idx + 1
   }
-  
-  html_content <- c(html_content, html_end)
-  
-  cat(html_content, file = rmdFile, append = TRUE, sep="\n")
+
+  html_parts[[part_idx]] <- html_end
+
+  # OPTIMIZED: Single combination instead of repeated c() calls
+  html_content <- unlist(html_parts[1:part_idx])
+
+  .buffer_add(html_content, collapse="\n")
 }

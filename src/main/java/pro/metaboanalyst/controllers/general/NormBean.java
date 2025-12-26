@@ -25,6 +25,8 @@ import pro.metaboanalyst.workflows.WorkflowBean;
 @Named("normBean")
 public class NormBean implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     @JsonIgnore
     @Inject
     private WorkflowBean wb;

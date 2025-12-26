@@ -45,7 +45,9 @@
                             <h:outputLabel value="Lack-of-fit p-value:"/>       
                             <h:panelGrid columns="2" style="padding-left:20px">
                                 <p:inputNumber id="input1" value="#{doseResponseBean.cutoffval}"/> 
-                                <p:graphicImage id="barIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="barIcon2" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="barIcon2" styleClass="helpTip">
                                     <p>
                                         The lack-of-fit p-value represents how well a statistical model fits the data. Unlike a p-value for a 
@@ -57,7 +59,9 @@
                             <h:outputLabel value="BMR factor:"/>       
                             <h:panelGrid columns="2" style="padding-left:20px">
                                 <p:inputNumber id="input3" value="#{doseResponseBean.numsds}"/> 
-                                <p:graphicImage id="barIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="barIcon3" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="barIcon3" styleClass="helpTip">
                                     <p>
                                         The benchmark response (BMR) is the compound expression value that is used to determine the BMD. The BMR 
@@ -74,7 +78,9 @@
                                     <f:selectItem itemLabel="Mean of control samples" itemValue="sampleMean" /> 
                                     <f:selectItem itemLabel="Evaluate model at 0" itemValue="modelZero" />    
                                 </p:selectOneMenu> 
-                                <p:graphicImage id="barIcon4" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="barIcon4" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="barIcon4" styleClass="helpTip">
                                     <p>
                                         The benchmark response (BMR) is computed as the mean at the control, plus or minus the BMR factor. There are 
@@ -185,7 +191,9 @@
                             <h:outputLabel value="Lack-of-fit p-value:"/>       
                             <h:panelGrid columns="2" style="padding-left:20px">
                                 <p:inputNumber id="input1" value="#{doseResponseBean.cutoffval}"/> 
-                                <p:graphicImage id="barIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                <h:panelGroup id="barIcon2" style="margin-left: 10px;">
+                                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                </h:panelGroup>
                                 <p:tooltip for="barIcon2" styleClass="helpTip">
                                     <p>
                                         The lack-of-fit p-value represents how well a statistical model fits the data. Unlike a p-value for a 
@@ -197,7 +205,9 @@
                             <!--                            <h:outputLabel value="BMR factor:"/>       
                                                         <h:panelGrid columns="2" style="padding-left:20px">
                                                             <p:inputNumber id="input3" value="#{doseResponseBean.numsds}"/> 
-                                                            <p:graphicImage id="barIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                                            <h:panelGroup id="barIcon3" style="margin-left: 10px;">
+                                                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                                            </h:panelGroup>
                                                             <p:tooltip for="barIcon3" styleClass="helpTip">
                                                                 <p>
                                                                     The benchmark response (BMR) is the compound expression value that is used to determine the BMD. The BMR 

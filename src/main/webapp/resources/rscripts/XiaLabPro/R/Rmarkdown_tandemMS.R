@@ -76,7 +76,7 @@ CreateMS2Intr <- function(){
              "This module is designed to provide an automated workflow to process the raw MS2 spectra data in four steps, including ",
              "raw spectra importing, integrity checking, database searching and result summary. The detailed algorithm and introduction on the workflows are included in [MetaboAnalystR 4.0](https://www.nature.com/articles/s41467-024-48009-6) publication.\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 ### Section 2 - Spectra IO summary and sanity check
@@ -86,12 +86,12 @@ CreateMS2SpecIOdoc <- function(mSetObj){
              "MetaboAnalyst MS2 Annotation Module accepts either single spectrum or multiple spectra (in common open MS formats: msp or mgf) ",
              "All of these options require the information of precursor ions and their corresponding MS/MS spectra. All empty spectra will be exclided automatically.",
              "The Data Integrity Check is performed before the data processing starts. ");
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   if(!is.null(mSetObj$dataSet$spectrum_dataframe)){ # single spectrum
     descr1 <- c( "You have uploaded a single spectrum. The basic information of this spectrum is provided below.\n\n")
-    cat(descr1, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr1);
+    .buffer_add("\n\n");
     
     table.count <<- table.count+1;
     
@@ -104,18 +104,18 @@ CreateMS2SpecIOdoc <- function(mSetObj){
              ". Input spectrum for MS2 annotation searching.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
     
   } else if(!is.null(mSetObj[["dataSet"]][["prec_mzrt_all"]])){ # multiple spectra
     descr1 <- c( "You have uploaded multiple spectra. The detailed information of all spectra is summarized below.\n\n")
-    cat(descr1, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr1);
+    .buffer_add("\n\n");
     
     descr2 <- mSet[["msgSet"]][["sanity_msgvec"]];
     descr2 <- paste0("+ ", descr2)
-    cat(descr2, file=rmdFile, append=TRUE, sep = "\n\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr2, collapse = "\n\n");
+    .buffer_add("\n\n");
   }
 }
 
@@ -124,7 +124,7 @@ CreateMS2AnalMethod <- function(mSetObj){
   descr <- c("\n\n## MS/MS Spectra Searching Parameters\n\n",
              "MetaboAnalyst offers multiple database options and two algorithms for spectra searching. Besides, there are also several parameters need to be customized.", 
              "Here the detailed algorithms and parameters' used in this study. Explanations on these parameters are also included below.");
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   table.count <<- table.count+1;
   if(!is.null(mSetObj$dataSet$spectrum_dataframe)){ # single spectrum
@@ -139,8 +139,8 @@ CreateMS2AnalMethod <- function(mSetObj){
              ".  Parameters for MS2 spectra searching of single spectrum.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   } else {
     cmdhist2 <- c(
       "```{r table_raw3, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -153,14 +153,14 @@ CreateMS2AnalMethod <- function(mSetObj){
              ".  Parameters for MS2 spectra searching of multiple spectra.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
 
   descr3 <- "All parameters used to do the MS2 database searching are shown as below."
   
-  cat(descr3, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr3, collapse="\n");
+  .buffer_add("\n\n");
   
   descr4 <- c(
     "1. ppm values:",
@@ -179,7 +179,7 @@ CreateMS2AnalMethod <- function(mSetObj){
     "6. Units for MZ deviation:",
     " + ppm:  parts per million.",
     " + da: Dalton, showing the absolute deviation.");
-  cat(descr4, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr4, collapse="\n");
 }
 
 ### Section 4 - MS2 searching results
@@ -189,8 +189,8 @@ CreateMS2AnalResults <- function(mSetObj){
              "The MS2 spectral searching results is summarized in Table ", 
              table.count<<-table.count+1,", as below."
   );
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n\n");
   
   cmdhist2 <- c(
     "```{r table_results1, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",
@@ -200,16 +200,16 @@ CreateMS2AnalResults <- function(mSetObj){
            ". Summary of all MS2 spectra searching results.', escape = FALSE, rmRowNM = TRUE)"),
     "```", "\n\n");
   
-  cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(cmdhist2, collapse="\n");
+  .buffer_add("\n\n");
   
   if(is.null(mSetObj$dataSet$spectrum_dataframe)){
     
     descr3 <- "The first column ***Indexes*** refers to the order of corresponding spectrum in your original MSP/MGF files. 
     The column called as ***Ranks*** is the ranking of the compounds based on the scores in desending order."
     
-    cat(descr3, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3, collapse="\n");
+    .buffer_add("\n\n");
     
   }
   
@@ -304,16 +304,16 @@ CreateMatchingPatterns <- function(mSetObj){
              "The mirror plots you are interested in are shown as below.\n\n"
   );
   
-  cat(descr, file=rmdFile, append=TRUE);
-  cat("\n", file=rmdFile, append=TRUE);
+  .buffer_add(descr);
+  .buffer_add("\n");
   
   files <- unique(mSetObj[["imgSet"]][["msmsmirror"]][["imageNM"]])
   files[grepl("mirror_plotting_", files)] -> files
 
   if(!any(file.exists(files))){
     descr3 <- c("\n\nNo Spectral mirror plots was viewed by you. Please try to explore from result page.");
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
   }
 
   for (i in files){
@@ -348,12 +348,12 @@ CreateMatchingPatterns <- function(mSetObj){
                  "\n\n");
       }
 
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
   }
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 

@@ -51,7 +51,9 @@
                     <p>
                         P-values are calculated with <b>PERMANOVA</b> (999 permutations) on the sample scores for each PC pair. 
                         For discrete metadata, it assesses group centroid separation. 
-                        For continuous metadata, it evaluates whether the data exhibit a gradient aligned with the metadata .
+                        For continuous metadata, it evaluates whether the data exhibit a gradient aligned with the metadata.
+                        For large data, only <b>top three PC pairs</b> will be computed here. 
+                        You can examine other PC pairs in the Score Plot view
                     </p>
                     <h:form id="form1">
                         <h:panelGrid columns="3" style="padding-top: 10px; padding-left: 40px">
@@ -177,6 +179,6 @@
             </p:tabView> 
         </h:panelGrid> 
         <ui:include src="/template/_feature_dialog.xhtml" />
-                <ui:include src="/template/_graphic_dialog.xhtml" />
+        <ui:include src="/template/_graphic_dialog.xhtml" />
     </ui:define>
 </ui:composition>

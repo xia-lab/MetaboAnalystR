@@ -377,9 +377,9 @@ public class DownloadBean implements Serializable {
             return;
         }
 
-        System.out.println("setupDownloadTable========sb.getAnalType=====" + sb.getAnalType());
-        System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
-        System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
+        //System.out.println("setupDownloadTable========sb.getAnalType=====" + sb.getAnalType());
+        //System.out.println(sb.getCurrentUser().getHomeDir() + "==============getHomeDir");
+        //System.out.println(sb.getCurrentUser().getRelativeDir() + "==============getRelativeDir");
 
         galleryStatImages = new ArrayList<>();
         galleryIntImages = new ArrayList<>();

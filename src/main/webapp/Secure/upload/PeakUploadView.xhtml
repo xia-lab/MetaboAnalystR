@@ -47,7 +47,9 @@
 
                                 <h:panelGroup  style="width:280px" layout="block">
                                     <p:outputLabel value="Mass Tolerance (ppm):"/>
-                                    <p:graphicImage id="formatIcon1" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIcon1" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>
                                 <h:panelGroup>
                                     <p:selectOneMenu value="#{peakLoader.instrumentOpt}" editable="true">
@@ -74,18 +76,24 @@
 
                                 <h:panelGroup  style="width:250px" layout="block">
                                     <p:outputLabel value="Enforce Primary Ions (V2 only):"/>
-                                    <p:graphicImage id="formatIconIon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIconIon" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>  
                                 <p:selectBooleanCheckbox value="#{peakLoader.primaryIon}" style="line-height: 18px"/>
 
                                 <!--- <h:panelGroup  style="width:250px" layout="block">
                                     <p:outputLabel style="font-size:13px; font-weight: bold; padding-right: 3px" value="Retention time window (V2):"/>
-                                    <p:graphicImage id="formatIconWin" url="../resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIconWin" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>
                                 <h:inputText style="width: 80px" value="#{peakLoader.rtFrac}"/> -->                         
                                 <h:panelGroup  style="width:250px" layout="block">
                                     <p:outputLabel value="Data File:"/>
-                                    <p:graphicImage id="formatIcon" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIcon" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>
                                 <p:fileUpload value="#{peakFileLoader.peakFile}" mode="simple" skinSimple="true" style="line-height: 18px">
                                     <p:validateFile sizeLimit="52428800" allowTypes="/(\.|\/)(csv|txt|tsv)$/"/>
@@ -220,7 +228,9 @@ m.z             p.value                 t.score     mode
 
                                 <h:panelGroup  style="width:280px" layout="block">
                                     <p:outputLabel value="Mass Tolerance (ppm):"/>
-                                    <p:graphicImage id="formatIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIcon2" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>
                                 <h:panelGroup>
                                     <p:selectOneMenu value="#{peakLoader.instrumentOpt}" editable="true">
@@ -241,7 +251,9 @@ m.z             p.value                 t.score     mode
 
                                 <h:panelGroup  style="width:280px" layout="block">
                                     <p:outputLabel value="Data Source:"/>
-                                    <p:graphicImage id="formatIcon3" url="/resources/images/ui-help.png" alt="help"/>
+                                    <h:panelGroup id="formatIcon3" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGroup>                              
                                 <p:selectOneMenu value="#{peakLoader.dataSource}">
                                     <f:selectItem itemLabel="Generic" itemValue="generic" />

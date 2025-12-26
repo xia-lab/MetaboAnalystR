@@ -72,7 +72,9 @@
 
             <h:panelGrid columns ="2" style="padding-top: 30px;">
                 <b style="font-size: 1.1em;">Network Tools:</b> 
-                <p:graphicImage id="toolIcon" url="/resources/images/ui-help.png" alt="help"/>
+                <h:panelGroup id="toolIcon" style="margin-left: 10px;">
+                    <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                </h:panelGroup>
             </h:panelGrid>
 
             <h:form id='form3'>
@@ -205,7 +207,9 @@
                                          update=":form1 :hisTab:cmdPane"
                                          />  
                         <h:panelGrid style="padding-right: 188px"> 
-                            <p:graphicImage id="toolIcon2" url="/resources/images/ui-help.png" alt="help"/>
+                            <h:panelGroup id="toolIcon2" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGrid>
                     </h:panelGrid>
                     <p:tooltip for="toolIcon2" styleClass="helpTip">

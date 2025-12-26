@@ -92,9 +92,8 @@ public class PCABean implements Serializable {
         return items;
     }
 
-    public String pcaPairBtn_action() {
-        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getCurrentImage("pca_pair"), "pca_pair", "png", 96, pcaPairNum, "NA", "NA");
-        return null;
+    public void pcaPairBtn_action() {
+        TimeSeries.plotPCAPairSummaryMeta(sb, sb.getNewImage("pca_pair"), "pca_pair", "png", 96, pcaPairNum, "NA", "NA");
     }
 
     private boolean greyScale = false;

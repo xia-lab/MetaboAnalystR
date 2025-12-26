@@ -89,7 +89,7 @@ CreateMetaMummichogIntro <- function(){
                    this idea for **functional meta-analysis** to identify robust pathway-level changes by integrating multiple 
                    LC-MS untargeted metabolomics data.",
                    "\n\n");
-  cat(back.descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(back.descr, collapse="\n");
   
 }
 
@@ -109,7 +109,7 @@ CreateMetaMummichogInputDoc <- function(mSetObj=NA){
              "All inputted files must be in .csv format.",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   sanity_msg <- vector("list");
   
@@ -127,8 +127,8 @@ CreateMetaMummichogInputDoc <- function(mSetObj=NA){
     }
 }
   
-  cat(unlist(sanity_msg), file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(unlist(sanity_msg));
+  .buffer_add("\n\n");
 
 
 if(is.null(mSetObj$metaLevel)){
@@ -144,7 +144,7 @@ if(is.null(mSetObj$metaLevel)){
                 different experimental conditions (i.e., different extraction methods or ion modes).
                 Users must select the algorithm (mummichog or GSEA), and pathway library used for meta-analysis.", 
                "\n");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
     
     if(mSetObj$metaLevel == "pathway"){
       if(!is.null("mSetObj$meta_results")){
@@ -154,7 +154,7 @@ if(is.null(mSetObj$metaLevel)){
                 paste("The selected p-value integrating pathways is: ```", mSetObj$meta.pval.method, "```."),
                 paste("The user's selected pathway library is: ```", mSetObj$paramSet$lib, "```."),
                 "\n\n");
-        cat(integ.desrc, file=rmdFile, append=TRUE, sep="\n");
+        .buffer_add(integ.desrc, collapse="\n");
       }
     } else {
       # pooling peaks
@@ -163,7 +163,7 @@ if(is.null(mSetObj$metaLevel)){
                 paste("The selected p-value cutoff: ```", mSetObj$pooled_cutoff, "```."),
                 paste("The user's selected pathway library is: ```", mSetObj$paramSet$lib, "```."),
                 "\n\n");
-      cat(pval.descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(pval.descr, collapse="\n");
     }
   }
 }
@@ -189,7 +189,7 @@ CreateMetaMummichogResults <- function(mSetObj){
                  " putative metabolite annotation, followed by pathway activity prediction to ultimately ",
                  " create a unified matrix of pathway-level results (keeping only pathways found across all-studies).", 
                  " Pathway activity scores are then combined using one of several p-value integration methods. \n\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
     }
     
     if(!is.null(mSetObj$imgSet$mummi.meta.path.plot)) {
@@ -200,7 +200,7 @@ CreateMetaMummichogResults <- function(mSetObj){
                  "The color and size of each circle corresponds to its p-value and enrichment factor, ",
                  "respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
                  " hits and the expected number of hits within the pathway. \n\n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
       
       fig_mmm1 <- fig.count <<- fig.count+1;
       
@@ -209,7 +209,7 @@ CreateMetaMummichogResults <- function(mSetObj){
                             '<a href="', link, '&format=pdf&imgCmd=meta_bubble" target="_blank">PDF</a> ',
                             '<a href="', link, '&format=svg&imgCmd=meta_bubble" target="_blank">SVG</a>',
                             '</div>')
-      cat(reportLinks, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(reportLinks, collapse="\n");
       
       fig <- c(paste0("```{r figure_mmm1, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mmm1, 
                       ". Summary of Pathway-Level Integration Meta-Analysis', ",
@@ -219,14 +219,14 @@ CreateMetaMummichogResults <- function(mSetObj){
                "safeIncludeGraphics(mSetObj$imgSet$mummi.meta.path.plot)",
                "```",
                "\n\n");
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
       
       descr <- c("\n#### Pathway-Level Meta-Analysis Results\n\n",
                  "The output of the Pathway-Level Integration Meta-Analysis consists of ",
                  "a table of results containing ranked pathways that are enriched in ",
                  "the user-uploaded datasets. The table includes the raw p-values (per individual study), ",
                  " the mean enrichment ratio and finally the integrated p-value (Meta.P). \n");
-      cat(descr, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(descr, collapse="\n");
       
       table.count <<- table.count+1;
       
@@ -241,7 +241,7 @@ CreateMetaMummichogResults <- function(mSetObj){
         );
 
       
-      cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(cmdhist2, collapse="\n");
     }
   } else {
     
@@ -254,7 +254,7 @@ CreateMetaMummichogResults <- function(mSetObj){
                "homogeneous but instruments are complementary,",  
                " for instance samples that comes from the same lab but were obtained using different columns, ",
                "extraction methods or data collected using complementary LC-MS instruments. \n\n");
-    cat(descr, file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(descr, collapse="\n");
     
     CreateMummichogAnalysisDoc(mSetObj)
   }
@@ -286,15 +286,15 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                  " to its p-value and enrichment factor, respectively. The enrichment factor ",
                  "of a pathway is calculated as the ratio between the number of significant", 
                  " pathway hits and the expected number of compound hits within the pathway. \n");
-      cat(descr, file=rmdFile, append=TRUE);
+      .buffer_add(descr);
       
       fig_mmm2 <- fig.count <<- fig.count+1;
       # peaks_to_paths
       link <- GetSharingLink(mSetObj)
       reportLinks <- getReportLinks(link, "meta_peaks_to_paths", "peaks_to_paths");
 
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       mSet$paramSet$anal.type <<- "mummichog";
       fig <- c(paste0("```{r figure_mmm2, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mmm2, 
                 ". Summary of Meta-Mummichog Pathway Analysis', ",
@@ -309,17 +309,17 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
          "```",
          "\n\n");
 
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
     
     descr <- c("\n\n### - Pathway Analysis Results Table\n\n",
                "The output of the mummichog analysis consists of a table of results containing ranked pathways that are enriched in ",
                "the user-uploaded data. The table includes the total number of hits per pathway (all, significant, and expected), the raw p-values (",
                "Hypergeometric), and the p-value modeled on user data using a Gamma distribution. \n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
     table.count <<- table.count+1;
     
     cmdhist2 <- c(
@@ -330,8 +330,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Results of the Mummichog Pathway Analysis.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if(!is.null(mSetObj$mummi.gsea.resmat)){
@@ -339,7 +339,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                "The output of the GSEA analysis consists of a table of results containing ranked pathways that are enriched in ",
                "the user-uploaded data. The table includes the total number of hits (all and expected), their raw p-values and adjusted p-values.",
                " On the web, user's can explore the results in an interactive volcano plot. \n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
     # Because mummi.gsea.resmat is created for meta-analysis
     if(!is.null(mSetObj$imgSet$mummi.gsea.plot)){
@@ -348,7 +348,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                  "The GSEA pathway summary plot below displays all matched pathways as circles. The color and size of each circle corresponds", 
                  " to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
                  " pathway hits and the expected number of compound hits within the pathway. \n\n");
-      cat(descr, file=rmdFile, append=TRUE);
+      .buffer_add(descr);
       
       fig_mmm3 <- fig.count <<- fig.count+1;
       # peaks_to_paths
@@ -356,7 +356,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
 
       
       reportLinks <- getReportLinks(link, "meta_peaks_to_paths_gsea", "peaks_to_paths_gsea");
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add("\n\n");
       
       mSet$paramSet$anal.type <<- "gsea";
 
@@ -375,11 +375,11 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
 
     cat(fig, sep = "\n")
 
-      cat(fig, file=rmdFile, append=TRUE, sep="\n");
-      cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(fig, collapse="\n");
+      .buffer_add("\n\n", collapse="\n");
     }
     
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
     table.count <<- table.count+1;
     
     cmdhist2 <- c(
@@ -390,8 +390,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Results of the GSEA Pathway Analysis.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if(!is.null(mSetObj$integ.resmat)){
@@ -404,7 +404,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
                " Large and red circles are considered the most perturbed pathways.",
                " The blue and pink areas highlight the significant pathways based on either GSEA ",
                "(pink) or mummichog (blue), and the purple area highlights significant pathways identified by both algorithms. \n\n");
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
     
     fig_mmm3 <- fig.count <<- fig.count+1;
     
@@ -413,8 +413,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
     link <- GetSharingLink(mSetObj)
     reportLinks <- getReportLinks(link, "meta_integ_peaks", "integ_peaks");
 
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
 
     fig <- c(paste0("```{r figure_mmm3, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_mmm3, 
                     ". Summary of Pathway Analysis', ",
@@ -424,11 +424,11 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              "safeIncludeGraphics(mSetObj$imgSet$integpks.plot)",
              "```",
              "\n\n");
-    cat(fig, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE, sep="\n");
+    .buffer_add(fig, collapse="\n");
+    .buffer_add("\n\n", collapse="\n");
     
     
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add("\n\n");
     table.count <<- table.count+1;
     
     cmdhist2 <- c(
@@ -439,8 +439,8 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              ". Meta-Analysis of Mummichog and GSEA Results.')"),
       "```", "\n\n");
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   descr <- c("\n\n### - Compound Matching Table\n\n",
@@ -449,7 +449,7 @@ CreateMummichogAnalysisDoc<-function(mSetObj=NA){
              " Mass of each feature, the predicted Matched.Compound for each feature,",
              "the Matched.Form, and the Mass.Diff. As the file can be very long (>40 pages), please ",
              "download it separately on the Downloads page of MetaboAnalyst. \n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
  
 }
 
@@ -493,17 +493,17 @@ CreateKeggNetDocMetaMummi <-function(mSetObj){
         "```\n",
         "\n\n---\n\n"
       )
-      cat(networkImageSlide, file = rmdFile, append = TRUE, sep = "\n")
+      .buffer_add(networkImageSlide, collapse="\n")
       
     }else{
       descr <- c("\n\n#### Global KEGG Metabolic Network\n\n",
                  "This interactive visualization allows users to interactively view their data in a global KEGG metabolic network.", "\n\n");
-      cat(descr, file=rmdFile, append=TRUE);
+      .buffer_add(descr);
       
       link <- GetSharingLink(mSetObj)
       reportLinks <- getReportLinks(link, "network_mummichog")
-      cat(reportLinks, file=rmdFile, append=TRUE);
-      cat("\n\n", file=rmdFile, append=TRUE);
+      .buffer_add(reportLinks);
+      .buffer_add("\n\n");
       
       img <- c(
         paste0("```{r figure_kegg_net, echo=FALSE, fig.align='center', fig.pos='H', fig.cap='Figure ",
@@ -513,7 +513,7 @@ CreateKeggNetDocMetaMummi <-function(mSetObj){
         "```",
         "\n\n")
       
-      cat(img, file = rmdFile, append = TRUE, sep="\n");
+      .buffer_add(img, collapse="\n");
     }
   }
 }

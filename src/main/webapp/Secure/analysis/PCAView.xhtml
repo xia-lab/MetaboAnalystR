@@ -153,7 +153,9 @@
             <p:tabView id="ac" widgetVar="tabWidgetVar" style="min-width: 900px; max-width: 1200px; border: none; font-size: 13px;">
                 <p:tab title ="Overview">
                     <p>
-                        P-values are calculated with PERMANOVA (999 permutations) on the sample scores for each PC pair
+                        P-values are calculated with PERMANOVA (999 permutations) on the sample scores for each PC pair. 
+                        For large data, only <b>top three PC pairs</b> will be computed here. 
+                        You can examine other PC pairs in the Score Plot view
                     </p>
                     <h:form id="form1">
                         <h:panelGrid columns="2" style="width: 70%">
@@ -164,7 +166,11 @@
                                 </p:selectOneMenu>
                                 <h:outputLabel style="font-weight: bold" value=" PCs"/>
                             </h:panelGroup>
-                            <p:commandButton value="Update" update=":ac:form1:pairPane  :hisTab:cmdPane" actionListener="#{pcaBean.pcaPairBtn_action()}"/>   
+                            <p:commandButton value="Update" 
+                                             onclick="PF('statusDialog').show()" 
+                                             oncomplete="PF('statusDialog').hide()"
+                                             update=":ac:form1:pairPane  :hisTab:cmdPane" 
+                                             actionListener="#{pcaBean.pcaPairBtn_action()}" partialSubmit="true"/>  
                         </h:panelGrid>
                         <h:panelGrid id="pairPane" style="text-align: center; width: 1000px;">
                             <h:panelGrid style="text-align: right; padding-left: 700px; width: 760px;">
@@ -341,7 +347,9 @@
                             <p:commandLink title="Reset Zoom" onclick="PF('chart').chart.resetZoom()">
                                 <i class="pi pi-undo"></i>
                             </p:commandLink>
-                            <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                            <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                                <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                            </h:panelGroup>
                         </h:panelGrid>
                         <p:tooltip for="helpIcon" styleClass="helpTip">
                             <p>

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package pro.metaboanalyst.agents;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,22 +13,12 @@ import com.vladsch.flexmark.ext.tables.TablesExtension;
 import jakarta.inject.Inject;
 import pro.metaboanalyst.controllers.general.SessionBean1;
 
-/**
- *
- * @author jeffxia
- */
 @Named("myBot")
 @SessionScoped
 public class OmicsBot implements Serializable {
 
-    private String code = "metabolomics";
-    private String systemInstruction = "You are a helpful assistant specialized in bioinformatics and omics data analysis. "
-            + "Answer questions clearly and concisely. If relevant information is provided in the RELEVANT KNOWLEDGE BASE section, "
-            + "prioritize that information in your response. Always provide accurate, scientifically sound advice. "
-            + " You specialize in metabolomics, mass spectrometry data analysis, and metabolite identification using MetaboAnalyst.";
-    private String welcomeMsg = "I am MetaboAnalyst Assistant using Gemini 2.5 Flash. Type your question and click on 'Send' to start. Please be patient ....";
-
-    private String promptMsg = "";
+    @Inject
+    private GeminiService geminiService;
 
     @JsonIgnore
     @Inject
@@ -43,69 +29,21 @@ public class OmicsBot implements Serializable {
     private FAQLoader faqLoader;
 
     private GeminiConversationClient geminiClient;
-
     private List<Message> messages;
+    private String promptMsg = "";
+    private String code = "metabolomics";
+    
+    // Current user's selected model (Starts with 3.0 Flash)
+    private String currentModel = GeminiService.MODEL_PRIMARY;
+    
+    private String systemInstruction = "You are a helpful assistant specialized in bioinformatics and omics data analysis. "
+            + "Answer questions clearly and concisely. If relevant information is provided in the RELEVANT KNOWLEDGE BASE section, "
+            + "prioritize that information in your response. Always provide accurate, scientifically sound advice. "
+            + " You specialize in metabolomics, mass spectrometry data analysis, and metabolite identification using MetaboAnalyst.";
 
-    //current model
-    private String modelName = "gemini-2.5-flash";
-
-    public String getModelName() {
-        return modelName;
-    }
-
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    //alternative models
-    private String altMdlName = "gemini-2.5-flash-lite";
-
-    public String getAltMdlName() {
-        return altMdlName;
-    }
-
-    public void setAltMdlName(String altMdlName) {
-        this.altMdlName = altMdlName;
-    }
-
-    public void modifyModel() {
-        if (modelName.equals("gemini-2.5-flash")) {
-            modelName = "gemini-2.5-flash-lite";
-            altMdlName = "gemini-2.5-flash";
-        } else {
-            modelName = "gemini-2.5-flash";
-            altMdlName = "gemini-2.5-flash-lite";
-        }
-        initAssistant();
-    }
-
-    /**
-     * Gets user-friendly display name for the current model. Note the displayed
-     * name is alternative to the currently used model
-     */
-    private String getDisplayModelName() {
-        return modelName.equals("gemini-2.5-flash") ? "Gemini 2.5 Flash" : "Gemini 2.5 Flash Lite";
-    }
-
-    public List<Message> getMessages() {
-        if (messages == null) {
-            messages = new ArrayList<>();
-            messages.add(new Message("Assistant", welcomeMsg));
-        }
-        return messages;
-    }
-
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
-    }
-
-    public void OmicsBot() {
-        messages = new ArrayList<>();
-        messages.add(new Message("Assistant", welcomeMsg));
-    }
+    private String welcomeMsg = ""; 
 
     public void initAssistant() {
-        // Memory optimization: Limit message history to last 30 messages before reset
         if (messages != null && messages.size() > 20) {
             List<Message> recentMessages = new ArrayList<>(messages.subList(messages.size() - 20, messages.size()));
             messages = recentMessages;
@@ -115,80 +53,60 @@ public class OmicsBot implements Serializable {
 
         cleanResource();
 
-        // Initialize Gemini client for the selected domain
-        geminiClient = new GeminiConversationClient(code);
+        // Pass service to the client wrapper
+        geminiClient = new GeminiConversationClient(code, geminiService);
 
-        // Get display model name for welcome message
-        String displayModelName = getDisplayModelName();
+        String displayModelName = geminiService.getModelDisplayName(currentModel);
         welcomeMsg = "I am MetaboAnalyst Assistant using " + displayModelName + ". Type your question and click on 'Send' to start. Please be patient ....";
         messages.add(new Message("Assistant", welcomeMsg));
     }
 
-    public String getPromptMsg() {
-        return promptMsg;
-    }
-
-    public void setPromptMsg(String promptMsg) {
-        this.promptMsg = promptMsg;
-    }
-
-    public String getWelcomeMsg() {
-        return welcomeMsg;
-    }
-
-    public void setWelcomeMsg(String welcomeMsg) {
-        this.welcomeMsg = welcomeMsg;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public void cleanResource() {
-        if (geminiClient != null) {
-            geminiClient.clearHistory();
-            System.out.println("Gemini conversation history cleared");
-            geminiClient = null;
+    public void modifyModel() {
+        // Toggle between 3.0 Flash and 2.5 Flash
+        if (currentModel.equals(GeminiService.MODEL_PRIMARY)) {
+            currentModel = GeminiService.MODEL_ALTERNATIVE;
         } else {
-            System.out.println("GeminiClient is null, resource already cleaned");
+            currentModel = GeminiService.MODEL_PRIMARY;
+        }
+        initAssistant();
+    }
+    
+    public String getModelName() {
+        return geminiService.getModelDisplayName(currentModel);
+    }
+    
+    public String getAltMdlName() {
+        if (currentModel.equals(GeminiService.MODEL_PRIMARY)) {
+             return geminiService.getModelDisplayName(GeminiService.MODEL_ALTERNATIVE);
+        } else {
+             return geminiService.getModelDisplayName(GeminiService.MODEL_PRIMARY);
         }
     }
 
-    // Updated sendMessage method for JSF integration
     public void sendUserQuery() {
-
         if (promptMsg.trim().length() == 0) {
             sb.addMessage("error", "Please enter your question first");
             return;
         }
 
         if (geminiClient == null) {
-            geminiClient = new GeminiConversationClient(code);
+            geminiClient = new GeminiConversationClient(code, geminiService);
         }
 
-        // Add the user's message to the chat
         getMessages().add(new Message("User", promptMsg));
 
         try {
-            // Find relevant FAQs
             List<FAQLoader.FAQEntry> relevantFAQs = faqLoader.findRelevantFAQs(code, promptMsg, 5);
-            String answer = geminiClient.sendMessage(promptMsg, systemInstruction, relevantFAQs, modelName);
+            
+            // Generate answer using the Service + Adaptive Fallback
+            String answer = geminiClient.sendMessage(promptMsg, systemInstruction, relevantFAQs, currentModel);
 
-            // Clean up citations (in case Gemini adds any)
             String regex = "【\\d+(:\\d+)?+†source】";
             String res = answer.replaceAll(regex, "");
-
-            // Convert markdown to HTML
             res = getHtmlContent(res);
 
-            // Add the response from Gemini to the chat
             messages.add(new Message("Assistant", res));
 
-            // Memory optimization: Keep only last 50 messages to prevent unbounded growth
             if (messages.size() > 30) {
                 messages.subList(0, messages.size() - 30).clear();
             }
@@ -198,19 +116,31 @@ public class OmicsBot implements Serializable {
             e.printStackTrace();
             messages.add(new Message("Assistant", "I apologize, but I encountered an error processing your request. Please try again."));
         }
-
-        // Clear the prompt message for the next input
         promptMsg = "";
     }
 
-    public String getHtmlContent(String text) {
-        // Configure Flexmark with table support
-        MutableDataSet options = new MutableDataSet();
-        options.set(Parser.EXTENSIONS, java.util.Arrays.asList(TablesExtension.create()));
-
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-        return renderer.render(parser.parse(text)); // Render HTML from markdown
+    public void cleanResource() {
+        if (geminiClient != null) {
+            geminiClient.clearHistory();
+            geminiClient = null;
+        }
     }
 
+    public String getHtmlContent(String text) {
+        MutableDataSet options = new MutableDataSet();
+        options.set(Parser.EXTENSIONS, java.util.Arrays.asList(TablesExtension.create()));
+        Parser parser = Parser.builder(options).build();
+        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+        return renderer.render(parser.parse(text));
+    }
+    
+    // Standard Getters/Setters
+    public List<Message> getMessages() { if (messages == null) initAssistant(); return messages; }
+    public void setMessages(List<Message> messages) { this.messages = messages; }
+    public String getPromptMsg() { return promptMsg; }
+    public void setPromptMsg(String promptMsg) { this.promptMsg = promptMsg; }
+    public String getWelcomeMsg() { return welcomeMsg; }
+    public void setWelcomeMsg(String welcomeMsg) { this.welcomeMsg = welcomeMsg; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 }

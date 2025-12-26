@@ -75,7 +75,7 @@ CreateCausalIntr <- function(){
             for potential instrumental variables (i.e. SNPs) that are associated with both the metabolite from our large collections of the recent mGWAS studies and the disease from the 
             OpenGWAS database. ",
              "\n\n");
-  cat(descr, file=rmdFile, append=TRUE);
+  .buffer_add(descr);
 }
 
 
@@ -105,7 +105,7 @@ CreateCausalInputDoc <- function(mSetObj = NA) {
   )
   
   # Write description to Rmd file
-  cat(descr, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(descr)
   
   # Add user-selected exposure and outcome
   selected_exposure <- unique(mSetObj$dataSet$exposure$`Common Name`)[1]
@@ -113,13 +113,13 @@ CreateCausalInputDoc <- function(mSetObj = NA) {
   
   # Write exposure to Rmd file with backticks
   exposure_text <- paste("### Selected Exposure\n\n", paste("`", selected_exposure, "`", sep=""), "\n\n")
-  cat(exposure_text, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(exposure_text)
   
   # Write outcome to Rmd file with backticks
   outcome_text <- paste("### Selected Outcome\n\n", paste("`", selected_outcome, "`", sep=""), "\n\n")
-  cat(outcome_text, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(outcome_text)
   
-  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add("\n\n", collapse="\n")
 }
 
 
@@ -153,7 +153,7 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
   )
   
   # Write description to Rmd file
-  cat(descr, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(descr)
   
   # Add selected parameters
   snp_filter_params <- mSetObj$dataSet$snp_filter_params
@@ -170,7 +170,7 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
     sep = ""
   )
   
-  cat(params_descr, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(params_descr, collapse="\n")
   
   # Increment table count
   table.count <<- table.count + 1
@@ -179,8 +179,8 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
   filtered_harmonized_data <<- harmonized_data[harmonized_data$mr_keep == TRUE & harmonized_data$mr_keep.outcome == TRUE, ]
   
   reportLinks <- getReportLinks(link=link, analNavi="harmonized_dat");
-  cat(reportLinks, file=rmdFile, append=TRUE);
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add(reportLinks);
+  .buffer_add("\n\n");
   
   # Add harmonized data table
   harmonized_table_descr <- c(
@@ -197,9 +197,9 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
     "\n\n"
   )
   
-  cat(harmonized_table_descr, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(harmonized_table_descr, collapse="\n")
   
-  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add("\n\n", collapse="\n")
   
   
   descr <- c(
@@ -209,7 +209,7 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
     "Among these methods, the median estimator and MR Egger regression allow for genetic pleiotropy. The methods you have chosen are summarized as below:\n\n")
   
   # Write description to Rmd file
-  cat(descr, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(descr)
   
   descr_md <- "";
   methods <- mSetObj$dataSet$methodType;
@@ -271,9 +271,9 @@ CreateCausalParametersDoc <- function(mSetObj = NA) {
     m_ds <- paste0("- ", m)
     descr_md <- paste(descr_md, m_ds, sep = "\n")
   }
-  cat(descr_md, file = rmdFile, append = TRUE, sep = "")
+  .buffer_add(descr_md)
   
-  cat("\n\n", file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add("\n\n", collapse="\n")
 }
 
 #'Create MR analysis report: Analysis and results
@@ -305,7 +305,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
   )
   
   # Write description to Rmd file
-  cat(descr, file = rmdFile, append = TRUE, sep = "\n")
+  .buffer_add(descr, collapse="\n")
   
   # Get unique exposures
   exposures <- unique(mSetObj$dataSet$mr_results_merge$exposure)
@@ -315,8 +315,8 @@ CreateCausalAnalDoc <- function(mSetObj) {
     exposure_curr <<- exposure;
     
     reportLinks <- getReportLinks(link=link, analNavi="mr_results_merge");
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     # Filter the MR results by exposure
     exposure_results <- mSetObj$dataSet$mr_results_merge[mSetObj$dataSet$mr_results_merge$exposure == exposure, ]
@@ -331,7 +331,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
       "\n\n"
     )
     
-    cat(table_descr, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(table_descr, collapse="\n")
     
     # Write the diagnostic plots
     scatter_plot <- mSetObj$imgSet$mr_scatter_plot[exposure]
@@ -340,13 +340,13 @@ CreateCausalAnalDoc <- function(mSetObj) {
     funnel_plot <- mSetObj$imgSet$mr_funnel_plot[exposure]
     
     reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "", scatter_plot));
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     # Scatter plot
     descr1 <- "The scatter plot shows the relationships between SNP effects on exposure against the SNP effects on the outcome, with the slope indicating the causal association."
-    cat(descr1, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr1);
+    .buffer_add("\n\n");
     
     fig.count<<-fig.count+1;
     scatter_descr <- c(
@@ -355,16 +355,16 @@ CreateCausalAnalDoc <- function(mSetObj) {
       "```",
       "\n\n"
     )
-    cat(scatter_descr, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(scatter_descr, collapse="\n")
     
     reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",forest_plot));
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     # Forest plot
     descr2 <- "The forest plot compares the causal effect calculated using the methods that include all the SNPs to using each SNP separately."
-    cat(descr2, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr2);
+    .buffer_add("\n\n");
     
     fig.count<<-fig.count+1;
     forest_descr <- c(
@@ -373,16 +373,16 @@ CreateCausalAnalDoc <- function(mSetObj) {
       "```",
       "\n\n"
     )
-    cat(forest_descr, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(forest_descr, collapse="\n")
     
     reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",leaveoneout_plot));
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     # Leave-one-out plot
     descr3 <- "To determine whether a single SNP is having a disproportionately larger impact on an association. Each dot represents the MR analysis excluding that specific SNP using IVW method."
-    cat(descr3, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr3);
+    .buffer_add("\n\n");
     
     fig.count<<-fig.count+1;
     leaveoneout_descr <- c(
@@ -391,16 +391,16 @@ CreateCausalAnalDoc <- function(mSetObj) {
       "```",
       "\n\n"
     )
-    cat(leaveoneout_descr, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(leaveoneout_descr, collapse="\n")
     
     reportLinks <- getReportLinks(link=link, "mr_results_merge", gsub("_[0-9]+_dpi150\\.png$", "",funnel_plot));
-    cat(reportLinks, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(reportLinks);
+    .buffer_add("\n\n");
     
     # Funnel plot
     descr4 <- "A funnel plot’s asymmetry can be used to determine how reliable a certain MR method is. Wider spread implies greater heterogeneity, which may be due to horizontal pleiotropy."
-    cat(descr4, file=rmdFile, append=TRUE);
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(descr4);
+    .buffer_add("\n\n");
     
     fig.count<<-fig.count+1;
     funnel_descr <- c(
@@ -409,7 +409,7 @@ CreateCausalAnalDoc <- function(mSetObj) {
       "```",
       "\n\n"
     )
-    cat(funnel_descr, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(funnel_descr, collapse="\n")
     
   }
 }

@@ -88,7 +88,9 @@
                                                    title="Customize the graphics output">
                                         <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="helpIcon" url="/resources/images/ui-help.png"  alt="help"/>
+                                    <h:panelGroup id="helpIcon" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGrid>
                                 <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_forest_plot')}" alt="ForestPlotImage"/>
                             </h:panelGrid>
@@ -115,7 +117,9 @@
                                                    title="Customize the graphics output">
                                         <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png"  alt="help"/>
+                                    <h:panelGroup id="helpIcon2" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
 
                                 </h:panelGrid>
 
@@ -143,7 +147,9 @@
                                                    title="Customize the graphics output">
                                         <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="helpIcon3" url="/resources/images/ui-help.png"  alt="help"/>
+                                    <h:panelGroup id="helpIcon3" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
                                 </h:panelGrid>
                                 <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName,'mr_funnel_plot')}" alt="FunnelPlotImage"/>
                             </h:panelGrid>
@@ -170,7 +176,9 @@
                                                    title="Customize the graphics output">
                                         <img src="#{facesContext.externalContext.requestContextPath}/resources/images/imgcenter.png"/>
                                     </p:commandLink>
-                                    <p:graphicImage id="helpIcon4" url="/resources/images/ui-help.png"  alt="help"/>
+                                    <h:panelGroup id="helpIcon4" style="margin-left: 10px;">
+                                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                                    </h:panelGroup>
 
                                 </h:panelGrid>
                                 <img onerror='this.style.display="none"' src="#{mgwasBean.getCurrentMRImageURL(metRes.compoundName, 'mr_leaveoneout_plot')}" alt="SensPlotImage"/>

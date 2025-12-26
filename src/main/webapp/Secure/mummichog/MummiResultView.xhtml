@@ -93,7 +93,9 @@
                 </h3>
                 <h:panelGroup>
                     Mouse over the <b>Help</b> icon to find more information on each columns
-                    <p:graphicImage id="helpIcon2" url="/resources/images/ui-help.png"  alt="help"/>
+                    <h:panelGroup id="helpIcon2" style="margin-left: 10px;">
+                        <i class="pi pi-question-circle" style="font-size: 1.2rem;"/>
+                    </h:panelGroup>
                 </h:panelGroup>
 
                 <p:tooltip for="helpIcon2" styleClass="helpTip">

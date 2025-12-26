@@ -303,16 +303,6 @@
         <p:tabView id="hisTab">
             <p:tab title="R History">
                 <h:panelGrid style="width: 100%; padding: 2px; text-align: right">
-                    <!--
-                    <h:form id="rcmdform">
-                        <p:commandButton value="Save" ajax="false"
-                                         onclick="PrimeFaces.monitorDownload(start, stop);" 
-                                         oncomplete="PF('statusDialog').hide()"
-                                         icon="pi pi-download">
-                            <p:fileDownload value="#{ctl.getRCmdFile()}" />
-                        </p:commandButton>
-                    </h:form>
-                    -->
                     <p:scrollPanel mode="native" style="width: 100%; padding: 5px; height:460px; text-align: left" class="surface-card">
                         <h:dataTable id="cmdPane" var="cmdBean" value="#{ctl.cmdVec}"
                                      styleClass="panelColumns" 

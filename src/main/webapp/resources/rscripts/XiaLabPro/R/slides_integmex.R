@@ -51,8 +51,8 @@ CreateIntegratedPathwayAnalIntr_slides <- function() {
     slideContent <- paste(introSlide, collapse = "\n")
     
     # Output to R Markdown file (assuming 'rmdFile' is defined and points to your .Rmd file)
-    cat(slideContent, file = rmdFile, append = TRUE, sep = "\n")
-    cat("\n\n---\n\n", file = rmdFile, append = TRUE) # Slide separator for R Markdown presentations
+    .buffer_add(slideContent, collapse="\n")
+    .buffer_add("\n\n---\n\n") # Slide separator for R Markdown presentations
 }
 
 #'Create integrated pathway  report: Data Input
@@ -74,7 +74,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
              " will be mapped to the respective databases collected within MetaboAnalyst. ",
              "\n\n");
   
-  cat(descr, file=rmdFile, append=TRUE, sep="\n");
+  .buffer_add(descr, collapse="\n");
   
   if(exists('map.table', where=mSetObj$dataSet)){
     
@@ -90,8 +90,8 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
     );
 
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }
   
   if (exists('gene.map.table', where=mSetObj$dataSet)){
@@ -109,11 +109,11 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
     );
 
     
-    cat(cmdhist2, file=rmdFile, append=TRUE, sep="\n");
-    cat("\n\n", file=rmdFile, append=TRUE);
+    .buffer_add(cmdhist2, collapse="\n");
+    .buffer_add("\n\n");
   }  
   
-  cat("\n\n", file=rmdFile, append=TRUE);
+  .buffer_add("\n\n");
 }
 
 #'Create integrated pathway analysis report
@@ -134,20 +134,20 @@ CreateIntegratedPathwayDoc_slides <- function(mSetObj = NA) {
         "# Pathway Analysis Results\n\n",
         "---\n\n"
     )
-    cat(overviewSlides, file = rmdFile, append = TRUE, sep = "\n")
+    .buffer_add(overviewSlides, collapse="\n")
 
     # Pathway Overview Slide
     if(!is.null(mSetObj$imgSet$path.overview)) {
         overviewSlideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$path.overview, "Overview of all pathways correlated with your data.")
-        cat(overviewSlideContent, file = rmdFile, append = TRUE)
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(overviewSlideContent)
+        .buffer_add("\n\n---\n\n")
     }
 
     # Detailed Pathway View Slide
     if(!is.null(mSetObj$imgSet$pathinteg.path)) {
         detailedPathwaySlideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$pathinteg.path, "Detailed view of a selected pathway with highlighted nodes.")
-        cat(detailedPathwaySlideContent, file = rmdFile, append = TRUE)
-        cat("\n\n---\n\n", file = rmdFile, append = TRUE)
+        .buffer_add(detailedPathwaySlideContent)
+        .buffer_add("\n\n---\n\n")
     }
 
     # Enriched Pathways Table
@@ -161,7 +161,7 @@ CreateIntegratedPathwayDoc_slides <- function(mSetObj = NA) {
             "```\n",
             "---\n\n"
         )
-        cat(enrichedPathwaysTableContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(enrichedPathwaysTableContent, collapse="\n")
     }
 
     # Pathway Mapping Details Table
@@ -175,6 +175,6 @@ CreateIntegratedPathwayDoc_slides <- function(mSetObj = NA) {
             "```\n",
             "---\n\n"
         )
-        cat(pathwayDetailsTableContent, file = rmdFile, append = TRUE, sep = "\n")
+        .buffer_add(pathwayDetailsTableContent, collapse="\n")
     }
 }

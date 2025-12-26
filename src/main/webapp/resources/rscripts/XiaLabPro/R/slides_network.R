@@ -43,7 +43,7 @@ CreateNetworkExplorerIntr_slides <- function() {
     "\n\n---\n\n"  # Add slide break for R Markdown
   )
   
-    cat(descr, file=rmdFile, append=TRUE);
+    .buffer_add(descr);
 }
 
 CreateNetworkExplorerInputDoc_slides <- function(mSetObj = NA) {
@@ -88,7 +88,7 @@ CreateNetworkExplorerInputDoc_slides <- function(mSetObj = NA) {
     }
     
     # Output the slide content to R Markdown or a file
-    cat(slideContent, file=rmdFile, append=TRUE) 
+    .buffer_add(slideContent) 
 }
 
 
@@ -120,7 +120,7 @@ CreateNetworkExplorerDoc_slides <- function(mSetObj=NA){
                           "   - DSPC network\n\n",                 
                           "---\n\n")
 
-    cat(slideContent, file=rmdFile, append=TRUE) 
+    .buffer_add(slideContent) 
     CreateKeggNetDoc(mSetObj);
     createEnrichmentTable(mSetObj, "keggGlobal");
 
@@ -133,7 +133,7 @@ CreateNetworkExplorerDoc_slides <- function(mSetObj=NA){
             netSlide <- paste0("## ", net.name, "\n\n",
                                   "![", net.name, "](", net.type, ".png)\n\n", 
                                   "---\n\n")
-            cat(netSlide, file=rmdFile, append=TRUE);
+            .buffer_add(netSlide);
             createEnrichmentTable(mSetObj, net.type);
         }
     }
