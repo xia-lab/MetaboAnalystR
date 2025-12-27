@@ -52,7 +52,7 @@ CreateStatIntrSlides <- function() {
              "5. Statistical analysis and visualization",
              "  - including t-tests, ANOVA, volcano plot, PCA, PLSDA, heatmaps, Random Forests, SVM, etc.",
              "\n\n---\n\n");
-  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
+  .buffer_add(slide_text, collapse="\n")
 }
 
 CreateUNIVSlides <- function(mSetObj = NA) {
@@ -289,8 +289,8 @@ CreateOPLSDASlides <- function(mSetObj = NA) {
     }
 
     # OPLS-DA Description
-    cat(paste0("# Orthogonal-Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA)",
-               "\n\n---\n\n"), file = rmdFile, append = TRUE)
+    .buffer_add(paste0("# Orthogonal-Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA)",
+               "\n\n---\n\n"))
   
     # Score plot
     slideContent <- CreateTwoColumnFigureSlide(mSetObj$imgSet$opls.score2d, "OPLS-DA score plot of all metabolite features.")
@@ -580,10 +580,10 @@ CreateSVMSlides <- function(mSetObj = NA) {
     if(show){
     # SVM Description
     .buffer_add("## Support Vector Machine (SVM)\n\n")
-    cat("SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. ",
+    .buffer_add(paste0("SVM aims to find a nonlinear decision function in the input space by mapping the data into a higher dimensional feature space and separating it there by means of a maximum margin hyperplane. ",
         "The SVM-based recursive feature selection and classification is performed using R-SVM script. The process is performed recursively using decreasing series of feature subsets so that different classification models can be calculated. ",
         "Feature importance is evaluated based on its frequencies being selected in the best classifier identified by recursive classification and cross-validation. ",
-        "Only the top 50 features (ranked by their p values from t-tests) will be evaluated.\n\n---\n\n", file = rmdFile, append = TRUE)
+        "Only the top 50 features (ranked by their p values from t-tests) will be evaluated.\n\n---\n\n"))
   
     }
     # SVM Classification Performance

@@ -44,7 +44,8 @@
 
         <div class="layout-menu-container">
             <h:form id="sidebar-form">
-                <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
+                <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" oncomplete="PF('statusDialog').hide();" />
+                <p:remoteCommand name="generateSlidesFromJS" actionListener="#{downloader.generateReport('slides')}" onstart="PF('statusDialog').show()" oncomplete="setTimeout(function(){var btn = document.getElementById('sidebar-form:downloadButtonPptx'); if(btn){btn.click();} PF('statusDialog').hide();}, 500);" update=":sidebar-form" />
 
                 <d:menu widgetVar="diamondMenuWidget" style="text-align: center; margin-top: 10px">
 
@@ -63,15 +64,14 @@
                                 action="#{sessionBean1.goToResultPage()}"/>
                     <p:separator/>
 
-                    <p:menuitem id="m_report" icon="pi pi-fw pi-file" 
+                    <p:menuitem id="m_report" icon="pi pi-fw pi-file"
                                 value="Report"
-                                disabled="#{not fireBaseController.displayDefaultReportButton}"
                                 action="#{downloader.generateReport('html')}" 
                                 onclick="PF('statusDialog').show()" 
                                 oncomplete="PF('statusDialog').hide()" 
                                 title="Generate analysis report"
                                 ajax="false"/>
-                    <!--                                 action="#{downloader.generateReport('html')}" 
+                    <!--                                 disabled="#{not fireBaseController.displayDefaultReportButton}"
                     -->
                     <p:separator/>
                     <!--
@@ -87,17 +87,13 @@
                                 update=":sidebar-form" 
                                 oncomplete="$('#sidebar-form\\:downloadButtonPdf').click(); PF('statusDialog').hide();"/>
                     <p:separator/>
+                                                    disabled="#{not fireBaseController.displayDefaultReportButton}"
+
                     -->
-                    <p:menuitem id="m_slide" icon="pi pi-fw pi-images" 
+                    <p:menuitem id="m_slide" icon="pi pi-fw pi-images"
                                 value="Slides"
-                                disabled="#{not fireBaseController.displayDefaultReportButton}"
-                                actionListener="#{downloader.generateReport('slides')}" 
                                 title="Generate analysis slides"
-                                onclick="PF('statusDialog').show();" 
-                                process="@this"
-                                ajax="true"
-                                update=":sidebar-form"
-                                oncomplete="$('#sidebar-form\\:downloadButtonPptx').click(); PF('statusDialog').hide();"/>
+                                onclick="document.getElementById('sidebar-form:generateAndDownloadPptx').click(); return false;"/>
                     <p:separator/>
 
                     <p:menuitem id="m_view" icon="pi pi-fw pi-cog" 
@@ -133,12 +129,28 @@
                                 onclick="document.getElementById('safeLogoutBtn').click()"/>
                 </d:menu>
 
+                <p:commandButton id="generateAndDownloadPptx"
+                                 value="Generate and Download PPTX"
+                                 style="display:none"
+                                 ajax="false"
+                                 icon="pi pi-download"
+                                 actionListener="#{downloader.generateReportByModule('NA','slides')}"
+                                 onclick="PrimeFaces.monitorDownload(
+                                                 function () {
+                                                     PF('statusDialog').show();
+                                                 },
+                                                 function () {
+                                                     PF('statusDialog').hide();
+                                                 });" >
+                    <p:fileDownload value="#{downloader.getAnalysisReport('pptx')}" contentDisposition="attachment"/>
+                </p:commandButton>
+
                 <p:commandButton id="downloadButtonPptx"
                                  value="Download PPTX"
-                                 style="display:none"          
-                                 ajax="false"                 
+                                 style="display:none"
+                                 ajax="false"
                                  icon="pi pi-download"
-                                 actionListener="#{downloader.preparePptx}"  
+                                 actionListener="#{downloader.preparePptx}"
                                  onclick="PrimeFaces.monitorDownload(
                                                  function () {
                                                      PF('statusDialog').show();

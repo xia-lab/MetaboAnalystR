@@ -35,7 +35,7 @@ CreateMultiFacIntr_slides <- function() {
              "4. Data normalization",
              "5. Statistical analysis and visualization",
              "\n\n---\n\n");
-  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
+  .buffer_add(slide_text, collapse="\n")
 }
 
 CreateMultiFacIntr_slides <- function() {
@@ -48,7 +48,7 @@ CreateMultiFacIntr_slides <- function() {
              "5. Statistical analysis and visualization",
              "  - including metadata overview, covariate adjustment, PCA, heatmaps, Random Forests, etc.",
              "\n\n---\n\n");
-  .buffer_add(slide_text, file = rmdFile, append = TRUE, collapse="\n")
+  .buffer_add(slide_text, collapse="\n")
 }
 
 #'Create report of analyses (Met Pathway)

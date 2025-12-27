@@ -182,9 +182,9 @@ CreateMetaMummichogResults_slides <- function(mSetObj){
 
       # Results Slide
       table.count <<- table.count+1;
-      cat(paste0("## Table ", 
-                 table.count, 
-                 ". Results of the Pathway-Level Integration Meta-Analysis."), file=rmdFile, append=TRUE, sep="\n");
+      .buffer_add(paste0("## Table ",
+                 table.count,
+                 ". Results of the Pathway-Level Integration Meta-Analysis.\n"));
 
         cmdhist2 <- c(
           "```{r table_mmm1, echo=FALSE, out.width = '100%', results='asis', out.height= '100%', warning=FALSE}",

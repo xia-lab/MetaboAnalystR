@@ -214,9 +214,9 @@ CreateMetaAnalysisOutput_slides <- function(mSetObj = NA) {
 
     # Table for Venn Diagram DE Features
     if(!is.null(mSetObj$analSet$sigfeat.matrix)){
-        cat(paste0("Table ", 
-                 table.count, 
-                 ". DE features by individual study and from meta-analysis.", file = rmdFile, append = TRUE))
+        .buffer_add(paste0("Table ",
+                 table.count,
+                 ". DE features by individual study and from meta-analysis.\n"))
         table.count <<- table.count+1;
         
         cmdhist2 <- c(
