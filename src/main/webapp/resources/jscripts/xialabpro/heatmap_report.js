@@ -4,12 +4,12 @@ function initReportFunctions() {
         handleEvent(false);
     });
 
+/*
     var element = $(parent.window.document).find("#sidebar-form\\:m_report");
-
-    element.bind('click keypress', function (event) {
-        handleEvent(true);
+    element.unbind('click keypress').bind('click keypress', function (event) {
+        handleSaveEvent(true);
     });
-
+     * */
 }
 
 function handleEvent(sendJsonAsync) {

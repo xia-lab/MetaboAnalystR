@@ -260,21 +260,36 @@ if (!is.null(mSetObj$imgSet$pca_score2d_meta) &&
   .buffer_add("\n\n", collapse="\n")
 }
 
+  # 3D iPCA plot - show actual image or placeholder
   if(!is.null(mSetObj$imgSet$reportSet$ipca_3d) && safeFileExists(mSetObj$imgSet$reportSet$ipca_3d)){
-    
+
     reportLinks <- getReportLinks(link, "ipca_3d");
     .buffer_add(reportLinks);
     .buffer_add("\n\n");
-    fig2 <- c(paste0("```{r figure_ipca3, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(), 
+    fig2 <- c(paste0("```{r figure_ipca3, echo=FALSE, fig.pos='H', fig.cap='Figure ", getFigCount(),
                      ". Screenshot of interactive 3-D plot.',",
-                     " fig.lp='", 
-                     mSetObj$imgSet$reportSet$ipca_3d, 
+                     " fig.lp='",
+                     mSetObj$imgSet$reportSet$ipca_3d,
                      "', out.width = '", getFigWidth(mSetObj,width="720px", widthPct="100%"), "'}"),
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$ipca_3d)",
               "```",
               "\n\n");
     .buffer_add(fig2, collapse="\n");
     .buffer_add("\n\n", collapse="\n");
+  } else {
+    # Placeholder for 3D iPCA plot - not yet generated
+    link <- GetSharingLink(mSetObj)
+    placeholderLinks <- getPlaceholderLinks(link, "ipca_3d")
+    placeholderPath <- getPlaceholderImagePath()
+    fig_num <- getFigCount()
+
+    .buffer_add("\n\n");
+    .buffer_add(paste0("**Figure ", fig_num, ": Interactive 3-D iPCA plot (not yet generated)**\n\n"))
+    .buffer_add('<div style="text-align: center;">\n')
+    .buffer_add(paste0('  <img src="', placeholderPath, '" style="max-width: 100%; height: auto;">\n'))
+    .buffer_add('</div>\n\n')
+    .buffer_add(placeholderLinks);
+    .buffer_add("\n\n");
   }
 }
 

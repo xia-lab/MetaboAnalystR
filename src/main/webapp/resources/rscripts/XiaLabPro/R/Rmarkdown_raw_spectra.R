@@ -444,8 +444,9 @@ CreatePCA3D<- function(){
 
   print(paste0(mSetObj$imgSet$reportSet$scores_3d));
 
+  # 3D PCA scores plot - show actual image or placeholder
   if(!is.null(mSetObj$imgSet$reportSet$scores_3d) && safeFileExists(mSetObj$imgSet$reportSet$scores_3d)){
-    fig <- c(paste0("```{r figure_pca3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pcaraw3d, 
+    fig <- c(paste0("```{r figure_pca3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pcaraw3d,
                     ". 3D-PCA score. Samples from different groups are marked with different colors.', ",
                     " fig.lp='scores_3d.png', out.width = '", getFigWidth(mSetObj), "'}"),
              "safeIncludeGraphics(mSetObj$imgSet$reportSet$scores_3d)",
@@ -455,10 +456,18 @@ CreatePCA3D<- function(){
     .buffer_add("\n\n", collapse="\n");
 
   } else {
-    descr3 <- c("\n\nNo 3D-PCA Score is presented. Please try to explore from result page.");
-    .buffer_add(descr3);
-    .buffer_add("\n");
-    .buffer_add("\n\n", collapse="\n");
+    # Placeholder for 3D PCA scores plot - not yet generated
+    link <- GetSharingLink(mSetObj)
+    placeholderLinks <- getPlaceholderLinks(link, "scores_3d")
+    placeholderPath <- getPlaceholderImagePath()
+
+    .buffer_add("\n\n");
+    .buffer_add(paste0("**Figure ", fig_pcaraw3d, ": Interactive 3-D PCA scores plot (not yet generated)**\n\n"))
+    .buffer_add('<div style="text-align: center;">\n')
+    .buffer_add(paste0('  <img src="', placeholderPath, '" style="max-width: 100%; height: auto;">\n'))
+    .buffer_add('</div>\n\n')
+    .buffer_add(placeholderLinks);
+    .buffer_add("\n\n");
   }
 
   ## Loading plot

@@ -36,6 +36,7 @@
                     textColor = "white";
                     gridColor = 'rgb(200, 200, 200,0.2)';
                 }
+                var self = this;
                 $.getJSON(usr + "/pointMap.json", function (data) {
 
                     pointMap = data;
@@ -100,13 +101,22 @@
                             }
                         }
                     };
-                    $.extend(true, this.cfg.config, options);
-                    if (this.chart) {
-                        this.chart.update();
+                    $.extend(true, self.cfg.config, options);
+
+                    // Wait for chart to be initialized if it's not ready yet
+                    if (self.chart) {
+                        self.chart.update();
                     } else {
-                        console.error("Chart.js instance not found on PrimeFaces widget.");
+                        // Chart might not be initialized yet, retry after a short delay
+                        setTimeout(function() {
+                            if (self.chart) {
+                                self.chart.update();
+                            } else {
+                                console.warn("Chart.js instance not yet available, skipping update.");
+                            }
+                        }, 100);
                     }
-                }.bind(this));
+                });
             }
             function setupTheme() {
                 var button = $("button[id$='toggleTm']");

@@ -44,6 +44,7 @@
 
         <div class="layout-menu-container">
             <h:form id="sidebar-form">
+                <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
 
                 <d:menu widgetVar="diamondMenuWidget" style="text-align: center; margin-top: 10px">
 
@@ -54,7 +55,6 @@
                                 action="#{fireBaseController.toggleOnDirectQuit('stay')}" 
                                 oncomplete="PF('fireSaveDialog').show()"
                                 title="Save current project/workflow/data"/>
-                    <p:remoteCommand name="generateReportFromJS" action="#{downloader.generateReport('html')}" onstart="PF('statusDialog').show()" />
                     <p:separator/>
 
                     <p:menuitem id="m_download" icon="pi pi-fw pi-chart-line" 
@@ -71,6 +71,8 @@
                                 oncomplete="PF('statusDialog').hide()" 
                                 title="Generate analysis report"
                                 ajax="false"/>
+                    <!--                                 action="#{downloader.generateReport('html')}" 
+                    -->
                     <p:separator/>
                     <!--
                     <p:menuitem id="m_pdf" 

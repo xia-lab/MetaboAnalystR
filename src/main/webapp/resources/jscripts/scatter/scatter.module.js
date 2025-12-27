@@ -8480,7 +8480,14 @@ function sendJsonToServer(jsonData, type, generateReport) {
             console.log("Success: JSON saving");
             if (generateReport) {
                 parent.PF("statusDialog").show();
-                parent.generateReportFromJS();
+                // Call the PrimeFaces remote command from parent window
+                console.log(parent);
+                if (typeof parent.generateReportFromJS === 'function') {
+                    parent.generateReportFromJS();
+                } else {
+                    // Try calling through PrimeFaces remote command directly
+                    parent.window.PrimeFaces.ab({s: "sidebar-form:generateReportFromJS", f: "sidebar-form"});
+                }
             } else {
                 parent.PF("statusDialog").hide();
             }
@@ -8658,11 +8665,13 @@ function initReportFunctions() {
     $('#reportBn').bind('click keypress', function (event) {
         handleSaveEvent(false);
     });
-
+/*
     var element = $(parent.window.document).find("#sidebar-form\\:m_report");
     element.unbind('click keypress').bind('click keypress', function (event) {
         handleSaveEvent(true);
     });
+     * */
+ 
 }
 
 function captureImageWithLegend(dataURL, type) {

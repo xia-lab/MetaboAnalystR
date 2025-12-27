@@ -171,15 +171,29 @@ PrepareHTMLReport <- function(mSetObj = NA, usrName, link = "NA", module = "NA")
     if(file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools")){ # for ubuntu with rstudio
         pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools";
     } else {
-        mSetObj <- .get.mSet(mSetObj);
+        warning("You must install pandoc or specify the path here !")
     }
-    
-    if (!is.null(mSetObj$dataSet$meta.info)) {
-        print(head(mSetObj$dataSet$meta.info))  
+    if(file.exists("/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64/pandoc")){
+        pandoc_path <- "/usr/lib/rstudio/resources/app/bin/quarto/bin/tools/x86_64";
     }
+  }
+  Sys.setenv(RSTUDIO_PANDOC = pandoc_path)
+  #save.image("rmd.RData");
 
   # Render the file
-  rmarkdown::render(output_file)
+  if(module != "NA"){
+    if(mSet$paramSet$report.format == "slides"){
+      rmarkdown::render(paste0("Analysis_Presentation_", module, ".Rmd"))
+    }else{
+      rmarkdown::render(paste0("Analysis_Report_", module, ".Rmd"))
+    }
+  }else{
+    if(mSet$paramSet$report.format == "slides"){
+      rmarkdown::render("Analysis_Presentation.Rmd")
+    }else{
+      rmarkdown::render("Analysis_Report.Rmd")
+    }
+  }
 
   # Clean up memory
   .rmd_buffer <<- NULL; # Release buffer to free memory
@@ -449,7 +463,7 @@ writeLines(html_content, "custom-scripts.html")
       "options(bitmapType = 'cairo')",
       "```"
     )
-    cat(html_setup, file = rmdFile, sep = "\n", append = TRUE)
+    .buffer_add(html_setup, collapse="\n")
 
     container_css <- c(
 
@@ -931,6 +945,37 @@ getTableCount <- function(){
 getCurrentFigCount <- function(){
   fig.count <<- fig.count + 1;
   return(fig.count);
+}
+
+#' Get path to standard placeholder image for missing 3D plots
+#' @return Path to the placeholder image
+getPlaceholderImagePath <- function() {
+  # Return path to standard "image not available" placeholder
+  # This is a static PNG image in the resources directory
+  return("../../images/temp.png")
+}
+
+#' Get report links for placeholder images (centered instead of right-aligned)
+#' @param link Base sharing link
+#' @param analNavi Navigation parameter for the analysis page
+#' @return HTML or LaTeX formatted links
+getPlaceholderLinks <- function(link, analNavi=""){
+  format <- mSet$paramSet$report.format;
+  link <- escapeLatexURL(link);
+
+  if (format == "pdf") {
+    # PDF format - skip for now
+    reportLinks <- "";
+  } else {
+    # HTML format - center-aligned link
+    reportLinks <- paste0(
+      '<div style="text-align: center; margin: 10px 0;">',
+      '<a href="', link, '&analNavi=', analNavi,'" target="_top" style="font-size: 14px; padding: 8px 16px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">',
+      'Click here to view and generate this plot',
+      '</a>',
+      '</div>');
+  }
+  return(reportLinks);
 }
 
 #table.name is for select/unselect table columns, especially for pdf

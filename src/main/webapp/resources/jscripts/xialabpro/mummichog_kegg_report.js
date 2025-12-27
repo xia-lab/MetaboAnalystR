@@ -12,11 +12,12 @@ function initReportFunctions() {
         handleSaveEvent(false);
     });
 
+/*
     var element = $(parent.window.document).find("#sidebar-form\\:m_report");
-    element.bind('click keypress', function (event) {
-        //console.log("saveevent");
+    element.unbind('click keypress').bind('click keypress', function (event) {
         handleSaveEvent(true);
     });
+     * */
 
 }
 

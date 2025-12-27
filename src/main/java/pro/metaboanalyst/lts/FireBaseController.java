@@ -1357,7 +1357,7 @@ public class FireBaseController implements Serializable {
             case "pca_3d" ->
                 sb.setCurrentNaviUrl("/Secure/analysis/PCAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=4");
             case "plsda_3d" ->
-                sb.setCurrentNaviUrl("/Secure/analysis/PLSDAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=4");
+                sb.setCurrentNaviUrl("/Secure/analysis/PLSDAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=5");
             case "splsda_3d" ->
                 sb.setCurrentNaviUrl("/Secure/analysis/SparsePLSDAView.xhtml?faces-redirect=true&tabWidgetId=tabWidgetVar&activeTab=3");
             case "ipca_3d" ->

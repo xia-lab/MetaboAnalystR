@@ -48,10 +48,12 @@ function initReportFunctions() {
         handleSaveEvent(false);
     });
 
+/*
     var element = $(parent.window.document).find("#sidebar-form\\:m_report");
-    element.bind('click keypress', function (event) {
+    element.unbind('click keypress').bind('click keypress', function (event) {
         handleSaveEvent(true);
     });
+     * */
 
 }
 

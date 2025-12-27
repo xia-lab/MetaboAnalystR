@@ -666,22 +666,36 @@ CreatePCAdoc <- function(mSetObj=NA){
             "\n\n");
   .buffer_add(fig4, collapse="\n");
   .buffer_add("\n\n", collapse="\n");
-  
+
+  # 3D PCA plot - show actual image or placeholder
   if(!is.null(mSetObj$imgSet$reportSet$pca_3d) && safeFileExists(mSetObj$imgSet$reportSet$pca_3d) ){
-  reportLinks <- getReportLinks(link, "pca_3d", "pca_3d");
+    reportLinks <- getReportLinks(link, "pca_3d", "pca_3d");
 
     .buffer_add(reportLinks);
     .buffer_add("\n\n");
-    fig5 <- c(paste0("```{r figure_pca5, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_3d, 
+    fig5 <- c(paste0("```{r figure_pca5, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_3d,
                      ". Screenshot of interactive 3-D plot.',",
-                     " fig.lp='", 
-                     mSetObj$imgSet$reportSet$pca_3d, 
+                     " fig.lp='",
+                     mSetObj$imgSet$reportSet$pca_3d,
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$pca_3d)",
               "```",
               "\n\n");
     .buffer_add(fig5, collapse="\n");
     .buffer_add("\n\n", collapse="\n");
+  } else {
+    # Placeholder for 3D PCA plot - not yet generated
+    link <- GetSharingLink(mSetObj)
+    placeholderLinks <- getPlaceholderLinks(link, "pca_3d")
+    placeholderPath <- getPlaceholderImagePath()
+
+    .buffer_add("\n\n");
+    .buffer_add(paste0("**Figure ", fig_3d, ": Interactive 3-D PCA plot (not yet generated)**\n\n"))
+    .buffer_add('<div style="text-align: center;">\n')
+    .buffer_add(paste0('  <img src="', placeholderPath, '" style="max-width: 100%; height: auto;">\n'))
+    .buffer_add('</div>\n\n')
+    .buffer_add(placeholderLinks);
+    .buffer_add("\n\n");
   }
   ###
    # "\\begin{figure}[htp]",
@@ -803,23 +817,36 @@ CreatePLSdoc <- function(mSetObj=NA){
             "\n\n");
   .buffer_add(fig2, collapse="\n");
   .buffer_add("\n\n", collapse="\n");
-  
-  ### 3d
+
+  ### 3D PLS-DA plot - show actual image or placeholder
   if(!is.null(mSetObj$imgSet$reportSet$plsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$plsda_3d) ){
-  reportLinks <- getReportLinks(link, "plsda_3d");
+    reportLinks <- getReportLinks(link, "plsda_3d");
 
     .buffer_add(reportLinks);
     .buffer_add("\n\n");
-    fig3 <- c(paste0("```{r figure_pls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_3d, 
+    fig3 <- c(paste0("```{r figure_pls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_pls_3d,
                      ". Screenshot of interactive 3-D plot.',",
-                     " fig.lp='", 
-                     mSetObj$imgSet$reportSet$plsda_3d, 
+                     " fig.lp='",
+                     mSetObj$imgSet$reportSet$plsda_3d,
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$plsda_3d)",
               "```",
               "\n\n");
     .buffer_add(fig3, collapse="\n");
     .buffer_add("\n\n", collapse="\n");
+  } else {
+    # Placeholder for 3D PLS-DA plot - not yet generated
+    link <- GetSharingLink(mSetObj)
+    placeholderLinks <- getPlaceholderLinks(link, "plsda_3d")
+    placeholderPath <- getPlaceholderImagePath()
+
+    .buffer_add("\n\n");
+    .buffer_add(paste0("**Figure ", fig_pls_3d, ": Interactive 3-D PLS-DA plot (not yet generated)**\n\n"))
+    .buffer_add('<div style="text-align: center;">\n')
+    .buffer_add(paste0('  <img src="', placeholderPath, '" style="max-width: 100%; height: auto;">\n'))
+    .buffer_add('</div>\n\n')
+    .buffer_add(placeholderLinks);
+    .buffer_add("\n\n");
   }
   
   ### loading
@@ -999,23 +1026,36 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
             "\n\n");
   .buffer_add(fig3, collapse="\n");
   .buffer_add("\n\n", collapse="\n");
-  
-  ## 3d score plot
+
+  ## 3D SPLS-DA plot - show actual image or placeholder
   if(!is.null(mSetObj$imgSet$reportSet$splsda_3d) && safeFileExists(mSetObj$imgSet$reportSet$splsda_3d) ){
-  reportLinks <- getReportLinks(link, "splsda_3d");
+    reportLinks <- getReportLinks(link, "splsda_3d");
 
     .buffer_add(reportLinks);
     .buffer_add("\n\n");
-    fig4 <- c(paste0("```{r figure_spls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_3d, 
+    fig4 <- c(paste0("```{r figure_spls_3d, echo=FALSE, fig.pos='H', fig.cap='Figure ", fig_spls_3d,
                      ". Screenshot of interactive 3-D plot.',",
-                     " fig.lp='", 
-                     mSetObj$imgSet$reportSet$splsda_3d, 
+                     " fig.lp='",
+                     mSetObj$imgSet$reportSet$splsda_3d,
                      "', out.width = '", getFigWidth(mSetObj), "'}"),
               "safeIncludeGraphics(mSetObj$imgSet$reportSet$splsda_3d)",
               "```",
               "\n\n");
     .buffer_add(fig4, collapse="\n");
     .buffer_add("\n\n", collapse="\n");
+  } else {
+    # Placeholder for 3D sPLS-DA plot - not yet generated
+    link <- GetSharingLink(mSetObj)
+    placeholderLinks <- getPlaceholderLinks(link, "splsda_3d")
+    placeholderPath <- getPlaceholderImagePath()
+
+    .buffer_add("\n\n");
+    .buffer_add(paste0("**Figure ", fig_spls_3d, ": Interactive 3-D sPLS-DA plot (not yet generated)**\n\n"))
+    .buffer_add('<div style="text-align: center;">\n')
+    .buffer_add(paste0('  <img src="', placeholderPath, '" style="max-width: 100%; height: auto;">\n'))
+    .buffer_add('</div>\n\n')
+    .buffer_add(placeholderLinks);
+    .buffer_add("\n\n");
   }
   
   ## cross-validation
