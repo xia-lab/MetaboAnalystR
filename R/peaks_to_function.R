@@ -4201,6 +4201,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
 
 PrepareIntegCMPDList <- function(mSetObj) {
   CMPDSet <- NULL;
+  mSetObj <- .get.mSet(mSetObj);
   my.cmpds <- RJSONIO::fromJSON(mSetObj$mum_nm);
   CMPDSet <- unique(unlist(my.cmpds[["hits.sig"]]));
   return(CMPDSet)
@@ -4210,7 +4211,6 @@ Prepare4IntegNetwork <- function(mSetObj = NA, netLib = "global"){
   mSetObj <- .get.mSet(mSetObj);
   # mSet <<- mSetObj <- NULL;
   # mSetObj <- InitDataObjects("conc", "network", FALSE)
-
   mSetObj <- SetOrganism(mSetObj, "hsa")
   cmpdList <- PrepareIntegCMPDList(mSetObj)
   cmpdList <- paste(cmpdList, collapse = "\n")
@@ -4222,11 +4222,11 @@ Prepare4IntegNetwork <- function(mSetObj = NA, netLib = "global"){
   mSetObj <- PrepareKeggQueryJson(mSetObj);
   mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(netLib != "global") {
     OrganizeJsonforNextwork(mSetObj)
   }
-  
+
   return(.set.mSet(mSetObj))
 }
 
