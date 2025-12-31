@@ -428,8 +428,6 @@ sam.plot2 <- function (object, delta, pos.stats = NULL, sig.col = 3, xlim = NULL
     ylim = NULL, main = NULL, xlab = NULL, ylab = NULL, pty = "s", 
     lab = c(10, 10, 7), pch = NULL, sig.cex = 1, ...) 
 {
-    if (!is(object, "SAM")) 
-        stop("object must be an object of class SAM.")
     if (is.null(pos.stats)) 
         pos.stats <- ifelse(all(object@d >= 0, na.rm = TRUE), 
             2, 1)

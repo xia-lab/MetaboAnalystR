@@ -384,8 +384,6 @@ SetDesignType <-function(mSetObj=NA, design){
 RecordRCommand <- function(mSetObj=NA, cmd){
   mSetObj <- .get.mSet(mSetObj); 
   mSetObj$cmdSet <- c(mSetObj$cmdSet, cmd);
-  #write(cmd, file = "Rhistory.R", append = TRUE);
-  #cat(cmd, "\n", file = "Rhistory.R", append = TRUE);
   return(.set.mSet(mSetObj));
 }
 
