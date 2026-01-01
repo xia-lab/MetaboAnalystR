@@ -9,21 +9,29 @@
 
     <p:panel styleClass="myPanel myDashboard" header="Univariate Statistics" toggleable="true" toggleSpeed="500" 
              class="surface-card text-800"
-             rendered="#{empty rocAnalBean.featureBeans and (not empty detailsBean.listModelAnova or not empty detailsBean.listModelVolcano)}">
-        <h:panelGroup rendered="#{not empty detailsBean.listModelAnova}">
-            <div style="text-align: right; margin-bottom: 10px;">
-                <p:commandButton value="Download"
-                                 ajax="false"
-                                 icon="pi pi-download"
-                                 style="margin-bottom: 10px;">
-                    <p:fileDownload value="#{detailsBean.detailFileAnova}" />
-                </p:commandButton>
-            </div>
-            <ui:include src="./stat/_AnovaTable.xhtml" />
-        </h:panelGroup>
-        <h:panelGroup rendered="#{not empty detailsBean.listModelVolcano}">
-            <ui:include src="./stat/_VolcanoTable.xhtml" />
-        </h:panelGroup>
+             rendered="#{empty rocAnalBean.featureBeans and (not empty detailsBean.listModelAnova or not empty detailsBean.listModelVolcano or not empty detailsBean.listModelFc or not empty detailsBean.listModelTt)}">
+        <p:tabView id="acUni" widgetVar="acVarUni">
+            <p:tab title="ANOVA" rendered="#{not empty detailsBean.listModelAnova}">
+                <div style="text-align: right; margin-bottom: 10px;">
+                    <p:commandButton value="Download"
+                                     ajax="false"
+                                     icon="pi pi-download"
+                                     style="margin-bottom: 10px;">
+                        <p:fileDownload value="#{detailsBean.detailFileAnova}" />
+                    </p:commandButton>
+                </div>
+                <ui:include src="./stat/_AnovaTable.xhtml" />
+            </p:tab>
+            <p:tab title="Fold Change" rendered="#{not empty detailsBean.listModelFc}">
+                <ui:include src="./stat/_FCTable.xhtml" />
+            </p:tab>
+            <p:tab title="T-Test" rendered="#{not empty detailsBean.listModelTt}">
+                <ui:include src="./stat/_TTestTable.xhtml" />
+            </p:tab>
+            <p:tab title="Volcano" rendered="#{not empty detailsBean.listModelVolcano}">
+                <ui:include src="./stat/_VolcanoTable.xhtml" />
+            </p:tab>
+        </p:tabView>
     </p:panel>
 
 
@@ -78,4 +86,3 @@
     </p:panel>
 
 </ui:composition>
-

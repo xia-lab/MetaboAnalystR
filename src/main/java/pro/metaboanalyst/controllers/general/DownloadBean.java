@@ -1369,6 +1369,8 @@ public class DownloadBean implements Serializable {
         if (containsModule("stat")) {
             //if (naviContainsUrl("/Secure/analysis/VolcanoView.xhtml")) {
             dtb.setInit(false);
+            dtb.setupDetailsTable(true, "fc");
+            dtb.setupDetailsTable(true, "tt");
             dtb.setupDetailsTable(true, "volcano");
             //}else if (naviContainsUrl("/Secure/analysis/PLSDAView.xhtml")) {
             dtb.setupDetailsTable(true, "pls.vip");

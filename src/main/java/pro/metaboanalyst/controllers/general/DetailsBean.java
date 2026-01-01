@@ -86,6 +86,14 @@ public class DetailsBean implements Serializable {
     private ColumnBean[] colVisVolcano = new ColumnBean[maxColNum];
     private ListDataModel<FeatureBean> listModelVolcano = null;
 
+    private String fileNameFc = "";
+    private ColumnBean[] colVisFc = new ColumnBean[maxColNum];
+    private ListDataModel<FeatureBean> listModelFc = null;
+
+    private String fileNameTt = "";
+    private ColumnBean[] colVisTt = new ColumnBean[maxColNum];
+    private ListDataModel<FeatureBean> listModelTt = null;
+
     private String fileNamePLS = "";
     private ColumnBean[] colVisPLS = new ColumnBean[maxColNum];
     private ListDataModel<FeatureBean> listModelPLS = null;
@@ -138,6 +146,8 @@ public class DetailsBean implements Serializable {
     public void cleanup() {
         listModel = null;
         listModelVolcano = null;
+        listModelFc = null;
+        listModelTt = null;
         listModelPLS = null;
         listModelOPLS = null;
         listModelPtn = null;
@@ -461,6 +471,54 @@ public class DetailsBean implements Serializable {
         this.colVisEbam = colVisEbam;
     }
 
+    public String getFileNameFc() {
+        return fileNameFc;
+    }
+
+    public void setFileNameFc(String fileNameFc) {
+        this.fileNameFc = fileNameFc;
+    }
+
+    public ColumnBean[] getColVisFc() {
+        return colVisFc;
+    }
+
+    public void setColVisFc(ColumnBean[] colVisFc) {
+        this.colVisFc = colVisFc;
+    }
+
+    public ListDataModel<FeatureBean> getListModelFc() {
+        return listModelFc;
+    }
+
+    public void setListModelFc(ListDataModel<FeatureBean> listModelFc) {
+        this.listModelFc = listModelFc;
+    }
+
+    public String getFileNameTt() {
+        return fileNameTt;
+    }
+
+    public void setFileNameTt(String fileNameTt) {
+        this.fileNameTt = fileNameTt;
+    }
+
+    public ColumnBean[] getColVisTt() {
+        return colVisTt;
+    }
+
+    public void setColVisTt(ColumnBean[] colVisTt) {
+        this.colVisTt = colVisTt;
+    }
+
+    public ListDataModel<FeatureBean> getListModelTt() {
+        return listModelTt;
+    }
+
+    public void setListModelTt(ListDataModel<FeatureBean> listModelTt) {
+        this.listModelTt = listModelTt;
+    }
+
     public ListDataModel<FeatureBean> getListModelEbam() {
         return listModelEbam;
     }
@@ -748,6 +806,22 @@ public class DetailsBean implements Serializable {
     public String getColVolcanoHeader(int inx) {
         if (colVisVolcano[inx] != null) {
             return colVisVolcano[inx].getName();
+        } else {
+            return "";
+        }
+    }
+
+    public String getColHeaderFc(int inx) {
+        if (colVisFc[inx] != null) {
+            return colVisFc[inx].getName();
+        } else {
+            return "";
+        }
+    }
+
+    public String getColHeaderTt(int inx) {
+        if (colVisTt[inx] != null) {
+            return colVisTt[inx].getName();
         } else {
             return "";
         }
@@ -1081,6 +1155,14 @@ public class DetailsBean implements Serializable {
             listModelVolcano = listModel;
             colVisVolcano = colVis;
             fileNameVolcano = fileName;
+        } else if (from.equals("fc")) {
+            listModelFc = listModel;
+            colVisFc = colVis;
+            fileNameFc = fileName;
+        } else if (from.equals("tt")) {
+            listModelTt = listModel;
+            colVisTt = colVis;
+            fileNameTt = fileName;
         } else if (from.startsWith("pls")) {
             listModelPLS = listModel;
             colVisPLS = colVis;
@@ -1177,6 +1259,14 @@ public class DetailsBean implements Serializable {
 
     public StreamedContent getDetailFileVolcano() {
         return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + fileNameVolcano);
+    }
+
+    public StreamedContent getDetailFileFc() {
+        return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + fileNameFc);
+    }
+
+    public StreamedContent getDetailFileTt() {
+        return DataUtils.getDownloadFile(sb.getCurrentUser().getHomeDir() + File.separator + fileNameTt);
     }
 
     public StreamedContent getDetailFilePLS() {
