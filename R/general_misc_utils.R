@@ -1543,6 +1543,10 @@ SaveMsetObject <- function(mSetObj=NA){
 }
 
 GetSampleNum <- function(){
-  mSetObj <- qs::qread("mSetObj_after_sanity.qs");
-  nrow(mSetObj$dataSet$meta.info);
+  if(file.exists("mSetObj_after_sanity.qs")){
+    mSetObj <- qs::qread("mSetObj_after_sanity.qs");
+    nrow(mSetObj$dataSet$meta.info);
+  } else {
+    return(0)
+  }
 }
