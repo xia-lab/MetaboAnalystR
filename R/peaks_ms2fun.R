@@ -39,9 +39,9 @@
   ref_cmpdlistn <- ref_cmpdlist[!pos_inx,];
   
   version <- mSetObj$paramSet$version;
-  
+
   # for empirical compounds
-  if(mSetObj$paramSet$mumRT & version=="v2"){
+  if(mSetObj$paramSet$mumRT && version=="v2"){
     ord_rt <- rank(mSetObj$dataSet$ret_time, ties.method = "random")
     ret_time_pos <- mSetObj$dataSet$ret_time[pos_inx];
     ret_time_rank_pos <- ord_rt[pos_inx];
@@ -334,8 +334,8 @@
   # re-order columns for output
   matched_res <- matched_res[, c(3,2,7,8,4,5)];
   colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "RT.Rank");
-  
-  if(!mSetObj$paramSet$mumRT & version=="v2"){
+
+  if(!mSetObj$paramSet$mumRT && version=="v2"){
     matched_res <- matched_res[,-(5:6)]
   }
   

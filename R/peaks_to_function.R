@@ -913,7 +913,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
   version <- mSetObj$paramSet$version;
   mSetObj$dataSet$paramSet <- mSetObj$paramSet;
-  if(mSetObj$paramSet$mumRT & version=="v2"){
+  if(mSetObj$paramSet$mumRT && version=="v2"){
     mSetObj <- .init.RT.Permutations(mSetObj, permNum)
   } else {
     mSetObj <- .init.Permutations(mSetObj, permNum)
@@ -1276,7 +1276,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   }
 
-  if(mSetObj$paramSet$mumRT & version=="v2"){
+  if(mSetObj$paramSet$mumRT && version=="v2"){
     # only for empirical compounds
     if(metaLevel %in% c("ec", "pathway", "pooled")){
       # map cpds to empirical cpds
@@ -1336,7 +1336,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   version <- mSetObj$paramSet$version;
   
   # for empirical compounds
-  if(mSetObj$paramSet$mumRT & version=="v2"){
+  if(mSetObj$paramSet$mumRT && version=="v2"){
     ord_rt <- rank(mSetObj$dataSet$ret_time, ties.method = "random")
     ret_time_pos <- mSetObj$dataSet$ret_time[pos_inx];
     ret_time_rank_pos <- ord_rt[pos_inx];
@@ -1502,16 +1502,16 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   # re-order columns for output
   matched_res <- matched_res[, c(3,2,7,8,4,5)];
   colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "RT.Rank");
-  
-  if(!mSetObj$paramSet$mumRT & version=="v2"){
+
+  if(!mSetObj$paramSet$mumRT && version=="v2"){
     matched_res <- matched_res[,-(5:6)]
   }
   
   #print(paste0(length(unique(matched_res[,2])), " matched compounds! cpd2mz"))
   
   # now create empirical compounds if necessary!
-  # 1 compound matches to multiple m/z, filter by RT 
-  if(mSetObj$paramSet$mumRT & version=="v2"){
+  # 1 compound matches to multiple m/z, filter by RT
+  if(mSetObj$paramSet$mumRT && version=="v2"){
     start <- Sys.time()
     # mz, ion
     empirical.cpd.list <- split(matched_res[,c(1,3,5,6)], matched_res[,2]); # split mz, ion and rt by compound
@@ -1696,8 +1696,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   # now update expr. profile
   matched_mz <- matched_res[,1];
   matched_ts <- mSetObj$dataSet$expr_dic[matched_mz];
-  
-  if(mSetObj$paramSet$mumRT & version=="v2") { # RT need to be in EC space
+
+  if(mSetObj$paramSet$mumRT && version=="v2") { # RT need to be in EC space
     # first create ecpd to expression dict
     ec.exp.mat <- data.frame(key=matched_res[,6], value=as.numeric(matched_ts), stringsAsFactors = F)
     ec_exp_dict <- Convert2Dictionary(ec.exp.mat);
@@ -2031,9 +2031,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     rt_tol_rank <- length(all_ref_mz) * mSetObj$dataSet$rt_frac
     
     # now create empirical compounds if necessary!
-    # 1 compound matches to multiple m/z, filter by RT 
-    if(mSetObj$paramSet$mumRT & version=="v2"){
-      
+    # 1 compound matches to multiple m/z, filter by RT
+    if(mSetObj$paramSet$mumRT && version=="v2"){
+
       start <- Sys.time()
       empirical.cpd.list <- data.table:::split.data.table(matched_res, by="Matched.Compound", sorted = TRUE); # split all info by compound
       empirical.cpds2cpds <- vector(length=(length(empirical.cpd.list)), "list")
@@ -2358,9 +2358,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   sig.size <- length(input_mzlist);
   mSetObj$dataSet$N <- sig.size;
   mSetObj$dataSet$input_mzlist <- input_mzlist
-  
-  if(all(mumRT) & version=="v2"){ # RT need to be in EC space
-    
+
+  if(all(mumRT) && version=="v2"){ # RT need to be in EC space
+
     # for GSEA
     # need to merge t-scores if same m/z in the data
     if(rank.metric == "mean"){     # default using the mean

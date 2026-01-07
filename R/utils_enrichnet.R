@@ -251,7 +251,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   # Create edges
   
-  e.df <- as_data_frame(g, what = "edges")  # gives from / to / weight
+  e.df <- igraph::as_data_frame(g, what = "edges")  # gives from / to / weight
   
   scale01   <- function(x) (x - min(x)) / (max(x) - min(x) + 1e-9)
   #e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 0));
