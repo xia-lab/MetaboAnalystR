@@ -145,7 +145,11 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     fig$x[[1]][[1]]$marker$line$size <- 1;
     return(fig);
   }else{
+    # Order by absolute fold change and label top 5 features
+    fc_data <- fc_data[order(-abs(fc_data$y)), ]
+    fc_data$top_label <- ifelse(seq_along(fc_data$y) <= 5, fc_data$label, NA)
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(fc_data, !is.na(top_label)))
     print(p);
     dev.off();
     return(.set.mSet(mSetObj));
