@@ -312,7 +312,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     pathway.idx  <- V(bg)$name %in% rownames(enr.mat)
     
     ## (A)  TOPOLOGY score for pathway nodes  – use degree() here
-    path.deg     <- degree(bg)[ pathway.idx ]
+    path.deg     <- igraph::degree(bg)[ pathway.idx ]
     path.norm    <- my.normalize(path.deg)                       # 0–1
     V(bg)$color [ pathway.idx ] <-
       ComputeColorGradient(path.norm,  "black",  FALSE)

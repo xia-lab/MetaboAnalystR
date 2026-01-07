@@ -324,6 +324,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
                                   annotation_legend=show.annot.legend,
                                   show_rownames=includeRowNames,
                                   color=colors,
+                                  use_raster=FALSE,
                                   silent=TRUE)
   
   static_ph$tree_row$order <- rev(static_ph$tree_row$order)
@@ -341,7 +342,8 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
                      legend=show.legend,
                      annotation_legend=show.annot.legend,
                      show_rownames=includeRowNames,
-                     color=colors)
+                     color=colors,
+                     use_raster=FALSE)
 
   grDevices::dev.off()
 

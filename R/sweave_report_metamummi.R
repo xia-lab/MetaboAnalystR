@@ -11,7 +11,10 @@
 CreateMetaPathRnwReport<-function(mSetObj, usrName){
 
   CreateHeader(usrName);
-  CreateMummichogMetaAnalReport(mSetObj)
+  CreateMetaMummichogIntro();
+  CreateMetaMummichogInputDoc(mSetObj);
+  CreateMetaMummichogResults(mSetObj);
+  CreateMetaboNetDoc(mSetObj);
   CreateRHistAppendix();
   CreateFooter();
   
@@ -179,59 +182,79 @@ CreateMetaMummichogResults <- function(mSetObj){
   
   mSetObj <- .get.mSet(mSetObj);
   
-  if(mSetObj$metaLevel == "pathway"){
-    
-    if(!is.null("mSet$meta_results")){
-      descr <- c("\\section{Pathway-Level Integration Results}\n",
-                 "The aim of the Pathway-Level Integration method is to improve the biological consistency across studies to identify a robust meta-signature for the phenotype in question.",
-                 " For pathway-level integration, each individual study undergoes the steps of calculating m/z level statistics and", 
-                 " putative metabolite annotation, followed by pathway activity prediction to ultimately create a unified matrix of pathway-level results (keeping only pathways found across all-studies).", 
-                 " Pathway activity scores are then combined using one of several p-value integration methods. \n");
-      cat(descr, file=rnwFile, append=TRUE);
-    }
-    
-    if(!is.null(mSetObj$imgSet$mummi.meta.path.plot)) {
-      
-      descr <- c("\\subsection{Pathway-Level Integration Plot}\n",
-                 "The bubble plot below represents the results of the Pathway-Level Integration. The plot displays all matched pathways per study as circles.", 
-                 "The color and size of each circle corresponds to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
-                 " hits and the expected number of hits within the pathway. \n");
-      cat(descr, file=rnwFile, append=TRUE);
-      
-      fig <- c(  "\\begin{figure}[htp]",
-                 "\\begin{center}",
-                 paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$mummi.meta.path.plot,"}",sep=""),
-                 "\\caption{Summary of Pathway-Level Integration Meta-Analysis}",
-                 "\\end{center}",
-                 paste("\\label{",mSetObj$imgSet$mummi.meta.path.plot,"}", sep=""),
-                 "\\end{figure}",
-                 "\\clearpage\n\n"
-      );
-      cat(fig, file=rnwFile, append=TRUE, sep="\n");
-      
-      descr <- c("\\subsection{Pathway-Level Integration Meta-Analysis Results Table}\n",
-                 "The output of the Pathway-Level Integration Meta-Analysis consists of a table of results containing ranked pathways that are enriched in ",
-                 "the user-uploaded datasets. The table includes the raw p-values (per individual study), the mean enrichment ratio and finally the integrated p-value (Meta.P). \n");
-      cat(descr, file=rnwFile, append=TRUE);
+  if(!is.null(mSetObj$meta_results) && !is.null(mSetObj$imgSet$mummi.meta.path.plot)){
+    descr <- c("\\section{Pathway-Level Integration Results}\n",
+               "The aim of the Pathway-Level Integration method is to improve the biological consistency across studies to identify a robust meta-signature for the phenotype in question.",
+               " For pathway-level integration, each individual study undergoes the steps of calculating m/z level statistics and", 
+               " putative metabolite annotation, followed by pathway activity prediction to ultimately create a unified matrix of pathway-level results (keeping only pathways found across all-studies).", 
+               " Pathway activity scores are then combined using one of several p-value integration methods. \n");
+    cat(descr, file=rnwFile, append=TRUE);
 
-      pathMetatable<-c("<<echo=false, results=tex>>=",
-                       "CreateMummichogMetaAnalPathTable(mSet);",
-                       "@",
-                       "\\clearpage\n\n");
+    descr <- c("\\subsection{Pathway-Level Integration Plot}\n",
+               "The bubble plot below represents the results of the Pathway-Level Integration. The plot displays all matched pathways per study as circles.", 
+               "The color and size of each circle corresponds to its p-value and enrichment factor, respectively. The enrichment factor of a pathway is calculated as the ratio between the number of significant", 
+               " hits and the expected number of hits within the pathway. \n");
+    cat(descr, file=rnwFile, append=TRUE);
 
-      cat(pathMetatable, file=rnwFile, append=TRUE, sep="\n");
-      cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
-    }
-  } else {
-    
+    fig <- c(  "\\begin{figure}[htp]",
+               "\\begin{center}",
+               paste("\\includegraphics[width=1.0\\textwidth]{",mSetObj$imgSet$mummi.meta.path.plot,"}",sep=""),
+               "\\caption{Summary of Pathway-Level Integration Meta-Analysis}",
+               "\\end{center}",
+               paste("\\label{",mSetObj$imgSet$mummi.meta.path.plot,"}", sep=""),
+               "\\end{figure}",
+               "\\clearpage\n\n"
+    );
+    cat(fig, file=rnwFile, append=TRUE, sep="\n");
+
+    descr <- c("\\subsection{Pathway-Level Integration Meta-Analysis Results Table}\n",
+               "The output of the Pathway-Level Integration Meta-Analysis consists of a table of results containing ranked pathways that are enriched in ",
+               "the user-uploaded datasets. The table includes the raw p-values (per individual study), the mean enrichment ratio and finally the integrated p-value (Meta.P). \n");
+    cat(descr, file=rnwFile, append=TRUE);
+
+    pathMetatable<-c("<<echo=false, results=tex>>=",
+                     "CreateMummichogMetaAnalPathTable(mSet);",
+                     "@",
+                     "\\clearpage\n\n");
+
+    cat(pathMetatable, file=rnwFile, append=TRUE, sep="\n");
+    cat("\\clearpage", file=rnwFile, append=TRUE, sep="\n");
+  }
+
+  if(!is.null(mSetObj$mummi.resmat) || !is.null(mSetObj$mummi.gsea.resmat) || !is.null(mSetObj$integ.resmat)){
     descr <- c("\\section{Pooled Peaks Results}\n",
-               "The aim of of the Pooling Peaks method is to computationally combine the outputs from different instruments that measure the same set of samples.", 
+               "The aim of the Pooling Peaks method is to computationally combine the outputs from different instruments that measure the same set of samples.", 
                " In this case, all uploaded peaks are merged into a single input for putative compound annotation (with consideration for different mass tolerances)", 
                " followed by pathway activity prediction. This method should be used when samples are homogeneous but instruments are complementary,",  
                " for instance samples that comes from the same lab but were obtained using different columns, extraction methods or data collected using complementary LC-MS instruments. \n");
     cat(descr, file=rnwFile, append=TRUE);
-    
+
     CreateMummichogAnalysisDoc(mSetObj)
+  }
+}
+
+#'Create KEGG Global Metabolic Network section for MetaPath report
+#'@description Report generation using Sweave
+#'@param mSetObj mSetObj
+#'@export
+CreateMetaboNetDoc <- function(mSetObj){
+  mSetObj <- .get.mSet(mSetObj);
+  netPath <- mSetObj$imgSet$reportSet$network_MetaboNet;
+  if (!is.null(netPath) && file.exists(netPath)) {
+    descr <- c("\\section{Global KEGG Metabolic Network}\n",
+               "This visualization allows users to view their data in a global KEGG metabolic network. \n");
+    cat(descr, file=rnwFile, append=TRUE);
+
+    fig <- c("\\begin{figure}[htp]",
+             "\\begin{center}",
+             paste("\\includegraphics[width=1.0\\textwidth]{", netPath, "}", sep=""),
+             "\\caption{KEGG global metabolic network}",
+             "\\end{center}",
+             paste("\\label{", netPath, "}", sep=""),
+             "\\end{figure}",
+             "\\clearpage\n\n"
+    );
+    cat(fig, file=rnwFile, append=TRUE, sep="\n");
   }
 }
 
