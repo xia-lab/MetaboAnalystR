@@ -843,7 +843,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     print(plotjs)
     write(as_json, plotjs)
 
-
+    .set.mSet(mSetObj)
   mSetObj <- PlotStaticHeatMap(mSetObj, baseName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist,
                                palette, fzCol, fzRow, viewOpt = "overview", rowV = rowV, colV = colV,
                                var.inx = var.inx, border = border, grp.ave = grp.ave, show.legend = show.legend,

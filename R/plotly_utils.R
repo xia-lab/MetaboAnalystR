@@ -338,7 +338,13 @@ gg2list_new <- function(p, width = NULL, height = NULL,
     theme[[i]] <- ggplot2::calc_element(i, theme)
   }
   # Translate plot wide theme elements to plotly.js layout
-  pm <- unitConvert(theme$plot.margin, "pixels")
+
+ if(is.null(theme$plot.margin)){
+    pm<- unitConvert(theme$margins, "pixels")
+  } else {
+    pm <- unitConvert(theme$plot.margin, "pixels")
+  }
+  
   gglayout <- list(
     margin = list(t = pm[[1]], r = pm[[2]], b = pm[[3]], l = pm[[4]]),
     plot_bgcolor = toRGB(theme$panel.background$fill),

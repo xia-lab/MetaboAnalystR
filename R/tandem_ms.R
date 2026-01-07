@@ -1453,6 +1453,9 @@ createSLURMBash <- function(path_str){
   ## Prepare Configuration script for slurm running
   conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=MS2_searching\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", path_str, "/metaboanalyst_ms2_search.txt\n")
   
+  if(file.exists("/docker_marker")){
+    conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=MS2_searching\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --output=", path_str, "/metaboanalyst_ms2_search.txt\n")  
+  }
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
