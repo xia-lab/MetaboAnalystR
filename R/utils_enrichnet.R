@@ -1,6 +1,6 @@
 
 
-my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum"){
+my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed", anal.opt="mum", edgeMode="overview"){
   # save.image("enrich.RData");
   mSetObj <- .get.mSet(mSetObj);
   # Get the appropriate result matrix based on analysis type
@@ -62,15 +62,46 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     hits  <- enr.mat[, hitcol]
     
     
+  } else if (anal.opt == "msetora") {
+    enr.mat <- mSetObj$analSet$ora.mat
+    if (is.null(enr.mat) || nrow(enr.mat) == 0) {
+      AddErrMsg("No ORA enrichment results found!"); return(0)
+    }
+    pvals <- enr.mat[, "Raw p"]
+    hits  <- enr.mat[, "hits"]
+  } else if (anal.opt == "msetqea") {
+    if (!is.null(mSetObj$analSet$qea.mat)) {
+      enr.mat <- mSetObj$analSet$qea.mat
+    } else if (!is.null(mSetObj$analSet$qea.res)) {
+      enr.mat <- mSetObj$analSet$qea.res
+    } else {
+      AddErrMsg("No QEA results found!"); return(0)
+    }
+    p.col  <- grep("^(Raw p|P[_]?[vV]al|^p(.*)?value)$", colnames(enr.mat), ignore.case = TRUE, value = TRUE)[1]
+    hitcol <- grep("^(Hits|Sig[_]?Hits|Hit|Overlap)$",      colnames(enr.mat), ignore.case = TRUE, value = TRUE)[1]
+    
+    if (is.na(p.col) || is.na(hitcol)) {
+      AddErrMsg("Unable to locate p-value or hit columns in QEA results!"); return(0)
+    }
+    
+    pvals <- enr.mat[, p.col]
+    hits  <- enr.mat[, hitcol]
   }  else {
     AddErrMsg("Unknown analysis type!")
     return(0)
   }
   
-  colnames(enr.mat) <- gsub("[ .]", "_", colnames(enr.mat))   # <-- NEW
+  colnames(enr.mat) <- gsub("[ .]", "_", colnames(enr.mat))
+  if ("hits" %in% colnames(enr.mat)) {
+    colnames(enr.mat)[colnames(enr.mat) == "hits"] <- "Hits"
+  }
   
-  max.show   <- 20
+  max.show   <- if (edgeMode == "overview") 50 else 20
   sig.cutoff <- 0.05
+  use_layout_graph <- FALSE
+  layout_pos <- NULL
+  layout_node_meta <- NULL
+  layout_edges <- NULL
   
   sig.idx <- which(pvals <= sig.cutoff)
   n.sig   <- length(sig.idx)
@@ -80,11 +111,47 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
             max.show, " overall.")
   }
   
-  ## 1.  Start with all pathways ordered by p-value (smallest first)
-  ord.all   <- order(pvals)                       # indices
-  
-  ## 2.  Always keep the first `max.show` entries in that order
-  keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+  if (edgeMode == "overview" && anal.opt %in% c("msetora", "msetqea") && file.exists("msea_network.json")) {
+    layout_json <- tryCatch(rjson::fromJSON(file = "msea_network.json"), error = function(e) NULL)
+    if (!is.null(layout_json) && !is.null(layout_json$nodes) && length(layout_json$nodes) > 0) {
+      layout_names <- vapply(layout_json$nodes, function(n) {
+        if (!is.null(n$label) && nzchar(n$label)) {
+          n$label
+        } else if (!is.null(n$id) && nzchar(n$id)) {
+          n$id
+        } else {
+          ""
+        }
+      }, character(1))
+      layout_names <- layout_names[layout_names != ""]
+      keep.idx <- match(layout_names, names(pvals))
+      keep.idx <- keep.idx[!is.na(keep.idx)]
+      if (length(keep.idx) > 0) {
+        use_layout_graph <- TRUE
+        if (!is.null(layout_json$edges) && length(layout_json$edges) > 0) {
+          edge_mat <- do.call(rbind, lapply(layout_json$edges, function(e) c(e$source, e$target)))
+          colnames(edge_mat) <- c("source", "target")
+          layout_edges <- as.data.frame(edge_mat, stringsAsFactors = FALSE)
+        } else {
+          layout_edges <- data.frame(source=character(0), target=character(0), stringsAsFactors = FALSE)
+        }
+        layout_node_meta <- lapply(layout_json$nodes, function(n) {
+          list(x = n$x, y = n$y, size = n$size, color = n$color)
+        })
+        layout_pos <- lapply(layout_node_meta, function(m) c(m$x, m$y))
+        names(layout_pos) <- layout_names
+        names(layout_node_meta) <- layout_names
+      }
+    }
+  }
+
+  if (!use_layout_graph) {
+    ## 1.  Start with all pathways ordered by p-value (smallest first)
+    ord.all   <- if (edgeMode == "overview") seq_along(pvals) else order(pvals)  # indices
+    
+    ## 2.  Always keep the first `max.show` entries in that order
+    keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+  }
   
   ## 3.  Subset all objects
   enr.mat   <- enr.mat[ keep.idx , , drop = FALSE ]
@@ -107,6 +174,19 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   # Create pathway-compound mapping
   pathway.cpds <- list()
   if (anal.opt %in% c("pathora", "pathqea")) {
+    if (edgeMode == "overview" && !is.null(mSetObj$pathways) && !is.null(mSetObj$pathways$cpds)) {
+      pathway.cpds <- setNames(
+        lapply(pathway.names, function(pw) {
+          idx <- which(mSetObj$pathways$name == pw)
+          if (length(idx) > 0) {
+            unlist(mSetObj$pathways$cpds[[ idx[1] ]])
+          } else {
+            character(0)
+          }
+        }),
+        pathway.names
+      )
+    } else {
     if(anal.opt == "pathora"){
       pathway.cpds <- mSetObj$analSet$ora.hits;
     }else{
@@ -117,6 +197,23 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     
     pathway.cpds <- lapply(pathway.cpds, function(x){
       names(x)
+    });
+    }
+    
+  } else if (anal.opt %in% c("msetora", "msetqea")) {
+    if(anal.opt == "msetora"){
+      pathway.cpds <- mSetObj$analSet$ora.hits;
+    }else{
+      pathway.cpds <- mSetObj$analSet$qea.hits;
+    }
+    pathway.cpds <- Filter(length, pathway.cpds)
+    pathway.cpds <- lapply(pathway.cpds, function(x){
+      nm <- names(x)
+      if (!is.null(nm) && length(nm) > 0) {
+        nm
+      } else {
+        unname(x)
+      }
     });
     
   } else {
@@ -141,50 +238,75 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ##  Build pathway → hit list (names or original IDs)
     ## -----------------------------------------------------------------
 
-      
     pathway.cpds <- setNames(
       lapply(pathway.names, function(pw) {
         idx   <- which(mSetObj$pathways$name == pw)          # row in master table
+        if(length(idx) == 0){
+          return(character(0))
+        }
         if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
-          
-        allID <- unlist(mSetObj$pathways$emp_cpds[[ idx[1] ]])   # all IDs in pathway
+          allID <- unlist(mSetObj$pathways$emp_cpds[[ idx[1] ]])   # all IDs in pathway
         }else{
           allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
-          
         }
-        intersect(allID, sig.ids)                            # keep only sig IDs
+        if (edgeMode == "overview") {
+          allID
+        } else {
+          intersect(allID, sig.ids)                            # keep only sig IDs
+        }
       }),
       pathway.names
     )
     
   }
   
-  # Calculate overlap matrix
-  w <- matrix(NA, nrow=n, ncol=n)
-  colnames(w) <- rownames(w) <- pathway.names
-  
-  for (i in 1:n) {
-    for (j in i:n) {
-      cpds.i <- pathway.cpds[[pathway.names[i]]]
-      cpds.j <- pathway.cpds[[pathway.names[j]]]
-      w[i,j] <- overlap_ratio(list(cpds.i), list(cpds.j), overlapType)
+  overlap_cpds <- pathway.cpds
+  if (anal.opt %in% c("msetora", "msetqea") && edgeMode == "overview") {
+    if (!exists("current.msetlib")) {
+      current.msetlib <<- qs::qread("current.msetlib.qs")
+    }
+    overlap_cpds <- current.msetlib$member[pathway.names]
+    missing_names <- setdiff(pathway.names, names(overlap_cpds))
+    if (length(missing_names) > 0) {
+      for (nm in missing_names) {
+        overlap_cpds[[nm]] <- pathway.cpds[[nm]]
+      }
     }
   }
+
+  if (use_layout_graph) {
+    g <- graph_from_data_frame(layout_edges, directed=F, vertices=pathway.names)
+  } else {
+    # Calculate overlap matrix
+    w <- matrix(NA, nrow=n, ncol=n)
+    colnames(w) <- rownames(w) <- pathway.names
+    
+    for (i in 1:n) {
+      for (j in i:n) {
+        cpds.i <- overlap_cpds[[pathway.names[i]]]
+        cpds.j <- overlap_cpds[[pathway.names[j]]]
+        w[i,j] <- overlap_ratio(list(cpds.i), list(cpds.j), overlapType)
+      }
+    }
+    
+    # Create network
+    wd <- reshape::melt(w)
+    wd <- wd[wd[,1] != wd[,2],]
+    wd <- wd[!is.na(wd[,3]),]
+    
+    g <- graph_from_data_frame(wd[,-3], directed=F)
+  }
   
-  # Create network
-  wd <- reshape::melt(w)
-  wd <- wd[wd[,1] != wd[,2],]
-  wd <- wd[!is.na(wd[,3]),]
-  
-  g <- graph_from_data_frame(wd[,-3], directed=F)
-  
-  E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
-  
-  g <- delete_edges(g, E(g)[wd[,3] < 0.01])  # Remove weak connections
-  
-  if(vcount(g) == 0){
-    AddErrMsg("No connections above threshold!")
-    return(0)
+  if (!use_layout_graph) {
+    E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
+    edge_threshold <- if (edgeMode == "overview") 0.25 else 0.10
+    g <- delete_edges(g, E(g)[wd[,3] < edge_threshold])  # Remove weak connections
+    if(vcount(g) == 0){
+      AddErrMsg("No connections above threshold!")
+      return(0)
+    }
+  } else {
+    E(g)$weight <- 1
   }
   
   # Define helper functions
@@ -229,10 +351,26 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   node.colsw <- V(g)$colorw
   if(anal.opt %in% c("pathora", "pathqea")){
     pw.ids <- unname(.name2id(node.nms));
+  } else if (anal.opt %in% c("msetora", "msetqea")) {
+    pw.ids <- node.nms;
   }else{
     pw.ids <- .mumname2id(node.nms);
   }
   for(i in 1:length(node.sizes)){
+    if (!is.null(layout_pos) && node.nms[i] %in% names(layout_pos)) {
+      pos.xy[i, 1] <- layout_pos[[node.nms[i]]][1]
+      pos.xy[i, 2] <- layout_pos[[node.nms[i]]][2]
+    }
+    if (use_layout_graph && !is.null(layout_node_meta) && node.nms[i] %in% names(layout_node_meta)) {
+      meta <- layout_node_meta[[node.nms[i]]]
+      if (!is.null(meta$size)) {
+        node.sizes[i] <- meta$size
+      }
+      if (!is.null(meta$color)) {
+        node.cols[i] <- meta$color
+        node.colsw[i] <- meta$color
+      }
+    }
     nodes[[i]] <- list(
       id = node.nms[i],
       pwId= pw.ids[i],
@@ -252,18 +390,24 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   # Create edges
   
   e.df <- igraph::as_data_frame(g, what = "edges")  # gives from / to / weight
+  if (!"weight" %in% colnames(e.df)) {
+    e.df$weight <- 1
+  }
   
   scale01   <- function(x) (x - min(x)) / (max(x) - min(x) + 1e-9)
   #e.df$width <- as.numeric(rescale2NewRange((-log10(e.df$weight)), 0.5, 0));
-  e.df$width <- 0.5;
-  
-  edge.mat <- apply(
-    cbind(id     = seq_len(nrow(e.df)),
-          source = e.df$from,
-          target = e.df$to,
-          weight = e.df$weight,   # keep the raw value if you like
-          width  = e.df$width),   # **thickness for JS**
-    1, as.list)
+  if (nrow(e.df) > 0) {
+    e.df$width <- 0.5;
+    edge.mat <- apply(
+      cbind(id     = seq_len(nrow(e.df)),
+            source = e.df$from,
+            target = e.df$to,
+            weight = e.df$weight,   # keep the raw value if you like
+            width  = e.df$width),   # **thickness for JS**
+      1, as.list)
+  } else {
+    edge.mat <- list()
+  }
   
   
   # Create bipartite graph (pathways to compounds)
@@ -282,6 +426,10 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   }else if (anal.opt == "pathora") {
     sig.cpds <- unique(unlist(mSetObj$analSet$ora.hits))
   }else if (anal.opt == "pathqea") {
+    sig.cpds <- unique(unlist(mSetObj$analSet$qea.hits))
+  } else if (anal.opt == "msetora") {
+    sig.cpds <- unique(unlist(mSetObj$analSet$ora.hits))
+  } else if (anal.opt == "msetqea") {
     sig.cpds <- unique(unlist(mSetObj$analSet$qea.hits))
   }  else {
     # For GSEA, all compounds are considered
@@ -366,6 +514,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     bedge.mat <- cbind(id=paste0("b", 1:nrow(bedge.mat)), source=bedge.mat[,1], target=bedge.mat[,2])
     
   } else {
+    bg <- igraph::make_empty_graph()
     bnodes <- list()
     bedge.mat <- matrix(nrow=0, ncol=3)
   }
@@ -391,6 +540,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   if(anal.opt %in% c("pathora", "pathqea")){
     pwType <- mSetObj$pathwaylibtype; 
+    sig.cpds = "";
+  } else if (anal.opt %in% c("msetora", "msetqea")) {
+    pwType <- "mset"
     sig.cpds = "";
   }else{
     pwType <- mSetObj$lib.organism;
