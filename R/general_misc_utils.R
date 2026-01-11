@@ -1452,12 +1452,12 @@ GetPrimaryType <- function(analysis.var){
     return(primary.type);
 }
 
-PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog"){
+PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog", edgeMode="overview"){
 
     if(!exists("my.mummichog.enrich.net")){ 
         compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/utils_enrichnet.Rc"));
     }
-    return(my.enrich.net(mSetObj, netNm, overlapType, type ));
+    return(my.enrich.net(mSetObj, netNm, overlapType, type, edgeMode ));
 }
 
 PlotPCAPairSummaryMeta <- function(mSetObj = NA,
