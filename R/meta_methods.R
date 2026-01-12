@@ -541,7 +541,7 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   fc.mat <- mSetObj$analSet$fc.mat;
   pval.mat <- mSetObj$analSet$pval.mat;
   metastat.de <- mSetObj$analSet$metastat.de;
-  meta.stat <- mSetObj$analSet$metastat;
+  meta.stat <- mSetObj$analSet$meta.stat;
 
   colnms <- GetMetaResultColNames();
   if(single.type == "fc"){
@@ -565,13 +565,13 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
 
 GetMetaStat <- function(){
   mSetObj <- .get.mSet(mSetObj);
-  meta.stat <- mSetObj$analSet$metastat;
+  meta.stat <- mSetObj$analSet$meta.stat;
   return (meta.stat$stat);
 }
 
 GetMetaStatNames <- function(){
   mSetObj <- .get.mSet(mSetObj);
-  meta.stat <- mSetObj$analSet$metastat;
+  meta.stat <- mSetObj$analSet$meta.stat;
   return (names(meta.stat$stat));
 }
 
@@ -714,7 +714,7 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
   
   mSetObj <- .get.mSet(mSetObj);
   metastat.de <- mSetObj$analSet$metastat.de;
-  meta.stat <- mSetObj$analSet$metastat;
+  meta.stat <- mSetObj$analSet$meta.stat;
   mdata.all <- mSetObj$mdata.all;
   newDat <- list();
   hit.inx <- mdata.all==1;
@@ -738,13 +738,23 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
 
   sums <- unlist(lapply(metastat.de, length))
   names <- unlist(lapply(metastat.de, paste, collapse = ", "))
-  metasum <- length(meta.stat$de)
-  metaname <- paste(meta.stat$de, collapse = ", ")
-  allsums <- c(sums, metasum)
-  allnames <- c(names, metaname)
-  sigmat <- cbind(allsums, allnames)
-  colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
-  rownames(sigmat) <- c(names(metastat.de), "Meta-Analysis")
+
+  # Include meta-analysis results if available
+  if(anal.type == "metadata" & meta.selected & !is.null(meta.stat$de)){
+    metasum <- length(meta.stat$de)
+    metaname <- paste(meta.stat$de, collapse = ", ")
+    allsums <- c(sums, metasum)
+    allnames <- c(names, metaname)
+    sigmat <- cbind(allsums, allnames)
+    colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
+    rownames(sigmat) <- c(names(metastat.de), "Meta-Analysis")
+  } else {
+    allsums <- sums
+    allnames <- names
+    sigmat <- cbind(allsums, allnames)
+    colnames(sigmat) <- c("Sum of DE Features", "Names of DE Features")
+    rownames(sigmat) <- names(metastat.de)
+  }
   mSetObj$analSet$sigfeat.matrix <- sigmat;
 
   require(reshape2)
