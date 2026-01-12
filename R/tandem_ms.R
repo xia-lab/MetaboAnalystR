@@ -1524,7 +1524,7 @@ preplotAllMS2MirrorSingleSearch <- function(mSetObj=NA, ppm, mz){
     # This is a function used to pre-plotting all mirror plots in advance for report
     # Aiming to have top 200 or the ones with similarity score above 0.8 / 80
     mSetObj <- .get.mSet(mSetObj);
-    save(mSetObj, file = "mSetObj__preplotAllMS2Mirror.rda")
+    qs::qsave(mSetObj, file = "mSetObj.qs")
 
     nn_total <- length(mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]])
     if(nn_total<1){
@@ -1538,5 +1538,6 @@ preplotAllMS2MirrorSingleSearch <- function(mSetObj=NA, ppm, mz){
         compoundNm <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][i]
         plotMirror(mSetObj, i, mz, ppm, paste0("pre_mplot_", compoundNm,".png"), 150, "png", 10, 6)
     }
+    
     return(1)
 }
