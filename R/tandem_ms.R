@@ -285,6 +285,9 @@ plotMirror <- function(mSetObj=NA, featureidx = 1,
     spec_top <- spec_df
     
     ref_str <- mSetObj[["dataSet"]][["msms_result"]][[1]][["MS2refs"]][featureidx]
+    if(length(mSetObj$dataSet$frgs_result[[1]])==0){
+        return(1)
+    }
     frgs_vec <- mSetObj$dataSet$frgs_result[[1]][[featureidx]]
     if(is.na(ref_str)){
       return (1);
@@ -1513,4 +1516,27 @@ plotrawms2Mirror <- function(mSetObj=NA, feature, index){
     cat("plotrawms2Mirror == feature ===> ", feature, "\n")
     cat("plotrawms2Mirror == index   ===> ", index, "\n")
 
+}
+
+
+
+preplotAllMS2MirrorSingleSearch <- function(mSetObj=NA, ppm, mz){
+    # This is a function used to pre-plotting all mirror plots in advance for report
+    # Aiming to have top 200 or the ones with similarity score above 0.8 / 80
+    mSetObj <- .get.mSet(mSetObj);
+    save(mSetObj, file = "mSetObj__preplotAllMS2Mirror.rda")
+
+    nn_total <- length(mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]])
+    if(nn_total<1){
+        return(0)
+    }
+    ft_vec <- seq(nn_total)
+    if(nn_total>200){
+        ft_vec <- which(mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]] > 80)
+    }
+    for(i in ft_vec){
+        compoundNm <- mSetObj[["dataSet"]][["msms_result"]][[1]][["Compounds"]][i]
+        plotMirror(mSetObj, i, mz, ppm, paste0("pre_mplot_", compoundNm,".png"), 150, "png", 10, 6)
+    }
+    return(1)
 }
