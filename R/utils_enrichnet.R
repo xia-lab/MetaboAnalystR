@@ -96,7 +96,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     colnames(enr.mat)[colnames(enr.mat) == "hits"] <- "Hits"
   }
   
-  max.show   <- if (edgeMode == "overview") 50 else 20
+  max.show   <- 30
   sig.cutoff <- 0.05
   use_layout_graph <- FALSE
   layout_pos <- NULL
@@ -217,7 +217,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     });
     
   } else {
-    if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
+    if(isTRUE(mSetObj$paramSet$mumRT) && isTRUE(mSetObj$paramSet$version == "v2")){
       sig.cpds <- mSetObj$total_matched_ecpds
     }else{
       sig.cpds <- mSetObj$total_matched_cpds
@@ -244,7 +244,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
         if(length(idx) == 0){
           return(character(0))
         }
-        if(mSetObj$paramSet$mumRT & mSetObj$paramSet$version=="v2"){
+        if(isTRUE(mSetObj$paramSet$mumRT) && isTRUE(mSetObj$paramSet$version == "v2")){
           allID <- unlist(mSetObj$pathways$emp_cpds[[ idx[1] ]])   # all IDs in pathway
         }else{
           allID <- unlist(mSetObj$pathways$cpds[[ idx[1] ]])   # all IDs in pathway
@@ -299,7 +299,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   if (!use_layout_graph) {
     E(g)$weight <- wd[,3]            # wd comes from reshape::melt(w)
-    edge_threshold <- if (edgeMode == "overview") 0.25 else 0.10
+    edge_threshold <- if (edgeMode == "overview") 0.25 else 0.05
     g <- delete_edges(g, E(g)[wd[,3] < edge_threshold])  # Remove weak connections
     if(vcount(g) == 0){
       AddErrMsg("No connections above threshold!")
