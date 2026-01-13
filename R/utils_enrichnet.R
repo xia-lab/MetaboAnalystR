@@ -95,6 +95,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   if ("hits" %in% colnames(enr.mat)) {
     colnames(enr.mat)[colnames(enr.mat) == "hits"] <- "Hits"
   }
+  all_hits_raw <- hits
   
   max.show   <- 30
   sig.cutoff <- 0.05
@@ -333,11 +334,24 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   V(g)$color <- vertex_colors
   V(g)$colorw <- vertex_colorsw
   
-  # Set node sizes based on hits
-  if (all(vertex_hits == vertex_hits[1])){
+  # Set node sizes based on hits (use full-range scaling for consistency across views)
+  rescale_with_range <- function(x, min_val, max_val, from, to){
+    if (max_val == min_val) return(rep(mean(c(from, to)), length(x)))
+    (x - min_val) / (max_val - min_val) * (to - from) + from
+  }
+  vertex_hits_clean <- ifelse(is.finite(vertex_hits), vertex_hits, 0)
+  all_hits_clean <- all_hits_raw[is.finite(all_hits_raw)]
+  if (length(all_hits_clean) == 0) {
+    all_hits_clean <- 0
+  }
+  all_hits_log <- log(pmax(all_hits_clean, 0) + 1, base=10)
+  all_hit_min <- min(all_hits_log)
+  all_hit_max <- max(all_hits_log)
+  if (all(vertex_hits_clean == vertex_hits_clean[1]) || all_hit_min == all_hit_max){
     V(g)$size <- rep(12, length(vertex_hits))
   } else {
-    V(g)$size <- my.rescale(log(vertex_hits + 1, base=10), 8, 24)
+    V(g)$size <- rescale_with_range(log(pmax(vertex_hits_clean, 0) + 1, base=10),
+                                    all_hit_min, all_hit_max, 8, 20)
   }
   
   # Layout
@@ -363,9 +377,6 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     }
     if (use_layout_graph && !is.null(layout_node_meta) && node.nms[i] %in% names(layout_node_meta)) {
       meta <- layout_node_meta[[node.nms[i]]]
-      if (!is.null(meta$size)) {
-        node.sizes[i] <- meta$size
-      }
       if (!is.null(meta$color)) {
         node.cols[i] <- meta$color
         node.colsw[i] <- meta$color
@@ -478,9 +489,17 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
       }
     }
     
-    # Set sizes
+    # Set sizes (match pathway sizes to gene-set network; keep compounds by degree)
     node.dgr2 <- as.numeric(igraph::degree(bg))
     V(bg)$size <- my.rescale(log(node.dgr2 + 1, base=10), 6, 20)
+    if (length(node.sizes) > 0) {
+      sizes_by_name <- setNames(node.sizes, node.nms)
+      path_names <- V(bg)$name[pathway.idx]
+      matched_sizes <- sizes_by_name[path_names]
+      V(bg)$size[pathway.idx] <- ifelse(is.na(matched_sizes),
+                                        V(bg)$size[pathway.idx],
+                                        matched_sizes)
+    }
     
     # Layout
     pos.xy.b <- layout_nicely(bg)
