@@ -47,7 +47,13 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
     }
     
     # feature enhancement https://omicsforum.ca/t/error-in-setcurrentmsetlib-function-in-r/2058
-    if(!exists("current.msetlib") || is.null(mSetObj$analSet$msetlibname) || mSetObj$analSet$msetlibname != libname) {
+    # Also check if current.msetlib has already been processed (has $member)
+    need_reload <- !exists("current.msetlib") ||
+                   is.null(mSetObj$analSet$msetlibname) ||
+                   mSetObj$analSet$msetlibname != libname ||
+                   !is.null(current.msetlib$member);  # Already processed, need fresh load
+
+    if(need_reload) {
         destfile <- paste(libname, ".qs", sep = "");
         if(.on.public.web){
             my.qs  <- paste(rpath, "libs/msets/", destfile, sep="");

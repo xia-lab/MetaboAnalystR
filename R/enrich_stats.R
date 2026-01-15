@@ -20,7 +20,9 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   # --- 1. Prepare Query ---
   if(mSetObj$analSet$type=="msetssp"){
-    ora.vec <- mSetObj$dataSet$cmpd;
+    # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
+    # These are in the same format as nm.map$hmdb used for other ORA modes
+    ora.vec <- mSetObj$dataSet$ssp.cmpd;
   }else{
     nm.map <- GetFinalNameMap(mSetObj);
     valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
@@ -582,7 +584,8 @@ GetSSPTable<-function(mSetObj=NA){
   ssp.res<-mSetObj$analSet$ssp.mat[,-c(1,3,6)];
   rownames(ssp.res)<-mSetObj$analSet$ssp.mat[,1]
   selected.col<-rep(0, nrow(ssp.res));
-  inx<-match(mSetObj$dataSet$cmpd, mSetObj$analSet$ssp.mat[,1]);
+  # Use ssp.cmpd which contains user-selected compounds from Update.MapData()
+  inx<-match(mSetObj$dataSet$ssp.cmpd, mSetObj$analSet$ssp.mat[,1]);
   selected.col[inx]<-1;
   
   print(xtable::xtable(cbind(ssp.res, selected = selected.col),align="l|l|p{8cm}|c|c", caption="Comparison with Reference Concentrations"),
