@@ -1640,17 +1640,21 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
   
   if(anal.mode=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$ROCtest$pred.list;
+    # Ensure preds is a list (it may be a single S4 prediction object from ROCtest)
+    if(!is.list(preds)) {
+      preds <- list(preds);
+    }
     auroc <- mSetObj$analSet$ROCtest$auc.vec;
     perf <- ROCR::performance(preds[[1]], "tpr", "fpr");
     perf.avg <- ComputeAverageCurve(perf, avg.method);
-    
+
     cols <- (1:length(preds))+1;
     ROCR::plot(perf.avg@x.values[[1]], perf.avg@y.values[[1]], type="n", axes=F,
                xlim=c(0,1), ylim=c(0,1),
                xlab="1-Specificity (False positive rate)",
                ylab="Sensitivity (True positive rate)"
     );
-    
+
     box()
     axis(side=2)
     lab.at <- seq(0, 1, 0.2);
@@ -1660,23 +1664,26 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     abline(v=grid.at, lty=3, col="lightgrey");
     abline(h=grid.at, lty=3, col="lightgrey");
     lines(perf.avg@x.values[[1]], perf.avg@y.values[[1]], col=cols[1]);
-    for(i in 2:length(preds)){
-      perf <- ROCR::performance(preds[[i]], "tpr", "fpr");
-      avg <- ComputeAverageCurve(perf, avg.method);
-      lines(avg@x.values[[1]], avg@y.values[[1]], col=cols[i]);
+    # Only loop through additional models if there are more than one
+    if(length(preds) > 1) {
+      for(i in 2:length(preds)){
+        perf <- ROCR::performance(preds[[i]], "tpr", "fpr");
+        avg <- ComputeAverageCurve(perf, avg.method);
+        lines(avg@x.values[[1]], avg@y.values[[1]], col=cols[i]);
+      }
     }
-    
+
     best.inx <- which.max(auroc);
-    
+
     # now add and format legends to the bottom right corner
     feats <- c("Var.", names(preds));
     feats <- substr(feats, 1, 8);
     feats <- sprintf("%-5s", feats);
-    
+
     vals <- c("AUC", round(auroc, 3));
-    
+
     vals <- sprintf("%-8s", vals);
-    
+
     cis <- mSetObj$analSet$multiROC$auc.ci;
     cis <- c("CI", cis);
     legends <- paste(feats, vals, cis, sep="");
