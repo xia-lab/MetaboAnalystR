@@ -223,7 +223,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     }else{
       sig.cpds <- mSetObj$total_matched_cpds
     }
-    
+
     cmpd.db   <- .get.my.lib("compound_db.qs")
     kegg2name <- setNames(cmpd.db$name,  cmpd.db$kegg_id)   # "C00022" → "Pyruvate"
     name2kegg <- setNames(cmpd.db$kegg_id, cmpd.db$name)    # "Pyruvate" → "C00022"
@@ -241,7 +241,12 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
 
     pathway.cpds <- setNames(
       lapply(pathway.names, function(pw) {
+        # First try to match by name
         idx   <- which(mSetObj$pathways$name == pw)          # row in master table
+        # If no match by name, try to match by ID
+        if(length(idx) == 0 && !is.null(mSetObj$pathways$id)){
+          idx <- which(mSetObj$pathways$id == pw)
+        }
         if(length(idx) == 0){
           return(character(0))
         }
@@ -258,7 +263,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
       }),
       pathway.names
     )
-    
+
   }
   
   overlap_cpds <- pathway.cpds
@@ -456,7 +461,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
       b.mat <- rbind(b.mat, pathway.connections)
     }
   }
-  
+
   if(nrow(b.mat) > 0){
     colnames(b.mat) <- c("source", "target")
     bg <- graph_from_data_frame(b.mat, directed=F)
@@ -545,7 +550,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   } else {
     bedge.mat <- list()
   }
-  mum.version <- mSetObj$paramSet$version <- version
+  mum.version <- mSetObj$paramSet$version
   
   #if(anal.opt %in% c("pathora", "pathqea")){
   

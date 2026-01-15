@@ -3179,9 +3179,10 @@ json.res <- list(
   # order by p-values
   ord.inx <- order(res.mat[,3]);
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
-  
+
   mSetObj$mummi.gsea.resmat <- res.mat;
-  
+  mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
+
   EC.Hits <- qs::qread("pathwaysFiltered.qs")
   EC.Hits <- lapply(seq_along(EC.Hits), function(i) paste(names(EC.Hits[[i]]), collapse = ";"))
   res.mat <- cbind(res.mat, EC.Hits)
