@@ -767,18 +767,21 @@ CreatePathwayMemberTableRMD<-function(mSetObj=NA){
 
     path.ids <- rownames(res);
     hit.inx <- match(path.ids, current.kegglib$path.ids);
-    path.nms <- names(current.kegglib$path.ids)[hit.inx];  
+    path.nms <- names(current.kegglib$path.ids)[hit.inx];
 
-    hit.path.col <- hit.id.col <- hit.nm.col <- vector(mode = "list", length=length(path.ids));
+    n <- length(path.ids);
+    hit.path.col <- character(n);
+    hit.id.col <- character(n);
+    hit.nm.col <- character(n);
 
     mtable <- mSetObj$dataSet$map.table;
 
     hit.path.ids  <- names(hits.query);
 
-    for (i in 1:length(path.ids)){
-        
+    for (i in 1:n){
+
         path.id <- path.ids[i];
-        hit.path.col[i] <- path.nms[i];
+        hit.path.col[i] <- as.character(path.nms[i]);
 
         phits <- unique(hits.query[[path.id]]);
 
@@ -794,8 +797,11 @@ CreatePathwayMemberTableRMD<-function(mSetObj=NA){
         hit.nm.col[i] <- paste(msybls, collapse="; ");
     }
 
-    my.table <- cbind(hit.path.col, hit.id.col, hit.nm.col);
-    colnames(my.table) <- c("Pathway", "Hit IDs", "Hit Names");
+    my.table <- data.frame(Pathway = hit.path.col,
+                           `Hit IDs` = hit.id.col,
+                           `Hit Names` = hit.nm.col,
+                           check.names = FALSE,
+                           stringsAsFactors = FALSE);
     return(my.table);
-    
+
 }
