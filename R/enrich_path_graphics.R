@@ -268,15 +268,15 @@ setRendAttrs = function(g, AllBorder="transparent",
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPathSummary<-function(mSetObj=NA, 
-                          show.grid, 
-                          imgName, 
-                          format="png", 
-                          dpi=default.dpi, 
+PlotPathSummary<-function(mSetObj=NA,
+                          show.grid,
+                          imgName,
+                          format="png",
+                          dpi=default.dpi,
                           width=NA,
                           xlim = NA,
                           ylim = NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
 
   jointGlobal <- FALSE;
@@ -292,7 +292,7 @@ PlotPathSummary<-function(mSetObj=NA,
     x <- mSetObj$analSet$ora.mat[,8];
     y <- mSetObj$analSet$ora.mat[,4];
     names(x) <- names(y) <- rownames(mSetObj$analSet$ora.mat);
-    
+
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$ora.mat);
     }
@@ -303,14 +303,14 @@ PlotPathSummary<-function(mSetObj=NA,
     x <- mSetObj$analSet$qea.mat[,7];
     y <- mSetObj$analSet$qea.mat[,3];
     names(x) <- names(y) <- rownames(mSetObj$analSet$qea.mat);
-    
+
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$qea.mat);
     }
     mSetObj$analSet$path.qea.mat <- mSetObj$analSet$qea.mat
     rownames(mSetObj$analSet$path.qea.mat)<-GetQEA.pathNames(mSetObj);
   } else if (type == "pathinteg") { # this is integrative analysis
-    
+
     jointGlobal <- !is.null(mSetObj[["mum_nm_csv"]]);
     if(jointGlobal) {
       combo.resmat <- mSetObj$dataSet$integResGlobal;
@@ -319,7 +319,7 @@ PlotPathSummary<-function(mSetObj=NA,
       x <- -log10(combo.resmat[,6]); # y is cmpd
       y <- scales::rescale(y, c(0,4))
       x <- scales::rescale(x, c(0,4))
-      if(min(combo.resmat[,7]) ==0){combo.resmat[,7][combo.resmat[,7] ==0] <- 
+      if(min(combo.resmat[,7]) ==0){combo.resmat[,7][combo.resmat[,7] ==0] <-
         min(combo.resmat[,7][!(combo.resmat[,7] ==0)])/2}
       combo.p <- -log10(combo.resmat[,7])
       combo.p <- scales::rescale(combo.p, c(0,4))
@@ -329,11 +329,11 @@ PlotPathSummary<-function(mSetObj=NA,
       y <-  mSetObj$dataSet$path.mat[,4];
       names(x) <- names(y) <- rownames(mSetObj$dataSet$path.mat);
     }
-    
+
     if(!.on.public.web){
       path.nms <- rownames(mSetObj$analSet$jointPAMatches);
     }
-    
+
   }else{
     print(paste("Unknown analysis type: ", mSetObj$analSet$type));
     return(0);
@@ -345,14 +345,14 @@ PlotPathSummary<-function(mSetObj=NA,
   if(!jointGlobal){
     y = -log10(y);
     inx <- order(y, decreasing= T);
-    x <- x[inx]; 
+    x <- x[inx];
     y <- y[inx];
     # set circle size according to impact
     # take sqrt to increase spread out
     sqx <- sqrt(x);
     min.x<- min(sqx, na.rm = TRUE);
     max.x <- max(sqx, na.rm = TRUE);
-    
+
     if(min.x == max.x){ # only 1 value
       radi.vec <- rep(0.075, length(x));
     }else{
@@ -360,32 +360,32 @@ PlotPathSummary<-function(mSetObj=NA,
       minR <- (max.x - min.x)/160;
       radi.vec <- minR+(maxR-minR)*(sqx-min.x)/(max.x-min.x);
     }
-    
+
     bg.vec <- heat.colors(length(y));
 
   } else {
     inx <- order(combo.p, decreasing= T);
     pathnames <- combo.resmat$pathways
     combo.p <- combo.p[inx]
-    x <- x[inx]; 
+    x <- x[inx];
     y <- y[inx];
     path.nms <- pathnames[inx];
-    
+
     # set circle size based on combined pvalues
     min.x <- min(combo.p, na.rm = TRUE);
     max.x <- max(combo.p, na.rm = TRUE);
-    
+
     if(min.x == max.x){ # only 1 value
       max.x = 1.5*max.x;
       min.x = 0.5*min.x;
     }
-    
+
     maxR <- (max.x - min.x)/40;
     minR <- (max.x - min.x)/160;
     radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
     bg.vec <- heat.colors(length(combo.p));
   }
-  
+
   if(.on.public.web){
     if(mSetObj$analSet$type == "pathinteg"){
       if(jointGlobal) {
@@ -397,9 +397,9 @@ PlotPathSummary<-function(mSetObj=NA,
       path.nms <- names(current.kegglib$path.ids)[match(names(x),current.kegglib$path.ids)];
     }
   }
-  
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
+
   if(is.na(width)){
     w <- 6;
   }else if(width == 0){
@@ -409,7 +409,7 @@ PlotPathSummary<-function(mSetObj=NA,
   }
   h <- w;
   mSetObj$imgSet$path.overview<-imgName;
-  
+
   if(jointGlobal){
     xlabNM = "Enriched Pathways of Genes/Proteins";
     ylabNM = "Enriched Pathways from Peaks";
@@ -417,7 +417,7 @@ PlotPathSummary<-function(mSetObj=NA,
     xlabNM = "Pathway Impact";
     ylabNM = "-log10(p)";
   }
-  
+
   if(is.na(xlim)) {
     max_x <- max(x)
   } else {
@@ -427,7 +427,7 @@ PlotPathSummary<-function(mSetObj=NA,
       max_x <- max(x)
     }
   }
-  
+
   if(is.na(ylim)){
     max_y <- max(y)
   } else {
@@ -437,19 +437,19 @@ PlotPathSummary<-function(mSetObj=NA,
       max_y <- max(y)
     }
   }
-  
+
   # Create a data frame for ggplot
   data <- data.frame(x = x, y = y, radi = radi.vec, color = bg.vec, path = path.nms)
-  data$pval <- orig.y; 
+  data$pval <- orig.y;
   mSetObj$analSet$pathSummaryDf <- data;
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(6,5,2,3));
-  plot(x, 
-       y, 
-       type="n", 
-       axes=F, 
-       xlab=xlabNM, 
+  plot(x,
+       y,
+       type="n",
+       axes=F,
+       xlab=xlabNM,
        ylab=ylabNM,
        xlim = c(min(x), max_x),
        ylim = c(min(y), max_y)
@@ -459,9 +459,9 @@ PlotPathSummary<-function(mSetObj=NA,
   if(show.grid){
     grid(col="blue");
   }
-  
+
   symbols(x, y, add = TRUE, inches = F, circles = radi.vec, bg = bg.vec, xpd=T);
-  
+
   # convert to pixel positions, only for web interaction dpi=default.dpi
   #if(dpi == 72){
     width.px <- height.px <- w*100;
@@ -473,6 +473,96 @@ PlotPathSummary<-function(mSetObj=NA,
   tbl <- CreatePathwayMemberTableRMD(mSetObj);
   mSetObj$analSet$pathwayMemberTable <- tbl
   return(.set.mSet(mSetObj));
+}
+
+#'Plot pathway summary for slide reports using ggplot2 style
+#'@description Creates a modern ggplot2-based pathway overview plot for slide reports
+#'Same style as PlotPeaks2Paths (Mummichog) with yellow-to-red gradient and labeled top pathways
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi.
+#'@param width Input the width.
+#'@param num.labels Number of top pathways to label (default 5)
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotPathSummarySlide <- function(mSetObj=NA,
+                                  imgName,
+                                  format="png",
+                                  dpi=96,
+                                  width=NA,
+                                  num.labels=5){
+
+  mSetObj <- .get.mSet(mSetObj);
+  library(ggplot2);
+  library(ggrepel);
+
+  # Get data from pathSummaryDf if available, otherwise compute
+  if(!is.null(mSetObj$analSet$pathSummaryDf)){
+    df <- mSetObj$analSet$pathSummaryDf;
+    x <- df$x;
+    y <- df$y;
+    path.nms <- df$path;
+  } else {
+    # Fallback: compute from analysis results
+    type <- mSetObj$analSet$type;
+    if(type == "pathora"){
+      x <- mSetObj$analSet$ora.mat[,8];
+      y <- -log10(mSetObj$analSet$ora.mat[,4]);
+      path.nms <- rownames(mSetObj$analSet$ora.mat);
+    } else if(type == "pathqea") {
+      x <- mSetObj$analSet$qea.mat[,7];
+      y <- -log10(mSetObj$analSet$qea.mat[,3]);
+      path.nms <- rownames(mSetObj$analSet$qea.mat);
+    } else {
+      print("PlotPathSummarySlide requires PlotPathSummary to be called first");
+      return(mSetObj);
+    }
+    inx <- order(y, decreasing=T);
+    x <- x[inx];
+    y <- y[inx];
+    path.nms <- path.nms[inx];
+  }
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+
+  # Create data frame for plotting
+  df <- data.frame(x = x, y = y, radi = sqrt(abs(x)), path = path.nms)
+
+  # Build ggplot with same style as PlotPeaks2Paths (Mummichog)
+  p <- ggplot(df, aes(x = x, y = y)) +
+    geom_point(aes(size = radi, color = y), stroke = 0.5) +
+    scale_size_continuous(range = c(1, 5)) +
+    scale_color_gradient(low = "yellow", high = "red", name = "-log10(p)") +
+    xlab("Pathway Impact") +
+    ylab("-log10(p)") +
+    theme_minimal()
+
+  # Add text labels for top N pathways
+  if(num.labels > 0 && length(y) > 0) {
+    n_labels <- min(num.labels, length(y))
+    top_indices <- head(order(-df$y), n_labels)
+    p <- p + geom_text_repel(aes(label = path), data = df[top_indices, ], size = 3)
+  }
+
+  # Save the plot using Cairo
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  print(p);
+  dev.off();
+
+  return(imgName);
 }
 
 # Used in higher function
