@@ -861,7 +861,7 @@ GetNetsNameString <- function(){
   paste(rownames(net.stats), collapse="||");
 }
 
-UpdateNetworkLayout <- function(algo, filenm, focus){
+UpdateNetworkLayout2 <- function(algo, filenm, focus){
   # get layers
   mSetObj <- .get.mSet(mSetObj);
   res <- mSetObj$dataSet$mir.res;

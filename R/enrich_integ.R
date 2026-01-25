@@ -1438,12 +1438,15 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
 CreateIntegratedPathwayMemberTableRMD<-function(){
 
     my.table <- read.csv("jointpa_matched_features.csv", header=TRUE);
-    hit.paths <- hit.genes <- hit.cmpds <- vector(mode = "list", length=nrow(my.table));
+    n <- nrow(my.table);
+    hit.paths <- character(n);
+    hit.genes <- character(n);
+    hit.cmpds <- character(n);
 
-    for (i in 1:nrow(my.table)){
-        
-        hit.paths[i] <- my.table[i,1];
-        phits <- strsplit(my.table[i,2], "; ")[[1]];
+    for (i in 1:n){
+
+        hit.paths[i] <- as.character(my.table[i,1]);
+        phits <- strsplit(as.character(my.table[i,2]), "; ")[[1]];
         cpd.inx <- grepl("cpd:",phits);
         if(sum(cpd.inx)>0){
             cmpd.hits <- phits[cpd.inx];
@@ -1451,7 +1454,7 @@ CreateIntegratedPathwayMemberTableRMD<-function(){
             cmpd.hits <- substr(cmpd.hits, 5, nchar(cmpd.hits));
             hit.cmpds[i] <- paste(cmpd.hits, collapse="; ");
         }else{
-            hit.cmpds[i] <- ""; 
+            hit.cmpds[i] <- "";
         }
 
         if(sum(!cpd.inx)>0){
@@ -1464,8 +1467,11 @@ CreateIntegratedPathwayMemberTableRMD<-function(){
         }
     }
 
-    new.table <- cbind(hit.paths, hit.genes, hit.cmpds);
-    colnames(new.table) <- c("Pathway", "Hit Genes (Entrez ID)", "Hit Compounds (KEGG ID)");
+    new.table <- data.frame(Pathway = hit.paths,
+                            `Hit Genes (Entrez ID)` = hit.genes,
+                            `Hit Compounds (KEGG ID)` = hit.cmpds,
+                            check.names = FALSE,
+                            stringsAsFactors = FALSE);
     return(new.table);
-    
+
 }

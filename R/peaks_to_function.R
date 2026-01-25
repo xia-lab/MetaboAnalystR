@@ -576,8 +576,13 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   msg.vec <- NULL;
-  mSetObj$mum_nm <- "mummichog_query_mummichog.json"
-  mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
+  # Only set default filenames if not already set by SetPeakEnrichMethod
+  if(is.null(mSetObj$mum_nm)){
+    mSetObj$mum_nm <- "mummichog_query_mummichog.json"
+  }
+  if(is.null(mSetObj$mum_nm_csv)){
+    mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
+  }
   ndat <- mSetObj$dataSet$mummi.orig;
   pos_inx = mSetObj$dataSet$pos_inx
   ndat <- data.frame(cbind(ndat, pos_inx), stringsAsFactors = FALSE)
@@ -3179,9 +3184,10 @@ json.res <- list(
   # order by p-values
   ord.inx <- order(res.mat[,3]);
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
-  
+
   mSetObj$mummi.gsea.resmat <- res.mat;
-  
+  mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
+
   EC.Hits <- qs::qread("pathwaysFiltered.qs")
   EC.Hits <- lapply(seq_along(EC.Hits), function(i) paste(names(EC.Hits[[i]]), collapse = ";"))
   res.mat <- cbind(res.mat, EC.Hits)
@@ -4766,6 +4772,7 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
   }else{
     gene.vec <- unlist(strsplit(ids, "; "));
     anal.type <<- "mummichog";
+    mSetObj$paramSet$anal.type <- "mummichog";  # Must set this for .init.Permutations to use correct path
     is.rt <- mSetObj$paramSet$mumRT;
     if(is.rt){
       feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)

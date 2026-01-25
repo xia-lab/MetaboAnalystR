@@ -20,7 +20,9 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   # --- 1. Prepare Query ---
   if(mSetObj$analSet$type=="msetssp"){
-    ora.vec <- mSetObj$dataSet$cmpd;
+    # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
+    # These are in the same format as nm.map$hmdb used for other ORA modes
+    ora.vec <- mSetObj$dataSet$ssp.cmpd;
   }else{
     nm.map <- GetFinalNameMap(mSetObj);
     valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
@@ -586,7 +588,8 @@ GetSSPTable<-function(mSetObj=NA){
   ssp.res<-mSetObj$analSet$ssp.mat[,-c(1,3,6)];
   rownames(ssp.res)<-mSetObj$analSet$ssp.mat[,1]
   selected.col<-rep(0, nrow(ssp.res));
-  inx<-match(mSetObj$dataSet$cmpd, mSetObj$analSet$ssp.mat[,1]);
+  # Use ssp.cmpd which contains user-selected compounds from Update.MapData()
+  inx<-match(mSetObj$dataSet$ssp.cmpd, mSetObj$analSet$ssp.mat[,1]);
   selected.col[inx]<-1;
   
   print(xtable::xtable(cbind(ssp.res, selected = selected.col),align="l|l|p{8cm}|c|c", caption="Comparison with Reference Concentrations"),
@@ -768,18 +771,21 @@ CreatePathwayMemberTableRMD<-function(mSetObj=NA){
 
     path.ids <- rownames(res);
     hit.inx <- match(path.ids, current.kegglib$path.ids);
-    path.nms <- names(current.kegglib$path.ids)[hit.inx];  
+    path.nms <- names(current.kegglib$path.ids)[hit.inx];
 
-    hit.path.col <- hit.id.col <- hit.nm.col <- vector(mode = "list", length=length(path.ids));
+    n <- length(path.ids);
+    hit.path.col <- character(n);
+    hit.id.col <- character(n);
+    hit.nm.col <- character(n);
 
     mtable <- mSetObj$dataSet$map.table;
 
     hit.path.ids  <- names(hits.query);
 
-    for (i in 1:length(path.ids)){
-        
+    for (i in 1:n){
+
         path.id <- path.ids[i];
-        hit.path.col[i] <- path.nms[i];
+        hit.path.col[i] <- as.character(path.nms[i]);
 
         phits <- unique(hits.query[[path.id]]);
 
@@ -795,8 +801,11 @@ CreatePathwayMemberTableRMD<-function(mSetObj=NA){
         hit.nm.col[i] <- paste(msybls, collapse="; ");
     }
 
-    my.table <- cbind(hit.path.col, hit.id.col, hit.nm.col);
-    colnames(my.table) <- c("Pathway", "Hit IDs", "Hit Names");
+    my.table <- data.frame(Pathway = hit.path.col,
+                           `Hit IDs` = hit.id.col,
+                           `Hit Names` = hit.nm.col,
+                           check.names = FALSE,
+                           stringsAsFactors = FALSE);
     return(my.table);
-    
+
 }

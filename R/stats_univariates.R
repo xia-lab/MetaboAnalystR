@@ -892,7 +892,11 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
     # Export the plotly object
     return(plotly_obj);
   }else{
+    # Order by p.log (descending) and label top 5 features
+    df <- df[order(-df$p.log), ]
+    df$top_label <- ifelse(seq_along(df$p.log) <= 5, df$label, NA)
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(df, !is.na(top_label)))
     print(p)
     dev.off();
   }
