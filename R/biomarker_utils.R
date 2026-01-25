@@ -233,11 +233,13 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
-  
+
   if(mSetObj$analSet$mode == "univ"){
     fast.write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+    # Arrow export for zero-copy Java access (ROC feature ranking)
+    shadow_save_mixed(feat.rank.mat, "roc_feat_rank.qs");
   }
-  return(.set.mSet(mSetObj));  
+  return(.set.mSet(mSetObj));
 }
 
 

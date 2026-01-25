@@ -153,6 +153,8 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
   # write results
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
   qs::qsave(resTable, "limma.sig.qs")
+  # Arrow export for zero-copy Java access (dose-response results)
+  shadow_save_mixed(resTable, "dose_limma_result.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
   mSetObj$dataSet$main.var <- main.var;
   return(.set.mSet(mSetObj))
@@ -196,9 +198,11 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
 
         res.all2 <- cbind(res.all,  "AveFC"=ave.fc);
         hit.inx <- which(!inx.unsig);
-        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);        
+        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
         fast.write.csv(sig.res, file="limma_sig_features.csv");
- 
+        # Arrow export for zero-copy Java access (dose sig features)
+        shadow_save_mixed(sig.res, "dose_sig_features.qs");
+
         # only store avarage FC + last 5 columns from the general information from limma - AveExpr, F, P.Value, adj.P.Val, AveFC 
         sig.mat <- sig.res[,(colNum-4):colNum, drop=FALSE];
 

@@ -1160,8 +1160,10 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   #csv.res <- merge(res, ld.pass.df, by.x = "item", by.y = "id")
 
   fast.write.csv(res, "curvefit_detailed_table.csv");
+  # Arrow export for zero-copy Java access
+  shadow_save_mixed(res, "curvefit_result.qs");
   print("Completed PerformBMDCalc");
-  
+
   if(!.on.public.web){
       return(.set.mSet(mSetObj))
   }
@@ -1274,7 +1276,9 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     mSetObj$dataSet      <- dataSet
     .set.mSet(mSetObj)
     fast.write.csv(res, "curvefit_detailed_table.csv")
-    
+    # Arrow export for zero-copy Java access
+    shadow_save_mixed(res, "curvefit_result.qs");
+
     print("Completed PerformBMDCalc")
     if (!.on.public.web) return(.set.mSet(mSetObj))
     return(if (nrow(disp.res) == 1) 3 else 1)

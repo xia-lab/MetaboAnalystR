@@ -357,7 +357,9 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   # store the value for report
   mSetObj$dataSet$map.table <- csv.res;
   fast.write.csv(csv.res, file="name_map.csv", row.names=F);
-  
+  # Arrow export for zero-copy Java access (name mapping table can have 5,000+ entries)
+  shadow_save_mixed(csv.res, "name_map_result.qs");
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(as.vector(html.res));
