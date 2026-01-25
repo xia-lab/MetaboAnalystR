@@ -2772,8 +2772,8 @@ GetMeanROC<-function(perf){
 
 ContainNewSamples <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
-  print("ContainNewSamples");
+  #print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
+  #print("ContainNewSamples");
   ifelse(mSetObj$dataSet$new.samples, 1, 0);
 }
 

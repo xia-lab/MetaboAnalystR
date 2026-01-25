@@ -1592,7 +1592,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
              function(x) paste(unique(x), collapse = ";"),
              FUN.VALUE = character(1))
     })
-    print(paste0(length(unique(merged_ecs$ec)), " merged ECs identified!"))
+    #print(paste0(length(unique(merged_ecs$ec)), " merged ECs identified!"))
     
     # third, check if primary ion is present
     # needs to be per EC!
@@ -1795,8 +1795,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     mSetObj <- qs::qread(metaFiles[meta_file])
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
-    print(paste0("compoundLibMeta"));
-    print(paste0("Got ", length(ref_mzlist), " mass features."))
+    #print(paste0("compoundLibMeta"));
+    #print(paste0("Got ", length(ref_mzlist), " mass features."))
     pos_inx <- mSetObj$dataSet$pos_inx;
     ref_mzlistp <- ref_mzlist[pos_inx];
     ref_mzlistn <- ref_mzlist[!pos_inx];
@@ -2239,7 +2239,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
       matched_res$Empirical.Compound <- gsub("\\|.*", "", ec.new)
       end <- Sys.time()
       totaltime <- end-start
-      print(paste0(length(unique(matched_res$Empirical.Compound)), " empirical compounds identified in ", totaltime, " seconds."))
+      #print(paste0(length(unique(matched_res$Empirical.Compound)), " empirical compounds identified in ", totaltime, " seconds."))
       
       if(mutual.feats){
         # keep empirical compounds that only match across all files
@@ -2255,7 +2255,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
           return(0)
         }
         
-        print(paste0(sum(matched.inx), "matched empirical compounds identified across all studies!"))
+        #print(paste0(sum(matched.inx), "matched empirical compounds identified across all studies!"))
         
         matched_res <- matched_res[matched.inx,]
         matched_res <- splitstackshape::cSplit(matched_res, c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "Matched.Scores", 
@@ -3085,7 +3085,7 @@ json.res <- list(
   res.mat <- signif(as.matrix(res.mat[ord.inx, ]), 4);
 
   if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
-    print("mSetObj$paramSet");
+    #print("mSetObj$paramSet");
     mSetObj$mummi.gsea.resmat <- res.mat;
     mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
 

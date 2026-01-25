@@ -173,12 +173,12 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 
 .get.sqlite.con <- function(sqlite.path){
     load_rsqlite();
-    print(paste("DEBUG: Attempting to connect to SQLite database at:", sqlite.path));
-    print(paste("DEBUG: File exists:", file.exists(sqlite.path)));
+    #print(paste("DEBUG: Attempting to connect to SQLite database at:", sqlite.path));
+    #print(paste("DEBUG: File exists:", file.exists(sqlite.path)));
     if(file.exists(sqlite.path)){
         file_info <- file.info(sqlite.path);
-        print(paste("DEBUG: File size:", file_info$size, "bytes"));
-        print(paste("DEBUG: File permissions:", file_info$mode));
+        #print(paste("DEBUG: File size:", file_info$size, "bytes"));
+        #print(paste("DEBUG: File permissions:", file_info$mode));
     }
     return(dbConnect(SQLite(), sqlite.path, synchronous = NULL));
 }
