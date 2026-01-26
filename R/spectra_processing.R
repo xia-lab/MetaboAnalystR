@@ -2986,6 +2986,9 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     mSetObj[["imgSet"]][["msmsmirror"]] <- rbind(df, df0)
   }
 
+  msmsmirror_set <- mSetObj[["imgSet"]][["msmsmirror"]]
+  qs::qsave(msmsmirror_set, file = "msmsmirror_set.qs")
+
   return(.set.mSet(mSetObj));
 }
 

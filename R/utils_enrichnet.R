@@ -534,7 +534,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     }
     
     # Create bipartite edges
-    bedge.mat <- get.edgelist(bg)
+    bedge.mat <- as_edgelist(bg)
     bedge.mat <- cbind(id=paste0("b", 1:nrow(bedge.mat)), source=bedge.mat[,1], target=bedge.mat[,2])
     
   } else {

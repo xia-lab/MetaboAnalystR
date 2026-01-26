@@ -233,11 +233,13 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
-  
+
   if(mSetObj$analSet$mode == "univ"){
     fast.write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+    # Arrow export for zero-copy Java access (ROC feature ranking)
+    shadow_save_mixed(feat.rank.mat, "roc_feat_rank.qs");
   }
-  return(.set.mSet(mSetObj));  
+  return(.set.mSet(mSetObj));
 }
 
 
@@ -1969,6 +1971,9 @@ PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   mSetObj$analSet$imp.mat <- imp.mat;
   mSetObj$analSet$lowhigh <- lowhigh;
   mSetObj$analSet$roc.sig.nm <- imp.fileNm;
+
+  # Arrow export for zero-copy Java access (ROC importance matrix)
+  shadow_save_mixed(imp.mat, "roc_imp_mat.qs");
   
   if(measure=="freq"){
     imp.vec <- sort(imp.mat[,1], decreasing=T);
@@ -2770,8 +2775,8 @@ GetMeanROC<-function(perf){
 
 ContainNewSamples <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
-  print("ContainNewSamples");
+  #print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
+  #print("ContainNewSamples");
   ifelse(mSetObj$dataSet$new.samples, 1, 0);
 }
 

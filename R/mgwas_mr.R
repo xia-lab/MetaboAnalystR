@@ -68,7 +68,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
         outcome.dat <- extractGwasDB(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies));
       }
       last_msg <- captured_messages[length(captured_messages)];
-      print(last_msg);
+      #print(last_msg);
       
       if(length(grep("Server error: 502", captured_messages)) > 0 || length(grep("Failed to retrieve results from server", captured_messages))){
             AddErrMsg(paste0(last_msg));
@@ -92,7 +92,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
        dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
       dat <- TwoSampleMR::steiger_filtering(dat)
-        print(dat$steiger_dir)
+       #print(dat$steiger_dir)
        dat<-dat[dat$steiger_dir,]
        dat$steiger_pval <- signif(dat$steiger_pval, digits = 4)
        res = c(res,(nr - nrow(dat)))
@@ -810,7 +810,7 @@ mir.graph <- simplify(
 
 from = unique(res$Exposure)
 to= unique(res$Outcome)
-paths <- get.all.shortest.paths(mir.graph, from, to)$res;
+paths <- all_shortest_paths(mir.graph, from, to)$res;
 
 if(length(paths) == 0){
 mSetObj$dataSet$path <- data.frame();

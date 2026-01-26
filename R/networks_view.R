@@ -354,7 +354,7 @@ GetNodeBetweenness <- function(){
 DecomposeGraph <- function(gObj, minNodeNum=3, maxNetNum=10){
 
   # now decompose to individual connected subnetworks
-  comps <- igraph::decompose.graph(gObj, min.vertices=minNodeNum);
+  comps <- igraph::decompose(gObj, min.vertices=minNodeNum);
   if(length(comps) == 0){
     msg <- paste("No subnetwork was identified with at least", minNodeNum, "nodes!");
     AddErrMsg(msg);
@@ -434,7 +434,7 @@ GetNetsQueryNum <- function(){
 # from to should be valid nodeIDs
 GetShortestPaths <- function(from, to){
   current.net <- pheno.comps[[current.net.nm]];
-  paths <- igraph::get.all.shortest.paths(current.net, from, to)$res;
+  paths <- igraph::all_shortest_paths(current.net, from, to)$res;
   if(length(paths) == 0){
     return (paste("No connection between the two nodes!"));
   }
@@ -461,11 +461,11 @@ GetShortestPaths <- function(from, to){
 ExcludeNodes <- function(nodeids, filenm){
   nodes2rm <- strsplit(nodeids, ";", fixed=TRUE)[[1]];
   current.net <- pheno.comps[[current.net.nm]];
-  current.net <- igraph::delete.vertices(current.net, nodes2rm);
+  current.net <- igraph::delete_vertices(current.net, nodes2rm);
 
   # need to remove all orphan nodes
   bad.vs<-V(current.net)$name[igraph::degree(current.net) == 0];
-  current.net <- igraph::delete.vertices(current.net, bad.vs);
+  current.net <- igraph::delete_vertices(current.net, bad.vs);
 
   # return all those nodes that are removed
   nds2rm <- paste(c(bad.vs, nodes2rm), collapse="||");
@@ -473,7 +473,7 @@ ExcludeNodes <- function(nodeids, filenm){
   # update topo measures
   node.btw <- as.numeric(igraph::betweenness(current.net));
   node.dgr <- as.numeric(igraph::degree(current.net));
-  node.exp <- as.numeric(igraph::get.vertex.attribute(current.net, name="abundance", index = V(current.net)));
+  node.exp <- as.numeric(igraph::vertex_attr(current.net, name="abundance", index = V(current.net)));
   nms <- V(current.net)$name;
   hit.inx <- match(nms, pheno.net$node.data[,1]);
   lbls <- pheno.net$node.data[hit.inx,2];
@@ -509,7 +509,7 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   current.net <- pheno.comps[[current.net.nm]];
   g <- current.net;
   if(!is.connected(g)){
-    g <- igraph::decompose.graph(current.net, min.vertices=2)[[1]];
+    g <- igraph::decompose(current.net, min.vertices=2)[[1]];
   }
   total.size <- length(V(g));
 
@@ -540,11 +540,11 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
   }
 
   if(method == "walktrap"){
-    fc <- igraph::walktrap.community(g);
+    fc <- igraph::cluster_walktrap(g);
   }else if(method == "infomap"){
-    fc <- igraph::infomap.community(g);
+    fc <- igraph::cluster_infomap(g);
   }else if(method == "labelprop"){
-    fc <- igraph::label.propagation.community(g);
+    fc <- igraph::cluster_label_prop(g);
   }else{
     print(paste("Unknown method:", method));
     return ("NA||Unknown method!");
@@ -588,7 +588,7 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
 
     # calculate p values (comparing in- out- degrees)
     #subgraph <- induced.subgraph(g, path.inx);
-    subgraph <- igraph::induced.subgraph(g, path.ids);
+    subgraph <- igraph::induced_subgraph(g, path.ids);
     in.degrees <- igraph::degree(subgraph);
     #out.degrees <- igraph::degree(g, path.inx) - in.degrees;
     out.degrees <- igraph::degree(g, path.ids) - in.degrees;
@@ -613,7 +613,7 @@ FindCommunities <- function(method="walktrap", use.weight=FALSE){
 }
 
 community.significance.test <- function(graph, vs, ...) {
-  subgraph <- igraph::induced.subgraph(graph, vs)
+  subgraph <- igraph::induced_subgraph(graph, vs)
   in.degrees <- igraph::degree(subgraph)
   out.degrees <- igraph::degree(graph, vs) - in.degrees
   wilcox.test(in.degrees, out.degrees, ...)
@@ -643,7 +643,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
   }
 
   # get edge data
-  edge.mat <- igraph::get.edgelist(g);
+  edge.mat <- igraph::as_edgelist(g);
   edge.evidence <- igraph::edge_attr(g, "Evidence");
   edge.coeff <- igraph::edge_attr(g, "Coefficient");
   edge.pval <- igraph::edge_attr(g, "Pval");
@@ -668,7 +668,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
   # get the note data
   node.btw <- as.numeric(igraph::betweenness(g));
   node.dgr <- as.numeric(igraph::degree(g));
-  node.exp <- as.numeric(igraph::get.vertex.attribute(g, name="abundance", index = V(g)));
+  node.exp <- as.numeric(igraph::vertex_attr(g, name="abundance", index = V(g)));
 
   # node size to degree values
   if(vcount(g)>500){
@@ -799,10 +799,10 @@ ExtractModule<- function(nodeids){
   g <- pheno.comps[[current.net.nm]];
   # try to see if the nodes themselves are already connected
   hit.inx <- V(g)$name %in% nodes;
-  gObj <- igraph::induced.subgraph(g, V(g)$name[hit.inx]);
+  gObj <- igraph::induced_subgraph(g, V(g)$name[hit.inx]);
 
   # now find connected components
-  comps <- igraph::decompose.graph(gObj, min.vertices=1);
+  comps <- igraph::decompose(gObj, min.vertices=1);
 
   if(length(comps) == 1){ # nodes are all connected
     g <- comps[[1]];
@@ -811,13 +811,13 @@ ExtractModule<- function(nodeids){
     paths.list <-list();
     sd.len <- length(nodes);
     for(pos in 1:sd.len){
-      paths.list[[pos]] <- igraph::get.shortest.paths(g, nodes[pos], nodes[-(1:pos)])$vpath;
+      paths.list[[pos]] <- igraph::shortest_paths(g, nodes[pos], nodes[-(1:pos)])$vpath;
     }
     nds.inxs <- unique(unlist(paths.list));
     nodes2rm <- V(g)$name[-nds.inxs];
-    g <- simplify(igraph::delete.vertices(g, nodes2rm));
+    g <- simplify(igraph::delete_vertices(g, nodes2rm));
   }
-  nodeList <- igraph::get.data.frame(g, "vertices");
+  nodeList <- igraph::as_data_frame(g, "vertices");
   if(nrow(nodeList) < 3){
     return ("NA");
   }
@@ -828,7 +828,7 @@ ExtractModule<- function(nodeids){
   ndFileNm = paste(module.nm, "_node_list.csv", sep="");
   fast.write.csv(nodeList, file=ndFileNm, row.names=FALSE);
 
-  edgeList <- igraph::get.data.frame(g, "edges");
+  edgeList <- igraph::as_data_frame(g, "edges");
   edgeList <- cbind(rownames(edgeList), edgeList);
   colnames(edgeList) <- c("Id", "Source", "Target");
   edgFileNm = paste(module.nm, "_edge_list.csv", sep="");
@@ -941,7 +941,7 @@ GetMinConnectedGraphs <- function(mSetObj=NA, max.len = 200){
   dgrs <- igraph::degree(overall.graph);
   keep.inx <- dgrs > 1 | (names(dgrs) %in% my.seeds);
   nodes2rm <- V(overall.graph)$name[!keep.inx];
-  overall.graph <-  simplify(delete.vertices(overall.graph, nodes2rm));
+  overall.graph <-  simplify(delete_vertices(overall.graph, nodes2rm));
 
   # need to restrict the operation b/c get.shortest.paths is very time consuming
   # for top max.len highest degrees
@@ -966,17 +966,17 @@ GetMinConnectedGraphs <- function(mSetObj=NA, max.len = 200){
   # now calculate the shortest paths for
   # each seed vs. all other seeds (note, to remove pairs already calculated previously)
   for(pos in 1:sd.len){
-    paths.list[[pos]] <- get.shortest.paths(overall.graph, my.seeds[pos], seed.proteins[-(1:pos)])$vpath;
+    paths.list[[pos]] <- shortest_paths(overall.graph, my.seeds[pos], seed.proteins[-(1:pos)])$vpath;
   }
   nds.inxs <- unique(unlist(paths.list));
   nodes2rm <- V(overall.graph)$name[-nds.inxs];
-  g <- simplify(delete.vertices(overall.graph, nodes2rm));
+  g <- simplify(delete_vertices(overall.graph, nodes2rm));
 
-  nodeList <- get.data.frame(g, "vertices");
+  nodeList <- igraph::as_data_frame(g, "vertices");
   colnames(nodeList) <- c("Id", "Label");
   fast.write.csv(nodeList, file="orig_node_list.csv", row.names=F);
 
-  edgeList <- get.data.frame(g, "edges");
+  edgeList <- igraph::as_data_frame(g, "edges");
   edgeList <- cbind(rownames(edgeList), edgeList);
   colnames(edgeList) <- c("Id", "Source", "Target");
   fast.write.csv(edgeList, file="orig_edge_list.csv", row.names=F);
@@ -1040,7 +1040,7 @@ FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
 
   mSetObj <- .get.mSet(mSetObj);
   all.nms <- V(overall.graph)$name;
-  edge.mat <- get.edgelist(overall.graph);
+  edge.mat <- as_edgelist(overall.graph);
   dgrs <- igraph::degree(overall.graph);
   nodes2rm.dgr <- nodes2rm.btw <- NULL;
 
@@ -1063,7 +1063,7 @@ FilterBipartiNet <- function(mSetObj=NA, nd.type, min.dgr, min.btw){
   }
 
   nodes2rm <- unique(c(nodes2rm.dgr, nodes2rm.btw));
-  overall.graph <- simplify(delete.vertices(overall.graph, nodes2rm), edge.attr.comb=list("first"));
+  overall.graph <- simplify(delete_vertices(overall.graph, nodes2rm), edge.attr.comb=list("first"));
   # the simplify() function removes the edge attributes by default
   # added edge.attr.comb=list("first") to always chooses the first attribute value
   AddMsg(paste("A total of", length(nodes2rm) , "was reduced."));

@@ -156,11 +156,13 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
 
-  save.mat <- mSetObj$analSet$ora.mat;  
+  save.mat <- mSetObj$analSet$ora.mat;
 
   hit.inx <- match(rownames(save.mat), current.kegglib$path.ids);
   rownames(save.mat) <- names(current.kegglib$path.ids)[hit.inx];
   fast.write.csv(save.mat, file="pathway_results.csv");
+  # Arrow export for zero-copy Java access (Pathway ORA results)
+  shadow_save_mixed(save.mat, "pathway_ora_result.qs");
   return(.set.mSet(mSetObj));
 }
 
@@ -369,9 +371,11 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   pathNames <- names(current.kegglib$path.ids)[hit.inx];
   rownames(res.mat) <- pathNames; # change from ids to names for users
   fast.write.csv(res.mat, file="pathway_results.csv");
-  
+  # Arrow export for zero-copy Java access (Pathway QEA results)
+  shadow_save_mixed(res.mat, "pathway_qea_result.qs");
+
   mSetObj$analSet$qea.pathNames <- pathNames;
-  return(.set.mSet(mSetObj)); 
+  return(.set.mSet(mSetObj));
 }
 
 #'Export pathway names from QEA analysis
