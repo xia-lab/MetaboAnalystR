@@ -85,7 +85,7 @@ mir.graph <- simplify(
 
 from = unique(res$Exposure)
 to= unique(res$Outcome)
-paths <- get.all.shortest.paths(mir.graph, from, to)$res;
+paths <- all_shortest_paths(mir.graph, from, to)$res;
 
 if(length(paths) == 0){
 return(0)
@@ -335,7 +335,7 @@ CreateGraph <- function(mSetObj=NA, net.type){
 DecomposeGraph <- function(gObj, minNodeNum = 2){
   mSetObj <- .get.mSet(mSetObj);
    #save.image("DecomposeGraph.RData")
-  comps <-decompose.graph(gObj, min.vertices=minNodeNum);
+  comps <-decompose(gObj, min.vertices=minNodeNum);
   
   if(length(comps) == 0){
     current.msg <<- paste("No connected nodes found after this filtering!");
@@ -531,7 +531,7 @@ convertIgraph2JSON <- function(g, filenm){
   shapes <- rep("circle", length(nms));
   
   # get edge data
-  edge.mat <- get.edgelist(g);
+  edge.mat <- as_edgelist(g);
   edge.pmids <- igraph::edge_attr(g, "Reference");
   edge.p_values <- igraph::edge_attr(g, "EdgeAttr1");
   edge.n_pmids <- igraph::edge_attr(g, "EdgeAttr2");
@@ -560,9 +560,9 @@ convertIgraph2JSON <- function(g, filenm){
   node.dgr <- as.numeric(degree(g));
   
   if(anal.type %notin% c("array", "rnaseq", "qpcr")){
-    node.exp <- as.character(get.vertex.attribute(g, name="abundance", index = V(g)));
+    node.exp <- as.character(vertex_attr(g, name="abundance", index = V(g)));
   }else{
-    node.exp <- as.numeric(get.vertex.attribute(g, name="abundance", index = V(g)));
+    node.exp <- as.numeric(vertex_attr(g, name="abundance", index = V(g)));
   }
   
   if(vcount(g) > 1000){
@@ -794,23 +794,23 @@ PerformLayOut <- function(g, layers, algo, focus=""){
   vc <- vcount(g);
   if(algo == "Default"){
     if(vc > 1000) {
-      # pos.xy <- layout.fruchterman.reingold(g, area=30*vc^2);
-      pos.xy <- layout.lgl(g);
+      # pos.xy <- layout_with_fr(g, area=30*vc^2);
+      pos.xy <- layout_with_lgl(g);
     }else if(vc < 100){
-      pos.xy <- layout.kamada.kawai(g);
+      pos.xy <- layout_with_kk(g);
     }else{
-      pos.xy <- layout.fruchterman.reingold(g, area=40*vc^2);
+      pos.xy <- layout_with_fr(g, area=40*vc^2);
     }
   }else if(algo == "FrR"){
-    pos.xy <- layout.fruchterman.reingold(g, area=34*vc^2);
+    pos.xy <- layout_with_fr(g, area=34*vc^2);
   }else if(algo == "circle"){
-    pos.xy <- layout.circle(g);
+    pos.xy <- layout_in_circle(g);
   }else if(algo == "random"){
-    pos.xy <- layout.random(g);
+    pos.xy <- layout_randomly(g);
   }else if(algo == "lgl"){
-    pos.xy <- layout.lgl(g);
+    pos.xy <- layout_with_lgl(g);
   }else if(algo == "gopt"){
-    pos.xy <- layout.graphopt(g)
+    pos.xy <- layout_with_graphopt(g)
   }else if(algo == "circular_tripartite"){
     library(ggforce)
     l <- layout_with_sugiyama(g, layers = V(g)$group*(vc/3) +30)
@@ -891,7 +891,7 @@ UpdateNetworkLayout2 <- function(algo, filenm, focus){
 
 GetShortestPaths <- function(from, to){
   
-  paths <- get.all.shortest.paths(current.mirnet, from, to)$res;
+  paths <- all_shortest_paths(current.mirnet, from, to)$res;
   if(length(paths) == 0){
     return (paste("No connection between the two nodes!"));
   }

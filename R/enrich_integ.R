@@ -1247,7 +1247,7 @@ getLayout<-function(graph){
   if(length(V(graph)$graphics_x)==0||length(V(graph)$graphics_y)==0) return (NULL)
   x_y<-c()
 
-  graphics_x <- igraph::get.vertex.attribute(graph,"graphics_x")
+  graphics_x <- igraph::vertex_attr(graph,"graphics_x")
   index <- which(is.na(graphics_x))
   if(length(index)>1){
     #temp<-as.numeric(graphics_x[which(graphics_x!="unknow")]) # this is old version
@@ -1261,7 +1261,7 @@ getLayout<-function(graph){
   } 
   graphics_x <- as.numeric(graphics_x);
 
-  graphics_y <- igraph::get.vertex.attribute(graph,"graphics_y")
+  graphics_y <- igraph::vertex_attr(graph,"graphics_y")
   index <- which(is.na(graphics_y))
   if(length(index)>0){
     temp <- as.numeric(graphics_y[which(!is.na(graphics_y))])

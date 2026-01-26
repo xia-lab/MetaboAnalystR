@@ -828,7 +828,7 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 #' @export
 #' @import igraph
 
-PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.reingold){
+PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   
   # due to space limitation, plot top 50 if more than 50 were given
   title <- "Enrichment Network Overview";
@@ -866,7 +866,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   wd <- wd[!is.na(wd[,3]),];
   g <- graph_from_data_frame(wd[,-3], directed=F);
   E(g)$width <- sqrt(wd[,3]*20);
-  g <- delete.edges(g, E(g)[wd[,3] < 0.25]);
+  g <- delete_edges(g, E(g)[wd[,3] < 0.25]);
   #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
   #cols <- color_scale("red", "#E5C494");
   #V(g)$color <- cols[sapply(pvalue, getIdx, min(pvalue), max(pvalue))];
@@ -879,7 +879,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
   #V(g)$size <- log(cnt2, base=10) * 10 + 1;
   V(g)$size <- cnt + 3;
 
-  pos.xy <- layout.fruchterman.reingold(g,niter=500);
+  pos.xy <- layout_with_fr(g,niter=500);
   
   # now create the json object
   nodes <- vector(mode="list");
@@ -897,7 +897,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout.fruchterman.re
     );
   }
   
-  edge.mat <- get.edgelist(g);
+  edge.mat <- as_edgelist(g);
   edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
   # covert to json
   netData <- list(nodes=nodes, edges=edge.mat);

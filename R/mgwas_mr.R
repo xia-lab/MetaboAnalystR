@@ -810,7 +810,7 @@ mir.graph <- simplify(
 
 from = unique(res$Exposure)
 to= unique(res$Outcome)
-paths <- get.all.shortest.paths(mir.graph, from, to)$res;
+paths <- all_shortest_paths(mir.graph, from, to)$res;
 
 if(length(paths) == 0){
 mSetObj$dataSet$path <- data.frame();

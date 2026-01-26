@@ -639,7 +639,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     wd <- wd[!is.na(wd[,3]),];
     g <- graph_from_data_frame(wd[,-3], directed=F);
     E(g)$width <- sqrt(wd[,3]*20);
-    g <- delete.edges(g, E(g)[wd[,3] < overlap]); # change 
+    g <- delete_edges(g, E(g)[wd[,3] < overlap]); # change 
     V(g)$color <- hcl.colors(length(pvalue), net_palette);
     
     cnt <- folds;
@@ -651,7 +651,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
       V(g)$size <- cnt + 20;
     }
     
-    pos.xy <- layout.fruchterman.reingold(g,niter=500);
+    pos.xy <- layout_with_fr(g,niter=500);
     
     # now create the json object
     nodes <- vector(mode="list");
@@ -671,7 +671,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
         );
       }
       
-      edge.mat <- get.edgelist(g);
+      edge.mat <- as_edgelist(g);
       edge.mat <- cbind(id=1:nrow(edge.mat), source=edge.mat[,1], target=edge.mat[,2]);
       # covert to json
       netData <- list(nodes=nodes, edges=edge.mat);
