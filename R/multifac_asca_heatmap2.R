@@ -697,6 +697,18 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
   asca$out.list <- out.list;
   qs::qsave(asca, file="asca.qs");
 
+  # Arrow export for zero-copy Java access (ASCA results)
+  for (nm in names(sig.list)) {
+    type_suffix <- gsub("Model\\.", "", nm);
+    type_suffix <- gsub("\\.", "", type_suffix);
+    if (!is.null(sig.list[[nm]]) && nrow(sig.list[[nm]]) > 0) {
+      ExportResultMatArrow(sig.list[[nm]], paste0("asca_sig", type_suffix));
+    }
+    if (!is.null(out.list[[nm]]) && nrow(out.list[[nm]]) > 0) {
+      ExportResultMatArrow(out.list[[nm]], paste0("asca_out", type_suffix));
+    }
+  }
+
   return(.set.mSet(mSetObj));
 }
 

@@ -1971,6 +1971,9 @@ PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   mSetObj$analSet$imp.mat <- imp.mat;
   mSetObj$analSet$lowhigh <- lowhigh;
   mSetObj$analSet$roc.sig.nm <- imp.fileNm;
+
+  # Arrow export for zero-copy Java access (ROC importance matrix)
+  shadow_save_mixed(imp.mat, "roc_imp_mat.qs");
   
   if(measure=="freq"){
     imp.vec <- sort(imp.mat[,1], decreasing=T);

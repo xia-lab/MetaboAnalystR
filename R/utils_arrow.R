@@ -128,6 +128,7 @@ validateColumns <- function(tab, required, context = "") {
 #' Saves data as both .qs (for R) and .arrow (for Java zero-copy access).
 #' ALWAYS preserves rownames as the first column (row_names_id) in Arrow files.
 #' Returns the verified absolute path to the Arrow file for Java to memory-map.
+#' Removes existing Arrow file first to prevent file-locking conflicts.
 #'
 #' @param obj The object to save (matrix or data.frame)
 #' @param file The .qs file path (will auto-generate .arrow path)
@@ -158,6 +159,12 @@ shadow_save <- function(obj, file, compress = "uncompressed") {
                 }
             }
 
+            # Remove existing file first to prevent file-lock conflicts
+            if (file.exists(arrow_path)) {
+                unlink(arrow_path)
+                Sys.sleep(0.01)
+            }
+
             arrow::write_feather(df, arrow_path, compression = compress)
 
             # SAFE-HANDSHAKE: Brief delay then verify with normalizePath
@@ -176,6 +183,7 @@ shadow_save <- function(obj, file, compress = "uncompressed") {
 #' Shadow save for mixed-type data frames (Safe-Handshake pattern)
 #'
 #' Handles factors by converting to character. Returns verified path.
+#' Removes existing Arrow file first to prevent file-locking conflicts.
 #'
 #' @param obj Data frame or matrix to save
 #' @param file Path to .qs file
@@ -204,6 +212,12 @@ shadow_save_mixed <- function(obj, file, compress = "uncompressed") {
             if (!is.null(rn) && length(rn) > 0 && !all(rn == as.character(1:nrow(df)))) {
                 # Prepend row_names_id as first column
                 df <- cbind(row_names_id = as.character(rn), df)
+            }
+
+            # Remove existing file first to prevent file-lock conflicts
+            if (file.exists(arrow_path)) {
+                unlink(arrow_path)
+                Sys.sleep(0.01)
             }
 
             arrow::write_feather(df, arrow_path, compression = compress)
@@ -292,6 +306,7 @@ ExportPrenormDataArrow <- function(mSetObj = NA) {
 #' Export statistical results matrix to Arrow format (Safe-Handshake)
 #'
 #' For t-test, fold change, volcano, ANOVA results. Returns verified path.
+#' Removes existing file first to prevent file-locking conflicts with Java.
 #'
 #' @param result_mat Result matrix to export
 #' @param filename Output filename (without .arrow extension)
@@ -314,6 +329,14 @@ ExportResultMatArrow <- function(result_mat, filename) {
         }
 
         arrow_path <- paste0(filename, ".arrow")
+
+        # Remove existing file first to prevent file-lock conflicts
+        # Java should have closed its memory-map before R reaches here
+        if (file.exists(arrow_path)) {
+            unlink(arrow_path)
+            Sys.sleep(0.01)  # Brief pause after delete
+        }
+
         arrow::write_feather(df, arrow_path, compression = "uncompressed")
 
         # SAFE-HANDSHAKE: Verify file is ready
