@@ -4666,8 +4666,7 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = default
       layout(xaxis = list(title = 'Enrichment Factor'),
              yaxis = list(title = '-log10(p)'),
              hovermode='closest',
-            width = 800, 
-            height = 600)
+             autosize = TRUE)
     
     mSetObj$imgSet$mummi.plot<- imgName
   }else{
@@ -4694,8 +4693,7 @@ PlotlyPeaks2Paths <- function(mSetObj=NA, imgName, format = "png", dpi = default
         xaxis = list(title = 'NES'),
         yaxis = list(title = '-log10(p)'),
         hovermode='closest',
-        width = 800, 
-        height = 600)
+        autosize = TRUE)
     
     mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
