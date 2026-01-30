@@ -281,7 +281,7 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   lipid <- mSetObj$lipid.feats;
  
   if(!is.null(lipid) & anal.type == "msetqea"){
-    qvec <- names(mSet$dataSet$url.var.nms);
+    qvec <- names(mSetObj$dataSet$url.var.nms);
   }else{
     qvec <- mSetObj$dataSet$cmpd;
   }
@@ -357,7 +357,7 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   # store the value for report
   mSetObj$dataSet$map.table <- csv.res;
   fast.write.csv(csv.res, file="name_map.csv", row.names=F);
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(as.vector(html.res));

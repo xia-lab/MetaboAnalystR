@@ -196,9 +196,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
 
         res.all2 <- cbind(res.all,  "AveFC"=ave.fc);
         hit.inx <- which(!inx.unsig);
-        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);        
+        sig.res <- signif(res.all2[hit.inx, , drop=F], 5);
         fast.write.csv(sig.res, file="limma_sig_features.csv");
- 
+
         # only store avarage FC + last 5 columns from the general information from limma - AveExpr, F, P.Value, adj.P.Val, AveFC 
         sig.mat <- sig.res[,(colNum-4):colNum, drop=FALSE];
 

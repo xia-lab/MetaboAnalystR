@@ -57,19 +57,21 @@ Reload.scripts.on.demand <- function(){
 
 # note, this is usually used at the end of a function
 # for local, return itself; for web, push to global environment
-.set.mSet <- function(mSetObj=NA){
+# PRO: Unified to use mSetObj as the single global name (avoids ~15MB duplication)
+# NOTE: Parameter renamed to 'obj' to avoid shadowing the global 'mSetObj'
+.set.mSet <- function(obj=NA){
   if(.on.public.web){
-    mSet <<- mSetObj;
+    mSetObj <<- obj;
     return (1);
   }
-  return(mSetObj);
+  return(obj);
 }
 
-.get.mSet <- function(mSetObj=NA){
+.get.mSet <- function(obj=NA){
   if(.on.public.web){
-    return(mSet)
+    return(mSetObj)
   }else{
-    return(mSetObj);
+    return(obj);
   }
 }
 
@@ -93,8 +95,8 @@ InitDataObjects <- function(data.type, anal.type, paired=FALSE, default.dpi=defa
   rpath <<- "../../";
   default.dpi <<- default.dpi;
   if(!.on.public.web){
-    if(exists("mSet")){
-      mSetObj <- .get.mSet(mSet);
+    if(exists("mSetObj")){
+      mSetObj <- .get.mSet(mSetObj);
       mSetObj$dataSet$type <- data.type;
       mSetObj$dataSet$paired <- paired;
       mSetObj$dataSet$pair.checked <- FALSE;
@@ -270,8 +272,8 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   if(anal.type == "mummichog"){
     .set.mSet(mSetObj);
     mSetObj<-.init.MummiMSet(mSetObj);
-    load("params.rda"); 
-    mSet$paramSet$mumDataContainsPval <<- 1;
+    load("params.rda");
+    mSetObj$paramSet$mumDataContainsPval <<- 1;
     
     mSetObj<-UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
     mSetObj<-.rt.included(mSetObj, "seconds");
@@ -1348,10 +1350,10 @@ GetSampleNames <- function(mSetObj=NA){
 
 GetNameCheckMsgs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  if(is.null(mSet$msgSet$nmcheck.msg)){ # not applicable
+  if(is.null(mSetObj$msgSet$nmcheck.msg)){ # not applicable
     return(c("1", "Not applicable"));
   }
-  return(mSet$msgSet$nmcheck.msg);
+  return(mSetObj$msgSet$nmcheck.msg);
 }
 
 ValidateMetabolonData <- function(file_path = NULL) {

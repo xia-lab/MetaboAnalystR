@@ -5,7 +5,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
                      gseaParam=1,
                      BPPARAM=NULL) {
   mSetObj <<- mSetObj;
-  save.image("fgsea.RData");
+  #save.image("fgsea.RData");
   # Warning message for ties in stats
   ties <- sum(duplicated(stats[stats != 0]))
   if (ties != 0) {

@@ -70,7 +70,8 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   data_lbl_list <- vector("list", length(sel.nms))
   cls_lbl_list <- vector("list", length(sel.nms))
 
-  # First dataset
+  # First dataset - MUST re-read since dataSet was overwritten in consistency check loop
+  dataSet <- qs::qread(sel.nms[1])
   matrix_list[[1]] <- dataSet$data[, shared.nms]
   data_lbl_list[[1]] <- rep(sel.nms[1], nrow(matrix_list[[1]]))
   cls_lbl_list[[1]] <- dataSet$cls

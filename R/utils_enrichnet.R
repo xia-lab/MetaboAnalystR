@@ -534,7 +534,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     }
     
     # Create bipartite edges
-    bedge.mat <- get.edgelist(bg)
+    bedge.mat <- as_edgelist(bg)
     bedge.mat <- cbind(id=paste0("b", 1:nrow(bedge.mat)), source=bedge.mat[,1], target=bedge.mat[,2])
     
   } else {
@@ -605,8 +605,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   pheno.comps[["enrichNet"]] <- g;
   pheno.comps[["enrichNet_bipartite"]] <- bg;
   pheno.comps <<- pheno.comps;
-  
-  return(.set.mSet(mSetObj))
+
+  .set.mSet(mSetObj)
+  return(1)
 }
 
 # Helper function for overlap calculation (if not already defined)

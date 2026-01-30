@@ -352,7 +352,7 @@ AddEntryExposure <- function(mSetObj=NA, mir.id) {
   # save.image("RemoveEntry.RData")
   mSetObj <- .get.mSet(mSetObj);
   dataSet <- mSetObj$dataSet;
-  print(c(mir.id,"mir.id"))
+  #print(c(mir.id,"mir.id"))
  
   if(exists("harmonized.dat",mSetObj$dataSet)){
   harmonized.dat <- mSetObj$dataSet$harmonized.dat
@@ -412,12 +412,12 @@ load_rsqlite <- function(){
 
 .get.sqlite.con <- function(sqlite.path){
   load_rsqlite();
-  print(paste("DEBUG: Attempting to connect to SQLite database at:", sqlite.path));
-  print(paste("DEBUG: File exists:", file.exists(sqlite.path)));
+  #print(paste("DEBUG: Attempting to connect to SQLite database at:", sqlite.path));
+  #print(paste("DEBUG: File exists:", file.exists(sqlite.path)));
   if(file.exists(sqlite.path)){
       file_info <- file.info(sqlite.path);
-      print(paste("DEBUG: File size:", file_info$size, "bytes"));
-      print(paste("DEBUG: File permissions:", file_info$mode));
+      #print(paste("DEBUG: File size:", file_info$size, "bytes"));
+      #print(paste("DEBUG: File permissions:", file_info$mode));
   }
   return(dbConnect(SQLite(), sqlite.path, synchronous = NULL));
 }

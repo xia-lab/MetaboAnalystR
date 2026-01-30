@@ -736,16 +736,21 @@ CovariateScatter.Anal <- function(mSetObj,
   }
   
   # for detail table
-  mSetObj$analSet$cov <- cov; 
+  mSetObj$analSet$cov <- cov;
   # for plotting adjp vs p
-  mSetObj$analSet$cov.mat <- both.mat; 
-  
+  mSetObj$analSet$cov.mat <- both.mat;
+
+  # Arrow export for zero-copy Java access (Covariate results)
+  if (!is.null(cov$sig.mat) && nrow(cov$sig.mat) > 0) {
+    ExportResultMatArrow(cov$sig.mat, "cov_sig_mat");
+  }
+
   jsonNm <- gsub(paste0(".", format), ".json", imgName);
   jsonObj <- RJSONIO::toJSON(both.mat);
   sink(jsonNm);
   cat(jsonObj);
   sink();
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(res);
@@ -906,16 +911,21 @@ CombineFacScatter.Anal <- function(mSetObj,
   }
   
   # for detail table
-  mSetObj$analSet$cov <- cov; 
+  mSetObj$analSet$cov <- cov;
   # for plotting adjp vs p
-  mSetObj$analSet$cov.mat <- both.mat; 
-  
+  mSetObj$analSet$cov.mat <- both.mat;
+
+  # Arrow export for zero-copy Java access (Covariate results)
+  if (!is.null(cov$sig.mat) && nrow(cov$sig.mat) > 0) {
+    ExportResultMatArrow(cov$sig.mat, "cov_sig_mat");
+  }
+
   jsonNm <- gsub(paste0(".", format), ".json", imgName);
   jsonObj <- RJSONIO::toJSON(both.mat);
   sink(jsonNm);
   cat(jsonObj);
   sink();
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(res);

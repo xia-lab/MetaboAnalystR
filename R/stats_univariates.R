@@ -37,7 +37,9 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
   
   fileName <- "fold_change.csv";
   fast.write.csv(sig.mat,file=fileName);
-  
+  # Arrow export for zero-copy Java access
+  ExportResultMatArrow(sig.mat, "fc_sig_mat");
+
   # create a list object to store fc
   mSetObj$analSet$fc<-list (
     paired = FALSE,
@@ -259,8 +261,10 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       colnames(all.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
     }
     fast.write.csv(all.mat, file=file.nm);
+    # Arrow export for zero-copy Java access (all results)
+    ExportResultMatArrow(all.mat, "tt_all_mat");
   }
-  
+
   if(pvalType=="fdr"){
     inx.imp <- fdr.p <= threshp;
   }else{
@@ -292,7 +296,9 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       colnames(sig.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
     }
     fast.write.csv(sig.mat, file=file.nm);
-    
+    # Arrow export for zero-copy Java access (significant results)
+    ExportResultMatArrow(sig.mat, "tt_sig_mat");
+
     tt <- list (
       tt.nm = tt.nm,
       sig.nm = file.nm,
@@ -502,7 +508,9 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   
   fileName <- "volcano.csv";
   fast.write.csv(signif(sig.var,5), file=fileName);
-  
+  # Arrow export for zero-copy Java access
+  ExportResultMatArrow(sig.var, "volcano_sig_mat");
+
 # Create all features table
 all.var <- cbind(fc.all, fc.log, p.value, p.log);
 
@@ -798,6 +806,8 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
   
   # note only display max for web (save all to the file)
   fast.write.csv(sig.mat,file=fileName);
+  # Arrow export for zero-copy Java access
+  ExportResultMatArrow(sig.mat, "aov_sig_mat");
   if(sig.num > max.sig){
     sig.mat <- sig.mat[1:max.sig,];
   }
@@ -882,7 +892,11 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
     # Export the plotly object
     return(plotly_obj);
   }else{
+    # Order by p.log (descending) and label top 5 features
+    df <- df[order(-df$p.log), ]
+    df$top_label <- ifelse(seq_along(df$p.log) <= 5, df$label, NA)
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+    p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(df, !is.na(top_label)))
     print(p)
     dev.off();
   }

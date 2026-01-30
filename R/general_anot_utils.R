@@ -88,7 +88,7 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F, mixed = F){
   mSetObj <- .get.mSet(mSetObj);
   
   if(lipid & anal.type == "msetqea"){
-    qvec <- names(mSet$dataSet$url.var.nms);
+    qvec <- names(mSetObj$dataSet$url.var.nms);
   }else{
     qvec <- mSetObj$dataSet$cmpd;
   }

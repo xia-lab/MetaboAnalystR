@@ -792,18 +792,18 @@ GetGeneMappingResultTable<-function(mSetObj=NA){
   colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
   
   sqlite.path <- paste0(url.pre, mSetObj$org, "_genes.sqlite");
-  print(paste("DEBUG: Initial sqlite.path =", sqlite.path));
-  print(paste("DEBUG: url.pre =", url.pre));
-  print(paste("DEBUG: mSetObj$org =", mSetObj$org));
+  #print(paste("DEBUG: Initial sqlite.path =", sqlite.path));
+  #print(paste("DEBUG: url.pre =", url.pre));
+  #print(paste("DEBUG: mSetObj$org =", mSetObj$org));
   if(!file.exists(sqlite.path)){
-    print(paste("DEBUG: SQLite file not found at", sqlite.path, "- downloading..."));
+    #print(paste("DEBUG: SQLite file not found at", sqlite.path, "- downloading..."));
     #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
     sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/",
                          org.code, "_genes.sqlite");
     sqlite.path <- paste0(getwd(), "/",org.code, "_genes.sqlite")
-    print(paste("DEBUG: Download URL:", sqlite_url));
-    print(paste("DEBUG: New sqlite.path after download:", sqlite.path));
-    print(paste("DEBUG: Current working directory:", getwd()));
+    #print(paste("DEBUG: Download URL:", sqlite_url));
+    #print(paste("DEBUG: New sqlite.path after download:", sqlite.path));
+    #print(paste("DEBUG: Current working directory:", getwd()));
     download.file(sqlite_url,destfile = sqlite.path, method = "curl")
   }
   conv.db <- .get.sqlite.con(sqlite.path); 
@@ -897,16 +897,16 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
         colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
 
         sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
-        print(paste("DEBUG: Initial sqlite.path =", sqlite.path));
-        print(paste("DEBUG: url.pre =", url.pre));
+        #print(paste("DEBUG: Initial sqlite.path =", sqlite.path));
+        #print(paste("DEBUG: url.pre =", url.pre));
         if(!file.exists(sqlite.path)){
-          print(paste("DEBUG: SQLite file not found at", sqlite.path, "- downloading..."));
+          #print(paste("DEBUG: SQLite file not found at", sqlite.path, "- downloading..."));
           #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
           sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
           sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
-          print(paste("DEBUG: Download URL:", sqlite_url));
-          print(paste("DEBUG: New sqlite.path after download:", sqlite.path));
-          print(paste("DEBUG: Current working directory:", getwd()));
+          #print(paste("DEBUG: Download URL:", sqlite_url));
+          #print(paste("DEBUG: New sqlite.path after download:", sqlite.path));
+          #print(paste("DEBUG: Current working directory:", getwd()));
           download.file(sqlite_url,destfile = sqlite.path, method = "curl")
         }
         con <- .get.sqlite.con(sqlite.path);
@@ -1067,7 +1067,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
     return(PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi));  
   }else{ 
     mSetObj <- PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi);   
-    print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
+    #print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
     return(.set.mSet(mSetObj));
   }
 }
@@ -1247,7 +1247,7 @@ getLayout<-function(graph){
   if(length(V(graph)$graphics_x)==0||length(V(graph)$graphics_y)==0) return (NULL)
   x_y<-c()
 
-  graphics_x <- igraph::get.vertex.attribute(graph,"graphics_x")
+  graphics_x <- igraph::vertex_attr(graph,"graphics_x")
   index <- which(is.na(graphics_x))
   if(length(index)>1){
     #temp<-as.numeric(graphics_x[which(graphics_x!="unknow")]) # this is old version
@@ -1261,7 +1261,7 @@ getLayout<-function(graph){
   } 
   graphics_x <- as.numeric(graphics_x);
 
-  graphics_y <- igraph::get.vertex.attribute(graph,"graphics_y")
+  graphics_y <- igraph::vertex_attr(graph,"graphics_y")
   index <- which(is.na(graphics_y))
   if(length(index)>0){
     temp <- as.numeric(graphics_y[which(!is.na(graphics_y))])
@@ -1395,8 +1395,8 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   if(!.on.public.web){
-    
-    if(is.null(mSet$analSet$jointPAMatches)){
+
+    if(is.null(mSetObj$analSet$jointPAMatches)){
       AddErrMsg("Perform integrative pathway analysis first!")
       return(0)
     }

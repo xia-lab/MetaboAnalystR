@@ -542,6 +542,10 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
   mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
+
+  # Arrow export for zero-copy Java access (PCA loadings)
+  ExportResultMatArrow(loadings, "pca_load");
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -739,9 +743,13 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   mSetObj$analSet$plsr$loading.type <- "all";
   mSetObj$analSet$plsr$vip.mat <- .calculate.pls.vip(pls.res, comp.num);
   mSetObj$custom.cmpds <- c();
-  
+
   fast.write.csv(signif(mSetObj$analSet$plsr$scores,5), row.names=rownames(mSetObj$dataSet$norm), file="plsda_score.csv");
   fast.write.csv(signif(mSetObj$analSet$plsr$loadings,5), file="plsda_loadings.csv");
+
+  # Arrow export for zero-copy Java access (PLS VIP)
+  ExportResultMatArrow(mSetObj$analSet$plsr$vip.mat, "pls_vip");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -962,7 +970,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink(imgName);
   cat(json.obj);
   sink();
-  mSet$imgSet$pls.score3d <- imgName;
+  mSetObj$imgSet$pls.score3d <- imgName;
 
   qs::qsave(pls3d$score, "score3d.qs");
 
@@ -1078,7 +1086,10 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   ldName2<-paste("Loadings", inx2)
   colnames(loadings)<-c(ldName1, ldName2);
   mSetObj$analSet$plsr$imp.loads<-loadings; # set up loading matrix
-  
+
+  # Arrow export for zero-copy Java access (PLS loadings)
+  ExportResultMatArrow(loadings, "pls_load");
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -1190,6 +1201,12 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
   }
   
   mSetObj$analSet$plsda<-list(best.num=best.num, choice=choice, coef.mat=coef.mat, fit.info=all.info);
+
+  # Arrow export for zero-copy Java access (PLS-DA coefficients)
+  if (!is.null(coef.mat) && nrow(coef.mat) > 0) {
+    ExportResultMatArrow(coef.mat, "pls_coef");
+  }
+
   return(.set.mSet(mSetObj));
 }
 
@@ -1966,9 +1983,13 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   ord.inx <- order(-splot.mat[,2], -splot.mat[,3]);
   splot.mat <- signif(splot.mat[ord.inx,],5);
   
-  fast.write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv"); 
+  fast.write.csv(signif(splot.mat[,2:3],5), file="oplsda_splot.csv");
   mSetObj$analSet$oplsda$splot.mat <- splot.mat;
-  mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;   
+  mSetObj$analSet$oplsda$opls.axis.lims <- opls.axis.lims;
+
+  # Arrow export for zero-copy Java access (OPLS S-plot)
+  ExportResultMatArrow(splot.mat[,c(1,3)], "opls_splot");
+
   return(.set.mSet(mSetObj));
 }
 
@@ -2040,10 +2061,14 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png",
   dev.off();
   
   fast.write.csv(vip.mat, file="oplsda_vip.csv");
+
+  # Arrow export for zero-copy Java access (OPLS VIP)
+  ExportResultMatArrow(vip.mat, "opls_vip");
+
   return(.set.mSet(mSetObj));
 }
 
-#'Plot OPLS 
+#'Plot OPLS
 #'@description Plot OPLS 
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -2307,8 +2332,12 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
   ord.inx <- order(-abs(load.mat[,1]), -abs(load.mat[,2]));
   load.mat <- signif(load.mat[ord.inx,],5);
   fast.write.csv(load.mat, file="splsda_loadings.csv");
-  
+
   mSetObj$analSet$splsr$loadings$X <- load.mat;
+
+  # Arrow export for zero-copy Java access (SPLS loadings)
+  ExportResultMatArrow(load.mat, "spls_load");
+
   return(.set.mSet(mSetObj));
 }
 

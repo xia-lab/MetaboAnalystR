@@ -308,6 +308,10 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
     phenotype.factor= phenOpt
   );
   mSetObj$analSet$aov2 <- aov2;
+
+  # Arrow export for zero-copy Java access (ANOVA2 results)
+  ExportResultMatArrow(aov2$sig.mat, "aov2_sig_mat");
+
   return(.set.mSet(mSetObj));
 }
 

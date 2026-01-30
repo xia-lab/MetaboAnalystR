@@ -119,8 +119,9 @@ CalculateHyperScore <- function(mSetObj=NA){
   ord.inx <- order(res.mat[,4]);
   mSetObj$analSet$ora.mat <- signif(res.mat[ord.inx, , drop=FALSE], 3);
   mSetObj$analSet$ora.hits <- hits;
-  
+
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
+  ExportResultMatArrow(mSetObj$analSet$ora.mat, "ora_result");
   return(.set.mSet(mSetObj));
 }
 
@@ -279,7 +280,8 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   res.mat<-res.mat[ord.inx, , drop = FALSE];
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
   fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
-  
+  ExportResultMatArrow(mSetObj$analSet$qea.mat, "qea_result");
+
   return(.set.mSet(mSetObj));
 }
 

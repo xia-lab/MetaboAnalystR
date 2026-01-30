@@ -233,11 +233,12 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   # how to format pretty, and still keep numeric
   feat.rank.mat <<- signif(feat.rank.mat, digits = 5);
-  
+
   if(mSetObj$analSet$mode == "univ"){
     fast.write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
+    ExportResultMatArrow(feat.rank.mat, "roc_feat_rank");
   }
-  return(.set.mSet(mSetObj));  
+  return(.set.mSet(mSetObj));
 }
 
 
@@ -1814,7 +1815,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   if(is.null(mSetObj$analSet$multiROC$accu.mat)){
-    accu.mat <- mSet$analSet$ROCtest$accu.mat;
+    accu.mat <- mSetObj$analSet$ROCtest$accu.mat;
   }else{
     accu.mat <- mSetObj$analSet$multiROC$accu.mat;
   }
@@ -2770,8 +2771,8 @@ GetMeanROC<-function(perf){
 
 ContainNewSamples <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
-  print("ContainNewSamples");
+  #print(ifelse(mSetObj$dataSet$new.samples, 1, 0));
+  #print("ContainNewSamples");
   ifelse(mSetObj$dataSet$new.samples, 1, 0);
 }
 
