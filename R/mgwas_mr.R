@@ -150,6 +150,9 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
    }else if(file.exists("/Users/xialab/Dropbox/sqlite")){
         database_path <- "/Users/xialab/Dropbox/sqlite/openGWAS_nonProxy.sqlite";
         database_path2 <- "/Users/xialab/Dropbox/sqlite/openGWAS_withProxy.sqlite";
+   }else if(file.exists("/home/zgy/sqlite/openGWAS_nonProxy.sqlite")){
+        database_path <- "/home/zgy/sqlite/openGWAS_nonProxy.sqlite";
+        database_path2 <- "/home/zgy/sqlite/openGWAS_withProxy.sqlite";
    }else{
         database_path <- "/home/glassfish/sqlite/openGWAS_nonProxy.sqlite"
         database_path2 <- "/home/glassfish/sqlite/openGWAS_withProxy.sqlite"
