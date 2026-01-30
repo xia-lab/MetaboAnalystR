@@ -121,8 +121,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   mSetObj$analSet$ora.hits <- hits;
 
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
-  # Arrow export for zero-copy Java access (ORA enrichment results)
-  shadow_save_mixed(mSetObj$analSet$ora.mat, "ora_result.qs");
+  ExportResultMatArrow(mSetObj$analSet$ora.mat, "ora_result");
   return(.set.mSet(mSetObj));
 }
 
@@ -281,8 +280,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   res.mat<-res.mat[ord.inx, , drop = FALSE];
   mSetObj$analSet$qea.mat <- signif(res.mat,5);
   fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
-  # Arrow export for zero-copy Java access (QEA enrichment results)
-  shadow_save_mixed(mSetObj$analSet$qea.mat, "qea_result.qs");
+  ExportResultMatArrow(mSetObj$analSet$qea.mat, "qea_result");
 
   return(.set.mSet(mSetObj));
 }

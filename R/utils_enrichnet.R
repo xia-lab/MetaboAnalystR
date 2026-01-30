@@ -605,8 +605,9 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   pheno.comps[["enrichNet"]] <- g;
   pheno.comps[["enrichNet_bipartite"]] <- bg;
   pheno.comps <<- pheno.comps;
-  
-  return(.set.mSet(mSetObj))
+
+  .set.mSet(mSetObj)
+  return(1)
 }
 
 # Helper function for overlap calculation (if not already defined)

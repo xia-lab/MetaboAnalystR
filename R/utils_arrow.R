@@ -54,6 +54,12 @@ write_arrow_safe <- function(df, path, compress = "uncompressed") {
         }
     }
 
+    # CRITICAL: Remove existing file first to prevent file-lock conflicts
+    if (file.exists(path)) {
+        unlink(path)
+        Sys.sleep(0.01)
+    }
+
     # Write the Arrow file
     arrow::write_feather(df, path, compression = compress)
 

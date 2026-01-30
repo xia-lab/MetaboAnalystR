@@ -1516,7 +1516,7 @@ readProgressSec <- function(path_str){
 }
 
 loadMS2ResultmSet <- function(){
-  mSet <<- qs::qread("MS2_searching_results.qs");
+  mSetObj <<- qs::qread("MS2_searching_results.qs");
 }
 
 plotms2Mirror <- function(mSetObj=NA, feature, index){
@@ -1534,7 +1534,7 @@ plotms2Mirror <- function(mSetObj=NA, feature, index){
 
 
     # need to set current ms indx
-    mSet[["dataSet"]][["current_msms_idx"]] <<- featurelabel_idx
+    mSetObj[["dataSet"]][["current_msms_idx"]] <<- featurelabel_idx
     plotMirror(mSetObj, candidate_idx, mz, 5.0, paste0("dyn_mplot_", feature,"_", index, ".svg"), default.dpi, "svg", 10, 6)
 
 }

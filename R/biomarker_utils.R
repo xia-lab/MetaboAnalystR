@@ -236,8 +236,7 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
 
   if(mSetObj$analSet$mode == "univ"){
     fast.write.csv(feat.rank.mat, file="metaboanalyst_roc_univ.csv");
-    # Arrow export for zero-copy Java access (ROC feature ranking)
-    shadow_save_mixed(feat.rank.mat, "roc_feat_rank.qs");
+    ExportResultMatArrow(feat.rank.mat, "roc_feat_rank");
   }
   return(.set.mSet(mSetObj));
 }
@@ -1816,7 +1815,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   if(is.null(mSetObj$analSet$multiROC$accu.mat)){
-    accu.mat <- mSet$analSet$ROCtest$accu.mat;
+    accu.mat <- mSetObj$analSet$ROCtest$accu.mat;
   }else{
     accu.mat <- mSetObj$analSet$multiROC$accu.mat;
   }
@@ -1971,9 +1970,6 @@ PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   mSetObj$analSet$imp.mat <- imp.mat;
   mSetObj$analSet$lowhigh <- lowhigh;
   mSetObj$analSet$roc.sig.nm <- imp.fileNm;
-
-  # Arrow export for zero-copy Java access (ROC importance matrix)
-  shadow_save_mixed(imp.mat, "roc_imp_mat.qs");
   
   if(measure=="freq"){
     imp.vec <- sort(imp.mat[,1], decreasing=T);

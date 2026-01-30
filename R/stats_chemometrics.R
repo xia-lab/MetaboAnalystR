@@ -970,7 +970,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink(imgName);
   cat(json.obj);
   sink();
-  mSet$imgSet$pls.score3d <- imgName;
+  mSetObj$imgSet$pls.score3d <- imgName;
 
   qs::qsave(pls3d$score, "score3d.qs");
 

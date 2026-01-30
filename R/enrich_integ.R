@@ -1395,8 +1395,8 @@ CreateIntegMatchingTable <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   if(!.on.public.web){
-    
-    if(is.null(mSet$analSet$jointPAMatches)){
+
+    if(is.null(mSetObj$analSet$jointPAMatches)){
       AddErrMsg("Perform integrative pathway analysis first!")
       return(0)
     }

@@ -809,8 +809,7 @@ resxs <- lapply(1:length(res), function(i){
     drcfit.obj$fitres.all <- resxs_df
     drcfit.obj$dose <- dose_vec;
     mSetObj$dataSet$drcfit.obj <- drcfit.obj
-    
-    qs::qsave(fitting_res0, file = "curve_fitting_res.qs")    
+
     print("Completed PerformContDRFit!");
     return(.set.mSet(mSetObj));
 }
@@ -1160,8 +1159,7 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   #csv.res <- merge(res, ld.pass.df, by.x = "item", by.y = "id")
 
   fast.write.csv(res, "curvefit_detailed_table.csv");
-  # Arrow export for zero-copy Java access
-  shadow_save_mixed(res, "curvefit_result.qs");
+  ExportResultMatArrow(res, "curvefit_result");
   print("Completed PerformBMDCalc");
 
   if(!.on.public.web){
@@ -1276,8 +1274,7 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     mSetObj$dataSet      <- dataSet
     .set.mSet(mSetObj)
     fast.write.csv(res, "curvefit_detailed_table.csv")
-    # Arrow export for zero-copy Java access
-    shadow_save_mixed(res, "curvefit_result.qs");
+    ExportResultMatArrow(res, "curvefit_result");
 
     print("Completed PerformBMDCalc")
     if (!.on.public.web) return(.set.mSet(mSetObj))

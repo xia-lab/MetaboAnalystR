@@ -171,31 +171,18 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@import qs
 #'@export
 
-PerformMetaPSEA <- function(mSetObj=NA, 
-                            lib, 
-                            libVersion, 
-                            minLib = 3, 
-                            permNum = 100, 
+PerformMetaPSEA <- function(mSetObj=NA,
+                            lib,
+                            libVersion,
+                            minLib = 3,
+                            permNum = 100,
                             metaLevel = "pathway",
-                            combine.level="pvalue", 
-                            pval.method = "fisher", 
+                            combine.level="pvalue",
+                            pval.method = "fisher",
                             es.method = "fixed",
-                            rank.metric="mean", 
-                            mutual.feats = TRUE, 
+                            rank.metric="mean",
+                            mutual.feats = TRUE,
                             pooled_cutoff = 0.05) {
-                            mSetObj<<-NA; 
-                            lib <<- "hsa_kegg"; 
-                            libVersion <<- "current"; 
-                            minLib <<- 3; 
-                            permNum <<- 100; 
-                            metaLevel <<- "pathway";
-                            combine.level<<-"pvalue"; 
-                            pval.method <<- "fisher"; 
-                            es.method <<- "fixed";
-                            rank.metric<<-"mean"; 
-                            mutual.feats <<- FALSE; 
-                            pooled_cutoff <<- 0.001
-  #save.image("metapsea.RData");
 
   require(plyr);
   mSetObj <- .get.mSet(mSetObj);
@@ -582,7 +569,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
   mSetObj <- .get.mSet(mSetObj);
   metaLevel <- mSetObj$metaLevel;
 
-  anal.type0 <- mSet[["paramSet"]][["anal.type"]]
+  anal.type0 <- mSetObj[["paramSet"]][["anal.type"]]
   
   if(metaLevel != "pathway"){
     AddErrMsg("Function only for pathway-level meta-analysis!")
@@ -600,7 +587,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     names(pvals) <- rownames(path_results)
     title <- "MS Peaks to Pathway Network Overview";
     
-    if("emp_cpds" %in% names(mSet$pathways)){
+    if("emp_cpds" %in% names(mSetObj$pathways)){
       path.names <- mSetObj$pathways$name
       current.mset <- mSetObj$pathways$emp_cpds;
       names(current.mset) <- path.names
@@ -2271,6 +2258,6 @@ Finish.DataSet <- function(dataName, dataName2 = NULL){
 Restore.CmdHistory <- function(){
   if(file.exists("cmdSet.qs")){
     cmdSet <- qs::qread("cmdSet.qs");
-    mSet$cmdSet <<- c(cmdSet, mSet$cmdSet);
-  } 
+    mSetObj$cmdSet <<- c(cmdSet, mSetObj$cmdSet);
+  }
 }

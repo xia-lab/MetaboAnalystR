@@ -3633,26 +3633,43 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = def
     geom_point(aes(size = radi.vec, color = combined_value), alpha = 0.7) +  # Slightly increase transparency
     geom_text_repel(data = top_5, aes(label = path.nms), size = 3) +  # Add repelling labels for top 5 pathways
     scale_color_gradientn(colors = rev(heat.colors(10)), name="Combined Score") +  # Reversed heat colors
-    scale_size_continuous(range = c(3, 10), guide="none") +  # Increased size range
+    scale_size_continuous(range = c(1, 5), guide="none") +  # Reduced size range to match Mummichog
     labs(x = "GSEA -log10(p)", y = "Mummichog -log10(p)") +
     theme_minimal() +
     theme(legend.position = "none",  # Remove the legend
           panel.background = element_rect(fill = "white"),  # Set panel background to white
           plot.background = element_rect(fill = "white"))   # Set plot background to white
   
-  df <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
+  json_data <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
-  cat(RJSONIO::toJSON(df));
+  cat(RJSONIO::toJSON(json_data));
   sink();
   
   if(interactive){
-    plotly_p <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), legend = list(
-      traceorder = "normal",
-      orientation = "v",
-      yanchor = "top",
-      xanchor = "left",
-      itemsizing = "constant"  # This tries to make legend item sizes constant
-    ),autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    # Create plotly chart directly (same style as PlotlyPeaks2Paths)
+    # Use sqrt of combined_value for sizing (same approach as Mummichog)
+    size_vec <- sqrt(abs(as.numeric(df$combined_value)))
+    plotly_p <- plot_ly(df, x = ~x, y = ~y,
+                        type = 'scatter', mode = 'markers',
+                        marker = list(
+                          size = ~size_vec * 10,  # Same multiplier as Mummichog
+                          color = ~combined_value,
+                          colorscale = list(c(0, "yellow"), c(1, "red")),
+                          colorbar = list(title = "-log10(p)", len = 0.5, x = 1.02),
+                          line = list(color = 'black', width = 1)
+                        ),
+                        text = ~paste("Pathway:", path.nms,
+                                      "<br>GSEA -log10(p):", round(x, 3),
+                                      "<br>Mummichog -log10(p):", round(y, 3),
+                                      "<br>Combined -log10(p):", round(combined_value, 3)),
+                        hoverinfo = 'text') %>%
+      layout(
+        xaxis = list(title = 'GSEA -log10(p)'),
+        yaxis = list(title = 'Mummichog -log10(p)'),
+        hovermode = 'closest',
+        autosize = TRUE,
+        margin = list(r = 80, b = 50, t = 30)  # Compact margins
+      )
     return(plotly_p);
   }else{
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);   

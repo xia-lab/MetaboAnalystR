@@ -747,7 +747,7 @@ convertIgraph2JSON <- function(net.nm, filenm){
   nodes <- vector(mode="list");
   for(i in 1:length(node.sizes)){
     # TODO: avoid which here and just attach HMDB matched IDs to the list of Compound nodes
-    hmdb.id <- mSet$dataSet$map.table[which(mSet$dataSet$map.table[,1] == nms[i]), 3]
+    hmdb.id <- mSetObj$dataSet$map.table[which(mSetObj$dataSet$map.table[,1] == nms[i]), 3]
 
     nodes[[i]] <- list(
       id=nms[i],
