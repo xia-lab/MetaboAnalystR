@@ -170,15 +170,20 @@ melt_check <- function(data, id.vars, measure.vars, variable.name, value.name) {
   list(id = id.vars, measure = measure.vars)
 }
 melt_dataframe <- function(data, id_ind, measure_ind, variable_name, value_name, measure_attributes, factorsAsStrings, valueAsFactor) {
-    if(.on.public.web){
-    require("XiaLabCppLib")
-    res <- .Call('_XiaLabCppLib_melt_dataframe', PACKAGE = 'XiaLabCppLib', 
-        data, id_ind, measure_ind, variable_name, value_name, 
-        measure_attributes, factorsAsStrings, valueAsFactor)
+    # Pro bypass: use MetaboAnalystR backend to avoid XiaLabCppLib in Master session
+    if(exists(".pro.cpp.bypass", envir = .GlobalEnv) && isTRUE(get(".pro.cpp.bypass", envir = .GlobalEnv))){
+        res <- .Call('_MetaboAnalystR_melt_dataframe', PACKAGE = 'MetaboAnalystR',
+            data, id_ind, measure_ind, variable_name, value_name,
+            measure_attributes, factorsAsStrings, valueAsFactor)
+    } else if(.on.public.web){
+        require("XiaLabCppLib")
+        res <- .Call('_XiaLabCppLib_melt_dataframe', PACKAGE = 'XiaLabCppLib',
+            data, id_ind, measure_ind, variable_name, value_name,
+            measure_attributes, factorsAsStrings, valueAsFactor)
     } else {
-    res <- .Call('_MetaboAnalystR_melt_dataframe', PACKAGE = 'MetaboAnalystR', 
-        data, id_ind, measure_ind, variable_name, value_name, 
-        measure_attributes, factorsAsStrings, valueAsFactor)
+        res <- .Call('_MetaboAnalystR_melt_dataframe', PACKAGE = 'MetaboAnalystR',
+            data, id_ind, measure_ind, variable_name, value_name,
+            measure_attributes, factorsAsStrings, valueAsFactor)
     }
 }
 normalize_melt_arguments <- function(data, measure.ind, factorsAsStrings) {

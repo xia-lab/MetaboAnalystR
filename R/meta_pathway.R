@@ -571,8 +571,8 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
 
   anal.type0 <- mSetObj[["paramSet"]][["anal.type"]]
   
-  if(metaLevel != "pathway"){
-    AddErrMsg("Function only for pathway-level meta-analysis!")
+  if(is.null(metaLevel) || metaLevel != "pathway"){
+    AddErrMsg("This view is only available for pathway-level meta-analysis. Please run pathway-level integration first, or use the appropriate results page for pooled-peaks analysis.")
     return(0)
   }
   
@@ -1954,16 +1954,25 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
 
 GetMetaPathResultColNames <- function() {
   mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$res_table)){
+    return(character(0))
+  }
   return(colnames(mSetObj$dataSet$res_table)[-1])
 }
 
 GetMetaPathNMs <- function() {
   mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$res_table)){
+    return(character(0))
+  }
   return(mSetObj$dataSet$res_table$Pathways)
 }
 
 GetMetaPathResultItem <- function(rowN) {
   mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$dataSet$res_table)){
+    return(character(0))
+  }
   res <- mSetObj$dataSet$res_table[,-1];
   return(as.character(unname(res[rowN,])))
 }
@@ -1980,32 +1989,52 @@ PrepareCMPDList <- function() {
 Prepare4Network <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
 
-  mSetObj <- SetOrganism(mSetObj, "hsa")
-  cmpdList <- PrepareCMPDList()
-  
-  cmpdList <- paste(cmpdList, collapse = "\n")
-  mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg")
-  
-  #mSetObj <- CreateMappingResultTable(mSetObj)
-  mSetObj <- PrepareNetworkData(mSetObj)
-  
-  idtype <<- "cmpd";
-  mSetObj <- PrepareKeggQueryJson(mSetObj);
-  mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
-  mSetObj <- .get.mSet(mSetObj);
+  tryCatch({
+    mSetObj <- SetOrganism(mSetObj, "hsa")
+    cmpdList <- PrepareCMPDList()
 
-  return(.set.mSet(mSetObj))
+    cmpdList <- paste(cmpdList, collapse = "\n")
+    mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg")
+
+    #mSetObj <- CreateMappingResultTable(mSetObj)
+    mSetObj <- PrepareNetworkData(mSetObj)
+
+    idtype <<- "cmpd";
+    mSetObj <- PrepareKeggQueryJson(mSetObj);
+    mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
+    mSetObj <- .get.mSet(mSetObj);
+
+    .set.mSet(mSetObj)
+    return(1L)  # Return integer 1 for success (Java expects int)
+  }, error = function(e) {
+    AddErrMsg(paste("Network preparation failed:", e$message))
+    return(0L)  # Return integer 0 for failure
+  })
 }
 
 GetSigPathNums <- function(pvalCutoff){
   mSetObj <- .get.mSet(NA);
   pathSet <- mSetObj$dataSet$pathResults;
   anal.type0 <- mSetObj[["paramSet"]][["anal.type"]];
-  
-  if(class(pathSet[[1]])[1] == "matrix"){
+
+  # Handle case where pathSet is NULL or empty
+  if(is.null(pathSet) || length(pathSet) == 0){
+    if(file.exists("pathSet_tmp.qs")){
+      pathSet <- qs::qread("pathSet_tmp.qs")
+    } else {
+      AddErrMsg("Path results not available. Please run the analysis first.")
+      return(NULL)
+    }
+  } else if(class(pathSet[[1]])[1] == "matrix"){
     qs::qsave(pathSet, file = "pathSet_tmp.qs")
   } else {
-    pathSet <- qs::qread("pathSet_tmp.qs")
+    # pathSet exists but first element is not a matrix - try to read cached version
+    if(file.exists("pathSet_tmp.qs")){
+      pathSet <- qs::qread("pathSet_tmp.qs")
+    } else {
+      AddErrMsg("Path results not in expected format. Please re-run the analysis.")
+      return(NULL)
+    }
   }
   
   if(anal.type0 == "mummichog"){
