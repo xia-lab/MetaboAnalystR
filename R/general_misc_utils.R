@@ -1194,68 +1194,6 @@ rowcolFt =  function(x, fac, var.equal, which = 1L) {
   return(res)
 }
 
-# Pure R implementation of row/column t-tests (Pro bypass for XiaLabCppLib)
-# This replaces the C function call when .pro.cpp.bypass is TRUE
-.rowcolttests_R <- function(x, fac, nrgrp, which, na.rm) {
-  # which: 1 = row tests, 2 = column tests
-  if (which == 2) {
-    x <- t(x)
-  }
-
-  # fac is 0-indexed integer vector (0 for group1, 1 for group2)
-  grp1_idx <- which(fac == 0)
-  grp2_idx <- which(fac == 1)
-
-  n1 <- length(grp1_idx)
-  n2 <- length(grp2_idx)
-
-  if (n1 == 0 || n2 == 0) {
-    stop("Each group must have at least one sample")
-  }
-
-  # Extract data for each group
-  x1 <- x[, grp1_idx, drop = FALSE]
-  x2 <- x[, grp2_idx, drop = FALSE]
-
-  # Calculate means
-  if (na.rm) {
-    m1 <- rowMeans(x1, na.rm = TRUE)
-    m2 <- rowMeans(x2, na.rm = TRUE)
-    # Count non-NA values per row
-    n1_eff <- rowSums(!is.na(x1))
-    n2_eff <- rowSums(!is.na(x2))
-    # Calculate variances
-    v1 <- rowSums((x1 - m1)^2, na.rm = TRUE) / (n1_eff - 1)
-    v2 <- rowSums((x2 - m2)^2, na.rm = TRUE) / (n2_eff - 1)
-    # Pooled variance (Welch's approximation for unequal variances)
-    se <- sqrt(v1/n1_eff + v2/n2_eff)
-    # Welch-Satterthwaite degrees of freedom
-    df <- (v1/n1_eff + v2/n2_eff)^2 / ((v1/n1_eff)^2/(n1_eff-1) + (v2/n2_eff)^2/(n2_eff-1))
-  } else {
-    m1 <- rowMeans(x1)
-    m2 <- rowMeans(x2)
-    # Calculate variances
-    v1 <- rowSums((x1 - m1)^2) / (n1 - 1)
-    v2 <- rowSums((x2 - m2)^2) / (n2 - 1)
-    # Pooled variance
-    se <- sqrt(v1/n1 + v2/n2)
-    # Welch-Satterthwaite degrees of freedom
-    df <- (v1/n1 + v2/n2)^2 / ((v1/n1)^2/(n1-1) + (v2/n2)^2/(n2-1))
-  }
-
-  # Difference of means
-  dm <- m1 - m2
-
-  # t-statistic
-  statistic <- dm / se
-
-  # Handle edge cases (zero variance)
-  statistic[!is.finite(statistic)] <- NA
-  df[!is.finite(df)] <- NA
-
-  list(statistic = statistic, dm = dm, df = df)
-}
-
 rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
     
   #if(.on.public.web){
@@ -1272,14 +1210,11 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
   if (typeof(x) == "integer")
       x[] <- as.numeric(x)
 
-  #cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
-  # Pro bypass: use pure R implementation to avoid XiaLabCppLib in Master session
-  if(exists(".pro.cpp.bypass", envir = .GlobalEnv) && isTRUE(get(".pro.cpp.bypass", envir = .GlobalEnv))){
-      cc = .rowcolttests_R(x, f$fac, f$nrgrp, which, na.rm)
-  } else if(require(XiaLabCppLib, quietly = TRUE)){
+  if(.on.public.web){
+      require("XiaLabCppLib")
       cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
   } else {
-      cc = .rowcolttests_R(x, f$fac, f$nrgrp, which, na.rm)
+      cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm, PACKAGE="MetaboAnalystR")
   }
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,

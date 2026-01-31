@@ -305,3 +305,172 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 
   return(.set.mSet(mSetObj));
 }
+
+#' Pack mesh3d object for JSON serialization
+#' @description Extracts essential fields from mesh3d objects for JavaScript consumption
+#' @param obj A mesh3d object or list of mesh3d objects
+#' @return A list with type, colors, vertices, and vb fields
+.pack_mesh3d <- function(obj) {
+  if (inherits(obj, "mesh3d")) {
+    out <- list()
+    if (!is.null(obj$type)) out$type <- obj$type
+    if (!is.null(obj$colors)) out$colors <- obj$colors
+    if (!is.null(obj$vertices)) out$vertices <- obj$vertices
+    if (!is.null(obj$vb)) out$vb <- obj$vb
+    return(out)
+  }
+  if (is.list(obj)) {
+    return(lapply(obj, .pack_mesh3d))
+  }
+  obj
+}
+
+#' Compute 3D encasing mesh (ellipse, alpha shape, or kernel density)
+#' @description Computes 3D encasing for a group of samples in scatter plot
+#' @param filenm Output filename for the JSON mesh data
+#' @param type Type of encasing: "ellipse", "alpha", or "kde"
+#' @param names.vec Sample names separated by "; "
+#' @param level Confidence level (default 0.95)
+#' @param omics Omics type (optional)
+#' @return The filename of the created JSON file
+#' @export
+ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
+  level <- as.numeric(level)
+  names <- strsplit(names.vec, "; ")[[1]]
+
+  # Read SCALED coordinates from rdt.set.qs (created by my.json.scatter)
+  # Coordinates are scaled to [-1, 1] to match JSON node positions (JS multiplies by 1000)
+  if (!file.exists("rdt.set.qs")) {
+    message("[ComputeEncasing] rdt.set.qs not found")
+    return("NA")
+  }
+  rdt.set <- qs::qread("rdt.set.qs")
+  pos.xyz <- rdt.set$pos.xyz
+
+  inx <- rownames(pos.xyz) %in% names
+  if (sum(inx) < 3) {
+    message("[ComputeEncasing] Need at least 3 matching points")
+    return("NA")
+  }
+
+  coords <- as.matrix(pos.xyz[inx, 1:3])
+  mesh <- list()
+
+  tryCatch({
+    if (type == "alpha") {
+      require(alphashape3d)
+      require(rgl)
+      sh <- ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09)
+      mesh[[1]] <- as.mesh3d(sh, triangles = TRUE)
+    } else if (type == "ellipse") {
+      require(rgl)
+      cov_mat <- cov(coords)
+      if (any(is.na(cov_mat)) || det(cov_mat) <= 0) {
+        message("[ComputeEncasing] Singular covariance matrix")
+        return("NA")
+      }
+      # centre=c(0,0,0) because JS positions mesh at node centroid
+      mesh[[1]] <- ellipse3d(x = cov_mat, centre = c(0, 0, 0), level = level)
+    } else {
+      require(ks)
+      kde_res <- kde(coords)
+      plot(kde_res, cont = level * 100)
+      mesh <- scene3d()$objects
+    }
+
+    jsonlite::write_json(.pack_mesh3d(mesh), filenm, auto_unbox = TRUE, pretty = FALSE)
+    return(filenm)
+  }, error = function(e) {
+    message("[ComputeEncasing] ERROR: ", e$message)
+    return("NA")
+  })
+}
+
+#' Compute 3D encasing mesh for multiple groups (batch mode)
+#' @description Computes 3D encasing for multiple groups defined in JSON
+#' @param filenm Output filename for the JSON mesh data
+#' @param type Type of encasing: "ellipse", "alpha", or "kde"
+#' @param groups.json JSON string with array of groups: [{"group":"name","ids":"id1; id2; ..."},...]
+#' @param level Confidence level (default 0.95)
+#' @param omics Omics type (optional)
+#' @return The filename of the created JSON file
+#' @export
+ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="NA"){
+  level <- as.numeric(level)
+
+  # Parse JSON input
+  groups <- tryCatch({
+    jsonlite::fromJSON(groups.json)
+  }, error = function(e) {
+    # Try unescaping if JSON has escaped quotes
+    tryCatch({
+      jsonlite::fromJSON(gsub('\\\\"', '"', groups.json))
+    }, error = function(e2) {
+      message("[ComputeEncasingBatch] JSON parse failed: ", e2$message)
+      return(NULL)
+    })
+  })
+
+  if (is.null(groups)) return("NA")
+  if (!is.data.frame(groups)) groups <- as.data.frame(groups)
+  if (nrow(groups) == 0) return("NA")
+
+  # Read SCALED coordinates from rdt.set.qs (created by my.json.scatter)
+  # Coordinates are scaled to [-1, 1] to match JSON node positions (JS multiplies by 1000)
+  if (!file.exists("rdt.set.qs")) {
+    message("[ComputeEncasingBatch] rdt.set.qs not found")
+    return("NA")
+  }
+  rdt.set <- qs::qread("rdt.set.qs")
+  pos.xyz <- rdt.set$pos.xyz
+
+  all_meshes <- list()
+
+  for (i in 1:nrow(groups)) {
+    group_name <- groups$group[i]
+    names <- strsplit(groups$ids[i], "; ")[[1]]
+    inx <- rownames(pos.xyz) %in% names
+
+    if (sum(inx) < 3) next
+
+    coords <- as.matrix(pos.xyz[inx, 1:3])
+    mesh <- NULL
+
+    tryCatch({
+      if (type == "alpha") {
+        require(alphashape3d)
+        require(rgl)
+        sh <- ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09)
+        mesh <- as.mesh3d(sh, triangles = TRUE)
+      } else if (type == "ellipse") {
+        require(rgl)
+        cov_mat <- cov(coords)
+        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) next
+        # centre=c(0,0,0) because JS positions mesh at node centroid
+        mesh <- ellipse3d(x = cov_mat, centre = c(0, 0, 0), level = level)
+      } else {
+        require(ks)
+        kde_res <- kde(coords)
+        plot(kde_res, cont = level * 100)
+        mesh <- scene3d()$objects[[1]]
+      }
+
+      if (!is.null(mesh)) {
+        # Wrap in list so JS gets array: [{vb: ...}]
+        all_meshes[[group_name]] <- list(.pack_mesh3d(mesh))
+      }
+    }, error = function(e) {
+      message("[ComputeEncasingBatch] Group '", group_name, "' error: ", e$message)
+    })
+  }
+
+  if (length(all_meshes) == 0) return("NA")
+
+  # Convert to array format: [{"group": "name", "mesh": [{vb: ...}]}, ...]
+  result_array <- lapply(names(all_meshes), function(grp) {
+    list(group = grp, mesh = all_meshes[[grp]])
+  })
+
+  jsonlite::write_json(result_array, filenm, auto_unbox = TRUE, pretty = FALSE)
+  return(filenm)
+}
