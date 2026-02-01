@@ -1210,11 +1210,11 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
   if (typeof(x) == "integer")
       x[] <- as.numeric(x)
 
-  #cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm)
-   if(require(XiaLabCppLib)){
-        cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
-   }else{
-        cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm, PACKAGE="genefilter")
+  if(.on.public.web){
+      require("XiaLabCppLib")
+      cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
+  } else {
+      cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm, PACKAGE="MetaboAnalystR")
   }
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,
