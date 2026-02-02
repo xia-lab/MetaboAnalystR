@@ -186,7 +186,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     }
     # progress 110
     cmd_prgs <- "OptiLCMS:::MessageOutput(
-      mes = paste0(\'Step 7/12: MS/MS data imported completely! \n\n\'),
+      mes = paste0(\'Step 7/12: MS/MS data imported completely! \n\'),
       ecol = \'\',
       progress = 110
     )";
@@ -220,7 +220,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", "mSet@MSnData[[\'peak_mtx_idx\']] <- idx");
     str <- paste0(str, ";\n", cmd_deco)
     # progress 140
-    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\n\'),ecol = \'\',progress = 140)";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed ! \n\'),ecol = \'\',progress = 140)";
     str <- paste0(str, ";\n", cmd_prgs)
     
   } else {
@@ -250,7 +250,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     }
     
     # progress 110
-    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\n\'),ecol = \'\',progress = 110)";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 7/12: MS/MS data imported completely!  \n\'),ecol = \'\',progress = 110)";
     str <- paste0(str, ";\n", cmd_prgs)
     
     if(param_list[["targets_opt"]] == "sigs") {
@@ -271,7 +271,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     str <- paste0(str, ";\n", cmd_deco)
     str <- paste0(str, ";\n", "mSet@MSnData[[\'peak_mtx_idx\']] <- idx");
     # progress 140
-    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\n\'),ecol = \'\',progress = 140)";
+    cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution completed! \n\'),ecol = \'\',progress = 140)";
     str <- paste0(str, ";\n", cmd_prgs)
   }
   
@@ -283,12 +283,12 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                      user_dbCorrection = FALSE)");
   str <- paste0(str, ";\n", cmd_consenus)
   # progress 150
-  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\n\'),ecol = \'\',progress = 150)";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 9/12: MS/MS spectra consensus finished! \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # PerformDBSearchingBatch
   # progress 150
-  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\n\'),ecol = \'\',progress = 150)";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
   if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
@@ -310,7 +310,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
 
   str <- paste0(str, ";\n", cmd_seareching)
   # progress 180
-  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\n\'),ecol = \'\',progress = 180)";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS database searching completed! \n\'),ecol = \'\',progress = 180)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # PerformResultsExport
@@ -330,7 +330,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   }
 
   # progress 190
-  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\n\'),ecol = \'\',progress = 190)";
+  cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exported! \n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
   
   # FormatMSnAnnotation
