@@ -347,6 +347,12 @@ PlotScatter <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = d
     w <- width
   }
   h <- w*4/5;
+
+  # Ensure width/height are in inches (not pixels) for all formats.
+  if (!is.na(w) && w > 50) {
+    w <- w / 72
+    h <- h / 72
+  }
   
   # Record img
   imageName <- imgName
@@ -443,6 +449,12 @@ PlotForest <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = de
     w <- width
   }
   h <- w
+
+  # Ensure width/height are in inches (not pixels) for all formats.
+  if (!is.na(w) && w > 50) {
+    w <- w / 72
+    h <- h / 72
+  }
   
   # Record img
   imageName <- imgName
@@ -527,6 +539,12 @@ PlotLeaveOneOut <- function(mSetObj = NA, exposure, imgName, format = "png", dpi
     w <- width
   }
   h <- w
+
+  # Ensure width/height are in inches (not pixels) for all formats.
+  if (!is.na(w) && w > 50) {
+    w <- w / 72
+    h <- h / 72
+  }
   
   # Record img
   imageName <- imgName
@@ -606,6 +624,12 @@ PlotFunnel <- function(mSetObj = NA, exposure, imgName, format = "png", dpi = de
     w <- width
   }
   h <- w
+
+  # Ensure width/height are in inches (not pixels) for all formats.
+  if (!is.na(w) && w > 50) {
+    w <- w / 72
+    h <- h / 72
+  }
   
   # Record img
   imageName <- imgName
