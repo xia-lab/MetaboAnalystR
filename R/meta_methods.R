@@ -683,7 +683,9 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=default.dpi, width=NA){
                  panel.bwplot(x, y, ...)
                })
   
-  Cairo::Cairo(file=imgNm, width=460, height=420, type="png", bg="white");
+  w <- 460/72
+  h <- 420/72
+  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
   print(box);
   dev.off();
 }
@@ -702,7 +704,9 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=default.dpi, width=NA){
                              ltext(x=x, y=y, labels=names, pos=1, offset=1, cex=0.8, col="magenta")
                            })
   
-  Cairo::Cairo(file=imgNm, width=480, height=480, type="png", bg="white");
+  w <- 480/72
+  h <- 480/72
+  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
   print(pcafig);
   dev.off();
 }
@@ -823,7 +827,7 @@ if(!exists('metastat.meta')){
   plotlyNm <- paste0(imgNm, ".rda")
   dpi <- as.numeric(dpi)
 
-  Cairo(file = img.path, width = 8, height = 6, type = format, bg = "white", units = "in", dpi = dpi)
+  Cairo::Cairo(file = img.path, width = 8, height = 6, type = format, bg = "white", units = "in", dpi = dpi)
   print(pcafig)
   dev.off()
 
@@ -874,7 +878,7 @@ if(!exists('metastat.meta')){
     theme_bw()
 
   # Save static image
-  Cairo(file = img.path, width = 10, height = 6, type = format, bg = "white", dpi = dpi, unit = "in")
+  Cairo::Cairo(file = img.path, width = 10, height = 6, type = format, bg = "white", dpi = dpi, unit = "in")
   print(g)
   dev.off()
 

@@ -48,7 +48,7 @@ gg2list_new <- function(p, width = NULL, height = NULL,
   } else if (capabilities("jpeg")) {
     grDevices::jpeg 
   } else if (is_installed("Cairo")) {
-    function(filename, ...) Cairo::Cairo(file = filename, ...)
+    function(filename, ...) Cairo::Cairo(file = filename, unit = "px", ...)
   } else {
     stop(
       "No Cairo or bitmap device is available. Such a graphics device is required to convert sizes correctly in ggplotly().\n\n", 
@@ -1023,4 +1023,3 @@ gg2list_new <- function(p, width = NULL, height = NULL,
   
   l
 }
-

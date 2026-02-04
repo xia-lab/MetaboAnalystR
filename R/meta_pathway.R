@@ -2262,11 +2262,21 @@ qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", 
     nrows = 1;
   }
   if(is.null(dat2)){
-    Cairo::Cairo(file=imgNm, width=460, height=420, type="png", bg="white");
+    w <- 460/72
+    h <- 420/72
+    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
     print(box);
     dev.off();
   } else {
-    Cairo::Cairo(file=imgNm, width=width, height=height, type="png", bg="white");
+    w <- width
+    h <- height
+    if (!is.na(w) && w > 50) {
+      w <- w / 72
+    }
+    if (!is.na(h) && h > 50) {
+      h <- h / 72
+    }
+    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
     grid.arrange(box, box2, nrow = nrows);
     dev.off();
   }

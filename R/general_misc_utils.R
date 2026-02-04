@@ -978,7 +978,9 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
   y.label <- GetAbundanceLabel(mSetObj$dataSet$type);
   cmpd.name = paste0("Met_", cmpd, ".png")
   
-  Cairo::Cairo(file=cmpd.name, width=240, height=400, bg = "transparent", type="png");
+  w <- 240/72
+  h <- 400/72
+  Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png");
   
   col <- unique(GetColorSchema(cls.lbls))
   df <- data.frame(conc = mSetObj$dataSet$norm[, cmpd], class = cls.lbls)
