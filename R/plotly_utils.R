@@ -344,7 +344,10 @@ gg2list_new <- function(p, width = NULL, height = NULL,
   } else {
     pm <- unitConvert(theme$plot.margin, "pixels")
   }
-  
+  if(length(pm)<4){
+    pm <- list(9.741248,7.305936,9.741248,7.305936)
+  }
+
   gglayout <- list(
     margin = list(t = pm[[1]], r = pm[[2]], b = pm[[3]], l = pm[[4]]),
     plot_bgcolor = toRGB(theme$panel.background$fill),
