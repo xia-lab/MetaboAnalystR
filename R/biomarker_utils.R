@@ -1113,9 +1113,8 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=defa
   }
 
 
-  scale <- dpi/72;
-  w <- 200*scale;
-  h <- 400*scale; 
+  w <- 200/72;
+  h <- 400/72; 
   col <- GetColorSchema(y);
   
   if(length(mSetObj$imgSet$roc.univ.boxplot)==0){
@@ -1133,7 +1132,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=defa
   
   #mSetObj$imgSet$roc.univ.boxplot <- imgName;
   
-  Cairo::Cairo(file=imgName, width=w, height=h, type=format, bg="white", dpi=dpi);
+  Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type=format, bg="white", dpi=dpi);
   par(oma=c(0,0,1,0));
   par(mar=c(4,4,4,4)+.1);
   df <- data.frame(conc = x, class = y)

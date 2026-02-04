@@ -93,7 +93,9 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
         cmpd <- hit.cmpds[i];
         histvec[cmpd] <- cmpd;
         cmpd.name <- paste(cmpd, ".png", sep="");
-        Cairo::Cairo(file=cmpd.name, width=220, height=260, bg = "transparent", type="png");
+        w <- 220/72
+        h <- 260/72
+        Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png");
         # remember to change jscode for image size when the change the size above
         par(mar=c(4,3,3,2));
         
@@ -147,7 +149,15 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
     imgName <- paste(pathName, ".png", sep="");
     
     ## Open plot device
-    Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+    w <- width
+    h <- height
+    if (!is.na(w) && w > 50) {
+      w <- w / 72
+    }
+    if (!is.na(h) && h > 50) {
+      h <- h / 72
+    }
+    Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
     par(mai=rep(0,4));
     g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
     nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
@@ -664,7 +674,15 @@ RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=N
   mSetObj <- .get.mSet(mSetObj);
   library(igraph);
 
-  Cairo::Cairo(file=imgName, width=width, height=height,type="png", bg="white");
+  w <- width
+  h <- height
+  if (!is.na(w) && w > 50) {
+    w <- w / 72
+  }
+  if (!is.na(h) && h > 50) {
+    h <- h / 72
+  }
+  Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
   if(mSetObj$analSet$type == "pathinteg"){
     font.cex <- 0.7*zoom.factor/100;
     if(font.cex < 0.6){

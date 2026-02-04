@@ -271,13 +271,13 @@ PlotDRHistogram <- function(mSetObj = NA,
 
   imgFile <- paste0(imgNm, "dpi", dpi, ".", format)
 
-  Cairo(file   = imgFile,
-        width  = w,
-        height = h,
-        unit   = "in",
-        dpi    = dpi,
-        type   = format,
-        bg     = "white")
+  Cairo::Cairo(file   = imgFile,
+               width  = w,
+               height = h,
+               unit   = "in",
+               dpi    = dpi,
+               type   = format,
+               bg     = "white")
 
   print(p)
   dev.off()

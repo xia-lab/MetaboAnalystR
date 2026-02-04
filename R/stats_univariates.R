@@ -946,7 +946,9 @@ PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=default.dpi, widt
   df <- data.frame(conc = x, class = y)
   col <- unique(GetColorSchema(y))
   
-  Cairo::Cairo(file = imgName, dpi=dpi, width=my.width, height=325, type=format, bg="transparent");
+  w <- my.width/72
+  h <- 325/72
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="transparent");
   
   p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
