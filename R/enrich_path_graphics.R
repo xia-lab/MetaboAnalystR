@@ -95,7 +95,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
         cmpd.name <- paste(cmpd, ".png", sep="");
         w <- 220/72
         h <- 260/72
-        Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png");
+        Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png", dpi = 72);
         # remember to change jscode for image size when the change the size above
         par(mar=c(4,3,3,2));
         
@@ -157,7 +157,7 @@ PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png",
     if (!is.na(h) && h > 50) {
       h <- h / 72
     }
-    Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
+    Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white", dpi = 72);
     par(mai=rep(0,4));
     g.obj <- plot(g, nodeAttrs = setRendAttrs(g, fillcolor=fillcolvec));
     nodeInfo <- GetMetPANodeInfo(pathName, g.obj, tooltip, histvec, pvec, impvec, width, height);
@@ -682,7 +682,7 @@ RerenderMetPAGraph <- function(mSetObj=NA, imgName, width, height, zoom.factor=N
   if (!is.na(h) && h > 50) {
     h <- h / 72
   }
-  Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
+  Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white", dpi = 72);
   if(mSetObj$analSet$type == "pathinteg"){
     font.cex <- 0.7*zoom.factor/100;
     if(font.cex < 0.6){
