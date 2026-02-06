@@ -1675,6 +1675,7 @@ GeneratePeakList <- function(userPath) {
     cat("waiting data writing done...")
     Sys.sleep(3)
   }
+  options(digits = 10) 
   ann_data <- readRDS("annotated_peaklist.rds");
   ann_data <-
     ann_data[, c(1, 4, ncol(ann_data) - 4, ncol(ann_data) - 5, ncol(ann_data) -1 , ncol(ann_data)-2, ncol(ann_data))];
@@ -1704,8 +1705,8 @@ GeneratePeakList <- function(userPath) {
     pvals <-tt.res$p.value;
     pvals[is.nan(pvals)] <- 1;
     pfdr <-p.adjust(pvals, method = "fdr")
-    pvals <- signif(pvals, 8)
-    pfdr <- round(signif(pfdr, 8), 8)
+    pvals <- signif(pvals, 4)
+    pfdr <- round(signif(pfdr, 4), 4)
     FeatureOrder <- order(pvals)
     intenVale <- round(apply(sample_data_mean, 1, mean),1)
   } else {
@@ -1977,24 +1978,24 @@ generateAsariPeakList <-  function(userPath) {
   lvls <- groups[groups != "QC"];
   sample_data_log <- sample_data_log[,groups != "QC"];
   groups <- as.factor(lvls);
-  
+  options(digits = 10) 
   ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
   pvals <- ttest_res[,2]
   pfdr <-p.adjust(pvals, method = "fdr")
-  pvals <- signif(pvals, 8)
-  pfdr <- round(signif(pfdr, 8), 8)
+  pvals <- signif(pvals, 4)
+  pfdr <- round(signif(pfdr, 4), 4)
   
   pvals[is.nan(pvals)] = 1
   pfdr[is.nan(pfdr)] = 1
   
-  my.dat <- data.frame(mz = ftab_annotation$mz,
-                       rt = ftab_annotation$rtime,
+  my.dat <- data.frame(mz = round(ftab_annotation$mz, digits = 4),
+                       rt = round(ftab_annotation$rtime, digits = 1),
                        adduct = adds,
                        isotopes = isos,
                        Formula = all_forumus,
                        Compound = all_cmpd,
                        HMDBID = all_hmdb,
-                       intenVale = ftable$peak_area,
+                       intenVale = round(signif(ftable$peak_area,4), digits = 4),
                        pvals = pvals,
                        pfdr = pfdr,
                        cvs = cvs)
