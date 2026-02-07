@@ -2836,7 +2836,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
   }
   
-  #save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2678.rda")
+  save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2839.rda")
   #cat("==== fragDB_path ---> ", fragDB_path, "\n");
 
   fl <- gsub("mz|sec|min", "", featurelabel)
@@ -3023,11 +3023,14 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     #stop("Your mSet object does not contain MS2 analysis results!")
     mSet_raw <- qs::qread("msn_mset_result.qs")
     mSet_raw@MSnResults -> mSetObj[["analSet"]][["ms2res"]] -> MSnResults;
-    mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData
+    mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData;    
   } else {
     mSetObj[["analSet"]][["ms2res"]] -> MSnResults
     mSetObj[["analSet"]][["ms2data"]] -> MSnData
   }
+  result_num <- peak_idx
+  peak_idx <- which(row.names(MSnData[["peak_mtx"]]) == peak_idx)
+
   peak_idx0 <- peak_idx-1
   idx <- which(peak_idx0 == MSnResults[["Concensus_spec"]][[1]])
   if(!(peak_idx0 %in% MSnResults[["Concensus_spec"]][[1]])){
@@ -3084,7 +3087,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   mz <- round(mz, 4)
   rt <- round(rt, 2)
   
-  result_num <- idx #<- peak_idx;
+  #result_num <- idx #<- peak_idx;
   ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
   uidx <- vapply(ucmpds, function(x){
     which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
@@ -3220,7 +3223,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     print(px)
   }
   saveRDS(px, file = paste0(gsub(".png|.svg|.pdf", "", imageNM), ".rds"))
-  imageNM <- paste0("mirror_plotting_", peak_idx, "_", sub_idx,"_", dpi, ".png")
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx,"_", dpi, ".png")
   
   jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
