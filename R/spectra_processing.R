@@ -741,8 +741,8 @@ save(selectRow_idx, file = 'selectRow_idx.rda')
   sort(selectRow_idx) -> selectRow_idx
   if(msopt=="true"){
     if(file.exists("compound_msn_results_index.qs")){
-        dt_ms2 <- qs::qread("compound_msn_results_index.qs")
-        dt_ms2$peak_idx_vals -> peak_idx_ms2
+        dt_ms2 <- qs::qread("compound_msn_results_index2MS1.qs")
+        dt_ms2[,1] -> peak_idx_ms2
         vec_idx <- selectRow_idx
         vec_idx <- vec_idx[!c(vec_idx %in% peak_idx_ms2)]
         vec_idx <- vapply(selectRow_idx, function(x){x %in% vec_idx}, logical(1L))
@@ -3395,7 +3395,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 }
 
 checkMS2annotationExists <- function(feature_idx){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     if(feature_idx %in% res_dt[,1]){
         rowidx <- which(feature_idx == res_dt[,1])[1]
         colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
@@ -3408,7 +3408,7 @@ checkMS2annotationExists <- function(feature_idx){
 }
 
 extractSimScores <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Score_1", "Score_2","Score_3","Score_4","Score_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3419,7 +3419,7 @@ extractSimScores <- function(feature_idx, topN){
 
 
 extractformulaNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Formula_1", "Formula_2","Formula_3","Formula_4","Formula_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3430,7 +3430,7 @@ extractformulaNMs <- function(feature_idx, topN){
 
 
 extractcompoundNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3440,7 +3440,7 @@ extractcompoundNMs <- function(feature_idx, topN){
 }
 
 extractInchikeys <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("InchiKey_1", "InchiKey_2","InchiKey_3","InchiKey_4","InchiKey_5"), function(x){
             return(which(x == colnames(res_dt)))
