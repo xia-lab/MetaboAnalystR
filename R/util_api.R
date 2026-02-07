@@ -126,7 +126,15 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
       
       imgName = paste(pathName, "_dpi", dpi, ".", format, sep="");
       
-      Cairo::Cairo(file = imgName, dpi=dpi, width=width, height=height, type=format, bg="white");
+      w <- width
+      h <- height
+      if (!is.na(w) && w > 50) {
+        w <- w / 72
+      }
+      if (!is.na(h) && h > 50) {
+        h <- h / 72
+      }
+      Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
       par(mai=rep(0,4));
       plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=mSetObj$api$inmex.plot.bg.cols,
                 vertex.frame.color=mSetObj$api$inmex.plot.line.cols);
@@ -139,13 +147,29 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
       if(!exists("dpi")){dpi <- default.dpi;}
       if(!exists('width')){w <- h <- width <- height <- 8}
       if(is.null(dpi)){
-        Cairo::Cairo(file=imgName, width=width, height=height, type="png", bg="white");
+        w <- width
+        h <- height
+        if (!is.na(w) && w > 50) {
+          w <- w / 72
+        }
+        if (!is.na(h) && h > 50) {
+          h <- h / 72
+        }
+        Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
       }else{
         if(is.na(width)){
           width <- 8;
           w <- h <- width;
         }
-        Cairo::Cairo(file = imgName, dpi=dpi, width=width, height=height, type=format, bg="white");
+        w <- width
+        h <- height
+        if (!is.na(w) && w > 50) {
+          w <- w / 72
+        }
+        if (!is.na(h) && h > 50) {
+          h <- h / 72
+        }
+        Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
       }
       
       par(mai=rep(0,4));
