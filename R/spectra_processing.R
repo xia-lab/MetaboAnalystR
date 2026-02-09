@@ -2797,6 +2797,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
     mSet_raw <- qs::qread("msn_mset_result.qs")
     mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
+    mSetObj[["analSet"]][["ms2data"]] <- mSet_raw@MSnData;
     if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
       peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
       peak_mtx_complete <- do.call(rbind, peak_list)
