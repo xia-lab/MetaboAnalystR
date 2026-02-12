@@ -1170,7 +1170,18 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
     ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
     return(ggp_build);
   }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);    
+    # Add text labels for top 10 most significant features on static plot
+    top_n <- min(10, nrow(both.mat))
+    top_features <- both.mat[1:top_n, ]
+    p <- p + ggrepel::geom_text_repel(
+      data = top_features,
+      aes(label = Row.names),
+      size = 3,
+      color = "black",
+      max.overlaps = 20,
+      show.legend = FALSE
+    )
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);
     print(p)
     dev.off()
     return(.set.mSet(mSetObj));
