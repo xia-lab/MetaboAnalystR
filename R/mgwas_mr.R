@@ -939,7 +939,7 @@ api_post_request <- function(route, params,
   is_ci <- getOption("epigraphdb.ci") %>%
     as.character() %>%
     tolower()
-  config <- httr::add_headers(.headers = c("client-type" = "R", "ci" = is_ci))
+  config <- c(httr::add_headers(.headers = c("client-type" = "R", "ci" = is_ci)), httr::config(ssl_verifypeer = FALSE, ssl_verifyhost = FALSE))
   # body <- jsonlite::toJSON(params, auto_unbox = TRUE) # this is for epigraphdb query
   body <- jsonlite::toJSON(params);
   response <- httr::RETRY(
