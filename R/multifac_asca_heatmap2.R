@@ -2038,22 +2038,51 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
   if (length(cont.inx))
     metaData[cont.inx] <- lapply(metaData[cont.inx], \(x) as.numeric(as.character(x)))
 
+   cor_pmat <- function(df, method) {
+    mat <- as.matrix(df)
+    n <- ncol(mat)
+    p.mat <- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+      for (j in (i + 1):n) {
+        tmp <- cor.test(mat[, i], mat[, j], method = method, use = "pairwise.complete.obs")
+        p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+      }
+    }
+    colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+    return(p.mat)
+  }
+
   ## ── 2 · correlation matrix -----------------------------------------
   if (tolower(cor.method) == "partial") {
     if (!requireNamespace("ppcor", quietly = TRUE))
       stop("Package 'ppcor' is required for partial correlations.")
     pc <- ppcor::pcor(metaData, method = cor.opt)
     cormat <- pc$estimate
+    pmat   <- pc$p.value
     rownames(cormat) <- colnames(cormat) <- colnames(metaData)
   } else {                                  # "univariate"
     cormat <- cor(metaData, method = cor.opt, use = "pairwise.complete.obs")
+    pmat   <- cor_pmat(metaData, method = cor.opt)
   }
   cormat  <- round(cormat, 3)
+  diag(cormat) <- NA
+  diag(pmat) <- NA
 
   ## Upper triangle only
   get_upper_tri <- function(mat) { mat[lower.tri(mat)] <- NA; mat }
+
   melted <- reshape2::melt(get_upper_tri(cormat), na.rm = TRUE)
+  melted_p <- reshape2::melt(get_upper_tri(pmat), na.rm = TRUE)
   melted$value <- signif(melted$value, 3)
+  melted$p_val <- melted_p$value
+  sig_idx1 <- !is.na(melted$p_val) & melted$p_val < 0.05
+  sig_idx2 <- !is.na(melted$p_val) & melted$p_val < 0.01
+  
+  melted$label <- signif(melted$value, 3)
+
+  melted$label[sig_idx1] <- paste0(signif(melted$value, 3)[sig_idx1], " *")
+  melted$label[sig_idx2] <- paste0(signif(melted$value, 3)[sig_idx2], " **")
 
   ## ── 3 · figure size heuristics -------------------------------------
   meta.num <- ncol(metaData)
@@ -2101,7 +2130,7 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
                legend.direction = "vertical",
                legend.position  = "left") +
          coord_fixed() +
-         geom_text(aes(label = value), size = textSize, colour = "black")
+         geom_text(aes(label = label), size = textSize, colour = "black")
 
   ## ── 6 · output: Plotly or static -----------------------------------
   if (interactive) {
