@@ -741,8 +741,8 @@ save(selectRow_idx, file = 'selectRow_idx.rda')
   sort(selectRow_idx) -> selectRow_idx
   if(msopt=="true"){
     if(file.exists("compound_msn_results_index.qs")){
-        dt_ms2 <- qs::qread("compound_msn_results_index.qs")
-        dt_ms2$peak_idx_vals -> peak_idx_ms2
+        dt_ms2 <- qs::qread("compound_msn_results_index2MS1.qs")
+        dt_ms2[,1] -> peak_idx_ms2
         vec_idx <- selectRow_idx
         vec_idx <- vec_idx[!c(vec_idx %in% peak_idx_ms2)]
         vec_idx <- vapply(selectRow_idx, function(x){x %in% vec_idx}, logical(1L))
@@ -1675,6 +1675,7 @@ GeneratePeakList <- function(userPath) {
     cat("waiting data writing done...")
     Sys.sleep(3)
   }
+  options(digits = 10) 
   ann_data <- readRDS("annotated_peaklist.rds");
   ann_data <-
     ann_data[, c(1, 4, ncol(ann_data) - 4, ncol(ann_data) - 5, ncol(ann_data) -1 , ncol(ann_data)-2, ncol(ann_data))];
@@ -1704,8 +1705,8 @@ GeneratePeakList <- function(userPath) {
     pvals <-tt.res$p.value;
     pvals[is.nan(pvals)] <- 1;
     pfdr <-p.adjust(pvals, method = "fdr")
-    pvals <- signif(pvals, 8)
-    pfdr <- round(signif(pfdr, 8), 8)
+    pvals <- signif(pvals, 4)
+    pfdr <- round(signif(pfdr, 4), 4)
     FeatureOrder <- order(pvals)
     intenVale <- round(apply(sample_data_mean, 1, mean),1)
   } else {
@@ -1977,24 +1978,24 @@ generateAsariPeakList <-  function(userPath) {
   lvls <- groups[groups != "QC"];
   sample_data_log <- sample_data_log[,groups != "QC"];
   groups <- as.factor(lvls);
-  
+  options(digits = 10) 
   ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
   pvals <- ttest_res[,2]
   pfdr <-p.adjust(pvals, method = "fdr")
-  pvals <- signif(pvals, 8)
-  pfdr <- round(signif(pfdr, 8), 8)
+  pvals <- signif(pvals, 4)
+  pfdr <- round(signif(pfdr, 4), 4)
   
   pvals[is.nan(pvals)] = 1
   pfdr[is.nan(pfdr)] = 1
   
-  my.dat <- data.frame(mz = ftab_annotation$mz,
-                       rt = ftab_annotation$rtime,
+  my.dat <- data.frame(mz = round(ftab_annotation$mz, digits = 4),
+                       rt = round(ftab_annotation$rtime, digits = 1),
                        adduct = adds,
                        isotopes = isos,
                        Formula = all_forumus,
                        Compound = all_cmpd,
                        HMDBID = all_hmdb,
-                       intenVale = ftable$peak_area,
+                       intenVale = round(signif(ftable$peak_area,4), digits = 4),
                        pvals = pvals,
                        pfdr = pfdr,
                        cvs = cvs)
@@ -2796,6 +2797,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
     mSet_raw <- qs::qread("msn_mset_result.qs")
     mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
+    mSetObj[["analSet"]][["ms2data"]] <- mSet_raw@MSnData;
     if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
       peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
       peak_mtx_complete <- do.call(rbind, peak_list)
@@ -2835,7 +2837,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
   }
   
-  #save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2678.rda")
+  save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2839.rda")
   #cat("==== fragDB_path ---> ", fragDB_path, "\n");
 
   fl <- gsub("mz|sec|min", "", featurelabel)
@@ -3022,11 +3024,14 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     #stop("Your mSet object does not contain MS2 analysis results!")
     mSet_raw <- qs::qread("msn_mset_result.qs")
     mSet_raw@MSnResults -> mSetObj[["analSet"]][["ms2res"]] -> MSnResults;
-    mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData
+    mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData;    
   } else {
     mSetObj[["analSet"]][["ms2res"]] -> MSnResults
     mSetObj[["analSet"]][["ms2data"]] -> MSnData
   }
+  result_num <- peak_idx
+  peak_idx <- which(row.names(MSnData[["peak_mtx"]]) == peak_idx)
+
   peak_idx0 <- peak_idx-1
   idx <- which(peak_idx0 == MSnResults[["Concensus_spec"]][[1]])
   if(!(peak_idx0 %in% MSnResults[["Concensus_spec"]][[1]])){
@@ -3083,7 +3088,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   mz <- round(mz, 4)
   rt <- round(rt, 2)
   
-  result_num <- idx #<- peak_idx;
+  #result_num <- idx #<- peak_idx;
   ucmpds <- unique(DBAnnoteRes[[idx]][["InchiKeys"]])
   uidx <- vapply(ucmpds, function(x){
     which(DBAnnoteRes[[idx]][["InchiKeys"]] == x)[1]
@@ -3219,7 +3224,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     print(px)
   }
   saveRDS(px, file = paste0(gsub(".png|.svg|.pdf", "", imageNM), ".rds"))
-  imageNM <- paste0("mirror_plotting_", peak_idx, "_", sub_idx,"_", dpi, ".png")
+  imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx,"_", dpi, ".png")
   
   jsonlist <- RJSONIO::toJSON(px, pretty = T,force = TRUE,.na = "null");
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
@@ -3394,7 +3399,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 }
 
 checkMS2annotationExists <- function(feature_idx){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     if(feature_idx %in% res_dt[,1]){
         rowidx <- which(feature_idx == res_dt[,1])[1]
         colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
@@ -3407,7 +3412,7 @@ checkMS2annotationExists <- function(feature_idx){
 }
 
 extractSimScores <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Score_1", "Score_2","Score_3","Score_4","Score_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3418,7 +3423,7 @@ extractSimScores <- function(feature_idx, topN){
 
 
 extractformulaNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Formula_1", "Formula_2","Formula_3","Formula_4","Formula_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3429,7 +3434,7 @@ extractformulaNMs <- function(feature_idx, topN){
 
 
 extractcompoundNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3439,7 +3444,7 @@ extractcompoundNMs <- function(feature_idx, topN){
 }
 
 extractInchikeys <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index.qs")
+    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("InchiKey_1", "InchiKey_2","InchiKey_3","InchiKey_4","InchiKey_5"), function(x){
             return(which(x == colnames(res_dt)))

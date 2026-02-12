@@ -555,27 +555,27 @@ SetMRMethod <- function(){
 
 
 
-GetPathRowNames <- function(netType){
+GetPathRowNames <- function(){
   mSetObj <- .get.mSet(mSetObj);
   path <- mSetObj$dataSet$path;
- if(nrow(path)==0){
+  if(is.null(path) || !is.data.frame(path) || nrow(path)==0){
    return()
   }else{
   return(1:nrow(path))
 }
 }
 
- 
+
 GetPathCol <- function(colInx){
- 
+
   mSetObj <- .get.mSet(mSetObj);
   path <- mSetObj$dataSet$path;
-  if(nrow(path)==0){
+  if(is.null(path) || !is.data.frame(path) || nrow(path)==0){
    return()
   }else{
     return(path[,colInx]);
    }
- 
+
 }
 
 
