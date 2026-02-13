@@ -1046,18 +1046,31 @@ QueryAlphaGenome <- function(api_key="") {
     )
   }));
 
+  # Filter: keep only rows with quantile >= 0.5 (upper half)
+  AG_QUANTILE_THRESHOLD <- 0.5;
+  quantile_vals <- suppressWarnings(as.numeric(result_df$Quantile));
+  keep <- !is.na(quantile_vals) & quantile_vals >= AG_QUANTILE_THRESHOLD;
+  result_df_filtered <- result_df[keep, ];
+  print(paste0("[QueryAlphaGenome] ", nrow(result_df), " total rows, ", nrow(result_df_filtered),
+               " rows with quantile >= ", AG_QUANTILE_THRESHOLD));
+
+  if(nrow(result_df_filtered) == 0) {
+    print("[QueryAlphaGenome] No rows above threshold, keeping all results for reference.");
+    result_df_filtered <- result_df;  # fallback: show all if nothing passes
+  }
+
   tryCatch({
-    fast.write.csv(result_df, file="alphagenome_results.csv", row.names=FALSE);
+    fast.write.csv(result_df_filtered, file="alphagenome_results.csv", row.names=FALSE);
   }, error=function(e) {
     print(paste0("Warning: could not write alphagenome_results.csv: ", e$message));
   });
-  mSetObj$dataSet$alphagenome_results <- result_df;
+  mSetObj$dataSet$alphagenome_results <- result_df_filtered;
   .set.mSet(mSetObj);
 
   if(.on.public.web) {
-    return(nrow(result_df));
+    return(nrow(result_df_filtered));
   } else {
-    return(nrow(result_df));
+    return(nrow(result_df_filtered));
   }
 }
 
@@ -1178,6 +1191,8 @@ GetAlphaGenomeCol <- function(colInx) {
 BuildEvidenceComparison <- function() {
   mSetObj <- .get.mSet(mSetObj);
 
+  AG_QUANTILE_THRESHOLD <- 0.5;
+
   # Use mr_dat — same SNPs as result page plots
   dat <- mSetObj$dataSet$mr_dat;
   if(is.null(dat) || nrow(dat) == 0) {
@@ -1196,6 +1211,47 @@ BuildEvidenceComparison <- function() {
     return(0);
   }
 
+  # Collect ALL literature entities for matching
+  path_df <- mSetObj$dataSet$path;
+  mr2lit <- mSetObj$dataSet$mr2lit;
+  has_lit <- FALSE;
+  lit_entities <- c();  # all unique entities from literature (for matching)
+
+  # From mr2lit table: collect Exposure_Subject, Overlap, Outcome_Object
+  if(!is.null(mr2lit) && is.data.frame(mr2lit) && nrow(mr2lit) > 0) {
+    has_lit <- TRUE;
+    for(cn in c("Exposure_Subject", "Overlap", "Outcome_Object")) {
+      if(cn %in% colnames(mr2lit)) {
+        vals <- unique(as.character(mr2lit[[cn]]));
+        vals <- vals[!is.na(vals) & vals != ""];
+        lit_entities <- c(lit_entities, vals);
+      }
+    }
+  }
+
+  # From path_df: extract node names from path strings (split on " → ")
+  if(!is.null(path_df) && is.data.frame(path_df) && nrow(path_df) > 0) {
+    has_lit <- TRUE;
+    if("path" %in% colnames(path_df)) {
+      for(i in 1:nrow(path_df)) {
+        nodes <- trimws(unlist(strsplit(as.character(path_df$path[i]), "→")));
+        nodes <- nodes[!is.na(nodes) & nodes != ""];
+        lit_entities <- c(lit_entities, nodes);
+      }
+    }
+  }
+
+  # Deduplicate and create search-ready string
+  lit_entities <- unique(toupper(lit_entities));
+  lit_entities <- lit_entities[nchar(lit_entities) > 0];
+  lit_entities_str <- paste(lit_entities, collapse=" ||| ");
+  print(paste0("[BuildEvidenceComparison] has_lit=", has_lit,
+               ", lit_entities count=", length(lit_entities)));
+  if(length(lit_entities) > 0) {
+    print(paste0("[BuildEvidenceComparison] First 10 entities: ",
+                 paste(head(lit_entities, 10), collapse="; ")));
+  }
+
   snps <- unique(dat$SNP);
   rows <- list();
 
@@ -1208,92 +1264,137 @@ BuildEvidenceComparison <- function() {
     mr_beta <- ifelse(is.na(mr_beta_num), "N/A", as.character(signif(mr_beta_num, 4)));
     mr_pval <- ifelse(is.na(mr_pval_num), "N/A", as.character(signif(mr_pval_num, 3)));
     mr_gene <- ifelse(is.na(snp_dat$genes) || snp_dat$genes == "", "N/A", as.character(snp_dat$genes));
+    has_mr <- !is.na(mr_pval_num) && mr_pval_num < 0.05;
 
-    # Literature evidence
-    lit_evidence <- "No data";
-    path_df <- mSetObj$dataSet$path;
-    if(!is.null(path_df) && is.data.frame(path_df) && nrow(path_df) > 0) {
-      lit_evidence <- paste0(nrow(path_df), " path(s) found");
-    }
-
-    # AlphaGenome evidence - determine functional impact level
-    ag_has_data <- FALSE;
-    ag_level <- "none";  # none / minimal / moderate / strong
-    ag_top_gene <- "N/A";
-    ag_top_score <- "N/A";
-    ag_top_quantile <- "N/A";
-    ag_n_genes <- "N/A";
+    # AlphaGenome evidence — one row per gene/effect above threshold
     ag_res <- mSetObj$dataSet$alphagenome_results;
+    added_ag_rows <- FALSE;
+
     if(!is.null(ag_res) && is.data.frame(ag_res) && nrow(ag_res) > 0) {
       snp_ag <- ag_res[ag_res$SNP == snp, ];
       if(nrow(snp_ag) > 0) {
-        ag_has_data <- TRUE;
-        # Use ALL effect types (RNA_SEQ, CHIP_HISTONE, ATAC, DNASE, etc.)
         all_quantiles <- suppressWarnings(as.numeric(snp_ag$Quantile));
-        all_scores <- suppressWarnings(as.numeric(snp_ag$Score));
+        above_thresh <- !is.na(all_quantiles) & all_quantiles >= AG_QUANTILE_THRESHOLD;
+        snp_ag_filtered <- snp_ag[above_thresh, ];
 
-        # Best quantile across all effect types determines functional level
-        best_q <- max(all_quantiles, na.rm=TRUE);
-        best_idx <- which.max(all_quantiles);
-        ag_top_gene <- snp_ag$Target_Gene[best_idx];
-        ag_top_score <- as.character(signif(abs(all_scores[best_idx]), 4));
-        ag_top_quantile <- as.character(signif(best_q, 4));
-        ag_n_genes <- as.character(length(unique(snp_ag$Target_Gene)));
+        if(nrow(snp_ag_filtered) > 0) {
+          for(j in 1:nrow(snp_ag_filtered)) {
+            tg <- as.character(snp_ag_filtered$Target_Gene[j]);
+            et <- as.character(snp_ag_filtered$Effect_Type[j]);
+            q_val <- suppressWarnings(as.numeric(snp_ag_filtered$Quantile[j]));
+            q_str <- as.character(signif(q_val, 4));
 
-        # Determine functional level from best quantile
-        if(!is.na(best_q) && best_q > 0.9) {
-          ag_level <- "strong";
-        } else if(!is.na(best_q) && best_q > 0.75) {
-          ag_level <- "moderate";
-        } else if(!is.na(best_q) && best_q > 0.5) {
-          ag_level <- "weak";
-        } else {
-          ag_level <- "minimal";
+            # Display label: gene name if available, otherwise effect type
+            if(is.na(tg) || tg == "N/A" || tg == "") {
+              ag_label <- et;
+            } else {
+              ag_label <- tg;
+            }
+
+            # Check if this specific gene/effect is in literature evidence
+            # Match AG gene against all literature entities (Exposure_Subject,
+            # Overlap, Outcome_Object, path nodes). All are UPPERCASED.
+            # Strategy:
+            #   (a) Exact match: full gene symbol == literature entity
+            #   (b) Word-boundary: gene symbol as a standalone word in entity
+            #       e.g. "SLC6A16" in "SLC6A16 TRANSPORTER" (YES)
+            #       but  "LIN" NOT in "VALINE", "OST" NOT in "OSTEOPOROSIS"
+            #   (c) Prefix match: literature entity (≥4 chars, looks like gene symbol)
+            #       is a prefix of the AG gene. e.g. entity "SLC2A" matches gene "SLC2A4"
+            in_lit <- "No";
+            lit_match <- "";
+            if(has_lit && length(lit_entities) > 0 && !is.na(tg) && tg != "N/A" && tg != "") {
+              tg_upper <- toupper(tg);
+
+              # (a) Exact match
+              if(tg_upper %in% lit_entities) {
+                in_lit <- "Yes";
+                lit_match <- tg_upper;
+              }
+
+              # (b) Word-boundary match: gene symbol as whole token in any entity
+              if(in_lit == "No") {
+                # Escape any regex-special chars in gene symbol, then add word boundaries
+                tg_escaped <- gsub("([.|()\\^{}+$*?\\[\\]])", "\\\\\\1", tg_upper);
+                pattern <- paste0("\\b", tg_escaped, "\\b");
+                for(ent in lit_entities) {
+                  if(grepl(pattern, ent)) {
+                    in_lit <- "Yes";
+                    lit_match <- ent;
+                    break;
+                  }
+                }
+              }
+
+              # (c) Prefix match: lit entity looks like a gene symbol (≥4 chars,
+              #     contains letters+digits) and is a prefix of the AG gene
+              if(in_lit == "No") {
+                for(ent in lit_entities) {
+                  if(nchar(ent) >= 4 && grepl("[A-Z]", ent) && grepl("[0-9]", ent)) {
+                    if(startsWith(tg_upper, ent)) {
+                      in_lit <- "Yes";
+                      lit_match <- ent;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+
+            # Show matched literature entity if found
+            in_lit_display <- in_lit;
+            if(in_lit == "Yes" && lit_match != "") {
+              # Show the matched term (lowercase for readability)
+              in_lit_display <- paste0("Yes (", tolower(lit_match), ")");
+            }
+
+            # Overall per row: MR significance + variant effect strength + literature link
+            if(has_mr && in_lit == "Yes" && q_val > 0.9) {
+              overall <- "Strong: MR + literature + strong effect";
+            } else if(has_mr && in_lit == "Yes") {
+              overall <- "Strong: MR + in literature";
+            } else if(has_mr && q_val > 0.9) {
+              overall <- "Supported: MR + strong effect";
+            } else if(has_mr && q_val > 0.75) {
+              overall <- "Moderate: MR + moderate effect";
+            } else if(has_mr) {
+              overall <- "Weak: MR + weak effect";
+            } else {
+              overall <- "Insufficient evidence";
+            }
+
+            rows[[length(rows) + 1]] <- data.frame(
+              SNP = snp,
+              Positional_Gene = mr_gene,
+              MR_Beta = mr_beta,
+              MR_Pval = mr_pval,
+              AG_Gene_Effect = ag_label,
+              Quantile = q_str,
+              In_Literature = in_lit_display,
+              Overall = overall,
+              stringsAsFactors = FALSE
+            );
+            added_ag_rows <- TRUE;
+          }
         }
       }
     }
 
-    # Overall evidence assessment using three independent sources
-    has_mr <- !is.na(mr_pval_num) && mr_pval_num < 0.05;
-    has_lit <- lit_evidence != "No data";
-
-    if(has_mr && ag_level == "strong" && has_lit) {
-      overall <- "Strong: MR + Literature + strong variant effect";
-    } else if(has_mr && ag_level == "moderate" && has_lit) {
-      overall <- "Supported: MR + Literature + moderate variant effect";
-    } else if(has_mr && ag_level == "strong") {
-      overall <- "Supported: MR + strong variant effect";
-    } else if(has_mr && ag_level == "weak" && has_lit) {
-      overall <- "Moderate: MR + Literature + weak variant effect";
-    } else if(has_mr && ag_level == "moderate") {
-      overall <- "Moderate: MR + moderate variant effect";
-    } else if(has_mr && has_lit) {
-      overall <- "Moderate: MR + Literature";
-    } else if(has_mr && ag_level == "weak") {
-      overall <- "Weak: MR + weak variant effect";
-    } else if(has_mr && ag_level == "minimal") {
-      overall <- "Weak: MR + minimal variant effect";
-    } else if(has_mr && ag_has_data && ag_level == "none") {
-      overall <- "Caution: SNP shows no functional effect";
-    } else if(has_mr) {
-      overall <- "MR only";
-    } else {
-      overall <- "Insufficient evidence";
+    # If no AG rows above threshold for this SNP, add one summary row
+    if(!added_ag_rows) {
+      overall <- if(has_mr) "MR only" else "Insufficient evidence";
+      rows[[length(rows) + 1]] <- data.frame(
+        SNP = snp,
+        Positional_Gene = mr_gene,
+        MR_Beta = mr_beta,
+        MR_Pval = mr_pval,
+        AG_Gene_Effect = "No effect above threshold",
+        Quantile = "N/A",
+        In_Literature = "N/A",
+        Overall = overall,
+        stringsAsFactors = FALSE
+      );
     }
-
-    rows[[length(rows) + 1]] <- data.frame(
-      SNP = snp,
-      Positional_Gene = mr_gene,
-      MR_Beta = as.character(mr_beta),
-      MR_Pval = as.character(mr_pval),
-      Literature = lit_evidence,
-      AG_Top_Gene = ag_top_gene,
-      AG_Top_Score = as.character(ag_top_score),
-      AG_Quantile = as.character(ag_top_quantile),
-      AG_Genes_Affected = ag_n_genes,
-      Overall = overall,
-      stringsAsFactors = FALSE
-    );
   }
 
   result_df <- do.call(rbind, rows);
