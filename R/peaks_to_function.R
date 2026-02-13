@@ -131,6 +131,20 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
     rt = TRUE
   }else{
     rt = FALSE
+    # Support mz__rt formatted m/z values when no explicit r.t column is provided.
+    if("m.z" %in% colnames(input)){
+      mz_chr <- as.character(input$m.z)
+      has_mzrt <- grepl("__", mz_chr, fixed = TRUE)
+      if(any(has_mzrt, na.rm = TRUE)){
+        parts <- strsplit(mz_chr[has_mzrt], "__", fixed = TRUE)
+        mz_part <- vapply(parts, function(x) x[1], character(1), USE.NAMES = FALSE)
+        rt_part <- vapply(parts, function(x) if(length(x) > 1) x[2] else NA_character_, character(1), USE.NAMES = FALSE)
+        input$m.z[has_mzrt] <- mz_part
+        input$r.t <- if("r.t" %in% colnames(input)) input$r.t else NA
+        input$r.t[has_mzrt] <- rt_part
+        rt <- TRUE
+      }
+    }
   }
   
   qs::qsave(input, "mum_raw.qs");
@@ -557,7 +571,7 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
-  # save.image("mum.RData");
+  save.image("mum.RData");
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$msgSet$check.msg <- NULL;
   if(mSetObj$dataSet$mum.type == "table"){
@@ -583,17 +597,103 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   if(is.null(mSetObj$mum_nm_csv)){
     mSetObj$mum_nm_csv <- "mummichog_pathway_enrichment_mummichog.csv"
   }
-  ndat <- mSetObj$dataSet$mummi.orig;
-  pos_inx = mSetObj$dataSet$pos_inx
-  ndat <- data.frame(cbind(ndat, pos_inx), stringsAsFactors = FALSE)
+  ndat <- as.data.frame(mSetObj$dataSet$mummi.orig, stringsAsFactors = FALSE);
+  pos_inx <- mSetObj$dataSet$pos_inx
+  ndat$pos_inx <- pos_inx
+  
+  pick_col <- function(df, candidates, fallback = NA_integer_, label = "column"){
+    nms <- colnames(df)
+    hit <- intersect(candidates, nms)
+    if(length(hit) > 0){
+      return(hit[1])
+    }
+    if(!is.na(fallback) && fallback <= ncol(df)){
+      return(nms[fallback])
+    }
+    AddErrMsg(paste("Unable to locate", label, "in uploaded data!"))
+    return(NA_character_)
+  }
+  
+  parse_first_numeric <- function(x){
+    x <- trimws(as.character(x))
+    x[x == ""] <- NA_character_
+    x <- gsub(",", ".", x, fixed = TRUE)
+    x <- gsub("^\"|\"$", "", x)
+    out <- suppressWarnings(as.numeric(x))
+    need <- is.na(out) & !is.na(x)
+    if(any(need)){
+      cand <- sub("__.*$", "", x[need])
+      out[need] <- suppressWarnings(as.numeric(cand))
+    }
+    need <- is.na(out) & !is.na(x)
+    if(any(need)){
+      cand <- sub("/.*$", "", x[need])
+      out[need] <- suppressWarnings(as.numeric(cand))
+    }
+    need <- is.na(out) & !is.na(x)
+    if(any(need)){
+      m <- regexpr("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?", x[need], perl = TRUE)
+      got <- rep(NA_character_, sum(need))
+      hit <- m > 0
+      if(any(hit)){
+        got[hit] <- regmatches(x[need][hit], m[hit])
+      }
+      out[need] <- suppressWarnings(as.numeric(got))
+    }
+    out
+  }
+  
+  pval.col <- pick_col(ndat, c("p.value", "p_value", "pval", "p.val"), 1, "p-value column")
+  mz.col <- pick_col(ndat, c("m.z", "mz", "m/z"), 2, "m/z column")
+  tscore.col <- pick_col(ndat, c("t.score", "t_score", "tscore", "score"), 3, "score column")
+  rt.col <- NA_character_
+  if(mSetObj$paramSet$mumRT){
+    rt.hits <- intersect(c("r.t", "rt", "retention.time", "retention_time"), colnames(ndat))
+    if(length(rt.hits) > 0){
+      rt.col <- rt.hits[1]
+    }
+  }
+  if(any(is.na(c(pval.col, mz.col, tscore.col)))){
+    return(0)
+  }
   
   rawdat <- qs::qread("mum_raw.qs");
   
+  mz.raw <- as.character(ndat[[mz.col]])
+  mznew <- parse_first_numeric(mz.raw)
+  bad.mz <- is.na(mznew)
+  if(all(bad.mz)){
+    bad.examples <- paste(utils::head(unique(mz.raw[bad.mz]), 5), collapse = ", ")
+    AddErrMsg(paste("Invalid values found in the m/z column! Examples:", bad.examples))
+    return(0)
+  }
+  if(any(bad.mz)){
+    removed <- sum(bad.mz)
+    ndat <- ndat[!bad.mz, , drop = FALSE]
+    mz.raw <- mz.raw[!bad.mz]
+    mznew <- mznew[!bad.mz]
+    msg.vec <- c(msg.vec, paste("A total of <b>", removed, "</b> rows with invalid m/z values were removed."))
+  }
+  ndat$.__mz_num__ <- mznew
+  # Canonicalize m/z representation for downstream matching and cutoff logic.
+  # This avoids carrying mixed formats such as "mz__rt" in the m/z column.
+  ndat[[mz.col]] <- mznew
+  
   if(mSetObj$paramSet$mumRT){
-    na.num <- sum(is.na(ndat$r.t))
+    if(is.na(rt.col)){
+      rt.from.mz <- parse_first_numeric(sub("^.*__", "", mz.raw))
+      if(!all(is.na(rt.from.mz))){
+        ndat$.__rt_num__ <- rt.from.mz
+        rt.col <- ".__rt_num__"
+      }else{
+        AddErrMsg("Unable to locate retention-time values in uploaded data!")
+        return(0)
+      }
+    }
+    na.num <- sum(is.na(ndat[[rt.col]]))
     # filter out any reads w. NA RT
     if(na.num>0){
-      na.inx <- which(is.na(ndat$r.t))
+      na.inx <- which(is.na(ndat[[rt.col]]))
       ndat <- ndat[-na.inx,]
       msg.vec <- c(msg.vec, paste("A total of <b>", na.num, "</b> mz features with missing retention times were removed."));
     }
@@ -610,16 +710,21 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   read.msg <- mSetObj$msgSet$read.msg
   
   # sort mzs by p-value
-  ord.inx <- order(ndat[,1]);
+  pvals <- suppressWarnings(as.numeric(ndat[[pval.col]]))
+  if(any(is.na(pvals))){
+    AddErrMsg("Invalid values found in the p-value column!")
+    return(0)
+  }
+  ord.inx <- order(pvals);
   ndat <- ndat[ord.inx,]; # order by p-vals
   
   # filter based on mz
-  mznew <- ndat[,2];
+  mznew <- ndat$.__mz_num__;
   
   # trim to fit within 50 - 2000
   my.inx <- mznew > 50 & mznew < 2001;
   trim.num <- sum(!my.inx);
-  range = paste0(min(ndat[,1]), "-", max(ndat[,1]))
+  range = paste0(min(mznew), "-", max(mznew))
   if(length(unique(mSetObj[["dataSet"]][["pos_inx"]])) > 1){
     colNMadd <- "and mode";
     colnumadd <- 1;
@@ -649,7 +754,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   # remove duplicated mzs (make unique)
-  dup.inx <- duplicated(ndat);
+  dup.inx <- duplicated(ndat[[mz.col]]);
   dup.num <- sum(dup.inx);
   
   if(dup.num > 0){
@@ -658,7 +763,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   # make mzs unique
-  mzs <- ndat[,2]
+  mzs <- as.character(ndat[[mz.col]])
   # ensure features are unique
   mzs_unq <- mzs[duplicated(mzs)]
   set.seed(123);
@@ -667,17 +772,25 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     mzs_unq <- mzs[duplicated(mzs)]
   }
   
-  ndat[,2] <- mzs
-  ref_mzlist <- ndat[,2];
+  ndat[[mz.col]] <- mzs
+  ref_mzlist <- ndat[[mz.col]];
   
   # set up expression (up/dn)
-  tscores <- as.numeric(ndat[,3]);
+  tscores <- suppressWarnings(as.numeric(ndat[[tscore.col]]));
+  if(any(is.na(tscores))){
+    AddErrMsg("Invalid values found in the score column!")
+    return(0)
+  }
   names(tscores) <- ref_mzlist;
   
   # set up rt
   if(mSetObj$paramSet$mumRT){
     
-    retention_time <- as.numeric(ndat[,4]);
+    retention_time <- suppressWarnings(as.numeric(ndat[[rt.col]]));
+    if(any(is.na(retention_time))){
+      AddErrMsg("Invalid values found in the retention-time column!")
+      return(0)
+    }
     names(retention_time) <- ref_mzlist;
     mSetObj$dataSet$pos_inx <- as.numeric(ndat$pos_inx) == 1;
     mSetObj$dataSet$ret_time <- retention_time;
@@ -705,7 +818,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     return(0)
   }
   
-  if(min(ndat[,"p.value"])<0 || max(ndat[,"p.value"])>1){
+  pvals <- suppressWarnings(as.numeric(ndat[[pval.col]]))
+  if(min(pvals)<0 || max(pvals)>1){
     msg.vec <- c(msg.vec, "Please make sure the p-values are between 0 and 1.");
   }
   
@@ -776,6 +890,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   }
   
   mSetObj$msgSet$check.msg <- c(mSetObj$msgSet$check.msg, read.msg, msg.vec);
+  ndat$.__mz_num__ <- NULL
+  ndat$.__rt_num__ <- NULL
   mSetObj$dataSet$mummi.proc <- ndat;
   mSetObj$dataSet$expr_dic <- tscores;
   mSetObj$dataSet$ref_mzlist <- ref_mzlist;
@@ -795,22 +911,37 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
 
   mSetObj <- .get.mSet(mSetObj);
-  peakFormat <- mSetObj$paramSet$peakFormat;
-  
-  if(peakFormat %in% c("rmp", "rmt")){
-    maxp <- 0;
-  }else{
-    pvals <- c(0.25, 0.2, 0.15, 0.1, 0.05, 0.01, 0.005, 0.001, 0.0005, 0.0001, 0.00005, 0.00001)
-    ndat <- mSetObj$dataSet$mummi.proc;
-    n <- floor(fraction*length(ndat[,"p.value"]))
-    cutoff <- ndat[n+1,1]
-    if(!any(pvals <= cutoff)){
-      maxp <- 0.00001
-    }else{
-      maxp <- max(pvals[pvals <= cutoff])
-    }
+  ndat <- mSetObj$dataSet$mummi.proc;
+  if(is.null(ndat) || nrow(ndat) == 0){
+    AddErrMsg("No peak list is available to compute percentile cutoff.")
+    return(0)
   }
-
+  frac <- suppressWarnings(as.numeric(fraction))
+  if(is.na(frac)){
+    AddErrMsg("Invalid fraction value for percentile cutoff.")
+    return(0)
+  }
+  frac <- max(min(frac, 1), 0)
+  
+  pvec <- suppressWarnings(as.numeric(ndat[, "p.value"]))
+  keep <- is.finite(pvec)
+  if(!any(keep)){
+    AddErrMsg("No valid p-values found to compute percentile cutoff.")
+    return(0)
+  }
+  pvec <- sort(pvec[keep], decreasing = FALSE)
+  n <- max(1, floor(frac * length(pvec)))
+  n <- min(n, length(pvec))
+  maxp <- pvec[n]
+  
+  # Snap to coarse cutoffs for legacy/default behavior in UI.
+  maxp <- ifelse(maxp > 0.2, 0.2,
+                 ifelse(maxp > 0.15, 0.15,
+                        ifelse(maxp > 0.1, 0.1,
+                               ifelse(maxp > 0.05, 0.05,
+                                      ifelse(maxp > 0.01, 0.01,
+                                             ifelse(maxp > 0.005, 0.005, 0.001))))))
+  
   mSetObj$dataSet$cutoff <- maxp
   .set.mSet(mSetObj);
   return(SetMummichogPval(NA, maxp));
@@ -916,6 +1047,14 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   mSetObj$initPSEA <- init;
   .set.mSet(mSetObj);
   mSetObj <- .setup.psea.library(mSetObj, lib, libVersion, minLib);
+  if(!is.list(mSetObj)){
+    if(is.numeric(mSetObj) && mSetObj == 0){
+      AddErrMsg("MS Peaks to Paths analysis failed: no compound matches found from uploaded peak list under current settings/library.")
+      return(0)
+    }
+    AddErrMsg("MS Peaks to Paths analysis failed during library setup.")
+    return(0)
+  }
   version <- mSetObj$paramSet$version;
   mSetObj$dataSet$paramSet <- mSetObj$paramSet;
   if(mSetObj$paramSet$mumRT && version=="v2"){
@@ -931,6 +1070,52 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     }
   }
   return(.set.mSet(mSetObj));
+}
+
+.print_head_dbg <- function(label, obj, n = 6){
+  cat("[PSEA-DEBUG]", label, "\n")
+  if(is.null(obj)){
+    cat("  <NULL>\n")
+    return(invisible(NULL))
+  }
+  out <- try(utils::head(obj, n), silent = TRUE)
+  if(inherits(out, "try-error")){
+    out <- try(utils::head(as.character(obj), n), silent = TRUE)
+  }
+  print(out)
+  invisible(NULL)
+}
+
+.dump_psea_error_objects <- function(mSetObj, context = "", res.mat = NULL, matched_res = NULL){
+  cat("[PSEA-DEBUG] context:", context, "\n")
+  if(is.null(mSetObj) || !is.list(mSetObj)){
+    cat("[PSEA-DEBUG] mSetObj is not a list\n")
+    print(mSetObj)
+    return(invisible(NULL))
+  }
+  if(!is.null(mSetObj$dataSet)){
+    .print_head_dbg("dataSet$ref_mzlist", mSetObj$dataSet$ref_mzlist)
+    .print_head_dbg("dataSet$pos_inx", mSetObj$dataSet$pos_inx)
+    .print_head_dbg("dataSet$ret_time", mSetObj$dataSet$ret_time)
+    .print_head_dbg("dataSet$mode", mSetObj$dataSet$mode)
+    .print_head_dbg("dataSet$instrument", mSetObj$dataSet$instrument)
+    .print_head_dbg("dataSet$primary_ion", mSetObj$dataSet$primary_ion)
+  }
+  if(!is.null(mSetObj$paramSet)){
+    .print_head_dbg("paramSet$anal.type", mSetObj$paramSet$anal.type)
+    .print_head_dbg("paramSet$version", mSetObj$paramSet$version)
+    .print_head_dbg("paramSet$mumRT", mSetObj$paramSet$mumRT)
+  }
+  .print_head_dbg("input_cpdlist", mSetObj$input_cpdlist)
+  .print_head_dbg("total_matched_cpds", mSetObj$total_matched_cpds)
+  .print_head_dbg("total_matched_ecpds", mSetObj$total_matched_ecpds)
+  if(!is.null(res.mat)){
+    .print_head_dbg("res.mat", res.mat)
+  }
+  if(!is.null(matched_res)){
+    .print_head_dbg("matched_res", matched_res)
+  }
+  invisible(NULL)
 }
 
 #' Internal function to perform PSEA, no retention time
@@ -1280,6 +1465,10 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   } else {
     mSetObj <- .search.compoundLib(mSetObj, cpd.lib, cpd.treep, cpd.treen);
   }
+  
+  if(!is.list(mSetObj)){
+    return(0)
+  }
 
   if(mSetObj$paramSet$mumRT && version=="v2"){
     # only for empirical compounds
@@ -1332,7 +1521,16 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
                                 cpd.treep,
                                 cpd.treen){
 
-  ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
+  ref_mzlist_raw <- as.character(mSetObj$dataSet$ref_mzlist)
+  ref_mzlist <- suppressWarnings(as.numeric(ref_mzlist_raw))
+  if(any(is.na(ref_mzlist))){
+    ref_mzlist <- suppressWarnings(as.numeric(sub("__.*$", "", ref_mzlist_raw)))
+  }
+  if(any(is.na(ref_mzlist))){
+    bad.examples <- paste(utils::head(unique(ref_mzlist_raw[is.na(ref_mzlist)]), 5), collapse = ", ")
+    AddErrMsg(paste("Invalid m/z values found after preprocessing. Examples:", bad.examples))
+    return(0)
+  }
   #print(paste0("compoundLib"));
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   pos_inx <- mSetObj$dataSet$pos_inx;
@@ -1462,7 +1660,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     pos_matches <- length(matched_resp) > 0
     
     if(!neg_matches & !pos_matches){
-      msg.vec <<- "No compound matches from upload peak list!"
+      .dump_psea_error_objects(mSetObj, context = ".search.compoundLib: mixed mode, no matches")
+      AddErrMsg("No compound matches from uploaded peak list!")
       return(0)
     }
     
@@ -1486,7 +1685,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     matched_resp <- matched_resp$as.list();
     
     if(is.null(unlist(matched_resp))){
-      msg.vec <<- "No compound matches from upload peak list!"
+      .dump_psea_error_objects(mSetObj, context = ".search.compoundLib: positive mode, no matches")
+      AddErrMsg("No compound matches from uploaded peak list!")
       return(0)
     }
     
@@ -1496,7 +1696,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   } else {
     matched_resn <- matched_resn$as.list();
     if(is.null(unlist(matched_resn))){
-      msg.vec <<- "No compound matches from upload peak list!"
+      .dump_psea_error_objects(mSetObj, context = ".search.compoundLib: negative mode, no matches")
+      AddErrMsg("No compound matches from uploaded peak list!")
       return(0)
     }
     
@@ -1734,7 +1935,10 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     
     # now do matching to identify significant input_ecpdlist
     refmz <- names(mz2ec_dict)
-    hits.index <- which(refmz %in% as.character(mSetObj$dataSet$input_mzlist));
+    refmz.num <- suppressWarnings(as.numeric(refmz))
+    input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
+    input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
+    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
     ec1 <- unique(unlist(mz2ec_dict[hits.index]));
     mSetObj$input_ecpdlist <- ec1;
     mSetObj$total_matched_ecpds <- unique(as.vector(matched_res$Empirical.Compound));
@@ -1752,7 +1956,10 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
 
     # now do matching to identify significant input_cpdlist
     refmz <- names(mz2cpd_dict)
-    hits.index <- which(refmz %in% as.character(mSetObj$dataSet$input_mzlist));
+    refmz.num <- suppressWarnings(as.numeric(refmz))
+    input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
+    input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
+    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
     cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
     
     if(.on.public.web){
@@ -2760,10 +2967,21 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
  
   # remove those no hits
   hit.inx <- as.numeric(as.character(res.mat[,3])) > 0;
+  total.path.n <- nrow(res.mat)
+  sig.path.n <- sum(hit.inx)
   res.mat <- res.mat[hit.inx, , drop=FALSE];
   
   if(nrow(res.mat) <= 1){
-    AddErrMsg("Not enough m/z to compound hits for pathway analysis!")
+    matched_dbg <- try(qs::qread("mum_res.qs"), silent = TRUE)
+    if(inherits(matched_dbg, "try-error")){
+      matched_dbg <- NULL
+    }
+    .dump_psea_error_objects(mSetObj,
+                             context = ".compute.mummichogSigPvals: insufficient pathway hits",
+                             res.mat = res.mat,
+                             matched_res = matched_dbg)
+    AddErrMsg(paste0("Not enough m/z-to-pathway signal for pathway analysis (pathways with sig hits: ",
+                     sig.path.n, "/", total.path.n, "). You may have many mz->compound matches, but too few pathways with non-zero significant hits."))
     return(0)
   }
   
@@ -2932,10 +3150,21 @@ res.mat <- cbind(res.mat, Emp.Hits = better.hits, Empirical = emp.p, EC.Hits = f
 
 # remove pathways with no hits
 hit.inx <- as.numeric(as.character(res.mat[,8])) > 0;
+total.path.n <- nrow(res.mat)
+sig.path.n <- sum(hit.inx)
 res.mat <- res.mat[hit.inx, , drop=FALSE];
 
 if(nrow(res.mat) <= 1){
-  AddErrMsg("Not enough m/z to compound hits for pathway analysis! Try Version 1 (no RT considerations)!")
+  matched_dbg <- try(qs::qread("mum_res.qs"), silent = TRUE)
+  if(inherits(matched_dbg, "try-error")){
+    matched_dbg <- NULL
+  }
+  .dump_psea_error_objects(mSetObj,
+                           context = ".compute.mummichogRTSigPvals: insufficient pathway hits",
+                           res.mat = res.mat,
+                           matched_res = matched_dbg)
+  AddErrMsg(paste0("Not enough m/z-to-pathway signal for pathway analysis (pathways with sig hits: ",
+                   sig.path.n, "/", total.path.n, "). Try Version 1 (no RT considerations) or relax filters."))
   return(0)
 }
 
@@ -3813,6 +4042,7 @@ GetECMsg <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$mummi$ec.msg)
 }
+
 
 GetDefaultPvalCutoff <- function(mSetObj=NA){
 
