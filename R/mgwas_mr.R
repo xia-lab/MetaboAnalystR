@@ -965,7 +965,368 @@ api_request <- function(route, params,
     return(flatten_response(response))
   }
   library(magrittr) # for pipe operation %>% 
-  response %>% httr::content(as = "parsed", encoding = "utf-8") 
+  response %>% httr::content(as = "parsed", encoding = "utf-8")
+}
+
+
+#####################################
+## AlphaGenome Variant Effect API  ##
+#####################################
+
+QueryAlphaGenome <- function(api_key="") {
+  mSetObj <- .get.mSet(mSetObj);
+
+  # Use mr_dat — the exact SNPs used in MR analysis and shown in result plots
+  dat <- mSetObj$dataSet$mr_dat;
+  if(is.null(dat) || nrow(dat) == 0) {
+    current.msg <<- "No MR analysis data available for AlphaGenome analysis.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Further filter to mr_keep (allele-compatible SNPs actually used in MR)
+  if("mr_keep" %in% colnames(dat)) {
+    dat <- dat[dat$mr_keep, ];
+  }
+
+  if(nrow(dat) == 0) {
+    current.msg <<- "No kept SNPs available for AlphaGenome analysis.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Deduplicate by SNP ID (mr_dat may have duplicates from multi-exposure)
+  dat <- dat[!duplicated(dat$SNP), ];
+  print(paste0("[QueryAlphaGenome] Querying ", nrow(dat), " SNPs: ", paste(dat$SNP, collapse=", ")));
+
+  # Build request body from mr_dat
+  snp_list <- lapply(1:nrow(dat), function(i) {
+    chr_val <- dat$chr.exposure[i];
+    if(!grepl("^chr", chr_val)) {
+      chr_val <- paste0("chr", chr_val);
+    }
+    list(
+      snp_id = as.character(dat$SNP[i]),
+      chromosome = chr_val,
+      position = as.integer(dat$pos.exposure[i]),
+      ref_allele = as.character(dat$other_allele.exposure[i]),
+      alt_allele = as.character(dat$effect_allele.exposure[i]),
+      gene = ifelse(is.na(dat$genes[i]) || dat$genes[i] == "", "N/A", as.character(dat$genes[i]))
+    )
+  });
+
+  ag_results <- query_alphagenome_api(snp_list, api_key);
+
+  if(is.null(ag_results) || length(ag_results) == 0) {
+    current.msg <<- "AlphaGenome API returned no results.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  safe_str <- function(x, fallback="N/A") {
+    if(is.null(x) || is.na(x) || x == "") return(fallback);
+    return(as.character(x));
+  }
+
+  result_df <- do.call(rbind, lapply(ag_results, function(r) {
+    data.frame(
+      SNP = safe_str(r$snp_id),
+      Positional_Gene = safe_str(r$gene),
+      Target_Gene = safe_str(r$target_gene),
+      Gene_Type = safe_str(r$gene_type),
+      Effect_Type = safe_str(r$output_type),
+      Tissue = safe_str(r$tissue),
+      Score = ifelse(is.null(r$raw_score), "N/A", as.character(signif(r$raw_score, 4))),
+      Quantile = ifelse(is.null(r$quantile_score), "N/A", as.character(signif(r$quantile_score, 4))),
+      Interpretation = safe_str(r$interpretation),
+      stringsAsFactors = FALSE
+    )
+  }));
+
+  tryCatch({
+    fast.write.csv(result_df, file="alphagenome_results.csv", row.names=FALSE);
+  }, error=function(e) {
+    print(paste0("Warning: could not write alphagenome_results.csv: ", e$message));
+  });
+  mSetObj$dataSet$alphagenome_results <- result_df;
+  .set.mSet(mSetObj);
+
+  if(.on.public.web) {
+    return(nrow(result_df));
+  } else {
+    return(nrow(result_df));
+  }
+}
+
+
+query_alphagenome_api <- function(snp_list, api_key="") {
+  # Call AlphaGenome Python script directly (on-demand, no always-running service)
+
+  # Determine Python executable and script paths
+  local_root <- "/Users/lzy/NetBeansProjects/MetaboAnalyst";
+
+  if(dir.exists(local_root)) {
+    # Local dev environment
+    python_bin <- file.path(local_root, "alphagenome_venv", "bin", "python3");
+    script_path <- file.path(local_root, "alphagenome_score.py");
+  } else {
+    # Server deployment
+    python_bin <- "/opt/alphagenome/venv/bin/python3";
+    script_path <- "/opt/alphagenome/alphagenome_score.py";
+  }
+
+  if(!file.exists(script_path)) {
+    current.msg <<- paste0("AlphaGenome script not found: ", script_path);
+    print(current.msg);
+    return(NULL);
+  }
+
+  if(!file.exists(python_bin)) {
+    current.msg <<- paste0("Python not found: ", python_bin);
+    print(current.msg);
+    return(NULL);
+  }
+
+  # Write input/output JSON files in R working directory (RServe sets this per session)
+  ts <- as.integer(Sys.time());
+  input_file <- file.path(getwd(), paste0("ag_input_", ts, ".json"));
+  output_file <- file.path(getwd(), paste0("ag_output_", ts, ".json"));
+
+  tryCatch({
+    input_json <- jsonlite::toJSON(snp_list, auto_unbox=TRUE);
+    print(paste0("[AlphaGenome] Writing input to: ", input_file));
+    con <- file(input_file, "w");
+    writeLines(as.character(input_json), con);
+    close(con);
+
+    # Build command: python3 script.py input.json output.json [api_key]
+    cmd_args <- c(script_path, input_file, output_file);
+    if(nchar(api_key) > 0) {
+      cmd_args <- c(cmd_args, api_key);
+    }
+
+    print(paste0("[AlphaGenome] Running: ", python_bin, " ", paste(cmd_args[1:2], collapse=" "), " ..."));
+
+    # Execute Python script
+    output <- system2(python_bin, args=cmd_args, stdout=TRUE, stderr=TRUE);
+    status <- attr(output, "status");
+    print(paste0("[AlphaGenome] Exit status: ", ifelse(is.null(status), "0", status)));
+    if(length(output) > 0) {
+      print(paste0("[AlphaGenome] Output: ", paste(utils::head(output, 10), collapse="\n")));
+    }
+
+    if(!is.null(status) && status != 0) {
+      current.msg <<- paste0("AlphaGenome script failed (exit ", status, "): ",
+                              paste(output, collapse="\n"));
+      print(current.msg);
+      return(NULL);
+    }
+
+    # Read output JSON
+    if(!file.exists(output_file)) {
+      current.msg <<- "AlphaGenome script did not produce output file.";
+      print(current.msg);
+      return(NULL);
+    }
+
+    results <- jsonlite::fromJSON(output_file, simplifyVector=FALSE);
+    print(paste0("[AlphaGenome] Got ", length(results), " results."));
+    return(results);
+
+  }, error=function(e) {
+    current.msg <<- paste0("AlphaGenome execution failed: ", e$message);
+    print(paste0("[AlphaGenome] ERROR: ", e$message));
+    return(NULL);
+  }, finally={
+    # Clean up temp files
+    if(file.exists(input_file)) file.remove(input_file);
+    if(file.exists(output_file)) file.remove(output_file);
+  })
+}
+
+
+GetAlphaGenomeRowNames <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$alphagenome_results;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  return(as.character(1:nrow(res)));
+}
+
+
+GetAlphaGenomeCol <- function(colInx) {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$alphagenome_results;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  col <- as.character(res[, colInx]);
+  col[is.na(col) | col == ""] <- "N/A";
+  return(col);
+}
+
+
+
+########################################
+## Evidence Comparison Summary        ##
+########################################
+
+BuildEvidenceComparison <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+
+  # Use mr_dat — same SNPs as result page plots
+  dat <- mSetObj$dataSet$mr_dat;
+  if(is.null(dat) || nrow(dat) == 0) {
+    mSetObj$dataSet$evidence_comparison <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Further filter to mr_keep
+  if("mr_keep" %in% colnames(dat)) {
+    dat <- dat[dat$mr_keep, ];
+  }
+  if(nrow(dat) == 0) {
+    mSetObj$dataSet$evidence_comparison <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  snps <- unique(dat$SNP);
+  rows <- list();
+
+  for(snp in snps) {
+    snp_dat <- dat[dat$SNP == snp, ][1,];
+
+    # MR info
+    mr_beta_num <- suppressWarnings(as.numeric(snp_dat$beta.exposure));
+    mr_pval_num <- suppressWarnings(as.numeric(snp_dat$pval.exposure));
+    mr_beta <- ifelse(is.na(mr_beta_num), "N/A", as.character(signif(mr_beta_num, 4)));
+    mr_pval <- ifelse(is.na(mr_pval_num), "N/A", as.character(signif(mr_pval_num, 3)));
+    mr_gene <- ifelse(is.na(snp_dat$genes) || snp_dat$genes == "", "N/A", as.character(snp_dat$genes));
+
+    # Literature evidence
+    lit_evidence <- "No data";
+    path_df <- mSetObj$dataSet$path;
+    if(!is.null(path_df) && is.data.frame(path_df) && nrow(path_df) > 0) {
+      lit_evidence <- paste0(nrow(path_df), " path(s) found");
+    }
+
+    # AlphaGenome evidence - determine functional impact level
+    ag_has_data <- FALSE;
+    ag_level <- "none";  # none / minimal / moderate / strong
+    ag_top_gene <- "N/A";
+    ag_top_score <- "N/A";
+    ag_top_quantile <- "N/A";
+    ag_n_genes <- "N/A";
+    ag_res <- mSetObj$dataSet$alphagenome_results;
+    if(!is.null(ag_res) && is.data.frame(ag_res) && nrow(ag_res) > 0) {
+      snp_ag <- ag_res[ag_res$SNP == snp, ];
+      if(nrow(snp_ag) > 0) {
+        ag_has_data <- TRUE;
+        # Use ALL effect types (RNA_SEQ, CHIP_HISTONE, ATAC, DNASE, etc.)
+        all_quantiles <- suppressWarnings(as.numeric(snp_ag$Quantile));
+        all_scores <- suppressWarnings(as.numeric(snp_ag$Score));
+
+        # Best quantile across all effect types determines functional level
+        best_q <- max(all_quantiles, na.rm=TRUE);
+        best_idx <- which.max(all_quantiles);
+        ag_top_gene <- snp_ag$Target_Gene[best_idx];
+        ag_top_score <- as.character(signif(abs(all_scores[best_idx]), 4));
+        ag_top_quantile <- as.character(signif(best_q, 4));
+        ag_n_genes <- as.character(length(unique(snp_ag$Target_Gene)));
+
+        # Determine functional level from best quantile
+        if(!is.na(best_q) && best_q > 0.9) {
+          ag_level <- "strong";
+        } else if(!is.na(best_q) && best_q > 0.75) {
+          ag_level <- "moderate";
+        } else if(!is.na(best_q) && best_q > 0.5) {
+          ag_level <- "weak";
+        } else {
+          ag_level <- "minimal";
+        }
+      }
+    }
+
+    # Overall evidence assessment using three independent sources
+    has_mr <- !is.na(mr_pval_num) && mr_pval_num < 0.05;
+    has_lit <- lit_evidence != "No data";
+
+    if(has_mr && ag_level == "strong" && has_lit) {
+      overall <- "Strong: MR + Literature + strong variant effect";
+    } else if(has_mr && ag_level == "moderate" && has_lit) {
+      overall <- "Supported: MR + Literature + moderate variant effect";
+    } else if(has_mr && ag_level == "strong") {
+      overall <- "Supported: MR + strong variant effect";
+    } else if(has_mr && ag_level == "weak" && has_lit) {
+      overall <- "Moderate: MR + Literature + weak variant effect";
+    } else if(has_mr && ag_level == "moderate") {
+      overall <- "Moderate: MR + moderate variant effect";
+    } else if(has_mr && has_lit) {
+      overall <- "Moderate: MR + Literature";
+    } else if(has_mr && ag_level == "weak") {
+      overall <- "Weak: MR + weak variant effect";
+    } else if(has_mr && ag_level == "minimal") {
+      overall <- "Weak: MR + minimal variant effect";
+    } else if(has_mr && ag_has_data && ag_level == "none") {
+      overall <- "Caution: SNP shows no functional effect";
+    } else if(has_mr) {
+      overall <- "MR only";
+    } else {
+      overall <- "Insufficient evidence";
+    }
+
+    rows[[length(rows) + 1]] <- data.frame(
+      SNP = snp,
+      Positional_Gene = mr_gene,
+      MR_Beta = as.character(mr_beta),
+      MR_Pval = as.character(mr_pval),
+      Literature = lit_evidence,
+      AG_Top_Gene = ag_top_gene,
+      AG_Top_Score = as.character(ag_top_score),
+      AG_Quantile = as.character(ag_top_quantile),
+      AG_Genes_Affected = ag_n_genes,
+      Overall = overall,
+      stringsAsFactors = FALSE
+    );
+  }
+
+  result_df <- do.call(rbind, rows);
+  tryCatch({
+    fast.write.csv(result_df, file="evidence_comparison.csv", row.names=FALSE);
+  }, error=function(e) {
+    print(paste0("Warning: could not write evidence_comparison.csv: ", e$message));
+  });
+  mSetObj$dataSet$evidence_comparison <- result_df;
+  .set.mSet(mSetObj);
+  return(nrow(result_df));
+}
+
+
+GetComparisonRowNames <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$evidence_comparison;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  return(as.character(1:nrow(res)));
+}
+
+
+GetComparisonCol <- function(colInx) {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$evidence_comparison;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  col <- as.character(res[, colInx]);
+  col[is.na(col) | col == ""] <- "N/A";
+  return(col);
 }
 
 
