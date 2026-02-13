@@ -3029,6 +3029,11 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     mSetObj[["analSet"]][["ms2res"]] -> MSnResults
     mSetObj[["analSet"]][["ms2data"]] -> MSnData
   }
+  
+  if(is.null(row.names(MSnData[["peak_mtx"]]))){
+    row.names(MSnData[["peak_mtx"]]) <- c(1:nrow(MSnData[["peak_mtx"]]))
+  }
+
   result_num <- peak_idx
   peak_idx <- which(row.names(MSnData[["peak_mtx"]]) == peak_idx)
 
