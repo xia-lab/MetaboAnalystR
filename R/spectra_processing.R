@@ -43,7 +43,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=840:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -112,7 +112,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   }
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=840:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
   
   ## Prepare R script for running
   # need to require("OptiLCMS")
@@ -394,7 +394,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   
   ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=840:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
   
   require(R.utils)
   allMSFiles <- list.files("upload", full.names = T, recursive = T)
