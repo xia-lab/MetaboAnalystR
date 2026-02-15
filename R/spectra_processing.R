@@ -343,13 +343,13 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_write <- "write.table(dtx, file = \'compound_msn_results.tsv\', row.names = F, quote = FALSE, sep = \'\\t\')";
   str <- paste0(str, ";\n", cmd_write)
   
-  cmd_saving <- "qs::qsave(mSet, file = \'msn_mset_result.qs\')";
+  cmd_saving <- "mSet@MSnData[[\'precursors\']] <- mSet@MSnData[[\'scanrts_ms1\']] <- mSet@MSnData[[\'scanrts_ms2\']] <- mSet@MSnData[[\'scan_ms1\']] <- mSet@MSnData[[\'scan_ms2\']] <- NULL; qs::qsave(mSet, file = \'msn_mset_result.qs\')";
   str <- paste0(str, ";\n", cmd_saving)
   
   cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
   str <- paste0(str, ";\n", cmd_summarize)
 
-    if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
+  if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
     export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite\')";
     str <- paste0(str, ";\n", export_msn_all)
   } else if (file.exists("/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite")){
@@ -3160,13 +3160,38 @@ PerformMirrorPlotting <- function(mSetObj=NA,
     plot.subtitle=element_text(size=13, face="plain", color="black"),
     plot.title=element_text(size=18, face="plain", color="black"))
   
-  Cairo::Cairo(
-    file = paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png"),
-    unit = "in", dpi = dpi, width = width, height = height, type = format, bg = "white")
-  print(p1)
-  dev.off()
+file_path <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
   
+  # 2. Safety Net: Ensure dev.off() runs no matter what happens
+  # This prevents "zombie" devices from blocking future plots
+  on.exit({
+    if (dev.cur() > 1) dev.off()
+  })
+
+  tryCatch({
+    # 3. Initialize Cairo
+    Cairo::Cairo(
+      file = file_path,
+      unit = "in", 
+      dpi = dpi, 
+      width = width, 
+      height = height, 
+      type = "png", # Explicitly set to Cairo's png engine
+      bg = "white"
+    )
+    
+    # 4. Generate the plot
+    print(p1)
+    
+    message(paste("Successfully saved:", file_path))
+    
+  }, error = function(e) {
+    # 5. Log the error specifically for Rserve logs
+    message(paste("Plotting failed for", file_path, ":", e$message))
+    stop(e) # Re-throw the error so your main app knows it failed
+  })
   # Save the interactive plot with ggplot
+  options(bitmapType = 'cairo')
   imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
   save(p1, file = "p1.rda")
   px <- plotly::ggplotly(p1);
@@ -3179,7 +3204,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   px[["x"]][["layout"]][["xaxis"]][["title"]][["font"]][["size"]] <- 16
   #px[["x"]][["layout"]][["title"]] <-NULL
   px[["x"]][["layout"]][["title"]][["font"]][["size"]] <- 16
-  
+
   if(length(px[["x"]][["data"]])>2){
     px[["x"]][["data"]][[3]][["marker"]][["size"]] <- px[["x"]][["data"]][[3]][["marker"]][["size"]]/2
   }
@@ -3193,7 +3218,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
       px[["x"]][["data"]][[1]][["text"]] <- gsub("-","",px[["x"]][["data"]][[1]][["text"]])
     }
   }
-  
+
   ## update the bottom data  -data2
   if(length(px[["x"]][["data"]][[2]])>0){
     if(length(px[["x"]][["data"]][[2]][["text"]])>0){
@@ -3213,7 +3238,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
       }
     }
   }
-  
+
   ## update the matched star  -data3
   if(length(px[["x"]][["data"]])>2){
     if(length(px[["x"]][["data"]][[3]])>0){
@@ -3235,7 +3260,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   sink(paste0(gsub(".png|.svg|.pdf", "", imageNM),".json"));
   cat(jsonlist);
   sink();
-  
+
   if(is.null(mSetObj[["imgSet"]][["msmsmirror"]])){
     df <- data.frame(indx = result_num, imageNM = imageNM, legend = paste0(subtitle, " (", title, ")"))
     mSetObj[["imgSet"]][["msmsmirror"]] <- df
