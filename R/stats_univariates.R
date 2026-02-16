@@ -496,7 +496,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   sig.var <- cbind(fc.all[inx.imp,drop=F], fc.log[inx.imp,drop=F], p.value[inx.imp,drop=F], p.log[inx.imp,drop=F]);
   
   if(pval.type == "fdr"){
-    colnames(sig.var) <- c("FC", "log2(FC)", "p.ajusted", "-log10(p)");
+    colnames(sig.var) <- c("FC", "log2(FC)", "p.adjusted", "-log10(p)");
   }else{
     colnames(sig.var) <- c("FC", "log2(FC)", "raw.pval", "-log10(p)");
   }
