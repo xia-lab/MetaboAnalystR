@@ -52,7 +52,6 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
 
   mSetObj <- .get.mSet(mSetObj);
-  
   data <- qs::qread("prenorm.qs");
   cls <- mSetObj$dataSet$prenorm.cls;
   
@@ -121,7 +120,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   qs::qsave(row.norm, file="row_norm.qs");
   # this is for biomarker analysis only (for compound concentration data)
   if(ratio){
-    min.val <- min(abs(data[data!=0]))/2;
+    min.val <- min(abs(data[data!=0]), na.rm = T)/2;
     norm.data <- log2((data + sqrt(data^2 + min.val))/2);
     transnm<-"Log2 Normalization";
 
@@ -152,15 +151,15 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
     # transformation
     # may not be able to deal with 0 or negative values
     if(transNorm=='LogNorm'){
-      min.val <- min(abs(data[data!=0]))/10;
+      min.val <- min(abs(data[data!=0]), na.rm = T)/10;
       data<-apply(data, 2, LogNorm, min.val);
       transnm<-"Log10 Normalization";
     }else if(transNorm=='Log2Norm'){
-      min.val <- min(abs(data[data!=0]))/10;
+      min.val <- min(abs(data[data!=0]), na.rm = T)/10;
       data<-apply(data, 2, Log2Norm, min.val);
       transnm<-"Log2 Normalization";
     }else if(transNorm=='SrNorm'){
-      min.val <- min(abs(data[data!=0]))/10;
+      min.val <- min(abs(data[data!=0]), na.rm = T)/10;
       data<-apply(data, 2, SquareRootNorm, min.val);
       transnm<-"Square Root Transformation";
     }else if(transNorm=='CrNorm'){
@@ -376,7 +375,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   #save.image("normsum.RData");
   mSetObj <- .get.mSet(mSetObj);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
+
   if(is.na(width)){
     w <- 10.5; h <- 12.5;
   }else if(width==0){
