@@ -2264,7 +2264,7 @@ qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", 
   if(is.null(dat2)){
     w <- 460/72
     h <- 420/72
-    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white", dpi=dpi);
     print(box);
     dev.off();
   } else {
@@ -2276,7 +2276,7 @@ qc.biBoxPlot <- function(dat, dat2 = NULL, imgNm1, imgNM2 = NULL, format="png", 
     if (!is.na(h) && h > 50) {
       h <- h / 72
     }
-    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
+    Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white", dpi=dpi);
     grid.arrange(box, box2, nrow = nrows);
     dev.off();
   }

@@ -685,7 +685,7 @@ qc.boxplot <- function(dat, imgNm, format="png", dpi=default.dpi, width=NA){
   
   w <- 460/72
   h <- 420/72
-  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
+  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white", dpi=dpi);
   print(box);
   dev.off();
 }
@@ -706,7 +706,7 @@ qc.pcaplot <- function(x, imgNm, format="png", dpi=default.dpi, width=NA){
   
   w <- 480/72
   h <- 480/72
-  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white");
+  Cairo::Cairo(file=imgNm, unit="in", width=w, height=h, type="png", bg="white", dpi=dpi);
   print(pcafig);
   dev.off();
 }

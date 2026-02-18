@@ -155,7 +155,7 @@ my.kegg.plot <- function(endpoint="/pathway_kegg_plot",
         if (!is.na(h) && h > 50) {
           h <- h / 72
         }
-        Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
+        Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white", dpi=72);
       }else{
         if(is.na(width)){
           width <- 8;
