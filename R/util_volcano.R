@@ -88,7 +88,7 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   if(plotLbl){
     p <- p +  ggrepel::geom_text_repel();
   }
-  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme);
+  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme, labelNum=labelNum);
   
   if(!interactive){
     if(plotTheme == 0){
