@@ -521,12 +521,54 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   if(.on.public.web){
     # make this lazy load
     if(!exists("my.impute.missing")){ # public web on same user dir
-      .load.scripts.on.demand("util_missing.Rc");    
+      # Use source() here so util_missing updates are picked up without requiring Rc rebuild.
+      util.path <- paste0(rpath, "rscripts/MetaboAnalystR/R/util_missing.R")
+      if(!file.exists(util.path)){
+        util.path <- paste0("../../../rscripts/MetaboAnalystR/R/util_missing.R")
+      }
+      source(util.path, local = FALSE)
     }
     return(my.impute.missing(mSetObj, method, grpLod, grpMeasure));
   }else{
     return(my.impute.missing(mSetObj, method, grpLod, grpMeasure));
   }
+}
+
+.pick.cls.for.matrix <- function(mSetObj, nrow.mat, preferred = character()){
+  keys <- unique(c(preferred, "proc.cls", "filt.cls", "edit.cls", "cls", "orig.cls", "cls_orig"))
+  for (k in keys) {
+    vv <- mSetObj$dataSet[[k]]
+    if (!is.null(vv) && length(vv) == nrow.mat) {
+      return(as.factor(vv))
+    }
+  }
+  return(NULL)
+}
+
+.get.latest.proc.matrix <- function(mSetObj=NA,
+                                    files = c("data.edit.qs", "data.filt.qs", "data_proc.qs", "preproc.qs", "preproc.orig.qs")) {
+  mSetObj <- .get.mSet(mSetObj)
+  exist <- files[file.exists(files)]
+  if (length(exist) == 0) {
+    return(NULL)
+  }
+  mt <- file.info(exist)$mtime
+  src <- exist[which.max(mt)]
+  dat <- as.matrix(qs::qread(src))
+
+  pref <- switch(src,
+                 "data.edit.qs" = c("edit.cls"),
+                 "data.filt.qs" = c("filt.cls", "proc.cls"),
+                 "data_proc.qs" = c("proc.cls", "filt.cls"),
+                 "preproc.qs" = c("proc.cls", "orig.cls"),
+                 "preproc.orig.qs" = c("orig.cls", "proc.cls"),
+                 character())
+  cls <- .pick.cls.for.matrix(mSetObj, nrow(dat), pref)
+  if (is.null(cls)) {
+    AddErrMsg(paste0("Unable to resolve class labels for matrix source: ", src))
+    return(NULL)
+  }
+  list(data = dat, cls = cls, source = src)
 }
 
 CheckContainsBlank <- function(mSetObj=NA){
@@ -574,13 +616,13 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
   #Reset to default
   mSetObj$dataSet$filt <- NULL;
 
-  if(file.exists("preproc.qs")){
-    int.mat <- as.matrix(qs::qread("preproc.qs"));
-  }else{
-    int.mat <- as.matrix(qs::qread("data_proc.qs"));
-
+  latest <- .get.latest.proc.matrix(mSetObj, files = c("data.filt.qs", "data_proc.qs", "preproc.qs", "preproc.orig.qs"))
+  if (is.null(latest)) {
+    AddErrMsg("No available preprocessing matrix for filtering.")
+    return(0)
   }
-  cls <- mSetObj$dataSet$proc.cls;
+  int.mat <- latest$data
+  cls <- latest$cls
   
   # save a copy
   mSetObj$dataSet$filt.cls <- cls;
@@ -662,7 +704,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     n.feat.before   <- ncol(int.mat)
 
     ## feature-level filtering against blank threshold
-    idx2keep       <- blankfeatureFiltering(blank.hits, blank.threshold)
+    idx2keep       <- blankfeatureFiltering(int.mat, blank.hits, blank.threshold)
     idx2keep_exist <- names(idx2keep) %in% colnames(int.mat)
     idx2keep_all   <- idx2keep & idx2keep_exist
     ft_nms2keep    <- names(which(idx2keep_all))
@@ -750,9 +792,9 @@ GetFilterTotalMsg <-function(mSetObj=NA){
 }
 
 
-blankfeatureFiltering <- function(idx_blank, threshold) {
+blankfeatureFiltering <- function(preproc, idx_blank, threshold) {
 
-  preproc <- qs::qread("preproc.qs")
+  preproc <- as.matrix(preproc)
 
   stopifnot(
     is.logical(idx_blank),

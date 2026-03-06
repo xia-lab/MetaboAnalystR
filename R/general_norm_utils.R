@@ -45,10 +45,11 @@ getFeatureNum <- function(mSetObj=NA){
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
-  if(!.on.public.web){
-    # call this to make sure always restart from the same footing, and taking care of prefiltering steps
-    # only required to run local R package, as web will be called from interface during bean init
-    .prepare.prenorm.data(mSetObj);
+  # Always refresh prenorm from the latest available preprocessing matrix.
+  .prepare.prenorm.data(mSetObj);
+  if (!file.exists("prenorm.qs")) {
+    AddErrMsg("Normalization failed: prenorm.qs was not prepared.")
+    return(0)
   }
 
   mSetObj <- .get.mSet(mSetObj);
@@ -661,15 +662,39 @@ PreparePrenormData <- function(mSetObj=NA){
 
 .prepare.prenorm.data <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(file.exists("data.edit.qs")){
-    prenorm <- qs::qread("data.edit.qs");;
-    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$edit.cls;
-  }else {
-    # missing value 
-    prenorm <- qs::qread("data_proc.qs");
-    mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$proc.cls;
+
+  candidates <- c("data.edit.qs", "data.filt.qs", "data_proc.qs", "preproc.qs", "preproc.orig.qs")
+  exists.files <- candidates[file.exists(candidates)]
+  if (length(exists.files) == 0) {
+    AddErrMsg("No available preprocessing matrix for normalization.")
+    return(.set.mSet(mSetObj))
   }
+  src <- exists.files[which.max(file.info(exists.files)$mtime)]
+  prenorm <- as.matrix(qs::qread(src))
+
+  pick.cls <- function(nrow.mat, preferred = character()) {
+    keys <- unique(c(preferred, "proc.cls", "filt.cls", "edit.cls", "cls", "orig.cls", "cls_orig"))
+    for (k in keys) {
+      vv <- mSetObj$dataSet[[k]]
+      if (!is.null(vv) && length(vv) == nrow.mat) {
+        return(as.factor(vv))
+      }
+    }
+    return(NULL)
+  }
+  pref <- switch(src,
+                 "data.edit.qs" = c("edit.cls"),
+                 "data.filt.qs" = c("filt.cls", "proc.cls"),
+                 "data_proc.qs" = c("proc.cls", "filt.cls"),
+                 "preproc.qs" = c("proc.cls", "orig.cls"),
+                 "preproc.orig.qs" = c("orig.cls", "proc.cls"),
+                 character())
+  cls <- pick.cls(nrow(prenorm), pref)
+  if (is.null(cls)) {
+    AddErrMsg(paste0("Unable to resolve class labels for normalization from source: ", src))
+    return(.set.mSet(mSetObj))
+  }
+  mSetObj$dataSet$prenorm.cls <- cls
 
   # make sure the meta.info is synchronized with data
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){

@@ -5,13 +5,40 @@ my.impute.missing <- function(mSetObj = NA,
   #save.image("miss.RData");
   mSetObj <- .get.mSet(mSetObj)
   
-  int.mat <- qs::qread("data.filt.qs");          # samples × variables
+  latest <- NULL
+  if (exists(".get.latest.proc.matrix")) {
+    latest <- .get.latest.proc.matrix(mSetObj, files = c("data.filt.qs", "data_proc.qs", "preproc.qs", "preproc.orig.qs"))
+  }
+  if (is.null(latest)) {
+    cand <- c("data.filt.qs", "data_proc.qs", "preproc.qs", "preproc.orig.qs")
+    ex <- cand[file.exists(cand)]
+    if (length(ex) == 0) {
+      AddErrMsg("No available preprocessing matrix for missing-value imputation.")
+      return(0)
+    }
+    src <- ex[which.max(file.info(ex)$mtime)]
+    int.mat <- as.matrix(qs::qread(src))
+    cls.auto <- mSetObj$dataSet$proc.cls
+    if (is.null(cls.auto) || length(cls.auto) != nrow(int.mat)) {
+      cls.auto <- mSetObj$dataSet$filt.cls
+    }
+    if (is.null(cls.auto) || length(cls.auto) != nrow(int.mat)) {
+      cls.auto <- mSetObj$dataSet$orig.cls
+    }
+    if (is.null(cls.auto) || length(cls.auto) != nrow(int.mat)) {
+      AddErrMsg("Unable to resolve class labels for missing-value imputation.")
+      return(0)
+    }
+  } else {
+    int.mat <- latest$data
+    cls.auto <- latest$cls
+  }
   new.mat <- msg <- NULL;
   
   if (!is.null(mSetObj$dataSet$meta.info) && ncol(mSetObj$dataSet$meta.info) >= 1) {
     grp <- as.character(mSetObj$dataSet$meta.info[, 1])
   } else {
-    grp <- as.character(mSetObj$dataSet$cls)
+    grp <- as.character(cls.auto)
   }
   
   if (length(grp) != nrow(int.mat))
@@ -168,7 +195,8 @@ my.impute.missing <- function(mSetObj = NA,
   }
   
 
-  mSetObj$dataSet$proc.feat.num <- ncol(int.mat)
+  mSetObj$dataSet$proc.feat.num <- ncol(new.mat)
+  mSetObj$dataSet$proc.cls <- as.factor(cls.auto)
   qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
   mSetObj$dataSet$filt <- NULL;
   mSetObj$msgSet$replace.msg <- msg
