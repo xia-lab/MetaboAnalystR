@@ -41,13 +41,11 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
   de$Status <- as.factor(de$Status);
 
-  # Calculate percentile ranks (0-100 scale for easier interpretation)
-  de$p.rank <- rank(de$p.log) / length(de$p.log) * 100  # Higher p-values (lower significance) get lower rank
-  de$fc.rank <- rank(abs(de$fc.log)) / length(de$fc.log) * 100  # Higher absolute fold changes get higher rank
-  de$combinedRank <- pmax(de$p.rank, de$fc.rank)
+  # Rank by p-value (primary, higher -log10(p) = more significant) then FC (tiebreaker)
+  de$combinedRank <- order(order(-de$p.log, -abs(de$fc.log)))
 
-  imp.inx <- imp.inx[order(-de$combinedRank)]
-  de <- de[order(-de$combinedRank), ]
+  imp.inx <- imp.inx[order(de$combinedRank)]
+  de <- de[order(de$combinedRank), ]
   de$label <- NA
   if(interactive){
     de$label <- rownames(de);
@@ -88,7 +86,7 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   if(plotLbl){
     p <- p +  ggrepel::geom_text_repel();
   }
-  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme);
+  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme, labelNum=labelNum);
   
   if(!interactive){
     if(plotTheme == 0){

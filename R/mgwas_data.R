@@ -200,6 +200,10 @@ PrepareMgwasCSV <- function(table.nm){
     fast.write.csv(mSetObj$dataSet$mr_res_loo, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
   }else if(table.nm=="mr_res"){
     fast.write.csv(mSetObj$dataSet$mr_results, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="alphagenome_results"){
+    fast.write.csv(mSetObj$dataSet$alphagenome_results, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
+  }else if(table.nm=="evidence_comparison"){
+    fast.write.csv(mSetObj$dataSet$evidence_comparison, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
   }else if(table.nm=="manhattan"){
     fast.write.csv(mSetObj$dataSet$snp2met, file=paste(table.nm, ".csv", sep=""), row.names = FALSE);
   } else if(anal.type == "multilist" || anal.type == "snp2mir" || anal.type == "tf2genemir" || anal.type == "gene2tfmir"){
@@ -555,27 +559,27 @@ SetMRMethod <- function(){
 
 
 
-GetPathRowNames <- function(netType){
+GetPathRowNames <- function(){
   mSetObj <- .get.mSet(mSetObj);
   path <- mSetObj$dataSet$path;
- if(nrow(path)==0){
+  if(is.null(path) || !is.data.frame(path) || nrow(path)==0){
    return()
   }else{
   return(1:nrow(path))
 }
 }
 
- 
+
 GetPathCol <- function(colInx){
- 
+
   mSetObj <- .get.mSet(mSetObj);
   path <- mSetObj$dataSet$path;
-  if(nrow(path)==0){
+  if(is.null(path) || !is.data.frame(path) || nrow(path)==0){
    return()
   }else{
     return(path[,colInx]);
    }
- 
+
 }
 
 

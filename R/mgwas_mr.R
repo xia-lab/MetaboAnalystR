@@ -757,15 +757,36 @@ mr_modified <- function (dat,
 
 QueryLiteratureMelodiPresto <- function(exposure, outcome) {
  mir.resu <<- data.frame();
- 
+
   mSetObj <- .get.mSet(mSetObj);
   endpoint <- "/overlap/"
   params <- list(
     x = exposure,
     y = outcome
   )
- 
-  lit_df <- query_melodipresto(route = endpoint, params = params, mode = "raw", method = "POST")
+
+  # --- Shared project-wide cache: all users benefit from cached results ---
+  cache_dir <- paste0(rpath, "/libs/melodi_cache");
+  if(!dir.exists(cache_dir)) dir.create(cache_dir, recursive=TRUE);
+  cache_key <- paste(sort(c(exposure, outcome)), collapse="|");
+  cache_hash <- substr(digest::digest(cache_key, algo="md5"), 1, 12);
+  cache_file <- file.path(cache_dir, paste0("metab_lit_", cache_hash, ".rds"));
+
+  lit_df <- NULL;
+  if(file.exists(cache_file)) {
+    print(paste0("[QueryLiteratureMelodiPresto] Loading from cache: ", cache_file));
+    lit_df <- tryCatch(readRDS(cache_file), error = function(e) NULL);
+  }
+
+  if(is.null(lit_df)) {
+    lit_df <- query_melodipresto(route = endpoint, params = params, mode = "raw", method = "POST")
+    # Save to shared cache
+    if(!is.null(lit_df)) {
+      tryCatch(saveRDS(lit_df, file=cache_file), error = function(e) {
+        print(paste0("Warning: could not write cache: ", e$message));
+      });
+    }
+  }
 
   if(is.null(lit_df)){
 
@@ -939,7 +960,7 @@ api_post_request <- function(route, params,
   is_ci <- getOption("epigraphdb.ci") %>%
     as.character() %>%
     tolower()
-  config <- httr::add_headers(.headers = c("client-type" = "R", "ci" = is_ci))
+  config <- c(httr::add_headers(.headers = c("client-type" = "R", "ci" = is_ci)), httr::config(ssl_verifypeer = FALSE, ssl_verifyhost = FALSE))
   # body <- jsonlite::toJSON(params, auto_unbox = TRUE) # this is for epigraphdb query
   body <- jsonlite::toJSON(params);
   response <- httr::RETRY(
@@ -965,7 +986,667 @@ api_request <- function(route, params,
     return(flatten_response(response))
   }
   library(magrittr) # for pipe operation %>% 
-  response %>% httr::content(as = "parsed", encoding = "utf-8") 
+  response %>% httr::content(as = "parsed", encoding = "utf-8")
+}
+
+
+#####################################
+## AlphaGenome Variant Effect API  ##
+#####################################
+
+QueryAlphaGenome <- function(api_key="") {
+  mSetObj <- .get.mSet(mSetObj);
+
+  # Use mr_dat — the exact SNPs used in MR analysis and shown in result plots
+  dat <- mSetObj$dataSet$mr_dat;
+  if(is.null(dat) || nrow(dat) == 0) {
+    current.msg <<- "No MR analysis data available for AlphaGenome analysis.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Further filter to mr_keep (allele-compatible SNPs actually used in MR)
+  if("mr_keep" %in% colnames(dat)) {
+    dat <- dat[dat$mr_keep, ];
+  }
+
+  if(nrow(dat) == 0) {
+    current.msg <<- "No kept SNPs available for AlphaGenome analysis.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Deduplicate by SNP ID (mr_dat may have duplicates from multi-exposure)
+  dat <- dat[!duplicated(dat$SNP), ];
+  print(paste0("[QueryAlphaGenome] Querying ", nrow(dat), " SNPs: ", paste(dat$SNP, collapse=", ")));
+
+  # Build request body from mr_dat
+  snp_list <- lapply(1:nrow(dat), function(i) {
+    chr_val <- dat$chr.exposure[i];
+    if(!grepl("^chr", chr_val)) {
+      chr_val <- paste0("chr", chr_val);
+    }
+    list(
+      snp_id = as.character(dat$SNP[i]),
+      chromosome = chr_val,
+      position = as.integer(dat$pos.exposure[i]),
+      ref_allele = as.character(dat$other_allele.exposure[i]),
+      alt_allele = as.character(dat$effect_allele.exposure[i]),
+      gene = ifelse(is.na(dat$genes[i]) || dat$genes[i] == "", "N/A", as.character(dat$genes[i]))
+    )
+  });
+
+  ag_results <- query_alphagenome_api(snp_list, api_key);
+
+  if(is.null(ag_results) || length(ag_results) == 0) {
+    current.msg <<- "AlphaGenome API returned no results.";
+    mSetObj$dataSet$alphagenome_results <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  safe_str <- function(x, fallback="N/A") {
+    if(is.null(x) || is.na(x) || x == "") return(fallback);
+    return(as.character(x));
+  }
+
+  result_df <- do.call(rbind, lapply(ag_results, function(r) {
+    data.frame(
+      SNP = safe_str(r$snp_id),
+      Positional_Gene = safe_str(r$gene),
+      Target_Gene = safe_str(r$target_gene),
+      Gene_Type = safe_str(r$gene_type),
+      Effect_Type = safe_str(r$output_type),
+      Tissue = safe_str(r$tissue),
+      Score = ifelse(is.null(r$raw_score), "N/A", as.character(signif(r$raw_score, 4))),
+      Quantile = ifelse(is.null(r$quantile_score), "N/A", as.character(signif(r$quantile_score, 4))),
+      Interpretation = safe_str(r$interpretation),
+      stringsAsFactors = FALSE
+    )
+  }));
+
+  # Filter: keep only rows with quantile >= 0.5 (upper half)
+  AG_QUANTILE_THRESHOLD <- 0.5;
+  quantile_vals <- suppressWarnings(as.numeric(result_df$Quantile));
+  keep <- !is.na(quantile_vals) & quantile_vals >= AG_QUANTILE_THRESHOLD;
+  result_df_filtered <- result_df[keep, ];
+  print(paste0("[QueryAlphaGenome] ", nrow(result_df), " total rows, ", nrow(result_df_filtered),
+               " rows with quantile >= ", AG_QUANTILE_THRESHOLD));
+
+  if(nrow(result_df_filtered) == 0) {
+    print("[QueryAlphaGenome] No rows above threshold, keeping all results for reference.");
+    result_df_filtered <- result_df;  # fallback: show all if nothing passes
+  }
+
+  tryCatch({
+    fast.write.csv(result_df_filtered, file="alphagenome_results.csv", row.names=FALSE);
+  }, error=function(e) {
+    print(paste0("Warning: could not write alphagenome_results.csv: ", e$message));
+  });
+  mSetObj$dataSet$alphagenome_results <- result_df_filtered;
+  .set.mSet(mSetObj);
+
+  if(.on.public.web) {
+    return(nrow(result_df_filtered));
+  } else {
+    return(nrow(result_df_filtered));
+  }
+}
+
+
+query_alphagenome_api <- function(snp_list, api_key="") {
+  # Call AlphaGenome Python script directly (on-demand, no always-running service)
+
+  # Determine Python executable and script paths
+  local_root <- "/Users/lzy/NetBeansProjects/MetaboAnalyst";
+
+  if(dir.exists(local_root)) {
+    # Local dev environment
+    python_bin <- file.path(local_root, "alphagenome_venv", "bin", "python3");
+    script_path <- file.path(local_root, "alphagenome_score.py");
+  } else {
+    # Server deployment
+    python_bin <- "/opt/alphagenome/venv/bin/python3";
+    script_path <- "/opt/alphagenome/alphagenome_score.py";
+  }
+
+  if(!file.exists(script_path)) {
+    current.msg <<- paste0("AlphaGenome script not found: ", script_path);
+    print(current.msg);
+    return(NULL);
+  }
+
+  if(!file.exists(python_bin)) {
+    current.msg <<- paste0("Python not found: ", python_bin);
+    print(current.msg);
+    return(NULL);
+  }
+
+  # Write input/output JSON files in R working directory (RServe sets this per session)
+  ts <- as.integer(Sys.time());
+  input_file <- file.path(getwd(), paste0("ag_input_", ts, ".json"));
+  output_file <- file.path(getwd(), paste0("ag_output_", ts, ".json"));
+
+  tryCatch({
+    input_json <- jsonlite::toJSON(snp_list, auto_unbox=TRUE);
+    print(paste0("[AlphaGenome] Writing input to: ", input_file));
+    con <- file(input_file, "w");
+    writeLines(as.character(input_json), con);
+    close(con);
+
+    # Build command: python3 script.py input.json output.json [api_key]
+    cmd_args <- c(script_path, input_file, output_file);
+    if(nchar(api_key) > 0) {
+      cmd_args <- c(cmd_args, api_key);
+    }
+
+    print(paste0("[AlphaGenome] Running: ", python_bin, " ", paste(cmd_args[1:2], collapse=" "), " ..."));
+
+    # Execute Python script
+    output <- system2(python_bin, args=cmd_args, stdout=TRUE, stderr=TRUE);
+    status <- attr(output, "status");
+    print(paste0("[AlphaGenome] Exit status: ", ifelse(is.null(status), "0", status)));
+    if(length(output) > 0) {
+      print(paste0("[AlphaGenome] Output: ", paste(utils::head(output, 10), collapse="\n")));
+    }
+
+    if(!is.null(status) && status != 0) {
+      current.msg <<- paste0("AlphaGenome script failed (exit ", status, "): ",
+                              paste(output, collapse="\n"));
+      print(current.msg);
+      return(NULL);
+    }
+
+    # Read output JSON
+    if(!file.exists(output_file)) {
+      current.msg <<- "AlphaGenome script did not produce output file.";
+      print(current.msg);
+      return(NULL);
+    }
+
+    results <- jsonlite::fromJSON(output_file, simplifyVector=FALSE);
+    print(paste0("[AlphaGenome] Got ", length(results), " results."));
+    return(results);
+
+  }, error=function(e) {
+    current.msg <<- paste0("AlphaGenome execution failed: ", e$message);
+    print(paste0("[AlphaGenome] ERROR: ", e$message));
+    return(NULL);
+  }, finally={
+    # Clean up temp files
+    if(file.exists(input_file)) file.remove(input_file);
+    if(file.exists(output_file)) file.remove(output_file);
+  })
+}
+
+
+GetAlphaGenomeRowNames <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$alphagenome_results;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  return(as.character(1:nrow(res)));
+}
+
+
+GetAlphaGenomeCol <- function(colInx) {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$alphagenome_results;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  col <- as.character(res[, colInx]);
+  col[is.na(col) | col == ""] <- "N/A";
+  return(col);
+}
+
+
+
+GetGeneLitRowNames <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$gene_disease_lit;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  return(as.character(1:nrow(res)));
+}
+
+GetGeneLitCol <- function(colInx) {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$gene_disease_lit;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  col <- as.character(res[, colInx]);
+  col[is.na(col) | col == ""] <- "N/A";
+  return(col);
+}
+
+
+########################################
+## Gene-Disease Literature (batch)    ##
+########################################
+
+# Query MELODI-Presto for gene→disease literature evidence
+# Uses a SINGLE API call with all AG gene names as x, disease as y
+# Stores result in mSetObj$dataSet$gene_disease_lit
+QueryGeneLiterature <- function(disease) {
+  mSetObj <- .get.mSet(mSetObj);
+
+  # Get unique gene names from AlphaGenome results above threshold
+  ag_res <- mSetObj$dataSet$alphagenome_results;
+  if(is.null(ag_res) || !is.data.frame(ag_res) || nrow(ag_res) == 0) {
+    print("[QueryGeneLiterature] No AlphaGenome results, skipping");
+    mSetObj$dataSet$gene_disease_lit <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  AG_QUANTILE_THRESHOLD <- 0.5;
+  q_vals <- suppressWarnings(as.numeric(ag_res$Quantile));
+  keep <- !is.na(q_vals) & q_vals >= AG_QUANTILE_THRESHOLD;
+  ag_filtered <- ag_res[keep, ];
+
+  # Collect search terms: real gene names + positional genes from MR data
+  genes <- unique(as.character(ag_filtered$Target_Gene));
+  genes <- genes[!is.na(genes) & genes != "" & genes != "N/A"];
+  # Filter out ENSEMBL IDs (ENSG...) — they won't be in PubMed text
+  genes <- genes[!grepl("^ENSG[0-9]+$", genes)];
+
+  # Also add positional genes from MR data (the gene where the SNP sits)
+  dat <- mSetObj$dataSet$mr_dat;
+  if(!is.null(dat) && is.data.frame(dat) && nrow(dat) > 0) {
+    pos_genes <- unique(as.character(dat$genes));
+    pos_genes <- pos_genes[!is.na(pos_genes) & pos_genes != "" & pos_genes != "N/A"];
+    genes <- unique(c(genes, pos_genes));
+  }
+
+  # Map AlphaGenome effect types to searchable biological terms
+  # These won't have Target_Gene but represent chromatin/epigenetic effects
+  effect_type_terms <- c(
+    "histone modification",
+    "chromatin accessibility",
+    "transcription factor binding",
+    "gene expression regulation"
+  );
+
+  # Combine: gene names + effect type biological terms
+  search_terms <- unique(c(genes, effect_type_terms));
+
+  if(length(search_terms) == 0) {
+    print("[QueryGeneLiterature] No search terms, skipping");
+    mSetObj$dataSet$gene_disease_lit <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  print(paste0("[QueryGeneLiterature] Querying ", length(search_terms),
+               " terms against disease: ", disease));
+  print(paste0("[QueryGeneLiterature] Terms: ", paste(search_terms, collapse=", ")));
+
+  # --- Shared project-wide cache: all users benefit from cached results ---
+  cache_dir <- paste0(rpath, "/libs/melodi_cache");
+  if(!dir.exists(cache_dir)) dir.create(cache_dir, recursive=TRUE);
+  cache_key <- paste(sort(c(search_terms, disease)), collapse="|");
+  cache_hash <- substr(digest::digest(cache_key, algo="md5"), 1, 12);
+  cache_file <- file.path(cache_dir, paste0("gene_lit_", cache_hash, ".rds"));
+
+  res <- NULL;
+  if(file.exists(cache_file)) {
+    print(paste0("[QueryGeneLiterature] Loading from cache: ", cache_file));
+    res <- tryCatch(readRDS(cache_file), error = function(e) {
+      print(paste0("[QueryGeneLiterature] Cache read error: ", e$message));
+      NULL;
+    });
+  }
+
+  if(is.null(res) || nrow(res) == 0) {
+    # No cache — call MELODI-Presto API
+    endpoint <- "/overlap/";
+    params <- list(
+      x = search_terms,
+      y = disease
+    );
+
+    lit_df <- tryCatch({
+      query_melodipresto(route = endpoint, params = params, mode = "raw", method = "POST");
+    }, error = function(e) {
+      print(paste0("[QueryGeneLiterature] API error: ", e$message));
+      NULL;
+    });
+
+    if(is.null(lit_df) || nrow(lit_df) == 0) {
+      print("[QueryGeneLiterature] No results from MELODI-Presto");
+      mSetObj$dataSet$gene_disease_lit <- data.frame();
+      .set.mSet(mSetObj);
+      return(0);
+    }
+
+    # Format result
+    res <- as.data.frame(lit_df[, c("set_x", "subject_name_x", "predicate_x",
+                                     "pval_x", "pmids_x", "object_name_x",
+                                     "predicate_y", "object_name_y",
+                                     "pval_y", "pmids_y", "set_y")]);
+    res$pval_x <- signif(res$pval_x, digits = 5);
+    res$pval_y <- signif(res$pval_y, digits = 5);
+    colnames(res) <- c("Gene", "Gene_Subject", "Gene_Predicate",
+                        "Gene_Pval", "Gene_PMIDs", "Overlap",
+                        "Disease_Predicate", "Disease_Object",
+                        "Disease_Pval", "Disease_PMIDs", "Disease");
+
+    # Save to shared cache
+    tryCatch({
+      saveRDS(res, file=cache_file);
+      print(paste0("[QueryGeneLiterature] Cached to: ", cache_file));
+    }, error=function(e) {
+      print(paste0("Warning: could not write cache: ", e$message));
+    });
+  }
+
+  print(paste0("[QueryGeneLiterature] Found ", nrow(res), " gene-disease links"));
+  print(paste0("[QueryGeneLiterature] Genes with hits: ",
+               paste(unique(res$Gene), collapse=", ")));
+
+  # Also save as gene_disease_literature.csv for user download
+  tryCatch({
+    fast.write.csv(res, file="gene_disease_literature.csv", row.names=FALSE);
+  }, error=function(e) {
+    print(paste0("Warning: could not write gene_disease_literature.csv: ", e$message));
+  });
+
+  mSetObj$dataSet$gene_disease_lit <- res;
+  .set.mSet(mSetObj);
+  return(nrow(res));
+}
+
+
+########################################
+## Evidence Comparison Summary        ##
+########################################
+
+BuildEvidenceComparison <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+
+  AG_QUANTILE_THRESHOLD <- 0.5;
+
+  # Use mr_dat — same SNPs as result page plots
+  dat <- mSetObj$dataSet$mr_dat;
+  if(is.null(dat) || nrow(dat) == 0) {
+    mSetObj$dataSet$evidence_comparison <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # Further filter to mr_keep
+  if("mr_keep" %in% colnames(dat)) {
+    dat <- dat[dat$mr_keep, ];
+  }
+  if(nrow(dat) == 0) {
+    mSetObj$dataSet$evidence_comparison <- data.frame();
+    .set.mSet(mSetObj);
+    return(0);
+  }
+
+  # ---- Original metabolite-disease literature PMIDs ----
+  mr2lit <- mSetObj$dataSet$mr2lit;
+  metab_pmids <- c();
+  if(!is.null(mr2lit) && is.data.frame(mr2lit) && nrow(mr2lit) > 0) {
+    for(cn in c("Exposure_PMIDs", "Outcome_PMIDs")) {
+      if(cn %in% colnames(mr2lit)) {
+        raw <- as.character(mr2lit[[cn]]);
+        raw <- raw[!is.na(raw) & raw != ""];
+        # PMIDs may be space-separated or comma-separated
+        all_ids <- unlist(strsplit(raw, "[, ]+"));
+        all_ids <- trimws(all_ids);
+        all_ids <- all_ids[all_ids != ""];
+        metab_pmids <- c(metab_pmids, all_ids);
+      }
+    }
+    metab_pmids <- unique(metab_pmids);
+    print(paste0("[BuildEvidenceComparison] Metabolite-disease PMIDs: ", length(metab_pmids)));
+  }
+
+  # ---- Gene-disease literature: from QueryGeneLiterature() batch call ----
+  gene_lit <- mSetObj$dataSet$gene_disease_lit;
+  has_gene_lit <- !is.null(gene_lit) && is.data.frame(gene_lit) && nrow(gene_lit) > 0;
+
+  # Build lookup: gene/term -> list of overlap concepts + PMIDs + shared PMIDs
+  # Key is UPPERCASED, underscores replaced with spaces (MELODI-Presto returns
+  # set_x as lowercase with underscores, e.g. "chromatin_accessibility")
+  gene_lit_lookup <- list();
+  if(has_gene_lit) {
+    for(i in 1:nrow(gene_lit)) {
+      g <- toupper(gsub("_", " ", as.character(gene_lit$Gene[i])));
+      overlap <- as.character(gene_lit$Overlap[i]);
+      gene_pmid_str <- as.character(gene_lit$Gene_PMIDs[i]);
+      dis_pmid_str <- as.character(gene_lit$Disease_PMIDs[i]);
+      if(is.na(g) || g == "") next;
+      if(is.null(gene_lit_lookup[[g]])) {
+        gene_lit_lookup[[g]] <- list(overlaps=c(), pmids=c(), shared_pmids=c());
+      }
+      if(!is.na(overlap) && overlap != "") {
+        gene_lit_lookup[[g]]$overlaps <- unique(c(gene_lit_lookup[[g]]$overlaps, overlap));
+      }
+      # Collect all PMIDs from gene-disease literature
+      for(ps in c(gene_pmid_str, dis_pmid_str)) {
+        if(!is.na(ps) && ps != "") {
+          ids <- trimws(unlist(strsplit(ps, "[, ]+")));
+          ids <- ids[ids != ""];
+          gene_lit_lookup[[g]]$pmids <- unique(c(gene_lit_lookup[[g]]$pmids, ids));
+        }
+      }
+    }
+    # Find PMID overlap with metabolite-disease literature
+    for(g in names(gene_lit_lookup)) {
+      shared <- intersect(gene_lit_lookup[[g]]$pmids, metab_pmids);
+      gene_lit_lookup[[g]]$shared_pmids <- shared;
+    }
+    print(paste0("[BuildEvidenceComparison] Gene-disease literature: ",
+                 length(gene_lit_lookup), " genes with hits: ",
+                 paste(names(gene_lit_lookup), collapse=", ")));
+    for(g in names(gene_lit_lookup)) {
+      print(paste0("  ", g, ": ", length(gene_lit_lookup[[g]]$overlaps), " overlaps, ",
+                    length(gene_lit_lookup[[g]]$pmids), " PMIDs, ",
+                    length(gene_lit_lookup[[g]]$shared_pmids), " shared PMIDs"));
+    }
+  } else {
+    print("[BuildEvidenceComparison] No gene-disease literature available");
+  }
+
+  snps <- unique(dat$SNP);
+  rows <- list();
+
+  for(snp in snps) {
+    snp_dat <- dat[dat$SNP == snp, ][1,];
+
+    # MR info
+    mr_beta_num <- suppressWarnings(as.numeric(snp_dat$beta.exposure));
+    mr_pval_num <- suppressWarnings(as.numeric(snp_dat$pval.exposure));
+    mr_beta <- ifelse(is.na(mr_beta_num), "N/A", as.character(signif(mr_beta_num, 4)));
+    mr_pval <- ifelse(is.na(mr_pval_num), "N/A", as.character(signif(mr_pval_num, 3)));
+    mr_gene <- ifelse(is.na(snp_dat$genes) || snp_dat$genes == "", "N/A", as.character(snp_dat$genes));
+    has_mr <- !is.na(mr_pval_num) && mr_pval_num < 0.05;
+
+    # AlphaGenome evidence — one row per gene/effect above threshold
+    ag_res <- mSetObj$dataSet$alphagenome_results;
+    added_ag_rows <- FALSE;
+
+    if(!is.null(ag_res) && is.data.frame(ag_res) && nrow(ag_res) > 0) {
+      snp_ag <- ag_res[ag_res$SNP == snp, ];
+      if(nrow(snp_ag) > 0) {
+        all_quantiles <- suppressWarnings(as.numeric(snp_ag$Quantile));
+        above_thresh <- !is.na(all_quantiles) & all_quantiles >= AG_QUANTILE_THRESHOLD;
+        snp_ag_filtered <- snp_ag[above_thresh, ];
+
+        if(nrow(snp_ag_filtered) > 0) {
+          for(j in 1:nrow(snp_ag_filtered)) {
+            tg <- as.character(snp_ag_filtered$Target_Gene[j]);
+            et <- as.character(snp_ag_filtered$Effect_Type[j]);
+            q_val <- suppressWarnings(as.numeric(snp_ag_filtered$Quantile[j]));
+            q_str <- as.character(signif(q_val, 4));
+
+            # Display label: gene name if available, otherwise effect type
+            if(is.na(tg) || tg == "N/A" || tg == "") {
+              ag_label <- et;
+            } else {
+              ag_label <- tg;
+            }
+
+            # Check gene-disease literature: direct MELODI-Presto evidence
+            # gene_lit_lookup keys: gene names (e.g. "HNF4G") and bio terms
+            #   (e.g. "HISTONE MODIFICATION").  Each key has its OWN PMIDs.
+            #
+            # Priority: look up by the ROW-SPECIFIC identifier first:
+            #   1) If AG Gene/Effect is an effect type → use the mapped bio term
+            #   2) If AG Gene/Effect is a real gene name → use that gene
+            #   3) Fallback to positional gene ONLY if nothing else matched
+            # This ensures each row gets its own PMIDs, not the positional gene's.
+
+            et_term_map <- list(
+              "CHIP_HISTONE" = "HISTONE MODIFICATION",
+              "CHIP_TF"      = "TRANSCRIPTION FACTOR BINDING",
+              "DNASE"        = "CHROMATIN ACCESSIBILITY",
+              "ATAC"         = "CHROMATIN ACCESSIBILITY",
+              "CAGE"         = "GENE EXPRESSION REGULATION",
+              "PROCAP"       = "GENE EXPRESSION REGULATION",
+              "RNA_SEQ"      = "GENE EXPRESSION REGULATION"
+            );
+
+            gene_pmid_raw <- "";
+            shared_pmid_raw <- "";
+
+            if(has_gene_lit) {
+              matched_key <- NULL;
+
+              # Determine what this row represents based on ag_label
+              # ag_label = tg (target gene) when tg is available, else et (effect type)
+              has_target_gene <- !is.na(tg) && tg != "N/A" && tg != "";
+              is_ensembl <- has_target_gene && grepl("^ENSG[0-9]+", tg);
+              row_shows_effect <- !has_target_gene;  # ag_label = effect type
+
+              if(row_shows_effect && !is.na(et) && toupper(et) %in% names(et_term_map)) {
+                # Row displays as effect type (CHIP_HISTONE, DNASE, etc.)
+                # Look up by the biological term
+                bio_term <- et_term_map[[toupper(et)]];
+                if(!is.null(gene_lit_lookup[[bio_term]])) {
+                  matched_key <- bio_term;
+                }
+              } else if(has_target_gene && !is_ensembl) {
+                # Row displays a specific target gene (ZFHX4, LINC01109, etc.)
+                # Look up by that gene name
+                tg_key <- toupper(tg);
+                if(!is.null(gene_lit_lookup[[tg_key]])) {
+                  matched_key <- tg_key;
+                }
+              }
+
+              # NO fallback to positional gene.
+              # AG Gene PMIDs must be specific to this row's gene/effect.
+              # If no literature found for the specific gene/effect, show "No".
+
+              # Extract PMIDs from the matched key
+              if(!is.null(matched_key)) {
+                entry <- gene_lit_lookup[[matched_key]];
+                all_pmids <- entry$pmids;
+                shared_pmids <- entry$shared_pmids;
+                if(length(all_pmids) > 0) {
+                  gene_pmid_raw <- paste(unique(all_pmids), collapse=", ");
+                }
+                if(length(shared_pmids) > 0) {
+                  shared_pmid_raw <- paste(unique(shared_pmids), collapse=", ");
+                }
+              }
+            }
+
+            # Overall: integrate MR + variant effect + literature + PMID overlap
+            if(has_mr && shared_pmid_raw != "" && q_val > 0.9) {
+              overall <- "Strong: MR + shared PMIDs + strong effect";
+            } else if(has_mr && shared_pmid_raw != "") {
+              overall <- "Strong: MR + shared PMIDs";
+            } else if(has_mr && gene_pmid_raw != "" && q_val > 0.9) {
+              overall <- "Strong: MR + gene-disease lit + strong effect";
+            } else if(has_mr && gene_pmid_raw != "") {
+              overall <- "Supported: MR + gene-disease lit";
+            } else if(has_mr && q_val > 0.9) {
+              overall <- "Supported: MR + strong effect";
+            } else if(has_mr && q_val > 0.75) {
+              overall <- "Moderate: MR + moderate effect";
+            } else if(has_mr) {
+              overall <- "Weak: MR + weak effect";
+            } else {
+              overall <- "Insufficient evidence";
+            }
+
+            rows[[length(rows) + 1]] <- data.frame(
+              SNP = snp,
+              Positional_Gene = mr_gene,
+              MR_Beta = mr_beta,
+              MR_Pval = mr_pval,
+              AG_Gene_Effect = ag_label,
+              Quantile = q_str,
+              Gene_PMIDs = gene_pmid_raw,
+              Shared_PMIDs = shared_pmid_raw,
+              Overall = overall,
+              stringsAsFactors = FALSE
+            );
+            added_ag_rows <- TRUE;
+          }
+        }
+      }
+    }
+
+    # If no AG rows above threshold for this SNP, add one summary row
+    if(!added_ag_rows) {
+      overall <- if(has_mr) "MR only" else "Insufficient evidence";
+      rows[[length(rows) + 1]] <- data.frame(
+        SNP = snp,
+        Positional_Gene = mr_gene,
+        MR_Beta = mr_beta,
+        MR_Pval = mr_pval,
+        AG_Gene_Effect = "No effect above threshold",
+        Quantile = "N/A",
+        Gene_PMIDs = "",
+        Shared_PMIDs = "",
+        Overall = overall,
+        stringsAsFactors = FALSE
+      );
+    }
+  }
+
+  result_df <- do.call(rbind, rows);
+  tryCatch({
+    fast.write.csv(result_df, file="evidence_comparison.csv", row.names=FALSE);
+  }, error=function(e) {
+    print(paste0("Warning: could not write evidence_comparison.csv: ", e$message));
+  });
+  mSetObj$dataSet$evidence_comparison <- result_df;
+  .set.mSet(mSetObj);
+  return(nrow(result_df));
+}
+
+
+GetComparisonRowNames <- function() {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$evidence_comparison;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  return(as.character(1:nrow(res)));
+}
+
+
+GetComparisonCol <- function(colInx) {
+  mSetObj <- .get.mSet(mSetObj);
+  res <- mSetObj$dataSet$evidence_comparison;
+  if(is.null(res) || !is.data.frame(res) || nrow(res)==0) {
+    return(NULL);
+  }
+  col <- as.character(res[, colInx]);
+  col[is.na(col) | col == ""] <- "N/A";
+  return(col);
 }
 
 

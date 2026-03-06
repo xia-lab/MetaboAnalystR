@@ -1127,7 +1127,7 @@ PlotInmexGraph <- function(mSetObj, pathName,
     if (!is.na(h) && h > 50) {
       h <- h / 72
     }
-    Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white");
+    Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type="png", bg="white", dpi=72);
     par(mai=rep(0,4));
     plotGraph(g, vertex.label=V(g)$plot_name, vertex.color=bg.color, vertex.frame.color=line.color);
     nodeInfo <- GetKEGGNodeInfo(pathName, g, width, height);

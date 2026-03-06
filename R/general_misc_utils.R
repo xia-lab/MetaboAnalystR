@@ -980,7 +980,7 @@ PlotLoadBoxplot <- function(mSetObj=NA, cmpd){
   
   w <- 240/72
   h <- 400/72
-  Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png");
+  Cairo::Cairo(file=cmpd.name, unit="in", width=w, height=h, bg = "transparent", type="png", dpi=72);
   
   col <- unique(GetColorSchema(cls.lbls))
   df <- data.frame(conc = mSetObj$dataSet$norm[, cmpd], class = cls.lbls)

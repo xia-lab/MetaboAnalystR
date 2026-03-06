@@ -147,11 +147,25 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   }
 
   if (!use_layout_graph) {
-    ## 1.  Start with all pathways ordered by p-value (smallest first)
-    ord.all   <- if (edgeMode == "overview") seq_along(pvals) else order(pvals)  # indices
-    
-    ## 2.  Always keep the first `max.show` entries in that order
-    keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+    ## Mummichog module:
+    ## - if significant pathways > 20, show top 20 significant pathways
+    ## - if significant pathways are 10-20, show all significant pathways
+    ## - if significant pathways < 10, show top 10 overall
+    if (anal.opt %in% c("mum", "gsea", "integ")) {
+      ord.p <- order(pvals)
+      if (n.sig > 20) {
+        sig.ord <- ord.p[ord.p %in% sig.idx]
+        keep.idx <- sig.ord[seq_len(min(20, length(sig.ord)))]
+      } else if (n.sig >= 10) {
+        keep.idx <- ord.p[ord.p %in% sig.idx]
+      } else {
+        keep.idx <- ord.p[seq_len(min(10, length(ord.p)))]
+      }
+    } else {
+      ## Default behavior for other modules
+      ord.all   <- if (edgeMode == "overview") seq_along(pvals) else order(pvals)  # indices
+      keep.idx  <- ord.all[ seq_len( min(max.show, length(ord.all)) ) ]
+    }
   }
   
   ## 3.  Subset all objects
