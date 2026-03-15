@@ -208,7 +208,14 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
 .prepare.qea.score <- function(mSetObj=NA, nodeImp, method){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  # Guard: ensure continuous cls is numeric, not factor
+  # (UpdateSampleGroups or other processing may have converted it)
+  if(!is.null(mSetObj$dataSet$cls.type) && mSetObj$dataSet$cls.type == "cont" && is.factor(mSetObj$dataSet$cls)){
+    message("[QEA] Fixing cls: was factor with ", nlevels(mSetObj$dataSet$cls), " levels, converting to numeric");
+    mSetObj$dataSet$cls <- as.numeric(as.character(mSetObj$dataSet$cls));
+  }
+
   # first, need to make a clean dataSet$norm data based on name mapping
   # only contain valid kegg id will be used
   nm.map <- GetFinalNameMap(mSetObj);
@@ -245,7 +252,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   });
   
   names(univ.p) <- colnames(path.data);
-  
+
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
     mSetObj$api$nodeImp <- nodeImp;
     mSetObj$api$method <- method;
@@ -330,7 +337,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   }
   
   qs::qsave(dat.in, file="dat.in.qs");
-  
+
   # store data before microservice
   mSetObj$analSet$qea.univp <- signif(univ.p,7);
   mSetObj$analSet$node.imp <- nodeImp;

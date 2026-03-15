@@ -1058,10 +1058,19 @@ UpdateSampleGroups<-function(mSetObj=NA, metadata="NA"){
         }
     }
   }else{
-    mSetObj$dataSet$orig.cls <- mSetObj$dataSet$proc.cls <- mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+    if(!is.null(mSetObj$dataSet$cls.type) && mSetObj$dataSet$cls.type == "cont"){
+      cls.num <- as.numeric(as.character(cls.lbl));
+      mSetObj$dataSet$orig.cls <- mSetObj$dataSet$proc.cls <- mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$cls <- cls.num;
+    }else{
+      mSetObj$dataSet$orig.cls <- mSetObj$dataSet$proc.cls <- mSetObj$dataSet$prenorm.cls <- mSetObj$dataSet$cls <- as.factor(cls.lbl);
+    }
   }
 
-  mSetObj$dataSet$meta.info[,inx] = as.factor(cls.lbl);
+  if(!is.null(mSetObj$dataSet$cls.type) && mSetObj$dataSet$cls.type == "cont"){
+    mSetObj$dataSet$meta.info[,inx] = as.numeric(as.character(cls.lbl));
+  }else{
+    mSetObj$dataSet$meta.info[,inx] = as.factor(cls.lbl);
+  }
   return(.set.mSet(mSetObj));
 }
 
