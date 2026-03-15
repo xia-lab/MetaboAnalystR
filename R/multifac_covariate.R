@@ -1580,3 +1580,362 @@ partial_shrink <- function(x, method = c("pearson","spearman")){
   diag(p) <- 1
   return(p)
 }
+
+#' Perform Covariate Adjustment and Update Data
+#' @description Adjusts data for confounding covariates and replaces normalized data with adjusted data
+#' @param mSetObj Input name of the created mSet Object
+#' @param primary.var Primary metadata variable (disease/condition)
+#' @param blocking.factor Optional blocking factor for random effects (default "NA")
+#' @param use.combat Logical, use ComBat instead of limma removeBatchEffect (default FALSE)
+#' @return 1 on success, 0 on failure
+#' @export
+PerformCovariateAdjustment <- function(mSetObj = NA,
+                                       primary.var,
+                                       blocking.factor = "NA",
+                                       use.combat = FALSE) {
+  
+  library(limma)
+  library(dplyr)
+  
+  mSetObj <- .get.mSet(mSetObj)
+  
+  # Get covariates from adj.vec (set from Java)
+  if(!exists('adj.vec')) {
+    AddErrMsg("No covariates specified for adjustment!")
+    return(0)
+  }
+  
+  if(length(adj.vec) == 0 || all(adj.vec == "NA")) {
+    AddErrMsg("No covariates specified for adjustment!")
+    return(0)
+  }
+  
+  # Save original pre-covariate data if not already saved (first time adjustment)
+  # Use a different name than norm.orig to avoid interfering with ROC analysis
+  if(is.null(mSetObj$dataSet$norm.before.covariate)) {
+    mSetObj$dataSet$norm.before.covariate <- mSetObj$dataSet$norm
+    cat("DEBUG: Saved original pre-covariate data for first time\n")
+    cat("DEBUG: Saved data dimensions:", dim(mSetObj$dataSet$norm), "\n")
+  } else {
+    cat("DEBUG: Using existing pre-covariate data backup\n")
+    cat("DEBUG: Backup dimensions:", dim(mSetObj$dataSet$norm.before.covariate), "\n")
+  }
+
+  # Always work on the original pre-covariate data, not previously adjusted data
+  feature_table <- mSetObj$dataSet$norm.before.covariate
+  cat("DEBUG: Working on pre-covariate data\n")
+  cat("DEBUG: Checking data structure...\n")
+  cat("DEBUG: feature_table dimensions:", dim(feature_table), "\n")
+  cat("DEBUG: feature_table rownames (first 5):", head(rownames(feature_table), 5), "\n")
+  cat("DEBUG: feature_table colnames (first 5):", head(colnames(feature_table), 5), "\n")
+
+  meta.info <- mSetObj$dataSet$meta.info
+  cat("DEBUG: meta.info dimensions:", dim(meta.info), "\n")
+  cat("DEBUG: meta.info rownames (first 5):", head(rownames(meta.info), 5), "\n")
+  
+  # Match samples between data and metadata
+  common.samples <- intersect(rownames(feature_table), rownames(meta.info))
+  cat("DEBUG: Common samples found:", length(common.samples), "\n")
+  cat("DEBUG: Common samples (first 5):", head(common.samples, 5), "\n")
+  
+  if(length(common.samples) == 0) {
+    cat("ERROR: No matching samples!\n")
+    cat("DEBUG: feature_table sample names:", head(rownames(feature_table), 10), "\n")
+    cat("DEBUG: meta.info sample names:", head(rownames(meta.info), 10), "\n")
+    AddErrMsg("Sample names don't match between data and metadata!")
+    return(0)
+  }
+  
+  # Subset and reorder both to use common samples
+  feature_table <- feature_table[common.samples, , drop=FALSE]
+  meta.info <- meta.info[common.samples, , drop=FALSE]
+  
+  # Validate primary variable exists
+  if(!(primary.var %in% colnames(meta.info))) {
+    AddErrMsg(paste0("Primary variable '", primary.var, "' not found in metadata!"))
+    return(0)
+  }
+  
+  # Validate covariates exist
+  missing.covs <- adj.vec[!(adj.vec %in% colnames(meta.info))]
+  if(length(missing.covs) > 0) {
+    AddErrMsg(paste0("Covariates not found in metadata: ", paste(missing.covs, collapse=", ")))
+    return(0)
+  }
+  
+  # Convert character columns to factors
+  var.types <- sapply(meta.info, class)
+  meta.info[, var.types == "character"] <- lapply(meta.info[, var.types == "character"], factor)
+  
+  # Remove samples with missing values
+  all.vars <- c(primary.var, adj.vec)
+  complete.idx <- complete.cases(meta.info[, all.vars, drop=FALSE])
+  
+  if(sum(complete.idx) < nrow(feature_table)) {
+    n.removed <- sum(!complete.idx)
+    AddMsg(paste0("Removed ", n.removed, " samples with missing covariate values"))
+    feature_table <- feature_table[complete.idx, , drop=FALSE]
+    meta.info <- meta.info[complete.idx, , drop=FALSE]
+  }
+  
+  if(nrow(feature_table) < 10) {
+    AddErrMsg("Too few samples remaining after removing missing values!")
+    return(0)
+  }
+  
+  # Transpose for limma (Features x Samples)
+  data.limma <- t(feature_table)
+  
+  # Create design matrix
+  formula.str <- paste0("~ ", paste(all.vars, collapse=" + "))
+  design <- model.matrix(as.formula(formula.str), data=meta.info)
+  
+  # Check for rank deficiency
+  design.rank <- qr(design)$rank
+  design.ncol <- ncol(design)
+  
+  if(design.rank < design.ncol) {
+    AddErrMsg(paste0("Covariate adjustment failed - variables are confounded. ",
+                     "Primary variable and covariates may be perfectly correlated. ",
+                     "Please choose different covariates."))
+    return(0)
+  }
+  
+  # Perform adjustment
+  if(use.combat && require(sva, quietly=TRUE)) {
+    # ComBat - requires exactly one batch variable
+    if(length(adj.vec) != 1) {
+      AddErrMsg("ComBat requires exactly one batch covariate!")
+      return(0)
+    }
+    
+    batch <- as.factor(meta.info[, adj.vec[1]])
+    mod <- model.matrix(as.formula(paste0("~", primary.var)), data=meta.info)
+    
+    tryCatch({
+      data.adjusted <- ComBat(dat=data.limma, batch=batch, mod=mod)
+      method.label <- "ComBat"
+    }, error = function(e) {
+      AddErrMsg(paste0("ComBat failed: ", e$message))
+      return(0)
+    })
+    
+  } else {
+    # Use limma's removeBatchEffect
+    # Get the primary variable column indices from design matrix
+    primary.cols <- grep(primary.var, colnames(design))
+
+    # Create covariate design matrix (excluding primary variable)
+    # Always use model.matrix to handle both numeric and categorical variables
+    cov.formula <- paste0("~ 0 + ", paste(adj.vec, collapse=" + "))
+    covariates <- model.matrix(as.formula(cov.formula), data=meta.info)
+
+    # Debug: print covariate matrix info
+    cat("DEBUG: Covariate matrix dimensions:", dim(covariates), "\n")
+    cat("DEBUG: Covariate matrix column names:", colnames(covariates), "\n")
+    cat("DEBUG: Covariate matrix first few rows:\n")
+    print(head(covariates))
+
+    # Apply batch effect removal
+    if(blocking.factor != "NA" && blocking.factor %in% colnames(meta.info)) {
+      block <- as.factor(meta.info[, blocking.factor])
+      data.adjusted <- removeBatchEffect(data.limma,
+                                        covariates=covariates,
+                                        design=design[, primary.cols, drop=FALSE],
+                                        block=block)
+    } else {
+      data.adjusted <- removeBatchEffect(data.limma,
+                                        covariates=covariates,
+                                        design=design[, primary.cols, drop=FALSE])
+    }
+    method.label <- "limma removeBatchEffect"
+  }
+  
+  # Store adjusted data
+  # data.adjusted is Features x Samples (from limma/ComBat)
+  # MetaboAnalyst stores data as Samples x Features, so transpose back
+  cat("DEBUG: data.adjusted dimensions (Features x Samples):", dim(data.adjusted), "\n")
+  data.adjusted.transposed <- t(data.adjusted)  # Transpose to Samples x Features
+  cat("DEBUG: data.adjusted.transposed dimensions (Samples x Features):", dim(data.adjusted.transposed), "\n")
+
+  # Replace current data with adjusted data
+  # Note: norm.before.covariate was saved at the beginning of this function
+  mSetObj$dataSet$norm <- data.adjusted.transposed  # Replace with adjusted data (Samples x Features)
+  cat("DEBUG: Stored adjusted data dimensions:", dim(data.adjusted.transposed), "\n")
+
+  # Clear ROC analysis cache so it uses the new adjusted data
+  mSetObj$dataSet$norm.orig.roc <- NULL
+  mSetObj$dataSet$norm.all <- NULL
+  cat("DEBUG: Cleared ROC analysis cache\n")
+
+  mSetObj$dataSet$covariate.adjusted <- TRUE
+  mSetObj$dataSet$covariate.method <- method.label
+  mSetObj$dataSet$covariate.primary <- primary.var
+  mSetObj$dataSet$covariate.variables <- adj.vec
+  
+  AddMsg(paste0("Successfully adjusted data using ", method.label,
+               ". Downstream analyses will use covariate-adjusted data."))
+
+  return(.set.mSet(mSetObj))
+}
+
+##################################################
+## Reset Covariate Adjustment
+## Restores original data and clears adjustment metadata
+##################################################
+ResetCovariateAdjustment <- function(mSetObj = NA) {
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  # Check if adjustment was performed
+  if(is.null(mSetObj$dataSet$covariate.adjusted) || !mSetObj$dataSet$covariate.adjusted) {
+    # No adjustment was performed, nothing to reset
+    return(0)
+  }
+
+  # Restore original data if backup exists
+  if(!is.null(mSetObj$dataSet$norm.before.covariate)) {
+    mSetObj$dataSet$norm <- mSetObj$dataSet$norm.before.covariate
+    mSetObj$dataSet$norm.before.covariate <- NULL
+
+    # Clear ROC analysis cache so it uses the restored data
+    mSetObj$dataSet$norm.orig.roc <- NULL
+    mSetObj$dataSet$norm.all <- NULL
+
+    # Clear covariate adjustment metadata
+    mSetObj$dataSet$covariate.adjusted <- FALSE
+    mSetObj$dataSet$covariate.method <- NULL
+    mSetObj$dataSet$covariate.primary <- NULL
+    mSetObj$dataSet$covariate.variables <- NULL
+
+    .set.mSet(mSetObj)
+    return(1)
+  } else {
+    # No backup found
+    return(0)
+  }
+}
+
+##################################################
+## Plot PCA Before/After Covariate Adjustment
+## Adapted from ProteoAnalyst
+##################################################
+#' @description Generate side-by-side PCA plots showing data before and after covariate adjustment
+#' @param mSetObj Input the name of the bound mSet Object
+#' @param covariate Name of the primary covariate to show in the plot
+#' @param imgName Image file name
+#' @param format Image format ("png" or "pdf")
+#' @param dpi Resolution for PNG
+#' @return 1 on success, 0 on error
+#'
+PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covariate_pca",
+                                       format="png", dpi=96) {
+
+  # Load required libraries
+  library(ggplot2)
+  library(ggpubr)  # For ggarrange
+
+  mSetObj <- .get.mSet(mSetObj)
+
+  # Check if adjustment was performed
+  if(is.null(mSetObj$dataSet$covariate.adjusted) || !mSetObj$dataSet$covariate.adjusted) {
+    AddErrMsg("Error: No covariate adjustment has been performed!")
+    return(0)
+  }
+
+  # Get before/after data matrices
+  # In MetaboAnalyst: data is stored as Samples x Features (rows=samples, cols=features)
+  data.before <- mSetObj$dataSet$norm.before.covariate  # Original pre-covariate data (Samples x Features)
+  data.after <- mSetObj$dataSet$norm  # Adjusted data (Samples x Features)
+
+  if(is.null(data.before) || is.null(data.after)) {
+    AddErrMsg("Error: Missing data for PCA comparison!")
+    return(0)
+  }
+
+  # Get metadata
+  meta.info <- mSetObj$dataSet$meta.info
+
+  # Match samples (samples are in rows for MetaboAnalyst)
+  common.samples <- intersect(rownames(data.before), rownames(meta.info))
+  data.before <- data.before[common.samples, , drop=FALSE]
+  data.after <- data.after[common.samples, , drop=FALSE]
+  meta.info <- meta.info[common.samples, , drop=FALSE]
+
+  # Check covariate exists
+  if(!(covariate %in% colnames(meta.info))) {
+    AddErrMsg(paste0("Error: Covariate '", covariate, "' not found in metadata!"))
+    return(0)
+  }
+
+  # Perform PCA on both datasets
+  # Data is already Samples x Features, so no transpose needed
+  pca.before <- prcomp(data.before, scale=TRUE, center=TRUE)
+  pca.after <- prcomp(data.after, scale=TRUE, center=TRUE)
+
+  # Calculate variance explained
+  var.before <- summary(pca.before)$importance[2, 1:2] * 100  # PC1, PC2
+  var.after <- summary(pca.after)$importance[2, 1:2] * 100
+
+  # Create data frames for plotting
+  # Use the covariate as a factor for proper coloring
+  df.before <- data.frame(
+    PC1 = pca.before$x[, 1],
+    PC2 = pca.before$x[, 2],
+    Group = as.factor(meta.info[, covariate]),
+    Sample = rownames(pca.before$x)
+  )
+
+  df.after <- data.frame(
+    PC1 = pca.after$x[, 1],
+    PC2 = pca.after$x[, 2],
+    Group = as.factor(meta.info[, covariate]),
+    Sample = rownames(pca.after$x)
+  )
+
+  # Create plot labels
+  xlabel.before <- sprintf("PC1 (%.1f%%)", var.before[1])
+  ylabel.before <- sprintf("PC2 (%.1f%%)", var.before[2])
+  xlabel.after <- sprintf("PC1 (%.1f%%)", var.after[1])
+  ylabel.after <- sprintf("PC2 (%.1f%%)", var.after[2])
+
+  # Create before plot
+  p1 <- ggplot(df.before, aes(x=PC1, y=PC2, color=Group)) +
+    geom_point(size=3, alpha=0.7) +
+    labs(title="Before Adjustment",
+         x=xlabel.before,
+         y=ylabel.before,
+         color=covariate) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(hjust=0.5, size=14, face="bold"),
+      legend.position = "right",
+      legend.title = element_text(size=11, face="bold"),
+      axis.title = element_text(size=11)
+    )
+
+  # Create after plot
+  p2 <- ggplot(df.after, aes(x=PC1, y=PC2, color=Group)) +
+    geom_point(size=3, alpha=0.7) +
+    labs(title="After Adjustment",
+         x=xlabel.after,
+         y=ylabel.after,
+         color=covariate) +
+    theme_bw() +
+    theme(
+      plot.title = element_text(hjust=0.5, size=14, face="bold"),
+      legend.position = "right",
+      legend.title = element_text(size=11, face="bold"),
+      axis.title = element_text(size=11)
+    )
+
+  # Combine plots side-by-side with shared legend
+  combined <- ggarrange(p1, p2, ncol=2, common.legend=TRUE, legend="right")
+
+  # Save plot - imgName already includes path, dpi, and extension from Java
+  Cairo::Cairo(file=imgName, width=14, height=7, unit="in", dpi=dpi, type=format, bg="white")
+  print(combined)
+  dev.off()
+
+  return(1)
+}
