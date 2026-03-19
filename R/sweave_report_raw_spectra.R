@@ -691,9 +691,39 @@ createFeatureAnnotationSumTable <- function(){
 createFeatureCompoundSumTable <- function(){
   
   if(file.exists("peak_feature_summary.csv")){
+
+    sanitize_for_latex <- function(text_vector) {
+      # Map Unicode superscripts to LaTeX math mode
+      replacements <- c(
+        "\u03B1" = "$\\alpha$",
+        "\u03B2" = "$\\beta$",
+        "\u03B3" = "$\\gamma$",
+        "\u03B4" = "$\\delta$",
+        "\u03B5" = "$\\epsilon$",
+        "\u2070" = "$^{0}$",
+        "\u00B9" = "$^{1}$",
+        "\u00B2" = "$^{2}$",
+        "\u00B3" = "$^{3}$",
+        "\u2074" = "$^{4}$",
+        "\u2075" = "$^{5}$",
+        "\u2076" = "$^{6}$",
+        "\u2077" = "$^{7}$",
+        "\u2078" = "$^{8}$",
+        "\u2079" = "$^{9}$",
+        "\u2080" = "$_{0}$", 
+        "\u2081" = "$_{1}$",
+        "\u2082" = "$_{2}$"
+      )
+
+      for (uni in names(replacements)) {
+        text_vector <- gsub(uni, replacements[uni], text_vector, fixed = TRUE)
+      }
+      return(text_vector)
+    }
     dt <- read.csv("peak_feature_summary.csv");
     dt <- dt[(dt$Formula!= "" & dt$Compound!=""), c(1:2, 5:6)]
     dt$Compound <- gsub(";", "\n\n", dt$Compound)
+    dt$Compound <- sanitize_for_latex(dt$Compound)
     #dt <- dt[1:5,]
     rownames(dt) <- NULL
     
