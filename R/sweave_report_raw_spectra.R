@@ -645,6 +645,7 @@ createResSumText <- function(){
   txts <- PerformResultSummary();
   txts[5] <- gsub("\\%", "\\\\%", txts[5])
   txts[6] <- gsub("\\%", "\\\\%", txts[6])
+  txts[2] <- gsub("_", "\\_", txts[2], fixed = TRUE);
   return(paste0(txts, sep = "\n"))
 }
 createFeatureAnnoSum <- function() {
