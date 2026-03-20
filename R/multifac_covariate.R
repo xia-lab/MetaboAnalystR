@@ -539,8 +539,17 @@ CovariateScatter.Anal <- function(mSetObj,
     
   covariates <- mSetObj$dataSet$meta.info
   var.types <- mSetObj[["dataSet"]][["meta.types"]]
-  feature_table <- t(mSetObj$dataSet$norm);
-  
+
+  # Always use ORIGINAL data (before any adjustment) for both comparisons
+  # This way we compare statistical models WITH vs WITHOUT covariates on the same data
+  if(!is.null(mSetObj$dataSet$norm.before.covariate)){
+    # Use original data that was saved before adjustment
+    feature_table <- t(mSetObj$dataSet$norm.before.covariate)
+  } else {
+    # No adjustment was performed, use current data
+    feature_table <- t(mSetObj$dataSet$norm)
+  }
+
   # process inputs
   ref <- make.names(ref)
   contrast.cls <- make.names(contrast.cls)
@@ -567,13 +576,11 @@ CovariateScatter.Anal <- function(mSetObj,
   sig.num <- 0;
   
   if(analysis.type == "disc"){
-    # build design and contrast matrix 
+    # build design and contrast matrix
     covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
     grp.nms <- levels(covariates[, analysis.var]);
-    design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
-    colnames(design)[1:length(grp.nms)] <- grp.nms;
+
     myargs <- list();
-    
     if(contrast.cls == "anova"){
       cntr.cls <- grp.nms[grp.nms != ref];
       myargs <- as.list(paste(cntr.cls, "-", ref, sep = ""));
@@ -582,24 +589,40 @@ CovariateScatter.Anal <- function(mSetObj,
     }
     #################handle issues with factor name with space in the value
     myargs <- lapply(myargs, function(x) gsub(" ", ".", x))  # Convert spaces to dots
-    myargs[["levels"]] <- design;
-    contrast.matrix <- do.call(makeContrasts, myargs);
-    
-    # handle blocking factor
-    if (block == "NA") {
-      fit <- lmFit(feature_table, design)
+
+    # Analysis WITH covariates (if any were selected)
+    if(adj.bool){
+      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+      colnames(design)[1:length(grp.nms)] <- grp.nms;
+      myargs[["levels"]] <- design;
+      contrast.matrix <- do.call(makeContrasts, myargs);
+
+      # handle blocking factor
+      if (block == "NA") {
+        fit <- lmFit(feature_table, design)
+      } else {
+        block.vec <- covariates[,block];
+        corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
+        fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+      }
+
+      fit <- contrasts.fit(fit, contrast.matrix);
+      fit <- eBayes(fit);
+      rest <- topTable(fit, number = Inf);
     } else {
-      block.vec <- covariates[,block];
-      corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
-      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+      # No covariates selected - same as "without" analysis
+      design <- model.matrix(formula(paste0("~ 0 + ", analysis.var)), data = covariates);
+      colnames(design)[1:length(grp.nms)] <- grp.nms;
+      myargs[["levels"]] <- design;
+      contrast.matrix <- do.call(makeContrasts, myargs);
+      fit <- lmFit(feature_table, design)
+      fit <- contrasts.fit(fit, contrast.matrix);
+      fit <- eBayes(fit);
+      rest <- topTable(fit, number = Inf);
     }
-    
-    fit <- contrasts.fit(fit, contrast.matrix);
-    fit <- eBayes(fit);
-    rest <- topTable(fit, number = Inf);
-    
-    ### get results with no adjustment
-    design <- model.matrix(formula(paste0("~ 0", paste0(" + ", analysis.var, collapse = ""))), data = covariates);
+
+    ### Analysis WITHOUT covariates (simple model)
+    design <- model.matrix(formula(paste0("~ 0 + ", analysis.var)), data = covariates);
     colnames(design)[1:length(grp.nms)] <- grp.nms;
     myargs[["levels"]] <- design;
     contrast.matrix <- do.call(makeContrasts, myargs);
@@ -608,32 +631,39 @@ CovariateScatter.Anal <- function(mSetObj,
     fit <- eBayes(fit);
     res.noadj <- topTable(fit, number = Inf);
     
-  } else { 
+  } else {
     covariates[, analysis.var] <- covariates[, analysis.var] %>% as.numeric();
-    types <- unname(mSetObj$dataSet$meta.types[vars])
-    if(sum(types == "cont") == length(vars)){ #in case of single, continuous variable, must use different intercept or limma will give unreasonable results
-      design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
+
+    # Analysis WITH covariates (if any were selected)
+    if(adj.bool){
+      types <- unname(mSetObj$dataSet$meta.types[vars])
+      if(sum(types == "cont") == length(vars)){ #in case of single, continuous variable, must use different intercept or limma will give unreasonable results
+        design <- model.matrix(formula(paste0("~", paste0(" + ", vars, collapse = ""))), data = covariates);
+      } else {
+        design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+      }
+
+      # recent update: enable blocking factor for continuous primary metadata
+      if (block == "NA") {
+        fit <- lmFit(feature_table, design)
+      } else {
+        block.vec <- covariates[,block];
+        corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
+        fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
+      }
+
+      fit <- eBayes(fit);
+      rest <- topTable(fit, number = Inf, coef = analysis.var);
+      colnames(rest)[1] <- analysis.var;
     } else {
-      design <- model.matrix(formula(paste0("~ 0", paste0(" + ", vars, collapse = ""))), data = covariates);
+      # No covariates selected - same as "without" analysis
+      design <- model.matrix(formula(paste0("~ ", analysis.var)), data = covariates);
+      fit <- eBayes(lmFit(feature_table, design));
+      rest <- topTable(fit, number = Inf);
     }
-    
-    # recent update: enable blocking factor for continuous primary metadata
-    if (block == "NA") {
-      # print(head(design));
-      fit <- lmFit(feature_table, design)
-    } else {
-      block.vec <- covariates[,block];
-      corfit <- duplicateCorrelation(feature_table, design, block = block.vec)
-      fit <- lmFit(feature_table, design, block = block.vec, correlation = corfit$consensus)
-    }
-    
-    fit <- eBayes(fit);
-    rest <- topTable(fit, number = Inf, coef = analysis.var);
-    colnames(rest)[1] <- analysis.var;
-    
-    ### get results with no adjustment
-    design <- model.matrix(formula(paste0("~", analysis.var)), data = covariates);
-    
+
+    ### Analysis WITHOUT covariates (simple model)
+    design <- model.matrix(formula(paste0("~ ", analysis.var)), data = covariates);
     fit <- eBayes(lmFit(feature_table, design));
     res.noadj <- topTable(fit, number = Inf);
   }
@@ -1598,16 +1628,18 @@ PerformCovariateAdjustment <- function(mSetObj = NA,
   library(dplyr)
   
   mSetObj <- .get.mSet(mSetObj)
-  
+
   # Get covariates from adj.vec (set from Java)
-  if(!exists('adj.vec')) {
-    AddErrMsg("No covariates specified for adjustment!")
-    return(0)
-  }
-  
-  if(length(adj.vec) == 0 || all(adj.vec == "NA")) {
-    AddErrMsg("No covariates specified for adjustment!")
-    return(0)
+  # If no covariates, skip adjustment but still save original data
+  if(!exists('adj.vec') || length(adj.vec) == 0 || all(adj.vec == "NA")) {
+    # No covariates selected - skip adjustment
+    # Just mark that we checked, and return success
+    if(is.null(mSetObj$dataSet$norm.before.covariate)) {
+      mSetObj$dataSet$norm.before.covariate <- mSetObj$dataSet$norm
+    }
+    mSetObj$dataSet$covariate.adjusted <- FALSE
+    AddMsg("No covariates selected. Skipping data adjustment.")
+    return(.set.mSet(mSetObj))
   }
   
   # Save original pre-covariate data if not already saved (first time adjustment)
