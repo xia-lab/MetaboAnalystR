@@ -1478,7 +1478,7 @@ PlotRFImpRankStability <- function(mSetObj = NA,
                                    feat.num = 15,
                                    imgName = "rf_rank_stability",
                                    format = "png",
-                                   dpi = 72,
+                                   dpi = default.dpi,
                                    width = NA) {
 
   mSetObj <- .get.mSet(mSetObj)

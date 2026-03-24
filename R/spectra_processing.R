@@ -42,42 +42,53 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
     write.table("centWave_manual", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   }
   
-  ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
-  
+  ## Detect if SLURM is available (server) or local execution
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+
+  ## Prepare Configuration script
+  if(useSlurm){
+    conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=720:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  } else {
+    conf_inf <- "#!/bin/bash\n"
+  }
+
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
-  
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
   str <- paste0(str, ";\n", "mSet <- InitDataObjects(\'spec\', \'raw\', FALSE)");
   str <- paste0(str, ";\n", "mSet <- UpdateRawfiles(mSet,", rawfilenms.vec, ")");
-  
+
   ## Construct the opt pipeline
   if(planString2 == "opt"){
     str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_opt\')')
     str <- paste0(str, ';\n',  planString)
     str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
-  
+
   ## Construct the default pipeline
   if(planString2 == "default"){
     str <- paste0(str, ';\n', 'plan <- InitializaPlan(\'raw_ms\')')
     str <- paste0(str, ';\n',  planString)
     str <- paste0(str, ';\n',  "res <- ExecutePlan(plan)")
   }
-  
-  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")  
+
+  str <- paste0(str, ';\n',  "Export.Annotation(res[['mSet']])")
   str <- paste0(str, ';\n',  "Export.PeakSummary(res[['mSet']])")
   str <- paste0(str, ';\n',  "Export.PeakTable(res[['mSet']])")
-  
+
   # sink command for running
   sink("ExecuteRawSpec.sh");
-  
+
   cat(conf_inf);
-  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  if(useSlurm){
+    cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  } else {
+    cat(paste0("\nR -e \"\n", str, "\n\" > ", users.path, "/metaboanalyst_spec_proc.txt 2>&1"));
+  }
       
   sink();
     
@@ -111,9 +122,16 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     users.path <-getwd();
   }
   
-  ## Prepare Configuration script for slurm running
-  conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=960:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
-  
+  ## Detect if SLURM is available
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+
+  ## Prepare Configuration script
+  if(useSlurm){
+    conf_inf <- "#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=960:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n"
+  } else {
+    conf_inf <- "#!/bin/bash\n"
+  }
+
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
@@ -368,11 +386,15 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   
   # sink command for running
   sink("ExecuteRawSpec.sh", append = TRUE);
-  
-  cat(paste0("\nsrun R -e \"\n", str, "\n\""));
-  
+
+  if(useSlurm){
+    cat(paste0("\nsrun R -e \"\n", str, "\n\""));
+  } else {
+    cat(paste0("\nR -e \"\n", str, "\n\" >> ", users.path, "/metaboanalyst_spec_proc.txt 2>&1"));
+  }
+
   sink();
-  
+
   return(1)
 }
 
@@ -393,9 +415,16 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   ## create algorithm marker
   write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   
-  ## Prepare Configuration script for slurm running
-  conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=960:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
-  
+  ## Detect if SLURM is available
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+
+  ## Prepare Configuration script
+  if(useSlurm){
+    conf_inf <- paste0("#!/bin/bash\n#\n#SBATCH --job-name=Spectral_Processing\n#\n#SBATCH --ntasks=1\n#SBATCH --time=960:00\n#SBATCH --mem-per-cpu=5G\n#SBATCH --cpus-per-task=2\n#SBATCH --output=", users.path, "/metaboanalyst_spec_proc.txt\n")
+  } else {
+    conf_inf <- "#!/bin/bash\n"
+  }
+
   require(R.utils)
   allMSFiles <- list.files("upload", full.names = T, recursive = T)
   for(i in allMSFiles){
@@ -445,12 +474,17 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   sink("ExecuteRawSpec.sh");
   
   cat(conf_inf);
-  
+
   # str_asari
-  
-  cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
-  cat(paste0("\n", str_asari, "; \n\n"));
-  cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
+  if(useSlurm){
+    cat(paste0("\nsrun R -e \"\n", str, "\n\";\n"));
+    cat(paste0("\n", str_asari, "; \n\n"));
+    cat(paste0("\nsrun R -e \"\n", str2, "\n\";"));
+  } else {
+    cat(paste0("\nR -e \"\n", str, "\n\" > ", users.path, "/metaboanalyst_spec_proc.txt 2>&1;\n"));
+    cat(paste0("\n", str_asari, "; \n\n"));
+    cat(paste0("\nR -e \"\n", str2, "\n\" >> ", users.path, "/metaboanalyst_spec_proc.txt 2>&1;"));
+  }
   
   sink();
   

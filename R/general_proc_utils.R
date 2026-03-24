@@ -1264,7 +1264,7 @@ PlotMissingDistr <- function(mSetObj = NA,
                width  = width,
                height = height,
                dpi    = dpi,
-               units  = "in",
+               unit   = "in",
                type   = format)
 
   p1 <- ggplot(df, aes(x = Group, y = Percent, fill = Group)) +
@@ -1374,7 +1374,7 @@ PlotMissingHeatmap <- function(mSetObj = NA,
 
   # Heatmap plot
   img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  Cairo::Cairo(file = img.full, width = 8, height = 7.2, units = "in", dpi = dpi, type = format)
+  Cairo::Cairo(file = img.full, width = 8, height = 7.2, unit = "in", dpi = dpi, type = format)
 
   p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
     geom_tile(color = "grey90") +
@@ -1488,7 +1488,7 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
     img.full <- paste0(prefix, "dpi", dpi, ".", format)
     hide_feat_labels <- ncol(miss.mat) > 100
 
-    Cairo::Cairo(file = img.full, width = 8, height = 6, units = "in", dpi = dpi, type = format)
+    Cairo::Cairo(file = img.full, width = 8, height = 6, unit = "in", dpi = dpi, type = format)
 
     p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
       geom_tile(color = "grey90") +
