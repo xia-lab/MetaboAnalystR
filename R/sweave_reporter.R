@@ -79,6 +79,7 @@ CreateHeader <- function(usrName){
               "\\usepackage{longtable}",
               "\\usepackage{graphicx}",
               "\\usepackage{grffile}",
+              "\\DeclareUnicodeCharacter{200B}{\\hspace{0pt}}",
               "<<echo=false>>=",
               "options(width=60);",
               "@",
