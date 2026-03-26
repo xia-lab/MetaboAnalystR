@@ -188,10 +188,10 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@export
 
 # contains three inner functions to be compatible with microservice
-CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
-  
+CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
+
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method); # on local, everything is done
+  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method, covariates); # on local, everything is done
   
   if(length(mSetObj)==0 || mSetObj== 0){
     return(0);
@@ -205,7 +205,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   return(.set.mSet(mSetObj));
 }
 
-.prepare.qea.score <- function(mSetObj=NA, nodeImp, method){
+.prepare.qea.score <- function(mSetObj=NA, nodeImp, method, covariates=NA){
 
   mSetObj <- .get.mSet(mSetObj);
 
@@ -319,19 +319,57 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method){
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
   
-  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits);
+  # Build covariate data if provided
+  has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
+  cov.df <- NULL
+  if (has.cov && !is.null(mSetObj$dataSet$meta.info)) {
+    cov.cols <- intersect(covariates, colnames(mSetObj$dataSet$meta.info))
+    if (length(cov.cols) > 0) {
+      cov.df <- mSetObj$dataSet$meta.info[rownames(path.data), cov.cols, drop = FALSE]
+      for (cn in colnames(cov.df)) {
+        if (is.factor(cov.df[[cn]]) || is.character(cov.df[[cn]])) {
+          cov.df[[cn]] <- as.factor(cov.df[[cn]])
+        } else {
+          cov.df[[cn]] <- as.numeric(cov.df[[cn]])
+        }
+      }
+      message("[Pathway QEA] Covariates included: ", paste(cov.cols, collapse = ", "))
+    }
+  }
+
+  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df);
   if(method == "gt"){
-    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{Globaltest}.";
+    cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
+    mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```Globaltest```.",
+      " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
+      "which is statistically more rigorous than adjusting the data separately before testing.\n\n",
+      "- Enrichment method: ```Globaltest```", cov.label);
     dat.in$my.fun <- function(){
-      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
+      if (!is.null(dat.in$cov.df)) {
+        # Build null model matrix from covariates
+        null.mat <- model.matrix(~ ., data = dat.in$cov.df)
+        gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, null = null.mat, subsets=dat.in$subsets);
+      } else {
+        gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
+      }
       gt.res <- globaltest::result(gt.obj);
       return(gt.res[,c(5,1)]);
     }
   }else{
-    mSetObj$msgSet$rich.msg <- "The selected pathway enrichment analysis method is \\textbf{GlobalAncova}.";
+    cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
+    mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```GlobalAncova```.",
+      " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
+      "which is statistically more rigorous than adjusting the data separately before testing.\n\n",
+      "- Enrichment method: ```GlobalAncova```", cov.label);
     dat.in$my.fun <- function(){
       path.data <- dat.in$data;
-      ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, test.genes=dat.in$subsets, method="approx");
+      if (!is.null(dat.in$cov.df)) {
+        # GlobalAncova needs numeric design matrix for covars, not data.frame
+        cov.mat <- model.matrix(~ ., data = dat.in$cov.df)[, -1, drop = FALSE]
+        ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, covars=cov.mat, test.genes=dat.in$subsets, method="approx");
+      } else {
+        ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, test.genes=dat.in$subsets, method="approx");
+      }
       return(ga.out[,c(1,3)]);
     }
   }

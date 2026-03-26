@@ -49,7 +49,7 @@ my.time.mb.1d <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=N
     
     if(is.null(nu))
     {
-      nu0 <- mean(sapply(1:(k-1), function(x) squeezeVar(diagS1[x,], n-1)$df.prior))
+      nu0 <- mean(sapply(1:(k-1), function(x) mb.squeezeVar(diagS1[x,], n-1)$df.prior))
       nu <- max(nu0, nu.lim)
       if(is.infinite(nu)& is.null(Lambda1))  {Lambda1 <- S1.avg} 
       if(is.finite(nu)& is.null(Lambda1))    {Lambda1 <- (nu-k)*S1.avg/nu }

@@ -1559,3 +1559,19 @@ GetSampleNum <- function(){
     return(0)
   }
 }
+
+#' Limma-based fold change and p-values
+#' @description Compute moderated logFC, t, P.Value, adj.P.Val using limma.
+#'   Data should be on the appropriate scale before calling (log2 for logFC interpretation).
+#' @param data Data matrix (samples x features)
+#' @param cls Factor with two levels (group labels)
+#' @return Data frame with columns: logFC, t, P.Value, adj.P.Val (rows = features)
+#' @export
+GetLimmaFCandP <- function(data, cls) {
+  require(limma)
+  design <- model.matrix(~cls)
+  fit <- lmFit(t(as.matrix(data)), design)
+  fit <- eBayes(fit)
+  tt <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
+  return(tt[, c("logFC", "t", "P.Value", "adj.P.Val")])
+}

@@ -56,19 +56,26 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   }
 
   if (length(sort.vec.hm2) == 0) {
-    ord.vec <- 1
+    # No metadata sort selected — cluster samples by data similarity
+    if (dataOpt == "norm") {
+      clust.data <- mSetObj$dataSet$norm
+    } else {
+      clust.data <- qs::qread("prenorm.qs")
+    }
+    dd <- dist(clust.data, method = smplDist)
+    hc <- hclust(dd, method = clstDist)
+    ordInx <- hc$order
   } else {
     ord.vec <- match(sort.vec.hm2, colnames(sel.meta.df))
-  }
-
-  if (length(ord.vec) == 1) {
-    ordInx <- order(sel.meta.df[, ord.vec])
-  } else if (length(ord.vec) == 2) {
-    ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]])
-  } else if (length(ord.vec) == 3) {
-    ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]], sel.meta.df[, ord.vec[3]])
-  } else {
-    ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]], sel.meta.df[, ord.vec[3]], sel.meta.df[, ord.vec[4]])
+    if (length(ord.vec) == 1) {
+      ordInx <- order(sel.meta.df[, ord.vec])
+    } else if (length(ord.vec) == 2) {
+      ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]])
+    } else if (length(ord.vec) == 3) {
+      ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]], sel.meta.df[, ord.vec[3]])
+    } else {
+      ordInx <- order(sel.meta.df[, ord.vec[1]], sel.meta.df[, ord.vec[2]], sel.meta.df[, ord.vec[3]], sel.meta.df[, ord.vec[4]])
+    }
   }
 
   annotation <- as.data.frame(sel.meta.df[ordInx, ])

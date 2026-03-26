@@ -11,18 +11,36 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
-  
+FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.method="classical"){
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # make sure threshold is above 1
   fc.thresh = ifelse(fc.thresh>1, fc.thresh, 1/fc.thresh);
   max.thresh = fc.thresh;
   min.thresh = 1/fc.thresh;
-  
-  res <- GetFC(mSetObj, paired, cmp.type);
-  fc.all <- res$fc.all;
-  fc.log <- res$fc.log;
+
+  if (fc.method == "limma" && !paired) {
+    # Limma-based logFC - use row_norm (original scale, same as classical GetFC)
+    # Log2-transform so limma logFC = log2 fold change
+    row.data <- qs::qread("row_norm.qs");
+    row.log2 <- log2(as.matrix(row.data));
+    row.log2[!is.finite(row.log2)] <- 0;
+    limma.res <- GetLimmaFCandP(row.log2, mSetObj$dataSet$cls);
+    # Limma coef=2 gives level[2]-level[1], but classical does level[1]/level[2]
+    # Negate to match classical direction
+    fc.log <- signif(-limma.res$logFC, 5);
+    names(fc.log) <- rownames(limma.res);
+    # Reorder to match norm columns
+    fc.log <- fc.log[colnames(mSetObj$dataSet$norm)];
+    if (cmp.type == 1) fc.log <- -fc.log;
+    fc.all <- signif(2^abs(fc.log), 5);
+    fc.all[fc.log < 0] <- signif(1/fc.all[fc.log < 0], 5);
+  } else {
+    res <- GetFC(mSetObj, paired, cmp.type);
+    fc.all <- res$fc.all;
+    fc.log <- res$fc.log;
+  }
   
   inx.up <- fc.all > max.thresh;
   inx.down <- fc.all < min.thresh;
@@ -43,6 +61,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE){
   # create a list object to store fc
   mSetObj$analSet$fc<-list (
     paired = FALSE,
+    fc.method = fc.method,
     raw.thresh = fc.thresh,
     max.thresh = max.thresh,
     min.thresh = min.thresh,
@@ -229,20 +248,47 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE, 
-                        equal.var=TRUE, pvalType="fdr", all_results=FALSE){
-  
+Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
+                        equal.var=TRUE, pvalType="fdr", all_results=FALSE, tt.method="classical"){
+
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+
+  # Map method names to internal parameters
+  if (tt.method == "welch") {
+    equal.var <- FALSE
+    tt.method <- "classical"
+  } else if (tt.method == "student") {
+    equal.var <- TRUE
+    tt.method <- "classical"
+  } else if (tt.method == "wilcox") {
+    nonpar <- TRUE
+    tt.method <- "classical"
+  }
+
+  if (tt.method == "limma" && !nonpar && !paired) {
+    # Limma moderated t-test
+    require(limma)
+    design <- model.matrix(~mSetObj$dataSet$cls)
+    fit <- lmFit(t(as.matrix(mSetObj$dataSet$norm)), design)
+    fit <- eBayes(fit)
+    tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
+    t.stat <- tt.res$t
+    p.value <- tt.res$P.Value
+    names(t.stat) <- names(p.value) <- rownames(tt.res)
+    # Reorder to match norm columns
+    t.stat <- t.stat[colnames(mSetObj$dataSet$norm)]
+    p.value <- p.value[colnames(mSetObj$dataSet$norm)]
+  } else if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
     res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
+    t.stat <- res[,1];
+    p.value <- res[,2];
+    names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   } else {
     res <- GetTtestRes(mSetObj, paired, equal.var, nonpar);
+    t.stat <- res[,1];
+    p.value <- res[,2];
+    names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   }
-  
-  t.stat <- res[,1];
-  p.value <- res[,2];
-  names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
   
   p.log <- -log10(p.value);
   fdr.p <- p.adjust(p.value, "fdr");
@@ -287,11 +333,15 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
     sig.mat <- signif(sig.mat, 5);
     
     if(nonpar){
-      tt.nm = "Wilcoxon Rank Test";  
+      tt.nm = "Wilcoxon Rank Test";
       file.nm <- "wilcox_rank.csv"
       colnames(sig.mat) <- c("V", "p.value", "-log10(p)", "FDR");
-    }else{
-      tt.nm = "T-Tests";
+    } else if(tt.method == "limma") {
+      tt.nm = "Moderated T-test (Limma)";
+      file.nm <- "t_test.csv";
+      colnames(sig.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
+    } else {
+      tt.nm = ifelse(equal.var, "Student's T-test", "Welch's T-test");
       file.nm <- "t_test.csv";
       colnames(sig.mat) <- c("t.stat", "p.value", "-log10(p)", "FDR");
     }
@@ -301,6 +351,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 
     tt <- list (
       tt.nm = tt.nm,
+      tt.method = tt.method,
       sig.nm = file.nm,
       sig.num = sig.num,
       paired = paired,
@@ -315,7 +366,16 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       adjust.method = pvalType
     );
   }else{
+    if(nonpar){
+      tt.nm = "Wilcoxon Rank Test";
+    } else if(tt.method == "limma") {
+      tt.nm = "Moderated T-test (Limma)";
+    } else {
+      tt.nm = ifelse(equal.var, "Student's T-test", "Welch's T-test");
+    }
     tt <- list (
+      tt.nm = tt.nm,
+      tt.method = tt.method,
       sig.num = sig.num,
       paired = paired,
       pval.type = pvalType,
@@ -454,26 +514,27 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh, 
-                         cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw"){
-  
+Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
+                         cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw", fc.method="classical"){
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # Note, volcano is based on t-tests and fold change analysis
-  #### t-tests and p values. If performed and identical parameters
-  mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type);
+  # When fc.method is "limma", use moderated t-test for p-values too
+  tt.method <- ifelse(fc.method == "limma", "limma", "classical")
+  mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method);
   mSetObj <- .get.mSet(mSetObj);
   p.value <- mSetObj$analSet$tt$p.value;
-  
+
   if(pval.type == "fdr"){
     p.value <- p.adjust(p.value, "fdr");
-  }   
-  
+  }
+
   inx.p <- p.value <= threshp;
   p.log <- -log10(p.value);
-  
+
   #### fc analysis
-  mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired);
+  mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired, fc.method);
   mSetObj <- .get.mSet(mSetObj);
   
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);
@@ -528,6 +589,7 @@ all.var <- all.var[ord.all, , drop=F];
 fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 
   volcano <- list (
+    fc.method = fc.method,
     pval.type = pval.type,
     raw.threshx = fcthresh,
     raw.threshy = threshp,
@@ -544,7 +606,7 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
     sig.mat = sig.var,
     all.mat = signif(all.var, 5),
     p.value = p.value
-    
+
   );
   mSetObj$analSet$volcano <- volcano;
   return(.set.mSet(mSetObj));

@@ -8,7 +8,15 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   data <- t(dataSet$norm)
   sig.ids <- rownames(data);
   
-  res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+  # Reuse existing stat results if available (from PerformMumTableStat)
+  if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value)) {
+    pvals <- mSetObj$analSet$tt$p.value[sig.ids]
+    tscores <- mSetObj$analSet$tt$t.score[sig.ids]
+    res <- data.frame(p.value = pvals, t.score = tscores, row.names = sig.ids)
+    message("[PRO] Heatmap: reusing existing stat results")
+  } else {
+    res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+  }
   
   if(dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx = rep(TRUE, nrow(data))
@@ -20,8 +28,9 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   
   if(mSetObj$paramSet$mumRT){
     feat_info <- rownames(data)
-    # OPTIMIZED: Use strsplit once with fixed=TRUE for better performance
-    feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
+    # Support both "__" and "@" as mz/rt separator (try __ first)
+    sep <- if(any(grepl("__", feat_info, fixed=TRUE))) "__" else if(any(grepl("@", feat_info, fixed=TRUE))) "@" else "__"
+    feat_info_split <- matrix(unlist(strsplit(feat_info, sep, fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
 
     # OPTIMIZED: Single-pass duplicate handling - vectorized operation

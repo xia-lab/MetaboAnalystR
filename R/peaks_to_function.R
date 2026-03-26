@@ -134,9 +134,15 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
     # Support mz__rt formatted m/z values when no explicit r.t column is provided.
     if("m.z" %in% colnames(input)){
       mz_chr <- as.character(input$m.z)
+      # Support both "__" and "@" as mz/rt separator (try __ first)
       has_mzrt <- grepl("__", mz_chr, fixed = TRUE)
+      mzrt_sep <- "__"
+      if(!any(has_mzrt, na.rm = TRUE)){
+        has_mzrt <- grepl("@", mz_chr, fixed = TRUE)
+        mzrt_sep <- "@"
+      }
       if(any(has_mzrt, na.rm = TRUE)){
-        parts <- strsplit(mz_chr[has_mzrt], "__", fixed = TRUE)
+        parts <- strsplit(mz_chr[has_mzrt], mzrt_sep, fixed = TRUE)
         mz_part <- vapply(parts, function(x) x[1], character(1), USE.NAMES = FALSE)
         rt_part <- vapply(parts, function(x) if(length(x) > 1) x[2] else NA_character_, character(1), USE.NAMES = FALSE)
         input$m.z[has_mzrt] <- mz_part
@@ -379,10 +385,16 @@ Convert2Mummichog <- function(mSetObj=NA,
   ##  1.  Parse row-names:  "mz__rt"  →  m/z   +   retention time
   ## ------------------------------------------------------------------
   feat_nm <- rownames(cov.res)
+  # Support both "__" and "@" as mz/rt separator (try __ first)
   has_rt  <- grepl("__", feat_nm, fixed = TRUE)
+  cov_sep <- "__"
+  if (!any(has_rt)) {
+    has_rt <- grepl("@", feat_nm, fixed = TRUE)
+    cov_sep <- "@"
+  }
 
   if (any(has_rt)) {                                 # split once, vectorised
-    parts   <- strsplit(feat_nm[has_rt], "__", fixed = TRUE)
+    parts   <- strsplit(feat_nm[has_rt], cov_sep, fixed = TRUE)
     mz.vec  <- feat_nm                               # default: unchanged
     rt.vec  <- rep(NA_real_, length(feat_nm))
 
@@ -487,7 +499,9 @@ Convert2Mummichog <- function(mSetObj=NA,
 
     if(rt){ # taking retention time information from feature name itself
       feat_info <- mummi_new[,1]
-      feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
+      # Support both "__" and "@" as mz/rt separator (try __ first)
+      sep <- if(any(grepl("__", feat_info, fixed=TRUE))) "__" else if(any(grepl("@", feat_info, fixed=TRUE))) "@" else "__"
+      feat_info_split <- matrix(unlist(strsplit(feat_info, sep, fixed=TRUE)), ncol=2, byrow=T)
       colnames(feat_info_split) <- c("m.z", "r.t")
       
       if(rt.type == "minutes"){
@@ -4383,11 +4397,39 @@ ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", 
 #' @export
 #' @author Zhiqiang Pang, Jeff Xia
 
-PreparePeakTable4PSEA <- function(mSetObj=NA){
-  
+PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
+
   mSetObj <- .get.mSet(mSetObj);
 
-  if(length(levels(mSetObj$dataSet$cls)) < 3){
+  # If PerformMumTableStat already computed analSet$tt, reuse it
+  if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value)) {
+    res <- mSetObj;
+    ngrps <- length(levels(mSetObj$dataSet$cls));
+    testmeth <- ifelse(ngrps > 2, "aov", "tt");
+    message("[PRO] Reusing existing stat results from PerformMumTableStat");
+  } else if (ranking.method == "limma" && length(levels(mSetObj$dataSet$cls)) < 3) {
+    # Use limma moderated statistics
+    limma.res <- GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
+    # Store in analSet$tt format for Convert2Mummichog compatibility
+    p.value <- limma.res$P.Value;
+    names(p.value) <- rownames(limma.res);
+    t.score <- limma.res$t;
+    names(t.score) <- rownames(limma.res);
+    fdr.p <- limma.res$adj.P.Val;
+    names(fdr.p) <- rownames(limma.res);
+    mSetObj$analSet$tt <- list(
+      p.value = p.value,
+      p.log = -log10(p.value),
+      t.score = t.score,
+      fdr.p = fdr.p,
+      sig.num = sum(fdr.p < 0.05, na.rm = TRUE),
+      inx.imp = fdr.p < 0.05
+    );
+    .set.mSet(mSetObj);
+    res <- mSetObj;
+    testmeth <- "tt";
+    message("[PRO] Mummichog ranking: limma moderated statistics");
+  } else if(length(levels(mSetObj$dataSet$cls)) < 3){
     res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
     testmeth <- "tt";
   } else {
@@ -4435,6 +4477,224 @@ PreparePeakTable4PSEA <- function(mSetObj=NA){
     mSetObj <- SanityCheckMummichogData(mSetObj)
   }
   return(.set.mSet(mSetObj));
+}
+
+#' Perform statistical analysis for table input (ranking only, no conversion)
+#' @description Computes t-test/ANOVA or limma statistics for feature ranking.
+#'   Results are stored in mSetObj$analSet$tt for later use by Convert2Mummichog.
+#' @param mSetObj mSet Object
+#' @param ranking.method "classical" or "limma"
+#' @return Number of significant features (FDR < 0.05)
+#' @export
+PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval.cutoff = 0.05, fc.cutoff = 0,
+                                ref.group = NA, contrast.group = NA, covariates = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  require(limma)
+  cls <- mSetObj$dataSet$cls
+  x <- mSetObj$dataSet$norm
+  ngrps <- length(levels(cls))
+
+  # Set reference group
+  if (!is.na(ref.group) && ref.group %in% levels(cls)) {
+    cls <- relevel(cls, ref = ref.group)
+  }
+  ref <- levels(cls)[1]
+
+  # Determine contrast group for logFC
+  if (!is.na(contrast.group) && contrast.group %in% levels(cls)) {
+    cont <- contrast.group
+  } else {
+    cont <- levels(cls)[2]
+  }
+
+  # Build covariate matrix if specified (only used with limma method)
+  has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
+  cov.mat <- NULL
+  if (has.cov && ranking.method == "limma" && !is.null(mSetObj$dataSet$meta.info)) {
+    meta <- mSetObj$dataSet$meta.info
+    cov.cols <- intersect(covariates, colnames(meta))
+    if (length(cov.cols) > 0) {
+      cov.list <- list()
+      for (cn in cov.cols) {
+        v <- meta[, cn]
+        if (is.numeric(v)) {
+          cov.list[[cn]] <- v
+        } else {
+          cov.list[[cn]] <- as.factor(v)
+        }
+      }
+      cov.mat <- data.frame(cov.list, row.names = rownames(meta))
+      message("Covariates included in limma model: ", paste(cov.cols, collapse = ", "))
+    }
+  } else if (has.cov && ranking.method != "limma") {
+    message("Note: covariates are ignored for classical t-test/ANOVA method")
+  }
+
+  if (ranking.method == "limma" || ngrps == 2) {
+    # Limma: design with reference + optional covariates
+    if (!is.null(cov.mat)) {
+      design <- model.matrix(~0 + cls + ., data = cov.mat)
+    } else {
+      design <- model.matrix(~0 + cls)
+    }
+    colnames(design)[1:ngrps] <- levels(cls)
+    contrast.name <- paste0(cont, "-", ref)
+    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
+    fit <- lmFit(t(as.matrix(x)), design)
+    fit <- contrasts.fit(fit, contrast.matrix)
+    fit <- eBayes(fit)
+    tt <- topTable(fit, number = Inf, sort.by = "none")
+    p.value <- tt$P.Value
+    names(p.value) <- rownames(tt)
+    t.score <- tt$t
+    names(t.score) <- rownames(tt)
+    fdr.p <- tt$adj.P.Val
+    names(fdr.p) <- rownames(tt)
+    logfc <- tt$logFC
+    names(logfc) <- rownames(tt)
+    cov.label <- if (!is.null(cov.mat)) paste0(" adj:", paste(colnames(cov.mat), collapse=",")) else ""
+    method.label <- paste0("limma (", cont, " vs ", ref, cov.label, ")")
+
+  } else {
+    # Classical multi-group: ANOVA for overall p-values + limma for logFC of specific contrast (no covariates)
+    mSetObj <- ANOVA.Anal(mSetObj, F, pval.cutoff, FALSE)
+    mSetObj <- .get.mSet(mSetObj)
+    aov.res <- mSetObj$analSet$aov
+    p.value <- aov.res$p.value
+    fdr.p <- aov.res$fdr.p
+    t.score <- -log10(p.value)
+    names(t.score) <- names(p.value)
+
+    # logFC from specific contrast via limma (no covariates for classical method)
+    design <- model.matrix(~0 + cls)
+    colnames(design)[1:ngrps] <- levels(cls)
+    contrast.name <- paste0(cont, "-", ref)
+    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
+    fit <- lmFit(t(as.matrix(x)), design)
+    fit <- contrasts.fit(fit, contrast.matrix)
+    fit <- eBayes(fit)
+    tt.first <- topTable(fit, number = Inf, sort.by = "none")
+    logfc <- tt.first$logFC
+    names(logfc) <- rownames(tt.first)
+    logfc <- logfc[names(p.value)]
+    method.label <- paste0("ANOVA + logFC(", cont, " vs ", ref, ")")
+  }
+
+  # Apply thresholds
+  sig.inx <- fdr.p < pval.cutoff
+  if (fc.cutoff > 0) sig.inx <- sig.inx & (abs(logfc) > fc.cutoff)
+
+  # Store in analSet$tt format for Convert2Mummichog compatibility
+  mSetObj$analSet$tt <- list(
+    p.value = p.value, p.log = -log10(p.value), t.score = t.score,
+    fdr.p = fdr.p, logfc = logfc,
+    sig.num = sum(sig.inx, na.rm = TRUE), inx.imp = sig.inx
+  )
+
+  # Save result table as CSV and Arrow for detailed view
+  tryCatch({
+    result.mat <- data.frame(
+      Log2FC = signif(logfc, 5),
+      P.Value = signif(p.value, 5),
+      FDR = signif(fdr.p, 5),
+      negLogP = signif(-log10(p.value), 5)
+    )
+    rownames(result.mat) <- names(p.value)
+    ord.inx <- order(p.value)
+    result.mat <- result.mat[ord.inx, ]
+    fast.write.csv(result.mat, file = "mum_stat_result.csv")
+    qs::qsave(result.mat, "mum_stat_result_mat.qs")
+    tryCatch(ExportResultMatArrow(result.mat, "mum_stat_result"), error = function(e) {})
+  }, error = function(e) { message("Failed to save stat result table: ", e$message) })
+
+  # Save volcano JSON for interactive Chart.js rendering
+  tryCatch({
+    volcano.data <- list(
+      names = names(p.value),
+      logFC = as.numeric(logfc),
+      negLogP = as.numeric(-log10(p.value)),
+      fdr = as.numeric(fdr.p)
+    )
+    jsonObj <- RJSONIO::toJSON(volcano.data)
+    sink("mum_volcano.json")
+    cat(jsonObj)
+    sink()
+  }, error = function(e) { message("Failed to save volcano JSON: ", e$message) })
+
+  message("Mummichog ranking: ", method.label, ". Sig: ", sum(sig.inx, na.rm = TRUE))
+  .set.mSet(mSetObj)
+  return(sum(sig.inx, na.rm = TRUE))
+}
+
+#' Plot volcano for mummichog table input
+#' @description Plots logFC vs -log10(p) from the statistical analysis results
+#' @param mSetObj mSet Object
+#' @param imgName Image file name prefix
+#' @param dpi Resolution
+#' Get mummichog stat result table data for details view
+#' @export
+GetMumStatRowNames <- function() {
+  mat <- qs::qread("mum_stat_result_mat.qs")
+  return(rownames(mat))
+}
+#' @export
+GetMumStatColNames <- function() {
+  mat <- qs::qread("mum_stat_result_mat.qs")
+  return(colnames(mat))
+}
+#' @export
+GetMumStatMat <- function() {
+  mat <- qs::qread("mum_stat_result_mat.qs")
+  return(as.matrix(mat))
+}
+
+#' @param format Image format
+#' @export
+PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pval.cutoff = 0.05, fc.cutoff = 0) {
+  require(ggplot2)
+  mSetObj <- .get.mSet(mSetObj)
+  tt <- mSetObj$analSet$tt
+  if (is.null(tt)) { return(0) }
+
+  p.val <- tt$p.value
+  fdr <- if (!is.null(tt$fdr.p)) tt$fdr.p else p.adjust(p.val, "fdr")
+
+  # Use stored logFC if available, otherwise compute
+  if (!is.null(tt$logfc)) {
+    logfc <- tt$logfc[names(p.val)]
+  } else {
+    limma.res <- tryCatch(GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls), error = function(e) NULL)
+    if (!is.null(limma.res)) {
+      logfc <- limma.res$logFC[names(p.val)]
+    } else {
+      logfc <- rep(0, length(p.val))
+    }
+  }
+
+  sig <- fdr < pval.cutoff
+  if (fc.cutoff > 0) sig <- sig & (abs(logfc) > fc.cutoff)
+
+  df <- data.frame(logFC = logfc, negLogP = -log10(p.val), sig = sig)
+
+  imgFile <- paste0(imgName, "dpi", dpi, ".", format)
+  Cairo::Cairo(file = imgFile, width = 7, height = 5.5, unit = "in", dpi = dpi, type = format, bg = "white")
+  g <- ggplot(df, aes(x = logFC, y = negLogP, color = sig)) +
+    geom_point(alpha = 0.6, size = 1.5) +
+    scale_color_manual(values = c("FALSE" = "grey70", "TRUE" = "firebrick3"),
+                       labels = c("Not significant", "Significant"), name = "") +
+    geom_hline(yintercept = -log10(pval.cutoff), linetype = "dashed", color = "blue", alpha = 0.5) +
+    xlab("Log2(Fold Change)") + ylab("-Log10(P-value)") +
+    ggtitle("Volcano Plot") +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+  if (fc.cutoff > 0) {
+    g <- g + geom_vline(xintercept = c(-fc.cutoff, fc.cutoff), linetype = "dashed", color = "blue", alpha = 0.5)
+  }
+  print(g)
+  dev.off()
+  mSetObj$imgSet$mum.volcano <- imgFile
+  .set.mSet(mSetObj)
+  return(1)
 }
 
 CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 

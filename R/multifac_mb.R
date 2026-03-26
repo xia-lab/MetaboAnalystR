@@ -251,7 +251,7 @@ matrix.cov <- function(x, k, trans=TRUE, c.grp=NULL, use="complete.obs")
 }
 
 # Used in higher function 
-squeezeVar <- function(var, df){
+mb.squeezeVar <- function(var, df){
   n <- length(var)
   if(n == 0) stop("var is empty")
   if(n == 1) return(list(var.post=var,var.prior=var,df.prior=0))
@@ -260,7 +260,7 @@ squeezeVar <- function(var, df){
   } else {
     if(length(df) != n) stop("lengths differ")
   }
-  out <- fitFDist(var, df1=df)
+  out <- mb.fitFDist(var, df1=df)
   if(is.null(out$df2) || is.na(out$df2)) stop("Could not estimate prior df")
   out$var.prior <- out$scale
   out$df.prior <- out$df2
@@ -276,7 +276,7 @@ squeezeVar <- function(var, df){
 }
 
 # Used in higher function 
-fitFDist <- function(x, df1) {
+mb.fitFDist <- function(x, df1) {
   #	Moment estimation of the parameters of a scaled F-distribution
   #	The first degrees of freedom is given
   #	Gordon Smyth
@@ -307,7 +307,7 @@ fitFDist <- function(x, df1) {
   emean <- mean(e)
   evar <- mean(n/(n-1)*(e-emean)^2-trigamma(df1/2))
   if(evar > 0) {
-    df2 <- 2*trigammaInverse(evar)
+    df2 <- 2*mb.trigammaInverse(evar)
     s20 <- exp(emean+digamma(df2/2)-log(df2/2))
   } else {
     df2 <- Inf
@@ -317,7 +317,7 @@ fitFDist <- function(x, df1) {
 }
 
 # Used in higher function 
-trigammaInverse <- function(x) {
+mb.trigammaInverse <- function(x) {
   #	Solve trigamma(y) = x for y
   #	Gordon Smyth
   #	8 Sept 2002.  Last revised 12 March 2004.

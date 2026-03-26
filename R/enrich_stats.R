@@ -133,21 +133,21 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-CalculateGlobalTestScore <- function(mSetObj=NA){
+CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+
     if(!exists("current.msetlib")){
         current.msetlib <<- qs::qread("current.msetlib.qs");
     }
 
 
   if(.on.public.web){
-    .prepare.globaltest.score(mSetObj);
-    .perform.computing();   
-    .save.globaltest.score(mSetObj);  
+    .prepare.globaltest.score(mSetObj, covariates);
+    .perform.computing();
+    .save.globaltest.score(mSetObj);
   }else{
-    mSetObj <- .prepare.globaltest.score(mSetObj);
+    mSetObj <- .prepare.globaltest.score(mSetObj, covariates);
     
     if(!grepl("kegg", mSetObj$analSet$msetlibname)){
       .perform.computing();   
@@ -157,7 +157,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
-.prepare.globaltest.score <- function(mSetObj=NA){
+.prepare.globaltest.score <- function(mSetObj=NA, covariates=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   # now, need to make a clean dataSet$norm data based on name mapping
@@ -220,10 +220,39 @@ CalculateGlobalTestScore <- function(mSetObj=NA){
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   phenotype <- mSetObj$dataSet$cls;
   
+  # Build covariate data if provided
+  has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
+  cov.df <- NULL
+  if (has.cov && !is.null(mSetObj$dataSet$meta.info)) {
+    cov.cols <- intersect(covariates, colnames(mSetObj$dataSet$meta.info))
+    if (length(cov.cols) > 0) {
+      cov.df <- mSetObj$dataSet$meta.info[rownames(msea.data), cov.cols, drop = FALSE]
+      for (cn in colnames(cov.df)) {
+        if (is.factor(cov.df[[cn]]) || is.character(cov.df[[cn]])) {
+          cov.df[[cn]] <- as.factor(cov.df[[cn]])
+        } else {
+          cov.df[[cn]] <- as.numeric(cov.df[[cn]])
+        }
+      }
+      message("[MSEA QEA] Covariates included: ", paste(cov.cols, collapse = ", "))
+    }
+  }
+
+  # Set enrichment message with covariate info for report
+  cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
+  mSetObj$msgSet$rich.msg <- paste0("The enrichment analysis method is ```Globaltest```.",
+    if (!is.null(cov.df)) " Covariates are adjusted within the statistical model, which is statistically more rigorous than adjusting the data separately." else "",
+    "\n\n- Enrichment method: ```Globaltest```", cov.label)
+
   # there are more steps, better drop a function to compute in the remote env.
-  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits);
+  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df);
   dat.in$my.fun <- function(){
-    gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
+    if (!is.null(dat.in$cov.df)) {
+      null.mat <- model.matrix(~ ., data = dat.in$cov.df)
+      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, null = null.mat, subsets=dat.in$subsets);
+    } else {
+      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
+    }
     gt.res <- globaltest::result(gt.obj);
     
     match.num <- gt.res[,5];

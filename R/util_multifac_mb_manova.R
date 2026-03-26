@@ -53,7 +53,7 @@ my.time.mb.manova <- function (object, times, D, size, nu = NULL, Lambda = NULL,
       nu <- nu0
     }
     if (is.null(nu)) {
-      nu0 <- mean(sapply(1:times, function(x) squeezeVar(diagSp[x,
+      nu0 <- mean(sapply(1:times, function(x) mb.squeezeVar(diagSp[x,
                                                                 ], N - D)$df.prior))
       nu <- max(nu0, nu.lim)
       if (is.infinite(nu) & is.null(Lambda)) {

@@ -125,7 +125,9 @@ RF.AnalMeta <- function(mSetObj = NA,
   ## -------- variable importance table --------------------------------
   impmat <- rf_out$importance
   mdAcc  <- if (metaType == "disc") "MeanDecreaseAccuracy" else "%IncMSE"
-  sigmat <- impmat[, mdAcc, drop = FALSE]
+  # Include both Gini and Accuracy (or %IncMSE and IncNodePurity for regression)
+  imp.cols <- intersect(c(mdAcc, "MeanDecreaseGini", "IncNodePurity"), colnames(impmat))
+  sigmat <- impmat[, imp.cols, drop = FALSE]
   sigmat <- sigmat[order(sigmat[, 1], decreasing = TRUE), , drop = FALSE]
   sigmat <- signif(sigmat, 5)
   fast.write.csv(sigmat, file = "randomforests_sigfeatures.csv")
@@ -166,14 +168,14 @@ PlotRF.ClassifyMeta <- function(mSetObj = NA,
                width = w, height = h, type = format, bg = "white")
   
   if (is.classification) {
+    layout(matrix(c(1, 2), nrow = 2), heights = c(5, 1))
     par(mar = c(4, 4, 3, 2))
     cols <- rainbow(ncol(rf_mod$err.rate))
-    plot(rf_mod, main = "Random Forest model (classification)", col = cols)
-    legend("topright",
-           legend = colnames(rf_mod$err.rate),
-           lty = 1,
-           col = cols,
-           bty = "n")
+    plot(rf_mod, main = "Random Forest Classification", col = cols)
+    par(mar = c(0, 0, 0, 0))
+    plot.new()
+    legend("center", legend = colnames(rf_mod$err.rate),
+           lty = 1, col = cols, bty = "n", horiz = TRUE, cex = 0.9)
   } else {
     par(mar = c(4, 4, 3, 1))
     plot(rf_mod, main = "OOB error (MSE)")
@@ -191,24 +193,38 @@ PlotRF.VIPMeta <- function(mSetObj = NA,
                            format = "png",
                            dpi    = default.dpi,
                            width  = NA,
-                           type   = "meta") {
-  
+                           type   = "meta",
+                           impMeasure = "MeanDecreaseAccuracy",
+                           feat.num = 15) {
+
   mSetObj <- .get.mSet(mSetObj)
-  vip.score <- rev(sort(mSetObj$analSet$rf$importance[, 1]))  # IncMSE or MDA
+  imp.mat <- mSetObj$analSet$rf$importance
+
+  # Select importance measure column
+  if (!impMeasure %in% colnames(imp.mat)) {
+    impMeasure <- colnames(imp.mat)[1]  # fallback to first column
+  }
+  vip.score <- rev(sort(imp.mat[, impMeasure]))
+
+  # Limit to top features
+  if (feat.num > 0 && feat.num < length(vip.score)) {
+    vip.score <- vip.score[1:feat.num]
+  }
+
+  xlbl <- gsub("MeanDecrease", "Mean Decrease ", impMeasure)
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
-  
+
+  n.feat <- length(vip.score)
   w <- ifelse(is.na(width), 8, ifelse(width == 0, 7, width))
-  h <- w * 7 / 8
+  h <- max(5, n.feat * 0.35 + 2)  # dynamic height based on feature count
   mSetObj$imgSet$rf.imp <- imgName
-  
+
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
   if(mSetObj$analSet$rf$type == "regression"){
-  PlotImpVarCont(mSetObj, vip.score, colnames(mSetObj$analSet$rf$importance)[1],
-                 type = "meta")
+    PlotImpVarCont(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta")
   }else{
-  PlotImpVarDisc(mSetObj, vip.score, colnames(mSetObj$analSet$rf$importance)[1],
-                 type = "meta")
+    PlotImpVarDisc(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta")
   }
   dev.off()
   .set.mSet(mSetObj)
@@ -270,9 +286,10 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
   
   # modified for B/W color
   dotcolor <- ifelse(color.BW, "darkgrey", "#585855");
-  dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.3);
-  
-  mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1)
+  label.cex <- if(feat.num > 25) 0.65 else if(feat.num > 15) 0.75 else 0.9
+  dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.1);
+
+  mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1, cex=label.cex)
   
   axis.lims <- par("usr"); # x1, x2, y1 ,y2
   
@@ -424,24 +441,26 @@ PlotImpVarCont <- function(mSetObj  = NA,
   cols.ordered[ord] <- clr.vec
   
   ## ── draw importance dot chart -------------------------------------
-dotchart(imp.top,
+  label.cex <- if(feat.num > 25) 0.65 else if(feat.num > 15) 0.75 else 0.9
+  dotchart(imp.top,
          pch = 21,
          xlab = xlbl,
-         cex  = 1.3,               # keep axis label size normal
-         bg   = "white")         # dummy fill, we will override below
+         cex  = 1.1,
+         bg   = "white")
 
-## overlay larger colored points (30% larger)
-points(x = imp.top,
+  ## overlay larger colored points
+  points(x = imp.top,
        y = seq_along(imp.top),
        pch = 21,
        bg  = cols.ordered,
-       cex = 1.6)  # this is the increased dot size
+       cex = 1.4)
 
   mtext(side = 2,
         at    = seq_len(feat.num),
         text  = short.nms,
         las   = 2,
-        line  = 1)
+        line  = 1,
+        cex   = label.cex)
   
   par(op)
   invisible(.set.mSet(mSetObj))
@@ -500,7 +519,6 @@ CovariateScatter.Anal <- function(mSetObj,
                                   contrast.cls = "anova"){
   # load libraries
   library(limma)
-  library(dplyr)
   
   #imgName <<- imgName;
   #format<- "png";
@@ -525,29 +543,35 @@ CovariateScatter.Anal <- function(mSetObj,
     adj.vec = "NA"
     vars <- analysis.var;
   }else{
-    if(length(adj.vec) > 0){
+    if(length(adj.vec) > 0 && !all(adj.vec == "NA") && !all(adj.vec == "")){
       adj.bool = T;
       vars <- c(analysis.var, adj.vec);
       cov.vec <- adj.vec;
-    }else{    
+    }else{
       adj.vec= "NA"
       adj.bool = F;
       vars <- analysis.var;
     }
   }
+  message("[CovScatter] adj.bool=", adj.bool, " vars=", paste(vars, collapse=","),
+          " adj.vec=", paste(adj.vec, collapse=","),
+          " using.orig=", !is.null(mSetObj$dataSet$norm.before.covariate))
 
     
   covariates <- mSetObj$dataSet$meta.info
   var.types <- mSetObj[["dataSet"]][["meta.types"]]
 
-  # Always use ORIGINAL data (before any adjustment) for both comparisons
-  # This way we compare statistical models WITH vs WITHOUT covariates on the same data
-  if(!is.null(mSetObj$dataSet$norm.before.covariate)){
-    # Use original data that was saved before adjustment
+  # Always use ORIGINAL normalized data (before any covariate adjustment)
+  # Linear model handles covariates internally via the design matrix
+  if(file.exists("data_norm_only.qs")){
+    feature_table <- t(qs::qread("data_norm_only.qs"))
+    message("[CovScatter] Using original normalized data from data_norm_only.qs")
+  } else if(!is.null(mSetObj$dataSet$norm.before.covariate)){
     feature_table <- t(mSetObj$dataSet$norm.before.covariate)
+    message("[CovScatter] Using norm.before.covariate")
   } else {
-    # No adjustment was performed, use current data
     feature_table <- t(mSetObj$dataSet$norm)
+    message("[CovScatter] Using current mSetObj$dataSet$norm")
   }
 
   # process inputs
@@ -558,9 +582,9 @@ CovariateScatter.Anal <- function(mSetObj,
   # process metadata table (covariates)
   for(i in c(1:length(var.types))){ # ensure all columns are the right type
     if(var.types[i] == "disc"){
-      covariates[,i] <- covariates[,i] %>% make.names() %>% factor()
+      covariates[,i] <- factor(make.names(covariates[,i]))
     } else {
-      covariates[,i] <- covariates[,i] %>% as.character() %>% as.numeric()
+      covariates[,i] <- as.numeric(as.character(covariates[,i]))
     }
   }
   
@@ -577,7 +601,7 @@ CovariateScatter.Anal <- function(mSetObj,
   
   if(analysis.type == "disc"){
     # build design and contrast matrix
-    covariates[, analysis.var] <- covariates[, analysis.var] %>% make.names() %>% factor();
+    covariates[, analysis.var] <- factor(make.names(covariates[, analysis.var]));
     grp.nms <- levels(covariates[, analysis.var]);
 
     myargs <- list();
@@ -609,6 +633,11 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      # For multi-contrast (ANOVA), extract logFC from first contrast
+      if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
+        first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        rest$logFC <- first.contrast[rownames(rest), "logFC"]
+      }
     } else {
       # No covariates selected - same as "without" analysis
       design <- model.matrix(formula(paste0("~ 0 + ", analysis.var)), data = covariates);
@@ -619,6 +648,10 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
+        first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        rest$logFC <- first.contrast[rownames(rest), "logFC"]
+      }
     }
 
     ### Analysis WITHOUT covariates (simple model)
@@ -632,7 +665,7 @@ CovariateScatter.Anal <- function(mSetObj,
     res.noadj <- topTable(fit, number = Inf);
     
   } else {
-    covariates[, analysis.var] <- covariates[, analysis.var] %>% as.numeric();
+    covariates[, analysis.var] <- as.numeric(as.character(covariates[, analysis.var]));
 
     # Analysis WITH covariates (if any were selected)
     if(adj.bool){
@@ -667,21 +700,40 @@ CovariateScatter.Anal <- function(mSetObj,
     fit <- eBayes(lmFit(feature_table, design));
     res.noadj <- topTable(fit, number = Inf);
   }
-  
-  
+
+
   # make visualization
   adj.mat <- rest[, c("P.Value", "adj.P.Val")]
   noadj.mat <- res.noadj[, c("P.Value", "adj.P.Val")]
-  
+
   colnames(adj.mat) <- c("pval.adj", "fdr.adj")
   colnames(noadj.mat) <- c("pval.no", "fdr.no")
-  
-  both.mat <- merge(adj.mat, noadj.mat, by = "row.names")
-  both.mat$pval.adj <- -log10(both.mat$pval.adj)
-  both.mat$fdr.adj <- -log10(both.mat$fdr.adj)
-  both.mat$pval.no <- -log10(both.mat$pval.no)
-  both.mat$fdr.no <- -log10(both.mat$fdr.no)
-  
+
+  # Build comparison matrix using common row names (avoid merge issues)
+  common.nms <- intersect(rownames(rest), rownames(res.noadj))
+  pv.adj <- as.numeric(rest[common.nms, "P.Value"])
+  fdr.adj <- as.numeric(rest[common.nms, "adj.P.Val"])
+  pv.no <- as.numeric(res.noadj[common.nms, "P.Value"])
+  fdr.no <- as.numeric(res.noadj[common.nms, "adj.P.Val"])
+  both.mat <- data.frame(
+    Row.names = common.nms,
+    pval.adj = -log10(pv.adj),
+    fdr.adj = -log10(fdr.adj),
+    pval.no = -log10(pv.no),
+    fdr.no = -log10(fdr.no),
+    stringsAsFactors = FALSE
+  )
+  rownames(both.mat) <- common.nms
+  # Add logFC for volcano plot
+  message("[CovScatter] rest colnames: ", paste(colnames(rest), collapse=", "))
+  message("[CovScatter] logFC in rest: ", "logFC" %in% colnames(rest))
+  if ("logFC" %in% colnames(rest)) {
+    both.mat$logFC <- as.numeric(rest[common.nms, "logFC"])
+    message("[CovScatter] logFC added to both.mat, range: ",
+            paste(range(both.mat$logFC, na.rm=TRUE), collapse=" to "))
+  }
+  message("[CovScatter] both.mat colnames: ", paste(colnames(both.mat), collapse=", "))
+
   # make plot
   if( "F" %in% colnames(rest)){
     fstat <- rest[, "F"];
@@ -843,24 +895,37 @@ CombineFacScatter.Anal <- function(mSetObj,
    colnames(rest)= gsub("\\X.","",colnames(rest))
    colnames(rest) <- gsub("\\.\\.\\.", "-", colnames(rest))
    colnames(rest) <- gsub("\\.$", "-", colnames(rest))
- 
+   # For multi-contrast (ANOVA), extract logFC from first contrast
+   if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
+     first.contrast <- topTable(fit2, coef = 1, number = Inf, sort.by = "none")
+     rest$logFC <- first.contrast[rownames(rest), "logFC"]
+   }
+
     fit <- lmFit(data.norm,  mSetObj$analSet$design.noadj)
     fit <- contrasts.fit(fit, mSetObj$analSet$contrast.matrix.noadj);
     fit <- eBayes(fit);
     res.noadj <- topTable(fit, number = Inf);
  
-   # make visualization
-  adj.mat <-   rest[, c("P.Value", "adj.P.Val")]
-  noadj.mat <-  res.noadj[, c("P.Value", "adj.P.Val")]
-  colnames(adj.mat) <- c("pval.adj", "fdr.adj")
-  colnames(noadj.mat) <- c("pval.no", "fdr.no")
-  
-  both.mat <- merge(adj.mat, noadj.mat, by = "row.names")
-  both.mat$pval.adj <- -log10(both.mat$pval.adj)
-  both.mat$fdr.adj <- -log10(both.mat$fdr.adj)
-  both.mat$pval.no <- -log10(both.mat$pval.no)
-  both.mat$fdr.no <- -log10(both.mat$fdr.no)
-  
+   # Build comparison matrix using common row names (avoid merge issues)
+  common.nms2 <- intersect(rownames(rest), rownames(res.noadj))
+  pv.adj2 <- as.numeric(rest[common.nms2, "P.Value"])
+  fdr.adj2 <- as.numeric(rest[common.nms2, "adj.P.Val"])
+  pv.no2 <- as.numeric(res.noadj[common.nms2, "P.Value"])
+  fdr.no2 <- as.numeric(res.noadj[common.nms2, "adj.P.Val"])
+  both.mat <- data.frame(
+    Row.names = common.nms2,
+    pval.adj = -log10(pv.adj2),
+    fdr.adj = -log10(fdr.adj2),
+    pval.no = -log10(pv.no2),
+    fdr.no = -log10(fdr.no2),
+    stringsAsFactors = FALSE
+  )
+  rownames(both.mat) <- common.nms2
+  # Add logFC for volcano plot
+  if ("logFC" %in% colnames(rest)) {
+    both.mat$logFC <- as.numeric(rest[common.nms2, "logFC"])
+  }
+
   # make plot
   if( "F" %in% colnames(rest)){
     fstat <- rest[, "F"];
@@ -966,7 +1031,7 @@ CombineFacScatter.Anal <- function(mSetObj,
 
 prepareLimmaContrast <-function(meta0="NA",meta1="NA",anal.type = "ref", par1 = NULL, par2 = NULL, nested.opt = "intonly"){
   library(limma)
-  library(dplyr)
+  # dplyr removed - use base R to avoid masking issues
   
   if(!exists('adj.vec')){
     adj.bool = F;
@@ -1170,12 +1235,10 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   library(plotly)
   threshold <- logp_val               
   
-  both.mat$category <- with(both.mat, dplyr::case_when(
-    pval.no > threshold & pval.adj > threshold ~ "Significant in both",
-    pval.no > threshold & pval.adj <= threshold ~ "Significant in pval.no only",
-    pval.adj > threshold & pval.no <= threshold ~ "Significant in pval.adj only",
-    TRUE ~ "Non-significant"
-  ))
+  both.mat$category <- ifelse(both.mat$pval.no > threshold & both.mat$pval.adj > threshold, "Significant in both",
+                       ifelse(both.mat$pval.no > threshold & both.mat$pval.adj <= threshold, "Significant in pval.no only",
+                       ifelse(both.mat$pval.adj > threshold & both.mat$pval.no <= threshold, "Significant in pval.adj only",
+                              "Non-significant")))
   
   # Define a list or data frame mapping categories to properties
   category_properties <- data.frame(
@@ -1625,7 +1688,7 @@ PerformCovariateAdjustment <- function(mSetObj = NA,
                                        use.combat = FALSE) {
   
   library(limma)
-  library(dplyr)
+  # dplyr removed - use base R to avoid masking issues
   
   mSetObj <- .get.mSet(mSetObj)
 

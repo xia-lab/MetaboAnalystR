@@ -185,50 +185,32 @@ CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
   
   x  <- mSetObj$dataSet$norm;
   y <- mSetObj$dataSet$cls;
-  
+
   # auc
   auc <- caTools::colAUC(x, y, plotROC=F)[1,];
-  if(.on.public.web & RequireFastUnivTests(mSetObj)){
-    res <- PerformFastUnivTests(x, y);
-    ttp <- res[,2];
-  }else{
-    ttp <- GetROCTtestP(x, y);
-  }
-  
-  # fold change
-  # use non-transformed data, then log2
-  if(mSetObj$dataSet$use.ratio){
-    data <- mSetObj$dataSet$proc.ratio;
-  }else{
-    data <- qs::qread("data_proc.qs");
-  }
-  # update in case norm filtered?
-  hit.inxX <- rownames(data) %in% rownames(x);
-  hit.inxY <- colnames(data) %in% colnames(x);
-  data <- data[hit.inxX, hit.inxY, drop=FALSE];
-  min.val <- min(abs(data[data!=0]))/2;
-  #data <- log2((data + sqrt(data^2 + min.val))/2);
-  
-  m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), , drop=FALSE]);
-  m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), , drop=FALSE]);
-  #fc <- m1-m2;
-  ratio <- m1/m2;
-  ratio[ratio < 0] <- 0;
-  fc <- signif(log2(ratio), 5);
-  fc[is.infinite(fc) & fc < 0] <- -99;
-  fc[is.infinite(fc) & fc > 0] <- 99;
+
+  # Use limma linear model for logFC and moderated p-values
+  limma.res <- GetLimmaFCandP(x, y);
+  fc <- signif(limma.res$logFC, 5);
+  names(fc) <- rownames(limma.res);
+  ttp <- limma.res$P.Value;
+  names(ttp) <- rownames(limma.res);
+
+  # Reorder to match column order of x
+  fc <- fc[colnames(x)];
+  ttp <- ttp[colnames(x)];
   
   if(mSetObj$dataSet$roc_cols > 1){ # dont need to calc kmeans if only 1 metabolite!
     # now do k-means to measure their expression similarities
     
     kms <- ComputeKmeanClusters(t(x), clust.num);
-    feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, FC=fc, clusters = kms);
+    feat.rank.mat <- data.frame(AUC=auc, Pval=ttp, Log2FC=fc, clusters = kms);
     rownames(feat.rank.mat) <- colnames(x);
-    
+
     ord.inx <- order(feat.rank.mat$AUC, decreasing=T);
     feat.rank.mat  <- data.matrix(feat.rank.mat[ord.inx, , drop=FALSE]);
   }else{
-    feat.rank.mat <- data.matrix(data.frame(AUC=auc, Pval=ttp, FC=fc, clusters=1))
+    feat.rank.mat <- data.matrix(data.frame(AUC=auc, Pval=ttp, Log2FC=fc, clusters=1))
   }
   
   # how to format pretty, and still keep numeric
@@ -3021,6 +3003,12 @@ GetLassoFreqs <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
+
+#' Compute logFC and moderated p-values using limma linear model
+#' @description Fits a linear model per feature and returns logFC (model coefficient)
+#'   and moderated p-values via empirical Bayes. Works on normalized/transformed data
+# GetLimmaFCandP is now defined in general_misc_utils.R (loaded for all modules)
+# It log2-transforms data before limma fitting so logFC is on log2 scale
 
 GetROCTtestP <- function(data, cls){
   data <- as.matrix(data);
