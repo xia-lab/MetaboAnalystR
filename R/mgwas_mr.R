@@ -23,7 +23,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       }
       if(!exists("tableView.proc",mSetObj$dataSet)){
           mSetObj$dataSet$tableView.proc <- mSetObj$dataSet$tableView
-
+          mSetObj$dataSet$tableView.bak <- mSetObj$dataSet$tableView
        }
       exposure.dat <- mSetObj$dataSet$tableView;
       exposure.dat <- exposure.dat[,c("P-value", "Chr", "SE","Beta","BP","HMDB","SNP","A1","A2","EAF","Common Name", "metabolites", "genes", "gene_id", "URL", "PMID", "pop_code", "biofluid","sample")]
@@ -32,7 +32,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       outcome.id <- mSetObj$dataSet$outcome$id;
     if(is.na(mSetObj[["dataSet"]][["outcome"]][["sample_size"]]) & steigerOpt =="use_steiger"){
         AddErrMsg(paste0("Steiger filtering failed due to missing of outcome sample size. Please choose another outcome dataset or skip steiger filtering"))
-             return(-2);
+             return(c(-2, -2));
     }
     
       # do LD clumping
@@ -72,11 +72,11 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       
       if(length(grep("Server error: 502", captured_messages)) > 0 || length(grep("Failed to retrieve results from server", captured_messages))){
             AddErrMsg(paste0(last_msg));
-            return(-2);   
+            return(c(-2, -2));
       }
       if(is.null(outcome.dat) | nrow(outcome.dat) == 0){
             AddErrMsg(paste0("The selected combination of SNP(s) and disease outcome yielded no available data."))
-            return(-2);
+            return(c(-2, -2));
       }
       
    
@@ -103,6 +103,9 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        dat$ifCheck = !grepl(", ",dat$metabolites)
        dat= dat[order(dat$ifCheck,dat$pval.exposure,decreasing = T),]
        mSetObj$dataSet$harmonized.dat <- dat;
+       # update tableView to reflect filtered SNPs (only keep mr_keep=TRUE rows)
+       surviving.rows <- rownames(dat[dat$mr_keep, ]);
+       mSetObj$dataSet$tableView <- mSetObj$dataSet$tableView[surviving.rows, ];
      if(!exists("tableView.orig",   mSetObj$dataSet)){
         mSetObj$dataSet$tableView.orig <- dat
         mSetObj$dataSet$exposure.ldp.org <-  exposure.dat
@@ -1708,6 +1711,9 @@ ResetSNPEntries  <- function(expnm="") {
   mSetObj$dataSet$harmonized.dat <-   mSetObj$dataSet$tableView.orig
   mSetObj$dataSet$exposure.ldp <- mSetObj$dataSet$exposure.ldp.org
   mSetObj$dataSet$outcome.dat <-   mSetObj$dataSet$outcome.dat.org
+  if(exists("tableView.bak", mSetObj$dataSet)){
+    mSetObj$dataSet$tableView <- mSetObj$dataSet$tableView.bak
+  }
   return(.set.mSet(mSetObj));
   
 }
