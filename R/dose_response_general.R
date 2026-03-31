@@ -1159,7 +1159,10 @@ PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
   #csv.res <- merge(res, ld.pass.df, by.x = "item", by.y = "id")
 
   fast.write.csv(res, "curvefit_detailed_table.csv");
-  ExportResultMatArrow(res, "curvefit_result");
+  # Export only the columns needed by Java (numeric subset matching GetFitResultMatrix)
+  arrow.res <- res[, c("lof.p", "bmdl", "bmd", "bmdu", "b", "c", "d", "e"), drop = FALSE]
+  colnames(arrow.res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")
+  ExportResultMatArrow(arrow.res, "curvefit_result");
   print("Completed PerformBMDCalc");
 
   if(!.on.public.web){
@@ -1274,7 +1277,10 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     mSetObj$dataSet      <- dataSet
     .set.mSet(mSetObj)
     fast.write.csv(res, "curvefit_detailed_table.csv")
-    ExportResultMatArrow(res, "curvefit_result");
+    # Export only the columns needed by Java (numeric subset matching GetFitResultMatrix)
+    arrow.res <- res[, c("lof.p", "bmdl", "bmd", "bmdu", "b", "c", "d", "e"), drop = FALSE]
+    colnames(arrow.res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")
+    ExportResultMatArrow(arrow.res, "curvefit_result");
 
     print("Completed PerformBMDCalc")
     if (!.on.public.web) return(.set.mSet(mSetObj))
@@ -1425,7 +1431,8 @@ GetFitResultMatrix <- function(){
     res[is.nan(res)] <- 0
     colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e", "AIC")
   } else {
-    res <- mSetObj$dataSet$html.resTable[,-c(1,2)]
+    res <- mSetObj$dataSet$html.resTable
+    res <- res[, c("lof.p", "bmdl", "bmd", "bmdu", "b", "c", "d", "e"), drop = FALSE]
     res <- signif(as.matrix(res), 5)
     res[is.nan(res)] <- 0
     colnames(res) <- c("P-val", "BMDl", "BMD", "BMDu", "b", "c", "d", "e")

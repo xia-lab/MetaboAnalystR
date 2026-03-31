@@ -1661,8 +1661,10 @@ GeneratePeakList <- function(userPath) {
 
   setwd(userPath)
   
+  .wait_i <- 0
   while(!file.exists("mSet.rda")){
-    #cat("waiting data writing done...")
+    .wait_i <- .wait_i + 1
+    if(.wait_i > 60) stop("Timeout: mSet.rda not found after 3 minutes")
     Sys.sleep(3)
   }
   load("mSet.rda")
@@ -1705,8 +1707,10 @@ GeneratePeakList <- function(userPath) {
   }
 
   ## Prepare other information
+  .wait_i <- 0
   while(!file.exists("annotated_peaklist.rds")){
-    cat("waiting data writing done...")
+    .wait_i <- .wait_i + 1
+    if(.wait_i > 60) stop("Timeout: annotated_peaklist.rds not found after 3 minutes")
     Sys.sleep(3)
   }
   options(digits = 10) 

@@ -128,7 +128,7 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
 {
    if(.on.public.web){
     # make this lazy load
-    if(!exists("my.time.mb.manova")){ # public web on same user dir
+    if(!exists("my.time.mb.manova")){
       .load.scripts.on.demand("util_multifac_mb_manova.Rc");    
     }
     return(my.time.mb.manova(object, times, D, size, nu, Lambda, beta.d, beta, alpha.d, alpha, condition.grp, time.grp, rep.grp, p));
@@ -382,7 +382,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
   
    if(.on.public.web){
     # make this lazy load
-    if(!exists("my.time.mb.2d")){ # public web on same user dir
+    if(!exists("my.time.mb.2d")){
       .load.scripts.on.demand("util_multifac_mb_2d.Rc");    
     }
     return(my.time.mb.2d(object, k, mn, c.grp, nu, Lambda, eta, k.grp, mn.grp, r, vec, d, prop, T2.only));
@@ -395,7 +395,7 @@ mb.2D <- function(object, k, mn, c.grp, nu=NULL, Lambda=NULL, eta=NULL, k.grp=NU
 mb.1D <- function(object, k, n, nu=NULL, Lambda1=NULL, eta=NULL, k.grp=NULL, n.grp=NULL, r=FALSE, vec=FALSE, d=NULL, prop=0.01, T2.only=TRUE) {
     if(.on.public.web){
     # make this lazy load
-    if(!exists("my.time.mb.1d")){ # public web on same user dir
+    if(!exists("my.time.mb.1d")){
       .load.scripts.on.demand("util_multifac_mb_1d.Rc");    
     }
     return(my.time.mb.1d(object, k, n, nu, Lambda1, eta, k.grp, n.grp, r, vec, d, prop, T2.only));

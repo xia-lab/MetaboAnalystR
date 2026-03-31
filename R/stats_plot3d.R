@@ -9,7 +9,7 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.plot.scatter3d")){ # public web on same user dir
+    if(!exists("my.plot.scatter3d")){
       .load.scripts.on.demand("util_plot3d.Rc");    
     }
     return(my.plot.scatter3d(x, y, z, xlab=xlab, ylab=ylab, 
@@ -354,35 +354,35 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   }
 
   coords <- as.matrix(pos.xyz[inx, 1:3])
-  mesh <- list()
 
   tryCatch({
-    if (type == "alpha") {
-      require(alphashape3d)
-      require(rgl)
-      sh <- ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09)
-      mesh[[1]] <- as.mesh3d(sh, triangles = TRUE)
-    } else if (type == "ellipse") {
-      require(rgl)
-      cov_mat <- cov(coords)
-      if (any(is.na(cov_mat)) || det(cov_mat) <= 0) {
-        message("[ComputeEncasing] Singular covariance matrix")
-        return("NA")
-      }
-      # centre=c(0,0,0) because JS positions mesh at node centroid
-      mesh[[1]] <- ellipse3d(x = cov_mat, centre = c(0, 0, 0), level = level)
-    } else {
-      require(ks)
-      kde_res <- kde(coords)
-      plot(kde_res, cont = level * 100)
-      mesh <- scene3d()$objects
+    mesh <- rsclient_isolated_exec(
+      func_body = function(input_data) {
+        Sys.setenv(RGL_USE_NULL = TRUE)
+        cov_mat <- cov(input_data$coords)
+        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) return(NULL)
+        center <- colMeans(input_data$coords)
+        mesh <- list()
+        mesh[[1]] <- rgl::ellipse3d(x = cov_mat, centre = center, level = input_data$level)
+        mesh
+      },
+      input_data = list(coords = coords, level = level),
+      packages = c("rgl", "qs"), timeout = 120, output_type = "qs"
+    )
+    if (is.list(mesh) && isFALSE(mesh$success)) {
+      sink(filenm); cat("{}"); sink()
+      return(filenm)
     }
-
+    if (is.null(mesh)) {
+      sink(filenm); cat("{}"); sink()
+      return(filenm)
+    }
     jsonlite::write_json(.pack_mesh3d(mesh), filenm, auto_unbox = TRUE, pretty = FALSE)
     return(filenm)
   }, error = function(e) {
-    message("[ComputeEncasing] ERROR: ", e$message)
-    return("NA")
+    message("[ComputeEncasing] ", e$message)
+    sink(filenm); cat("{}"); sink()
+    return(filenm)
   })
 }
 
@@ -424,53 +424,54 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
   rdt.set <- qs::qread("rdt.set.qs")
   pos.xyz <- rdt.set$pos.xyz
 
-  all_meshes <- list()
-
-  for (i in 1:nrow(groups)) {
-    group_name <- groups$group[i]
-    names <- strsplit(groups$ids[i], "; ")[[1]]
-    inx <- rownames(pos.xyz) %in% names
-
-    if (sum(inx) < 3) next
-
-    coords <- as.matrix(pos.xyz[inx, 1:3])
-    mesh <- NULL
-
-    tryCatch({
-      if (type == "alpha") {
-        require(alphashape3d)
-        require(rgl)
-        sh <- ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09)
-        mesh <- as.mesh3d(sh, triangles = TRUE)
-      } else if (type == "ellipse") {
-        require(rgl)
-        cov_mat <- cov(coords)
-        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) next
-        # centre=c(0,0,0) because JS positions mesh at node centroid
-        mesh <- ellipse3d(x = cov_mat, centre = c(0, 0, 0), level = level)
-      } else {
-        require(ks)
-        kde_res <- kde(coords)
-        plot(kde_res, cont = level * 100)
-        mesh <- scene3d()$objects[[1]]
-      }
-
-      if (!is.null(mesh)) {
-        # Wrap in list so JS gets array: [{vb: ...}]
-        all_meshes[[group_name]] <- list(.pack_mesh3d(mesh))
-      }
-    }, error = function(e) {
-      message("[ComputeEncasingBatch] Group '", group_name, "' error: ", e$message)
-    })
-  }
-
-  if (length(all_meshes) == 0) return("NA")
-
-  # Convert to array format: [{"group": "name", "mesh": [{vb: ...}]}, ...]
-  result_array <- lapply(names(all_meshes), function(grp) {
-    list(group = grp, mesh = all_meshes[[grp]])
+  # Extract coords per group in master
+  group_data <- lapply(1:nrow(groups), function(i) {
+    nms <- strsplit(groups$ids[i], "; ")[[1]]
+    inx <- rownames(pos.xyz) %in% nms
+    list(group = groups$group[i], coords = as.matrix(pos.xyz[inx, 1:3]))
   })
 
-  jsonlite::write_json(result_array, filenm, auto_unbox = TRUE, pretty = FALSE)
-  return(filenm)
+  tryCatch({
+    # Single subprocess for all groups
+    result_list <- rsclient_isolated_exec(
+      func_body = function(input_data) {
+        Sys.setenv(RGL_USE_NULL = TRUE)
+        lapply(input_data$groups, function(g) {
+          coords <- g$coords
+          if (nrow(coords) < 3) return(NULL)
+          tryCatch({
+            cov_mat <- cov(coords)
+            if (any(is.na(cov_mat)) || det(cov_mat) <= 0) return(NULL)
+            center <- colMeans(coords)
+            mesh <- rgl::ellipse3d(x = cov_mat, centre = center, level = input_data$level)
+            list(group = g$group, mesh = list(mesh))
+          }, error = function(e) NULL)
+        })
+      },
+      input_data = list(groups = group_data, level = level),
+      packages = c("rgl", "qs"), timeout = 120, output_type = "qs"
+    )
+
+    if (is.list(result_list) && isFALSE(result_list$success)) {
+      sink(filenm); cat("{}"); sink()
+      return(filenm)
+    }
+
+    # Filter NULLs and pack mesh3d objects
+    result_list <- result_list[!sapply(result_list, is.null)]
+    if (length(result_list) == 0) {
+      sink(filenm); cat("{}"); sink()
+      return(filenm)
+    }
+
+    result_array <- lapply(result_list, function(r) {
+      list(group = r$group, mesh = lapply(r$mesh, .pack_mesh3d))
+    })
+    jsonlite::write_json(result_array, filenm, auto_unbox = TRUE, pretty = FALSE)
+    return(filenm)
+  }, error = function(e) {
+    message("[ComputeEncasingBatch] ", e$message)
+    sink(filenm); cat("{}"); sink()
+    return(filenm)
+  })
 }

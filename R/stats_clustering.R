@@ -760,21 +760,20 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       my.dist2 <- as.dist(my.dist2, diag = FALSE, upper = F);
 
     } else if (smplDist == "bray") { # Bray-Curtis requires the vegan package
-        library(vegan)
-        
-        # 1. Transpose data (Features x Samples -> Samples x Features)
-        # vegan requires samples as rows
         dat.t <- t(data1sc)
-        
-        # 2. Check for negative values (common in normalized data)
         if (min(dat.t, na.rm=TRUE) < 0) {
-            # Shift data to be non-negative: X_new = X + |min|
             print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
             dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
         }
-        
-        # 3. Calculate Distance
-        my.dist2 <- vegan::vegdist(dat.t, method = "bray")
+        my.dist2 <- rsclient_isolated_exec(
+          func_body = function(input_data) {
+            require(vegan)
+            vegan::vegdist(input_data$dat, method = "bray")
+          },
+          input_data = list(dat = dat.t),
+          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+        )
+        if (is.list(my.dist2) && isFALSE(my.dist2$success)) { AddErrMsg(my.dist2$message); return(0) }
 
     }else{
       my.dist2 = dist(t(data1sc), method = smplDist)
@@ -790,22 +789,21 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       my.dist <- as.dist(my.dist, diag = FALSE, upper = F)
 
   } else if (smplDist == "bray") { # Bray-Curtis requires the vegan package
-
-        library(vegan)
-        
-        # 1. Transpose data (Features x Samples -> Samples x Features)
-        # vegan requires samples as rows
-        dat.t <- data1sc;
-        
-        # 2. Check for negative values (common in normalized data)
+        dat.t <- data1sc
         if (min(dat.t, na.rm=TRUE) < 0) {
-            # Shift data to be non-negative: X_new = X + |min|
             print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
             dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
         }
-        
-        # 3. Calculate Distance
-        my.dist <- vegan::vegdist(dat.t, method = "bray")
+        my.dist <- rsclient_isolated_exec(
+          func_body = function(input_data) {
+            require(vegan)
+            vegan::vegdist(input_data$dat, method = "bray")
+          },
+          input_data = list(dat = dat.t),
+          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+        )
+        if (is.list(my.dist) && isFALSE(my.dist$success)) { AddErrMsg(my.dist$message); return(0) }
+        if (!is.null(my.dist$value)) my.dist <- my.dist$value
 
     }else{
       my.dist = dist(data1sc, method = smplDist)
@@ -1002,31 +1000,35 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
     dist.for.cols <- smplDist
 
     if(smplDist == "bray"){
-        library(vegan)
-        
-        # 1. APPLY SCALING FIRST
-        # Critical: PlotHeatMap calculates Bray on the SCALED data. 
-        # We must replicate this to get identical clusters.
-        # Note: We assume scale_mat is available in the environment.
+        # Apply scaling first (replicate PlotHeatMap's scaled data)
         dat.for.dist <- scale_mat(t(hc.dat), scaleOpt)
-        
-        # 2. FEATURE DISTANCE (For Heatmap Rows)
-        # Input: Features x Samples (scaled)
-        # vegdist calculates distance between ROWS of the input.
+
+        # Feature distance (rows): Features x Samples (scaled)
         feat.mat <- dat.for.dist
         if (min(feat.mat, na.rm=TRUE) < 0) {
             feat.mat <- feat.mat + abs(min(feat.mat, na.rm=TRUE))
         }
-        dist.for.rows <- vegan::vegdist(feat.mat, method = "bray")
-        
-        # 3. SAMPLE DISTANCE (For Heatmap Cols)
-        # Input: Samples x Features (scaled)
-        # vegdist needs Samples as ROWS.
+        # Sample distance (cols): Samples x Features (scaled)
         smpl.mat <- t(dat.for.dist)
         if (min(smpl.mat, na.rm=TRUE) < 0) {
             smpl.mat <- smpl.mat + abs(min(smpl.mat, na.rm=TRUE))
         }
-        dist.for.cols <- vegan::vegdist(smpl.mat, method = "bray")
+
+        bray_result <- rsclient_isolated_exec(
+          func_body = function(input_data) {
+            require(vegan)
+            list(
+              rows = vegan::vegdist(input_data$feat_mat, method = "bray"),
+              cols = vegan::vegdist(input_data$smpl_mat, method = "bray")
+            )
+          },
+          input_data = list(feat_mat = feat.mat, smpl_mat = smpl.mat),
+          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+        )
+        if (is.list(bray_result) && isFALSE(bray_result$success)) { AddErrMsg(bray_result$message); return(0) }
+        if (!is.null(bray_result$value)) bray_result <- bray_result$value
+        dist.for.rows <- bray_result$rows
+        dist.for.cols <- bray_result$cols
     }
     # ------------- UPDATED BLOCK END -------------
 

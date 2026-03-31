@@ -10,7 +10,16 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  contrib <- factoextra::get_pca_var(pca)$contrib;
+  response <- rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(factoextra)
+      factoextra::get_pca_var(input_data$pca)$contrib
+    },
+    input_data = list(pca = pca),
+    packages = c("factoextra", "qs"), timeout = 120, output_type = "qs"
+  )
+  if (is.list(response) && isFALSE(response$success)) { AddErrMsg(response$message); return(0) }
+  contrib <- response
   if(ncol(contrib)>10){
     contrib <- contrib[,1:10];# keep top 10 should be sufficient
   }
@@ -37,29 +46,57 @@ PCA.Anal <- function(mSetObj=NA){
 
   data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
-  if (cls.type == "cont") {
-    if (!is.numeric(grp))
-      stop("'grp' must be numeric when cls.type = \"cont\"")
+  result <- rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(vegan)
+      data_dist <- input_data$data_dist
+      grp <- input_data$grp
+      cls_type <- input_data$cls_type
 
-    res <- vegan::adonis2(data.dist ~ grp)
-    pair.res <- NULL
-
-  } else {
-    grp      <- as.factor(grp)
-    res      <- vegan::adonis2(data.dist ~ grp)
-
-    if (length(levels(grp)) > 2) {               # pairwise if >2 levels
-      pair.res           <- .permanova_pairwise(x = data.dist, grp = grp)
-      rownames(pair.res) <- pair.res$pairs
-      pair.res$pairs     <- NULL
-      pair.res           <- signif(pair.res, 5)
-      fast.write.csv(pair.res, file = "pca_pairwise_permanova.csv")
-    } else {
-      pair.res <- NULL
-    }
+      if (cls_type == "cont") {
+        if (!is.numeric(grp)) stop("'grp' must be numeric when cls.type = 'cont'")
+        res <- vegan::adonis2(data_dist ~ grp)
+        pair.res <- NULL
+      } else {
+        grp <- as.factor(grp)
+        res <- vegan::adonis2(data_dist ~ grp)
+        if (length(levels(grp)) > 2) {
+          co <- combn(unique(as.character(grp)), 2)
+          nco <- ncol(co)
+          out <- data.frame(matrix(NA, nrow = nco, ncol = 5))
+          names(out) <- c('pairs', 'SumOfSqs', 'F.Model', 'R2', 'pval')
+          for (j in 1:nco) {
+            ij <- grp %in% c(co[1, j], co[2, j])
+            Dij <- as.dist(as.matrix(data_dist)[ij, ij])
+            fij <- data.frame(fij = grp[ij])
+            a <- vegan::adonis2(Dij ~ fij, data = fij, permutations = 999)
+            out[j, 1] <- paste(co[1, j], 'vs', co[2, j])
+            out[j, 2] <- a$SumOfSqs[1]; out[j, 3] <- a$F[1]
+            out[j, 4] <- a$R2[1]; out[j, 5] <- a$`Pr(>F)`[1]
+          }
+          out$p.adj <- p.adjust(out$pval, method = "fdr")
+          out$SumOfSqs <- NULL
+          pair.res <- out
+        } else {
+          pair.res <- NULL
+        }
+      }
+      list(res = res, pair.res = pair.res)
+    },
+    input_data = list(data_dist = data.dist, grp = grp, cls_type = cls.type),
+    packages = c("vegan", "qs"), timeout = 300, output_type = "qs"
+  )
+  if (is.list(result) && isFALSE(result$success)) {
+    warning(paste("PERMANOVA failed:", result$message))
+    return(list(NULL, NULL))
   }
-
-  return(list(res, pair.res))
+  if (!is.null(result$pair.res)) {
+    rownames(result$pair.res) <- result$pair.res$pairs
+    result$pair.res$pairs <- NULL
+    result$pair.res <- signif(result$pair.res, 5)
+    fast.write.csv(result$pair.res, file = "pca_pairwise_permanova.csv")
+  }
+  return(list(result$res, result$pair.res))
 }
 
 
@@ -1236,7 +1273,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   library(ggplot2)
   library(ggrepel)
   library(dplyr)
-  library(factoextra) 
+  # factoextra not needed here — removed dead import
  
   
   cls <- mSetObj$dataSet$cls;
@@ -1381,7 +1418,7 @@ PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
     res.orig <- Get.bwss(pred.orig, orig.cls);
     res.perm <- Perform.permutation(num, Get.pls.bw);
   }
-  # perm.num may be adjusted on public server
+  # perm.num may be adjusted on server
   perm.num <- res.perm$perm.num;
   perm.res <- res.perm$perm.res;
   perm.vec <- c(res.orig, unlist(perm.res, use.names=FALSE));
@@ -2169,7 +2206,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
   
-  # note, actual permutation number may be adjusted in public server
+  # note, actual permutation number may be adjusted on server
   perm.num <- my.res$suppLs[["permI"]];
   
   mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
@@ -3111,23 +3148,19 @@ ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = 999)
 
 ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
   pc.mat <- cbind(pc1, pc2)
-  distM  <- dist(pc.mat)                     # Euclidean distance
-  
-    ## ------------------------------------------------  dbRDA
-    if (!requireNamespace("vegan", quietly = TRUE))
-      stop("Package 'vegan' is required for dbRDA (install.packages(\"vegan\")).")
-    
-    # capscale ~ cls — distance-based RDA
-    dbrda.mod <- vegan::capscale(distM ~ cls)
-    dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = numPermutations)
-    
-    Fval <- dbrda.an$F[1]
-    R2   <- dbrda.mod$CCA$tot.chi / dbrda.mod$tot.chi
-    pval <- dbrda.an$`Pr(>F)`[1]
-    
-    stat.info.vec <- c(`F-value` = signif(Fval, 5),
-                       `R-squared` = signif(R2, 5),
-                       `p-value`   = signif(pval, 5))
+  distM  <- dist(pc.mat)
 
-    return(signif(pval, 5));
+  result <- rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(vegan)
+      dbrda.mod <- vegan::capscale(input_data$distM ~ input_data$cls)
+      dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = input_data$n_perm)
+      signif(dbrda.an$`Pr(>F)`[1], 5)
+    },
+    input_data = list(distM = distM, cls = cls, n_perm = numPermutations),
+    packages = c("vegan", "qs"), timeout = 300, output_type = "qs"
+  )
+  if (is.list(result) && isFALSE(result$success)) { AddErrMsg(result$message); return(0) }
+  pval <- if (!is.null(result$value)) result$value else result
+  return(pval)
 }

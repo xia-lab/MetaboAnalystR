@@ -3,7 +3,7 @@ CleanLipidNames <- function(qvec){
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.clean.lipid")){ # public web on same user dir
+    if(!exists("my.clean.lipid")){
       .load.scripts.on.demand("util_lipid.Rc");    
     }
     return(my.clean.lipid(qvec));
@@ -72,7 +72,7 @@ PerformMultiMatch <- function(mSetObj=NA, q, lipid){
 PerformApproxMatch <- function(mSetObj=NA, q, lipid){
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.approx.match")){ # public web on same user dir
+    if(!exists("my.approx.match")){
       .load.scripts.on.demand("util_approx.Rc");    
     }
     return(my.approx.match(mSetObj, q, lipid));
@@ -162,7 +162,7 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 CrossReferencingAPI <- function(mSetObj=NA, inputType){
   
    # make this lazy load
-    if(!exists("my.namemap.api")){ # public web on same user dir
+    if(!exists("my.namemap.api")){
       .load.scripts.on.demand("util_api.Rc");    
     }
 

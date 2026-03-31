@@ -559,7 +559,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.batch.correct")){ # public web on same user dir
+    if(!exists("my.batch.correct")){
       .load.scripts.on.demand("util_batch.Rc");    
     }
     return(my.batch.correct(mSetObj, imgName, Method, center)); 

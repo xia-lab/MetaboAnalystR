@@ -693,7 +693,7 @@ KendallCorrFunc <- function(var1, var2, data){
 
 # inject functions from the Network-DSPC script
 ComputeDSPC <- function(mSetObj=NA){
-     if(!exists("PerformDSPC")){ # public web on same user dir
+     if(!exists("PerformDSPC")){
          .load.scripts.on.demand("networks_enrich.Rc");  
          .load.scripts.on.demand("networks_view.Rc");      
      }

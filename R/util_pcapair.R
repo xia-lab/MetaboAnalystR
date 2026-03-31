@@ -6,6 +6,34 @@
                                 pc.num,
                                 meta = "Class",
                                 metaShape = NULL) {
+
+  # Run entire pairs plot in subprocess (GGally + vegan quarantined)
+  rsclient_isolated_exec(
+    func_body = function(input_data) {
+      setwd(input_data$wd)
+      require(ggplot2); require(GGally); require(grid); require(vegan); require(Cairo)
+      .plot_pca_pair_inner(input_data$mSetObj, input_data$imgName, input_data$format,
+                           input_data$dpi, input_data$width, input_data$pc.num,
+                           input_data$meta, input_data$metaShape)
+    },
+    input_data = list(mSetObj = mSetObj, imgName = imgName, format = format,
+                      dpi = dpi, width = width, pc.num = pc.num,
+                      meta = meta, metaShape = metaShape, wd = getwd()),
+    packages = c("GGally", "vegan", "ggplot2", "Cairo", "grid", "qs"),
+    timeout = 300, output_type = "qs",
+    module = "metabo"
+  )
+  # plot failure is non-fatal
+  mSetObj <- .get.mSet(mSetObj)
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  mSetObj$imgSet$pca.pair <- imgName
+  return(invisible(.set.mSet(mSetObj)))
+}
+
+# Inner implementation (called directly or in subprocess)
+.plot_pca_pair_inner <- function(mSetObj = NA, imgName, format = "png",
+                                  dpi = 72, width = NA, pc.num,
+                                  meta = "Class", metaShape = NULL) {
   library(ggplot2)
   library(GGally)
   library(grid)

@@ -2426,11 +2426,17 @@ PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA"
 
   mSetObj$dataSet$meta.info.proc <- process_metadata(mSetObj$dataSet$meta.info)  
 
-  # Check if original normalized data exists, if not, initialize it
-  if (is.null(mSetObj$dataSet$norm.orig.roc)) {
+  # Track which data state (norm vs adjusted) was used for ROC cache
+  current_state <- if (!is.null(mSetObj$dataSet$active_data_state)) mSetObj$dataSet$active_data_state else "norm"
+  prev_state <- mSetObj$dataSet$.roc_data_state
+
+  # Re-initialize if first call or data source changed (norm <-> adjusted)
+  if (is.null(mSetObj$dataSet$norm.orig.roc) || !identical(current_state, prev_state)) {
     mSetObj$dataSet$norm.orig.roc <- mSetObj$dataSet$norm
+    mSetObj$dataSet$.roc_data_state <- current_state
+    mSetObj$dataSet$norm.all <- NULL
   }
-  
+
   # Get original data and metadata
   merged_data <- mSetObj$dataSet$norm.orig.roc;
   meta.info <- mSetObj$dataSet$meta.info

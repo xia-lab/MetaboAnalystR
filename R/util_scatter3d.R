@@ -277,38 +277,53 @@ scale_range <- function(x, new_min = 0, new_max = 1) {
 
 
 ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
+  tryCatch({
+    level <- as.numeric(level)
+    names <- strsplit(names.vec, "; ")[[1]]
 
-  level <- as.numeric(level)
-  names = strsplit(names.vec, "; ")[[1]]
+    # Read data in master
+    res <- .get.rdt.set()
+    pos.xyz <- res$pos.xyz
 
-  res <- .get.rdt.set();
-  res <- res$pos.xyz
-  pos.xyz <- res
+    if (is.null(pos.xyz) || nrow(pos.xyz) == 0) {
+      sink(filenm); cat("{}"); sink()
+      return(filenm)
+    }
 
-  inx = rownames(pos.xyz) %in% names;
-  coords = as.matrix(pos.xyz[inx,c(1:3)])
-  mesh = list()
-  if(type == "alpha"){
-    library(alphashape3d)
-    library(rgl)
-    sh=ashape3d(coords, 1.0, pert = FALSE, eps = 1e-09);
-    mesh[[1]] = as.mesh3d(sh, triangles=T);
-  }else if(type == "ellipse"){
-    library(rgl);
-    pos=cov(coords, y = NULL, use = "everything");
-    mesh[[1]] = ellipse3d(x=as.matrix(pos), level=level);
-  }else{
-    library(ks);
-    res=kde(coords);
-    r = plot(res, cont=level*100, display="rgl");
-    sc = scene3d();
-    mesh = sc$objects;
-  }
-  library(RJSONIO);
-  sink(filenm);
-  cat(toJSON(mesh));
-  sink();
-  return(filenm);
+    inx <- rownames(pos.xyz) %in% names
+    coords <- as.matrix(pos.xyz[inx, c(1:3)])
+
+    if (nrow(coords) < 4) {
+      sink(filenm); cat(RJSONIO::toJSON(list())); sink()
+      return(filenm)
+    }
+
+    # Only rgl::ellipse3d in subprocess
+    mesh <- rsclient_isolated_exec(
+      func_body = function(input_data) {
+        Sys.setenv(RGL_USE_NULL = TRUE)
+        pos <- cov(input_data$coords, y = NULL, use = "everything")
+        center <- colMeans(input_data$coords)
+        t_val <- sqrt(qchisq(input_data$level, 3))
+        mesh <- list()
+        mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
+        mesh
+      },
+      input_data = list(coords = coords, level = level),
+      packages = c("rgl", "qs"),
+      timeout = 120,
+      output_type = "qs"
+    )
+
+    # Write JSON in master (subprocess may have different wd)
+    if (!is.list(mesh) || !isFALSE(mesh$success)) {
+      sink(filenm); cat(RJSONIO::toJSON(mesh)); sink()
+    }
+  }, error = function(e) {
+    message("[ComputeEncasing] ", e$message)
+    sink(filenm); cat("{}"); sink()
+  })
+  return(filenm)
 }
 
 .get.rdt.set <- function(){

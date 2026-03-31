@@ -5,8 +5,31 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
                      gseaParam=1,
                      BPPARAM=NULL) {
   mSetObj <<- mSetObj;
-  #save.image("fgsea.RData");
-  # Warning message for ties in stats
+
+  # Run entire fgsea algorithm in subprocess
+  response <- rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(fgsea); require(BiocParallel); require(fastmatch); require(data.table)
+      setwd(input_data$wd)
+      .run_fgsea_inner(input_data$mSetObj, input_data$pathways, input_data$stats,
+                       input_data$ranks, input_data$nperm, input_data$minSize,
+                       input_data$maxSize, input_data$gseaParam)
+    },
+    input_data = list(mSetObj = mSetObj, pathways = pathways, stats = stats,
+                      ranks = ranks, nperm = nperm, minSize = minSize,
+                      maxSize = maxSize, gseaParam = gseaParam, wd = getwd()),
+    packages = c("fgsea", "BiocParallel", "fastmatch", "data.table", "qs"),
+    timeout = 900, output_type = "qs",
+    module = "metabo"
+  )
+  if (is.list(response) && isFALSE(response$success)) { AddErrMsg(response$message); return(0) }
+  return(response)
+}
+
+# Inner fgsea implementation (called directly or in subprocess)
+.run_fgsea_inner <- function(mSetObj, pathways, stats, ranks, nperm,
+                              minSize=1, maxSize=Inf, gseaParam=1,
+                              nproc=0, BPPARAM=NULL) {
   ties <- sum(duplicated(stats[stats != 0]))
   if (ties != 0) {
     warning("There are ties in the preranked stats (",
