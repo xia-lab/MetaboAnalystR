@@ -205,7 +205,7 @@ PerformMetaPSEA <- function(mSetObj=NA,
 
 
   if(file.exists("mummichog_matched_compound_all.csv")) file.remove("mummichog_matched_compound_all.csv")
-  if(file.exists("mummicho_pathway_enrichment_integ.csv")) file.remove("mmummicho_pathway_enrichment_integ.csv")
+  if(file.exists("mummichog_pathway_enrichment_integ.csv")) file.remove("mummichog_pathway_enrichment_integ.csv")
   if(file.exists("mummichog_pathway_enrichment_gsea.csv")) file.remove("mummichog_pathway_enrichment_gsea.csv")
   if(file.exists("ms_peaks_meta_anal_path_res.json")) file.remove("ms_peaks_meta_anal_path_res.json")
   if(file.exists("initial_ecs.qs")) file.remove("initial_ecs.qs")

@@ -570,9 +570,14 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   
   hits.query <- pathway.cpds;
-  
+
   #}
-  
+
+  # Save enrichment table as CSV for download (before converting to list)
+  csvName <- gsub("enrichNet", "enrichment", netNm)
+  csvName <- paste0(csvName, ".csv")
+  fast.write.csv(enr.mat, file = csvName, row.names = TRUE)
+
   enr.mat <- apply(enr.mat, 1, as.list)
   # print(paste("lib====", mSetObj$lib.organism));
   
@@ -610,7 +615,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   sink(netName)
   cat(rjson::toJSON(netData))
   sink()
-  
+
   # Store in mSetObj
   mSetObj$enrichNet <- netData
   

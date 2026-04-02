@@ -1213,6 +1213,73 @@ Setup.MapData <- function(mSetObj=NA, qvec){
   
   return(.set.mSet(mSetObj))
 }
+
+# Read a list input file (.txt/.csv/.tsv) and populate map data (datalist.csv)
+# Returns 1 on success, 0 on failure.
+Read.ListFileData <- function(mSetObj=NA, filePath, sep="auto", has.header=FALSE, col.inx=1){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(filePath) || !file.exists(filePath)){
+    AddErrMsg(paste("List file not found:", filePath));
+    return(0);
+  }
+
+  txt <- readLines(filePath, warn=FALSE, encoding="UTF-8");
+  txt <- gsub("\r", "", txt);
+  txt <- txt[nzchar(trimws(txt))];
+  if(length(txt) == 0){
+    AddErrMsg("List file appears to be empty.");
+    return(0);
+  }
+
+  if(is.na(col.inx) || col.inx < 1){
+    col.inx <- 1;
+  }
+
+  if(identical(sep, "auto")){
+    if(any(grepl("\t", txt, fixed=TRUE))){
+      sep <- "\t";
+    }else if(any(grepl(",", txt, fixed=TRUE))){
+      sep <- ",";
+    }else if(any(grepl(";", txt, fixed=TRUE))){
+      sep <- ";";
+    }else{
+      sep <- NA;
+    }
+  }
+
+  if(is.na(sep) || is.null(sep) || sep == ""){
+    qvec <- txt;
+    if(isTRUE(has.header) && length(qvec) > 1){
+      qvec <- qvec[-1];
+    }
+  }else{
+    toks <- strsplit(txt, split=sep, fixed=TRUE);
+    start.inx <- ifelse(isTRUE(has.header), 2, 1);
+    if(start.inx > length(toks)){
+      AddErrMsg("List file only contains header row.");
+      return(0);
+    }
+    qvec <- vapply(toks[start.inx:length(toks)], function(x){
+      if(length(x) >= col.inx){
+        return(x[[col.inx]]);
+      }else{
+        return("");
+      }
+    }, character(1));
+  }
+
+  qvec <- trimws(qvec);
+  qvec <- qvec[nzchar(qvec)];
+  qvec <- unique(qvec);
+  if(length(qvec) == 0){
+    AddErrMsg("No valid entries found in the list file.");
+    return(0);
+  }
+
+  mSetObj <- Setup.MapData(mSetObj, qvec);
+  return(1);
+}
 # this is only for SSP: for those with conc above threshold
 Update.MapData <- function(mSetObj=NA, qvec){
   mSetObj <- .get.mSet(mSetObj);
