@@ -7,8 +7,8 @@
                                 meta = "Class",
                                 metaShape = NULL) {
 
-  # Run entire pairs plot in subprocess (GGally + vegan quarantined)
-  rsclient_isolated_exec(
+  # Try subprocess first (for isolation); fallback to local render if child cannot resolve internals.
+  response <- rsclient_isolated_exec(
     func_body = function(input_data) {
       setwd(input_data$wd)
       require(ggplot2); require(GGally); require(grid); require(vegan); require(Cairo)
@@ -23,6 +23,10 @@
     timeout = 300, output_type = "qs",
     module = "metabo"
   )
+  if (is.list(response) && isFALSE(response$success)) {
+    message("[.plot.pca.pair.meta] subprocess failed, fallback to local render: ", response$message)
+    .plot_pca_pair_inner(mSetObj, imgName, format, dpi, width, pc.num, meta, metaShape)
+  }
   # plot failure is non-fatal
   mSetObj <- .get.mSet(mSetObj)
   imgName <- paste0(imgName, "dpi", dpi, ".", format)

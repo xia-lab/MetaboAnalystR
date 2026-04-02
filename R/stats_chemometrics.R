@@ -571,9 +571,12 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   mSetObj <- .get.mSet(mSetObj);
   
   loadings<-as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2]));
+  # Keep finite rows only to avoid blank plots when rotations contain NAs/Infs.
+  keep.inx <- is.finite(loadings[,1]) & is.finite(loadings[,2]);
+  loadings <- loadings[keep.inx, , drop=FALSE];
   # sort based on absolute values of 1, 2 
   ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
-  loadings <- signif(loadings[ord.inx,],5);
+  loadings <- signif(loadings[ord.inx,,drop=FALSE],5);
   
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
@@ -709,7 +712,7 @@ p <- ggplot() +
   geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
   stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
-               color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+               color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                   size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
@@ -724,7 +727,7 @@ p <- ggplot() +
     legend.position = "right",
     legend.title = element_blank(),
    legend.text = element_text(size = 12), 
-    panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),  # Add a black border around the plot
     panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
     panel.grid.minor = element_blank(),
     axis.line = element_blank(),
@@ -1315,7 +1318,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
     stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
     geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
-                 color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+               color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
     geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                     size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
@@ -1332,7 +1335,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
       legend.position = "right",
       legend.title = element_blank(),
       legend.text = element_text(size = 12), 
-      panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),  # Add a black border around the plot
       panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
       panel.grid.minor = element_blank(),
       axis.line = element_blank(),

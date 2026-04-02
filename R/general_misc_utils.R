@@ -96,7 +96,7 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
 }
 
 rsclient_isolated_exec <- function(func_body, input_data, packages = character(0),
-                                   timeout = 180, output_type = "qs") {
+                                   timeout = 180, output_type = "qs", ...) {
   bridge_tmp <- file.path(tempdir(), "rsclient_bridge")
   if (!dir.exists(bridge_tmp)) dir.create(bridge_tmp, recursive = TRUE)
   uid <- paste0(sample(letters, 6), collapse = "")
