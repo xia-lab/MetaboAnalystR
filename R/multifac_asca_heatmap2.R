@@ -625,7 +625,7 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
     # lev.perm is a list with each 3 col matrix (lvA, lvV, lvAB)
     res.perm <- Perform.permutation(20, Get.asca.leverage);
 
-    # perm.num may be adjusted on public server  
+    # perm.num may be adjusted on server  
     perm.num <- res.perm$perm.num;
     lev.perm <- res.perm$perm.res;
    
@@ -968,7 +968,7 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   mSetObj$analSet$asca <- TRUE;
   gc(); # garbage collection
 
-  # perm.num may be adjusted on public server  
+  # perm.num may be adjusted on server  
   perm.num <- res.perm$perm.num;
   perm.res <- res.perm$perm.res;
   

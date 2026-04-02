@@ -1,6 +1,6 @@
 # Perform OPLS
 # Orthogonal PLS functions (adapted from ropls package for web-based usage)
-# Turn off the .on.public.web for local usage
+# Configuration for web vs local usage
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
 # License: GNU GPL (>= 2)

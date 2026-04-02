@@ -5,6 +5,23 @@
 ## Part of the Rserve/qs to Apache Arrow migration
 ###################################################
 
+# Helper: write feather with subprocess isolation or direct
+.write_feather_safe <- function(df, arrow_path, compress = "uncompressed") {
+  if (file.exists(arrow_path)) { unlink(arrow_path); Sys.sleep(0.01) }
+
+  rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(arrow)
+      arrow::write_feather(input_data$df, input_data$path, compression = input_data$compress)
+      Sys.sleep(0.02)
+      base::normalizePath(input_data$path, mustWork = TRUE)
+    },
+    input_data = list(df = df, path = arrow_path, compress = compress),
+    packages = c("arrow", "qs"), timeout = 120, output_type = "qs"
+  )
+  # write failure is non-fatal
+}
+
 #' Sync file to disk and verify existence (Safe-Handshake pattern)
 #'
 #' This function ensures that a file is fully written to disk before
@@ -172,13 +189,7 @@ shadow_save <- function(obj, file, compress = "uncompressed") {
                 Sys.sleep(0.01)
             }
 
-            arrow::write_feather(df, arrow_path, compression = compress)
-
-            # SAFE-HANDSHAKE: Brief delay then verify with normalizePath
-            # This blocks until the OS confirms the file is accessible
-            Sys.sleep(0.02)
-            verified_path <- base::normalizePath(arrow_path, mustWork = TRUE)
-            return(verified_path)
+            .write_feather_safe(df, arrow_path, compress)
         }
     }, error = function(e) {
         warning(paste("Arrow shadow save failed:", e$message))
@@ -187,52 +198,21 @@ shadow_save <- function(obj, file, compress = "uncompressed") {
     return(NULL)
 }
 
-#' Shadow save for mixed-type data frames (Safe-Handshake pattern)
-#'
-#' Handles factors by converting to character. Returns verified path.
-#' Removes existing Arrow file first to prevent file-locking conflicts.
-#'
-#' @param obj Data frame or matrix to save
-#' @param file Path to .qs file
-#' @param compress Compression for Arrow (default: "uncompressed")
-#' @return The verified absolute path to the Arrow file, or NULL if save failed
-#' @export
 shadow_save_mixed <- function(obj, file, compress = "uncompressed") {
-    # Always save qs format for backward compatibility
     qs::qsave(obj, file)
-
-    # Derive Arrow path
     arrow_path <- sub("\\.qs$", ".arrow", file)
 
     tryCatch({
         if (is.matrix(obj) || is.data.frame(obj)) {
             df <- as.data.frame(obj, stringsAsFactors = FALSE)
-
-            # Convert factors to character for Arrow compatibility
             for (col in names(df)) {
-                if (is.factor(df[[col]])) {
-                    df[[col]] <- as.character(df[[col]])
-                }
+                if (is.factor(df[[col]])) df[[col]] <- as.character(df[[col]])
             }
-
             rn <- rownames(obj)
             if (!is.null(rn) && length(rn) > 0 && !all(rn == as.character(1:nrow(df)))) {
-                # Prepend row_names_id as first column
                 df <- cbind(row_names_id = as.character(rn), df)
             }
-
-            # CRITICAL: Remove existing file first to prevent file-lock conflicts
-            if (file.exists(arrow_path)) {
-                unlink(arrow_path)
-                Sys.sleep(0.01)
-            }
-
-            arrow::write_feather(df, arrow_path, compression = compress)
-
-            # SAFE-HANDSHAKE: Brief delay then verify with normalizePath
-            Sys.sleep(0.02)
-            verified_path <- base::normalizePath(arrow_path, mustWork = TRUE)
-            return(verified_path)
+            .write_feather_safe(df, arrow_path, compress)
         }
     }, error = function(e) {
         warning(paste("Arrow save (mixed) failed:", e$message))
@@ -350,20 +330,7 @@ ExportResultMatArrow <- function(result_mat, filename) {
         }
 
         arrow_path <- paste0(filename, ".arrow")
-
-        # CRITICAL: Remove existing file first to prevent file-lock conflicts
-        # Java should have closed its memory-map before R reaches here
-        if (file.exists(arrow_path)) {
-            unlink(arrow_path)
-            Sys.sleep(0.01)  # Brief pause after delete
-        }
-
-        arrow::write_feather(df, arrow_path, compression = "uncompressed")
-
-        # SAFE-HANDSHAKE: Verify file is ready
-        Sys.sleep(0.02)
-        verified_path <- base::normalizePath(arrow_path, mustWork = TRUE)
-        return(verified_path)
+        .write_feather_safe(df, arrow_path, "uncompressed")
     }, error = function(e) {
         warning(paste("ExportResultMatArrow failed:", e$message))
         return(NULL)

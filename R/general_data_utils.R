@@ -317,7 +317,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     primary.user <<- TRUE;
    }
   if(.on.public.web){
-    # disable parallel prcessing for public server
+    # disable parallel processing on server
     library(BiocParallel);
     register(SerialParam());
   } else {
@@ -715,7 +715,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 SaveTransformedData <- function(mSetObj=NA){
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.save.data")){ # public web on same user dir
+    if(!exists("my.save.data")){
       .load.scripts.on.demand("util_savedata.Rc");    
     }
     return(my.save.data(mSetObj));
@@ -736,7 +736,7 @@ SaveTransformedData <- function(mSetObj=NA){
 Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.parse.mztab")){ # public web on same user dir
+    if(!exists("my.parse.mztab")){
       .load.scripts.on.demand("util_mztab.Rc");    
     }
     return(my.parse.mztab(mSetObj, filename, identifier));
@@ -763,7 +763,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.parse.peaklist")){ # public web on same user dir
+    if(!exists("my.parse.peaklist")){
       .load.scripts.on.demand("util_peaks.Rc");    
     }
     return(my.parse.peaklist(mSetObj, foldername));
@@ -782,7 +782,7 @@ AddErrMsg <- function(msg){
     err.vec <<- "";
   }
   err.vec <<- c(err.vec, msg);
-  print(msg);
+  message("[ERROR] ", msg);
 }
 
 GetErrMsg<-function(){
@@ -1424,28 +1424,28 @@ GetNameCheckMsgs <- function(mSetObj=NA){
 }
 
 ValidateMetabolonData <- function(file_path = NULL) {
-    if(!exists("my.validate.metabolon.data")){ # public web on same user dir
+    if(!exists("my.validate.metabolon.data")){
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.validate.metabolon.data(file_path));
 }
 
 ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
-    if(!exists("my.read.metabolon.sheets")){ # public web on same user dir
+    if(!exists("my.read.metabolon.sheets")){
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
 }
 
 ExtractMetabolonCompoundIDs  <- function(mSetObj = NA, file_path = NULL){
-    if(!exists("my.extract.metabolon.compounds")){ # public web on same user dir
+    if(!exists("my.extract.metabolon.compounds")){
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.extract.metabolon.compounds(mSetObj, file_path));
 }
 
 ExtractMetabolonMetaFactors <- function(mSetObj = NA, file_path = NULL){
-    if(!exists("my.extract.metabolon.metafactors")){ # public web on same user dir
+    if(!exists("my.extract.metabolon.metafactors")){
       .load.scripts.on.demand("util_metabolon.Rc");    
     }
     return(my.extract.metabolon.metafactors(mSetObj, file_path));
@@ -1488,7 +1488,7 @@ GetMetabolonCMPDIDs <- function(mSetObj = NA){
 GetNMDRStudy <- function(mSetObj=NA, StudyID){
   
     # make this lazy load
-    if(!exists("my.get.nmdr.data")){ # public web on same user dir
+    if(!exists("my.get.nmdr.data")){
       .load.scripts.on.demand("util_nmdr.Rc");    
     }
     res <- my.get.nmdr.data(StudyID);

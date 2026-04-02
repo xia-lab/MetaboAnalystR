@@ -520,7 +520,7 @@ fetchReplaceMsg <- function(mSetObj = NA) {
 ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.impute.missing")){ # public web on same user dir
+    if(!exists("my.impute.missing")){
       # Use source() here so util_missing updates are picked up without requiring Rc rebuild.
       util.path <- paste0(rpath, "rscripts/MetaboAnalystR/R/util_missing.R")
       if(!file.exists(util.path)){

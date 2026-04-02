@@ -42,7 +42,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
  
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
     # make this lazy load
-    if(!exists("my.ora.kegg")){ # public web on same user dir
+    if(!exists("my.ora.kegg")){
       .load.scripts.on.demand("util_api.Rc");    
     }
 
@@ -279,7 +279,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     saveRDS(toSend, "tosend.rds");
 
    # make this lazy load
-    if(!exists("my.pathway.qea")){ # public web on same user dir
+    if(!exists("my.pathway.qea")){
       .load.scripts.on.demand("util_api.Rc");    
     }
     return(my.pathway.qea());

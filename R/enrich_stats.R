@@ -174,7 +174,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
 
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
     # make this lazy load
-    if(!exists("my.qea.kegg")){ # public web on same user dir
+    if(!exists("my.qea.kegg")){
       .load.scripts.on.demand("util_api.Rc");    
     }
 

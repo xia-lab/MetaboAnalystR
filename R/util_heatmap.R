@@ -13,7 +13,7 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
     pvals <- mSetObj$analSet$tt$p.value[sig.ids]
     tscores <- mSetObj$analSet$tt$t.score[sig.ids]
     res <- data.frame(p.value = pvals, t.score = tscores, row.names = sig.ids)
-    message("[PRO] Heatmap: reusing existing stat results")
+    message("Heatmap: reusing existing stat results")
   } else {
     res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
   }

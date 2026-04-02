@@ -157,8 +157,17 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         }
         # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
         if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with RUVr...");require(edgeR)
-          RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
+          print("Correcting with RUVr...");
+          RUV_r_edata <- rsclient_isolated_exec(
+            func_body = function(input_data) {
+              require(edgeR); require(RUVSeq)
+              RUVr_cor(input_data$mat, input_data$cls)
+            },
+            input_data = list(mat = commonMat2, cls = class.lbl2),
+            packages = c("edgeR", "RUVSeq", "qs"), timeout = 300, output_type = "qs"
+          )
+          if (is.list(RUV_r_edata) && isFALSE(RUV_r_edata$success)) { AddErrMsg(RUV_r_edata$message); return(0) }
+          if (!is.null(RUV_r_edata$value)) RUV_r_edata <- RUV_r_edata$value
           mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
         }
         # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
@@ -331,7 +340,16 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
       
-      RUV_r_edata<-suppressPackageStartupMessages(RUVr_cor(commonMat2,class.lbl2));
+      RUV_r_edata <- rsclient_isolated_exec(
+        func_body = function(input_data) {
+          require(edgeR); require(RUVSeq)
+          RUVr_cor(input_data$mat, input_data$cls)
+        },
+        input_data = list(mat = commonMat2, cls = class.lbl2),
+        packages = c("edgeR", "RUVSeq", "qs"), timeout = 300, output_type = "qs"
+      )
+      if (is.list(RUV_r_edata) && isFALSE(RUV_r_edata$success)) { AddErrMsg(RUV_r_edata$message); return(0) }
+      if (!is.null(RUV_r_edata$value)) RUV_r_edata <- RUV_r_edata$value
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
       
     } else if (Method=="RUV_g"){

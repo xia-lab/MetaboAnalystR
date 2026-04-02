@@ -314,47 +314,43 @@ GetPeakFormat <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 #'@export
 
-Convert2Mummichog <- function(mSetObj=NA, 
-                              rt=FALSE, 
-                              rds.file=FALSE, 
-                              rt.type="seconds", 
+Convert2Mummichog <- function(mSetObj=NA,
+                              rt=FALSE,
+                              rds.file=FALSE,
+                              rt.type="seconds",
                               test="tt", mode=NA){
 
-  if(test=="tt"|test=="all"){
-    if(is.null(mSetObj$analSet$tt)){
-      AddErrMsg("T-test was not performed!")
-      return(0)
-    }
-    
+  # If PerformMumTableStat already computed analSet$tt (limma-based), use it
+  # regardless of test parameter — it contains p.value, t.score, fdr.p, logfc
+  if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value) && test %in% c("tt", "aov")) {
     tt.pval <- sort(mSetObj$analSet$tt$p.value);
     fdr <- p.adjust(tt.pval, "fdr")
-    #fdr <- tt.pval
     mz.pval <- names(tt.pval)
     pvals <- cbind(mz.pval, as.numeric(fdr))
     colnames(pvals) <- c("m.z", "p.value")
-    
+
     tt.tsc <- sort(mSetObj$analSet$tt$t.score);
     mz.tsc <- names(tt.tsc)
     tscores <- cbind(mz.tsc, as.numeric(tt.tsc))
     colnames(tscores) <- c("m.z", "t.score")
   } else if(test=="es"|test=="all"){
-    effect.size <- mSetObj$analSet$effect.size;    
+    effect.size <- mSetObj$analSet$effect.size;
     if(is.null(effect.size)){
       AddErrMsg("Effect size was not calculated!")
       return(0)
     }
-    
+
     mz <- rownames(effect.size)
     esize <- cbind(mz, effect.size)
     colnames(esize) <- c("m.z", "effect.size", "st.dev", "lower.ci", "upper.ci");
 
   } else if(test=="fc"|test=="all"){
-    log2fc <- mSetObj$analSet$fc$fc.log    
+    log2fc <- mSetObj$analSet$fc$fc.log
     if(is.null(log2fc)){
       AddErrMsg("Fold-change was not calculated!")
       return(0)
     }
-    
+
     mz.fc <- names(log2fc)
     fcs <- cbind(mz.fc, as.numeric(log2fc))
     colnames(fcs) <- c("m.z", "log2.fc");
@@ -365,7 +361,7 @@ Convert2Mummichog <- function(mSetObj=NA,
       return(0)
     }
     aov.pvals <- mSetObj$analSet$aov$sig.p;
-    
+
     # Note pre-order will have effect on results
     # Let's be consistent
     ord.inx <- order(aov.pvals);
@@ -4318,7 +4314,7 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.fgsea")){ # public web on same user dir
+    if(!exists("my.fgsea")){
       .load.scripts.on.demand("util_fgsea.Rc");    
     }
     return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
@@ -4369,7 +4365,7 @@ CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib,
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("psea.heatmap.json")){ # public web on same user dir
+    if(!exists("psea.heatmap.json")){
       .load.scripts.on.demand("util_heatmap.Rc");    
     }
     return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
@@ -4406,7 +4402,7 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
     res <- mSetObj;
     ngrps <- length(levels(mSetObj$dataSet$cls));
     testmeth <- ifelse(ngrps > 2, "aov", "tt");
-    message("[PRO] Reusing existing stat results from PerformMumTableStat");
+    message("Reusing existing stat results from PerformMumTableStat");
   } else if (ranking.method == "limma" && length(levels(mSetObj$dataSet$cls)) < 3) {
     # Use limma moderated statistics
     limma.res <- GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
@@ -4428,7 +4424,7 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
     .set.mSet(mSetObj);
     res <- mSetObj;
     testmeth <- "tt";
-    message("[PRO] Mummichog ranking: limma moderated statistics");
+    message("Mummichog ranking: limma moderated statistics");
   } else if(length(levels(mSetObj$dataSet$cls)) < 3){
     res <- Ttests.Anal(mSetObj, F, 1, FALSE, TRUE)
     testmeth <- "tt";
@@ -4710,14 +4706,19 @@ PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pva
   sig <- fdr < pval.cutoff
   if (fc.cutoff > 0) sig <- sig & (abs(logfc) > fc.cutoff)
 
-  df <- data.frame(logFC = logfc, negLogP = -log10(p.val), sig = sig)
+  # Classify features as Up, Down, or Not significant
+  status <- rep("Not significant", length(p.val))
+  status[sig & logfc > 0] <- "Up"
+  status[sig & logfc < 0] <- "Down"
+  status <- factor(status, levels = c("Up", "Down", "Not significant"))
+
+  df <- data.frame(logFC = logfc, negLogP = -log10(p.val), status = status)
 
   imgFile <- paste0(imgName, "dpi", dpi, ".", format)
   Cairo::Cairo(file = imgFile, width = 7, height = 5.5, unit = "in", dpi = dpi, type = format, bg = "white")
-  g <- ggplot(df, aes(x = logFC, y = negLogP, color = sig)) +
+  g <- ggplot(df, aes(x = logFC, y = negLogP, color = status)) +
     geom_point(alpha = 0.6, size = 1.5) +
-    scale_color_manual(values = c("FALSE" = "grey70", "TRUE" = "firebrick3"),
-                       labels = c("Not significant", "Significant"), name = "") +
+    scale_color_manual(values = c("Up" = "firebrick3", "Down" = "steelblue3", "Not significant" = "grey70"), name = "") +
     geom_hline(yintercept = -log10(pval.cutoff), linetype = "dashed", color = "blue", alpha = 0.5) +
     xlab("Log2(Fold Change)") + ylab("-Log10(P-value)") +
     ggtitle("Volcano Plot") +
@@ -4738,7 +4739,7 @@ CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
   
   if(.on.public.web){
     # make this lazy load
-    if(!exists("my.list.heatmap")){ # public web on same user dir
+    if(!exists("my.list.heatmap")){
       .load.scripts.on.demand("util_listheatmap.Rc");    
     }
     return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));

@@ -1926,9 +1926,7 @@ ResetCovariateAdjustment <- function(mSetObj = NA) {
 PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covariate_pca",
                                        format="png", dpi=96) {
 
-  # Load required libraries
   library(ggplot2)
-  library(ggpubr)  # For ggarrange
 
   mSetObj <- .get.mSet(mSetObj)
 
@@ -1939,9 +1937,8 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
   }
 
   # Get before/after data matrices
-  # In MetaboAnalyst: data is stored as Samples x Features (rows=samples, cols=features)
-  data.before <- mSetObj$dataSet$norm.before.covariate  # Original pre-covariate data (Samples x Features)
-  data.after <- mSetObj$dataSet$norm  # Adjusted data (Samples x Features)
+  data.before <- mSetObj$dataSet$norm.before.covariate
+  data.after <- mSetObj$dataSet$norm
 
   if(is.null(data.before) || is.null(data.after)) {
     AddErrMsg("Error: Missing data for PCA comparison!")
@@ -1951,29 +1948,24 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
   # Get metadata
   meta.info <- mSetObj$dataSet$meta.info
 
-  # Match samples (samples are in rows for MetaboAnalyst)
+  # Match samples
   common.samples <- intersect(rownames(data.before), rownames(meta.info))
   data.before <- data.before[common.samples, , drop=FALSE]
   data.after <- data.after[common.samples, , drop=FALSE]
   meta.info <- meta.info[common.samples, , drop=FALSE]
 
-  # Check covariate exists
   if(!(covariate %in% colnames(meta.info))) {
     AddErrMsg(paste0("Error: Covariate '", covariate, "' not found in metadata!"))
     return(0)
   }
 
   # Perform PCA on both datasets
-  # Data is already Samples x Features, so no transpose needed
   pca.before <- prcomp(data.before, scale=TRUE, center=TRUE)
   pca.after <- prcomp(data.after, scale=TRUE, center=TRUE)
 
-  # Calculate variance explained
-  var.before <- summary(pca.before)$importance[2, 1:2] * 100  # PC1, PC2
+  var.before <- summary(pca.before)$importance[2, 1:2] * 100
   var.after <- summary(pca.after)$importance[2, 1:2] * 100
 
-  # Create data frames for plotting
-  # Use the covariate as a factor for proper coloring
   df.before <- data.frame(
     PC1 = pca.before$x[, 1],
     PC2 = pca.before$x[, 2],
@@ -1988,19 +1980,15 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
     Sample = rownames(pca.after$x)
   )
 
-  # Create plot labels
   xlabel.before <- sprintf("PC1 (%.1f%%)", var.before[1])
   ylabel.before <- sprintf("PC2 (%.1f%%)", var.before[2])
   xlabel.after <- sprintf("PC1 (%.1f%%)", var.after[1])
   ylabel.after <- sprintf("PC2 (%.1f%%)", var.after[2])
 
-  # Create before plot
   p1 <- ggplot(df.before, aes(x=PC1, y=PC2, color=Group)) +
     geom_point(size=3, alpha=0.7) +
     labs(title="Before Adjustment",
-         x=xlabel.before,
-         y=ylabel.before,
-         color=covariate) +
+         x=xlabel.before, y=ylabel.before, color=covariate) +
     theme_bw() +
     theme(
       plot.title = element_text(hjust=0.5, size=14, face="bold"),
@@ -2009,13 +1997,10 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
       axis.title = element_text(size=11)
     )
 
-  # Create after plot
   p2 <- ggplot(df.after, aes(x=PC1, y=PC2, color=Group)) +
     geom_point(size=3, alpha=0.7) +
     labs(title="After Adjustment",
-         x=xlabel.after,
-         y=ylabel.after,
-         color=covariate) +
+         x=xlabel.after, y=ylabel.after, color=covariate) +
     theme_bw() +
     theme(
       plot.title = element_text(hjust=0.5, size=14, face="bold"),
@@ -2024,13 +2009,24 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
       axis.title = element_text(size=11)
     )
 
-  # Combine plots side-by-side with shared legend
-  combined <- ggarrange(p1, p2, ncol=2, common.legend=TRUE, legend="right")
-
-  # Save plot - imgName already includes path, dpi, and extension from Java
-  Cairo::Cairo(file=imgName, width=14, height=7, unit="in", dpi=dpi, type=format, bg="white")
-  print(combined)
-  dev.off()
+  # ggarrange is quarantined - run in subprocess
+  rsclient_isolated_exec(
+    func_body = function(input_data) {
+      require(ggpubr); require(Cairo)
+      setwd(input_data$wd)
+      combined <- ggpubr::ggarrange(input_data$p1, input_data$p2,
+                                     ncol=2, common.legend=TRUE, legend="right")
+      Cairo::Cairo(file=input_data$imgName, width=14, height=7,
+                   unit="in", dpi=input_data$dpi, type=input_data$format, bg="white")
+      print(combined)
+      dev.off()
+      TRUE
+    },
+    input_data = list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi,
+                      format = format, wd = getwd()),
+    packages = c("ggpubr", "ggplot2", "Cairo", "qs"), timeout = 120, output_type = "qs"
+  )
+  # plot/write failure is non-fatal
 
   return(1)
 }

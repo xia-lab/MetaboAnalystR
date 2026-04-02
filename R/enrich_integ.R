@@ -252,7 +252,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   mSetObj$dataSet$pathinteg.impMat <- impMat;
   if(!.on.public.web){
      # make this lazy load
-    if(!exists("my.integ.kegg")){ # public web on same user dir
+    if(!exists("my.integ.kegg")){
       .load.scripts.on.demand("util_api.Rc");    
     }    
     if(libOpt == "integ"){

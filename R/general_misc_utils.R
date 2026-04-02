@@ -76,11 +76,78 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
   }
 } 
 
-# in public web, this is done by microservice
+# =============================================================================
+# RSclient subprocess execution (Rserve fork — shared by Public and Pro)
+# =============================================================================
+
+run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
+  conn <- RSclient::RS.connect(host = "localhost", port = 6311)
+  on.exit(try(RSclient::RS.close(conn), silent = TRUE))
+  RSclient::RS.assign(conn, ".exec_wd", getwd())
+  RSclient::RS.assign(conn, ".exec_func", func)
+  RSclient::RS.assign(conn, ".exec_args", args)
+  RSclient::RS.assign(conn, ".exec_timeout", timeout_sec)
+  RSclient::RS.eval(conn, quote({
+    setwd(.exec_wd)
+    setTimeLimit(elapsed = .exec_timeout, transient = TRUE)
+    on.exit(setTimeLimit(elapsed = Inf))
+    do.call(.exec_func, .exec_args)
+  }))
+}
+
+rsclient_isolated_exec <- function(func_body, input_data, packages = character(0),
+                                   timeout = 180, output_type = "qs", ...) {
+  bridge_tmp <- file.path(tempdir(), "rsclient_bridge")
+  if (!dir.exists(bridge_tmp)) dir.create(bridge_tmp, recursive = TRUE)
+  uid <- paste0(sample(letters, 6), collapse = "")
+  input_path <- file.path(bridge_tmp, paste0(uid, "_in.qs"))
+  output_path <- file.path(bridge_tmp, paste0(uid, "_out.qs"))
+
+  qs::qsave(input_data, input_path, preset = "fast")
+  Sys.sleep(0.02)
+
+  on.exit({
+    for (p in c(input_path, output_path)) if (file.exists(p)) unlink(p)
+  }, add = TRUE)
+
+  result <- run_func_via_rsclient(
+    func = function(input_path, output_path, func_body, pkgs) {
+      tryCatch({
+        for (pkg in pkgs) suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+        input_data <- qs::qread(input_path)
+        res <- func_body(input_data)
+        qs::qsave(res, output_path, preset = "fast")
+        Sys.sleep(0.02)
+        list(success = TRUE)
+      }, error = function(e) {
+        list(success = FALSE, message = e$message)
+      })
+    },
+    args = list(input_path = input_path, output_path = output_path,
+                func_body = func_body, pkgs = packages),
+    timeout_sec = timeout
+  )
+
+  if (isTRUE(result$success) && file.exists(output_path)) {
+    return(qs::qread(output_path))
+  }
+  msg <- if (!is.null(result$message)) result$message else "RSclient subprocess failed"
+  message("[rsclient_isolated_exec] ", msg)
+  return(list(success = FALSE, message = msg))
+}
+
+# Run prepared closure from dat.in.qs in RSclient child
 .perform.computing <- function(){
-  dat.in <- qs::qread("dat.in.qs");
-  dat.in$my.res <- dat.in$my.fun();
-  qs::qsave(dat.in, file="dat.in.qs");  
+  run_func_via_rsclient(
+    func = function(wd) {
+      setwd(wd)
+      dat.in <- qs::qread("dat.in.qs")
+      dat.in$my.res <- dat.in$my.fun()
+      qs::qsave(dat.in, file = "dat.in.qs")
+    },
+    args = list(wd = getwd()),
+    timeout_sec = 300
+  )
 }
 
 #' Read data table
@@ -231,7 +298,7 @@ getDataFromTextArea <- function(txtInput, sep.type="space"){
 #'
 Perform.permutation <- function(perm.num, fun){
  
-  # for public server, perm.num is not always followed to make sure loop will not continue for very long time
+  # perm.num is not always followed to make sure loop will not continue for very long time
   # before the adventure, see how long it takes for 10 permutations
   # if it is extremely slow (>60 sec) => max 20 (<0.05)
   # if it is very slow (30-60 sec) => max 100 (<0.01)
