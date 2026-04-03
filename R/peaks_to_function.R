@@ -1139,9 +1139,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
   } else if(anal.type0 == "gsea_peaks") {
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   } else {
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
     pathResults <- vector("list")
@@ -1241,9 +1243,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
   }else if(anal.type0 == "gsea_peaks"){
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   }else{
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogRTPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
     
@@ -3303,7 +3307,15 @@ json.res <- list(
     names(scores.vec) <- names(mSetObj$cpd_exp)
   }
 
-  fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)  
+  fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
+  if (is.list(fgseaRes) && !is.null(fgseaRes$success) && isFALSE(fgseaRes$success)) {
+    AddErrMsg(paste0("fgsea failed: ", fgseaRes$message))
+    return(0)
+  }
+  if (!is.data.frame(fgseaRes) || is.null(fgseaRes$pathway)) {
+    AddErrMsg("fgsea failed: invalid fgsea result object.")
+    return(0)
+  }
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
 
   path.size <- unlist(lapply(current.mset, length))
@@ -3400,6 +3412,14 @@ json.res <- list(
   }
   
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
+  if (is.list(fgseaRes) && !is.null(fgseaRes$success) && isFALSE(fgseaRes$success)) {
+    AddErrMsg(paste0("fgsea failed: ", fgseaRes$message))
+    return(0)
+  }
+  if (!is.data.frame(fgseaRes) || is.null(fgseaRes$pathway)) {
+    AddErrMsg("fgsea failed: invalid fgsea result object.")
+    return(0)
+  }
 
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
   

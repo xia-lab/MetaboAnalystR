@@ -180,7 +180,8 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nodeImp Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 #'and "dgr" for out-degree centrality. 
-#'@param method Indicate the pathway enrichment analysis, global test is "gt" and global ancova is "ga".
+#'@param method Indicate the pathway enrichment analysis, global test is "gt",
+#'global ancova is "ga", and mummichog-inspired rank enrichment is "mummi_like".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -355,7 +356,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       gt.res <- globaltest::result(gt.obj);
       return(gt.res[,c(5,1)]);
     }
-  }else{
+  } else if(method == "ga"){
     cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```GlobalAncova```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
@@ -372,6 +373,56 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       }
       return(ga.out[,c(1,3)]);
     }
+  } else if(method == "mummi_like"){
+    mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```Mummichog-inspired enrichment```.",
+      " This rank-based method uses all mapped features and tests whether pathway members are enriched toward",
+      " the top of the global significance ranking.");
+    dat.in$my.fun <- function(){
+      # Define universe by pathway library (already filtered by user reference metabolome if provided)
+      universe <- unique(unlist(current.mset[hit.inx], use.names = FALSE))
+      universe <- universe[!is.na(universe)]
+      if(length(universe) == 0){
+        return(matrix(c(0, 1), nrow = 1, dimnames = list("NA", c("Hits", "Raw p"))))
+      }
+
+      # Fill missing/unmapped universe members with p=1 (least significant)
+      pvals <- rep(1, length(universe))
+      names(pvals) <- universe
+      known.p <- as.numeric(univ.p)
+      names(known.p) <- names(univ.p)
+      pvals[names(known.p)] <- known.p[names(known.p)]
+      pvals[is.na(pvals)] <- 1
+      pvals[pvals <= 0] <- 1e-300
+
+      ranks <- rank(pvals, ties.method = "average")
+
+      res <- t(sapply(dat.in$subsets, function(set.ids){
+        set.ids <- intersect(set.ids, universe)
+        bg.ids <- setdiff(universe, set.ids)
+        hit.n <- length(set.ids)
+
+        if(hit.n == 0 || length(bg.ids) == 0){
+          return(c(hit.n, 1))
+        }
+
+        p.raw <- tryCatch(
+          stats::wilcox.test(ranks[set.ids], ranks[bg.ids], alternative="less", exact=FALSE)$p.value,
+          error = function(e) 1
+        )
+
+        c(hit.n, p.raw)
+      }))
+
+      res <- as.matrix(res)
+      if(is.null(dim(res))){
+        res <- matrix(res, nrow=1)
+      }
+      colnames(res) <- c("Hits", "Raw p")
+      return(res)
+    }
+  } else{
+    AddErrMsg(paste0("Unknown pathway enrichment method: ", method));
+    return(0);
   }
   
   qs::qsave(dat.in, file="dat.in.qs");
