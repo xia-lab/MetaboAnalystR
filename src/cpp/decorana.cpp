@@ -165,40 +165,6 @@ void detrnd(std::vector<double>& x,
   }
 }
 
-void segfit(std::vector<double>& x,
-            const std::vector<double>& aidot,
-            const std::vector<int>& ix,
-            int mi,
-            int mk,
-            std::vector<double>& fit) {
-  std::vector<double> z(50, 0.0);
-  std::vector<double> zn(50, 0.0);
-  std::vector<double> zbar(50, 0.0);
-
-  for (int i = 0; i < mi; ++i) {
-    const int k = ix[i] - 1;
-    z[k] += x[i] * aidot[i];
-    zn[k] += aidot[i];
-  }
-
-  int mmk = mk - 1;
-  for (int k = 1; k < mmk; ++k) {
-    zbar[k] = (z[k - 1] + z[k] + z[k + 1]) /
-              (zn[k - 1] + zn[k] + zn[k + 1] + 1.0e-12);
-  }
-
-  mmk = mmk - 1;
-  for (int k = 2; k < mmk; ++k) {
-    z[k] = (zbar[k - 1] + zbar[k] + zbar[k + 1]) / 3.0;
-  }
-
-  for (int i = 0; i < mi; ++i) {
-    const int k = ix[i] - 1;
-    fit[i] = z[k];
-    x[i] -= z[k];
-  }
-}
-
 void trans(const std::vector<double>& y,
            std::vector<double>& yy,
            std::vector<double>& x,
