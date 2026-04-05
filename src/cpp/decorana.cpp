@@ -730,14 +730,13 @@ void set_col(NumericMatrix& m, int col, const std::vector<double>& v) {
 
 } // namespace
 
-// [[Rcpp::export]]
-List do_decorana_cpp(NumericMatrix veg,
-                     int ira,
-                     int iresc,
-                     double rshort,
-                     int imk,
-                     NumericVector aidot,
-                     NumericVector adotj) {
+List do_decorana_impl(NumericMatrix veg,
+                      int ira,
+                      int iresc,
+                      double rshort,
+                      int imk,
+                      NumericVector aidot,
+                      NumericVector adotj) {
   const int NAXES = 4;
   const int MKPAD = 4;
   const double ZEROEIG = 1e-7;
@@ -833,4 +832,25 @@ List do_decorana_cpp(NumericMatrix veg,
   out.attr("class") = "decorana";
 
   return out;
+}
+
+RcppExport SEXP do_decorana(SEXP vegSEXP,
+                            SEXP iraSEXP,
+                            SEXP irescSEXP,
+                            SEXP rshortSEXP,
+                            SEXP imkSEXP,
+                            SEXP aidotSEXP,
+                            SEXP adotjSEXP) {
+BEGIN_RCPP
+  NumericMatrix veg(vegSEXP);
+  const int ira = Rcpp::as<int>(iraSEXP);
+  const int iresc = Rcpp::as<int>(irescSEXP);
+  const double rshort = Rcpp::as<double>(rshortSEXP);
+  const int imk = Rcpp::as<int>(imkSEXP);
+  NumericVector aidot(aidotSEXP);
+  NumericVector adotj(adotjSEXP);
+
+  List out = do_decorana_impl(veg, ira, iresc, rshort, imk, aidot, adotj);
+  return Rcpp::wrap(out);
+END_RCPP
 }
