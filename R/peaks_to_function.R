@@ -1139,9 +1139,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
   } else if(anal.type0 == "gsea_peaks") {
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   } else {
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
     pathResults <- vector("list")
@@ -1241,9 +1243,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
   }else if(anal.type0 == "gsea_peaks"){
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   }else{
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogRTPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
     
@@ -4634,6 +4638,42 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   message("Mummichog ranking: ", method.label, ". Sig: ", sum(sig.inx, na.rm = TRUE))
   .set.mSet(mSetObj)
   return(sum(sig.inx, na.rm = TRUE))
+}
+
+#' Compute p-value cutoff to exactly capture significant features from PerformMumTableStat
+#' @description After running PerformMumTableStat, find the p-value threshold that
+#'   captures all features where inx.imp == TRUE, keeping background peaks for permutation analysis
+#' @param mSetObj mSet Object
+#' @export
+GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  # Check if analSet$tt exists with significance index
+  if (is.null(mSetObj$analSet$tt) || is.null(mSetObj$analSet$tt$inx.imp)) {
+    AddErrMsg("No statistical analysis results found. Run PerformMumTableStat first.")
+    return(0)
+  }
+
+  # Get significant features based on FDR and FC cutoffs
+  sig.inx <- mSetObj$analSet$tt$inx.imp
+  if (sum(sig.inx) == 0) {
+    AddErrMsg("No significant features found from statistical analysis.")
+    return(0)
+  }
+
+  # Get p-values for significant features
+  sig.pvals <- mSetObj$analSet$tt$p.value[sig.inx]
+
+  # Find the maximum p-value among significant features
+  # This will be our cutoff - it captures all significant features
+  max.sig.pval <- max(sig.pvals, na.rm = TRUE)
+
+  # Add small buffer to ensure all are included
+  cutoff <- max.sig.pval * 1.01
+
+  message("[PRO] Computed p-value cutoff: ", signif(cutoff, 4), " to capture ", sum(sig.inx), " significant features")
+
+  return(cutoff)
 }
 
 #' Plot volcano for mummichog table input

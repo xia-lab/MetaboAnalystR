@@ -5,6 +5,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
                      gseaParam=1,
                      BPPARAM=NULL) {
   mSetObj <<- mSetObj;
+  fgsea_runner <- .run_fgsea_inner
 
   # Run entire fgsea algorithm in subprocess
   fgsea_inner <- .run_fgsea_inner
@@ -18,7 +19,8 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
     },
     input_data = list(mSetObj = mSetObj, pathways = pathways, stats = stats,
                       ranks = ranks, nperm = nperm, minSize = minSize,
-                      maxSize = maxSize, gseaParam = gseaParam, wd = getwd()),
+                      maxSize = maxSize, gseaParam = gseaParam, wd = getwd(),
+                      fgsea_runner = fgsea_runner),
     packages = c("fgsea", "BiocParallel", "fastmatch", "data.table", "qs"),
     timeout = 900, output_type = "qs"
   )
