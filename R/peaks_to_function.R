@@ -1948,7 +1948,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     refmz.num <- suppressWarnings(as.numeric(refmz))
     input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
     input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
-    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
+    input.mz.num <- unique(input.mz.num[!is.na(input.mz.num)])
+    hits.index <- which(!is.na(refmz.num) & refmz.num %in% input.mz.num);
     ec1 <- unique(unlist(mz2ec_dict[hits.index]));
     mSetObj$input_ecpdlist <- ec1;
     mSetObj$total_matched_ecpds <- unique(as.vector(matched_res$Empirical.Compound));
@@ -1969,7 +1970,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     refmz.num <- suppressWarnings(as.numeric(refmz))
     input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
     input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
-    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
+    input.mz.num <- unique(input.mz.num[!is.na(input.mz.num)])
+    hits.index <- which(!is.na(refmz.num) & refmz.num %in% input.mz.num);
     cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
     
     if(.on.public.web){
@@ -3304,6 +3306,12 @@ json.res <- list(
   }
 
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)  
+  if (!is.data.frame(fgseaRes) || !all(c("pathway", "size", "pval", "padj", "NES") %in% colnames(fgseaRes))) {
+    AddErrMsg("GSEA failed to return a valid result table.")
+    mSetObj$mummi.gsea.resmat <- matrix(numeric(0), nrow = 0, ncol = 5,
+                                      dimnames = list(NULL, c("Pathway_Total", "Hits", "P_val", "P_adj", "NES")))
+    return(mSetObj)
+  }
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
 
   path.size <- unlist(lapply(current.mset, length))
@@ -3400,6 +3408,12 @@ json.res <- list(
   }
   
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
+  if (!is.data.frame(fgseaRes) || !all(c("pathway", "pval", "padj", "NES") %in% colnames(fgseaRes))) {
+    AddErrMsg("GSEA failed to return a valid result table.")
+    mSetObj$mummi.gsea.resmat <- matrix(numeric(0), nrow = 0, ncol = 5,
+                                      dimnames = list(NULL, c("Pathway_Total", "Hits", "P_val", "P_adj", "NES")))
+    return(mSetObj)
+  }
 
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
   

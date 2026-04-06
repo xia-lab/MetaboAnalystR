@@ -20,8 +20,7 @@
                       dpi = dpi, width = width, pc.num = pc.num,
                       meta = meta, metaShape = metaShape, wd = getwd()),
     packages = c("GGally", "vegan", "ggplot2", "Cairo", "grid", "qs"),
-    timeout = 300, output_type = "qs",
-    module = "metabo"
+    timeout = 300, output_type = "qs"
   )
   if (is.list(response) && isFALSE(response$success)) {
     message("[.plot.pca.pair.meta] subprocess failed, fallback to local render: ", response$message)
