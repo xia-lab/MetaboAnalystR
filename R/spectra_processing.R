@@ -798,10 +798,6 @@ save(selectRow_idx, file = 'selectRow_idx.rda')
   qs::qsave(pca3d$loading, "loading3d.qs");
   fileNm <- paste0("spectra_3d_loading", featureNM,".json");
 
-  if(!exists("my.json.scatter")){
-    .load.scripts.on.demand("util_scatter3d.Rc");    
-  }
-
   my.json.scatter(fileNm, T);
   return(1);
 
@@ -923,9 +919,11 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     load("mSet.rda")
   } else {
     if(is.na(mSet)){
-      stop("mSet object is required! Should be an mSet generated after Peak Profiling!")
+      AddErrMsg("mSet object is required! Should be an mSet generated after Peak Profiling!");
+      return(0);
     } else if(!is(mSet, "mSet")) {
-      stop("Invalid mSet Object! Please check!")
+      AddErrMsg("Invalid mSet Object! Please check!");
+      return(0);
     }
   }
   
@@ -1664,7 +1662,7 @@ GeneratePeakList <- function(userPath) {
   .wait_i <- 0
   while(!file.exists("mSet.rda")){
     .wait_i <- .wait_i + 1
-    if(.wait_i > 60) stop("Timeout: mSet.rda not found after 3 minutes")
+    if(.wait_i > 60) { AddErrMsg("Timeout: mSet.rda not found after 3 minutes"); return(0); }
     Sys.sleep(3)
   }
   load("mSet.rda")
@@ -1710,7 +1708,7 @@ GeneratePeakList <- function(userPath) {
   .wait_i <- 0
   while(!file.exists("annotated_peaklist.rds")){
     .wait_i <- .wait_i + 1
-    if(.wait_i > 60) stop("Timeout: annotated_peaklist.rds not found after 3 minutes")
+    if(.wait_i > 60) { AddErrMsg("Timeout: annotated_peaklist.rds not found after 3 minutes"); return(0); }
     Sys.sleep(3)
   }
   options(digits = 10) 
@@ -2601,7 +2599,8 @@ plotMSfeatureSvg <- function (mSet = NULL, FeatureNM = 1, width = NA) {
             load("mSet.rda")
         }
         else {
-            stop("No mSet Object found !")
+            AddErrMsg("No mSet Object found !");
+            return(0);
         }
     }
     peakdata <- mSet@peakAnnotation$camera_output

@@ -1,3 +1,26 @@
+# Helper: format scatter plot parameters as report text (shared across report formats)
+if (!exists(".get.scatter.params.text", mode = "function")) {
+  .get.scatter.params.text <- function(format = "html") {
+    opts <- tryCatch(GetScatterOptions(), error = function(e) {
+      list(scaleMode = "independent", confidenceLevel = 0.95, confMethod = "chisq")
+    })
+    scale.label <- if (identical(opts$scaleMode, "uniform")) "Uniform (equal aspect ratio)" else "Independent"
+    method.label <- if (identical(opts$confMethod, "f")) "F-distribution" else "Chi-squared"
+    level.pct <- round(as.numeric(opts$confidenceLevel) * 100, 0)
+    if (format == "latex") {
+      paste0("\\textbf{Scatter plot parameters:} Axis scaling: ", scale.label,
+             "; Confidence level: ", level.pct, "\\%;",
+             " Confidence method: ", method.label,
+             " (2D uses $k$=2 degrees of freedom, 3D uses $k$=3).\n\n")
+    } else {
+      paste0("**Scatter plot parameters:** Axis scaling: ", scale.label,
+             "; Confidence level: ", level.pct, "%;",
+             " Confidence method: ", method.label,
+             " (2D uses *k*=2 degrees of freedom, 3D uses *k*=3).\n\n")
+    }
+  }
+}
+
 #'Create report for statistical analysis module
 #'@description Report generation using Sweave
 #'Write .Rnw file template
@@ -647,9 +670,10 @@ CreatePCAdoc <- function(mSetObj=NA){
              #paste("Figure", fig.count<<-fig.count+1,"shows the loadings plot between the selected PCs;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the biplot between the selected PCs.\n"),
              "Interactive 3-D scores plots are not included here and can be directly downloaded from website.\n");
-  
+
   cat(descr, file=rnwFile, append=TRUE);
-  
+  cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
+
   cmdhist <- c(
     "\\begin{figure}[htp]",
     "\\begin{center}",
@@ -752,8 +776,8 @@ CreatePLSdoc <- function(mSetObj=NA){
              paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the loading plot between the selected components;"));
   cat(descr, file=rnwFile, append=TRUE);
-  
-  
+  cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
+
   descr <- c(paste("Figure", fig.count<<-fig.count+1,"shows the classification performance with different number of components;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the results of permutation test for model validation;"),
              paste("Figure", fig.count<<-fig.count+1,"shows important features identified by PLS-DA.\n"));
@@ -866,8 +890,8 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
              paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluated using cross-validations;"));
   cat(descr, file=rnwFile, append=TRUE);
-  
-  
+  cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
+
   plsrhist <- c(
     "\\begin{figure}[htp]",
     "\\begin{center}",
@@ -945,8 +969,8 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
              paste("Figure", fig.count<<-fig.count+1,"shows the model overview;"),
              paste("Figure", fig.count<<-fig.count+1,"shows the results of the permutation tests for the models;"));
   cat(descr, file=rnwFile, append=TRUE);
-  
-  
+  cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
+
   oplsrhist<-c(
     "\\begin{figure}[htp]",
     "\\begin{center}",

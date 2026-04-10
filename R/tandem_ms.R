@@ -72,7 +72,8 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   }
   
   if(dbpath =="" || !file.exists(dbpath)){
-    stop("Database file does not exist! Please check!")
+    AddErrMsg("Database file does not exist! Please check!");
+    return(0);
   }
   # now set up the database option
   database <- gsub("\\[|\\]", "", database)
@@ -897,7 +898,8 @@ performMS2searchBatch <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
   }
   
   if(dbpath =="" || !file.exists(dbpath)){
-    stop("Database file does not exist! Please check!")
+    AddErrMsg("Database file does not exist! Please check!");
+    return(0);
   }
   # now set up the database option
   database <- gsub("\\[|\\]", "", database)
@@ -1317,7 +1319,8 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = de
 setMS2DBOpt <- function(mSetObj=NA, DBoption = "regular") {
   mSetObj <- .get.mSet(mSetObj);
   if(DBoption!="regular" & DBoption!="nl"){
-    stop("Wrong MS2DBopt. Must be either regular or nl");
+    AddErrMsg("Wrong MS2DBopt. Must be either regular or nl");
+    return(0);
   }
   mSetObj[["dataSet"]]$MSMS_db_option <- DBoption;
   return(.set.mSet(mSetObj))

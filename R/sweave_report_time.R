@@ -268,7 +268,7 @@ CreateCorHeatmap <- function(mSetObj=NA){
   }
   
   descr <- c("\\subsection{Two-way Heatmap Visualization}\n",
-             "The heatmap provides direct visualization of all data points in the form",
+             "The heatmap provides direct visualization of data points in the form",
              "of colors squares. The color spectrum intuitively indicates the higher or lower values.",
              "Users can choose different clustering algorithms or distance measures to cluster the",
              "variables. The samples are ordered by the two factors with default the first factor",

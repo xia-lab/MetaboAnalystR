@@ -581,7 +581,8 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
   nbstudies=length(pvalonesided);
   nbreptot=sum(nrep);
   if (nbreptot <2) {
-    stop("Error: the argument \"nrep\" must be a vector with at least two values higher than 1")
+    AddErrMsg("The argument 'nrep' must be a vector with at least two values higher than 1");
+    return(0);
   } 
   
   weight=sqrt(nrep/nbreptot);

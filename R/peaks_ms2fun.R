@@ -641,12 +641,13 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
     mSetObj$dataSet$cmpd.orig <-cmpd_input
   } else {
     AddErrMsg("Peak table and compound candidate table have different rows. Please correct.");
-    stop("Peak table and compound candidate table have different rows. Please correct.")
+    return(0);
   }
   
   if(meta.anal & method %in% c("es", "both")){
     #mummi.cols <- c(mummi.cols, "effect.size", "lower.ci", "upper.ci")
-    stop("Functional meta analysis is not available yet.")
+    AddErrMsg("Functional meta analysis is not available yet.");
+    return(0);
   }
   
   # first check if mode included
@@ -704,9 +705,10 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   }
   
   if(meta.anal & method %in% c("es", "both")){
-    # mSetObj$dataSet$mummi.orig <- cbind(mSetObj$dataSet$mummi.orig, effect.size=input$effect.size, 
+    # mSetObj$dataSet$mummi.orig <- cbind(mSetObj$dataSet$mummi.orig, effect.size=input$effect.size,
     #                                     lower.ci=input$lower.ci, upper.ci=input$upper.ci);
-    stop("Functional meta analysis is not available yet.")
+    AddErrMsg("Functional meta analysis is not available yet.");
+    return(0);
   }
   
   if (mSetObj$dataSet$mode == "positive") {
@@ -737,7 +739,8 @@ SetMS2IDType <- function(mSetObj=NA, IDtype = "hmdb_ids"){
   if(IDtype %in% c("hmdb_ids", "pubchem_cids", "pubchem_sids", "inchikeys", "smiles")){
     mSetObj$paramSet$ms2id.type <- IDtype;
   } else {
-    stop("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.")
+    AddErrMsg("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.");
+    return(0);
   }
   return(.set.mSet(mSetObj))
 }

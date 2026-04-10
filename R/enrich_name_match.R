@@ -1,16 +1,6 @@
 
 CleanLipidNames <- function(qvec){
-  
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.clean.lipid")){
-      .load.scripts.on.demand("util_lipid.Rc");    
-    }
-    return(my.clean.lipid(qvec));
-  }else{
-    return(my.clean.lipid(qvec));
-  }
-  
+  return(my.clean.lipid(qvec));
 }
 
 #' Perform detailed name match
@@ -70,15 +60,7 @@ PerformMultiMatch <- function(mSetObj=NA, q, lipid){
 #'@export
 #'
 PerformApproxMatch <- function(mSetObj=NA, q, lipid){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.approx.match")){
-      .load.scripts.on.demand("util_approx.Rc");    
-    }
-    return(my.approx.match(mSetObj, q, lipid));
-  }else{
-    return(my.approx.match(mSetObj, q, lipid));
-  }
+  return(my.approx.match(mSetObj, q, lipid));
 }
 
 #'Set matched name based on user selection from all potential hits
@@ -160,12 +142,6 @@ SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
 }
 
 CrossReferencingAPI <- function(mSetObj=NA, inputType){
-  
-   # make this lazy load
-    if(!exists("my.namemap.api")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
     mSetObj <- .get.mSet(mSetObj);
     toSend <- list(mSet = mSetObj, inputType = inputType, analType = anal.type)
     saveRDS(toSend, "tosend.rds");

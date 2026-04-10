@@ -1260,7 +1260,8 @@ PerformContBMDCalc <- function(mSetObj = NA) {
     num.cols     <- c("lof.p","bmd","bmdl","bmdu","b","c","d","e")
     missing.cols <- setdiff(num.cols, colnames(res))
     if (length(missing.cols) > 0) {
-      stop("Missing required columns in res: ", paste(missing.cols, collapse=", "))
+      AddErrMsg(paste0("Missing required columns in res: ", paste(missing.cols, collapse=", ")));
+      return(0);
     }
     res[, num.cols] <- lapply(res[, num.cols], function(x) {
       signif(as.numeric(as.character(x)), 2)
@@ -1302,10 +1303,14 @@ sensPOD <- function(mSetObj=NA, pod = c("feat.20", "feat.10th", "mode"), scale){
   f.its <- dataSet$itemselect;
 
   pod.choices <- c("feat.20", "feat.10th", "mode")
-  if (sum(pod %in% pod.choices) != length(pod))
-    stop("You must identify pod methods with the correct identifiers")
-  if (sum(duplicated(pod.choices)) > 0)
-    stop("Do not add duplicate pod methods")
+  if (sum(pod %in% pod.choices) != length(pod)) {
+    AddErrMsg("You must identify pod methods with the correct identifiers");
+    return(0);
+  }
+  if (sum(duplicated(pod.choices)) > 0) {
+    AddErrMsg("Do not add duplicate pod methods");
+    return(0);
+  }
   
   require(data.table)
   require(dplyr)

@@ -41,12 +41,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   }
  
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
-    # make this lazy load
-    if(!exists("my.ora.kegg")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
-    mSetObj$api$oraVec <- ora.vec; 
+    mSetObj$api$oraVec <- ora.vec;
     mSetObj$api$method <- method;
     mSetObj$api$nodeImp <- nodeImp;
 
@@ -279,10 +274,6 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     # send RDS to xialab api
     saveRDS(toSend, "tosend.rds");
 
-   # make this lazy load
-    if(!exists("my.pathway.qea")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
     return(my.pathway.qea());
   }
   

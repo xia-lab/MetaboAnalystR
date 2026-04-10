@@ -892,7 +892,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
         return(0)
       }
     } else {
-      stop("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.") 
+      AddErrMsg("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.");
+      return(0);
     }
   }
   if(!is.null(ref_cmpdlist)){
@@ -1401,8 +1402,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
         AddErrMsg("The MS2 ID  you have selected is not correct!")
         return(0)
       }
-      warning("MS2 ID type must be one of 'hmdb_ids', 'inchikeys', 'pubchem_CIDs', 'pubchem_SIDs', 'SMILES'.")
-      stop("Please redefine MS2 ID with function 'SetMS2IDType'.")
+      AddErrMsg("MS2 ID type must be one of 'hmdb_ids', 'inchikeys', 'pubchem_CIDs', 'pubchem_SIDs', 'SMILES'. Please redefine MS2 ID with function 'SetMS2IDType'.");
+      return(0);
     }
     ## checking adducts info - with MS2 INFO
     if(!is.null(mSetObj$dataSet$adduct.custom)){
@@ -3958,7 +3959,8 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
 
   inx <- which(mSetObj$pathways$name == msetNm)
   if (length(inx) != 1L) {
-    stop("Pathway name '", msetNm, "' not found or not unique in mSetObj$pathways$name.")
+    AddErrMsg(paste0("Pathway name '", msetNm, "' not found or not unique in mSetObj$pathways$name."));
+    return(0);
   }
 
   # --- 1) Normalize mset (character vector of KEGG IDs) -----------------
@@ -3971,7 +3973,8 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
   # --- 2) Name lookup table ---------------------------------------------
   cmpd.db <- .get.my.lib("compound_db.qs")  # expects columns: kegg_id, name
   if (is.null(cmpd.db) || !all(c("kegg_id", "name") %in% colnames(cmpd.db))) {
-    stop("compound_db.qs is missing or lacks columns 'kegg_id' and 'name'.")
+    AddErrMsg("compound_db.qs is missing or lacks columns 'kegg_id' and 'name'.");
+    return(0);
   }
   cmpd.db$kegg_id <- as.character(cmpd.db$kegg_id)
   cmpd.db$name    <- as.character(cmpd.db$name)
@@ -4330,17 +4333,8 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
                    gseaParam=1,
                    BPPARAM=NULL) {
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.fgsea")){
-      .load.scripts.on.demand("util_fgsea.Rc");    
-    }
-    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
-                    minSize, maxSize, nproc, gseaParam, BPPARAM));
-  }else{
-    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm, 
-                    minSize, maxSize, nproc, gseaParam, BPPARAM));
-  }
+  return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
+                  minSize, maxSize, nproc, gseaParam, BPPARAM));
 }
 
 
@@ -4381,15 +4375,7 @@ SetRTincluded <- function(mSetObj = NA, rt = "no") {
 CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, 
                               fileNm, filtOpt, version="v1"){
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("psea.heatmap.json")){
-      .load.scripts.on.demand("util_heatmap.Rc");    
-    }
-    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }else{
-    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }
+  return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
 }
     
 ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", testmeth="cov", mode=NA){
@@ -4755,15 +4741,7 @@ PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pva
 CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 
                                   minLib, fileNm, filtOpt, version="v1"){
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.list.heatmap")){
-      .load.scripts.on.demand("util_listheatmap.Rc");    
-    }
-    return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }else{
-    return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }
+  return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
 }
 
 
