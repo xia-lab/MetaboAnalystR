@@ -1635,8 +1635,10 @@ PlotRSDViolin <- function(mSetObj = NA,
 
   mSetObj <- .get.mSet(mSetObj)
 
-  if (!file.exists("preproc.qs"))
-    stop("Cannot find 'preproc.qs'.")
+  if (!file.exists("preproc.qs")) {
+    AddErrMsg("Cannot find 'preproc.qs'.");
+    return(0);
+  }
 
   raw <- t(qs::qread("preproc.qs"))      # rows = features, cols = samples
 

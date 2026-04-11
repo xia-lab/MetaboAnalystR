@@ -202,9 +202,10 @@ clump_data_local_ld <- function (dat, clump_kb = 10000, clump_r2 = 0.001, clump_
 {
   pval_column <- "pval.exposure"
   if (!is.data.frame(dat)) {
-    stop("Expecting data frame returned from format_data")
+    AddErrMsg("Expecting data frame returned from format_data");
+    return(0);
   }
-  if ("pval.exposure" %in% names(dat) & "pval.outcome" %in% 
+  if ("pval.exposure" %in% names(dat) & "pval.outcome" %in%
       names(dat)) {
     message("pval.exposure and pval.outcome columns present. Using pval.exposure for clumping.")
   } else if (!"pval.exposure" %in% names(dat) & "pval.outcome" %in% 

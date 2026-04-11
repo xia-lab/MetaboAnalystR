@@ -499,10 +499,6 @@ pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
   qs::qsave(pca3d$score, "score3d.qs");
   qs::qsave(pca3d$loadings, "loading3d.qs");
 
-  if(!exists("my.json.scatter")){
-    .load.scripts.on.demand("util_scatter3d.Rc");    
-  }
-
   my.json.scatter(fileNm, TRUE);
   return(.set.mSet(mSetObj));
 }
@@ -512,9 +508,6 @@ pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
 
 # Plot Venn diagram
 plotVennDiagram <- function(object, include="both", names, mar=rep(0,4), cex=1.2, lwd=1, circle.col, counts.col, show.include,...){
-    if(!exists("my.plot.venn")){
-        .load.scripts.on.demand("util_venndiagram.Rc");  
-    }
     return(my.plot.venn(object, include, names, mar, cex, lwd, circle.col, counts.col, show.include,...));
 }
 
@@ -597,7 +590,8 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
                                width = NA, pcx, pcy, reg = 0.95, show = 1,
                                grey.scale = 0, cex.opt = "na",
                                meta = NULL, metaShape = NULL) {
-  # save.image("2dscore.RData");
+  sp <- .get.scatter.params(reg)
+  reg <- sp$level
   if (!exists("pca.cex", envir = .GlobalEnv)){
     pca.cex <<- 1
   }
@@ -670,10 +664,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     pts.array <- array(0, dim = c(100, 2, length(lvs)))
     for (i in seq_along(lvs)) {
       inx <- colourVar == lvs[i]
-      groupVar  <- var(cbind(pc1[inx], pc2[inx]), na.rm = TRUE)
-      groupMean <- c(mean(pc1[inx], na.rm = TRUE), mean(pc2[inx], na.rm = TRUE))
-      pts.array[, , i] <- ellipse::ellipse(groupVar, centre = groupMean,
-                                           level = reg, npoints = 100)
+      pts.array[, , i] <- .compute.group.ellipse(pc1[inx], pc2[inx], sp)
     }
     
     xrg <- range(pc1, pts.array[, 1, ]);  yrg <- range(pc2, pts.array[, 2, ])
@@ -699,7 +690,8 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     ## base plot --------------------------------------------------------
     plot(pc1, pc2, xlab = xlabel, ylab = ylabel,
          xlim = xlim, ylim = ylim, type = "n",
-         col = "black", pch = pchs, main = "Scores Plot")
+         col = "black", pch = pchs, main = "Scores Plot",
+         asp = if(sp$use.asp) 1 else NA)
     grid(col = "lightgray", lty = "dotted", lwd = 1)
     
     ## ellipses
@@ -723,10 +715,7 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   } else {          ## ── continuous-colour branch ──────────────────────────
     
     ## full-sample confidence ellipse (drawn before points)
-    groupVar  <- var(cbind(pc1, pc2), na.rm = TRUE)
-    groupMean <- c(mean(pc1, na.rm = TRUE), mean(pc2, na.rm = TRUE))
-    ell.all   <- ellipse::ellipse(groupVar, centre = groupMean,
-                                  level = reg, npoints = 200)
+    ell.all <- .compute.group.ellipse(pc1, pc2, sp, npoints = 200)
     
     blues <- colorRampPalette(RColorBrewer::brewer.pal(9, "Blues"))(20)
     numv  <- as.numeric(as.character(colourVar))
@@ -752,7 +741,8 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
     plot(pc1, pc2,
          xlab = xlabel, ylab = ylabel,
          xlim = xlim,  ylim = ylim,
-         type = "n",   main = "Scores Plot")
+         type = "n",   main = "Scores Plot",
+         asp = if(sp$use.asp) 1 else NA)
     grid(col = "lightgray", lty = "dotted", lwd = 1)
     
     ## draw ellipse for the whole data cloud

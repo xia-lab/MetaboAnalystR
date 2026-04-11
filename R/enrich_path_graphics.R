@@ -28,12 +28,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
       
   }else{     
     
-   # plotting via microservice  
-   # make this lazy load
-    if(!exists("my.kegg.plot")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
+   # plotting via microservice
     mSetObj$api$analType <- mSetObj$analSet$type
     
     # first need to post to create image on server

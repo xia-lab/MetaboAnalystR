@@ -8,23 +8,30 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   fgsea_runner <- .run_fgsea_inner
 
   # Run entire fgsea algorithm in subprocess
+  fgsea_inner <- .run_fgsea_inner
   response <- rsclient_isolated_exec(
     func_body = function(input_data) {
       require(fgsea); require(BiocParallel); require(fastmatch); require(data.table)
       setwd(input_data$wd)
-      input_data$fgsea_runner(input_data$mSetObj, input_data$pathways, input_data$stats,
-                              input_data$ranks, input_data$nperm, input_data$minSize,
-                              input_data$maxSize, input_data$gseaParam)
+      fgsea_inner(input_data$mSetObj, input_data$pathways, input_data$stats,
+                       input_data$ranks, input_data$nperm, input_data$minSize,
+                       input_data$maxSize, input_data$gseaParam)
     },
     input_data = list(mSetObj = mSetObj, pathways = pathways, stats = stats,
                       ranks = ranks, nperm = nperm, minSize = minSize,
                       maxSize = maxSize, gseaParam = gseaParam, wd = getwd(),
                       fgsea_runner = fgsea_runner),
     packages = c("fgsea", "BiocParallel", "fastmatch", "data.table", "qs"),
-    timeout = 900, output_type = "qs",
-    module = "metabo"
+    timeout = 900, output_type = "qs"
   )
-  if (is.list(response) && isFALSE(response$success)) { AddErrMsg(response$message); return(0) }
+  if (is.list(response) && isFALSE(response$success)) {
+    AddErrMsg(response$message)
+    return(data.table::data.table(pathway=character(), pval=numeric(), padj=numeric(), NES=numeric(), size=integer()))
+  }
+  if (!is.data.frame(response)) {
+    AddErrMsg("fgsea returned invalid result format.")
+    return(data.table::data.table(pathway=character(), pval=numeric(), padj=numeric(), NES=numeric(), size=integer()))
+  }
   return(response)
 }
 

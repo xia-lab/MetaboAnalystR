@@ -41,9 +41,11 @@ my.impute.missing <- function(mSetObj = NA,
     grp <- as.character(cls.auto)
   }
   
-  if (length(grp) != nrow(int.mat))
-    stop("Group vector length mismatch with data!")
-  
+  if (length(grp) != nrow(int.mat)) {
+    AddErrMsg("Group vector length mismatch with data!");
+    return(0);
+  }
+
   uniq.grp <- unique(grp)
   
   ## Convenience: apply a column-wise FUN within each group
@@ -214,8 +216,10 @@ my.impute.missing <- function(mSetObj = NA,
 ReplaceMissingByLoD.grp <- function(int.mat, grp, fallback = 1e-6) {
   
   int.mat <- as.matrix(int.mat)                    # ensure matrix
-  if (length(grp) != nrow(int.mat))
-    stop("Length of 'grp' must equal nrow(int.mat)")
+  if (length(grp) != nrow(int.mat)) {
+    AddErrMsg("Length of 'grp' must equal nrow(int.mat)");
+    return(0);
+  }
   
   grp      <- as.character(grp)
   uniq.grp <- unique(grp)

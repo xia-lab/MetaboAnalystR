@@ -22,15 +22,18 @@ PerformMS1ResultsFormatting <- function(file_path, type, meta_data = NA){
   # meta_data <- "/home/qiang/Downloads/MetaboAnalystR_2.0.0/MetaboAnalystR/vignettes/XCMS.annotated.Report_1404649_meta.txt"
   # type can be mzmine/asari/msdial/xcms
   if(!file.exists(file_path)){
-    stop("The file_path is not valid! Please provide a valid file path.")
+    AddErrMsg("The file_path is not valid! Please provide a valid file path.");
+    return(0);
   }
   if(!(type %in% c("mzmine", "msdial", "asari", "xcms"))){
-    stop("The data type is not valid! Data type can be one of these: mzmine, msdial, asari and xcms.")
+    AddErrMsg("The data type is not valid! Data type can be one of these: mzmine, msdial, asari and xcms.");
+    return(0);
   }
   if(!file.exists(meta_data)){
-    stop("The file path of meta data table is invalid! Please provide a valid file path!")
+    AddErrMsg("The file path of meta data table is invalid! Please provide a valid file path!");
+    return(0);
   }
-  
+
   if(type == "msdial"){
     feadt <- read.csv(file_path, sep = "\t")
     if(!is.na(meta_data)){
@@ -182,13 +185,16 @@ PerformMS2ResultsFormatting <- function(file_path, type, MS1_features_list = NA)
   # MS1_features_list <- "/home/qiang/Downloads/MetaboAnalystR_2.0.0/MetaboAnalystR/vignettes/peaks_ms1_mzmine.txt"
   # type can be msfinder/sirius
   if(!file.exists(file_path)){
-    stop("The file_path is not valid! Please provide a valid file path.")
+    AddErrMsg("The file_path is not valid! Please provide a valid file path.");
+    return(0);
   }
   if(!file.exists(MS1_features_list)){
-    stop("The MS1_features_list is not valid! Please provide a valid file path.")
+    AddErrMsg("The MS1_features_list is not valid! Please provide a valid file path.");
+    return(0);
   }
   if(!(type %in% c("msfinder", "sirius"))){
-    stop("The data type is not valid! Data type can be one of these: msfinder, sirius.")
+    AddErrMsg("The data type is not valid! Data type can be one of these: msfinder, sirius.");
+    return(0);
   }
   require("progress")
   if(type == "msfinder"){

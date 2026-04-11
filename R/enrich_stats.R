@@ -37,8 +37,7 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   # --- 2. Handle KEGG API ---
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
-    if(!exists("my.hyperscore.kegg")){ .load.scripts.on.demand("util_api.Rc"); }
-    mSetObj$api$oraVec <- ora.vec; 
+    mSetObj$api$oraVec <- ora.vec;
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
       toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter,
@@ -173,11 +172,6 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
 
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
-    # make this lazy load
-    if(!exists("my.qea.kegg")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
     dimnames(msea.data) = NULL

@@ -79,6 +79,7 @@ void data2hill(double *x,
 #include <R.h>
 #include <Rinternals.h>
 
+#if 0
 /* Fortran routines called from decorana.f */
 
 void F77_NAME(eigy)(double*, double*, double*, int*, int*, int*, double*,
@@ -192,3 +193,4 @@ SEXP do_decorana(SEXP veg, SEXP ira, SEXP iresc, SEXP rshort, SEXP imk,
     UNPROTECT(4); /* xeig, yeig, eig, result */
     return result;
 }
+  #endif

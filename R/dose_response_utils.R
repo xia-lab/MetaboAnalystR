@@ -235,8 +235,10 @@ GetItemSelectData <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # double matrix
   return(itemselect$data);
@@ -249,8 +251,10 @@ GetItemSelectDataRowNms <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # character vector
   return(rownames(itemselect$data));
@@ -263,8 +267,10 @@ GetItemSelectDataColNms <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # character vector
   return(colnames(itemselect$data));
@@ -277,8 +283,10 @@ GetItemSelectDose <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # numeric vector
   return(itemselect$dose)
@@ -291,8 +299,10 @@ GetItemSelectItems <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # numeric vector
   return(itemselect$item)
@@ -305,8 +315,10 @@ GetItemSelectDataMean <- function(mSetObj=NA){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # double matrix
   return(itemselect$data.mean);
@@ -316,8 +328,10 @@ GetItemSelectDataMeanColNms <- function(){
   itemselect <- dataSet$itemselect;
   # Checks
   # TODO: return error message to API response
-  if (!inherits(itemselect, "itemselect"))
-    stop("Use only with 'itemselect' objects, created with the function itemselect")
+  if (!inherits(itemselect, "itemselect")) {
+    AddErrMsg("Use only with 'itemselect' objects, created with the function itemselect");
+    return(0);
+  }
   
   # character vector
   return(colnames(itemselect$data.mean));
@@ -355,8 +369,10 @@ GetDrcFitAllRes <- function(mSetObj=NA){
   f.drc <- dataSet$drcfit.obj;
   
   # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+  if (!inherits(f.drc, "drcfit")) {
+    AddErrMsg("Use only with 'drcfit' objects, created with the function drcfit");
+    return(0);
+  }
   
   res <- f.drc$fitres.all
   res <- res[,-c(1,2,ncol(res))]
@@ -372,8 +388,10 @@ GetDrcFitAllResColNms <- function(mSetObj=NA){
   f.drc <- dataSet$drcfit.obj;
   
   # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+  if (!inherits(f.drc, "drcfit")) {
+    AddErrMsg("Use only with 'drcfit' objects, created with the function drcfit");
+    return(0);
+  }
   
   res <- f.drc$fitres.all
 
@@ -387,8 +405,10 @@ GetDrcFitAllGeneIds <- function(mSetObj=NA){
   f.drc <- dataSet$drcfit.obj;
   
   # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+  if (!inherits(f.drc, "drcfit")) {
+    AddErrMsg("Use only with 'drcfit' objects, created with the function drcfit");
+    return(0);
+  }
   
   res <- f.drc$fitres.all
   return(res[,1])
@@ -398,8 +418,10 @@ GetDrcFitAllModNms <- function(){
   f.drc <- dataSet$drcfit.obj;
   
   # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+  if (!inherits(f.drc, "drcfit")) {
+    AddErrMsg("Use only with 'drcfit' objects, created with the function drcfit");
+    return(0);
+  }
   
   res <- f.drc$fitres.all
   return(res[,2])
@@ -412,8 +434,10 @@ GetDrcFitAllInvStatus <- function(mSetObj=NA){
   f.drc <- dataSet$drcfit.obj;
   
   # Checks
-  if (!inherits(f.drc, "drcfit"))
-    stop("Use only with 'drcfit' objects, created with the function drcfit")
+  if (!inherits(f.drc, "drcfit")) {
+    AddErrMsg("Use only with 'drcfit' objects, created with the function drcfit");
+    return(0);
+  }
   
   res <- f.drc$fitres.all
   return(res[,ncol(res)])
@@ -446,8 +470,10 @@ InitDrcFitObj <- function(mSetObj=NA){
 
 FilterBMDResults <- function(dataSet){
   obj.bmd <- dataSet$bmdcalc.obj
-  if (!inherits(obj.bmd, "bmdcalc"))
-    stop("Use only with 'bmdcalc' objects, created with the function bmdcalc")
+  if (!inherits(obj.bmd, "bmdcalc")) {
+    AddErrMsg("Use only with 'bmdcalc' objects, created with the function bmdcalc");
+    return(0);
+  }
 
   bmdcalc.obj <- obj.bmd
   if(bmd.pass.option == "conv"){

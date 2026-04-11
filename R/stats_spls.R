@@ -818,10 +818,28 @@ MCVfold.splsda = function(
       if (nrep > 1) # reinitialise the folds
         folds = folds.input
       
-      if (is.null(folds) || !is.numeric(folds) || folds < 2 || folds > n)
+      if (is.null(folds) || !is.numeric(folds) || length(folds) != 1 || is.na(folds))
       {
-        stop("Invalid number of folds.")
-      } else {
+        warning("Invalid number of folds. Resetting folds to 5.")
+        folds <- 5
+      }
+      folds <- round(folds)
+      if (folds < 2) {
+        warning("Invalid number of folds. Resetting folds to 2.")
+        folds <- 2
+      }
+      if (folds > n) {
+        warning("Invalid number of folds. Resetting folds to sample size: ", n)
+        folds <- n
+      }
+      if (is.null(multilevel)) {
+        min.class <- suppressWarnings(min(table(Y)))
+        if (is.finite(min.class) && folds > min.class) {
+          warning("Number of folds exceeds smallest class size. Resetting folds to ", min.class)
+          folds <- as.integer(min.class)
+        }
+      }
+      {
         M = round(folds)
         if (is.null(multilevel))
         {
@@ -2663,6 +2681,5 @@ unmap = function (classification, groups = NULL, noise = NULL)
   attr(z, "levels") = levels
   z
 }
-
 
 

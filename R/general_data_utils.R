@@ -1,33 +1,4 @@
 
-.load.scripts.on.demand <- function(fileName=""){
-    mSetObj <- .get.mSet(NA)
-  # Define the relative path that is independent of rpath
-  relPath <- paste0("rscripts/MetaboAnalystR/R/", fileName)
-  
-  # Construct the complete path using the current rpath
-  complete.path <- paste0(rpath, relPath)
-  
-  if(!file.exists(complete.path)){
-      rpath <<- "../../../"
-      complete.path <- paste0(rpath, relPath)
-  } else {
-      rpath <<- "../../"
-  }
-  
-  # Initialize the loaded.scripts list if needed
-  if(is.null(mSetObj$paramSet$loaded.scripts)){
-    mSetObj$paramSet$loaded.scripts <- list()
-  }
-  
-  # Only store the relative path (without rpath) to ensure uniqueness
-  if(!relPath %in% mSetObj$paramSet$loaded.scripts) {
-    mSetObj$paramSet$loaded.scripts <- c(mSetObj$paramSet$loaded.scripts, relPath)
-  }
-  
-  # Load the script using the complete path
-  compiler::loadcmp(complete.path)
-}
-
 Reload.scripts.on.demand <- function(){
   mSetObj <- .get.mSet(NA)
   
@@ -188,7 +159,8 @@ Convert2AnalObject <- function(mSet, data.type, anal.type, paired=FALSE){
     MSnResults = mSet@MSnResults
     MSnData = mSet@MSnData
   } else {
-    stop("This is not a valid mSet from raw spectral processing!")
+    AddErrMsg("This is not a valid mSet from raw spectral processing!");
+    return(0);
   }
   
   dataSet <- list();
@@ -713,15 +685,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.save.data")){
-      .load.scripts.on.demand("util_savedata.Rc");    
-    }
-    return(my.save.data(mSetObj));
-  }else{
-    return(my.save.data(mSetObj));
-  }
+  return(my.save.data(mSetObj));
 }
 
 #' Read an mzTab tab separated file from the passed in file.
@@ -734,15 +698,7 @@ SaveTransformedData <- function(mSetObj=NA){
 #' then the SML_ID will be used.
 #' @export
 Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.parse.mztab")){
-      .load.scripts.on.demand("util_mztab.Rc");    
-    }
-    return(my.parse.mztab(mSetObj, filename, identifier));
-  }else{
-    return(my.parse.mztab(mSetObj, filename, identifier));
-  }
+  return(my.parse.mztab(mSetObj, filename, identifier));
 }
 
 #'Read peak list files
@@ -761,15 +717,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 #'@export
 
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.parse.peaklist")){
-      .load.scripts.on.demand("util_peaks.Rc");    
-    }
-    return(my.parse.peaklist(mSetObj, foldername));
-  }else{
-    return(my.parse.peaklist(mSetObj, foldername));
-  }
+  return(my.parse.peaklist(mSetObj, foldername));
 }
 
 #' Adds an error message
@@ -778,9 +726,7 @@ Read.PeakList<-function(mSetObj=NA, foldername="upload"){
 #'@param msg Error message to print 
 #'@export
 AddErrMsg <- function(msg){
-  if(!exists("err.vec")){
-    err.vec <<- "";
-  }
+  current.msg <<- c(current.msg, msg);
   err.vec <<- c(err.vec, msg);
   message("[ERROR] ", msg);
 }
@@ -809,6 +755,17 @@ GetCurrentMsg <- function(){
     msg.vec <<- "";
   }
   return(msg.vec[length(msg.vec)]);
+}
+
+getCurrentMsg <- function(){
+  msg <- paste(current.msg, collapse="; ");
+  current.msg <<- "";
+  return(msg);
+}
+
+ClearErrMsg <- function(){
+  current.msg <<- "";
+  err.vec <<- "";
 }
 
 SetCmpdSummaryType <- function(mSetObj=NA, type){
@@ -1424,30 +1381,18 @@ GetNameCheckMsgs <- function(mSetObj=NA){
 }
 
 ValidateMetabolonData <- function(file_path = NULL) {
-    if(!exists("my.validate.metabolon.data")){
-      .load.scripts.on.demand("util_metabolon.Rc");    
-    }
     return(my.validate.metabolon.data(file_path));
 }
 
 ReadMetabolonSheets <- function(mSetObj = NA, metafactor, featureID){
-    if(!exists("my.read.metabolon.sheets")){
-      .load.scripts.on.demand("util_metabolon.Rc");    
-    }
     return(my.read.metabolon.sheets(mSetObj, metafactor, featureID));
 }
 
 ExtractMetabolonCompoundIDs  <- function(mSetObj = NA, file_path = NULL){
-    if(!exists("my.extract.metabolon.compounds")){
-      .load.scripts.on.demand("util_metabolon.Rc");    
-    }
     return(my.extract.metabolon.compounds(mSetObj, file_path));
 }
 
 ExtractMetabolonMetaFactors <- function(mSetObj = NA, file_path = NULL){
-    if(!exists("my.extract.metabolon.metafactors")){
-      .load.scripts.on.demand("util_metabolon.Rc");    
-    }
     return(my.extract.metabolon.metafactors(mSetObj, file_path));
 }
 
@@ -1487,10 +1432,6 @@ GetMetabolonCMPDIDs <- function(mSetObj = NA){
 #'@export
 GetNMDRStudy <- function(mSetObj=NA, StudyID){
   
-    # make this lazy load
-    if(!exists("my.get.nmdr.data")){
-      .load.scripts.on.demand("util_nmdr.Rc");    
-    }
     res <- my.get.nmdr.data(StudyID);
     if(res){
         mSetObj <- .get.mSet(mSetObj);

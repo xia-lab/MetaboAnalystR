@@ -35,14 +35,18 @@ Match.Pattern <- function(mSetObj  = NA,
 
   templ <- as.numeric(ClearStrings(strsplit(pattern, "-", fixed = TRUE)[[1]]))
 
-  if (all(templ == templ[1]))
-    stop("Cannot calculate correlation on constant values!")
+  if (all(templ == templ[1])) {
+    AddErrMsg("Cannot calculate correlation on constant values!");
+    return(0);
+  }
 
   ## rebuild template to match sample order ---------------------------
   cls         <- mSetObj$dataSet$cls
   all.lvls    <- levels(cls)
-  if (length(templ) != length(all.lvls))
-    stop("Wrong template: must match the number of groups.")
+  if (length(templ) != length(all.lvls)) {
+    AddErrMsg("Wrong template: must match the number of groups.");
+    return(0);
+  }
 
   new.template <- numeric(length(cls))
   for (i in seq_along(all.lvls))
@@ -691,12 +695,7 @@ KendallCorrFunc <- function(var1, var2, data){
   data.frame(var1, var2, result[c("estimate", "p.value", "statistic")], stringsAsFactors = FALSE)
 }
 
-# inject functions from the Network-DSPC script
 ComputeDSPC <- function(mSetObj=NA){
-     if(!exists("PerformDSPC")){
-         .load.scripts.on.demand("networks_enrich.Rc");  
-         .load.scripts.on.demand("networks_view.Rc");      
-     }
      return(PerformDSPC(mSetObj));
 }
 

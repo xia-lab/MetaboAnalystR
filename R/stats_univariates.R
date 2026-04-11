@@ -633,10 +633,6 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 
 PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=default.dpi, width=NA, labelNum=5, interactive=F){
 
-    # make this lazy load
-    if(!exists("my.plot.volcano")){
-      .load.scripts.on.demand("util_volcano.Rc");    
-    }
     return(my.plot.volcano(mSetObj, imgName, plotLbl, plotTheme, format, dpi,  width, labelNum, interactive));
 }
 
@@ -671,9 +667,6 @@ kwtest <- function(x, cls) {
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 FisherLSD <- function(aov.obj, thresh){
-  if(!exists("my.lsd.test")){
-    .load.scripts.on.demand("util_lsd.Rc");    
-  }
   return(my.lsd.test(aov.obj,"cls", alpha=thresh));
 }
 
@@ -1385,15 +1378,7 @@ GetFtestRes <- function(mSetObj=NA, nonpar=F){
 #'License: GNU GPL (>= 2)
 
 GetUnivReport <- function(mSetObj=NA){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.univ.report")){
-      .load.scripts.on.demand("util_univreport.Rc");    
-    }
-    return(my.univ.report(mSetObj));
-  }else{
-    return(my.univ.report(mSetObj));
-  }
+  return(my.univ.report(mSetObj));
 }
 
 ContainInfiniteTT<-function(mSetObj=NA){

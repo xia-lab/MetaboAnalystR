@@ -1317,10 +1317,14 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
   ## ── 2 · choose correlation strategy ────────────────────────────────
   if (tolower(corr.type) == "partial") {
     
-    if (!requireNamespace("ppcor",  quietly = TRUE))
-      stop("Package 'ppcor'  is required for partial correlations.")
-    if (!requireNamespace("glasso", quietly = TRUE))
-      stop("Package 'glasso' is required for graphical-lasso fallback.")
+    if (!requireNamespace("ppcor",  quietly = TRUE)) {
+      AddErrMsg("Package 'ppcor'  is required for partial correlations.");
+      return(0);
+    }
+    if (!requireNamespace("glasso", quietly = TRUE)) {
+      AddErrMsg("Package 'glasso' is required for graphical-lasso fallback.");
+      return(0);
+    }
     
     ## 2a · build full matrix  (target + features + optional covariates)
     full.mat <- cbind(target = tgt.var, input.data)
@@ -1342,8 +1346,10 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
     ## 2b · HIGH-DIMENSION branch (graphical lasso) --------------------
     if (nVar >= nSam + 5) {
       
-      if (!requireNamespace("BigQuic", quietly = TRUE))
-        stop("Package 'BigQuic' is required (install.packages('BigQuic')).")
+      if (!requireNamespace("BigQuic", quietly = TRUE)) {
+        AddErrMsg("Package 'BigQuic' is required (install.packages('BigQuic')).");
+        return(0);
+      }
       
       X <- scale(full.mat)                       # always standardise
       S <- cov(X, use = "pairwise")              # only for λ heuristic

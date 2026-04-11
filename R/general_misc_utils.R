@@ -96,7 +96,7 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
 }
 
 rsclient_isolated_exec <- function(func_body, input_data, packages = character(0),
-                                   timeout = 180, output_type = "qs", ...) {
+                                   timeout = 180, output_type = "qs", module = NULL) {
   bridge_tmp <- file.path(tempdir(), "rsclient_bridge")
   if (!dir.exists(bridge_tmp)) dir.create(bridge_tmp, recursive = TRUE)
   uid <- paste0(sample(letters, 6), collapse = "")
@@ -110,10 +110,27 @@ rsclient_isolated_exec <- function(func_body, input_data, packages = character(0
     for (p in c(input_path, output_path)) if (file.exists(p)) unlink(p)
   }, add = TRUE)
 
+  # If module is specified, resolve the script loader path so the child can load compiled scripts
+  loader_path <- NULL
+  if (!is.null(module)) {
+    loader_candidate <- paste0("../../rscripts/_script_loader.R")
+    if (file.exists(loader_candidate)) {
+      loader_path <- normalizePath(loader_candidate)
+    }
+  }
+
   result <- run_func_via_rsclient(
-    func = function(input_path, output_path, func_body, pkgs) {
+    func = function(input_path, output_path, func_body, pkgs, loader_path, module) {
       tryCatch({
+        Sys.setenv(RGL_USE_NULL = TRUE)
         for (pkg in pkgs) suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+        # Load tool scripts in the child session if module is specified
+        if (!is.null(loader_path) && file.exists(loader_path)) {
+          source(loader_path)
+          if (exists("LoadRscriptsOnDemand") && !is.null(module)) {
+            tryCatch(LoadRscriptsOnDemand(module), error = function(e) message("[rsclient] LoadRscriptsOnDemand: ", e$message))
+          }
+        }
         input_data <- qs::qread(input_path)
         res <- func_body(input_data)
         qs::qsave(res, output_path, preset = "fast")
@@ -124,7 +141,8 @@ rsclient_isolated_exec <- function(func_body, input_data, packages = character(0
       })
     },
     args = list(input_path = input_path, output_path = output_path,
-                func_body = func_body, pkgs = packages),
+                func_body = func_body, pkgs = packages,
+                loader_path = loader_path, module = module),
     timeout_sec = timeout
   )
 
