@@ -494,18 +494,29 @@ Convert2Mummichog <- function(mSetObj=NA,
   }
 
     if(rt){ # taking retention time information from feature name itself
-      feat_info <- mummi_new[,1]
+      feat_info <- as.character(mummi_new[,1])
       # Support both "__" and "@" as mz/rt separator (try __ first)
       sep <- if(any(grepl("__", feat_info, fixed=TRUE))) "__" else if(any(grepl("@", feat_info, fixed=TRUE))) "@" else "__"
-      feat_info_split <- matrix(unlist(strsplit(feat_info, sep, fixed=TRUE)), ncol=2, byrow=T)
-      colnames(feat_info_split) <- c("m.z", "r.t")
-      
-      if(rt.type == "minutes"){
-        rtime <- as.numeric(feat_info_split[,2])
-        rtime <- rtime * 60
-        feat_info_split[,2] <- rtime
+      split_parts <- strsplit(feat_info, sep, fixed=TRUE)
+      mz_vec <- vapply(split_parts, function(x) {
+        if (length(x) >= 1) x[1] else NA_character_
+      }, FUN.VALUE = character(1))
+      rt_vec <- suppressWarnings(as.numeric(vapply(split_parts, function(x) {
+        if (length(x) >= 2) x[2] else NA_character_
+      }, FUN.VALUE = character(1))))
+
+      # Fallback: use RT parsed earlier from metadata when feature names have no separator.
+      if (all(is.na(rt_vec)) &&
+          !is.null(mSetObj$dataSet$ret_time) &&
+          length(mSetObj$dataSet$ret_time) == length(feat_info)) {
+        rt_vec <- suppressWarnings(as.numeric(mSetObj$dataSet$ret_time))
       }
       
+      if(rt.type == "minutes"){
+        rt_vec <- rt_vec * 60
+      }
+      
+      feat_info_split <- data.frame("m.z" = mz_vec, "r.t" = rt_vec, check.names = FALSE, stringsAsFactors = FALSE)
       mummi_new <- cbind(feat_info_split, mummi_new[,-1])
     }
   }
@@ -4507,6 +4518,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   mSetObj <- .get.mSet(mSetObj)
   require(limma)
   cls <- mSetObj$dataSet$cls
+  # relevel() only supports unordered factors; metadata columns can be ordered.
+  cls <- factor(cls, levels = levels(cls), ordered = FALSE)
   x <- mSetObj$dataSet$norm
   ngrps <- length(levels(cls))
 
@@ -4522,6 +4535,13 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   } else {
     cont <- levels(cls)[2]
   }
+  
+  # Limma contrast names must be syntactically valid in R.
+  cls.levels <- levels(cls)
+  cls.safe <- make.names(cls.levels, unique = TRUE)
+  names(cls.safe) <- cls.levels
+  ref.safe <- cls.safe[ref]
+  cont.safe <- cls.safe[cont]
 
   # Build covariate matrix if specified (only used with limma method)
   has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
@@ -4553,8 +4573,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
     } else {
       design <- model.matrix(~0 + cls)
     }
-    colnames(design)[1:ngrps] <- levels(cls)
-    contrast.name <- paste0(cont, "-", ref)
+    colnames(design)[1:ngrps] <- unname(cls.safe)
+    contrast.name <- paste0(cont.safe, "-", ref.safe)
     contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
     fit <- lmFit(t(as.matrix(x)), design)
     fit <- contrasts.fit(fit, contrast.matrix)
@@ -4583,8 +4603,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
 
     # logFC from specific contrast via limma (no covariates for classical method)
     design <- model.matrix(~0 + cls)
-    colnames(design)[1:ngrps] <- levels(cls)
-    contrast.name <- paste0(cont, "-", ref)
+    colnames(design)[1:ngrps] <- unname(cls.safe)
+    contrast.name <- paste0(cont.safe, "-", ref.safe)
     contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
     fit <- lmFit(t(as.matrix(x)), design)
     fit <- contrasts.fit(fit, contrast.matrix)

@@ -67,9 +67,56 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 #'@export
 #'
 PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=default.dpi){
-  
+  if(!exists("current.kegglib") || is.null(current.kegglib)){
+    if(file.exists("current.kegglib.qs")){
+      current.kegglib <<- qs::qread("current.kegglib.qs");
+    }else{
+      .set.err.msg("KEGG library is not loaded.");
+      if(is.null(dpi)){
+        return("keggPathLnk='';\nkeggPathName=\"\"");
+      }
+      return("");
+    }
+  }
+
+  if(is.null(current.kegglib$path.ids) || is.null(current.kegglib$graph.list)){
+    .set.err.msg("KEGG pathway library is incomplete.");
+    if(is.null(dpi)){
+      return("keggPathLnk='';\nkeggPathName=\"\"");
+    }
+    return("");
+  }
+
   path.id <- current.kegglib$path.ids[pathName];
-  g <- current.kegglib$graph.list[[path.id]];
+  if(length(path.id) < 1 || is.na(path.id[1])){
+    all.path.ids <- unname(current.kegglib$path.ids);
+    if(pathName %in% all.path.ids){
+      path.id <- pathName;
+    }
+  }
+  path.id <- as.character(path.id[1]);
+
+  if(is.na(path.id) || nchar(path.id) == 0){
+    .set.err.msg(paste("Cannot resolve pathway ID for:", pathName));
+    if(is.null(dpi)){
+      return("keggPathLnk='';\nkeggPathName=\"\"");
+    }
+    return("");
+  }
+
+  g <- tryCatch({
+    current.kegglib$graph.list[[path.id]]
+  }, error = function(e){
+    NULL
+  });
+
+  if(is.null(g)){
+    .set.err.msg(paste("Cannot load KEGG graph for pathway:", pathName));
+    if(is.null(dpi)){
+      return("keggPathLnk='';\nkeggPathName=\"\"");
+    }
+    return("");
+  }
   tooltip <- names(KEGGgraph::nodes(g));
   
   nm.vec <- NULL;
@@ -350,7 +397,9 @@ PlotPathSummary<-function(mSetObj=NA,
     return(0);
   }
 
-        orig.y <- y;
+  is.mummi.path <- !is.null(mSetObj$msgSet$rich.msg) &&
+    grepl("mummichog", mSetObj$msgSet$rich.msg, ignore.case = TRUE);
+  orig.y <- y;
 
   # first sort values based on p
   if(!jointGlobal){
@@ -395,6 +444,11 @@ PlotPathSummary<-function(mSetObj=NA,
     minR <- (max.x - min.x)/160;
     radi.vec <- minR+(maxR-minR)*(combo.p-min.x)/(max.x-min.x);
     bg.vec <- heat.colors(length(combo.p));
+  }
+
+  if(is.mummi.path && length(radi.vec) > 0){
+    # Keep default shape distribution but shrink mummichog bubbles globally.
+    radi.vec <- pmax(radi.vec * 0.55, 0.003);
   }
 
   if(.on.public.web){
@@ -797,6 +851,8 @@ PlotPathSummaryGG <- function(mSetObj = NA,
   
   # Get data frame for ggplot
   data <- mSetObj$analSet$pathSummaryDf;
+  is.mummi.path <- !is.null(mSetObj$msgSet$rich.msg) &&
+    grepl("mummichog", mSetObj$msgSet$rich.msg, ignore.case = TRUE);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -860,7 +916,7 @@ if(ylabNM == "-log10(p)"){
   
   if(interactive){
     library(plotly);
-    sizeref <- max(data$radi) / 25
+    sizeref <- max(data$radi, na.rm = TRUE) / ifelse(is.mummi.path, 15, 25)
     ggp <- plot_ly(data, x = ~x, y = ~y, type = 'scatter', mode = 'markers',
                    marker = list(
                      size = ~radi, 
@@ -898,7 +954,7 @@ if(ylabNM == "-log10(p)"){
     
     p <- ggplot(data, aes(x = x, y = y, size = radi, fill = y, label = path, text = text)) +
       geom_point(shape=21) + # 21 is filled circle
-      scale_size_continuous(range = c(2, 10),name=xlabNM) +
+      scale_size_continuous(range = if(is.mummi.path) c(1.5, 5.5) else c(2, 10),name=xlabNM) +
       scale_fill_gradient(low = "#FFFFED", high = "#FF0000", name=ylabNM) +
       labs(x = xlabNM, y = ylabNM) +
       theme_bw()
@@ -937,4 +993,176 @@ if(ylabNM == "-log10(p)"){
   }
   
   return(.set.mSet(mSetObj))
+}
+
+#'Get compound colors for KEGG pathway network viewer
+#'@description Returns matched compounds with their colors based on significance
+#'@param mSetObj Input name of the created mSet Object
+#'@param pathName Input the name of the selected pathway
+#'@return Vector of strings in format "compoundId|color|pvalue"
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+GetPathwayCompoundColors <- function(mSetObj=NA, pathName){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  # Check if KEGG library is loaded
+  if(!exists("current.kegglib") || is.null(current.kegglib)){
+    return(character(0));
+  }
+
+  # Check if path.ids exists
+  if(is.null(current.kegglib$path.ids)){
+    return(character(0));
+  }
+
+  # Get pathway ID
+  path.id <- current.kegglib$path.ids[pathName];
+  if(length(path.id) < 1 || is.na(path.id[1])){
+    all.path.ids <- unname(current.kegglib$path.ids);
+    if(pathName %in% all.path.ids){
+      path.id <- pathName;
+    }
+  }
+  path.id <- as.character(path.id[1]);
+
+  if(is.null(path.id) || is.na(path.id)){
+    return(character(0));
+  }
+
+  # Check if graph.list exists
+  if(is.null(current.kegglib$graph.list)){
+    return(character(0));
+  }
+
+  # Get graph for this pathway
+  g <- tryCatch({
+    current.kegglib$graph.list[[path.id]]
+  }, error = function(e) {
+    return(NULL);
+  });
+
+  if(is.null(g)){
+    return(character(0));
+  }
+
+  # Get all compounds in this pathway
+  all.nodes <- KEGGgraph::nodes(g);
+
+  # Initialize with default colors
+  fillcolvec <- rep("lightblue", length(all.nodes));
+  pvec <- rep(NA, length(all.nodes));
+  names(fillcolvec) <- names(pvec) <- all.nodes;
+
+  # Build candidate pathway keys for robust lookup (e.g. ko00260 vs hsa00260)
+  path.keys <- unique(na.omit(c(
+    as.character(path.id),
+    as.character(pathName),
+    if(grepl("^[a-zA-Z]{2,4}[0-9]{5}$", path.id)) paste0("ko", substr(path.id, nchar(path.id)-4, nchar(path.id))) else NA_character_,
+    if(grepl("^[a-zA-Z]{2,4}[0-9]{5}$", pathName)) paste0("ko", substr(pathName, nchar(pathName)-4, nchar(pathName))) else NA_character_,
+    unname(current.kegglib$path.ids[as.character(pathName)]),
+    unname(current.kegglib$path.ids[as.character(path.id)])
+  )));
+  path.keys <- path.keys[!is.na(path.keys) & nzchar(path.keys)];
+
+  # Check for ORA hits
+  if(!is.null(mSetObj$analSet$ora.hits)){
+    hit.cmpds <- unique(unlist(mSetObj$analSet$ora.hits[path.keys], use.names = FALSE));
+    if(!is.null(hit.cmpds) && length(hit.cmpds) > 0){
+      fillcolvec[hit.cmpds] <- "red";
+      pvec[hit.cmpds] <- 0.05; # Default p-value for ORA hits
+
+      # Check for filtered compounds
+      if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$ora.filtered.mset)){
+        filtered.cmpds <- unique(unlist(mSetObj$analSet$ora.filtered.mset[path.keys], use.names = FALSE));
+        if(!is.null(filtered.cmpds)){
+          fillcolvec[!(names(fillcolvec) %in% filtered.cmpds)] <- "lightgrey";
+        }
+      }
+    }
+  }
+  # Check for QEA hits
+  else if(!is.null(mSetObj$analSet$qea.hits)){
+    hit.cmpds <- unique(unlist(mSetObj$analSet$qea.hits[path.keys], use.names = FALSE));
+    if(!is.null(hit.cmpds) && length(hit.cmpds) > 0){
+      # Get p-values for matched compounds
+      pvals <- mSetObj$analSet$qea.univp[hit.cmpds];
+      pvec[hit.cmpds] <- pvals;
+
+      # Create color gradient based on p-values (heat.colors: yellow to red)
+      bg.vec <- heat.colors(length(pvals));
+
+      # Reorder colors according to sorted p-values (most significant = reddest)
+      ord.inx <- match(pvals, sort(pvals));
+      fillcolvec[hit.cmpds] <- bg.vec[ord.inx];
+
+      # Check for filtered compounds
+      if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$analSet$qea.filtered.mset)){
+        filtered.cmpds <- unique(unlist(mSetObj$analSet$qea.filtered.mset[path.keys], use.names = FALSE));
+        if(!is.null(filtered.cmpds)){
+          fillcolvec[!(names(fillcolvec) %in% filtered.cmpds)] <- "lightgrey";
+        }
+      }
+    }
+  }
+
+  # Build result vector only for matched compounds (not background)
+  result <- character(0);
+  for(i in 1:length(all.nodes)){
+    node.id <- all.nodes[i];
+    color <- fillcolvec[node.id];
+
+    # Only include matched compounds (red colors or heat.colors)
+    if(color != "lightblue" && color != "lightgrey"){
+      pval <- pvec[node.id];
+      pval.str <- ifelse(is.na(pval), "NA", sprintf("%.6f", pval));
+      result <- c(result, paste(node.id, color, pval.str, sep="|"));
+    }
+  }
+
+  return(result);
+}
+
+#'Get pathway library compounds for KEGG pathway network viewer
+#'@description Returns all compound KEGG IDs in current organism pathway library for the selected pathway.
+#'@param mSetObj Input name of the created mSet Object
+#'@param pathName Input the name or id of the selected pathway
+#'@return Character vector of KEGG compound IDs (e.g. C00022)
+#'@export
+GetPathwayLibraryCompounds <- function(mSetObj=NA, pathName){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(!exists("current.kegglib") || is.null(current.kegglib)){
+    return(character(0));
+  }
+  if(is.null(current.kegglib$path.ids) || is.null(current.kegglib$mset.list)){
+    return(character(0));
+  }
+
+  path.id <- current.kegglib$path.ids[pathName];
+  if(length(path.id) < 1 || is.na(path.id[1])){
+    all.path.ids <- unname(current.kegglib$path.ids);
+    if(pathName %in% all.path.ids){
+      path.id <- pathName;
+    }
+  }
+  path.id <- as.character(path.id[1]);
+  if(is.null(path.id) || is.na(path.id) || !nzchar(path.id)){
+    return(character(0));
+  }
+
+  mset <- current.kegglib$mset.list[[path.id]];
+  if(is.null(mset) || length(mset) == 0){
+    return(character(0));
+  }
+
+  vals <- as.character(unname(mset));
+  vals <- toupper(vals);
+  vals <- vals[grepl("^C[0-9]{5}$", vals)];
+  vals <- unique(vals);
+  return(vals);
 }

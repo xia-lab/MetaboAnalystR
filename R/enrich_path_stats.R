@@ -9,7 +9,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nodeImp Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 #'and "dgr" for out-degree centrality. 
-#'@param method is "fisher" or "hyperg"
+#'@param method is "fisher", "hyperg", or "mummi_like"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -130,10 +130,67 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   if(method == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Fishers' exact test`.";
-  }else{
+  } else if(method == "hyperg"){
     # use lower.tail = F for P(X>x)
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Hypergeometric test`.";
+  } else if(method == "mummi_like"){
+    top.frac <- 0.10
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.top.frac)){
+      tmp.frac <- suppressWarnings(as.numeric(mSetObj$paramSet$pathqea.mummi.top.frac))
+      if(!is.na(tmp.frac) && tmp.frac > 0 && tmp.frac <= 1){
+        top.frac <- tmp.frac
+      }
+    }
+
+    perm.num <- 100
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
+      tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+      if(!is.na(tmp.perm) && tmp.perm >= 10){
+        perm.num <- tmp.perm
+      }
+    }
+
+    sig.n <- floor(length(ora.vec) * top.frac)
+    sig.n <- max(1, min(sig.n, length(ora.vec)))
+    sig.vec <- unique(ora.vec[seq_len(sig.n)])
+    sig.n <- length(sig.vec)
+
+    measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec))}), use.names=FALSE)
+    obs.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, sig.vec))}), use.names=FALSE)
+
+    res.mat[,2] <- sig.n * (measured.set.num / max(1, q.size))
+    res.mat[,3] <- obs.hits
+
+    obs.p <- rep(1, length(current.mset))
+    valid.inx <- which(measured.set.num > 0 & q.size > 0)
+    if(length(valid.inx) > 0){
+      obs.p[valid.inx] <- phyper(obs.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=F)
+    }
+
+    perm.le.count <- rep(0L, length(current.mset))
+    if(perm.num > 0){
+      for(b in seq_len(perm.num)){
+        perm.sig <- sample(ora.vec, size=sig.n, replace=FALSE)
+        perm.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, perm.sig))}), use.names=FALSE)
+        perm.p <- rep(1, length(current.mset))
+        if(length(valid.inx) > 0){
+          perm.p[valid.inx] <- phyper(perm.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=F)
+        }
+        perm.le.count <- perm.le.count + as.integer(perm.p <= obs.p)
+      }
+    }
+    res.mat[,4] <- (perm.le.count + 1) / (perm.num + 1)
+    hit.num <- obs.hits
+    hits <- lapply(current.mset, function(x){intersect(x, sig.vec)})
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected over-representation analysis method is `Mummichog`.\n\n",
+      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
+      "- Permutations: `", perm.num, "`"
+    );
+  } else{
+    AddErrMsg(paste0("Unknown over-representation analysis method: ", method));
+    return(0);
   }
   
   res.mat[,5] <- -log10(res.mat[,4]);
@@ -203,6 +260,33 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     mSetObj <- .save.qea.score(mSetObj);  
   }
   
+  return(.set.mSet(mSetObj));
+}
+
+#'Set parameters for pathway-QEA mummichog-like enrichment
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param top.fraction Fraction of top-ranked features used as significant (default 0.10)
+#'@param perm.num Number of permutations for empirical p-values (default 100)
+#'@export
+SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(mSetObj$paramSet)){
+    mSetObj$paramSet <- list();
+  }
+
+  frac <- suppressWarnings(as.numeric(top.fraction));
+  if(is.na(frac) || frac <= 0 || frac > 1){
+    frac <- 0.10;
+  }
+
+  pn <- suppressWarnings(as.integer(perm.num));
+  if(is.na(pn) || pn < 10){
+    pn <- 100;
+  }
+
+  mSetObj$paramSet$pathqea.mummi.top.frac <- frac;
+  mSetObj$paramSet$pathqea.mummi.perm.num <- pn;
   return(.set.mSet(mSetObj));
 }
 
@@ -374,9 +458,27 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       return(ga.out[,c(1,3)]);
     }
   } else if(method == "mummi_like"){
-    mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```Mummichog-inspired enrichment```.",
-      " This rank-based method uses all mapped features and tests whether pathway members are enriched toward",
-      " the top of the global significance ranking.");
+    top.frac <- 0.10
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.top.frac)){
+      tmp.frac <- suppressWarnings(as.numeric(mSetObj$paramSet$pathqea.mummi.top.frac))
+      if(!is.na(tmp.frac) && tmp.frac > 0 && tmp.frac <= 1){
+        top.frac <- tmp.frac
+      }
+    }
+
+    perm.num <- 100
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
+      tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+      if(!is.na(tmp.perm) && tmp.perm >= 10){
+        perm.num <- tmp.perm
+      }
+    }
+
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected pathway enrichment analysis method is ```Mummichog```.\n\n",
+      "- Significant-feature cutoff: top ```", round(top.frac * 100, 2), "%```\n",
+      "- Permutations: ```", perm.num, "```"
+    );
     dat.in$my.fun <- function(){
       # Define universe by pathway library (already filtered by user reference metabolome if provided)
       universe <- unique(unlist(current.mset[hit.inx], use.names = FALSE))
@@ -394,24 +496,48 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       pvals[is.na(pvals)] <- 1
       pvals[pvals <= 0] <- 1e-300
 
-      ranks <- rank(pvals, ties.method = "average")
+      sig.n <- floor(length(universe) * top.frac)
+      sig.n <- max(1, min(sig.n, length(universe)))
+      sig.ids <- names(sort(pvals, decreasing = FALSE))[seq_len(sig.n)]
 
-      res <- t(sapply(dat.in$subsets, function(set.ids){
-        set.ids <- intersect(set.ids, universe)
-        bg.ids <- setdiff(universe, set.ids)
-        hit.n <- length(set.ids)
+      set.list <- lapply(dat.in$subsets, function(ids) intersect(ids, universe))
+      set.sizes <- vapply(set.list, length, FUN.VALUE = integer(1))
+      obs.hits <- vapply(set.list, function(ids) length(intersect(ids, sig.ids)), FUN.VALUE = integer(1))
 
-        if(hit.n == 0 || length(bg.ids) == 0){
-          return(c(hit.n, 1))
-        }
-
-        p.raw <- tryCatch(
-          stats::wilcox.test(ranks[set.ids], ranks[bg.ids], alternative="less", exact=FALSE)$p.value,
-          error = function(e) 1
+      M <- length(universe)
+      obs.p <- rep(1, length(set.list))
+      valid.inx <- which(set.sizes > 0)
+      if(length(valid.inx) > 0){
+        obs.p[valid.inx] <- stats::phyper(
+          q = obs.hits[valid.inx] - 1,
+          m = set.sizes[valid.inx],
+          n = M - set.sizes[valid.inx],
+          k = sig.n,
+          lower.tail = FALSE
         )
+      }
 
-        c(hit.n, p.raw)
-      }))
+      perm.le.count <- rep(0L, length(set.list))
+      if(perm.num > 0){
+        for(b in seq_len(perm.num)){
+          perm.sig <- sample(universe, size = sig.n, replace = FALSE)
+          perm.hits <- vapply(set.list, function(ids) length(intersect(ids, perm.sig)), FUN.VALUE = integer(1))
+          perm.p <- rep(1, length(set.list))
+          if(length(valid.inx) > 0){
+            perm.p[valid.inx] <- stats::phyper(
+              q = perm.hits[valid.inx] - 1,
+              m = set.sizes[valid.inx],
+              n = M - set.sizes[valid.inx],
+              k = sig.n,
+              lower.tail = FALSE
+            )
+          }
+          perm.le.count <- perm.le.count + as.integer(perm.p <= obs.p)
+        }
+      }
+      emp.p <- (perm.le.count + 1) / (perm.num + 1)
+
+      res <- cbind(Hits = obs.hits, `Raw p` = emp.p)
 
       res <- as.matrix(res)
       if(is.null(dim(res))){
