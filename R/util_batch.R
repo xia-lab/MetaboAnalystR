@@ -158,16 +158,42 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
         if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
           print("Correcting with RUVr...");
-          RUV_r_edata <- rsclient_isolated_exec(
-            func_body = function(input_data) {
+          bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+          bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+          qs::qsave(list(mat = commonMat2, cls = class.lbl2), bridge_in, preset = "fast")
+          on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+          run_func_via_rsclient(
+            func = function(wd, bridge_in, bridge_out) {
+              setwd(wd)
               require(edgeR); require(RUVSeq)
-              RUVr_cor(input_data$mat, input_data$cls)
+              input <- qs::qread(bridge_in)
+              # Inlined RUVr_cor logic
+              data <- t(input$mat)
+              class <- input$cls
+              QCm <- grep('IS', rownames(data))
+              if (length(colnames(data)) != length(unique(colnames(data)))) {
+                colnames(data)[(duplicated(colnames(data)))] <- paste0(colnames(data)[duplicated(colnames(data))], "_2")
+              }
+              design <- model.matrix(~class)
+              data[data <= 0] <- 0.0001
+              y <- edgeR::DGEList(counts = data, group = class)
+              y <- edgeR::calcNormFactors(y, method = "upperquartile")
+              y <- edgeR::estimateGLMCommonDisp(y, design)
+              y <- edgeR::estimateGLMTagwiseDisp(y, design)
+              fit <- edgeR::glmFit(y, design)
+              res <- residuals(fit, type = "deviance")
+              data.log <- log10(data)
+              seqRUVr <- RUVSeq::RUVr(data.log, QCm, k = 1, res, isLog = TRUE)[["normalizedCounts"]]
+              data.corrected <- exp(seqRUVr)
+              qs::qsave(t(data.corrected), bridge_out, preset = "fast")
             },
-            input_data = list(mat = commonMat2, cls = class.lbl2),
-            packages = c("edgeR", "RUVSeq", "qs"), timeout = 300, output_type = "qs"
+            args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+            timeout_sec = 300
           )
-          if (is.list(RUV_r_edata) && isFALSE(RUV_r_edata$success)) { AddErrMsg(RUV_r_edata$message); return(0) }
-          if (!is.null(RUV_r_edata$value)) RUV_r_edata <- RUV_r_edata$value
+
+          RUV_r_edata <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+          if (is.null(RUV_r_edata)) { AddErrMsg("RUVr correction failed in isolated subprocess!"); return(0) }
           mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
         }
         # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
@@ -340,16 +366,42 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         return(F)
       }
       
-      RUV_r_edata <- rsclient_isolated_exec(
-        func_body = function(input_data) {
+      bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+      bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+      qs::qsave(list(mat = commonMat2, cls = class.lbl2), bridge_in, preset = "fast")
+      on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+      run_func_via_rsclient(
+        func = function(wd, bridge_in, bridge_out) {
+          setwd(wd)
           require(edgeR); require(RUVSeq)
-          RUVr_cor(input_data$mat, input_data$cls)
+          input <- qs::qread(bridge_in)
+          # Inlined RUVr_cor logic
+          data <- t(input$mat)
+          class <- input$cls
+          QCm <- grep('IS', rownames(data))
+          if (length(colnames(data)) != length(unique(colnames(data)))) {
+            colnames(data)[(duplicated(colnames(data)))] <- paste0(colnames(data)[duplicated(colnames(data))], "_2")
+          }
+          design <- model.matrix(~class)
+          data[data <= 0] <- 0.0001
+          y <- edgeR::DGEList(counts = data, group = class)
+          y <- edgeR::calcNormFactors(y, method = "upperquartile")
+          y <- edgeR::estimateGLMCommonDisp(y, design)
+          y <- edgeR::estimateGLMTagwiseDisp(y, design)
+          fit <- edgeR::glmFit(y, design)
+          res <- residuals(fit, type = "deviance")
+          data.log <- log10(data)
+          seqRUVr <- RUVSeq::RUVr(data.log, QCm, k = 1, res, isLog = TRUE)[["normalizedCounts"]]
+          data.corrected <- exp(seqRUVr)
+          qs::qsave(t(data.corrected), bridge_out, preset = "fast")
         },
-        input_data = list(mat = commonMat2, cls = class.lbl2),
-        packages = c("edgeR", "RUVSeq", "qs"), timeout = 300, output_type = "qs"
+        args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+        timeout_sec = 300
       )
-      if (is.list(RUV_r_edata) && isFALSE(RUV_r_edata$success)) { AddErrMsg(RUV_r_edata$message); return(0) }
-      if (!is.null(RUV_r_edata$value)) RUV_r_edata <- RUV_r_edata$value
+
+      RUV_r_edata <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+      if (is.null(RUV_r_edata)) { AddErrMsg("RUVr correction failed in isolated subprocess!"); return(0) }
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
       
     } else if (Method=="RUV_g"){

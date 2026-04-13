@@ -16,99 +16,72 @@
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=default.dpi){
 
   mSetObj <- .get.mSet(mSetObj);
-  .prepare.sam.anal(mSetObj, method, paired, varequal, delta, imgName, dpi);
-  .perform.computing();
-
-  if(.on.public.web){ 
-    .save.sam.anal(mSetObj);
-  }else{
-     mSetObj <- .save.sam.anal(mSetObj);
-  }
-  return(.set.mSet(mSetObj));
-}
-
-.prepare.sam.anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=default.dpi){
-
-  if(.on.public.web){mSetObj <- .get.mSet(mSetObj);}
   imgName = paste(imgName, "dpi", dpi, ".png", sep="");
-  mat <- t(mSetObj$dataSet$norm); # in sam the column is sample
+  mat <- t(mSetObj$dataSet$norm);
+  cl <- as.factor(mSetObj$dataSet$cls);
 
-  cl <- as.factor(mSetObj$dataSet$cls); # change to 0 and 1 for class label
-  dat.in <- list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method, varequal=varequal,
-                  paired=paired, delta=delta, cls.paired=as.numeric(mSetObj$dataSet$pairs), imgName=imgName);
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method,
+                  varequal=varequal, paired=paired, delta=delta,
+                  cls.paired=as.numeric(mSetObj$dataSet$pairs)), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  dat.in$my.fun<-function(){  
-    library(siggenes);
-    if(dat.in$cls.num==2){
-      if(dat.in$paired){
-        dat.in$cls <- dat.in$cls.paired;
-      }
-      if(dat.in$method == "d.stat"){
-        sam_out <- siggenes::sam(dat.in$data, dat.in$cls, method=d.stat, var.equal=dat.in$varequal, R.fold=0, rand=123);
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      library(siggenes)
+      input <- qs::qread(bridge_in)
+      data <- input$data; cls <- input$cls
+      if(input$cls.num==2){
+        if(input$paired) cls <- input$cls.paired
+        if(input$method == "d.stat"){
+          sam_out <- siggenes::sam(data, cls, method=d.stat, var.equal=input$varequal, R.fold=0, rand=123)
+        }else{
+          sam_out <- siggenes::sam(data, cls, method=wilc.stat, R.fold=0, rand=123)
+        }
       }else{
-        sam_out <- siggenes::sam(dat.in$data, dat.in$cls, method=wilc.stat, R.fold=0,rand=123);
+        sam_out <- siggenes::sam(data, cls, rand=123)
       }
-    }else{
-      sam_out <- siggenes::sam(dat.in$data, dat.in$cls, rand=123);
-    }
- 
-    # check if need to compute a suitable delta value
-    delta <- dat.in$delta;
-    if(delta == 0){
-      mat.fdr <- sam_out@mat.fdr
-      deltaVec <- mat.fdr[,"Delta"];
-      fdrVec <- mat.fdr[,"FDR"];
-      signumVec <- mat.fdr[,"Called"];
-      
-      delta <- deltaVec[1];
-      for(i in 1:length(deltaVec)){
-        my.delta = deltaVec[i];
-        fdr = fdrVec[i];
-        called = signumVec[i];
-        if(called > 0){ # at least 1 significant cmpd
-          # check fdr, default threshold 0.01
-          # if too many significant compounds, tight up and vice versa
-          if(fdr < 0.001){
-            delta <- my.delta; break;
-          }else if(fdr < 0.01 & called < 100){
-            delta <- my.delta; break;
-          }else if(fdr < 0.05 & called <50){
-            delta <- my.delta; break;
-          }else if(fdr < 0.1 & called < 20){
-            delta <- my.delta; break;
-          }else if(called < 10){
-            delta <- my.delta; break;
+
+      delta <- input$delta
+      if(delta == 0){
+        mat.fdr <- sam_out@mat.fdr
+        deltaVec <- mat.fdr[,"Delta"]; fdrVec <- mat.fdr[,"FDR"]; signumVec <- mat.fdr[,"Called"]
+        delta <- deltaVec[1]
+        for(i in 1:length(deltaVec)){
+          my.delta = deltaVec[i]; fdr = fdrVec[i]; called = signumVec[i]
+          if(called > 0){
+            if(fdr < 0.001){ delta <- my.delta; break
+            }else if(fdr < 0.01 & called < 100){ delta <- my.delta; break
+            }else if(fdr < 0.05 & called < 50){ delta <- my.delta; break
+            }else if(fdr < 0.1 & called < 20){ delta <- my.delta; break
+            }else if(called < 10){ delta <- my.delta; break }
           }
         }
       }
-    }
 
-    # get the signficant features
-    summary.mat <- summary(sam_out, delta)@mat.sig;
-    sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5));
-    data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE);
-    
-    # plot SAM plot
-    Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dpi, width=8, height=8, type="png", bg="white");
-    #siggenes::plot(sam_out, delta);
-    sam.plot2(sam_out, delta);
-    dev.off();        
-    
-    return(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat, img=imgName));
-  }
+      summary.mat <- summary(sam_out, delta)@mat.sig
+      sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5))
+      data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE)
 
-  qs::qsave(dat.in, file="dat.in.qs");
-  mSetObj$imgSet$sam.cmpd <- imgName;
-  return(.set.mSet(mSetObj));
-}
+      qs::qsave(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat), bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
 
-.save.sam.anal <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  my.res <- dat.in$my.res;
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
+  # Plotting uses custom sam.plot2() — must run in parent where it's defined
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height=8, type="png", bg="white")
+  sam.plot2(my.res$sam.res, my.res$sam.delta)
+  dev.off()
+
   mSetObj$analSet$sam <- my.res$sam.res;
-  mSetObj$analSet$sam.delta  <- my.res$sam.delta;
+  mSetObj$analSet$sam.delta <- my.res$sam.delta;
   mSetObj$analSet$sam.cmpds <- my.res$sig.mat;
+  mSetObj$imgSet$sam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
 }
 
@@ -175,38 +148,18 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
     mSetObj <- .get.mSet(mSetObj);
-    .prepare.sam.cmpd(mSetObj, imgName, format, dpi, width);
-    .perform.computing();    
+    imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+    if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 7 }else{ w <- width }
+
+    # sam.plot2() is a custom function only available in parent session — run directly
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
+    sam.plot2(mSetObj$analSet$sam, mSetObj$analSet$sam.delta)
+    dev.off()
+
+    mSetObj$imgSet$sam.cmpd <- imgName;
     if(.on.public.web){
-        # need to update image name after plotting
-        mSetObj <- mSet;
     }
     return(.set.mSet(mSetObj))
-}
-
- # note, this is now a microservice call and only used for other formats by users
-.prepare.sam.cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 8;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w;
-
-  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
-  dat.in$my.fun <- function(){
-    Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
-    #siggenes::plot(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
-    sam.plot2(dat.in$mSetObj$analSet$sam, dat.in$mSetObj$analSet$sam.delta);
-    dev.off();
-  }
-
-  qs::qsave(dat.in, file="dat.in.qs");
-  mSetObj$imgSet$sam.cmpd <- imgName;
-  return(.set.mSet(mSetObj));
 }
 
 #'For EBAM analysis 
@@ -226,74 +179,71 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 #'@export
 #'@import qs
 EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = default.dpi){
-    .prepare.ebam.init(mSetObj, isPaired, isVarEq, nonPar, A0, delta, imgA0, imgSig, dpi);
-    .perform.computing();
-    .save.ebam.init(mSetObj);
-}
-
-.prepare.ebam.init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi=default.dpi){
   mSetObj <- .get.mSet(mSetObj);
   if(isPaired){
-    cl.ebam <- as.numeric(mSetObj$dataSet$pairs); 
+    cl.ebam <- as.numeric(mSetObj$dataSet$pairs);
   }else{
-    cl.ebam <- as.numeric(mSetObj$dataSet$cls)-1; # change to 0 and 1 for class label
+    cl.ebam <- as.numeric(mSetObj$dataSet$cls)-1;
   }
   method <- "z.ebam";
   if(nonPar && length(levels(mSetObj$dataSet$cls)) == 2){
     method <- "wilc.ebam"
   }
-  conc.ebam <- t(mSetObj$dataSet$norm); # in sam column is sample, row is gene
-  
+  conc.ebam <- t(mSetObj$dataSet$norm);
+
   imgA0 = paste(imgA0, "dpi", dpi, ".png", sep="");
   imgSig = paste(imgSig, "dpi", dpi, ".png", sep="");
 
-  dat.in <- list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,  A0=A0, imgA0=imgA0, imgSig=imgSig);
-  dat.in$my.fun <- function(){
-    library(siggenes);
-    ebam_a0 <- siggenes::find.a0(dat.in$data, dat.in$cls, var.equal=dat.in$isVarEq, gene.names=rownames(dat.in$data), rand=123);
-    
-    # plotting ebam A0
-    Cairo::Cairo(file = dat.in$imgA0, unit="in", dpi=dpi, width=8, height=6, type="png", bg="white");
-    plot(ebam_a0);
-    dev.off();
-    
-    A0 <- dat.in$A0;
-    if(A0 == -99){ # default
-      A0 <- round(as.numeric(ebam_a0@suggested),4)
-    }
-    if(dat.in$method=="z.ebam"){
-      ebam_out <- siggenes::ebam(dat.in$data, dat.in$cls, method=z.ebam, a0=A0, var.equal=dat.in$isVarEq, fast=TRUE, gene.names=rownames(dat.in$data), rand=123);
-    }else{
-      ebam_out <- siggenes::ebam(dat.in$data, dat.in$cls, method=wilc.ebam, gene.names=rownames(dat.in$data), rand=123);
-    }
-    
-    # plotting ebam sig features
-    Cairo::Cairo(file = dat.in$imgSig, unit="in", dpi=dpi, width=7, height=7, type="png", bg="white");
-    plot(ebam_out, delta);
-    dev.off();
-    
-    summary.mat <- summary(ebam_out, delta)@mat.sig;
-    sig.mat <- as.matrix(signif(summary.mat[,-1],5));
-    data.table::fwrite(as.data.frame(sig.mat),file="ebam_sigfeatures.csv", row.names=TRUE);
-    
-    return(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, a0=A0, delta=delta));
-  }
-   
-  qs::qsave(dat.in, file="dat.in.qs");
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,
+                  A0=A0, delta=delta, imgA0=imgA0, dpi=dpi), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  mSetObj$imgSet$ebam.a0 <- imgA0;
-  mSetObj$imgSet$ebam.cmpd <-imgSig;
-  return(.set.mSet(mSetObj));
-}
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      library(siggenes)
+      input <- qs::qread(bridge_in)
+      data <- input$data; cls <- input$cls
+      ebam_a0 <- siggenes::find.a0(data, cls, var.equal=input$isVarEq, gene.names=rownames(data), rand=123)
 
-.save.ebam.init <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  my.res <- dat.in$my.res;
+      Cairo::Cairo(file = input$imgA0, unit="in", dpi=input$dpi, width=8, height=6, type="png", bg="white")
+      plot(ebam_a0)
+      dev.off()
+
+      A0 <- input$A0
+      if(A0 == -99) A0 <- round(as.numeric(ebam_a0@suggested),4)
+
+      if(input$method=="z.ebam"){
+        ebam_out <- siggenes::ebam(data, cls, method=z.ebam, a0=A0, var.equal=input$isVarEq, fast=TRUE, gene.names=rownames(data), rand=123)
+      }else{
+        ebam_out <- siggenes::ebam(data, cls, method=wilc.ebam, gene.names=rownames(data), rand=123)
+      }
+
+      summary.mat <- summary(ebam_out, input$delta)@mat.sig
+      sig.mat <- as.matrix(signif(summary.mat[,-1],5))
+      data.table::fwrite(as.data.frame(sig.mat), file="ebam_sigfeatures.csv", row.names=TRUE)
+
+      qs::qsave(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, delta=input$delta), bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
+
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
+  # Plotting uses custom plotEbam() — must run in parent where it's defined
+  Cairo::Cairo(file = imgSig, unit="in", dpi=dpi, width=7, height=7, type="png", bg="white")
+  plotEbam(my.res$ebam_out, my.res$delta)
+  dev.off()
+
   mSetObj$analSet$ebam <- my.res$ebam_out;
   mSetObj$analSet$ebam.cmpds <- my.res$sig.mat;
   mSetObj$analSet$ebam.a0 <- my.res$ebam_a0;
   mSetObj$analSet$ebam.delta <- my.res$delta;
+  mSetObj$imgSet$ebam.a0 <- imgA0;
+  mSetObj$imgSet$ebam.cmpd <- imgSig;
   return(.set.mSet(mSetObj));
 }
 
@@ -314,33 +264,14 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'@export
 #'
 PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
-    .prepare.ebam.cmpd(mSetObj, imgName, format, dpi, width);
-    .perform.computing();
-}
- 
-.prepare.ebam.cmpd <-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
-
   mSetObj <- .get.mSet(mSetObj);
-  
-  # note, this is now a remote call and only used for other formats by users
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- h <- 8;
-  }else if(width == 0){
-    w <- h <- 8;
-    mSetObj$imgSet$ebam.cmpd <-imgName;
-  }else{
-    w <- h <- width;
-  }
+  if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 8 }else{ w <- width }
 
-  dat.in <- list(mSetObj = mSetObj, dpi=dpi, width=w, height=h, type=format, imgName=imgName);
-  dat.in$my.fun <- function(){
-    Cairo::Cairo(file = dat.in$imgName, unit="in", dpi=dat.in$dpi, width=dat.in$width, height=dat.in$height, type=dat.in$type, bg="white");
-    plotEbam(dat.in$mSetObj$analSet$ebam, dat.in$mSetObj$analSet$ebam.delta);
-    dev.off();
-  }
-
-  qs::qsave(dat.in, file="dat.in.qs");
+  # plotEbam() is a custom function only available in parent session — run directly
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
+  plotEbam(mSetObj$analSet$ebam, mSetObj$analSet$ebam.delta)
+  dev.off()
 
   mSetObj$imgSet$ebam.cmpd <- imgName;
   return(.set.mSet(mSetObj));

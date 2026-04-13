@@ -10,16 +10,25 @@ PCA.Anal <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   pca <- prcomp(mSetObj$dataSet$norm, center=TRUE, scale=F);
 
-  response <- rsclient_isolated_exec(
-    func_body = function(input_data) {
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(pca = pca), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
       require(factoextra)
-      factoextra::get_pca_var(input_data$pca)$contrib
+      input <- qs::qread(bridge_in)
+      res <- factoextra::get_pca_var(input$pca)$contrib
+      qs::qsave(res, bridge_out, preset = "fast")
     },
-    input_data = list(pca = pca),
-    packages = c("factoextra", "qs"), timeout = 120, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 120
   )
-  if (is.list(response) && isFALSE(response$success)) { AddErrMsg(response$message); return(0) }
-  contrib <- response
+
+  contrib <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  if (is.null(contrib)) { AddErrMsg("PCA contrib calculation failed"); return(0) }
   if(ncol(contrib)>10){
     contrib <- contrib[,1:10];# keep top 10 should be sufficient
   }
@@ -46,12 +55,19 @@ PCA.Anal <- function(mSetObj=NA){
 
   data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
-  result <- rsclient_isolated_exec(
-    func_body = function(input_data) {
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data_dist = data.dist, grp = grp, cls_type = cls.type), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
       require(vegan)
-      data_dist <- input_data$data_dist
-      grp <- input_data$grp
-      cls_type <- input_data$cls_type
+      input <- qs::qread(bridge_in)
+      data_dist <- input$data_dist
+      grp <- input$grp
+      cls_type <- input$cls_type
 
       if (cls_type == "cont") {
         if (!is.numeric(grp)) stop("'grp' must be numeric when cls.type = 'cont'")
@@ -81,13 +97,15 @@ PCA.Anal <- function(mSetObj=NA){
           pair.res <- NULL
         }
       }
-      list(res = res, pair.res = pair.res)
+      qs::qsave(list(res = res, pair.res = pair.res), bridge_out, preset = "fast")
     },
-    input_data = list(data_dist = data.dist, grp = grp, cls_type = cls.type),
-    packages = c("vegan", "qs"), timeout = 300, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
   )
-  if (is.list(result) && isFALSE(result$success)) {
-    warning(paste("PERMANOVA failed:", result$message))
+
+  result <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  if (is.null(result)) {
+    warning("PERMANOVA failed")
     return(list(NULL, NULL))
   }
   if (!is.null(result$pair.res)) {
@@ -1751,52 +1769,47 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
-  mSetObj <- .prepare.oplsr.anal(mSetObj, reg);
-  .perform.computing();
-  .save.oplsr.anal(mSetObj);
-}
-
-.prepare.oplsr.anal <-function(mSetObj=NA, reg=FALSE){
-  
   mSetObj <- .get.mSet(mSetObj);
-  
-  mSetObj$analSet$opls.reg <- reg;  
-  
-  # default options for feature labels on splot
+
+  mSetObj$analSet$opls.reg <- reg;
   mSetObj$custom.cmpds <- c();
   mSetObj$analSet$oplsda$splot.type <- "all";
-  
+
   if(reg==TRUE){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
     cls<-model.matrix(~mSetObj$dataSet$cls-1);
   }
-  
+
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
+  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1);
 
-  dat.in <- list(data=datmat, cls=cls, cv.num=cv.num);
-  dat.in$my.fun <- function(){
-    rpath <- "../../";
-    if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
-    }
-    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=0, orthoI=NA, crossvalI=dat.in$cv.num);
-    return(my.res);
-  }
-  
-  qs::qsave(dat.in, file="dat.in.qs");
-  return(.set.mSet(mSetObj));
-}
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data=datmat, cls=cls, cv.num=cv.num), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-.save.oplsr.anal <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  mSetObj$analSet$oplsda <- dat.in$my.res;
-  score.mat <- cbind(mSetObj$analSet$oplsda$scoreMN[,1], mSetObj$analSet$oplsda$orthoScoreMN[,1]);
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      input <- qs::qread(bridge_in)
+      rpath <- "../../"
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
+        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      }
+      res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=NA, crossvalI=input$cv.num)
+      qs::qsave(res, bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
+
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  mSetObj$analSet$oplsda <- my.res;
+  score.mat <- cbind(my.res$scoreMN[,1], my.res$orthoScoreMN[,1]);
   colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
   fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="oplsda_score.csv");
-  load.mat <- cbind(mSetObj$analSet$oplsda$loadingMN[,1], mSetObj$analSet$oplsda$orthoLoadingMN[,1]);
+  load.mat <- cbind(my.res$loadingMN[,1], my.res$orthoLoadingMN[,1]);
   colnames(load.mat) <- c("Loading (t1)","OrthoLoading (to1)");
   fast.write.csv(signif(load.mat,5), file="oplsda_loadings.csv");
   return(.set.mSet(mSetObj));
@@ -2165,50 +2178,42 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
-  .prepare.oplsda.permut(mSetObj, num);
-  .perform.computing();
-  .save.oplsda.permut(mSetObj);
-}
-
-.prepare.oplsda.permut <-function(mSetObj=NA, num=100){
-  
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(mSetObj$analSet$opls.reg){
     cls<-scale(as.numeric(mSetObj$dataSet$cls))[,1];
   }else{
     cls<-model.matrix(~mSetObj$dataSet$cls-1);
   }
-  
+
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1); 
+  cv.num <- min(7, dim(mSetObj$dataSet$norm)[1]-1);
 
-  # fix the order to make sure data defined first
-  dat.in <- list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num);
-  dat.in$my.fun <- function(){
-    rpath <- "../../";
-    if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_opls.Rc"));
-    }
-    my.res <- perform_opls(dat.in$data, dat.in$cls, predI=1, permI=dat.in$perm.num, orthoI=NA, crossvalI=dat.in$cv.num);
-    return(my.res);
-  }
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  qs::qsave(dat.in, file="dat.in.qs");
-  return(.set.mSet(mSetObj));
-}
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      input <- qs::qread(bridge_in)
+      rpath <- "../../"
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
+        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      }
+      res <- perform_opls(input$data, input$cls, predI=1, permI=input$perm.num, orthoI=NA, crossvalI=input$cv.num)
+      qs::qsave(res, bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
 
-.save.oplsda.permut <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  my.res <- dat.in$my.res;
-  
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
   r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
-  
-  # note, actual permutation number may be adjusted on server
   perm.num <- my.res$suppLs[["permI"]];
-  
+
   mSetObj$analSet$oplsda$perm.res <- list(r.vec=r.vec, q.vec=q.vec, perm.num=perm.num);
   return(.set.mSet(mSetObj));
 }
@@ -2313,14 +2318,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'License: GNU GPL (>= 2)
 #'@export
 
-SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum=5, doCV=FALSE){    
-  .prepare.splsr.anal(mSetObj, comp.num, var.num, compVarOpt, validOpt, foldNum, doCV);
-  .perform.computing();
-  .save.splsr.anal(mSetObj);
-}
-
-.prepare.splsr.anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum, doCV){
-  
+SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum=5, doCV=FALSE){
   if(compVarOpt == "same"){
     comp.var.nums <- rep(var.num, comp.num);
   }else{
@@ -2331,48 +2329,47 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
       return(0);
     }
   }
-  
-  mSetObj <- .get.mSet(mSetObj);  
-  
-  # note, standardize the cls, to minimize the impact of categorical to numerical impact
+
+  mSetObj <- .get.mSet(mSetObj);
   cls <- scale(as.numeric(mSetObj$dataSet$cls))[,1];
   datmat <- as.matrix(mSetObj$dataSet$norm);
-  
-  dat.in <- list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums);
-  dat.in$my.fun <- function(){
-    rpath <- "../../";
-    if(file.exists(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/stats_spls.Rc"));
-    }    
-    my.res <- splsda(dat.in$data, dat.in$cls, ncomp=dat.in$comp.num, keepX=dat.in$comp.var.nums);
-    
-    if(doCV){# perform validation
-        perf.res <- perf.splsda(my.res, dist= "centroids.dist", validation=validOpt, folds = foldNum);
-        my.res$error.rate <- perf.res$error.rate$overall;
-    }
-    return(my.res);
-  }
- 
-  qs::qsave(dat.in, file="dat.in.qs");
-  return(.set.mSet(mSetObj));
-}
 
-.save.splsr.anal <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  mSetObj$analSet$splsr <- dat.in$my.res;
-  score.mat <- mSetObj$analSet$splsr$variates$X;
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums,
+                  doCV=doCV, validOpt=validOpt, foldNum=foldNum), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      input <- qs::qread(bridge_in)
+      rpath <- "../../"
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
+        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))
+      }
+      res <- splsda(input$data, input$cls, ncomp=input$comp.num, keepX=input$comp.var.nums)
+      if(input$doCV){
+        perf.res <- perf.splsda(res, dist="centroids.dist", validation=input$validOpt, folds=input$foldNum)
+        res$error.rate <- perf.res$error.rate$overall
+      }
+      qs::qsave(res, bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
+
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  mSetObj$analSet$splsr <- my.res;
+  score.mat <- my.res$variates$X;
   fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
-  load.mat <- mSetObj$analSet$splsr$loadings$X;
-  
-  # sort based on absolute values of 1, 2 
+  load.mat <- my.res$loadings$X;
+
   ord.inx <- order(-abs(load.mat[,1]), -abs(load.mat[,2]));
   load.mat <- signif(load.mat[ord.inx,],5);
   fast.write.csv(load.mat, file="splsda_loadings.csv");
 
   mSetObj$analSet$splsr$loadings$X <- load.mat;
-
-  # Arrow export for zero-copy Java access (SPLS loadings)
   ExportResultMatArrow(load.mat, "spls_load");
 
   return(.set.mSet(mSetObj));
@@ -3150,17 +3147,26 @@ ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
   pc.mat <- cbind(pc1, pc2)
   distM  <- dist(pc.mat)
 
-  result <- rsclient_isolated_exec(
-    func_body = function(input_data) {
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(distM = distM, cls = cls, n_perm = numPermutations), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
       require(vegan)
-      dbrda.mod <- vegan::capscale(input_data$distM ~ input_data$cls)
-      dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = input_data$n_perm)
-      signif(dbrda.an$`Pr(>F)`[1], 5)
+      input <- qs::qread(bridge_in)
+      dbrda.mod <- vegan::capscale(input$distM ~ input$cls)
+      dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = input$n_perm)
+      res <- signif(dbrda.an$`Pr(>F)`[1], 5)
+      qs::qsave(res, bridge_out, preset = "fast")
     },
-    input_data = list(distM = distM, cls = cls, n_perm = numPermutations),
-    packages = c("vegan", "qs"), timeout = 300, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
   )
-  if (is.list(result) && isFALSE(result$success)) { AddErrMsg(result$message); return(0) }
-  pval <- if (!is.null(result$value)) result$value else result
-  return(pval)
+
+  result <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  if (is.null(result)) { AddErrMsg("Multivariate test failed"); return(0) }
+  return(result)
 }
