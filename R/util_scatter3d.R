@@ -377,27 +377,33 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
       return(filenm)
     }
 
-    # Compute t-value using session method (chisq or F-distribution)
-    n <- nrow(coords)
-    t_val <- .get.ellipsoid.t(level, 3, n)
+    # Only rgl::ellipse3d in subprocess via bridge files
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    qs::qsave(list(coords = coords, level = level), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-    mesh <- rsclient_isolated_exec(
-      func_body = function(input_data) {
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
-        pos <- cov(input_data$coords, y = NULL, use = "everything")
-        center <- colMeans(input_data$coords)
+        require(rgl)
+        input <- qs::qread(bridge_in)
+        pos <- cov(input$coords, y = NULL, use = "everything")
+        center <- colMeans(input$coords)
+        t_val <- sqrt(qchisq(input$level, 3))
         mesh <- list()
-        mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = input_data$t_val)
-        mesh
+        mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
+        qs::qsave(mesh, bridge_out, preset = "fast")
       },
-      input_data = list(coords = coords, t_val = t_val),
-      packages = c("rgl", "qs"),
-      timeout = 120,
-      output_type = "qs"
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 120
     )
 
+    mesh <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
     # Write JSON in master (subprocess may have different wd)
-    if (!is.list(mesh) || !isFALSE(mesh$success)) {
+    if (!is.null(mesh)) {
       sink(filenm); cat(RJSONIO::toJSON(mesh)); sink()
     }
   }, error = function(e) {

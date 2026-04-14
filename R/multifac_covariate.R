@@ -2015,22 +2015,27 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
       axis.title = element_text(size=11)
     )
 
-  # ggarrange is quarantined - run in subprocess
-  rsclient_isolated_exec(
-    func_body = function(input_data) {
-      require(ggpubr); require(Cairo)
-      setwd(input_data$wd)
-      combined <- ggpubr::ggarrange(input_data$p1, input_data$p2,
+  # ggarrange is quarantined - run in subprocess via bridge files
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      require(ggpubr); require(ggplot2); require(Cairo)
+      input <- qs::qread(bridge_in)
+      combined <- ggpubr::ggarrange(input$p1, input$p2,
                                      ncol=2, common.legend=TRUE, legend="right")
-      Cairo::Cairo(file=input_data$imgName, width=14, height=7,
-                   unit="in", dpi=input_data$dpi, type=input_data$format, bg="white")
+      Cairo::Cairo(file=input$imgName, width=14, height=7,
+                   unit="in", dpi=input$dpi, type=input$format, bg="white")
       print(combined)
       dev.off()
-      TRUE
+      qs::qsave(TRUE, bridge_out, preset = "fast")
     },
-    input_data = list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi,
-                      format = format, wd = getwd()),
-    packages = c("ggpubr", "ggplot2", "Cairo", "qs"), timeout = 120, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 120
   )
   # plot/write failure is non-fatal
 

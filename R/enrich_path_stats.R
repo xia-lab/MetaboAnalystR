@@ -244,93 +244,37 @@ GetORA.pathNames <- function(mSetObj=NA){
 CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
 
   mSetObj <- .get.mSet(mSetObj);
-  mSetObj <- .prepare.qea.score(mSetObj, nodeImp, method, covariates); # on local, everything is done
-  
-  if(length(mSetObj)==0 || mSetObj== 0){
-    return(0);
-  }
-
-  if(.on.public.web){
-    .perform.computing();
-    mSetObj <- .save.qea.score(mSetObj);  
-  }
-  
-  return(.set.mSet(mSetObj));
-}
-
-#'Set parameters for pathway-QEA mummichog-like enrichment
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param top.fraction Fraction of top-ranked features used as significant (default 0.10)
-#'@param perm.num Number of permutations for empirical p-values (default 100)
-#'@export
-SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
-  mSetObj <- .get.mSet(mSetObj);
-
-  if(is.null(mSetObj$paramSet)){
-    mSetObj$paramSet <- list();
-  }
-
-  frac <- suppressWarnings(as.numeric(top.fraction));
-  if(is.na(frac) || frac <= 0 || frac > 1){
-    frac <- 0.10;
-  }
-
-  pn <- suppressWarnings(as.integer(perm.num));
-  if(is.na(pn) || pn < 10){
-    pn <- 100;
-  }
-
-  mSetObj$paramSet$pathqea.mummi.top.frac <- frac;
-  mSetObj$paramSet$pathqea.mummi.perm.num <- pn;
-  return(.set.mSet(mSetObj));
-}
-
-.prepare.qea.score <- function(mSetObj=NA, nodeImp, method, covariates=NA){
-
-  mSetObj <- .get.mSet(mSetObj);
 
   # Guard: ensure continuous cls is numeric, not factor
-  # (UpdateSampleGroups or other processing may have converted it)
   if(!is.null(mSetObj$dataSet$cls.type) && mSetObj$dataSet$cls.type == "cont" && is.factor(mSetObj$dataSet$cls)){
     message("[QEA] Fixing cls: was factor with ", nlevels(mSetObj$dataSet$cls), " levels, converting to numeric");
     mSetObj$dataSet$cls <- as.numeric(as.character(mSetObj$dataSet$cls));
   }
 
-  # first, need to make a clean dataSet$norm data based on name mapping
-  # only contain valid kegg id will be used
   nm.map <- GetFinalNameMap(mSetObj);
-  
   if(mSetObj$pathwaylibtype == "KEGG"){
     valid.inx <- !(is.na(nm.map$kegg)| duplicated(nm.map$kegg));
   } else if(mSetObj$pathwaylibtype == "SMPDB"){
     valid.inx <- !(is.na(nm.map$hmdbid)| duplicated(nm.map$hmdbid));
   }
-  
   nm.map <- nm.map[valid.inx,];
   orig.nms <- nm.map$query;
-  
+
   kegg.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(kegg.inx);
   path.data<-mSetObj$dataSet$norm[,hit.inx];
-  
+
   if(mSetObj$pathwaylibtype == "KEGG"){
     colnames(path.data) <- nm.map$kegg[kegg.inx[hit.inx]];
   } else if(mSetObj$pathwaylibtype == "SMPDB"){
     colnames(path.data) <- nm.map$hmdbid[kegg.inx[hit.inx]];
   }
-  
-  # calculate univariate p values when click indivisual compound node
-  # use lm model for t-tests (with var.equal=T), one-way anova, and linear regression (continuous);
+
   univ.p <- apply(as.matrix(path.data), 2, function(x) {
     tmp <- try(lm(as.numeric(mSetObj$dataSet$cls)~x));
-    if(class(tmp) == "try-error") {
-      return(NA);
-    }else{
-      tmp<-anova(tmp)
-      return(tmp[1,5]);
-    }
+    if(class(tmp) == "try-error") return(NA)
+    tmp<-anova(tmp); return(tmp[1,5]);
   });
-  
   names(univ.p) <- colnames(path.data);
 
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
@@ -339,51 +283,44 @@ SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
     mSetObj$api$pathDataColNms <- colnames(path.data)
     path.data <- as.matrix(path.data)
     dimnames(path.data) = NULL
-    mSetObj$api$pathData <- path.data; 
+    mSetObj$api$pathData <- path.data;
     mSetObj$api$univP <- as.numeric(univ.p);
     mSetObj$api$cls <- mSetObj$dataSet$cls
-    
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.kegg
-      
       toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
-                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
+                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms,
                      filterData = mSetObj$api$filterData, univP = mSetObj$api$univP, cls = mSetObj$api$cls)
     }else{
       toSend <- list(mSet = mSetObj, libVersion = mSetObj$api$libVersion, libNm = mSetObj$api$libNm, filter = mSetObj$api$filter, nodeImp = mSetObj$api$nodeImp,
-                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms, 
+                     method = mSetObj$api$method, pathData = mSetObj$api$pathData, pathDataColNms = mSetObj$api$pathDataColNms,
                      univP = mSetObj$api$univP, cls = mSetObj$api$cls)
     }
-    
-    # send RDS to xialab api
     saveRDS(toSend, "tosend.rds");
-
+    if(!exists("my.pathway.qea")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     return(my.pathway.qea());
   }
-  
-  # now, perform topology & enrichment analysis
+
   current.mset <- current.kegglib$mset.list;
   uniq.count <- current.kegglib$uniq.count;
-  
-  # check if a reference metabolome is applied
+
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet[["metabo.filter.kegg"]])){
     current.mset<-lapply(current.mset, function(x) {x[x %in% mSetObj$dataSet$metabo.filter.kegg]});
-
     mSetObj$analSet$qea.filtered.mset <- current.mset;
     uniq.count <- length(unique(unlist(current.mset), use.names=FALSE));
   }
-  
+
   hits <- lapply(current.mset, function(x) {x[x %in% colnames(path.data)]});
   hit.inx <- unlist(lapply(hits, function(x) {length(x)}), use.names=FALSE) > 0;
-  hits <- hits[hit.inx]; # remove no hits
-  
-  # deal with no hits
+  hits <- hits[hit.inx];
+
   if(length(hits)==0){
     AddErrMsg("No hits in the selected pathway library!");
     return(0)
   }
-  
-  # calculate the impact values
+
   if(nodeImp == "rbc"){
     imp.list <- current.kegglib$rbc[hit.inx];
     mSetObj$msgSet$topo.msg <- "Your selected node importance measure for topological analysis is `relative betweenness centrality`.";
@@ -394,7 +331,7 @@ SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
 
   imp.vec <- mapply(function(x, y){sum(x[y])}, imp.list, hits);
   set.num<-unlist(lapply(current.mset[hit.inx], length), use.names=FALSE);
-  
+
   # Build covariate data if provided
   has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
   cov.df <- NULL
@@ -403,185 +340,105 @@ SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
     if (length(cov.cols) > 0) {
       cov.df <- mSetObj$dataSet$meta.info[rownames(path.data), cov.cols, drop = FALSE]
       for (cn in colnames(cov.df)) {
-        if (is.factor(cov.df[[cn]]) || is.character(cov.df[[cn]])) {
-          cov.df[[cn]] <- as.factor(cov.df[[cn]])
-        } else {
-          cov.df[[cn]] <- as.numeric(cov.df[[cn]])
-        }
+        if (is.factor(cov.df[[cn]]) || is.character(cov.df[[cn]])) cov.df[[cn]] <- as.factor(cov.df[[cn]])
+        else cov.df[[cn]] <- as.numeric(cov.df[[cn]])
       }
       message("[Pathway QEA] Covariates included: ", paste(cov.cols, collapse = ", "))
     }
   }
 
-  dat.in <- list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df);
+  cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
   if(method == "gt"){
-    cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```Globaltest```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
       "which is statistically more rigorous than adjusting the data separately before testing.\n\n",
       "- Enrichment method: ```Globaltest```", cov.label);
-    dat.in$my.fun <- function(){
-      if (!is.null(dat.in$cov.df)) {
-        # Build null model matrix from covariates
-        null.mat <- model.matrix(~ ., data = dat.in$cov.df)
-        gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, null = null.mat, subsets=dat.in$subsets);
-      } else {
-        gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
-      }
-      gt.res <- globaltest::result(gt.obj);
-      return(gt.res[,c(5,1)]);
-    }
-  } else if(method == "ga"){
-    cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    qs::qsave(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
+        require(globaltest)
+        input <- qs::qread(bridge_in)
+        if (!is.null(input$cov.df)) {
+          null.mat <- model.matrix(~ ., data = input$cov.df)
+          gt.obj <- globaltest::gt(input$cls, input$data, null = null.mat, subsets=input$subsets)
+        } else {
+          gt.obj <- globaltest::gt(input$cls, input$data, subsets=input$subsets)
+        }
+        gt.res <- globaltest::result(gt.obj)
+        qs::qsave(gt.res[,c(5,1)], bridge_out, preset = "fast")
+      },
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 300
+    )
+
+    qea.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  }else{
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```GlobalAncova```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
       "which is statistically more rigorous than adjusting the data separately before testing.\n\n",
       "- Enrichment method: ```GlobalAncova```", cov.label);
-    dat.in$my.fun <- function(){
-      path.data <- dat.in$data;
-      if (!is.null(dat.in$cov.df)) {
-        # GlobalAncova needs numeric design matrix for covars, not data.frame
-        cov.mat <- model.matrix(~ ., data = dat.in$cov.df)[, -1, drop = FALSE]
-        ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, covars=cov.mat, test.genes=dat.in$subsets, method="approx");
-      } else {
-        ga.out <- GlobalAncova::GlobalAncova(xx=t(path.data), group=dat.in$cls, test.genes=dat.in$subsets, method="approx");
-      }
-      return(ga.out[,c(1,3)]);
-    }
-  } else if(method == "mummi_like"){
-    top.frac <- 0.10
-    if(!is.null(mSetObj$paramSet$pathqea.mummi.top.frac)){
-      tmp.frac <- suppressWarnings(as.numeric(mSetObj$paramSet$pathqea.mummi.top.frac))
-      if(!is.na(tmp.frac) && tmp.frac > 0 && tmp.frac <= 1){
-        top.frac <- tmp.frac
-      }
-    }
+    bridge_in2 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out2 <- sub("_in.qs", "_out.qs", bridge_in2)
+    qs::qsave(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in2, preset = "fast")
+    on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
 
-    perm.num <- 100
-    if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
-      tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
-      if(!is.na(tmp.perm) && tmp.perm >= 10){
-        perm.num <- tmp.perm
-      }
-    }
-
-    mSetObj$msgSet$rich.msg <- paste0(
-      "The selected pathway enrichment analysis method is ```Mummichog```.\n\n",
-      "- Significant-feature cutoff: top ```", round(top.frac * 100, 2), "%```\n",
-      "- Permutations: ```", perm.num, "```"
-    );
-    dat.in$my.fun <- function(){
-      # Define universe by pathway library (already filtered by user reference metabolome if provided)
-      universe <- unique(unlist(current.mset[hit.inx], use.names = FALSE))
-      universe <- universe[!is.na(universe)]
-      if(length(universe) == 0){
-        return(matrix(c(0, 1), nrow = 1, dimnames = list("NA", c("Hits", "Raw p"))))
-      }
-
-      # Fill missing/unmapped universe members with p=1 (least significant)
-      pvals <- rep(1, length(universe))
-      names(pvals) <- universe
-      known.p <- as.numeric(univ.p)
-      names(known.p) <- names(univ.p)
-      pvals[names(known.p)] <- known.p[names(known.p)]
-      pvals[is.na(pvals)] <- 1
-      pvals[pvals <= 0] <- 1e-300
-
-      sig.n <- floor(length(universe) * top.frac)
-      sig.n <- max(1, min(sig.n, length(universe)))
-      sig.ids <- names(sort(pvals, decreasing = FALSE))[seq_len(sig.n)]
-
-      set.list <- lapply(dat.in$subsets, function(ids) intersect(ids, universe))
-      set.sizes <- vapply(set.list, length, FUN.VALUE = integer(1))
-      obs.hits <- vapply(set.list, function(ids) length(intersect(ids, sig.ids)), FUN.VALUE = integer(1))
-
-      M <- length(universe)
-      obs.p <- rep(1, length(set.list))
-      valid.inx <- which(set.sizes > 0)
-      if(length(valid.inx) > 0){
-        obs.p[valid.inx] <- stats::phyper(
-          q = obs.hits[valid.inx] - 1,
-          m = set.sizes[valid.inx],
-          n = M - set.sizes[valid.inx],
-          k = sig.n,
-          lower.tail = FALSE
-        )
-      }
-
-      perm.le.count <- rep(0L, length(set.list))
-      if(perm.num > 0){
-        for(b in seq_len(perm.num)){
-          perm.sig <- sample(universe, size = sig.n, replace = FALSE)
-          perm.hits <- vapply(set.list, function(ids) length(intersect(ids, perm.sig)), FUN.VALUE = integer(1))
-          perm.p <- rep(1, length(set.list))
-          if(length(valid.inx) > 0){
-            perm.p[valid.inx] <- stats::phyper(
-              q = perm.hits[valid.inx] - 1,
-              m = set.sizes[valid.inx],
-              n = M - set.sizes[valid.inx],
-              k = sig.n,
-              lower.tail = FALSE
-            )
-          }
-          perm.le.count <- perm.le.count + as.integer(perm.p <= obs.p)
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
+        require(GlobalAncova)
+        input <- qs::qread(bridge_in)
+        if (!is.null(input$cov.df)) {
+          cov.mat <- model.matrix(~ ., data = input$cov.df)[, -1, drop = FALSE]
+          ga.out <- GlobalAncova::GlobalAncova(xx=t(input$data), group=input$cls, covars=cov.mat, test.genes=input$subsets, method="approx")
+        } else {
+          ga.out <- GlobalAncova::GlobalAncova(xx=t(input$data), group=input$cls, test.genes=input$subsets, method="approx")
         }
-      }
-      emp.p <- (perm.le.count + 1) / (perm.num + 1)
+        qs::qsave(ga.out[,c(1,3)], bridge_out, preset = "fast")
+      },
+      args = list(wd = getwd(), bridge_in = bridge_in2, bridge_out = bridge_out2),
+      timeout_sec = 300
+    )
 
-      res <- cbind(Hits = obs.hits, `Raw p` = emp.p)
-
-      res <- as.matrix(res)
-      if(is.null(dim(res))){
-        res <- matrix(res, nrow=1)
-      }
-      colnames(res) <- c("Hits", "Raw p")
-      return(res)
-    }
-  } else{
-    AddErrMsg(paste0("Unknown pathway enrichment method: ", method));
-    return(0);
+    qea.res <- if (file.exists(bridge_out2)) qs::qread(bridge_out2) else NULL
   }
-  
-  qs::qsave(dat.in, file="dat.in.qs");
 
-  # store data before microservice
+  # Store intermediate data
   mSetObj$analSet$qea.univp <- signif(univ.p,7);
   mSetObj$analSet$node.imp <- nodeImp;
   mSetObj$dataSet$norm.path <- path.data;
   mSetObj$analSet$qea.hits <- hits;
   mSetObj$analSet$imp.vec <- imp.vec;
   mSetObj$analSet$set.num <- set.num;
-  
-  return(.set.mSet(mSetObj));
-}
 
-.save.qea.score <- function(mSetObj = NA){
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  qea.res <- dat.in$my.res;
-  set.num <- mSetObj$analSet$set.num;
-  imp.vec <- mSetObj$analSet$imp.vec;
-  
+  # Process results (what .save.qea.score did)
+  if(is.null(qea.res)){
+    AddErrMsg("Pathway enrichment computation failed in isolated subprocess!");
+    return(0);
+  }
   match.num <- qea.res[,1];
   raw.p <- qea.res[,2];
-  
+
   log.p <- -log10(raw.p);
-  # add adjust p values
   holm.p <- p.adjust(raw.p, "holm");
   fdr.p <- p.adjust(raw.p, "fdr");
-  
+
   res.mat <- cbind(set.num, match.num, raw.p, log.p, holm.p, fdr.p, imp.vec);
   rownames(res.mat)<-rownames(qea.res);
   colnames(res.mat)<-c("Total Cmpd", "Hits", "Raw p", "-log10(p)", "Holm adjust", "FDR", "Impact");
   res.mat <- res.mat[!is.na(res.mat[,7]), , drop=FALSE];
-  
+
   ord.inx<-order(res.mat[,3], -res.mat[,7]);
   res.mat<-signif(res.mat[ord.inx,],5);
   mSetObj$analSet$qea.mat <- res.mat;
-  
+
   hit.inx <- match(rownames(res.mat), current.kegglib$path.ids);
   pathNames <- names(current.kegglib$path.ids)[hit.inx];
-  rownames(res.mat) <- pathNames; # change from ids to names for users
+  rownames(res.mat) <- pathNames;
   fast.write.csv(res.mat, file="pathway_results.csv");
   ExportResultMatArrow(res.mat, "pathway_qea_result");
 

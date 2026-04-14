@@ -95,78 +95,15 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
   }))
 }
 
-rsclient_isolated_exec <- function(func_body, input_data, packages = character(0),
-                                   timeout = 180, output_type = "qs", module = NULL) {
-  bridge_tmp <- file.path(tempdir(), "rsclient_bridge")
-  if (!dir.exists(bridge_tmp)) dir.create(bridge_tmp, recursive = TRUE)
-  uid <- paste0(sample(letters, 6), collapse = "")
-  input_path <- file.path(bridge_tmp, paste0(uid, "_in.qs"))
-  output_path <- file.path(bridge_tmp, paste0(uid, "_out.qs"))
-
-  qs::qsave(input_data, input_path, preset = "fast")
-  Sys.sleep(0.02)
-
-  on.exit({
-    for (p in c(input_path, output_path)) if (file.exists(p)) unlink(p)
-  }, add = TRUE)
-
-  # If module is specified, resolve the script loader path so the child can load compiled scripts
-  loader_path <- NULL
-  if (!is.null(module)) {
-    loader_candidate <- paste0("../../rscripts/_script_loader.R")
-    if (file.exists(loader_candidate)) {
-      loader_path <- normalizePath(loader_candidate)
-    }
-  }
-
-  result <- run_func_via_rsclient(
-    func = function(input_path, output_path, func_body, pkgs, loader_path, module) {
-      tryCatch({
-        Sys.setenv(RGL_USE_NULL = TRUE)
-        for (pkg in pkgs) suppressPackageStartupMessages(library(pkg, character.only = TRUE))
-        # Load tool scripts in the child session if module is specified
-        if (!is.null(loader_path) && file.exists(loader_path)) {
-          source(loader_path)
-          if (exists("LoadRscriptsOnDemand") && !is.null(module)) {
-            tryCatch(LoadRscriptsOnDemand(module), error = function(e) message("[rsclient] LoadRscriptsOnDemand: ", e$message))
-          }
-        }
-        input_data <- qs::qread(input_path)
-        res <- func_body(input_data)
-        qs::qsave(res, output_path, preset = "fast")
-        Sys.sleep(0.02)
-        list(success = TRUE)
-      }, error = function(e) {
-        list(success = FALSE, message = e$message)
-      })
-    },
-    args = list(input_path = input_path, output_path = output_path,
-                func_body = func_body, pkgs = packages,
-                loader_path = loader_path, module = module),
-    timeout_sec = timeout
-  )
-
-  if (isTRUE(result$success) && file.exists(output_path)) {
-    return(qs::qread(output_path))
-  }
-  msg <- if (!is.null(result$message)) result$message else "RSclient subprocess failed"
-  message("[rsclient_isolated_exec] ", msg)
-  return(list(success = FALSE, message = msg))
+SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMethod="chisq") {
+  scatter.opts <<- list(
+    scaleMode = scaleMode,
+    confLevel = confLevel,
+    confMethod = confMethod
+  );
+  invisible(1);
 }
 
-# Run prepared closure from dat.in.qs in RSclient child
-.perform.computing <- function(){
-  run_func_via_rsclient(
-    func = function(wd) {
-      setwd(wd)
-      dat.in <- qs::qread("dat.in.qs")
-      dat.in$my.res <- dat.in$my.fun()
-      qs::qsave(dat.in, file = "dat.in.qs")
-    },
-    args = list(wd = getwd()),
-    timeout_sec = 300
-  )
-}
 
 #' Read data table
 #' @description Function to read in a data table. First, it will try to use fread, however, it has issues with 

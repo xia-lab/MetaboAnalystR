@@ -7,31 +7,33 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   mSetObj <<- mSetObj;
   fgsea_runner <- .run_fgsea_inner
 
-  # Run entire fgsea algorithm in subprocess
-  fgsea_inner <- .run_fgsea_inner
-  response <- rsclient_isolated_exec(
-    func_body = function(input_data) {
+  # Run entire fgsea algorithm in subprocess via bridge files
+  # NOTE: .run_fgsea_inner is not available in the child Rserve session,
+  # so we pass the function definition itself through the bridge file
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(mSetObj = mSetObj, pathways = pathways, stats = stats,
+                  ranks = ranks, nperm = nperm, minSize = minSize,
+                  maxSize = maxSize, gseaParam = gseaParam,
+                  .run_fgsea_inner = .run_fgsea_inner), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
       require(fgsea); require(BiocParallel); require(fastmatch); require(data.table)
-      setwd(input_data$wd)
-      fgsea_inner(input_data$mSetObj, input_data$pathways, input_data$stats,
-                       input_data$ranks, input_data$nperm, input_data$minSize,
-                       input_data$maxSize, input_data$gseaParam)
+      input <- qs::qread(bridge_in)
+      res <- input$.run_fgsea_inner(input$mSetObj, input$pathways, input$stats,
+                                    input$ranks, input$nperm, input$minSize,
+                                    input$maxSize, input$gseaParam)
+      qs::qsave(res, bridge_out, preset = "fast")
     },
-    input_data = list(mSetObj = mSetObj, pathways = pathways, stats = stats,
-                      ranks = ranks, nperm = nperm, minSize = minSize,
-                      maxSize = maxSize, gseaParam = gseaParam, wd = getwd(),
-                      fgsea_runner = fgsea_runner),
-    packages = c("fgsea", "BiocParallel", "fastmatch", "data.table", "qs"),
-    timeout = 900, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 900
   )
-  if (is.list(response) && isFALSE(response$success)) {
-    AddErrMsg(response$message)
-    return(data.table::data.table(pathway=character(), pval=numeric(), padj=numeric(), NES=numeric(), size=integer()))
-  }
-  if (!is.data.frame(response)) {
-    AddErrMsg("fgsea returned invalid result format.")
-    return(data.table::data.table(pathway=character(), pval=numeric(), padj=numeric(), NES=numeric(), size=integer()))
-  }
+
+  response <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  if (is.null(response)) { AddErrMsg("fgsea subprocess failed"); return(0) }
   return(response)
 }
 

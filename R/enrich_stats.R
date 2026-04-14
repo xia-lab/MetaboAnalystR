@@ -136,67 +136,43 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
 
   mSetObj <- .get.mSet(mSetObj);
 
-    if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
-    }
+  if(!exists("current.msetlib")){
+    current.msetlib <<- qs::qread("current.msetlib.qs");
+  }
 
-
-  if(.on.public.web){
-    .prepare.globaltest.score(mSetObj, covariates);
-    .perform.computing();
-    .save.globaltest.score(mSetObj);
-  }else{
-    mSetObj <- .prepare.globaltest.score(mSetObj, covariates);
-    
-    if(!grepl("kegg", mSetObj$analSet$msetlibname)){
-      .perform.computing();   
-      mSetObj <- .save.globaltest.score(mSetObj);  
-    }
-  } 
-  return(.set.mSet(mSetObj));
-}
-
-.prepare.globaltest.score <- function(mSetObj=NA, covariates=NA){
-
-  mSetObj <- .get.mSet(mSetObj);
-  # now, need to make a clean dataSet$norm data based on name mapping
-  # only contain valid hmdb hit will be used
+  # Name mapping and data preparation
   nm.map <- GetFinalNameMap(mSetObj);
   valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
   nm.map <- nm.map[valid.inx,];
   orig.nms <- nm.map$query;
-  
+
   hmdb.inx <- match(colnames(mSetObj$dataSet$norm),orig.nms);
   hit.inx <- !is.na(hmdb.inx);
   msea.data <- mSetObj$dataSet$norm[,hit.inx];
   colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
 
   if(!.on.public.web & grepl("kegg", mSetObj$analSet$msetlibname)){
+    if(!exists("my.qea.kegg")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     mSetObj$api$mseaDataColNms <- colnames(msea.data)
     msea.data <- as.matrix(msea.data)
     dimnames(msea.data) = NULL
-    mSetObj$api$mseaData <- msea.data; 
+    mSetObj$api$mseaData <- msea.data;
     mSetObj$api$cls <- mSetObj$dataSet$cls
-    
     if(mSetObj$api$filter){
       mSetObj$api$filterData <- mSetObj$dataSet$metabo.filter.hmdb
-      
-      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms,
                      filterData = mSetObj$api$filterData, cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
     }else{
-      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms, 
+      toSend <- list(mSet = mSetObj, libNm = mSetObj$api$libname, filter = mSetObj$api$filter, mseaData = mSetObj$api$mseaData, mseaDataColNms = mSetObj$api$mseaDataColNms,
                      cls = mSetObj$api$cls, excludeNum = mSetObj$api$excludeNum)
     }
     saveRDS(toSend, "tosend.rds")
     return(my.qea.kegg());
   }
-  
-  if(!exists("current.msetlib")){
-      current.msetlib <<- qs::qread("current.msetlib.qs");
-  }
 
   current.mset <- current.msetlib$member;
-  # make a clean metabolite set based on reference metabolome filtering
   if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
     current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
     mSetObj$dataSet$filtered.mset <- current.mset;
@@ -208,12 +184,9 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
     return(0);
   }
 
-  # now, perform the enrichment analysis  
-
-  # first, get the matched entries from current.mset
   hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
   phenotype <- mSetObj$dataSet$cls;
-  
+
   # Build covariate data if provided
   has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
   cov.df <- NULL
@@ -232,71 +205,73 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
     }
   }
 
-  # Set enrichment message with covariate info for report
   cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
   mSetObj$msgSet$rich.msg <- paste0("The enrichment analysis method is ```Globaltest```.",
     if (!is.null(cov.df)) " Covariates are adjusted within the statistical model, which is statistically more rigorous than adjusting the data separately." else "",
     "\n\n- Enrichment method: ```Globaltest```", cov.label)
 
-  # there are more steps, better drop a function to compute in the remote env.
-  dat.in <- list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df);
-  dat.in$my.fun <- function(){
-    if (!is.null(dat.in$cov.df)) {
-      null.mat <- model.matrix(~ ., data = dat.in$cov.df)
-      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, null = null.mat, subsets=dat.in$subsets);
-    } else {
-      gt.obj <- globaltest::gt(dat.in$cls, dat.in$data, subsets=dat.in$subsets);
-    }
-    gt.res <- globaltest::result(gt.obj);
-    
-    match.num <- gt.res[,5];
-    if(sum(match.num>0)==0){
-      return(NA);
-    }
-    all.cmpds <- unlist(gt.obj@subsets, recursive = TRUE, use.names = FALSE);
-    all.cmpds <- unique(all.cmpds);
-    stat.mat <- matrix(0, length(all.cmpds), 5);
-    colnames(stat.mat) <-  c("p", "S", "ES", "sdS", "ncov")
-    rownames(stat.mat) <- all.cmpds
-    for(i in 1:length(all.cmpds)){
-      stat.mat[i,] <- gt.obj@functions$test(all.cmpds[i]);
-    }
-    return(list(gt.res=gt.res, pvals=stat.mat[,1]));
-  }
-  
-  qs::qsave(dat.in, file="dat.in.qs");
-  
-  # store necessary data 
-  mSetObj$analSet$set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
+  # Run globaltest in isolated subprocess via bridge files
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
+      require(globaltest)
+      input <- qs::qread(bridge_in)
+      if (!is.null(input$cov.df)) {
+        null.mat <- model.matrix(~ ., data = input$cov.df)
+        gt.obj <- globaltest::gt(input$cls, input$data, null = null.mat, subsets=input$subsets)
+      } else {
+        gt.obj <- globaltest::gt(input$cls, input$data, subsets=input$subsets)
+      }
+      gt.res <- globaltest::result(gt.obj)
+      match.num <- gt.res[,5]
+      if(sum(match.num>0)==0) { qs::qsave(NA, bridge_out, preset = "fast"); return(invisible(NULL)) }
+      all.cmpds <- unique(unlist(gt.obj@subsets, recursive = TRUE, use.names = FALSE))
+      stat.mat <- matrix(0, length(all.cmpds), 5)
+      colnames(stat.mat) <- c("p", "S", "ES", "sdS", "ncov")
+      rownames(stat.mat) <- all.cmpds
+      for(i in 1:length(all.cmpds)){
+        stat.mat[i,] <- gt.obj@functions$test(all.cmpds[i])
+      }
+      qs::qsave(list(gt.res=gt.res, pvals=stat.mat[,1]), bridge_out, preset = "fast")
+    },
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 300
+  )
+
+  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
+  # Store intermediate data
+  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
+  mSetObj$analSet$set.num <- set.num;
   mSetObj$analSet$qea.hits <- hits;
   mSetObj$analSet$msea.data <- msea.data;
-  return(.set.mSet(mSetObj));
-}
 
-.save.globaltest.score <- function(mSetObj = NA){
-
-  mSetObj <- .get.mSet(mSetObj);
-  dat.in <- qs::qread("dat.in.qs"); 
-  my.res <- dat.in$my.res;
-  set.num <- mSetObj$analSet$set.num;
-  
+  # Process results (what .save.globaltest.score did)
+  if(is.null(my.res)){
+    AddErrMsg("Globaltest computation failed in isolated subprocess!");
+    return(0);
+  }
   if(length(my.res)==1 && is.na(my.res)){
     AddErrMsg("No match was found to the selected metabolite set library!");
     return(0);
   }
-  
-  mSetObj$analSet$qea.pvals <- my.res$pvals; # p value for individual cmpds
+
+  mSetObj$analSet$qea.pvals <- my.res$pvals;
   gt.res <- my.res$gt.res;
-  
+
   raw.p <- gt.res[,1];
-  # add adjust p values
   bonf.p <- p.adjust(raw.p, "holm");
   fdr.p <- p.adjust(raw.p, "fdr");
-  
+
   res.mat <- cbind(set.num, gt.res[,5], gt.res[,2], gt.res[,3], raw.p, bonf.p, fdr.p);
   rownames(res.mat) <- rownames(gt.res);
   colnames(res.mat) <- c("Total Cmpd", "Hits", "Statistic Q", "Expected Q", "Raw p", "Holm p", "FDR");
-  
+
   hit.inx<-res.mat[,2]>0;
   res.mat<-res.mat[hit.inx, , drop = FALSE];
   ord.inx<-order(res.mat[,5]);

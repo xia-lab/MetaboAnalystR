@@ -54,26 +54,21 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
       coords_per_group[[i]] <- as.matrix(pos.xyz[inx, c(1:3)])
     }
 
-    # Pre-compute t-values per group using session method (chisq or F)
-    # F-distribution uses per-group n; chisq is the same for all groups
-    conf_method <- tryCatch(GetScatterOptions()$confMethod, error = function(e) "chisq")
-    t_vals <- numeric(length(coords_per_group))
-    for (i in seq_along(coords_per_group)) {
-      n <- nrow(coords_per_group[[i]])
-      if (conf_method == "f" && n > 3) {
-        t_vals[i] <- sqrt(3 * qf(level, 3, n - 1))
-      } else {
-        t_vals[i] <- sqrt(qchisq(level, 3))
-      }
-    }
+    # Single subprocess call for all ellipsoid computations via bridge files
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    qs::qsave(list(coords_per_group = coords_per_group, level = level, group_names = group_names), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-    # Single subprocess call for all ellipsoid computations
-    mesh_results <- rsclient_isolated_exec(
-      func_body = function(input_data) {
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
-        coords_list <- input_data$coords_per_group
-        t_vals <- input_data$t_vals
-        group_names <- input_data$group_names
+        require(rgl)
+        input <- qs::qread(bridge_in)
+        coords_list <- input$coords_per_group
+        level <- input$level
+        group_names <- input$group_names
 
         result_list <- vector("list", length(coords_list))
         for (i in seq_along(coords_list)) {
@@ -92,16 +87,16 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
             result_list[[i]] <<- list(group = group_names[i], mesh = list(), error = e$message)
           })
         }
-        result_list
+        qs::qsave(result_list, bridge_out, preset = "fast")
       },
-      input_data = list(coords_per_group = coords_per_group, t_vals = t_vals, group_names = group_names),
-      packages = c("rgl", "qs"),
-      timeout = 120,
-      output_type = "qs"
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 120
     )
 
-    # Write single file with all group results (metabo JS loads this directly)
-    if (is.list(mesh_results) && !isFALSE(mesh_results$success)) {
+    mesh_results <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
+    # Write JSON in master (subprocess may have different wd)
+    if (!is.null(mesh_results)) {
       sink(filenm); cat(RJSONIO::toJSON(mesh_results)); sink()
     } else {
       sink(filenm); cat("{}"); sink()
