@@ -199,10 +199,12 @@ perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, lo
       else warning("OPLS(-DA): The number of predictive component is set to 1 for a single response model", 
                    call. = FALSE)
       predI <- 1
-      if ((predI + orthoI) > min(dim(xMN))) 
-        stop("The sum of 'predI' (", predI, ") and 'orthoI' (", 
-             orthoI, ") exceeds the minimum dimension of the 'x' data matrix (", 
-             min(dim(xMN)), ")", call. = FALSE)
+      if ((predI + orthoI) > min(dim(xMN))) {
+        AddErrMsg(paste0("The sum of 'predI' (", predI, ") and 'orthoI' (",
+             orthoI, ") exceeds the minimum dimension of the 'x' data matrix (",
+             min(dim(xMN)), ")"));
+        return(0);
+      }
     }
     else {
       predI <- autMaxN

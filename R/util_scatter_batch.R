@@ -14,6 +14,8 @@
 #' @export
 ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics = "NA") {
   tryCatch({
+    # Use confidence level from session if available
+    level <- tryCatch(.get.confidence.level(), error = function(e) as.numeric(level))
     level <- as.numeric(level)
 
     # Read data in master
@@ -78,9 +80,8 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
           tryCatch({
             pos <- cov(coords, y = NULL, use = "everything")
             center <- colMeans(coords)
-            t_val <- sqrt(qchisq(level, 3))
             mesh <- list()
-            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
+            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_vals[i])
             result_list[[i]] <- list(group = group_names[i], mesh = mesh, error = NULL)
           }, error = function(e) {
             result_list[[i]] <<- list(group = group_names[i], mesh = list(), error = e$message)

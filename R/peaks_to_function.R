@@ -494,18 +494,29 @@ Convert2Mummichog <- function(mSetObj=NA,
   }
 
     if(rt){ # taking retention time information from feature name itself
-      feat_info <- mummi_new[,1]
+      feat_info <- as.character(mummi_new[,1])
       # Support both "__" and "@" as mz/rt separator (try __ first)
       sep <- if(any(grepl("__", feat_info, fixed=TRUE))) "__" else if(any(grepl("@", feat_info, fixed=TRUE))) "@" else "__"
-      feat_info_split <- matrix(unlist(strsplit(feat_info, sep, fixed=TRUE)), ncol=2, byrow=T)
-      colnames(feat_info_split) <- c("m.z", "r.t")
-      
-      if(rt.type == "minutes"){
-        rtime <- as.numeric(feat_info_split[,2])
-        rtime <- rtime * 60
-        feat_info_split[,2] <- rtime
+      split_parts <- strsplit(feat_info, sep, fixed=TRUE)
+      mz_vec <- vapply(split_parts, function(x) {
+        if (length(x) >= 1) x[1] else NA_character_
+      }, FUN.VALUE = character(1))
+      rt_vec <- suppressWarnings(as.numeric(vapply(split_parts, function(x) {
+        if (length(x) >= 2) x[2] else NA_character_
+      }, FUN.VALUE = character(1))))
+
+      # Fallback: use RT parsed earlier from metadata when feature names have no separator.
+      if (all(is.na(rt_vec)) &&
+          !is.null(mSetObj$dataSet$ret_time) &&
+          length(mSetObj$dataSet$ret_time) == length(feat_info)) {
+        rt_vec <- suppressWarnings(as.numeric(mSetObj$dataSet$ret_time))
       }
       
+      if(rt.type == "minutes"){
+        rt_vec <- rt_vec * 60
+      }
+      
+      feat_info_split <- data.frame("m.z" = mz_vec, "r.t" = rt_vec, check.names = FALSE, stringsAsFactors = FALSE)
       mummi_new <- cbind(feat_info_split, mummi_new[,-1])
     }
   }
@@ -892,7 +903,8 @@ SanityCheckMummichogData <- function(mSetObj=NA){
         return(0)
       }
     } else {
-      stop("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.") 
+      AddErrMsg("IDtype must be one of 'hmdb_ids', 'pubchem_cids', 'pubchem_sids', 'inchikeys', 'smiles'.");
+      return(0);
     }
   }
   if(!is.null(ref_cmpdlist)){
@@ -1139,9 +1151,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
   } else if(anal.type0 == "gsea_peaks") {
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   } else {
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogSigPvals(mSetObj);
     pathResults <- vector("list")
@@ -1241,9 +1255,11 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
   }else if(anal.type0 == "gsea_peaks"){
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
   }else{
     # need to perform mummichog + gsea then combine p-values
     mSetObj <- .compute.mummichog.RT.fgsea(mSetObj, permNum);
+    if(!is.list(mSetObj)) return(0)
     mSetObj <- .perform.mummichogRTPermutations(mSetObj, permNum);
     mSetObj <- .compute.mummichogRTSigPvals(mSetObj);
     
@@ -1397,8 +1413,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
         AddErrMsg("The MS2 ID  you have selected is not correct!")
         return(0)
       }
-      warning("MS2 ID type must be one of 'hmdb_ids', 'inchikeys', 'pubchem_CIDs', 'pubchem_SIDs', 'SMILES'.")
-      stop("Please redefine MS2 ID with function 'SetMS2IDType'.")
+      AddErrMsg("MS2 ID type must be one of 'hmdb_ids', 'inchikeys', 'pubchem_CIDs', 'pubchem_SIDs', 'SMILES'. Please redefine MS2 ID with function 'SetMS2IDType'.");
+      return(0);
     }
     ## checking adducts info - with MS2 INFO
     if(!is.null(mSetObj$dataSet$adduct.custom)){
@@ -1948,7 +1964,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     refmz.num <- suppressWarnings(as.numeric(refmz))
     input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
     input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
-    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
+    input.mz.num <- unique(input.mz.num[!is.na(input.mz.num)])
+    hits.index <- which(!is.na(refmz.num) & refmz.num %in% input.mz.num);
     ec1 <- unique(unlist(mz2ec_dict[hits.index]));
     mSetObj$input_ecpdlist <- ec1;
     mSetObj$total_matched_ecpds <- unique(as.vector(matched_res$Empirical.Compound));
@@ -1969,7 +1986,8 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     refmz.num <- suppressWarnings(as.numeric(refmz))
     input.mz.raw <- as.character(mSetObj$dataSet$input_mzlist)
     input.mz.num <- suppressWarnings(as.numeric(input.mz.raw))
-    hits.index <- which(!is.na(refmz.num) & !is.na(input.mz.num) & refmz.num %in% input.mz.num);
+    input.mz.num <- unique(input.mz.num[!is.na(input.mz.num)])
+    hits.index <- which(!is.na(refmz.num) & refmz.num %in% input.mz.num);
     cpd1 <- unique(unlist(mz2cpd_dict[hits.index]));
     
     if(.on.public.web){
@@ -3304,6 +3322,12 @@ json.res <- list(
   }
 
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)  
+  if (!is.data.frame(fgseaRes) || !all(c("pathway", "size", "pval", "padj", "NES") %in% colnames(fgseaRes))) {
+    AddErrMsg("GSEA failed to return a valid result table.")
+    mSetObj$mummi.gsea.resmat <- matrix(numeric(0), nrow = 0, ncol = 5,
+                                      dimnames = list(NULL, c("Pathway_Total", "Hits", "P_val", "P_adj", "NES")))
+    return(mSetObj)
+  }
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
 
   path.size <- unlist(lapply(current.mset, length))
@@ -3400,6 +3424,12 @@ json.res <- list(
   }
   
   fgseaRes <- fgsea2(mSetObj, current.mset, scores.vec, rank.vec, num_perm)
+  if (!is.data.frame(fgseaRes) || !all(c("pathway", "pval", "padj", "NES") %in% colnames(fgseaRes))) {
+    AddErrMsg("GSEA failed to return a valid result table.")
+    mSetObj$mummi.gsea.resmat <- matrix(numeric(0), nrow = 0, ncol = 5,
+                                      dimnames = list(NULL, c("Pathway_Total", "Hits", "P_val", "P_adj", "NES")))
+    return(mSetObj)
+  }
 
   res.mat <- matrix(0, nrow=length(fgseaRes$pathway), ncol=5)
   
@@ -3940,7 +3970,8 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
 
   inx <- which(mSetObj$pathways$name == msetNm)
   if (length(inx) != 1L) {
-    stop("Pathway name '", msetNm, "' not found or not unique in mSetObj$pathways$name.")
+    AddErrMsg(paste0("Pathway name '", msetNm, "' not found or not unique in mSetObj$pathways$name."));
+    return(0);
   }
 
   # --- 1) Normalize mset (character vector of KEGG IDs) -----------------
@@ -3953,7 +3984,8 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
   # --- 2) Name lookup table ---------------------------------------------
   cmpd.db <- .get.my.lib("compound_db.qs")  # expects columns: kegg_id, name
   if (is.null(cmpd.db) || !all(c("kegg_id", "name") %in% colnames(cmpd.db))) {
-    stop("compound_db.qs is missing or lacks columns 'kegg_id' and 'name'.")
+    AddErrMsg("compound_db.qs is missing or lacks columns 'kegg_id' and 'name'.");
+    return(0);
   }
   cmpd.db$kegg_id <- as.character(cmpd.db$kegg_id)
   cmpd.db$name    <- as.character(cmpd.db$name)
@@ -4312,17 +4344,8 @@ fgsea2 <- function(mSetObj, pathways, stats, ranks,
                    gseaParam=1,
                    BPPARAM=NULL) {
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.fgsea")){
-      .load.scripts.on.demand("util_fgsea.Rc");    
-    }
-    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
-                    minSize, maxSize, nproc, gseaParam, BPPARAM));
-  }else{
-    return(my.fgsea(mSetObj, pathways, stats, ranks, nperm, 
-                    minSize, maxSize, nproc, gseaParam, BPPARAM));
-  }
+  return(my.fgsea(mSetObj, pathways, stats, ranks, nperm,
+                  minSize, maxSize, nproc, gseaParam, BPPARAM));
 }
 
 
@@ -4363,15 +4386,7 @@ SetRTincluded <- function(mSetObj = NA, rt = "no") {
 CreateHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, minLib, 
                               fileNm, filtOpt, version="v1"){
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("psea.heatmap.json")){
-      .load.scripts.on.demand("util_heatmap.Rc");    
-    }
-    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }else{
-    return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }
+  return(psea.heatmap.json(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
 }
     
 ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", testmeth="cov", mode=NA){
@@ -4487,6 +4502,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   mSetObj <- .get.mSet(mSetObj)
   require(limma)
   cls <- mSetObj$dataSet$cls
+  # relevel() only supports unordered factors; metadata columns can be ordered.
+  cls <- factor(cls, levels = levels(cls), ordered = FALSE)
   x <- mSetObj$dataSet$norm
   ngrps <- length(levels(cls))
 
@@ -4502,6 +4519,13 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   } else {
     cont <- levels(cls)[2]
   }
+  
+  # Limma contrast names must be syntactically valid in R.
+  cls.levels <- levels(cls)
+  cls.safe <- make.names(cls.levels, unique = TRUE)
+  names(cls.safe) <- cls.levels
+  ref.safe <- cls.safe[ref]
+  cont.safe <- cls.safe[cont]
 
   # Build covariate matrix if specified (only used with limma method)
   has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
@@ -4533,8 +4557,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
     } else {
       design <- model.matrix(~0 + cls)
     }
-    colnames(design)[1:ngrps] <- levels(cls)
-    contrast.name <- paste0(cont, "-", ref)
+    colnames(design)[1:ngrps] <- unname(cls.safe)
+    contrast.name <- paste0(cont.safe, "-", ref.safe)
     contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
     fit <- lmFit(t(as.matrix(x)), design)
     fit <- contrasts.fit(fit, contrast.matrix)
@@ -4563,8 +4587,8 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
 
     # logFC from specific contrast via limma (no covariates for classical method)
     design <- model.matrix(~0 + cls)
-    colnames(design)[1:ngrps] <- levels(cls)
-    contrast.name <- paste0(cont, "-", ref)
+    colnames(design)[1:ngrps] <- unname(cls.safe)
+    contrast.name <- paste0(cont.safe, "-", ref.safe)
     contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
     fit <- lmFit(t(as.matrix(x)), design)
     fit <- contrasts.fit(fit, contrast.matrix)
@@ -4620,6 +4644,42 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
   message("Mummichog ranking: ", method.label, ". Sig: ", sum(sig.inx, na.rm = TRUE))
   .set.mSet(mSetObj)
   return(sum(sig.inx, na.rm = TRUE))
+}
+
+#' Compute p-value cutoff to exactly capture significant features from PerformMumTableStat
+#' @description After running PerformMumTableStat, find the p-value threshold that
+#'   captures all features where inx.imp == TRUE, keeping background peaks for permutation analysis
+#' @param mSetObj mSet Object
+#' @export
+GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  # Check if analSet$tt exists with significance index
+  if (is.null(mSetObj$analSet$tt) || is.null(mSetObj$analSet$tt$inx.imp)) {
+    AddErrMsg("No statistical analysis results found. Run PerformMumTableStat first.")
+    return(0)
+  }
+
+  # Get significant features based on FDR and FC cutoffs
+  sig.inx <- mSetObj$analSet$tt$inx.imp
+  if (sum(sig.inx) == 0) {
+    AddErrMsg("No significant features found from statistical analysis.")
+    return(0)
+  }
+
+  # Get p-values for significant features
+  sig.pvals <- mSetObj$analSet$tt$p.value[sig.inx]
+
+  # Find the maximum p-value among significant features
+  # This will be our cutoff - it captures all significant features
+  max.sig.pval <- max(sig.pvals, na.rm = TRUE)
+
+  # Add small buffer to ensure all are included
+  cutoff <- max.sig.pval * 1.01
+
+  message("[PRO] Computed p-value cutoff: ", signif(cutoff, 4), " to capture ", sum(sig.inx), " significant features")
+
+  return(cutoff)
 }
 
 #' Plot volcano for mummichog table input
@@ -4701,15 +4761,7 @@ PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pva
 CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 
                                   minLib, fileNm, filtOpt, version="v1"){
   
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.list.heatmap")){
-      .load.scripts.on.demand("util_listheatmap.Rc");    
-    }
-    return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }else{
-    return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
-  }
+  return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
 }
 
 

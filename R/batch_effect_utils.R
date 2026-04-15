@@ -557,15 +557,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'@export
 #'
 PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
-  if(.on.public.web){
-    # make this lazy load
-    if(!exists("my.batch.correct")){
-      .load.scripts.on.demand("util_batch.Rc");    
-    }
-    return(my.batch.correct(mSetObj, imgName, Method, center)); 
-  }else{
-    return(my.batch.correct(mSetObj, imgName, Method, center)); 
-  }
+  return(my.batch.correct(mSetObj, imgName, Method, center));
 }
 
 #'Signal Drift Correction
@@ -599,7 +591,8 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
   QCs<-grep("QC",as.character(class.lbl2));
   
   if (identical(QCs,integer(0))){
-    stop("QC samples are required for signal driift correction. Please double check your data !")
+    AddErrMsg("QC samples are required for signal driift correction. Please double check your data !");
+    return(0);
   }
   
   if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
@@ -609,7 +602,8 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
     QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
     mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
   } else {
-    stop("Please double check the batch, class and order information is not missing ")
+    AddErrMsg("Please double check the batch, class and order information is not missing ");
+    return(0);
   }
   
   plot.sample.trend(mSetObj,paste(imgName,"trend_"),method="QC_RLSC");
@@ -1235,7 +1229,8 @@ QC_RLSC<-function(data,batch,class,order,QCs){
     #                    sep="")
     #message("Please see the file: ",error_file," for detail!")
     #save(peaksData,cvStat,file=error_file)
-    stop("Please see detailed data in ",error_file)
+    AddErrMsg(paste0("Please see detailed data in ",error_file));
+    return(0);
   }
   peaksData <- tmpPeaksData
   peaksData <- dplyr::rename(peaksData,cv=normCV)
@@ -2804,7 +2799,8 @@ tuneSpline = function(x,y,span.vals=seq(0.1,1,by=0.05)){
     cat("No missing value imputation!\n")
     inputedData <- x
   }else{
-    stop("Please provide valid method for missing value inputation!")
+    AddErrMsg("Please provide valid method for missing value inputation!");
+    return(0);
   }
 
   if(method != "none"){

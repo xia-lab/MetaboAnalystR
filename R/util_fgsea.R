@@ -5,6 +5,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
                      gseaParam=1,
                      BPPARAM=NULL) {
   mSetObj <<- mSetObj;
+  fgsea_runner <- .run_fgsea_inner
 
   # Run entire fgsea algorithm in subprocess via bridge files
   # NOTE: .run_fgsea_inner is not available in the child Rserve session,

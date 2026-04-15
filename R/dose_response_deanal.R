@@ -429,8 +429,10 @@ PlotDoseVolcano <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
   doseRes <- mSetObj$analSet$dose
 
-  if (is.null(doseRes))
-    stop("analSet$dose is missing – run the LIMMA-result function first.")
+  if (is.null(doseRes)) {
+    AddErrMsg("analSet$dose is missing - run the LIMMA-result function first.");
+    return(0);
+  }
 
 doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
                          length(doseRes$fc.thresh) == 0) 0

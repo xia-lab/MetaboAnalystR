@@ -1,3 +1,85 @@
+###############################################
+## Shared 2D Score Plot Utilities
+## Used by PCA, PLS-DA, oPLS-DA, sPLS-DA
+###############################################
+
+#' Get scatter plot options from session (safe, with defaults)
+#' Returns list: level, method ("chisq"/"f"), type ("norm"/"t" for stat_ellipse),
+#'               use.asp (TRUE if uniform scaling), scaleMode
+#' @param default.level fallback confidence level if session not available
+.get.scatter.params <- function(default.level = 0.95) {
+  level <- default.level
+  method <- "chisq"
+  type <- "norm"
+  scaleMode <- "independent"
+  tryCatch({
+    if (exists("GetScatterOptions")) {
+      opts <- GetScatterOptions()
+      if (!is.null(opts$confidenceLevel)) level <- opts$confidenceLevel
+      if (!is.null(opts$confMethod)) method <- opts$confMethod
+      if (!is.null(opts$scaleMode)) scaleMode <- opts$scaleMode
+      if (method == "f") type <- "t"
+    }
+  }, error = function(e) {})
+  list(level = level, method = method, type = type,
+       use.asp = (scaleMode == "uniform"), scaleMode = scaleMode)
+}
+
+# Keep old name as alias
+.get.2d.confidence.params <- .get.scatter.params
+
+#' Compute 2D ellipse radius (t-value) for a group
+#' chi-squared: sqrt(qchisq(level, 2))
+#' F-distribution: sqrt(2 * qf(level, 2, n-1))
+#' @param level confidence level
+#' @param method "chisq" or "f"
+#' @param n group sample size
+GetEllipseRadius <- function(level, method, n) {
+  if (method == "f" && n > 2) {
+    return(sqrt(2 * qf(level, 2, n - 1)))
+  }
+  return(sqrt(qchisq(level, 2)))
+}
+
+#' Compute confidence ellipse points for one group
+#' Handles both chi-squared and F-distribution methods, guards n < 3
+#' @param x vector of x-coordinates for the group
+#' @param y vector of y-coordinates for the group
+#' @param params list from .get.scatter.params()
+#' @param npoints number of ellipse points (default 100)
+#' @return 2-column matrix of ellipse coordinates, or NA matrix if n < 3
+.compute.group.ellipse <- function(x, y, params, npoints = 100) {
+  n <- length(x)
+  if (n < 3) return(matrix(NA, npoints, 2))
+  groupVar <- var(cbind(x, y), na.rm = TRUE)
+  groupMean <- c(mean(x, na.rm = TRUE), mean(y, na.rm = TRUE))
+  radius <- GetEllipseRadius(params$level, params$method, n)
+  ellipse::ellipse(groupVar, centre = groupMean, t = radius, npoints = npoints)
+}
+
+#' Initialize a 2D score plot with proper aspect ratio
+#' @param x x-coordinates
+#' @param y y-coordinates
+#' @param xlabel x-axis label
+#' @param ylabel y-axis label
+#' @param xlim x limits (or NULL for auto)
+#' @param ylim y limits (or NULL for auto)
+#' @param params list from .get.scatter.params()
+#' @param main plot title
+#' @param ... extra args to plot()
+.init.score.plot <- function(x, y, xlabel, ylabel, xlim = NULL, ylim = NULL,
+                              params = NULL, main = "Scores Plot", ...) {
+  asp <- if (!is.null(params) && params$use.asp) 1 else NA
+  if (!is.null(xlim) && !is.null(ylim)) {
+    plot(x, y, xlab = xlabel, ylab = ylabel, xlim = xlim, ylim = ylim,
+         type = 'n', main = main, asp = asp, ...)
+  } else {
+    plot(x, y, xlab = xlabel, ylab = ylabel,
+         type = 'n', main = main, asp = asp, ...)
+  }
+  grid(col = "lightgray", lty = "dotted", lwd = 1)
+}
+
 #'Perform PCA analysis
 #'@description Perform PCA analysis, obtain variance explained, store item to PCA object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
@@ -292,9 +374,11 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
+PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
                            width=NA, pcx, pcy, reg = 0.95, show=1, grey.scale = 0, cex.opt="na"){
-  #save.image("pca2.RData");
+  # Override reg with session confidence level if available
+  sp <- .get.scatter.params(reg)
+  reg <- sp$level
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
     pca.cex <<- 1.0;
@@ -343,9 +427,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     pts.array <- array(0, dim=c(100,2,length(lvs)));
     for(i in 1:length(lvs)){
       inx <- cls == lvs[i];
-      groupVar<-var(cbind(pc1[inx],pc2[inx]), na.rm=T);
-      groupMean<-cbind(mean(pc1[inx], na.rm=T),mean(pc2[inx], na.rm=T));
-      pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+      pts.array[,,i] <- .compute.group.ellipse(pc1[inx], pc2[inx], sp)
     }
     
     xrg <- range(pc1, pts.array[,1,]);
@@ -359,7 +441,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     cols <- ExpandSchema(cls, col.def);
     
     plot(pc1, pc2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot",
-         col=cols, pch=as.numeric(cls)+1); ## added
+         col=cols, pch=as.numeric(cls)+1, asp=if(sp$use.asp) 1 else NA); ## added
     grid(col = "lightgray", lty = "dotted", lwd = 1);
     
     # draw ellipse
@@ -409,7 +491,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     legend(lgd.x, lgd.y, legend = names(pchs.def), pch=pchs.def, col=col.def, box.lty=0);
     
   }else{
-    plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot");
+    plot(pc1, pc2, xlab=xlabel, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
     points(pc1, pc2, pch=15, col="magenta");
     text(pc1, pc2, label=text.lbls, pos=4, col ="blue", xpd=T, cex=0.8*pca.cex);
   }
@@ -536,10 +618,6 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   pca3d$loading$cls = cls;
   qs::qsave(pca3d$loading, "loading3d.qs");
 
-  if(!exists("my.json.scatter")){
-    .load.scripts.on.demand("util_scatter3d.Rc");    
-  }
-
   my.json.scatter(imgName, T);
 
   if(.on.public.web){
@@ -589,9 +667,12 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   mSetObj <- .get.mSet(mSetObj);
   
   loadings<-as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2]));
+  # Keep finite rows only to avoid blank plots when rotations contain NAs/Infs.
+  keep.inx <- is.finite(loadings[,1]) & is.finite(loadings[,2]);
+  loadings <- loadings[keep.inx, , drop=FALSE];
   # sort based on absolute values of 1, 2 
   ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
-  loadings <- signif(loadings[ord.inx,],5);
+  loadings <- signif(loadings[ord.inx,,drop=FALSE],5);
   
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
@@ -725,9 +806,9 @@ group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_name
  ylabel = paste("PC",inx2, "(", round(100*mSetObj$analSet$pca$variance[inx2],1), "%)");
 p <- ggplot() +
   geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-  stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
+  stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
-               color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+               color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                   size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
@@ -742,13 +823,12 @@ p <- ggplot() +
     legend.position = "right",
     legend.title = element_blank(),
    legend.text = element_text(size = 12), 
-    panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),  # Add a black border around the plot
     panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
     panel.grid.minor = element_blank(),
     axis.line = element_blank(),
   plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
-  coord_cartesian(clip = "off")+
-  coord_fixed(ratio = 1)  
+  coord_fixed(ratio = 1, clip = "off")
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(p );
   dev.off();
@@ -854,9 +934,10 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'@export
 #'
 PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+  sp <- .get.scatter.params(reg)
+  reg <- sp$level
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
     pls.cex <<- 1.0;
@@ -903,11 +984,9 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
     inx <- cls1 == lvs[i];
-    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
-    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
-    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+    pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
-  
+
   xrg <- range(lv1, pts.array[,1,]);
   yrg <- range(lv2, pts.array[,2,]);
   x.ext<-(xrg[2]-xrg[1])/12;
@@ -918,7 +997,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   col.def <- GetColorSchema(cls, grey.scale==1);
   cols <- ExpandSchema(cls, col.def);
   
-  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
   grid(col = "lightgray", lty = "dotted", lwd = 1);
 
   # draw ellipse
@@ -1083,10 +1162,6 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   
   pls3d$loading$cls = cls;
   qs::qsave(pls3d$loading, "loading3d.qs");
-
-  if(!exists("my.json.scatter")){
-    .load.scripts.on.demand("util_scatter3d.Rc");    
-  }
 
   my.json.scatter(imgName, T);
 
@@ -1331,9 +1406,9 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   
   p <- ggplot() +
     geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-    stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = "norm", level = 0.95, geom = "polygon", alpha = 0.2) +
+    stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
     geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
-                 color = "black", arrow = arrow(length = unit(0.2, "cm")), size = 0.5, show.legend = FALSE) +
+               color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
     geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                     size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
@@ -1350,13 +1425,12 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
       legend.position = "right",
       legend.title = element_blank(),
       legend.text = element_text(size = 12), 
-      panel.border = element_rect(color = "black", fill = NA, size = 0.5),  # Add a black border around the plot
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),  # Add a black border around the plot
       panel.grid.major = element_line(color = "grey80",linetype = "dashed"),  # Lighten the grid lines if needed
       panel.grid.minor = element_blank(),
       axis.line = element_blank(),
       plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
-    coord_cartesian(clip = "off")+
-    coord_fixed(ratio = 1)  
+    coord_fixed(ratio = 1, clip = "off")
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(p );
   dev.off();
@@ -1835,8 +1909,10 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+  sp <- .get.scatter.params(reg)
+  reg <- sp$level
   cls <- mSetObj$dataSet$cls;
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
@@ -1876,9 +1952,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
     inx <- cls == lvs[i];
-    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
-    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
-    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+    pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
   
   xrg <- range(lv1, pts.array[,1,]);
@@ -1891,7 +1965,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   col.def <- GetColorSchema(cls, grey.scale==1);
   cols <- ExpandSchema(cls, col.def);
   
-  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   
   # draw ellipse
@@ -2425,9 +2499,10 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 #'@export
 #'
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
-  
-  mSetObj <- .get.mSet(mSetObj);
 
+  mSetObj <- .get.mSet(mSetObj);
+  sp <- .get.scatter.params(reg)
+  reg <- sp$level
   # add option to adjust label size. Should be global to remember previous state
   if(cex.opt=="na"){                
     spls.cex <<- 1.0;
@@ -2470,9 +2545,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   pts.array <- array(0, dim=c(100,2,length(lvs)));
   for(i in 1:length(lvs)){
     inx <- cls == lvs[i];
-    groupVar <- var(cbind(lv1[inx],lv2[inx]), na.rm=T);
-    groupMean <- cbind(mean(lv1[inx], na.rm=T),mean(lv2[inx], na.rm=T));
-    pts.array[,,i] <- ellipse::ellipse(groupVar, centre = groupMean, level = reg, npoints=100);
+    pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
   
   xrg <- range(lv1, pts.array[,1,]);
@@ -2485,7 +2558,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   col.def <- GetColorSchema(cls, grey.scale==1);
   cols <- ExpandSchema(cls, col.def);
   
-  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot");
+  plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   
   # draw ellipse
@@ -2659,11 +2732,6 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   spls3d$loading$cls = cls;
   qs::qsave(spls3d$loading, "loading3d.qs");
 
-  if(!exists("my.json.scatter")){
-    .load.scripts.on.demand("util_scatter3d.Rc");    
-  }
-
-  
   if(.on.public.web){
     my.json.scatter(imgName, T);
     return(1);
@@ -3052,6 +3120,8 @@ GetSPLSSigColNames <- function(mSetObj=NA, type){
 # internal called by all pair plots
 Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, width){
 
+  sp <- .get.scatter.params()
+
   if(is.na(width)){
     w <- 11;
   }else if(width == 0){
@@ -3060,7 +3130,7 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
     w <- width;
   }
   h <- w;
-  
+
   col.def <- GetColorSchema(cls);
   my.col <- ExpandSchema(cls, col.def);
   legend.nm <- names(col.def);
@@ -3081,10 +3151,27 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
    pchs.def <- GetShapeSchema(cls, 1); # use different shapes here
    my.pch <- ExpandSchema(cls, pchs.def);
 
+  # Panel function that respects asp=1 for uniform scaling
+  my.panel <- if(sp$use.asp) {
+    function(x, y, ...) {
+      usr <- par("usr")
+      rx <- diff(usr[1:2]); ry <- diff(usr[3:4])
+      if(rx > 0 && ry > 0) {
+        rng <- max(rx, ry)
+        mx <- mean(usr[1:2]); my <- mean(usr[3:4])
+        par(usr = c(mx - rng/2, mx + rng/2, my - rng/2, my + rng/2))
+      }
+      points(x, y, ...)
+    }
+  } else NULL
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   if(cls.type == "disc"){
-
-    pairs(mat, col=my.col, pch=my.pch, labels=lbls, oma=omaVal);
+    if(!is.null(my.panel)){
+      pairs(mat, col=my.col, pch=my.pch, labels=lbls, oma=omaVal, panel=my.panel);
+    } else {
+      pairs(mat, col=my.col, pch=my.pch, labels=lbls, oma=omaVal);
+    }
     par(xpd = TRUE)
     if(lgd.len > 4){
       legend("bottom", legend = legend.nm, pch=pchs.def, col=col.def, cex=0.9, bty = "n", ncol =lgd.len);
@@ -3092,7 +3179,11 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
       legend("bottom", legend = legend.nm, pch=pchs.def, col=col.def, bty = "n", ncol =lgd.len);
     }
   }else{
-    pairs(mat, labels=lbls);
+    if(!is.null(my.panel)){
+      pairs(mat, labels=lbls, panel=my.panel);
+    } else {
+      pairs(mat, labels=lbls);
+    }
   }
   dev.off();
 }

@@ -528,8 +528,15 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
       }
       var.nms <- GetRFSigRowNames()[1:top.num];
     }else{ # mean or iqr
-      filt.res <- PerformFeatureFilter(mSetObj$dataSet$norm, method.nm, top.num, mSetObj$analSet$type)$data;
-      var.nms <- colnames(filt.res);
+      norm.data <- mSetObj$dataSet$norm
+      if (method.nm == "iqr") {
+        filter.val <- apply(norm.data, 2, IQR, na.rm=TRUE)
+      } else {
+        filter.val <- apply(norm.data, 2, mean, na.rm=TRUE)
+      }
+      rk <- rank(-filter.val, ties.method='random')
+      n <- min(top.num, ncol(norm.data))
+      var.nms <- colnames(norm.data)[rk <= n]
     }
   }
   var.inx <- match(var.nms, colnames(mSetObj$dataSet$norm));

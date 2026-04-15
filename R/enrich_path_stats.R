@@ -9,7 +9,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nodeImp Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 #'and "dgr" for out-degree centrality. 
-#'@param method is "fisher" or "hyperg"
+#'@param method is "fisher", "hyperg", or "mummi_like"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -41,12 +41,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   }
  
   if(!.on.public.web & mSetObj$pathwaylibtype == "KEGG"){
-    # make this lazy load
-    if(!exists("my.ora.kegg")){
-      .load.scripts.on.demand("util_api.Rc");    
-    }
-
-    mSetObj$api$oraVec <- ora.vec; 
+    mSetObj$api$oraVec <- ora.vec;
     mSetObj$api$method <- method;
     mSetObj$api$nodeImp <- nodeImp;
 
@@ -130,10 +125,67 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   if(method == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Fishers' exact test`.";
-  }else{
+  } else if(method == "hyperg"){
     # use lower.tail = F for P(X>x)
     res.mat[,4] <- phyper(hit.num-1, set.num, uniq.count-set.num, q.size, lower.tail=F);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Hypergeometric test`.";
+  } else if(method == "mummi_like"){
+    top.frac <- 0.10
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.top.frac)){
+      tmp.frac <- suppressWarnings(as.numeric(mSetObj$paramSet$pathqea.mummi.top.frac))
+      if(!is.na(tmp.frac) && tmp.frac > 0 && tmp.frac <= 1){
+        top.frac <- tmp.frac
+      }
+    }
+
+    perm.num <- 100
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
+      tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+      if(!is.na(tmp.perm) && tmp.perm >= 10){
+        perm.num <- tmp.perm
+      }
+    }
+
+    sig.n <- floor(length(ora.vec) * top.frac)
+    sig.n <- max(1, min(sig.n, length(ora.vec)))
+    sig.vec <- unique(ora.vec[seq_len(sig.n)])
+    sig.n <- length(sig.vec)
+
+    measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec))}), use.names=FALSE)
+    obs.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, sig.vec))}), use.names=FALSE)
+
+    res.mat[,2] <- sig.n * (measured.set.num / max(1, q.size))
+    res.mat[,3] <- obs.hits
+
+    obs.p <- rep(1, length(current.mset))
+    valid.inx <- which(measured.set.num > 0 & q.size > 0)
+    if(length(valid.inx) > 0){
+      obs.p[valid.inx] <- phyper(obs.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=F)
+    }
+
+    perm.le.count <- rep(0L, length(current.mset))
+    if(perm.num > 0){
+      for(b in seq_len(perm.num)){
+        perm.sig <- sample(ora.vec, size=sig.n, replace=FALSE)
+        perm.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, perm.sig))}), use.names=FALSE)
+        perm.p <- rep(1, length(current.mset))
+        if(length(valid.inx) > 0){
+          perm.p[valid.inx] <- phyper(perm.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=F)
+        }
+        perm.le.count <- perm.le.count + as.integer(perm.p <= obs.p)
+      }
+    }
+    res.mat[,4] <- (perm.le.count + 1) / (perm.num + 1)
+    hit.num <- obs.hits
+    hits <- lapply(current.mset, function(x){intersect(x, sig.vec)})
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected over-representation analysis method is `Mummichog`.\n\n",
+      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
+      "- Permutations: `", perm.num, "`"
+    );
+  } else{
+    AddErrMsg(paste0("Unknown over-representation analysis method: ", method));
+    return(0);
   }
   
   res.mat[,5] <- -log10(res.mat[,4]);
@@ -180,7 +232,8 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nodeImp Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 #'and "dgr" for out-degree centrality. 
-#'@param method Indicate the pathway enrichment analysis, global test is "gt" and global ancova is "ga".
+#'@param method Indicate the pathway enrichment analysis, global test is "gt",
+#'global ancova is "ga", and mummichog-inspired rank enrichment is "mummi_like".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)

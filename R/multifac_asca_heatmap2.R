@@ -147,15 +147,21 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
       }
       mat <- as.matrix(mSetObj$analSet$rf.sigmat)
     } else {
-      mat <- PerformFeatureFilter(data, rankingMethod, topFeature + 1, mSetObj$analSet$type)$data
-      mat <- t(mat)
+      # Select top N features by ranking method (IQR, mean, etc.)
+      if (rankingMethod == "iqr") {
+        filter.val <- apply(data, 2, IQR, na.rm=TRUE)
+      } else if (rankingMethod == "mean") {
+        filter.val <- apply(data, 2, mean, na.rm=TRUE)
+      } else if (rankingMethod == "sd") {
+        filter.val <- apply(data, 2, sd, na.rm=TRUE)
+      } else {
+        filter.val <- apply(data, 2, IQR, na.rm=TRUE)
+      }
+      rk <- rank(-filter.val, ties.method='random')
+      n <- min(topFeature, ncol(data))
+      var.nms <- colnames(data)[rk <= n]
     }
-
-    var.nms <- rownames(mat)
-    if (length(var.nms) > topFeature) {
-      var.nms <- var.nms[c(1:topFeature)]
-    }
-    data <- data[, var.nms]
+    data <- data[, var.nms, drop=FALSE]
   }
 
   hc.dat <- as.matrix(data)
@@ -253,8 +259,6 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
     my.dist <- dist(data1sc, method=smplDist)
   }
 
-  dend_row <- hclust(my.dist, method=clstDist)
-  
   # ----------------------------------------------------
   # INTERACTIVE PLOT (iheatmapr)
   # ----------------------------------------------------
@@ -263,8 +267,12 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
                 colors=colors,
                 colorbar_grid=setup_colorbar_grid(nrows=nr, x_start=1.1, y_start=ys, x_spacing=0.15)
   ) %>%
-    add_col_annotation(annotation, side="top", size=annoPer, buffer=bf, inner_buffer=bf / 3) %>%
-    add_row_dendro(dend_row)
+    add_col_annotation(annotation, side="top", size=annoPer, buffer=bf, inner_buffer=bf / 3)
+
+  if(nrow(data1sc) >= 2) {
+    dend_row <- hclust(my.dist, method=clstDist)
+    p <- p %>% add_row_dendro(dend_row)
+  }
 
   if (showColnm) {
     p <- p %>%
@@ -2027,8 +2035,10 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
 
   mSetObj <- .get.mSet(mSetObj)
   metaData <- mSetObj$dataSet$meta.info
-  if (is.null(metaData) || ncol(metaData) < 2)
-    stop("Metadata frame is missing or has <2 variables.")
+  if (is.null(metaData) || ncol(metaData) < 2) {
+    AddErrMsg("Metadata frame is missing or has <2 variables.");
+    return(0);
+  }
  
   require(ggplot2);
   ## Optional: discrete/continuous typing ------------------------------
@@ -2062,8 +2072,10 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
 
   ## ── 2 · correlation matrix -----------------------------------------
   if (tolower(cor.method) == "partial") {
-    if (!requireNamespace("ppcor", quietly = TRUE))
-      stop("Package 'ppcor' is required for partial correlations.")
+    if (!requireNamespace("ppcor", quietly = TRUE)) {
+      AddErrMsg("Package 'ppcor' is required for partial correlations.");
+      return(0);
+    }
     pc <- ppcor::pcor(metaData, method = cor.opt)
     cormat <- pc$estimate
     pmat   <- pc$p.value

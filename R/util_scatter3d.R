@@ -6,10 +6,16 @@
 ## J. Xia, jeff.xia@mcgill.ca
 ###################################################
 
-my.json.scatter <- function(filenm, containsLoading=F){
+my.json.scatter <- function(filenm, containsLoading=F, scaleMode=NULL){
   library(igraph);
   res <- qs::qread("score3d.qs")
-  
+
+  # Read scaleMode from session if not passed explicitly
+  if (is.null(scaleMode)) {
+    opts <- tryCatch(Get3DScatterOptions(), error = function(e) list(scaleMode = "independent"))
+    scaleMode <- opts$scaleMode
+  }
+
   nodes <- vector(mode="list");
   names <- res$name;
   if(ncol(res$xyz) > nrow(res$xyz)){
@@ -17,27 +23,31 @@ my.json.scatter <- function(filenm, containsLoading=F){
   }else{
   orig.pos.xyz <- res$xyz;
   }
-  
+
   ticksX <- pretty(range(orig.pos.xyz[,1]*1.2),10, bound=F);
   ticksY <- pretty(range(orig.pos.xyz[,2]*1.2),10, bound=F);
   ticksZ <- pretty(range(orig.pos.xyz[,3]*1.2),10, bound=F);
-  
-  #add two nodes, 1 with all min values and another with all max values. For scaling purposes
-  minNode <-  c(min(ticksX), min(ticksY), min(ticksZ));
-  maxNode <-  c(max(ticksX), max(ticksY), max(ticksZ));
-  
-  # Add the new rows to the data frame
-  orig.pos.xyz.mod <- rbind(orig.pos.xyz, minNode)
-  orig.pos.xyz.mod <- rbind(orig.pos.xyz.mod, maxNode)
-  
-  #scaling
-  pos.xyz <- orig.pos.xyz.mod;
-  pos.xyz[,1] <- scale_range(orig.pos.xyz.mod[,1], -1,1);
-  pos.xyz[,2] <- scale_range(orig.pos.xyz.mod[,2], -1,1);
-  pos.xyz[,3] <- scale_range(orig.pos.xyz.mod[,3], -1,1);
-  
-  #remove last two rows
-  pos.xyz <- pos.xyz[1:(nrow(pos.xyz) - 2), ]
+
+  if (scaleMode == "uniform") {
+    # Uniform scaling: preserves proportions between axes
+    maxVal <- max(abs(orig.pos.xyz))
+    if (maxVal > 0) {
+      pos.xyz <- orig.pos.xyz / maxVal
+    } else {
+      pos.xyz <- orig.pos.xyz
+    }
+  } else {
+    # Independent scaling (default): each axis fills [-1, 1]
+    minNode <-  c(min(ticksX), min(ticksY), min(ticksZ));
+    maxNode <-  c(max(ticksX), max(ticksY), max(ticksZ));
+    orig.pos.xyz.mod <- rbind(orig.pos.xyz, minNode)
+    orig.pos.xyz.mod <- rbind(orig.pos.xyz.mod, maxNode)
+    pos.xyz <- orig.pos.xyz.mod;
+    pos.xyz[,1] <- scale_range(orig.pos.xyz.mod[,1], -1,1);
+    pos.xyz[,2] <- scale_range(orig.pos.xyz.mod[,2], -1,1);
+    pos.xyz[,3] <- scale_range(orig.pos.xyz.mod[,3], -1,1);
+    pos.xyz <- pos.xyz[1:(nrow(pos.xyz) - 2), ]
+  }
   
   metadf <- res$facA
   if(!is.factor(metadf)){
@@ -134,22 +144,25 @@ if ("facB" %in% names(res)) {
     ticksY <- pretty(range(orig.load.xyz[,2]),10);
     ticksZ <- pretty(range(orig.load.xyz[,3]),10);
     
-    #add two nodes, 1 with all min values and another with all max values. For scaling purposes
-    minNode <-  c(min(ticksX), min(ticksY), min(ticksZ));
-    maxNode <-  c(max(ticksX), max(ticksY), max(ticksZ));
-    
-    # Add the new rows to the data frame
-    orig.load.xyz.mod <- rbind(orig.load.xyz, minNode)
-    orig.load.xyz.mod <- rbind(orig.load.xyz.mod, maxNode)
-    
-    load.xyz <- orig.load.xyz.mod;
-    
-    load.xyz[,1] <- scale_range(orig.load.xyz.mod[,1], -1,1);
-    load.xyz[,2] <- scale_range(orig.load.xyz.mod[,2], -1,1);
-    load.xyz[,3] <- scale_range(orig.load.xyz.mod[,3], -1,1);
-    
-    #remove last two rows
-    load.xyz <- load.xyz[1:(nrow(load.xyz) - 2), ];
+    if (scaleMode == "uniform") {
+      maxVal <- max(abs(orig.load.xyz))
+      if (maxVal > 0) {
+        load.xyz <- orig.load.xyz / maxVal
+      } else {
+        load.xyz <- orig.load.xyz
+      }
+    } else {
+      minNode <-  c(min(ticksX), min(ticksY), min(ticksZ));
+      maxNode <-  c(max(ticksX), max(ticksY), max(ticksZ));
+      orig.load.xyz.mod <- rbind(orig.load.xyz, minNode)
+      orig.load.xyz.mod <- rbind(orig.load.xyz.mod, maxNode)
+      load.xyz <- orig.load.xyz.mod;
+      load.xyz[,1] <- scale_range(orig.load.xyz.mod[,1], -1,1);
+      load.xyz[,2] <- scale_range(orig.load.xyz.mod[,2], -1,1);
+      load.xyz[,3] <- scale_range(orig.load.xyz.mod[,3], -1,1);
+      #remove last two rows (padding nodes for independent scaling)
+      load.xyz <- load.xyz[1:(nrow(load.xyz) - 2), ];
+    }
     
     names <- res2$name;
     if("entrez" %in% names(res2)){
@@ -199,6 +212,12 @@ if ("facB" %in% names(res)) {
 
   rownames(pos.xyz) <- res$name;
   res$pos.xyz <- pos.xyz;
+  # Preserve scatter options — check rdt.set.qs first, then GlobalEnv fallback
+  prev.opts <- tryCatch(.get.rdt.set()$scatter.opts, error = function(e) NULL)
+  if (is.null(prev.opts) && exists(".scatter.opts", envir = .GlobalEnv)) {
+    prev.opts <- get(".scatter.opts", envir = .GlobalEnv)
+  }
+  if (!is.null(prev.opts)) res$scatter.opts <- prev.opts;
   .set.rdt.set(res);
 
 
@@ -276,8 +295,68 @@ scale_range <- function(x, new_min = 0, new_max = 1) {
 }
 
 
+# Scatter plot options stored in session (affects both 2D and 3D)
+# scaleMode: "independent" (per-axis) or "uniform" (proportional)
+# confidenceLevel: 0.50-0.99 (default 0.95)
+# confMethod: "chisq" (chi-squared, large samples) or "f" (F-distribution, small samples)
+SetScatterOptions <- function(scaleMode="independent", confidenceLevel=0.95, confMethod="chisq") {
+  opts <- list(scaleMode = scaleMode, confidenceLevel = as.numeric(confidenceLevel), confMethod = confMethod)
+  # Always store in GlobalEnv as reliable fallback
+  assign(".scatter.opts", opts, envir = .GlobalEnv)
+  # Also try to persist in rdt.set.qs
+  tryCatch({
+    res <- .get.rdt.set()
+    res$scatter.opts <- opts
+    .set.rdt.set(res)
+  }, error = function(e) {})
+  return(1)
+}
+
+Set3DScatterOptions <- SetScatterOptions
+
+GetScatterOptions <- function() {
+  opts <- tryCatch({
+    res <- .get.rdt.set()
+    res$scatter.opts
+  }, error = function(e) NULL)
+  if (is.null(opts) && exists(".scatter.opts", envir = .GlobalEnv)) {
+    opts <- get(".scatter.opts", envir = .GlobalEnv)
+  }
+  if (is.null(opts)) {
+    opts <- list(scaleMode = "independent", confidenceLevel = 0.95, confMethod = "chisq")
+  }
+  return(opts)
+}
+
+Get3DScatterOptions <- GetScatterOptions
+
+# Get confidence level from session
+.get.confidence.level <- function() {
+  opts <- GetScatterOptions()
+  return(opts$confidenceLevel)
+}
+
+# Compute the t-value (radius scaling) for ellipsoid given k dimensions and n samples
+# chisq method: sqrt(qchisq(level, k)) — asymptotic, for large samples
+# Compute t-value (radius scaling) for ellipsoid
+# 2D ellipses use k=2 (chi-sq df=2), 3D ellipsoids use k=3 (chi-sq df=3)
+# At the same confidence level, 3D ellipsoids appear smaller in projection
+# because the probability is distributed across 3 dimensions instead of 2
+# chisq method: sqrt(qchisq(level, k)) — asymptotic, for large samples
+# f method: sqrt(k * qf(level, k, n-1)) — sample-adjusted, for small samples
+.get.ellipsoid.t <- function(level, k, n) {
+  opts <- GetScatterOptions()
+  if (opts$confMethod == "f" && n > k) {
+    return(sqrt(k * qf(level, k, n - 1)))
+  } else {
+    return(sqrt(qchisq(level, k)))
+  }
+}
+
 ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   tryCatch({
+    # Use confidence level from session if available
+    level <- tryCatch(.get.confidence.level(), error = function(e) as.numeric(level))
     level <- as.numeric(level)
     names <- strsplit(names.vec, "; ")[[1]]
 
