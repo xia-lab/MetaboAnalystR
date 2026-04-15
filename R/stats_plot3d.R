@@ -356,23 +356,29 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   coords <- as.matrix(pos.xyz[inx, 1:3])
 
   tryCatch({
-    mesh <- rsclient_isolated_exec(
-      func_body = function(input_data) {
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    qs::qsave(list(coords = coords, level = level), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
-        cov_mat <- cov(input_data$coords)
-        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) return(NULL)
-        center <- colMeans(input_data$coords)
+        require(rgl)
+        input <- qs::qread(bridge_in)
+        cov_mat <- cov(input$coords)
+        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) { qs::qsave(NULL, bridge_out, preset = "fast"); return(invisible(NULL)) }
+        center <- colMeans(input$coords)
         mesh <- list()
-        mesh[[1]] <- rgl::ellipse3d(x = cov_mat, centre = center, level = input_data$level)
-        mesh
+        mesh[[1]] <- rgl::ellipse3d(x = cov_mat, centre = center, level = input$level)
+        qs::qsave(mesh, bridge_out, preset = "fast")
       },
-      input_data = list(coords = coords, level = level),
-      packages = c("rgl", "qs"), timeout = 120, output_type = "qs"
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 120
     )
-    if (is.list(mesh) && isFALSE(mesh$success)) {
-      sink(filenm); cat("{}"); sink()
-      return(filenm)
-    }
+
+    mesh <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
     if (is.null(mesh)) {
       sink(filenm); cat("{}"); sink()
       return(filenm)
@@ -432,27 +438,38 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
   })
 
   tryCatch({
-    # Single subprocess for all groups
-    result_list <- rsclient_isolated_exec(
-      func_body = function(input_data) {
+    # Single subprocess for all groups via bridge files
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    qs::qsave(list(groups = group_data, level = level), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
-        lapply(input_data$groups, function(g) {
+        require(rgl)
+        input <- qs::qread(bridge_in)
+        res <- lapply(input$groups, function(g) {
           coords <- g$coords
           if (nrow(coords) < 3) return(NULL)
           tryCatch({
             cov_mat <- cov(coords)
             if (any(is.na(cov_mat)) || det(cov_mat) <= 0) return(NULL)
             center <- colMeans(coords)
-            mesh <- rgl::ellipse3d(x = cov_mat, centre = center, level = input_data$level)
+            mesh <- rgl::ellipse3d(x = cov_mat, centre = center, level = input$level)
             list(group = g$group, mesh = list(mesh))
           }, error = function(e) NULL)
         })
+        qs::qsave(res, bridge_out, preset = "fast")
       },
-      input_data = list(groups = group_data, level = level),
-      packages = c("rgl", "qs"), timeout = 120, output_type = "qs"
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 120
     )
 
-    if (is.list(result_list) && isFALSE(result_list$success)) {
+    result_list <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+
+    if (is.null(result_list)) {
       sink(filenm); cat("{}"); sink()
       return(filenm)
     }

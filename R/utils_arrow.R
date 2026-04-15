@@ -9,15 +9,23 @@
 .write_feather_safe <- function(df, arrow_path, compress = "uncompressed") {
   if (file.exists(arrow_path)) { unlink(arrow_path); Sys.sleep(0.01) }
 
-  rsclient_isolated_exec(
-    func_body = function(input_data) {
+  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+  qs::qsave(list(df = df, path = arrow_path, compress = compress), bridge_in, preset = "fast")
+  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+  run_func_via_rsclient(
+    func = function(wd, bridge_in, bridge_out) {
+      setwd(wd)
       require(arrow)
-      arrow::write_feather(input_data$df, input_data$path, compression = input_data$compress)
+      input <- qs::qread(bridge_in)
+      arrow::write_feather(input$df, input$path, compression = input$compress)
       Sys.sleep(0.02)
-      base::normalizePath(input_data$path, mustWork = TRUE)
+      res <- base::normalizePath(input$path, mustWork = TRUE)
+      qs::qsave(res, bridge_out, preset = "fast")
     },
-    input_data = list(df = df, path = arrow_path, compress = compress),
-    packages = c("arrow", "qs"), timeout = 120, output_type = "qs"
+    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+    timeout_sec = 120
   )
   # write failure is non-fatal
 }

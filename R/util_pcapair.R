@@ -7,22 +7,8 @@
                                 meta = "Class",
                                 metaShape = NULL) {
 
-  # Run entire pairs plot in subprocess (GGally + vegan quarantined)
-  rsclient_isolated_exec(
-    func_body = function(input_data) {
-      setwd(input_data$wd)
-      require(ggplot2); require(GGally); require(grid); require(vegan); require(Cairo)
-      .plot_pca_pair_inner(input_data$mSetObj, input_data$imgName, input_data$format,
-                           input_data$dpi, input_data$width, input_data$pc.num,
-                           input_data$meta, input_data$metaShape)
-    },
-    input_data = list(mSetObj = mSetObj, imgName = imgName, format = format,
-                      dpi = dpi, width = width, pc.num = pc.num,
-                      meta = meta, metaShape = metaShape, wd = getwd()),
-    packages = c("GGally", "vegan", "ggplot2", "Cairo", "grid", "qs"),
-    timeout = 300, output_type = "qs",
-    module = "metabo"
-  )
+  # Call directly — GGally/vegan already loaded at init
+  .plot_pca_pair_inner(mSetObj, imgName, format, dpi, width, pc.num, meta, metaShape)
   # plot failure is non-fatal
   mSetObj <- .get.mSet(mSetObj)
   imgName <- paste0(imgName, "dpi", dpi, ".", format)

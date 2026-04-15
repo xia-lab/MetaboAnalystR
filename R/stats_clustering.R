@@ -765,15 +765,25 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
             print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
             dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
         }
-        my.dist2 <- rsclient_isolated_exec(
-          func_body = function(input_data) {
+        bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+        bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+        qs::qsave(list(dat = dat.t), bridge_in, preset = "fast")
+        on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+        run_func_via_rsclient(
+          func = function(wd, bridge_in, bridge_out) {
+            setwd(wd)
             require(vegan)
-            vegan::vegdist(input_data$dat, method = "bray")
+            input <- qs::qread(bridge_in)
+            res <- vegan::vegdist(input$dat, method = "bray")
+            qs::qsave(res, bridge_out, preset = "fast")
           },
-          input_data = list(dat = dat.t),
-          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+          args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+          timeout_sec = 120
         )
-        if (is.list(my.dist2) && isFALSE(my.dist2$success)) { AddErrMsg(my.dist2$message); return(0) }
+
+        my.dist2 <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+        if (is.null(my.dist2)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
 
     }else{
       my.dist2 = dist(t(data1sc), method = smplDist)
@@ -794,16 +804,25 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
             print("Warning: Negative values detected. Shifting data for Bray-Curtis...")
             dat.t <- dat.t + abs(min(dat.t, na.rm=TRUE))
         }
-        my.dist <- rsclient_isolated_exec(
-          func_body = function(input_data) {
+        bridge_in2 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+        bridge_out2 <- sub("_in.qs", "_out.qs", bridge_in2)
+        qs::qsave(list(dat = dat.t), bridge_in2, preset = "fast")
+        on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
+
+        run_func_via_rsclient(
+          func = function(wd, bridge_in, bridge_out) {
+            setwd(wd)
             require(vegan)
-            vegan::vegdist(input_data$dat, method = "bray")
+            input <- qs::qread(bridge_in)
+            res <- vegan::vegdist(input$dat, method = "bray")
+            qs::qsave(res, bridge_out, preset = "fast")
           },
-          input_data = list(dat = dat.t),
-          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+          args = list(wd = getwd(), bridge_in = bridge_in2, bridge_out = bridge_out2),
+          timeout_sec = 120
         )
-        if (is.list(my.dist) && isFALSE(my.dist$success)) { AddErrMsg(my.dist$message); return(0) }
-        if (!is.null(my.dist$value)) my.dist <- my.dist$value
+
+        my.dist <- if (file.exists(bridge_out2)) qs::qread(bridge_out2) else NULL
+        if (is.null(my.dist)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
 
     }else{
       my.dist = dist(data1sc, method = smplDist)
@@ -1014,19 +1033,28 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
             smpl.mat <- smpl.mat + abs(min(smpl.mat, na.rm=TRUE))
         }
 
-        bray_result <- rsclient_isolated_exec(
-          func_body = function(input_data) {
+        bridge_in3 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+        bridge_out3 <- sub("_in.qs", "_out.qs", bridge_in3)
+        qs::qsave(list(feat_mat = feat.mat, smpl_mat = smpl.mat), bridge_in3, preset = "fast")
+        on.exit(unlink(c(bridge_in3, bridge_out3)), add = TRUE)
+
+        run_func_via_rsclient(
+          func = function(wd, bridge_in, bridge_out) {
+            setwd(wd)
             require(vegan)
-            list(
-              rows = vegan::vegdist(input_data$feat_mat, method = "bray"),
-              cols = vegan::vegdist(input_data$smpl_mat, method = "bray")
+            input <- qs::qread(bridge_in)
+            res <- list(
+              rows = vegan::vegdist(input$feat_mat, method = "bray"),
+              cols = vegan::vegdist(input$smpl_mat, method = "bray")
             )
+            qs::qsave(res, bridge_out, preset = "fast")
           },
-          input_data = list(feat_mat = feat.mat, smpl_mat = smpl.mat),
-          packages = c("vegan", "qs"), timeout = 120, output_type = "qs"
+          args = list(wd = getwd(), bridge_in = bridge_in3, bridge_out = bridge_out3),
+          timeout_sec = 120
         )
-        if (is.list(bray_result) && isFALSE(bray_result$success)) { AddErrMsg(bray_result$message); return(0) }
-        if (!is.null(bray_result$value)) bray_result <- bray_result$value
+
+        bray_result <- if (file.exists(bridge_out3)) qs::qread(bridge_out3) else NULL
+        if (is.null(bray_result)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
         dist.for.rows <- bray_result$rows
         dist.for.cols <- bray_result$cols
     }
