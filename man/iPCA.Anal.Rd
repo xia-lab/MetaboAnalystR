@@ -10,6 +10,12 @@ iPCA.Anal(mSetObj, fileNm, metaCol, metaShape)
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{fileNm}{select a file name}
+
+\item{metaCol}{Character, name of the metadata column to use for coloring points in the PCA plot.}
+
+\item{metaShape}{Character, name of the metadata column to use for point shapes in the PCA plot.}
+
+\item{colorGradient}{Character, color scheme for the plot. Default is "heat".}
 }
 \description{
 Perform PCA analysis, prepares a JSON file for interactive liveGraphics3D, as well as interactive 3D

@@ -30,6 +30,8 @@ Ttests.Anal(
 
 \item{all_results}{Logical, if TRUE, returns T-Test analysis results
 for all compounds.}
+
+\item{tt.method}{Character, the t-test method to use: "classical" (default), "welch", "student", "wilcox" (non-parametric), or "limma" (moderated t-test).}
 }
 \description{
 This function is used to perform t-test analysis.

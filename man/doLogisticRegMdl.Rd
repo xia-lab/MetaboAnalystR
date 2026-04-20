@@ -7,6 +7,8 @@
 doLogisticRegMdl(mSetObj, x.train, y.train, x.test, y.test)
 }
 \arguments{
+\item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
 \item{x.train}{Input the X training set}
 
 \item{y.train}{Input the Y training set}
