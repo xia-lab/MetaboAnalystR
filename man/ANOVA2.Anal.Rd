@@ -14,8 +14,11 @@ type="time0")
 
 \item{p.cor}{Select method for p-value correction, bonferroni, holm or fdr}
 
-\item{type}{Select b to perform between-subjects ANOVA, 
-and w for within-subjects ANOVA}
+\item{designType}{Character, the design type for ANOVA. Options include "time0" (default), "time", "between", etc.}
+
+\item{phenOpt}{Character, specifies the phenotype option: "between" for between-subjects or "within" for within-subjects design. Default is "between".}
+
+\item{topN}{Integer, the maximum number of top significant features to retain. Default is 200.}
 }
 \description{
 Perform Two-way ANOVA
