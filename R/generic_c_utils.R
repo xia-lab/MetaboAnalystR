@@ -7,7 +7,8 @@
 #'
 #' @name MetaboAnalystR
 #' @useDynLib MetaboAnalystR, .registration=TRUE
-NULL
+#' @keywords internal
+"_PACKAGE"
 #> NULL
 
 
