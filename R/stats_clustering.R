@@ -488,6 +488,17 @@ PlotClustPCA <- function(mSetObj,
 #'@param colV Default is set to T
 #'@param border Indicate whether or not to show cell-borders, default is set to T
 #'@param grp.ave Logical, default is set to F
+#'@param fzCol Numeric, font size for column labels.
+#'@param fzRow Numeric, font size for row labels.
+#'@param fzAnno Numeric, font size for annotation labels.
+#'@param annoPer Numeric, proportion of the plot allocated for annotation.
+#'@param unitCol Numeric, unit size for columns.
+#'@param unitRow Numeric, unit size for rows.
+#'@param show.legend Logical, whether to display the color legend. Default is TRUE.
+#'@param show.annot.legend Logical, whether to display the annotation legend. Default is TRUE.
+#'@param showColnm Logical, whether to show column names. Default is TRUE.
+#'@param showRownm Logical, whether to show row names. Default is TRUE.
+#'@param download Logical, if TRUE generate a static downloadable heatmap instead of the interactive version. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -561,13 +572,22 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@param smplDist Input the sample distance method
 #'@param clstDist Input the clustering distance method
 #'@param palette Input color palette choice
-#'@param viewOpt Set heatmap options, default is set to "detail"
 #'@param rowV Default is set to T
 #'@param colV Default is set to T
 #'@param var.inx Default is set to NA
 #'@param border Indicate whether or not to show cell-borders, default is set to T
 #'@param grp.ave Logical, default is set to F
-#'@param metadata metadata
+#'@param fzCol Numeric, font size for column labels.
+#'@param fzRow Numeric, font size for row labels.
+#'@param fzAnno Numeric, font size for annotation labels.
+#'@param annoPer Numeric, proportion of the plot allocated for annotation.
+#'@param unitCol Numeric, unit size for columns.
+#'@param unitRow Numeric, unit size for rows.
+#'@param show.legend Logical, whether to display the color legend. Default is TRUE.
+#'@param show.annot.legend Logical, whether to display the annotation legend. Default is TRUE.
+#'@param showColnm Logical, whether to show column names. Default is TRUE.
+#'@param showRownm Logical, whether to show row names. Default is TRUE.
+#'@param maxFeature Integer, maximum number of features to display. Default is 2000.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
