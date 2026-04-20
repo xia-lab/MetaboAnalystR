@@ -686,8 +686,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       
     } else {
       AddErrMsg(
-        "No QC samples found (by class label or name prefix ‘QC’). ",
-        "Please use non-QC based filtering."
+        "No QC samples found (by class label or name prefix ‘QC’). \n Please use non-QC based filtering."
       )
       return(0)
     }
