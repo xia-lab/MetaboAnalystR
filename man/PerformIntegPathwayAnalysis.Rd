@@ -26,7 +26,7 @@ and visualization of both significant genes and metabolites or the gene-centric 
 metabolite-centric mode ("metab") which allows users
 to identify enriched pathways driven by significant genes or metabolites, respectively.}
 
-\item{integOpt}{integOpt,default is "query"}
+\item{integOpt}{Character, specifies the integration option for pathway nodes; default is "query"}
 }
 \description{
 used for integrative analysis 
