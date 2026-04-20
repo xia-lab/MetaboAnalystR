@@ -127,6 +127,7 @@ CalculateHyperScore <- function(mSetObj=NA){
 #'Quantitative enrichment analysis with globaltest
 #'@description Various enrichment analysis algorithms
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param covariates Optional covariates to include in the globaltest model. Default is NA (no covariates).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -405,6 +406,7 @@ CalculateSSP<-function(mSetObj=NA){
 #'include in the pie-chart. By default this is set to 15.
 #'@param colPal Character, input the preferred R Color Brewer palette to be
 #'used for the pie chart. By default this is set to "Set1".
+#'@param includeOthers Logical, whether to include an "Others" category for classes beyond maxClass. Default is TRUE.
 #'@import ggplot2
 PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dpi=default.dpi, width=8,
                                maxClass = 15, colPal = "Set1", includeOthers = TRUE){
