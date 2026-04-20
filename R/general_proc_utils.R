@@ -1542,16 +1542,17 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 }
 
 
-#' Check QC %RSD with pmp::filter_peaks_by_rsd
+#' Check QC RSD with pmp::filter_peaks_by_rsd
 #'
 #' Uses the Peak-Matrix-Processing (pmp) package to calculate the
-#' relative standard deviation (%RSD) of each feature across QC
+#' relative standard deviation (\%RSD) of each feature across QC
 #' injections and returns a concise QA message.
 #'
 #' @param mSetObj MetaboAnalystR object (default NA → pull from session)
-#' @param thr     RSD threshold (%) for the “pass-rate” statistic
+#' @param thr     RSD threshold percentage for the “pass-rate” statistic
 #' @return        Character string summarising QC precision
-
+#'
+#' @export
 CheckQCRSD <- function(mSetObj, thr = 30) {
     
     meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        

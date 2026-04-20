@@ -2,20 +2,20 @@
 % Please edit documentation in R/general_proc_utils.R
 \name{CheckQCRSD}
 \alias{CheckQCRSD}
-\title{Check QC %RSD with pmp::filter_peaks_by_rsd}
+\title{Check QC RSD with pmp::filter_peaks_by_rsd}
 \usage{
 CheckQCRSD(mSetObj, thr = 30)
 }
 \arguments{
 \item{mSetObj}{MetaboAnalystR object (default NA → pull from session)}
 
-\item{thr}{RSD threshold (%) for the “pass-rate” statistic}
+\item{thr}{RSD threshold percentage for the “pass-rate” statistic}
 }
 \value{
 Character string summarising QC precision
 }
 \description{
 Uses the Peak-Matrix-Processing (pmp) package to calculate the
-relative standard deviation (%RSD) of each feature across QC
+relative standard deviation (\%RSD) of each feature across QC
 injections and returns a concise QA message.
 }
