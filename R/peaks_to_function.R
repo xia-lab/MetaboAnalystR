@@ -4704,6 +4704,7 @@ GetMumStatMat <- function() {
   return(as.matrix(mat))
 }
 
+#' PlotMumVolcano
 #' @param format Image format
 #' @export
 PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pval.cutoff = 0.05, fc.cutoff = 0) {
