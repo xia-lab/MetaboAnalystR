@@ -713,6 +713,7 @@ genLREquation <- function(coef.mdl){
 
 #'Develop a Logistic Regression Model with all of the combined k-fold CV subsets
 #'@description Develop a Logistic Regression Model with all of the combined k-fold CV subsets
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param x.train Input the X training set
 #'@param y.train Input the Y training set
 #'@param x.test Input the X test set
@@ -2403,6 +2404,9 @@ ComputeHighLow <- function(perf){
 #'Prepare data for ROC analysis
 #'@description Prepare data for ROC analysis
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param sel.meta Name of the metadata column to use for grouping; default is "NA" to use the default class labels
+#'@param factor1 Name of the first factor level for binary classification; default is "NA"
+#'@param factor2 Name of the second factor level for binary classification; default is "NA"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
