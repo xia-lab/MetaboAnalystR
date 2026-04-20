@@ -305,6 +305,7 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param topN Integer, the maximum number of top pathways to display in the bar plot. Default is 25.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
