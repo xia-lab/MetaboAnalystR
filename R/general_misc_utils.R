@@ -1059,7 +1059,7 @@ GetDist3D <-function(mat, target=c(0,0,0)){
     return(dist.vec);
 }
 
-#' @exportS3Method
+#' @export
 sum.na <- function(x,...){
   res <- NA
   tmp <- !(is.na(x) | is.infinite(x))
@@ -1077,8 +1077,7 @@ var.na <- function(x){
   res
 }
 
-#' @exportS3Method
-end.with <- function(bigTxt, endTxt){
+var.na <- function(x){
    return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
 

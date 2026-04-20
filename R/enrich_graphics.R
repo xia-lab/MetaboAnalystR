@@ -688,7 +688,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
   }
 }
 
-#' @exportS3Method
+#' @export
 "image.plot.info" <- function(...) {
   temp <- list(...)
   #
@@ -761,7 +761,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
 # Copyright 2004-2007, Institute for Mathematics Applied Geosciences
 # University Corporation for Atmospheric Research
 # Licensed under the GPL -- www.gpl.org/licenses/gpl.html
-#' @exportS3Method
+#' @export
 image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
                            legend.width = 1, horizontal = FALSE, legend.mar = NULL,
                            bigplot = NULL, smallplot = NULL, ...) {
