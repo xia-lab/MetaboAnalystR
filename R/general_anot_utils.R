@@ -78,6 +78,8 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
 #'for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg" for a both KEGG and HMDB IDs.
 #'@param lipid Boolean, if features are lipids, a different database will be used for
 #'compound matching.
+#'@param mixed Boolean, if features contain a mix of metabolites and lipids, both databases will be merged
+#'for compound matching. Default is FALSE.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
