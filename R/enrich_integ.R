@@ -119,7 +119,7 @@ PrepareIntegData <- function(mSetObj=NA){
 #' and visualization of both significant genes and metabolites or the gene-centric ("genetic") and 
 #' metabolite-centric mode ("metab") which allows users
 #' to identify enriched pathways driven by significant genes or metabolites, respectively.
-#' @param integOpt integOpt,default is "query"
+#'@param integOpt Character, specifies the integration option for pathway nodes; default is "query"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
