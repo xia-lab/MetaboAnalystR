@@ -21,7 +21,6 @@ aov.2wayrep <- function(x){
 #'@description Perform Two-way ANOVA 
 #'Perform repeated measure one-way anova
 #'@param x Input the data 
-#'@param time.fac Input the time factor 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -53,8 +52,9 @@ aov.2way <- function(x){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param thresh Input the p-value threshold 
 #'@param p.cor Select method for p-value correction, bonferroni, holm or fdr
-#'@param type Select b to perform between-subjects ANOVA, 
-#'and w for within-subjects ANOVA 
+#'@param designType Character, the design type for ANOVA. Options include "time0" (default), "time", "between", etc.
+#'@param phenOpt Character, specifies the phenotype option: "between" for between-subjects or "within" for within-subjects design. Default is "between".
+#'@param topN Integer, the maximum number of top significant features to retain. Default is 200.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -378,6 +378,9 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@usage iPCA.Anal(mSetObj, fileNm, metaCol, metaShape)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fileNm select a file name
+#'@param metaCol Character, name of the metadata column to use for coloring points in the PCA plot.
+#'@param metaShape Character, name of the metadata column to use for point shapes in the PCA plot.
+#'@param colorGradient Character, color scheme for the plot. Default is "heat".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
