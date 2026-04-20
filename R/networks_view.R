@@ -14,6 +14,7 @@
 #'@param libOpt Select the different modes of pathways, either the gene-metabolite mode ("integ") which allows for joint-analysis
 #' and visualization of both significant genes and metabolites or the gene-centric ("genetic") and metabolite-centric mode ("metab") which allows users
 #' to identify enriched pathways driven by significant genes or metabolites, respectively.
+#'@param vis.type Character, visualization type for the pathway network output. Default is an empty string.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
