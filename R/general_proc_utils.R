@@ -411,6 +411,8 @@ PerformSanityClosure <- function(mSetObj=NA){
 #'@usage RemoveMissingPercent(mSetObj, percent)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param percent Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5. 
+#'@param grpWise Logical, if TRUE apply the missing value filter group-wise (keep a feature if at least one group
+#'passes the threshold); if FALSE (default) apply globally across all samples.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -511,6 +513,8 @@ fetchReplaceMsg <- function(mSetObj = NA) {
 #'replacement based on the minimum ("min), the mean ("mean"), or the median ("median") value of each feature columns,
 #'or several options to impute the missing values, using k-nearest neighbour ("KNN"), probabilistic PCA ("PPCA"), 
 #'Bayesian PCA ("BPCA") method, or Singular Value Decomposition ("svdImpute") 
+#'@param grpLod Logical, if TRUE apply limit of detection (LOD) imputation within each group. Default is FALSE.
+#'@param grpMeasure Logical, if TRUE use group-specific measurement for imputation. Default is FALSE.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
