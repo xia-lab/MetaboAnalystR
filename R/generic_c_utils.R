@@ -5,7 +5,6 @@
 #' @section MetaboAnalystR functions:
 #' The MetaboAnalystR functions ...
 #'
-#' @docType package
 #' @name MetaboAnalystR
 #' @useDynLib MetaboAnalystR, .registration=TRUE
 NULL
