@@ -369,6 +369,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'display the 95 percent confidence regions, and 0 will not.
 #'@param show Display sample names, 1 = show names, 0 = do not show names.
 #'@param grey.scale Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.
+#'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -735,6 +736,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@param inx1 Numeric, indicate the number of the principal component for the x-axis of the loading plot.
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
+#'@param topnum Integer, the number of top contributing features to display on the biplot. Default is 10.
 #'@export
 #'
 PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
@@ -931,6 +933,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'@param reg Numeric, default is 0.95
 #'@param show Show labels, 1 or 0
 #'@param grey.scale Numeric, use a grey scale (0) or not (1)
+#'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@export
 #'
 PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
@@ -1903,6 +1906,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@param reg Numeric
 #'@param show Show variable labels, 1 or O
 #'@param grey.scale Numeric, indicate grey-scale, 0 for no, and 1 for yes 
+#'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -2493,6 +2497,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 #'@param reg Numeric, between 1 and 0
 #'@param show Numeric, 1 or 0
 #'@param grey.scale Numeric, use grey-scale, 0 for no, and 1 for yes. 
+#'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
