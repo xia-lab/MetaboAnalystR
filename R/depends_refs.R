@@ -12,12 +12,13 @@ melt <- function(data, ..., na.rm = FALSE, value.name = "value") {
   UseMethod("melt", data)
 }
 
-
+#' @exportS3Method
 melt.default <- function(data, ..., na.rm = FALSE, value.name = "value") {
   if (na.rm) data <- data[!is.na(data)]
   setNames(data.frame(data), value.name)
 }
 
+#' @exportS3Method
 melt.list <- function(data, ..., level = 1) {
   require(plyr);
   parts <- lapply(data, melt.default, level = level + 1, ...)
@@ -37,7 +38,7 @@ melt.list <- function(data, ..., level = 1) {
   result
 }
 
-
+#' @exportS3Method
 melt.data.frame <- function(data, 
                             id.vars, 
                             measure.vars, 
@@ -82,7 +83,7 @@ melt.data.frame <- function(data,
   }
 }
 
-
+#' @exportS3Method
 melt.array <- function(data, varnames = names(dimnames(data)), ...,
                        na.rm = FALSE, as.is = FALSE, value.name = "value") {
   var.convert <- function(x) {

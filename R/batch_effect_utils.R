@@ -4145,6 +4145,7 @@ RUVg<-function(x, cIdx, k, drop=0, center=TRUE, round=TRUE, epsilon=1, tolerance
   !is.na(x) & abs(x - round(x)) < tol
 }
 
+#' @exportS3Method
 residuals.DGEGLM <- function(object, type=c("deviance", "pearson"), ...) {
   y <- as.matrix(object$counts)
   mu <- as.matrix(object$fitted.values)

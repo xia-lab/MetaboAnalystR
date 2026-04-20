@@ -524,6 +524,8 @@ GetDRRes <- function(mSetObj=NA){
 #### use the pureErrorAnova function from alr3. alr3 is now deprecated, so extracted these 
 # lines from the alr3 source code in the CRAN archive
 pureErrorAnova <- function(mod){UseMethod("pureErrorAnova")}
+
+#' @exportS3Method
 pureErrorAnova.lm <- function(mod) {
   if (is.null(mod$model)) mod <- update(mod, model=TRUE)
   p <- dim(mod$model)[2] -1
@@ -549,6 +551,7 @@ pureErrorAnova.lm <- function(mod) {
 
 randomLinComb <- function(X, seed=NULL) {UseMethod("randomLinComb")}
 
+#' @exportS3Method
 randomLinComb.default <- function(X, seed=NULL) {
   if(!is.null(seed)) set.seed(seed)
   std <- function(x){
@@ -560,6 +563,7 @@ randomLinComb.default <- function(X, seed=NULL) {
 randomLinComb.lm <- function(X, ...) {
   randomLinComb(model.matrix(X), ...)}
 
+#' @exportS3Method
 randomLinComb.lm <- function(X, seed=NULL) {
   if(is.null(X$model)) X <- update(X, model=TRUE)
   randomLinComb(X$model[ , -1], seed=seed)}

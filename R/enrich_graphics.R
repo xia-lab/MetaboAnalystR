@@ -533,7 +533,7 @@ concplot <- function(mn, lower, upper, labels=NULL,
 # Jeff Xia, jeff.xia@mcgill.ca
 # McGill University, Canada
 # License: GNU GPL (>= 2)
-
+#' @exportS3Method
 image.plot <- function(..., add = FALSE, nlevel = 64,
                        horizontal = FALSE, legend.shrink = 0.9, legend.width = 1.2,
                        legend.mar = ifelse(horizontal, 3.1, 5.1), legend.lab = NULL,
@@ -688,7 +688,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
   }
 }
 
-
+#' @exportS3Method
 "image.plot.info" <- function(...) {
   temp <- list(...)
   #
@@ -761,7 +761,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
 # Copyright 2004-2007, Institute for Mathematics Applied Geosciences
 # University Corporation for Atmospheric Research
 # Licensed under the GPL -- www.gpl.org/licenses/gpl.html
-
+#' @exportS3Method
 image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
                            legend.width = 1, horizontal = FALSE, legend.mar = NULL,
                            bigplot = NULL, smallplot = NULL, ...) {

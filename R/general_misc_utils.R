@@ -595,6 +595,7 @@ getVennCounts <- function(x, include="both") {
 # Jeff Xia\email{jeff.xia@mcgill.ca}
 # McGill University, Canada
 # License: GNU GPL (>= 2)
+#' @exportS3Method
 all.numeric <- function (x, what = c("test", "vector"), extras = c(".", "NA")){
   what <- match.arg(what)
   old <- options(warn = -1)
@@ -1058,6 +1059,7 @@ GetDist3D <-function(mat, target=c(0,0,0)){
     return(dist.vec);
 }
 
+#' @exportS3Method
 sum.na <- function(x,...){
   res <- NA
   tmp <- !(is.na(x) | is.infinite(x))
@@ -1075,6 +1077,7 @@ var.na <- function(x){
   res
 }
 
+#' @exportS3Method
 end.with <- function(bigTxt, endTxt){
    return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
