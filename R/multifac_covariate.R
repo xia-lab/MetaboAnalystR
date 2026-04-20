@@ -1922,6 +1922,7 @@ ResetCovariateAdjustment <- function(mSetObj = NA) {
 ## Plot PCA Before/After Covariate Adjustment
 ## Adapted from ProteoAnalyst
 ##################################################
+#' PlotCovariateAdjustmentPCA
 #' @description Generate side-by-side PCA plots showing data before and after covariate adjustment
 #' @param mSetObj Input the name of the bound mSet Object
 #' @param covariate Name of the primary covariate to show in the plot
