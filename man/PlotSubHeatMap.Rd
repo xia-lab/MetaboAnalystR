@@ -58,6 +58,18 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{palette}{Input color palette choice}
 
+\item{fzCol}{Numeric, font size for column labels.}
+
+\item{fzRow}{Numeric, font size for row labels.}
+
+\item{fzAnno}{Numeric, font size for annotation labels.}
+
+\item{annoPer}{Numeric, proportion of the plot allocated for annotation.}
+
+\item{unitCol}{Numeric, unit size for columns.}
+
+\item{unitRow}{Numeric, unit size for rows.}
+
 \item{method.nm}{Input the method for sub-heat map}
 
 \item{top.num}{Input the top number}
@@ -70,7 +82,17 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{grp.ave}{Logical, default is set to F}
 
+\item{show.legend}{Logical, whether to display the color legend. Default is TRUE.}
+
+\item{show.annot.legend}{Logical, whether to display the annotation legend. Default is TRUE.}
+
+\item{showColnm}{Logical, whether to show column names. Default is TRUE.}
+
+\item{showRownm}{Logical, whether to show row names. Default is TRUE.}
+
 \item{viewOpt}{Set heatmap options, default is set to "detail"}
+
+\item{download}{Logical, if TRUE generate a static downloadable heatmap instead of the interactive version. Default is FALSE.}
 }
 \description{
 Plot a sub heatmap based on results from t-tests/ANOVA, VIP or randomforest
