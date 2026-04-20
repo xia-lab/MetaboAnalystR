@@ -4,7 +4,7 @@
 \alias{CalculateGlobalTestScore}
 \title{Quantitative enrichment analysis with globaltest}
 \usage{
-CalculateGlobalTestScore(mSetObj = NA)
+CalculateGlobalTestScore(mSetObj = NA, covariates = NA)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}

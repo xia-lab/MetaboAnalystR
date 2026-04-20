@@ -4,7 +4,7 @@
 \alias{PlotEnrichNet.Overview}
 \title{PlotEnrichNet.Overview}
 \usage{
-PlotEnrichNet.Overview(folds, pvals, layoutOpt = layout.fruchterman.reingold)
+PlotEnrichNet.Overview(folds, pvals, layoutOpt = layout_with_fr)
 }
 \arguments{
 \item{folds}{Input fold-change for bar plot}

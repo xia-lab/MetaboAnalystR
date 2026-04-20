@@ -12,7 +12,7 @@ CalculateOraScore(mSetObj=NA, nodeImp, method)
 \item{nodeImp}{Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 and "dgr" for out-degree centrality.}
 
-\item{method}{is "fisher" or "hyperg"}
+\item{method}{is "fisher", "hyperg", or "mummi_like"}
 }
 \description{
 Calculate the over representation analysis score

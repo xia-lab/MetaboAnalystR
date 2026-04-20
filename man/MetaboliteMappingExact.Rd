@@ -4,7 +4,7 @@
 \alias{MetaboliteMappingExact}
 \title{Mapping from different metabolite IDs}
 \usage{
-MetaboliteMappingExact(mSetObj = NA, q.type, lipid = F)
+MetaboliteMappingExact(mSetObj = NA, q.type, lipid = F, mixed = F)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}

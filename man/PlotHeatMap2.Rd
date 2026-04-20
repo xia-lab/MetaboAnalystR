@@ -29,7 +29,8 @@ PlotHeatMap2(
   show.annot.legend = T,
   showColnm = T,
   showRownm = F,
-  maxFeature = 2000
+  maxFeature = 2000,
+  viewOpt = "overview"
 )
 }
 \arguments{

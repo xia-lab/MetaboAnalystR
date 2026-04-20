@@ -28,7 +28,7 @@ PlotStaticHeatMap2(
 )
 }
 \description{
-'@param #same as PlotHeatMap2
+Deprecated helper retained for backward compatibility. PlotHeatMap2 now generates both interactive JSON and static downloads.
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}

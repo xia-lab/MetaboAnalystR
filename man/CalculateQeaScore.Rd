@@ -12,7 +12,8 @@ CalculateQeaScore(mSetObj=NA, nodeImp, method)
 \item{nodeImp}{Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 and "dgr" for out-degree centrality.}
 
-\item{method}{Indicate the pathway enrichment analysis, global test is "gt" and global ancova is "ga".}
+\item{method}{Indicate the pathway enrichment analysis, global test is "gt",
+global ancova is "ga", and mummichog-inspired rank enrichment is "mummi_like".}
 }
 \description{
 Calculate quantitative enrichment score

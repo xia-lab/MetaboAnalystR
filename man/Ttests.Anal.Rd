@@ -11,7 +11,8 @@ Ttests.Anal(
   paired = FALSE,
   equal.var = TRUE,
   pvalType = "fdr",
-  all_results = FALSE
+  all_results = FALSE,
+  tt.method = "classical"
 )
 }
 \arguments{
