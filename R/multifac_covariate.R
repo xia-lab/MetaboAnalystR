@@ -364,6 +364,7 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
 #'@param feat.num Numeric, set the feature numbers, default is set to 15
 #'@param color.BW Use black-white for plot (T) or colors (F)
 #'@param type type, default is "type"
+#'@param nBins Integer, number of bins for grouping feature importance values in the partial dependence plot. Default is 3.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
