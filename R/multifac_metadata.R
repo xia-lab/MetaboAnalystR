@@ -657,6 +657,7 @@ mSetObj$analSet$combFacdf <- meta;
 #'@param dpi Input the dpi of the image to create
 #'@param width Input the width of the image to create
 #'@param meta Input the metadata to visualize
+#'@param meta2 Input the name of a second metadata variable for faceting or coloring. Optional.
 #'@param version version
 #'@author Jessica Ewald\email{jessica.ewald@mcgill.ca}
 #'McGill University, Canada
