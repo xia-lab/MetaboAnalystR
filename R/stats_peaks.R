@@ -8,15 +8,15 @@
 #'The default bw is 30 for LCMS, and 5 for GCMS.
 #'@usage GroupPeakList(mSetObj=NA, mzwid, bw, minfrac, minsamp, max)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param mzwid, define the width of overlapping m/z slices to use for creating peak density chromatograms
+#'@param mzwid define the width of overlapping m/z slices to use for creating peak density chromatograms
 #'and grouping peaks across samples
-#'@param bw, define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
+#'@param bw define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 #'kernel to apply to the peak density chromatogram
-#'@param minfrac, define the minimum fraction of samples necessary in at least one of the sample groups for
+#'@param minfrac define the minimum fraction of samples necessary in at least one of the sample groups for
 #'it to be a valid group
-#'@param minsamp, define the minimum number of samples necessary in at least one of the sample groups for 
+#'@param minsamp define the minimum number of samples necessary in at least one of the sample groups for 
 #'it to be a valid group 
-#'@param max, define the maximum number of groups to identify in a single m/z slice
+#'@param max define the maximum number of groups to identify in a single m/z slice
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
