@@ -30,6 +30,8 @@ display the 95 percent confidence regions, and 0 will not.}
 \item{show}{Display sample names, 1 = show names, 0 = do not show names.}
 
 \item{grey.scale}{Use grey-scale colors, 1 = grey-scale, 0 = not grey-scale.}
+
+\item{cex.opt}{Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".}
 }
 \description{
 Rotate PCA analysis

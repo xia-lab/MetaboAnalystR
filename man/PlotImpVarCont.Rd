@@ -23,6 +23,8 @@ PlotImpVarCont(
 
 \item{feat.num}{Numeric, set the feature numbers, default is set to 15}
 
+\item{nBins}{Integer, number of bins for grouping feature importance values in the partial dependence plot. Default is 3.}
+
 \item{color.BW}{Use black-white for plot (T) or colors (F)}
 
 \item{type}{type, default is "type"}

@@ -22,6 +22,8 @@ PlotMultiFacCmpdSummary(
 
 \item{meta}{Input the metadata to visualize}
 
+\item{meta2}{Input the name of a second metadata variable for faceting or coloring. Optional.}
+
 \item{version}{version}
 
 \item{format}{Input the format of the image to create}

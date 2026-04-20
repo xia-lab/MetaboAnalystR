@@ -56,6 +56,18 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{colorGradient}{Select heatmap colors: bwm, gray}
 
+\item{fzCol}{Numeric, font size for column labels.}
+
+\item{fzRow}{Numeric, font size for row labels.}
+
+\item{fzAnno}{Numeric, font size for annotation labels.}
+
+\item{annoPer}{Numeric, proportion of the plot allocated for annotation.}
+
+\item{unitCol}{Numeric, unit size for columns.}
+
+\item{unitRow}{Numeric, unit size for rows.}
+
 \item{rankingMethod}{rankingMethod}
 
 \item{topFeature}{topFeature}
@@ -64,9 +76,17 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{drawBorder}{Show cell borders: F or T (default F)}
 
-\item{viewOpt}{Select overview or detailed view: overview or detail}
+\item{show.legend}{Logical, whether to display the color legend. Default is TRUE.}
 
-\item{includeRowNames}{includeRowNames, logical}
+\item{show.annot.legend}{Logical, whether to display the annotation legend. Default is TRUE.}
+
+\item{showColnm}{Logical, whether to show column names. Default is TRUE.}
+
+\item{showRownm}{Logical, whether to show row names. Default is FALSE.}
+
+\item{maxFeature}{Integer, maximum number of features to display. Default is 2000.}
+
+\item{viewOpt}{Select overview or detailed view: overview or detail}
 }
 \description{
 Plot heatmap visualization for time-series data
