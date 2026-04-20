@@ -17,7 +17,17 @@
 #'@param useTopFeature Use significant features only: F or T (default false)
 #'@param drawBorder Show cell borders: F or T (default F)
 #'@param topFeature topFeature
-#'@param includeRowNames includeRowNames, logical
+#'@param fzCol Numeric, font size for column labels.
+#'@param fzRow Numeric, font size for row labels.
+#'@param fzAnno Numeric, font size for annotation labels.
+#'@param annoPer Numeric, proportion of the plot allocated for annotation. 
+#'@param unitCol Numeric, unit size for columns.
+#'@param unitRow Numeric, unit size for rows.
+#'@param show.legend Logical, whether to display the color legend. Default is TRUE.
+#'@param show.annot.legend Logical, whether to display the annotation legend. Default is TRUE.
+#'@param showColnm Logical, whether to show column names. Default is TRUE.
+#'@param showRownm Logical, whether to show row names. Default is FALSE.
+#'@param maxFeature Integer, maximum number of features to display. Default is 2000.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -2014,7 +2024,16 @@ PlotStaticMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="b
 #'Generate correlation heatmap for metadata
 #'@description Plot correlation coefficients between metadata
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param cor.opt Meethod for computing correlation coefficient
+#'@param cor.opt Method for computing correlation coefficient
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. If the image format is "pdf", users need not define the dpi. For "png" images, 
+#'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.
+#'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
+#'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param cor.method Character, method to compute correlation for mixed data types: "univariate" (default) or similar.
+#'@param colorGradient Character, color scheme for the heatmap. Default is "default".
+#'@param interactive Logical, whether to return an interactive plotly figure. Default is FALSE.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
