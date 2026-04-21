@@ -8,7 +8,7 @@
 
 my.json.scatter <- function(filenm, containsLoading=F, scaleMode=NULL){
   library(igraph);
-  res <- qs::qread("score3d.qs")
+  res <- ov_qs_read("score3d.qs")
 
   # Read scaleMode from session if not passed explicitly
   if (is.null(scaleMode)) {
@@ -132,7 +132,7 @@ if ("facB" %in% names(res)) {
   ticks=ticks,
   metaCol = legendData);
   }else{
-    res2 <- qs::qread("loading3d.qs");
+    res2 <- ov_qs_read("loading3d.qs");
 
     if(ncol(res2$xyz) > nrow(res2$xyz)){
     orig.load.xyz <- t(res2$xyz);
@@ -380,7 +380,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
     # Only rgl::ellipse3d in subprocess via bridge files
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    qs::qsave(list(coords = coords, level = level), bridge_in, preset = "fast")
+    ov_qs_save(list(coords = coords, level = level), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_rsclient(
@@ -388,19 +388,19 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
         require(rgl)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         pos <- cov(input$coords, y = NULL, use = "everything")
         center <- colMeans(input$coords)
         t_val <- sqrt(qchisq(input$level, 3))
         mesh <- list()
         mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
-        qs::qsave(mesh, bridge_out, preset = "fast")
+        ov_qs_save(mesh, bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
       timeout_sec = 120
     )
 
-    mesh <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+    mesh <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
     # Write JSON in master (subprocess may have different wd)
     if (!is.null(mesh)) {
@@ -414,9 +414,9 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
 }
 
 .get.rdt.set <- function(){
-  return(qs::qread("rdt.set.qs"));
+  return(ov_qs_read("rdt.set.qs"));
 }
 
 .set.rdt.set <- function(my.set){
-  qs::qsave(my.set, file="rdt.set.qs");
+  ov_qs_save(my.set, file="rdt.set.qs");
 }

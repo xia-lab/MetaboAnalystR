@@ -142,7 +142,7 @@ performMS2searchSingle <- function(mSetObj=NA, ppm1 = 10, ppm2 = 25,
                        Precursors = results_clean[[1]][["Precursors"]],
                        MS2_reference = results_clean[[1]][["MS2refs"]])
   
-  qs::qsave(results_clean, file = "MS2searchSingle_results.qs")
+  ov_qs_save(results_clean, file = "MS2searchSingle_results.qs")
   write.csv(res_df, file = "MS2searchSingle_results.csv", row.names = F)
   
   return(.set.mSet(mSetObj));
@@ -1238,7 +1238,7 @@ PlotMS2SummarySingle <- function(mSetObj=NA, imageNM = "", option = 0L, dpi = de
 
   if(is.null(mSetObj[["dataSet"]][["msms_result"]])){
     if(file.exists("MS2searchSingle_results.qs")){
-      ms2_res <- qs::qread("MS2searchSingle_results.qs")[[1]]
+      ms2_res <- ov_qs_read("MS2searchSingle_results.qs")[[1]]
     } else {
       return(0)
     }
@@ -1450,7 +1450,7 @@ cancelMS2Job <- function(path){
 }
 
 finishsearchingjob <- function(mSet){
-  qs::qsave(mSet, file = 'MS2_searching_results.qs')
+  ov_qs_save(mSet, file = 'MS2_searching_results.qs')
   cat("Everything has been finished successfully!\n", file = "metaboanalyst_ms2_search.txt", append = TRUE)
 }
 
@@ -1519,7 +1519,7 @@ readProgressSec <- function(path_str){
 }
 
 loadMS2ResultmSet <- function(){
-  mSetObj <<- qs::qread("MS2_searching_results.qs");
+  mSetObj <<- ov_qs_read("MS2_searching_results.qs");
 }
 
 plotms2Mirror <- function(mSetObj=NA, feature, index){
@@ -1556,7 +1556,7 @@ preplotAllMS2MirrorSingleSearch <- function(mSetObj=NA, ppm, mz){
     # This is a function used to pre-plotting all mirror plots in advance for report
     # Aiming to have top 200 or the ones with similarity score above 0.8 / 80
     mSetObj <- .get.mSet(mSetObj);
-    qs::qsave(mSetObj, file = "mSetObj.qs")
+    ov_qs_save(mSetObj, file = "mSetObj.qs")
 
     nn_total <- length(mSetObj[["dataSet"]][["msms_result"]][[1]][["Scores"]][[1]])
     if(nn_total<1){

@@ -53,7 +53,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }
 
   mSetObj <- .get.mSet(mSetObj);
-  data <- qs::qread("prenorm.qs");
+  data <- ov_qs_read("prenorm.qs");
   cls <- mSetObj$dataSet$prenorm.cls;
   
   colNames <- colnames(data);
@@ -118,7 +118,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
 
   # record row-normed data for fold change analysis 
   row.norm <- as.data.frame(CleanData(data, T, T)); #moved below ratio 
-  qs::qsave(row.norm, file="row_norm.qs");
+  ov_qs_save(row.norm, file="row_norm.qs");
   # this is for biomarker analysis only (for compound concentration data)
   if(ratio){
     min.val <- min(abs(data[data!=0]), na.rm = T)/2;
@@ -218,7 +218,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$scale.method <- scalenm;
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
 
-  qs::qsave(mSetObj$dataSet$norm, file="complete_norm.qs");
+  ov_qs_save(mSetObj$dataSet$norm, file="complete_norm.qs");
 
   if(substring(mSetObj$dataSet$format,4,5)=="mf"){
     
@@ -389,7 +389,7 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   
   mSetObj$imgSet$norm <- imgName
   
-  proc.data <- qs::qread("data_proc.qs");
+  proc.data <- ov_qs_read("data_proc.qs");
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
@@ -491,7 +491,7 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
     # w <- 7.2; h <- 9;
   }
   
-  proc.data <- qs::qread("data_proc.qs");
+  proc.data <- ov_qs_read("data_proc.qs");
   mSetObj$imgSet$summary_norm <-imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
@@ -561,7 +561,7 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
   ## ------------------------------------------------------------------
   ## 0)  choose the working abundance table + class vector
   ## ------------------------------------------------------------------
-  data <- qs::qread("data_proc.qs")
+  data <- ov_qs_read("data_proc.qs")
   cls  <- mSetObj$dataSet$proc.cls
 
   feat.hit.inx <- colnames(data) %in% feature.nm.vec        # feature.nm.vec: to delete
@@ -599,11 +599,11 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
   keep.feat <- colnames(data)
 
   if (file.exists("preproc.qs")) {
-    preproc <- qs::qread("preproc.qs")
+    preproc <- ov_qs_read("preproc.qs")
     preproc <- preproc[intersect(keep.smp,  rownames(preproc)),
                        intersect(keep.feat, colnames(preproc)),
                        drop = FALSE]
-    qs::qsave(preproc, "preproc.qs")
+    ov_qs_save(preproc, "preproc.qs")
   }
 
   
@@ -626,7 +626,7 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
   }
 
   #mSetObj$dataSet$edit     <- data
-  qs::qsave(data,"data.edit.qs");
+  ov_qs_save(data,"data.edit.qs");
   mSetObj$dataSet$edit.cls <- cls
   AddMsg("Successfully updated the data & metadata!")
 
@@ -669,7 +669,7 @@ PreparePrenormData <- function(mSetObj=NA){
     return(.set.mSet(mSetObj))
   }
   src <- exists.files[which.max(file.info(exists.files)$mtime)]
-  prenorm <- as.matrix(qs::qread(src))
+  prenorm <- as.matrix(ov_qs_read(src))
 
   pick.cls <- function(nrow.mat, preferred = character()) {
     keys <- unique(c(preferred, "proc.cls", "filt.cls", "edit.cls", "cls", "orig.cls", "cls_orig"))
@@ -702,7 +702,7 @@ PreparePrenormData <- function(mSetObj=NA){
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
 
-  qs::qsave(prenorm, "prenorm.qs");
+  ov_qs_save(prenorm, "prenorm.qs");
   mSetObj$dataSet$prenorm.smpl.nms <- rownames(prenorm);
   mSetObj$dataSet$prenorm.feat.nms <- colnames(prenorm);
   .set.mSet(mSetObj)

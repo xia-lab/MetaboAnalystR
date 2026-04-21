@@ -404,7 +404,7 @@ DecomposeGraph <- function(gObj, minNodeNum = 2){
 
 
 GetNetStatByType <- function(g){
-   # qs::qsave(g,"g.qs")
+   # ov_qs_save(g,"g.qs")
    # save.image("GetNetStatByType.RData")
   mSetObj <- .get.mSet(mSetObj);
   nd.queries <- V(g)$name;
@@ -516,7 +516,7 @@ PrepareNet <- function(mir.nm, file.nm){
 convertIgraph2JSON <- function(g, filenm){
   #filenm<<-filenm;
   mSetObj <- .get.mSet(mSetObj);
-  #qs::qsave(g,"g.qs");
+  #ov_qs_save(g,"g.qs");
 
   #save.image("net.RData");
   nms <- V(g)$name;

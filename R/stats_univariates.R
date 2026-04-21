@@ -24,7 +24,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
   if (fc.method == "limma" && !paired) {
     # Limma-based logFC - use row_norm (original scale, same as classical GetFC)
     # Log2-transform so limma logFC = log2 fold change
-    row.data <- qs::qread("row_norm.qs");
+    row.data <- ov_qs_read("row_norm.qs");
     row.log2 <- log2(as.matrix(row.data));
     row.log2[!is.finite(row.log2)] <- 0;
     limma.res <- GetLimmaFCandP(row.log2, mSetObj$dataSet$cls);
@@ -197,7 +197,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   
   if(paired){ 
     # compute the average of paired FC (unit is pair)
-    row.norm <- qs::qread("row_norm.qs");
+    row.norm <- ov_qs_read("row_norm.qs");
     data <- log2(row.norm);
     
     G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
@@ -213,7 +213,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   }else{
     # compute the FC of two group means (unit is group)
     
-    data <- qs::qread("row_norm.qs");
+    data <- ov_qs_read("row_norm.qs");
     m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
     m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
     
@@ -760,7 +760,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
     sig.p <- p.value[inx.imp];
     sig.fdr <- fdr.p[inx.imp];
     if(exists("aov.res")){
-      qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
+      ov_qs_save(aov.res[inx.imp], file="aov_res_imp.qs");
     }
     sig.mat <- all.mat[inx.imp,];
     ord.inx <- order(sig.mat$p.value);
@@ -824,7 +824,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
       cls <- mSetObj$dataSet$cls;
       aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
     }else{
-      aov.imp <- qs::qread("aov_res_imp.qs");
+      aov.imp <- ov_qs_read("aov_res_imp.qs");
     }
     
     # note this is only for post-hoc analysis. max 1000 in case too large

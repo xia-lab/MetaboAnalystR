@@ -83,6 +83,39 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
   conn <- RSclient::RS.connect(host = "localhost", port = 6311)
   on.exit(try(RSclient::RS.close(conn), silent = TRUE))
+  # Inject the qs wrapper helpers into the subprocess R session so callers
+  # writing ov_qs_read(f) / ov_qs_save(obj, f) inside their subprocess func
+  # body work transparently — the subprocess is a fresh R session and does
+  # not inherit master-session helpers otherwise.
+  RSclient::RS.eval(conn, quote({
+    ov_qs_read <- function(file, ...) {
+      if (file.exists(file)) {
+        r <- try(qs2::qs_read(file, ...), silent = TRUE)
+        if (!inherits(r, "try-error")) return(r)
+        return(qs::qread(file, ...))
+      }
+      if (endsWith(tolower(file), ".qs")) {
+        v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
+        if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
+      } else if (endsWith(tolower(file), ".qs2")) {
+        v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
+        if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
+      }
+      stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+    }
+    ov_qs_save <- function(obj, file, ...) {
+      .args <- list(...)
+      for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
+      do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
+      invisible(file)
+    }
+    ov_qs_exists <- function(file) {
+      if (file.exists(file)) return(TRUE)
+      if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
+      if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
+      FALSE
+    }
+  }))
   RSclient::RS.assign(conn, ".exec_wd", getwd())
   RSclient::RS.assign(conn, ".exec_func", func)
   RSclient::RS.assign(conn, ".exec_args", args)
@@ -1282,7 +1315,7 @@ convert.rds2qs <- function(){
  for(rds in rds.files){
     lib.rds <- readRDS(rds);
     nm <- substr(rds, 1, nchar(rds)-4);
-    qs::qsave(lib.rds,paste0(nm, ".qs"));
+    ov_qs_save(lib.rds,paste0(nm, ".qs"));
  }
 }
 
@@ -1293,11 +1326,11 @@ convert.rda2qs <- function(){
     nm <- substr(rda, 1, nchar(rda)-4);
     lib.rda <- load(rda);
     # here the name is inmexpa (jointpa)
-    # qs::qsave(inmexpa,paste0(nm, ".qs"));
+    # ov_qs_save(inmexpa,paste0(nm, ".qs"));
     # here the name is metpa (metpa)
-    qs::qsave(metpa,paste0(nm, ".qs"));
+    ov_qs_save(metpa,paste0(nm, ".qs"));
     # here the name is current.msetlib (msets)
-    #qs::qsave(current.msetlib,paste0(nm, ".qs"));
+    #ov_qs_save(current.msetlib,paste0(nm, ".qs"));
  }
 }
 
@@ -1571,13 +1604,13 @@ rescale2NewRange <- function(qvec, a, b){
 
 SaveMsetObject <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  qs::qsave(mSetObj, "mSetObj_after_sanity.qs");
+  ov_qs_save(mSetObj, "mSetObj_after_sanity.qs");
   return(1);
 }
 
 GetSampleNum <- function(){
   if(file.exists("mSetObj_after_sanity.qs")){
-    mSetObj <- qs::qread("mSetObj_after_sanity.qs");
+    mSetObj <- ov_qs_read("mSetObj_after_sanity.qs");
     nrow(mSetObj$dataSet$meta.info);
   } else {
     return(0)

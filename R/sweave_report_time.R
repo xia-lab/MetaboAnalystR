@@ -452,7 +452,7 @@ CreateASCAdoc <- function(mSetObj=NA){
   if(is.null(mSetObj$analSet$asca)){
     return();
   }
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
 
   if(isEmptyMatrix(asca$sig.list[["Model.a"]])){
     asca.tab1<-NULL;

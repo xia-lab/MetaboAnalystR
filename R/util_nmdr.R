@@ -37,7 +37,7 @@ my.get.nmdr.data <- function(StudyID){
         return(0)
     }
   
-    qs::qsave(query_study_dataset, "nmdr_study.qs");
+    ov_qs_save(query_study_dataset, "nmdr_study.qs");
     return(1);
 }
 
@@ -91,7 +91,7 @@ ListNMDRStudies <- function(mSetObj=NA){
   if(!.on.public.web){
     fast.write.csv(query_results_table_keep, "all_metabolomics_workbench_studies.csv")
   }else{
-    qs::qsave(query_results_table_keep, "metabolomics_workbench_studies.qs")
+    ov_qs_save(query_results_table_keep, "metabolomics_workbench_studies.qs")
   }
   
   return(.set.mSet(mSetObj));

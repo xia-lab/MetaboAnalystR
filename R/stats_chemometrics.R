@@ -94,22 +94,22 @@ PCA.Anal <- function(mSetObj=NA){
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(pca = pca), bridge_in, preset = "fast")
+  ov_qs_save(list(pca = pca), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(factoextra)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       res <- factoextra::get_pca_var(input$pca)$contrib
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 120
   )
 
-  contrib <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  contrib <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   if (is.null(contrib)) { AddErrMsg("PCA contrib calculation failed"); return(0) }
   if(ncol(contrib)>10){
     contrib <- contrib[,1:10];# keep top 10 should be sufficient
@@ -139,14 +139,14 @@ PCA.Anal <- function(mSetObj=NA){
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data_dist = data.dist, grp = grp, cls_type = cls.type), bridge_in, preset = "fast")
+  ov_qs_save(list(data_dist = data.dist, grp = grp, cls_type = cls.type), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(vegan)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       data_dist <- input$data_dist
       grp <- input$grp
       cls_type <- input$cls_type
@@ -179,13 +179,13 @@ PCA.Anal <- function(mSetObj=NA){
           pair.res <- NULL
         }
       }
-      qs::qsave(list(res = res, pair.res = pair.res), bridge_out, preset = "fast")
+      ov_qs_save(list(res = res, pair.res = pair.res), bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  result <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  result <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   if (is.null(result)) {
     warning("PERMANOVA failed")
     return(list(NULL, NULL))
@@ -555,7 +555,7 @@ PlotPCA3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink();
 
   #for util_scatter3d
-  qs::qsave(pca3d$score, "score3d.qs");
+  ov_qs_save(pca3d$score, "score3d.qs");
 
   if(!.on.public.web){
     return(.set.mSet(mSetObj));
@@ -617,7 +617,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
 
   pca3d$loading$cls = cls;
-  qs::qsave(pca3d$loading, "loading3d.qs");
+  ov_qs_save(pca3d$loading, "loading3d.qs");
 
   my.json.scatter(imgName, T);
 
@@ -1109,7 +1109,7 @@ PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
   sink();
   mSetObj$imgSet$pls.score3d <- imgName;
 
-  qs::qsave(pls3d$score, "score3d.qs");
+  ov_qs_save(pls3d$score, "score3d.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -1164,7 +1164,7 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
   pls3d$loading$cls = cls;
-  qs::qsave(pls3d$loading, "loading3d.qs");
+  ov_qs_save(pls3d$loading, "loading3d.qs");
 
   my.json.scatter(imgName, T);
 
@@ -1863,25 +1863,25 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data=datmat, cls=cls, cv.num=cv.num), bridge_in, preset = "fast")
+  ov_qs_save(list(data=datmat, cls=cls, cv.num=cv.num), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       rpath <- "../../"
       if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
       }
       res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=NA, crossvalI=input$cv.num)
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   mSetObj$analSet$oplsda <- my.res;
   score.mat <- cbind(my.res$scoreMN[,1], my.res$orthoScoreMN[,1]);
   colnames(score.mat) <- c("Score (t1)","OrthoScore (to1)");
@@ -2269,25 +2269,25 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num), bridge_in, preset = "fast")
+  ov_qs_save(list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       rpath <- "../../"
       if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
         compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
       }
       res <- perform_opls(input$data, input$cls, predI=1, permI=input$perm.num, orthoI=NA, crossvalI=input$cv.num)
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   r.vec <- my.res$suppLs[["permMN"]][, "R2Y(cum)"];
   q.vec <- my.res$suppLs[["permMN"]][, "Q2(cum)"];
   perm.num <- my.res$suppLs[["permI"]];
@@ -2414,14 +2414,14 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums,
+  ov_qs_save(list(data=datmat, cls=cls, comp.num=comp.num, comp.var.nums=comp.var.nums,
                   doCV=doCV, validOpt=validOpt, foldNum=foldNum), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       rpath <- "../../"
       if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
         compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))
@@ -2431,13 +2431,13 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
         perf.res <- perf.splsda(res, dist="centroids.dist", validation=input$validOpt, folds=input$foldNum)
         res$error.rate <- perf.res$error.rate$overall
       }
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   mSetObj$analSet$splsr <- my.res;
   score.mat <- my.res$variates$X;
   fast.write.csv(signif(score.mat,5), row.names=rownames(mSetObj$dataSet$norm), file="splsda_score.csv");
@@ -2677,7 +2677,7 @@ PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, 
   sink();
   mSetObj$imgSet$spls.score3d <- imgName;
 
-  qs::qsave(spls3d$score, "score3d.qs");
+  ov_qs_save(spls3d$score, "score3d.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -2735,7 +2735,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
   AddMsg("Annotated data is now ready for PCA 3D visualization!");
   
   spls3d$loading$cls = cls;
-  qs::qsave(spls3d$loading, "loading3d.qs");
+  ov_qs_save(spls3d$loading, "loading3d.qs");
 
   if(.on.public.web){
     my.json.scatter(imgName, T);
@@ -3245,24 +3245,24 @@ ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(distM = distM, cls = cls, n_perm = numPermutations), bridge_in, preset = "fast")
+  ov_qs_save(list(distM = distM, cls = cls, n_perm = numPermutations), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(vegan)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       dbrda.mod <- vegan::capscale(input$distM ~ input$cls)
       dbrda.an  <- vegan::anova.cca(dbrda.mod, permutations = input$n_perm)
       res <- signif(dbrda.an$`Pr(>F)`[1], 5)
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  result <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  result <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   if (is.null(result)) { AddErrMsg("Multivariate test failed"); return(0) }
   return(result)
 }

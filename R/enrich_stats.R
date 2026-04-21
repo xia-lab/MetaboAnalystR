@@ -63,7 +63,7 @@ CalculateHyperScore <- function(mSetObj=NA){
     gc() 
     
     # Load from disk (which Step 1 repaired)
-    loaded_lib <- qs::qread("current.msetlib.qs");
+    loaded_lib <- ov_qs_read("current.msetlib.qs");
     assign("current.msetlib", loaded_lib, envir = .GlobalEnv)
     assign("current.msetlib.name", req.lib.name, envir = .GlobalEnv)
   }
@@ -138,7 +138,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   if(!exists("current.msetlib")){
-    current.msetlib <<- qs::qread("current.msetlib.qs");
+    current.msetlib <<- ov_qs_read("current.msetlib.qs");
   }
 
   # Name mapping and data preparation
@@ -214,14 +214,14 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   # Run globaltest in isolated subprocess via bridge files
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
+  ov_qs_save(list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(globaltest)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       if (!is.null(input$cov.df)) {
         null.mat <- model.matrix(~ ., data = input$cov.df)
         gt.obj <- globaltest::gt(input$cls, input$data, null = null.mat, subsets=input$subsets)
@@ -230,7 +230,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
       }
       gt.res <- globaltest::result(gt.obj)
       match.num <- gt.res[,5]
-      if(sum(match.num>0)==0) { qs::qsave(NA, bridge_out, preset = "fast"); return(invisible(NULL)) }
+      if(sum(match.num>0)==0) { ov_qs_save(NA, bridge_out, preset = "fast"); return(invisible(NULL)) }
       all.cmpds <- unique(unlist(gt.obj@subsets, recursive = TRUE, use.names = FALSE))
       stat.mat <- matrix(0, length(all.cmpds), 5)
       colnames(stat.mat) <- c("p", "S", "ES", "sdS", "ncov")
@@ -238,13 +238,13 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
       for(i in 1:length(all.cmpds)){
         stat.mat[i,] <- gt.obj@functions$test(all.cmpds[i])
       }
-      qs::qsave(list(gt.res=gt.res, pvals=stat.mat[,1]), bridge_out, preset = "fast")
+      ov_qs_save(list(gt.res=gt.res, pvals=stat.mat[,1]), bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
   # Store intermediate data
   set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
@@ -616,7 +616,7 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
   }
   
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
     }
 
   # highlighting with different colors

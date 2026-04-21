@@ -848,7 +848,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   id <- names(pvalue);
 
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
 
    }
   geneSets <- current.msetlib$member;

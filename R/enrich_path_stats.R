@@ -355,14 +355,14 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       "- Enrichment method: ```Globaltest```", cov.label);
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    qs::qsave(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
+    ov_qs_save(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_rsclient(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         require(globaltest)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         if (!is.null(input$cov.df)) {
           null.mat <- model.matrix(~ ., data = input$cov.df)
           gt.obj <- globaltest::gt(input$cls, input$data, null = null.mat, subsets=input$subsets)
@@ -370,13 +370,13 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
           gt.obj <- globaltest::gt(input$cls, input$data, subsets=input$subsets)
         }
         gt.res <- globaltest::result(gt.obj)
-        qs::qsave(gt.res[,c(5,1)], bridge_out, preset = "fast")
+        ov_qs_save(gt.res[,c(5,1)], bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
       timeout_sec = 300
     )
 
-    qea.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+    qea.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   }else{
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```GlobalAncova```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
@@ -384,27 +384,27 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       "- Enrichment method: ```GlobalAncova```", cov.label);
     bridge_in2 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out2 <- sub("_in.qs", "_out.qs", bridge_in2)
-    qs::qsave(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in2, preset = "fast")
+    ov_qs_save(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in2, preset = "fast")
     on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
 
     run_func_via_rsclient(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         require(GlobalAncova)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         if (!is.null(input$cov.df)) {
           cov.mat <- model.matrix(~ ., data = input$cov.df)[, -1, drop = FALSE]
           ga.out <- GlobalAncova::GlobalAncova(xx=t(input$data), group=input$cls, covars=cov.mat, test.genes=input$subsets, method="approx")
         } else {
           ga.out <- GlobalAncova::GlobalAncova(xx=t(input$data), group=input$cls, test.genes=input$subsets, method="approx")
         }
-        qs::qsave(ga.out[,c(1,3)], bridge_out, preset = "fast")
+        ov_qs_save(ga.out[,c(1,3)], bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in2, bridge_out = bridge_out2),
       timeout_sec = 300
     )
 
-    qea.res <- if (file.exists(bridge_out2)) qs::qread(bridge_out2) else NULL
+    qea.res <- if (file.exists(bridge_out2)) ov_qs_read(bridge_out2) else NULL
   }
 
   # Store intermediate data
@@ -522,7 +522,7 @@ GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   mSetObj <- .get.mSet(mSetObj);
 
   if(!exists('current.kegglib')){
-    current.kegglib <<- qs::qread("current.kegglib.qs");
+    current.kegglib <<- ov_qs_read("current.kegglib.qs");
   }
 
   pathid <- current.kegglib$path.ids[msetNm]; 

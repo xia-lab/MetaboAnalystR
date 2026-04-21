@@ -33,13 +33,13 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   
   # Check for consistent class labels
   msg <- c(msg, "Checking group labels for consistency across datasets...")
-  dataSet <- qs::qread(sel.nms[1])
+  dataSet <- ov_qs_read(sel.nms[1])
   lvls <- levels(dataSet$cls)
   id.type <- dataSet$id.type
   shared.nms <- colnames(dataSet$data)
   
   for (i in 2:length(sel.nms)) {
-    dataSet <- qs::qread(sel.nms[i])
+    dataSet <- ov_qs_read(sel.nms[i])
     
     # Check if class labels are consistent
     if (!all(levels(dataSet$cls) == lvls)) {
@@ -71,14 +71,14 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   cls_lbl_list <- vector("list", length(sel.nms))
 
   # First dataset - MUST re-read since dataSet was overwritten in consistency check loop
-  dataSet <- qs::qread(sel.nms[1])
+  dataSet <- ov_qs_read(sel.nms[1])
   matrix_list[[1]] <- dataSet$data[, shared.nms]
   data_lbl_list[[1]] <- rep(sel.nms[1], nrow(matrix_list[[1]]))
   cls_lbl_list[[1]] <- dataSet$cls
 
   # Remaining datasets
   for (i in 2:length(sel.nms)) {
-    dataSet <- qs::qread(sel.nms[i])
+    dataSet <- ov_qs_read(sel.nms[i])
     ndat <- dataSet$data[, shared.nms]
     rownames(ndat) <- paste(rownames(ndat), "_", i, sep="")
     matrix_list[[i]] <- ndat
@@ -137,7 +137,7 @@ CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
                          gene.symbls = symbols,
                          cls.lbl=factor(cls.lbl),
                          data.lbl=data.lbl);
-  qs::qsave(metastat.meta, "metastat.meta.qs");
+  ov_qs_save(metastat.meta, "metastat.meta.qs");
   PerformEachDEAnal(mSetObj);
   
   # setup common stats gene number, smpl number, grp info
@@ -205,7 +205,7 @@ PerformEachDEAnal <- function(mSetObj=NA){
   mdata.all <- mSetObj$mdata.all
   sel.nms <- names(mdata.all)[mdata.all==1];
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   for(i in 1:length(sel.nms)){
     dataName <- sel.nms[i];
@@ -213,7 +213,7 @@ if(!exists('metastat.meta')){
     group <- factor(metastat.meta$cls.lbl[sel.inx]); # note regenerate factor to drop levels 
     data <- metastat.meta$data[, sel.inx];
     
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
     grp.lvl <- levels(dataSet$cls);
     
     # update data set
@@ -238,7 +238,7 @@ if(!exists('metastat.meta')){
   } 
 
   metastat.ind <<- metastat.ind;
-  qs::qsave(metastat.ind, "metastat.ind.qs");
+  ov_qs_save(metastat.ind, "metastat.ind.qs");
 
 }
 
@@ -256,8 +256,8 @@ if(!exists('metastat.meta')){
 
 PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
-  metastat.ind <<- qs::qread("metastat.ind.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
+  metastat.ind <<- ov_qs_read("metastat.ind.qs");
 }
   mSetObj <- .get.mSet(mSetObj);
   mdata.all <- mSetObj$mdata.all
@@ -276,7 +276,7 @@ if(!exists('metastat.meta')){
   
   for (i in 1:nbstudies){
     data.nm <- sel.nms[i];
-    dataSet <- qs::qread(data.nm);
+    dataSet <- ov_qs_read(data.nm);
     classes[[i]] <- dataSet$cls; 
     
     fit2i <- dataSet$fit.obj;
@@ -315,7 +315,7 @@ if(!exists('metastat.meta')){
   
   #meta.mat <<- pc.mat[sig.inx, ];
   meta.mat <<- pc.mat;
-  qs::qsave(meta.mat, "meta.mat.qs");
+  ov_qs_save(meta.mat, "meta.mat.qs");
   mSetObj <- SetupMetaStats(mSetObj, BHth);
   mSetObj$analSet$metap.mat <- meta.mat;
 
@@ -342,8 +342,8 @@ if(!exists('metastat.meta')){
 
 PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
-  metastat.ind <<- qs::qread("metastat.ind.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
+  metastat.ind <<- ov_qs_read("metastat.ind.qs");
 }
   mSetObj <- .get.mSet(mSetObj);
   mdata.all <- mSetObj$mdata.all
@@ -397,7 +397,7 @@ if(!exists('metastat.meta')){
   sig.inx <- abs(vc.mat[,"VoteCounts"]) >= minVote;
   #meta.mat <<- vc.mat[sig.inx, ,drop=F];
   meta.mat <<- vc.mat;
-  qs::qsave(meta.mat, "meta.mat.qs");
+  ov_qs_save(meta.mat, "meta.mat.qs");
   mSetObj <- SetupMetaStats(mSetObj, BHth);
   mSetObj$analSet$votecount.mat <- meta.mat;
   if(.on.public.web){
@@ -424,8 +424,8 @@ if(!exists('metastat.meta')){
 
 PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
-  metastat.ind <<- qs::qread("metastat.ind.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
+  metastat.ind <<- ov_qs_read("metastat.ind.qs");
 
 }
   mSetObj <- .get.mSet(mSetObj);
@@ -452,7 +452,7 @@ if(!exists('metastat.meta')){
   
   #meta.mat <<- dm.mat[sig.inx,];
   meta.mat <<- dm.mat;
-  qs::qsave(meta.mat, "meta.mat.qs");
+  ov_qs_save(meta.mat, "meta.mat.qs");
 
   mSetObj <- SetupMetaStats(mSetObj, BHth);
     mSetObj$analSet$merge.mat <- meta.mat;
@@ -473,7 +473,7 @@ if(!exists('metastat.meta')){
 
 GetMetaGeneIDType<-function(){
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   return(metastat.meta$id.type);
 }
@@ -481,7 +481,7 @@ if(!exists('metastat.meta')){
 GetMetaResultGeneIDs<-function(){
 
 if(!exists('meta.mat')){
-  meta.mat <<- qs::qread("meta.mat.qs");
+  meta.mat <<- ov_qs_read("meta.mat.qs");
 }
   return(rownames(meta.mat));
 }
@@ -491,7 +491,7 @@ if(!exists('meta.mat')){
 GetMetaResultGeneSymbols<-function(){
 
 if(!exists('meta.mat')){
-  meta.mat <<- qs::qread("meta.mat.qs");
+  meta.mat <<- ov_qs_read("meta.mat.qs");
 }
   ids <- rownames(meta.mat);
   if(length(ids) > 5000){
@@ -503,7 +503,7 @@ if(!exists('meta.mat')){
 GetMetaResultGeneIDLinks <- function(){
   ids <- rownames(meta.mat);
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   symbs <- metastat.meta$gene.symbls[ids];
   # set up links to genbank
@@ -515,7 +515,7 @@ if(!exists('metastat.meta')){
 GetMetaResultColNames <- function(){
 
 if(!exists('meta.mat')){
-  meta.mat <<- qs::qread("meta.mat.qs");
+  meta.mat <<- ov_qs_read("meta.mat.qs");
 }
   mSetObj <- .get.mSet(mSetObj);
   mdata.all <- mSetObj$mdata.all
@@ -535,7 +535,7 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   mSetObj <- .get.mSet(mSetObj);
 
   if(!exists('meta.mat')){
-    meta.mat <<- qs::qread("meta.mat.qs");
+    meta.mat <<- ov_qs_read("meta.mat.qs");
   }
   mSetObj <- SetupMetaStats(mSetObj, mSetObj$dataSet$pvalcutoff);
   
@@ -634,7 +634,7 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
 }
 
 PlotDataProfile<-function(dataName, boxplotName, pcaName, format="png", dpi=default.dpi){
-  dataSet <- qs::qread(dataName);
+  dataSet <- ov_qs_read(dataName);
   if(.on.public.web){
     load_lattice()
   }
@@ -790,7 +790,7 @@ PrepareUpsetData <- function(mSetObj=NA, fileNm){
 PlotMetaPCA <- function(mSetObj = NA, imgNm, dpi, format, interactive = FALSE) {
   mSetObj <- .get.mSet(mSetObj)
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   require(ggplot2)
   require(Cairo)
@@ -850,7 +850,7 @@ if(!exists('metastat.meta')){
 
 PlotMetaDensity <- function(mSetObj=NA, imgNm, dpi = default.dpi, format, interactive = FALSE) {
 if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   mSetObj <- .get.mSet(mSetObj);
   require(ggplot2)

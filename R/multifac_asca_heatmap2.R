@@ -70,7 +70,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
     if (dataOpt == "norm") {
       clust.data <- mSetObj$dataSet$norm
     } else {
-      clust.data <- qs::qread("prenorm.qs")
+      clust.data <- ov_qs_read("prenorm.qs")
     }
     dd <- dist(clust.data, method = smplDist)
     hc <- hclust(dd, method = clstDist)
@@ -99,7 +99,7 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   if (dataOpt == "norm") {
     my.data <- mSetObj$dataSet$norm
   } else {
-    my.data <- qs::qread("prenorm.qs")
+    my.data <- ov_qs_read("prenorm.qs")
   }
 
   data <- my.data[ordInx, ]
@@ -590,7 +590,7 @@ Perform.ASCA <- function(mSetObj=NA, a=1, b=2, x=2, res=2){
     model.ab = x,
     model.res = res 
   );
-  qs::qsave(asca, file="asca.qs");
+  ov_qs_save(asca, file="asca.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -616,7 +616,7 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
   
   mSetObj <- .get.mSet(mSetObj);
 
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   asca.models <- asca$models;
   spe.lims  <-  lev.lims <- numeric(3);
   
@@ -720,7 +720,7 @@ CalculateImpVarCutoff <- function(mSetObj=NA, spe.thresh = 0.05, lev.thresh = 0.
   }
   asca$sig.list <- sig.list;
   asca$out.list <- out.list;
-  qs::qsave(asca, file="asca.qs");
+  ov_qs_save(asca, file="asca.qs");
 
   # Arrow export for zero-copy Java access (ASCA results)
   for (nm in names(sig.list)) {
@@ -965,7 +965,7 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   facAB.size <- getFactorSize(facAB);
   
   # record these information
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   asca$perm.info <- list(
     facA.size = facA.size,
     facB.size = facB.size,
@@ -1012,7 +1012,7 @@ Perform.ASCA.permute<-function(mSetObj=NA, perm.num=20){
   
   asca$perm.p <- p.res;
   asca$perm.mat <- perm.res;
-  qs::qsave(asca, file="asca.qs");
+  ov_qs_save(asca, file="asca.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -1245,7 +1245,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
   mSetObj$imgSet$asca.scree <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, type=format, width=w, height=h,  bg="white");
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   models <- asca$models;
   # note four plots, model a, b, ab and res
   par(mfrow=c(2,2),oma=c(0,0,3,0), cex=1.0)
@@ -1286,7 +1286,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'
 PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, colorBW=FALSE){
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   if(type == "a"){
     md <- asca$models$Model.a;
     lbls <- as.character(levels(mSetObj$dataSet$facA));
@@ -1363,7 +1363,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
 PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, colorBW=FALSE, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   md <- asca$models$Model.ab;
   ab.lbls <- as.character(levels(mSetObj$dataSet$facA));
   ba.lbls <- as.character(levels(mSetObj$dataSet$facB));
@@ -1473,7 +1473,7 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.d
 PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
   
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   if(type == "a"){
     lvg <- asca$models$Model.a$leverage;
     spe <- asca$models$Model.a$SPE;
@@ -1576,7 +1576,7 @@ PlotSigVar <- function(x, y, xline, yline, title){
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
 
   perm.mat <- asca$perm.mat;
   perm.p <- asca$perm.p;
@@ -1638,14 +1638,14 @@ GetSigTable.ASCA <- function(mSetObj=NA, nm){
   }else{
     nmLbl <- paste("interaction effect between", mSetObj$dataSet$facA.lbl, "and",  mSetObj$dataSet$facB.lbl);
   }
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   GetSigTable(asca$sig.list[[nm]], paste("ASCA. The table shows features that are well modelled by ", nmLbl, ".", sep=""), mSetObj$dataSet$type);
   #return(.set.mSet(mSetObj));
 }
 
 GetAscaSigMat <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   if(type == "sigA"){
     sig.mat <- CleanNumber(asca$sig.list[["Model.a"]])
   }else if(type == "outA"){
@@ -1677,7 +1677,7 @@ GetAscaSigMat <- function(mSetObj=NA, type){
 
 GetAscaSigRowNames <- function(mSetObj=NA, type){
   mSetObj <- .get.mSet(mSetObj);
-  asca <- qs::qread("asca.qs");
+  asca <- ov_qs_read("asca.qs");
   if(type == "sigA"){
     return(rownames(asca$sig.list[["Model.a"]]))
   }

@@ -64,7 +64,7 @@ PlotKEGGPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png"
 PlotMetpaPath<-function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=default.dpi){
   if(!exists("current.kegglib") || is.null(current.kegglib)){
     if(file.exists("current.kegglib.qs")){
-      current.kegglib <<- qs::qread("current.kegglib.qs");
+      current.kegglib <<- ov_qs_read("current.kegglib.qs");
     }else{
       .set.err.msg("KEGG library is not loaded.");
       if(is.null(dpi)){
@@ -653,10 +653,10 @@ GeneratePathwayJSON<-function(pathway.nm){
   mSetObj <- .get.mSet(mSetObj);
   
   smpdb.path <- paste(rpath ,"libs/smpdb/", mSetObj$org, ".qs", sep="");
-  current.kegglib <- qs::qread(smpdb.path);
+  current.kegglib <- ov_qs_read(smpdb.path);
   
   jsons.path <- paste(rpath ,"libs/smpdb/jsons/", mSetObj$org, ".qs", sep="");
-  smpdb.jsons <- qs::qread(jsons.path) # no need to be global!
+  smpdb.jsons <- ov_qs_read(jsons.path) # no need to be global!
   
   if(pathway.nm == "top"){
     if(mSetObj$analSet$type == "pathora"){

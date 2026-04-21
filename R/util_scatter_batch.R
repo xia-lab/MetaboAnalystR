@@ -57,7 +57,7 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
     # Single subprocess call for all ellipsoid computations via bridge files
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    qs::qsave(list(coords_per_group = coords_per_group, level = level, group_names = group_names), bridge_in, preset = "fast")
+    ov_qs_save(list(coords_per_group = coords_per_group, level = level, group_names = group_names), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_rsclient(
@@ -65,7 +65,7 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
         require(rgl)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         coords_list <- input$coords_per_group
         level <- input$level
         group_names <- input$group_names
@@ -87,13 +87,13 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
             result_list[[i]] <<- list(group = group_names[i], mesh = list(), error = e$message)
           })
         }
-        qs::qsave(result_list, bridge_out, preset = "fast")
+        ov_qs_save(result_list, bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
       timeout_sec = 120
     )
 
-    mesh_results <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+    mesh_results <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
     # Write JSON in master (subprocess may have different wd)
     if (!is.null(mesh_results)) {

@@ -71,8 +71,8 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     coef(lm(scale(x) ~ scale(tmp_main)))[2]
   })
 
-  qs::qsave(beta_std, file = "limma_cor_res.qs")   # replaces cor_res
-  qs::qsave(fit,      file = "limma_fit_res.qs")
+  ov_qs_save(beta_std, file = "limma_cor_res.qs")   # replaces cor_res
+  ov_qs_save(fit,      file = "limma_fit_res.qs")
   } else {
 
     cls <- factor(metadata[[main.var]])
@@ -146,13 +146,13 @@ PerformDoseDEAnal <- function(mSetObj = NA, meta1 = "NA") {
     cor_res <- apply(expr_matrix, 1, function(x) {
       rcorr(x, metadata[[main.var]], type = "spearman")$r[1, 2]
     })
-    qs::qsave(cor_res, file = "limma_cor_res.qs")
-    qs::qsave(fit,     file = "limma_fit_res.qs")
+    ov_qs_save(cor_res, file = "limma_cor_res.qs")
+    ov_qs_save(fit,     file = "limma_fit_res.qs")
   }
   
   # write results
   fast.write.csv(resTable, file = "dose_response_limma_all.csv", row.names = TRUE)
-  qs::qsave(resTable, "limma.sig.qs")
+  ov_qs_save(resTable, "limma.sig.qs")
   mSetObj$dataSet$cls <- metadata[[main.var]]
   mSetObj$dataSet$main.var <- main.var;
   return(.set.mSet(mSetObj))
@@ -169,7 +169,7 @@ GetUpdatedClsType <- function(){
 ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.bool=T){
 
     mSetObj <- .get.mSet(mSetObj); 
-    res.all <- qs::qread("limma.sig.qs");
+    res.all <- ov_qs_read("limma.sig.qs");
 
     fdr.bool <- as.logical(fdr.bool);
 
@@ -242,9 +242,9 @@ ComputeDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, fc.thresh=0, fdr.b
 ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.25, fdr.bool=T){
   
   mSetObj <- .get.mSet(mSetObj); 
-  res.all <- qs::qread("limma.sig.qs");
-  fit_res <- qs::qread("limma_fit_res.qs")
-  cor_res <- qs::qread(file = "limma_cor_res.qs")
+  res.all <- ov_qs_read("limma.sig.qs");
+  fit_res <- ov_qs_read("limma_fit_res.qs")
+  cor_res <- ov_qs_read(file = "limma_cor_res.qs")
   save(mSetObj, file = "mSetObj___ComputeContDoseLimmaResTable.rda")
   fdr.bool <- as.logical(fdr.bool);
   

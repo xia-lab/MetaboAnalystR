@@ -341,8 +341,8 @@ Read.TextDataTs <- function(mSetObj=NA, filePath, format="rowu"){
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   
-  qs::qsave(conc, file="data_orig.qs");
-  qs::qsave(conc, file="data_orig_0.qs");
+  ov_qs_save(conc, file="data_orig.qs");
+  ov_qs_save(conc, file="data_orig_0.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   
@@ -514,7 +514,7 @@ SetDataTypeOfMeta <- function(mSetObj=NA){
     }
   }
   mSetObj$dataSet$meta.info <- meta.info
-  qs::qsave(meta.info, file = "info4batch.qs")
+  ov_qs_save(meta.info, file = "info4batch.qs")
   return(.set.mSet(mSetObj));
 }
 

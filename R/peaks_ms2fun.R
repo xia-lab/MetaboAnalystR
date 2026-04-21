@@ -407,7 +407,7 @@
     info <- strsplit(as.character(try2.df[,1]), split=";")
     df_ecs <- data.frame(ec=as.character(try2.df[,2]), mz=sapply(info, `[[`, 1), form=sapply(info, `[[`, 2), rt = sapply(info, `[[`, 3), cpd = sapply(info, `[[`, 4), stringsAsFactors = F)
     df_ecs$str_row_inx <- paste(df_ecs$mz, df_ecs$form, df_ecs$rt, sep = "___")
-    qs::qsave(df_ecs, "initial_ecs.qs")
+    ov_qs_save(df_ecs, "initial_ecs.qs")
     merged_ecs <- aggregate(. ~ str_row_inx, df_ecs, paste, collapse=";")
     
     # OPTIMIZED: Vectorized string processing instead of sapply/strsplit chains
@@ -523,7 +523,7 @@
   }
   
   fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
-  qs::qsave(matched_res, "mum_res.qs");
+  ov_qs_save(matched_res, "mum_res.qs");
   
   # now update expr. profile
   matched_mz <- matched_res[,1];
@@ -684,8 +684,8 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   rt <- rt.hit <- "r.t" %in% colnames(input)
   mSetObj$paramSet$ContainsMS2 <- TRUE;
   
-  qs::qsave(input, "mum_raw.qs");
-  qs::qsave(cmpd_input, "cmpd_raw.qs");
+  ov_qs_save(input, "mum_raw.qs");
+  ov_qs_save(cmpd_input, "cmpd_raw.qs");
   
   if(!"p.value" %in% colnames(input)){
     mumDataContainsPval <- 0;

@@ -565,7 +565,7 @@ CovariateScatter.Anal <- function(mSetObj,
   # Always use ORIGINAL normalized data (before any covariate adjustment)
   # Linear model handles covariates internally via the design matrix
   if(file.exists("data_norm_only.qs")){
-    feature_table <- t(qs::qread("data_norm_only.qs"))
+    feature_table <- t(ov_qs_read("data_norm_only.qs"))
     message("[CovScatter] Using original normalized data from data_norm_only.qs")
   } else if(!is.null(mSetObj$dataSet$norm.before.covariate)){
     feature_table <- t(mSetObj$dataSet$norm.before.covariate)
@@ -751,7 +751,7 @@ CovariateScatter.Anal <- function(mSetObj,
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file=fileName);
-  qs::qsave(rest, file = "covariate_result.qs");
+  ov_qs_save(rest, file = "covariate_result.qs");
   
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
@@ -942,7 +942,7 @@ CombineFacScatter.Anal <- function(mSetObj,
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file= mSetObj$analSet$combineFac_filename);
-  qs::qsave(rest, file = "combine_factors_result.qs");
+  ov_qs_save(rest, file = "combine_factors_result.qs");
   
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
@@ -1199,7 +1199,7 @@ convertCovariate2Fun <- function(){
     if(!file.exists("covariate_result.qs")){
         return(0)
     }
-    dt <- qs::qread("covariate_result.qs");
+    dt <- ov_qs_read("covariate_result.qs");
     features <- rownames(dt)
     
     mzs <- vapply(features, function(x){
@@ -2020,21 +2020,21 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
   # ggarrange is quarantined - run in subprocess via bridge files
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
+  ov_qs_save(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(ggpubr); require(ggplot2); require(Cairo)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       combined <- ggpubr::ggarrange(input$p1, input$p2,
                                      ncol=2, common.legend=TRUE, legend="right")
       Cairo::Cairo(file=input$imgName, width=14, height=7,
                    unit="in", dpi=input$dpi, type=input$format, bg="white")
       print(combined)
       dev.off()
-      qs::qsave(TRUE, bridge_out, preset = "fast")
+      ov_qs_save(TRUE, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 120

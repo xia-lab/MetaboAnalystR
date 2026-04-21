@@ -124,7 +124,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
   
   # only do for top topN (200 by default)
   if(dim(mSetObj$dataSet$norm)[2] > topN){
-    data.filt <-  qs::qread("data_proc.qs");
+    data.filt <-  ov_qs_read("data_proc.qs");
     metab.var <- apply(as.matrix(data.filt), 2, function(x){
       var(x/mean(x))
     })
@@ -499,8 +499,8 @@ pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
   cat(json.obj);
   sink();
 
-  qs::qsave(pca3d$score, "score3d.qs");
-  qs::qsave(pca3d$loadings, "loading3d.qs");
+  ov_qs_save(pca3d$score, "score3d.qs");
+  ov_qs_save(pca3d$loadings, "loading3d.qs");
 
   my.json.scatter(fileNm, TRUE);
   return(.set.mSet(mSetObj));

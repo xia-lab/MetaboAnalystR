@@ -25,7 +25,7 @@
 #'
 GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, minsamp = 1, max = 50) {
   mSetObj <- .get.mSet(mSetObj);
-  peakSet <- qs::qread("peakSet.qs");
+  peakSet <- ov_qs_read("peakSet.qs");
   samples <- peakSet$sampnames;
   classlabel <- peakSet$sampclass;
   classnames <- levels(classlabel)
@@ -102,7 +102,7 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
   
   peakSet$groups <- groupmat[uindex,];
   peakSet$groupidx<- groupindex[uindex];
-  qs::qsave(peakSet, "peakSet.qs");
+  ov_qs_save(peakSet, "peakSet.qs");
   return(.set.mSet(mSetObj));
 }
 
@@ -113,7 +113,7 @@ GroupPeakList <- function(mSetObj=NA, mzwid = 0.25, bw = 30, minfrac = 0.5, mins
 #'
 SetPeakList.GroupValues <- function(mSetObj=NA) {
   mSetObj <- .get.mSet(mSetObj);
-  peakSet <- qs::qread("peakSet.qs");
+  peakSet <- ov_qs_read("peakSet.qs");
   msg <- mSetObj$msgSet$peakMsg;
   
   peakmat <- peakSet$peaks;
@@ -153,8 +153,8 @@ SetPeakList.GroupValues <- function(mSetObj=NA) {
   }
   
   #mSetObj$dataSet$orig <- t(values);
-  qs::qsave(t(values), file="data_orig.qs");
-  qs::qsave(t(values), file="data_orig_0.qs");
+  ov_qs_save(t(values), file="data_orig.qs");
+  ov_qs_save(t(values), file="data_orig_0.qs");
   mSetObj$msgSet$proc.msg <- msg;
   mSetObj$dataSet$orig.cls <- as.factor(peakSet$sampclass);
   mSetObj$dataSet$type.cls.lbl <- class(peakSet$sampclass);

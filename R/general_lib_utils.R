@@ -13,7 +13,7 @@
     if(.on.public.web){
         lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
         print(paste("loading library:", lib.path));
-        return(qs::qread(lib.path));
+        return(ov_qs_read(lib.path));
     }
     # print(c("lib.path",lib.path))
     lib.download <- FALSE;
@@ -46,7 +46,7 @@
   
     # Deal w. corrupt downloaded files
     tryCatch({
-        my.lib <- qs::qread(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
+        my.lib <- ov_qs_read(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
         print("Loaded files from MetaboAnalyst web-server.")
         },
         warning = function(w) { print('warning in load') },
@@ -54,7 +54,7 @@
         print("Reading data unsuccessful, attempting to re-download file...")
         tryCatch({
             download.file(lib.url, destfile=filenm, method="curl")
-            my.lib <- qs::qread(lib.path);
+            my.lib <- ov_qs_read(lib.path);
             print("Loaded necessary files.")
         },
         warning = function(w) { print('warning in curl download') },

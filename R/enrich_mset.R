@@ -57,13 +57,13 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
         destfile <- paste(libname, ".qs", sep = "");
         if(.on.public.web){
             my.qs  <- paste(rpath, "libs/msets/", destfile, sep="");
-            current.msetlib <- qs::qread(my.qs);
+            current.msetlib <- ov_qs_read(my.qs);
         } else {
             my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
             if(!file.exists(destfile)){
                 download.file(my.qs, destfile, method = "curl");
             }
-            current.msetlib <- qs::qread(destfile);
+            current.msetlib <- ov_qs_read(destfile);
         }
         mSetObj$analSet$msetlibname <- libname;
     }
@@ -96,7 +96,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
   }
 
   current.msetlib <<- current.msetlib;
-  qs::qsave(current.msetlib, "current.msetlib.qs");
+  ov_qs_save(current.msetlib, "current.msetlib.qs");
   return(.set.mSet(mSetObj));
 }
 
@@ -242,7 +242,7 @@ SearchByCompound <- function(mSetObj=NA, query){
   mSetObj <- .get.mSet(mSetObj);
 
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
     }
 
 
@@ -407,7 +407,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
     sub.dir <- "kegg/metpa";
     destfile <- paste0(libNm, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    ov_qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
   }
@@ -434,7 +434,7 @@ SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
 
     destfile <- paste0(libNm, ".qs");
     current.kegglib <<- .get.my.lib(destfile, "smpdb");
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    ov_qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
 
@@ -568,7 +568,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
 GetMsetNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
     }
 
   return(current.msetlib$name);
@@ -577,7 +577,7 @@ GetMsetNames<-function(mSetObj=NA){
 GetMsetMembers<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
     }
 
   return(current.msetlib$member);
@@ -586,7 +586,7 @@ GetMsetMembers<-function(mSetObj=NA){
 GetMsetReferences<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
     }
 
   return(current.msetlib$reference);

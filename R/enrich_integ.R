@@ -141,7 +141,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     sub.dir <- paste0("kegg/jointpa/",libOpt);
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    ov_qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
   }
@@ -472,7 +472,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
         print("Not a defined topological measure!");
        # print(topo);
     }
-    qs::qsave(imp.list, file="pathinteg.impTopo.qs");
+    ov_qs_save(imp.list, file="pathinteg.impTopo.qs");
 
     # now, perform topological analysis		
     # calculate the sum of importance
@@ -576,7 +576,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     }
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    ov_qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
   }
@@ -740,7 +740,7 @@ GetIntegResultPathNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(!exists('current.kegglib')){
     if(file.exists("current.kegglib.qs")){
-        current.kegglib <<- qs::qread("current.kegglib.qs");
+        current.kegglib <<- ov_qs_read("current.kegglib.qs");
     }
   }
   return(names(current.kegglib$path.ids)[match(rownames(mSetObj$dataSet$path.mat),current.kegglib$path.ids)]);
@@ -992,7 +992,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
 
   if(!exists('current.kegglib')){
     if(file.exists("current.kegglib.qs")){
-        current.kegglib <<- qs::qread("current.kegglib.qs");
+        current.kegglib <<- ov_qs_read("current.kegglib.qs");
     }
   }
   library(igraph);
@@ -1002,7 +1002,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
     g <- upgrade_graph(g); # to fix warning, can be removed for new version
   }
   phits <- mSetObj$dataSet$path.hits[[path.id]];
-  pathinteg.impTopo <- qs::qread("pathinteg.impTopo.qs");
+  pathinteg.impTopo <- ov_qs_read("pathinteg.impTopo.qs");
   topo <- pathinteg.impTopo[[path.id]];
   
   # obtain up/down/stat information

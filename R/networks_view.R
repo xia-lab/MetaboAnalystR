@@ -29,7 +29,7 @@ UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enr
   sub.dir <- paste0("kegg/jointpa/",libOpt);
   destfile <- paste0(mSetObj$org, ".qs");
   current.kegglib <<- .get.my.lib(destfile, sub.dir);
-  qs::qsave(current.kegglib, "current.kegglib.qs");
+  ov_qs_save(current.kegglib, "current.kegglib.qs");
 
   load_igraph();
 

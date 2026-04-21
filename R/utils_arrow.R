@@ -11,18 +11,18 @@
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(df = df, path = arrow_path, compress = compress), bridge_in, preset = "fast")
+  ov_qs_save(list(df = df, path = arrow_path, compress = compress), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(arrow)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       arrow::write_feather(input$df, input$path, compression = input$compress)
       Sys.sleep(0.02)
       res <- base::normalizePath(input$path, mustWork = TRUE)
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 120
@@ -168,7 +168,7 @@ validateColumns <- function(tab, required, context = "") {
 #' @export
 shadow_save <- function(obj, file, compress = "uncompressed") {
     # Always save to qs for R compatibility
-    qs::qsave(obj, file)
+    ov_qs_save(obj, file)
 
     # Generate Arrow path
     arrow_path <- sub("\\.qs$", ".arrow", file)
@@ -207,7 +207,7 @@ shadow_save <- function(obj, file, compress = "uncompressed") {
 }
 
 shadow_save_mixed <- function(obj, file, compress = "uncompressed") {
-    qs::qsave(obj, file)
+    ov_qs_save(obj, file)
     arrow_path <- sub("\\.qs$", ".arrow", file)
 
     tryCatch({

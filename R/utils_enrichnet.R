@@ -283,7 +283,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   overlap_cpds <- pathway.cpds
   if (anal.opt %in% c("msetora", "msetqea", "msetssp") && edgeMode == "overview") {
     if (!exists("current.msetlib")) {
-      current.msetlib <<- qs::qread("current.msetlib.qs")
+      current.msetlib <<- ov_qs_read("current.msetlib.qs")
     }
     overlap_cpds <- current.msetlib$member[pathway.names]
     missing_names <- setdiff(pathway.names, names(overlap_cpds))
@@ -648,7 +648,7 @@ overlap_ratio <- function(set1, set2, type="mixed"){
 
 .id2name <- function(ids) {
   if (!exists("current.kegglib")) {
-    current.kegglib <<- qs::qread("current.kegglib.qs")
+    current.kegglib <<- ov_qs_read("current.kegglib.qs")
   }
   ix  <- match(ids, current.kegglib$path.ids)    # numeric indices or NA
   out <- names(current.kegglib$path.ids)[ix]     # gives NA where not found
@@ -663,7 +663,7 @@ overlap_ratio <- function(set1, set2, type="mixed"){
   
   ## lazy-load the KEGG pathway library if it is not yet in memory
   if (!exists("current.kegglib")) {
-    current.kegglib <<- qs::qread("current.kegglib.qs")
+    current.kegglib <<- ov_qs_read("current.kegglib.qs")
   }
   
   ids <- current.kegglib$path.ids        # named vector  Name → ID

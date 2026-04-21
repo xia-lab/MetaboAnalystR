@@ -110,7 +110,7 @@ CreateSummaryTable <- function(mSetObj=NA){
   sum.dat<-NULL;
   plenth <- mSetObj$dataSet$proc.feat.num;
   if(mSetObj$dataSet$type=='conc'| mSetObj$dataSet$type=='pktable'| mSetObj$dataSet$type=='specbin' | mSetObj$dataSet$type=='pktable-ma'){
-    orig.data<- qs::qread("data_orig.qs");
+    orig.data<- ov_qs_read("data_orig.qs");
     for(i in 1:nrow(orig.data)){
       srow<-orig.data[i,];
       newrow<-c(sum(srow[!is.na(srow)]>0), (sum(is.na(srow)) + sum(srow[!is.na(srow)]<=0)), plenth);
@@ -119,8 +119,8 @@ CreateSummaryTable <- function(mSetObj=NA){
     colnames(sum.dat)<-c("Features (positive)","Missing/Zero","Features (processed)");
     rownames(sum.dat)<-names(mSetObj$dataSet$url.smp.nms);
   }else if(mSetObj$dataSet$type=="nmrpeak"| mSetObj$dataSet$type=="mspeak"){ # peak list
-    pkSet<-qs::qread("peakSet.qs");
-    orig.data<- qs::qread("data_orig.qs");
+    pkSet<-ov_qs_read("peakSet.qs");
+    orig.data<- ov_qs_read("data_orig.qs");
     snames<-pkSet$sampnames;
     for(i in 1:length(snames)){
       samp.inx<-pkSet$peaks[,"sample"]==i;

@@ -20,7 +20,7 @@ SanityCheckData <- function(mSetObj=NA){
   #save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig_0.qs")){  
-    orig.data <- qs::qread("data_orig_0.qs"); # use the original version
+    orig.data <- ov_qs_read("data_orig_0.qs"); # use the original version
   } else {
     return(0);
   }  
@@ -114,7 +114,7 @@ SanityCheckData <- function(mSetObj=NA){
       mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
       
       mSetObj$dataSet$pair.checked <- TRUE;
-      #qs::qsave(orig.data, file="data_orig.qs");
+      #ov_qs_save(orig.data, file="data_orig.qs");
       
     } else {
       
@@ -191,7 +191,7 @@ SanityCheckData <- function(mSetObj=NA){
       mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
     }
     orig.data <- orig.data[ord.inx, , drop=FALSE];
-    qs::qsave(orig.data, file="data_orig.qs");
+    ov_qs_save(orig.data, file="data_orig.qs");
     if(mSetObj$dataSet$paired){
       mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
     }
@@ -276,8 +276,8 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
   
-  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
-  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
+  ov_qs_save(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
+  ov_qs_save(as.data.frame(int.mat), "preproc.qs"); # working copy
   
 ## ------------------------------------------------------------------
 ##  QC / blank-sample consistency checks with minimum thresholds
@@ -397,9 +397,9 @@ PerformSanityClosure <- function(mSetObj=NA){
   # note, this is last step of sanity check
   # prepare for reproducible analysis
 
-  int.mat <- qs::qread("preproc.qs"); 
+  int.mat <- ov_qs_read("preproc.qs"); 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
-  qs::qsave(as.data.frame(int.mat), file="data_proc.qs");
+  ov_qs_save(as.data.frame(int.mat), file="data_proc.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -430,7 +430,7 @@ RemoveMissingByPercent <- function(mSetObj = NA,
     int.mat   <- mSetObj$dataSet$proc          # already-normalised
     writeBack <- TRUE
   } else {
-    int.mat   <- qs::qread("preproc.orig.qs")  # raw pre-processing copy
+    int.mat   <- ov_qs_read("preproc.orig.qs")  # raw pre-processing copy
     writeBack <- FALSE
   }
 
@@ -467,7 +467,7 @@ RemoveMissingByPercent <- function(mSetObj = NA,
   rm.cnt <- sum(!good.inx)            # variables removed
 
     #mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
-    qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
+    ov_qs_save(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
   
 
   ## 4 · Log a concise message ------------------------------------------
@@ -558,7 +558,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   }
   mt <- file.info(exist)$mtime
   src <- exist[which.max(mt)]
-  dat <- as.matrix(qs::qread(src))
+  dat <- as.matrix(ov_qs_read(src))
 
   pref <- switch(src,
                  "data.edit.qs" = c("edit.cls"),
@@ -774,7 +774,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
   
-  qs::qsave(int.mat, "data.filt.qs");
+  ov_qs_save(int.mat, "data.filt.qs");
 
   .set.mSet(mSetObj);
 
@@ -782,7 +782,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     return(1);
   }else{
     # note here, if no missing data, need to save a copy for normalization
-    qs::qsave(int.mat, file = "data_proc.qs");
+    ov_qs_save(int.mat, file = "data_proc.qs");
     return(2);
   }
 }
@@ -979,16 +979,16 @@ IsDataContainsNegative<-function(mSetObj=NA){
 UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
   mSetObj <- .get.mSet(mSetObj);
   if(!is.null(mSetObj$dataSet[["orig"]])){
-    orig.data <- qs::qread("data_orig.qs");
+    orig.data <- ov_qs_read("data_orig.qs");
     orig.data <- .update.feature.nm(orig.data, old.nm, new.nm);
-    qs::qsave(orig.data, file="data_orig.qs");
+    ov_qs_save(orig.data, file="data_orig.qs");
   }
   
   if(file.exists("data_proc.qs")){
-    proc.data <- qs::qread("data_proc.qs");
+    proc.data <- ov_qs_read("data_proc.qs");
     proc.data <- .update.feature.nm(proc.data, old.nm, new.nm);
     mSetObj$dataSet$proc.feat.num <- ncol(proc.data);
-    qs::qsave(proc.data, file="data_proc.qs");
+    ov_qs_save(proc.data, file="data_proc.qs");
 
     #if(!is.null(mSetObj$dataSet[["filt"]])){
     ##  mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
@@ -1119,9 +1119,9 @@ GetMissingTestMsg <- function(mSetObj=NA, type){
     cls <-mSetObj$dataSet$cls
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         if(type == "filt"){
-          int.mat <- qs::qread("data.filt.qs");
+          int.mat <- ov_qs_read("data.filt.qs");
         }else{
-          int.mat <- qs::qread("preproc.orig.qs");
+          int.mat <- ov_qs_read("preproc.orig.qs");
         }
 
       miss.msg <- "";
@@ -1144,7 +1144,7 @@ GetMissNumMsg <- function(mSetObj = NA) {
   if(!file.exists("data.filt.qs")){
     return("NA");
   }
-  int.mat <- qs::qread("data.filt.qs")
+  int.mat <- ov_qs_read("data.filt.qs")
 
   ## count NAs
   totalCount <- length(int.mat)           # nrow * ncol
@@ -1206,9 +1206,9 @@ PlotMissingDistr <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
 
   if(grepl("_filt", imgName)){
-    int.mat <- qs::qread("data.filt.qs");
+    int.mat <- ov_qs_read("data.filt.qs");
   }else{
-    int.mat <- qs::qread("preproc.orig.qs");
+    int.mat <- ov_qs_read("preproc.orig.qs");
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1335,9 +1335,9 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   
   mSetObj <- .get.mSet(mSetObj)
   if(grepl("_filt", imgName)){
-    int.mat <- qs::qread("data.filt.qs");
+    int.mat <- ov_qs_read("data.filt.qs");
   }else{
-    int.mat <- qs::qread("preproc.orig.qs")
+    int.mat <- ov_qs_read("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1451,9 +1451,9 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 
   # Load appropriate matrix
   int.mat <- if (grepl("_filt", prefix)) {
-    qs::qread("data.filt.qs")
+    ov_qs_read("data.filt.qs")
   } else {
-    qs::qread("preproc.orig.qs")
+    ov_qs_read("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1588,7 +1588,7 @@ CheckQCRSD <- function(mSetObj, thr = 30) {
       mSetObj$msgSet$qc.rsd.msg <- msg
       return(msg)
     }
-    raw <- t(qs::qread("preproc.qs"))                # rows = ?  cols = ?
+    raw <- t(ov_qs_read("preproc.qs"))                # rows = ?  cols = ?
     
     ## make sure rows = features, cols = samples
     if (ncol(raw) != length(cls)) raw <- t(raw)
@@ -1644,7 +1644,7 @@ PlotRSDViolin <- function(mSetObj = NA,
     return(0);
   }
 
-  raw <- t(qs::qread("preproc.qs"))      # rows = features, cols = samples
+  raw <- t(ov_qs_read("preproc.qs"))      # rows = features, cols = samples
 
   ## ── class vector --------------------------------------------------------
   cls <- if (!is.null(mSetObj$dataSet$cls) &&
