@@ -720,12 +720,38 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     }
   }
   
-  # another check to ensure no missing or NA values
-  missing.inx <- apply(ndat, 2, function(x) any(is.na(x)))
-  
-  if(any(missing.inx)){
-    AddErrMsg("NA values found in the uploaded data!")
-    return(0)
+  # another check to ensure no missing or NA values — but be specific about
+  # which columns / rows are bad, and auto-drop affected rows (parallel to the
+  # m/z handling above) instead of aborting with a generic message. Excel error
+  # tokens like #DIV/0! and #N/A get parsed as NaN by data.table::fread.
+  na_per_col <- vapply(ndat, function(x) sum(is.na(x)), integer(1))
+  na_cols <- names(na_per_col)[na_per_col > 0]
+  if(length(na_cols) > 0){
+    # Collect row indices with any NA, then drop them in one pass.
+    na_row_mask <- Reduce(`|`, lapply(ndat[, na_cols, drop = FALSE], is.na))
+    bad_rows <- which(na_row_mask)
+    # Build a per-column summary for the user (column name, count, example row #).
+    # Use rownames so the reported index maps back to the original CSV data row,
+    # even if earlier m/z filtering already dropped rows from ndat.
+    row_labels <- rownames(ndat)
+    parts <- vapply(na_cols, function(col){
+      ex <- utils::head(row_labels[is.na(ndat[[col]])], 3)
+      sprintf("<b>%s</b> (%d, e.g. row %s)", col, na_per_col[[col]],
+              paste(ex, collapse = ", "))
+    }, character(1))
+    if(length(bad_rows) >= nrow(ndat)){
+      AddErrMsg(paste0("All rows contain NA/NaN in at least one column; ",
+                       "unable to proceed. Affected columns: ",
+                       paste(parts, collapse = "; "),
+                       ". Check your source file for Excel error codes ",
+                       "(#DIV/0!, #N/A, #NUM!, #REF!) or blank cells."))
+      return(0)
+    }
+    ndat <- ndat[-bad_rows, , drop = FALSE]
+    msg.vec <- c(msg.vec,
+      paste0("A total of <b>", length(bad_rows),
+             "</b> row(s) with NA/NaN values were removed. Affected columns: ",
+             paste(parts, collapse = "; "), "."))
   }
   
   read.msg <- mSetObj$msgSet$read.msg
