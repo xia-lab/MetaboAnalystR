@@ -70,6 +70,13 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
         level <- input$level
         group_names <- input$group_names
 
+        # Mahalanobis distance threshold at the requested confidence level for
+        # a 3-variable covariance — single scalar applied to every group, since
+        # we receive one `level` from the caller. Previous code referenced
+        # t_vals[i] which was never defined inside the subprocess closure and
+        # blew up with "object 't_vals' not found" for every group.
+        t_val <- sqrt(qchisq(level, df = 3))
+
         result_list <- vector("list", length(coords_list))
         for (i in seq_along(coords_list)) {
           coords <- coords_list[[i]]
@@ -81,7 +88,7 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
             pos <- cov(coords, y = NULL, use = "everything")
             center <- colMeans(coords)
             mesh <- list()
-            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_vals[i])
+            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
             result_list[[i]] <- list(group = group_names[i], mesh = mesh, error = NULL)
           }, error = function(e) {
             result_list[[i]] <<- list(group = group_names[i], mesh = list(), error = e$message)
