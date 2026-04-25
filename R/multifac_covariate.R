@@ -634,9 +634,14 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      # Strip "ID" column newer limma topTable prepends when rownames(fit)
+      # is non-null — defensive even though the conditional below is keyed
+      # off "logFC" presence rather than column 1.
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       # For multi-contrast (ANOVA), extract logFC from first contrast
       if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
         first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        if (!is.null(first.contrast$ID)) { rownames(first.contrast) <- first.contrast$ID; first.contrast$ID <- NULL; }
         rest$logFC <- first.contrast[rownames(rest), "logFC"]
       }
     } else {
@@ -649,8 +654,10 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
         first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        if (!is.null(first.contrast$ID)) { rownames(first.contrast) <- first.contrast$ID; first.contrast$ID <- NULL; }
         rest$logFC <- first.contrast[rownames(rest), "logFC"]
       }
     }
@@ -688,12 +695,16 @@ CovariateScatter.Anal <- function(mSetObj,
 
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf, coef = analysis.var);
+      # Strip the "ID" column newer limma topTable prepends when rownames(fit)
+      # is non-null. Otherwise the rename below targets the wrong column.
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       colnames(rest)[1] <- analysis.var;
     } else {
       # No covariates selected - same as "without" analysis
       design <- model.matrix(formula(paste0("~ ", analysis.var)), data = covariates);
       fit <- eBayes(lmFit(feature_table, design));
       rest <- topTable(fit, number = Inf);
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
     }
 
     ### Analysis WITHOUT covariates (simple model)
