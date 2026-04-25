@@ -831,8 +831,12 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     }
 
     if(missing(height)) {
-        height <- bubblePlotSize*0.6;
-    }    
+        # Scale height with pathway count so rows stay legible regardless of
+        # how many pathways survive the pvalCutoff / bubbleMaxPaths filter.
+        # ~0.3 inch per row + a 2.5 inch base for x-axis labels and legends.
+        n_paths <- nrow(path_results)
+        height <- max(bubblePlotSize * 0.5, 0.3 * n_paths + 2.5)
+    }
     
     if(missing(format)) {
         format <- "png";
