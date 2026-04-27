@@ -77,6 +77,48 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 } 
 
 # =============================================================================
+# qs read/save/exists wrappers (master session)
+# =============================================================================
+# Master-session counterparts of the helpers injected into Rserve subprocesses
+# below. Two consumption contexts, both supported:
+#   1. Installed MetaboAnalystR package — these live in the package namespace
+#      and are resolvable from any sibling function. Kept unexported (internal
+#      plumbing), matching the convention used for run_func_via_rsclient.
+#   2. Public web — _script_loader.R loadcmp's the .R/.Rc files into
+#      .GlobalEnv, so these top-level defs become globally visible regardless
+#      of NAMESPACE.
+
+ov_qs_read <- function(file, ...) {
+  if (file.exists(file)) {
+    r <- try(qs2::qs_read(file, ...), silent = TRUE)
+    if (!inherits(r, "try-error")) return(r)
+    return(qs::qread(file, ...))
+  }
+  if (endsWith(tolower(file), ".qs")) {
+    v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
+    if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
+  } else if (endsWith(tolower(file), ".qs2")) {
+    v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
+    if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
+  }
+  stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+}
+
+ov_qs_save <- function(obj, file, ...) {
+  .args <- list(...)
+  for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
+  do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
+  invisible(file)
+}
+
+ov_qs_exists <- function(file) {
+  if (file.exists(file)) return(TRUE)
+  if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
+  if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
+  FALSE
+}
+
+# =============================================================================
 # RSclient subprocess execution (Rserve fork — shared by Public and Pro)
 # =============================================================================
 

@@ -843,38 +843,39 @@ blankfeatureFiltering <- function(preproc, idx_blank, threshold) {
 
 
 
-ede <- function (x, y, index) 
+ede <- function (x, y, index)
 {
+  # Use plain if/else for scalar control flow with side-effect assignments.
+  # ifelse() forces both branches into a length-matched vector, so a branch
+  # ending with `if (...)` (no else) materialises NULL and crashes with
+  # "replacement has length zero" on the blank-subtraction code path.
 
   n = length(x)
   if (index == 1) {
     y = -y
   }
-    ifelse(n >= 4, {
-      LF = y - lin2(x[1], y[1], x[n], y[n], x)
-      jf1 = which.min(LF)
-      xf1 = x[jf1]
-      jf2 = which.max(LF)
-      xf2 = x[jf2]
-      res <- jf2 < jf1
-      if(length(res)==0){
-        jf1 = NaN
-        jf2 = NaN
-        xfx = NaN
-      } else {
-        ifelse(jf2 < jf1, {
-          xfx <- NaN
-        }, {
-          xfx <- 0.5 * (xf1 + xf2)
-          if(is.na(xfx)){xfx <- NaN}
-          if(length(xfx) == 0){xfx <- NaN}
-        })
-      }
-    }, {
+  if (n >= 4) {
+    LF = y - lin2(x[1], y[1], x[n], y[n], x)
+    jf1 = which.min(LF)
+    xf1 = x[jf1]
+    jf2 = which.max(LF)
+    xf2 = x[jf2]
+    res <- jf2 < jf1
+    if (length(res) == 0) {
       jf1 = NaN
       jf2 = NaN
       xfx = NaN
-    })
+    } else if (isTRUE(jf2 < jf1)) {
+      xfx <- NaN
+    } else {
+      xfx <- 0.5 * (xf1 + xf2)
+      if (length(xfx) == 0 || is.na(xfx)) xfx <- NaN
+    }
+  } else {
+    jf1 = NaN
+    jf2 = NaN
+    xfx = NaN
+  }
   out = matrix(c(jf1, jf2, xfx), nrow = 1, ncol = 3, byrow = TRUE)
   rownames(out) = "EDE"
   colnames(out) = c("j1", "j2", "chi")
@@ -901,24 +902,26 @@ bede <- function (x, y, index)
   iplast = B[1, 3]
   j <- 0
   while (!(is.nan(B[1, 3]))) {
-    ifelse(B[1, 2] >= B[1, 1] + 3, {
+    # Plain if/else so `break` is reached deterministically and no NULL
+    # branch can leak through ifelse()'s vector-recycling internals.
+    if (B[1, 2] >= B[1, 1] + 3) {
       j <- j + 1
       x2 <- x2[B[1, 1]:B[1, 2]]
       y2 <- y2[B[1, 1]:B[1, 2]]
       B <- ede(x2, y2, index)
-      ifelse(!(is.nan(B[1, 3])), {
+      if (!(is.nan(B[1, 3]))) {
         a = c(a, x2[B[1, 1]])
         b = c(b, x2[B[1, 2]])
         nped <- c(nped, length(x2))
         EDE <- c(EDE, B[1, 3])
         BEDE <- c(BEDE, B[1, 3])
         iplast = B[1, 3]
-      }, {
+      } else {
         break
-      })
-    }, {
+      }
+    } else {
       break
-    })
+    }
   }
   iters = as.data.frame(cbind(nped, a, b, BEDE))
   colnames(iters) = c("n", "a", "b", "EDE")
