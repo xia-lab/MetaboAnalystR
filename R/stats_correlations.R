@@ -185,10 +185,11 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@param cor.method Indicate the correlation method, 'pearson', 'spearman', or 'kendall'.
 #'@param colors Indicate the colors for the heatmap, "bwm" for default, "gbr" for red/green, "heat" for heat colors,
 #'"topo" for topo colors, and "gray" for gray scale.
-#'@param viewOpt Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.
 #'@param fix.col Logical, fix colors (TRUE) or not (FALSE).
 #'@param no.clst Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).
 #'@param corrCutoff set corrCutoff
+#'@param fz Numeric, font size for labels in the heatmap.
+#'@param unit Numeric, unit size controlling the height/width of each cell in the heatmap.
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export

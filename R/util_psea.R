@@ -146,7 +146,7 @@ CreateLibFromKEGG <- function(cpd.lib, pathways, org){
   print(paste0(org, " mummichog library created!"))
   file_name <- paste0(org, "_kegg.qs")
   
-  qs::qsave(mummichog.lib, file=file_name);
+  ov_qs_save(mummichog.lib, file=file_name);
 }
 
 # Makes adducts

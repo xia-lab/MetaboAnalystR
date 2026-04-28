@@ -6,7 +6,6 @@
  * peak alignment, matching and identification.” Analytical Chemistry, 78, 779–787.
  */
 
-/* 
 
 /*
  * ----------------------- R ENTRY POINTS -----------------------
@@ -358,7 +357,6 @@ void _breaks_on_binSize(double from_val, double to_val, int n_bin,
   // no of breaks: ceil(from_val - to_val / bin_size)
   // We have to assume that the *brks array has already been sized to the
   // correct length (i.e. ceil((from_val - to_val) / bin_size))
-  int idx = 0;
   for (int i = 0; i < n_bin; i++) {
     brks[i] = from_val + i * bin_size;
   }

@@ -54,7 +54,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
   
   mSetObj <- .get.mSet(mSetObj);
   dataName <- dataSet$name;
-  qs::qsave(dataSet, file=dataName);
+  ov_qs_save(dataSet, file=dataName);
   dataSet <<- dataSet; # redundant? have mSetObj$dataSet = 2 copies
   mdata.all[[dataName]] <<- 1;
  mSetObj$mdata.all <- mdata.all;
@@ -78,7 +78,7 @@ SanityCheckIndData<-function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
 
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -368,7 +368,7 @@ PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -441,7 +441,7 @@ PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }else{
     dataSet <- mSetObj$dataSet
   }
@@ -522,7 +522,7 @@ GetLimmaResTable<-function(fit.obj){
 #'@export
 PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = default.dpi){
   if(!exists('metastat.meta')){
-  metastat.meta <<- qs::qread("metastat.meta.qs");
+  metastat.meta <<- ov_qs_read("metastat.meta.qs");
 }
   mSetObj <- .get.mSet(mSetObj);
   mSetObj$imgSet$meta.anal$feature <- symb <- gene.id;
@@ -607,7 +607,7 @@ GetMetaSanityCheckMsg <- function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }
 
   return(dataSet$check.msg);
@@ -618,7 +618,7 @@ GetDataDims <- function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }
   data <- dataSet$data;
   dm <- dim(data);
@@ -632,7 +632,7 @@ GetMetaGroupNames <-function(mSetObj=NA, dataName){
   mSetObj <- .get.mSet(mSetObj);
   
   if(mSetObj$dataSet$name != dataName){
-    dataSet <- qs::qread(dataName);
+    dataSet <- ov_qs_read(dataName);
   }
   return(levels(dataSet$cls));
 }
@@ -653,8 +653,8 @@ GlobalCutOff = list(
 SetupMetaStats <- function(mSetObj, BHth){
   mdata.all <- mSetObj$mdata.all
   if(!exists('metastat.meta')){
-    metastat.meta <<- qs::qread("metastat.meta.qs");
-    metastat.ind <<- qs::qread("metastat.ind.qs");
+    metastat.meta <<- ov_qs_read("metastat.meta.qs");
+    metastat.ind <<- ov_qs_read("metastat.ind.qs");
   }
   GlobalCutOff$BHth <<- BHth;
   #all common genes

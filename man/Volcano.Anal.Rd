@@ -23,6 +23,8 @@ cmpType, nonpar=F, threshp, equal.var=TRUE, pval.type="raw")
 \item{equal.var}{Logical, indicates if the group variance is equal (T) or unequal (F)}
 
 \item{pval.type}{To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".}
+
+\item{fc.method}{Character, the fold change method: "classical" (default) or "limma". When "limma" is used, moderated t-statistics are also applied.}
 }
 \description{
 Perform volcano analysis

@@ -13,6 +13,10 @@ ImputeMissingVar(mSetObj, method)
 replacement based on the minimum ("min), the mean ("mean"), or the median ("median") value of each feature columns,
 or several options to impute the missing values, using k-nearest neighbour ("KNN"), probabilistic PCA ("PPCA"), 
 Bayesian PCA ("BPCA") method, or Singular Value Decomposition ("svdImpute")}
+
+\item{grpLod}{Logical, if TRUE apply limit of detection (LOD) imputation within each group. Default is FALSE.}
+
+\item{grpMeasure}{Logical, if TRUE use group-specific measurement for imputation. Default is FALSE.}
 }
 \description{
 Replace missing variables by min/mean/median/KNN/BPCA/PPCA/svdImpute.

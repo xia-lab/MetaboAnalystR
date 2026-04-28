@@ -140,7 +140,7 @@ savePeakListMetaData <- function(mSetObj=NA){
     meta.anal.type <<- anal.type
   }
   
-  qs::qsave(mSetObj, file_name)
+  ov_qs_save(mSetObj, file_name)
   
   return(.set.mSet(mSetObj));
 }
@@ -221,14 +221,14 @@ PerformMetaPSEA <- function(mSetObj=NA,
     cpdMatchResults <- list()
 
     for(i in 1:length(metaFiles)){
-      #mSetObj <- qs::qread(metaFiles[i]);
+      #mSetObj <- ov_qs_read(metaFiles[i]);
       mSetObj0 <- FormatmSet(mSetObj, metaFiles[i])
       if(!is.null(mSetObj0$dataSet$adduct.custom)){
         mSetObj0 <- AdductMapping(mSetObj0);
       }
 
       mSetObj0 <- .setup.psea.library(mSetObj0, lib, libVersion, minLib);
-      cpdMatchResults[[metaFiles[i]]] <- qs::qread("mum_res.qs")
+      cpdMatchResults[[metaFiles[i]]] <- ov_qs_read("mum_res.qs")
      
       # don't need to write path result CSV files for meta-analysis in indiv' runs
       # need to write each individual compound matching file with their own name
@@ -265,12 +265,12 @@ PerformMetaPSEA <- function(mSetObj=NA,
     adduct.list <- list();
     
     for(metafile in seq_along(metaFiles)){
-      #mSetObj <- qs::qread(metaFiles[metafile]);
+      #mSetObj <- ov_qs_read(metaFiles[metafile]);
       mSetObj0 <- FormatmSet(mSetObj, metaFiles[metafile]);
       
       if(!is.null(mSetObj0$dataSet$adduct.custom)){
         mSetObj0 <- AdductMapping(mSetObj0);
-        qs::qsave(mSetObj0, file = metaFiles[metafile]);
+        ov_qs_save(mSetObj0, file = metaFiles[metafile]);
       }
       
       metafile <- metaFiles[metafile];
@@ -831,8 +831,12 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     }
 
     if(missing(height)) {
-        height <- bubblePlotSize*0.6;
-    }    
+        # Scale height with pathway count so rows stay legible regardless of
+        # how many pathways survive the pvalCutoff / bubbleMaxPaths filter.
+        # ~0.3 inch per row + a 2.5 inch base for x-axis labels and legends.
+        n_paths <- nrow(path_results)
+        height <- max(bubblePlotSize * 0.5, 0.3 * n_paths + 2.5)
+    }
     
     if(missing(format)) {
         format <- "png";
@@ -894,7 +898,7 @@ Customize.MetaAdduct <- function(mSet, name, name2, qvec, mode){
   #   filename <- paste0(fileNM, "mummichoginput.qs");
   # }
   #
-  # mSetObj <- qs::qread(filename); 
+  # mSetObj <- ov_qs_read(filename); 
   dataNMs <- names(mSetObj)[grepl("MetaData",names(mSetObj))];
 
   for(nm in dataNMs){
@@ -916,7 +920,7 @@ Customize.MetaAdduct <- function(mSet, name, name2, qvec, mode){
   # mSetObj$adduct.custom <- TRUE;
   # mSetObj$dataSet$fileName <- fileNM;
   
-  # qs::qsave(mSetObj, file = filename);
+  # ov_qs_save(mSetObj, file = filename);
   # return(1);
   return(.set.mSet(mSetObj))
 }
@@ -1379,7 +1383,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
   msg <- NULL;
   
   for(i in seq(data_oriNM)){
-    conc <- qs::qread(data_oriNM[i]);
+    conc <- ov_qs_read(data_oriNM[i]);
     
     if(i == 2){
       # dataSet <- mSetObj[[paste0("dataSet",i)]];
@@ -1573,7 +1577,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
   
   # Collect all msg here 
   mSetObj$dataSet$check.msg <- msg; #may consider msg missing
-  # qs::qsave(mSetObj, file = mSetObjNM);
+  # ov_qs_save(mSetObj, file = mSetObjNM);
 
   if(.on.public.web){
     .set.mSet(mSetObj);
@@ -1761,13 +1765,13 @@ GetMetaPathGroupNames <-function(mSetObj=NA, dataName){
   }
   return(levels(cls))
   #if(mSetObj$dataSet$name != dataName){
-  #  dataSet <- qs::qread(dataName);
+  #  dataSet <- ov_qs_read(dataName);
   #}
   #return(levels(mSetObj$dataSet$cls));
 }
 
 PlotPathDataProfile<-function(dataName, dataName2= NULL, boxplotName, boxplotName2 =NULL, dataformat, dpi){
-  #dataSet <- qs::qread(dataName);
+  #dataSet <- ov_qs_read(dataName);
   mSetObj <- .get.mSet(mSetObj);
   
   if(.on.public.web){
@@ -2020,17 +2024,17 @@ GetSigPathNums <- function(pvalCutoff){
   # Handle case where pathSet is NULL or empty
   if(is.null(pathSet) || length(pathSet) == 0){
     if(file.exists("pathSet_tmp.qs")){
-      pathSet <- qs::qread("pathSet_tmp.qs")
+      pathSet <- ov_qs_read("pathSet_tmp.qs")
     } else {
       AddErrMsg("Path results not available. Please run the analysis first.")
       return(NULL)
     }
   } else if(class(pathSet[[1]])[1] == "matrix"){
-    qs::qsave(pathSet, file = "pathSet_tmp.qs")
+    ov_qs_save(pathSet, file = "pathSet_tmp.qs")
   } else {
     # pathSet exists but first element is not a matrix - try to read cached version
     if(file.exists("pathSet_tmp.qs")){
-      pathSet <- qs::qread("pathSet_tmp.qs")
+      pathSet <- ov_qs_read("pathSet_tmp.qs")
     } else {
       AddErrMsg("Path results not in expected format. Please re-run the analysis.")
       return(NULL)
@@ -2290,13 +2294,13 @@ Finish.DataSet <- function(dataName, dataName2 = NULL){
   fileTitle2 <- sub(pattern = "(.*)\\..*$", replacement = "\\1", (dataName2));
   
   mSetObjNM <- paste0(fileTitle, "_" ,fileTitle2, "_mSet.qs");
-  qs::qsave(mSet, file = mSetObjNM)
+  ov_qs_save(mSet, file = mSetObjNM)
   return(1)
 }
 
 Restore.CmdHistory <- function(){
   if(file.exists("cmdSet.qs")){
-    cmdSet <- qs::qread("cmdSet.qs");
+    cmdSet <- ov_qs_read("cmdSet.qs");
     mSetObj$cmdSet <<- c(cmdSet, mSetObj$cmdSet);
   }
 }

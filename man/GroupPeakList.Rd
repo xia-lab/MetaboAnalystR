@@ -9,19 +9,19 @@ GroupPeakList(mSetObj=NA, mzwid, bw, minfrac, minsamp, max)
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
-\item{mzwid, }{define the width of overlapping m/z slices to use for creating peak density chromatograms
+\item{mzwid}{define the width of overlapping m/z slices to use for creating peak density chromatograms
 and grouping peaks across samples}
 
-\item{bw, }{define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
+\item{bw}{define the bandwidth (standard deviation or half width at half maximum) of gaussian smoothing
 kernel to apply to the peak density chromatogram}
 
-\item{minfrac, }{define the minimum fraction of samples necessary in at least one of the sample groups for
+\item{minfrac}{define the minimum fraction of samples necessary in at least one of the sample groups for
 it to be a valid group}
 
-\item{minsamp, }{define the minimum number of samples necessary in at least one of the sample groups for 
+\item{minsamp}{define the minimum number of samples necessary in at least one of the sample groups for 
 it to be a valid group}
 
-\item{max, }{define the maximum number of groups to identify in a single m/z slice}
+\item{max}{define the maximum number of groups to identify in a single m/z slice}
 }
 \description{
 Group peaks from the peak list based on position

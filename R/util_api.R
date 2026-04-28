@@ -82,7 +82,7 @@ my.integ.kegg <- function(endpoint="/jointpath"){
     
     rownames(mSetObj$dataSet$path.mat) <- mSetObj$dataSet$jointpa.pathnames
     fast.write.csv(mSetObj$dataSet$path.mat, file="MetaboAnalyst_result_pathway.csv", row.names=TRUE);
-    qs::qsave(mSetObj$dataSet$pathinteg.impTopo, file = "pathinteg.impTopo.qs")
+    ov_qs_save(mSetObj$dataSet$pathinteg.impTopo, file = "pathinteg.impTopo.qs")
     #mSetObj$dataSet$pathinteg.impMat <- impMat;    
     return(.set.mSet(mSetObj));
  }

@@ -44,11 +44,13 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{no.clst}{Logical, indicate if the correlations should be clustered (TRUE) or not (FALSE).}
 
-\item{corrCutoff}{set corrCutoff
+\item{fz}{Numeric, font size for labels in the heatmap.}
+
+\item{unit}{Numeric, unit size controlling the height/width of each cell in the heatmap.
 McGill University, Canada
 License: GNU GPL (>= 2)}
 
-\item{viewOpt}{Indicate "overview" to get an overview of the heatmap, and "detail" to get a detailed view of the heatmap.}
+\item{corrCutoff}{set corrCutoff}
 }
 \description{
 Plot correlation heatmap

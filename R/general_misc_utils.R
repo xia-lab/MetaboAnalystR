@@ -77,12 +77,87 @@ RemoveDuplicates <- function(data, lvlOpt="mean", quiet=T){
 } 
 
 # =============================================================================
+# qs read/save/exists wrappers (master session)
+# =============================================================================
+# Master-session counterparts of the helpers injected into Rserve subprocesses
+# below. Two consumption contexts, both supported:
+#   1. Installed MetaboAnalystR package — these live in the package namespace
+#      and are resolvable from any sibling function. Kept unexported (internal
+#      plumbing), matching the convention used for run_func_via_rsclient.
+#   2. Public web — _script_loader.R loadcmp's the .R/.Rc files into
+#      .GlobalEnv, so these top-level defs become globally visible regardless
+#      of NAMESPACE.
+
+ov_qs_read <- function(file, ...) {
+  if (file.exists(file)) {
+    r <- try(qs2::qs_read(file, ...), silent = TRUE)
+    if (!inherits(r, "try-error")) return(r)
+    return(qs::qread(file, ...))
+  }
+  if (endsWith(tolower(file), ".qs")) {
+    v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
+    if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
+  } else if (endsWith(tolower(file), ".qs2")) {
+    v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
+    if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
+  }
+  stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+}
+
+ov_qs_save <- function(obj, file, ...) {
+  .args <- list(...)
+  for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
+  do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
+  invisible(file)
+}
+
+ov_qs_exists <- function(file) {
+  if (file.exists(file)) return(TRUE)
+  if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
+  if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
+  FALSE
+}
+
+# =============================================================================
 # RSclient subprocess execution (Rserve fork — shared by Public and Pro)
 # =============================================================================
 
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
   conn <- RSclient::RS.connect(host = "localhost", port = 6311)
   on.exit(try(RSclient::RS.close(conn), silent = TRUE))
+  # Inject the qs wrapper helpers into the subprocess R session so callers
+  # writing ov_qs_read(f) / ov_qs_save(obj, f) inside their subprocess func
+  # body work transparently — the subprocess is a fresh R session and does
+  # not inherit master-session helpers otherwise.
+  RSclient::RS.eval(conn, quote({
+    ov_qs_read <- function(file, ...) {
+      if (file.exists(file)) {
+        r <- try(qs2::qs_read(file, ...), silent = TRUE)
+        if (!inherits(r, "try-error")) return(r)
+        return(qs::qread(file, ...))
+      }
+      if (endsWith(tolower(file), ".qs")) {
+        v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
+        if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
+      } else if (endsWith(tolower(file), ".qs2")) {
+        v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
+        if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
+      }
+      stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+    }
+    ov_qs_save <- function(obj, file, ...) {
+      .args <- list(...)
+      for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
+      do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
+      invisible(file)
+    }
+    ov_qs_exists <- function(file) {
+      if (file.exists(file)) return(TRUE)
+      if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
+      if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
+      FALSE
+    }
+  }))
   RSclient::RS.assign(conn, ".exec_wd", getwd())
   RSclient::RS.assign(conn, ".exec_func", func)
   RSclient::RS.assign(conn, ".exec_args", args)
@@ -117,67 +192,86 @@ SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMetho
 
 .readDataTable <- function(fileName, save.copy=TRUE){
 
+    # Capture the original parser diagnostic so we can surface it to the
+    # user when both readers fail. Without this, the only thing the UI sees
+    # is a cryptic "missing value where TRUE/FALSE needed" downstream.
+    parser.diag <- NULL;
+
     dat <- tryCatch(
             {
-                data.table::fread(fileName, header=TRUE, check.names=FALSE, 
+                data.table::fread(fileName, header=TRUE, check.names=FALSE,
                                   blank.lines.skip=TRUE, data.table=FALSE, integer64 = "numeric");
             }, error=function(e){
+                parser.diag <<- conditionMessage(e);
                 print(e);
-                return(.my.slowreaders(fileName));    
+                return(.my.slowreaders(fileName));
             }, warning=function(w){
+                parser.diag <<- conditionMessage(w);
                 print(w);
                 return(.my.slowreaders(fileName));
             });
-            
 
-    if(any(dim(dat) == 0)){
+    # If the slow reader threw (try-error) or fread returned an empty frame,
+    # bail out NOW with an informative message — do not fall through to the
+    # column-cleanup line below, which mutates a try-error object into
+    # something whose class is no longer "try-error" but whose ncol() is NA,
+    # producing the silent "missing value where TRUE/FALSE needed" failure.
+    bad.read <- inherits(dat, "try-error") ||
+                is.null(dat) ||
+                !is.data.frame(dat) ||
+                any(dim(dat) == 0);
+
+    if (bad.read && !inherits(dat, "try-error")) {
+        # Fast reader returned an empty frame — try slow reader once.
         dat <- .my.slowreaders(fileName);
+        bad.read <- inherits(dat, "try-error") ||
+                    is.null(dat) ||
+                    !is.data.frame(dat) ||
+                    any(dim(dat) == 0);
+    }
+
+    if (bad.read) {
+        if (inherits(dat, "try-error")) {
+            parser.diag <- attr(dat, "condition")$message;
+        }
+        AddErrMsg("Failed to read the uploaded data file.");
+        if (!is.null(parser.diag) && nzchar(parser.diag)) {
+            AddErrMsg(paste("Parser said:", parser.diag));
+        }
+        AddErrMsg("Common causes:");
+        AddErrMsg("- A row has more or fewer columns than the header (look at the line number in the parser message).");
+        AddErrMsg("- Wrong delimiter for the extension (TSV saved as .csv, or vice versa).");
+        AddErrMsg("- Embedded newlines or unescaped commas/tabs inside a cell.");
+        AddErrMsg("- Non-UTF-8 characters or a BOM marker at the start of the file.");
+        AddErrMsg("- Duplicate sample or feature names.");
+        return(0);
     }
 
     # need to remove potential empty columns !! NOTE the single |, not || which is for atomic operation
     dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
 
-    if(save.copy){
-        # now try to save something for user side view or debugging
-        if(class(dat) == "try-error" || ncol(dat) == 1){
-            if((ncol(dat)==1) & (colnames(dat)[1] == "m.z" || colnames(dat)[1] == "mz")){
-                # do nothing, because this is not a bug
+    if (save.copy) {
+        if (ncol(dat) == 1) {
+            if (colnames(dat)[1] == "m.z" || colnames(dat)[1] == "mz") {
+                # legitimate single-column m/z input — not an error
             } else {
-                AddErrMsg("Data format error. Failed to read in the data!");
-                AddErrMsg("Make sure the data table is saved as comma separated values (.csv) format!");
-                AddErrMsg("Please also check the followings: ");
-                AddErrMsg("Either sample or feature names must in UTF-8 encoding; Latin, Greek letters are not allowed.");
-                AddErrMsg("We recommend to use a combination of English letters, underscore, and numbers for naming purpose.");
-                AddErrMsg("Make sure sample names and feature (peak, compound) names are unique.");
-                AddErrMsg("Missing values should be blank or NA without quote.");
-                AddErrMsg("Make sure the file delimeters are commas.");
-
-                # now try to extract something for viewing
+                AddErrMsg("Data parsed to a single column — likely the wrong delimiter.");
+                AddErrMsg("Save tab-separated files with extension .txt; comma-separated with .csv.");
+                # save the first 100 lines for the user to inspect
                 tryCatch({
-                    fileConn <- file(filePath, encoding = "UTF-8");
-                    text <- readLines(fileConn, n=100); # max 100 lines
-                    write.csv(text, file="raw_dataview.csv");
-                },
-                error = function(e) return(e),
-                finally = {
-                    close(fileConn)
-                });
-
+                    fileConn <- file(fileName, encoding = "UTF-8");
+                    text <- readLines(fileConn, n = 100);
+                    write.csv(text, file = "raw_dataview.csv");
+                    close(fileConn);
+                }, error = function(e) NULL);
                 return(0);
             }
+        }
 
-        }
-  
         # save a table output at the earliest time for viewing
-        row.num <- nrow(dat);
-        col.num <- ncol(dat);
-        if(row.num > 100){
-            row.num <- 100;
-        }
-        if(col.num > 10){
-            col.num <- 10;
-        }
-        write.csv(dat[1:row.num, 1:col.num], file="raw_dataview.csv");
+        row.num <- min(nrow(dat), 100);
+        col.num <- min(ncol(dat), 10);
+        write.csv(dat[1:row.num, 1:col.num], file = "raw_dataview.csv");
     }
     return(dat);
 }
@@ -595,6 +689,7 @@ getVennCounts <- function(x, include="both") {
 # Jeff Xia\email{jeff.xia@mcgill.ca}
 # McGill University, Canada
 # License: GNU GPL (>= 2)
+#' @exportS3Method
 all.numeric <- function (x, what = c("test", "vector"), extras = c(".", "NA")){
   what <- match.arg(what)
   old <- options(warn = -1)
@@ -1058,6 +1153,7 @@ GetDist3D <-function(mat, target=c(0,0,0)){
     return(dist.vec);
 }
 
+#' @export
 sum.na <- function(x,...){
   res <- NA
   tmp <- !(is.na(x) | is.infinite(x))
@@ -1075,7 +1171,7 @@ var.na <- function(x){
   res
 }
 
-end.with <- function(bigTxt, endTxt){
+var.na <- function(x){
    return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
 }
 
@@ -1280,7 +1376,7 @@ convert.rds2qs <- function(){
  for(rds in rds.files){
     lib.rds <- readRDS(rds);
     nm <- substr(rds, 1, nchar(rds)-4);
-    qs::qsave(lib.rds,paste0(nm, ".qs"));
+    ov_qs_save(lib.rds,paste0(nm, ".qs"));
  }
 }
 
@@ -1291,11 +1387,11 @@ convert.rda2qs <- function(){
     nm <- substr(rda, 1, nchar(rda)-4);
     lib.rda <- load(rda);
     # here the name is inmexpa (jointpa)
-    # qs::qsave(inmexpa,paste0(nm, ".qs"));
+    # ov_qs_save(inmexpa,paste0(nm, ".qs"));
     # here the name is metpa (metpa)
-    qs::qsave(metpa,paste0(nm, ".qs"));
+    ov_qs_save(metpa,paste0(nm, ".qs"));
     # here the name is current.msetlib (msets)
-    #qs::qsave(current.msetlib,paste0(nm, ".qs"));
+    #ov_qs_save(current.msetlib,paste0(nm, ".qs"));
  }
 }
 
@@ -1569,13 +1665,13 @@ rescale2NewRange <- function(qvec, a, b){
 
 SaveMsetObject <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
-  qs::qsave(mSetObj, "mSetObj_after_sanity.qs");
+  ov_qs_save(mSetObj, "mSetObj_after_sanity.qs");
   return(1);
 }
 
 GetSampleNum <- function(){
   if(file.exists("mSetObj_after_sanity.qs")){
-    mSetObj <- qs::qread("mSetObj_after_sanity.qs");
+    mSetObj <- ov_qs_read("mSetObj_after_sanity.qs");
     nrow(mSetObj$dataSet$meta.info);
   } else {
     return(0)

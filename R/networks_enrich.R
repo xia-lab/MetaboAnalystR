@@ -359,7 +359,7 @@ PerformDSPC <- function(mSetObj=NA){
   # glasso cannot work well on large data,
   # must be log or cubic root transformed
   if(!mSetObj$dataSet$trans.method %in% c("Cubic Root Transformation", "Log10 Normalization")){
-      dat <- qs::qread("row_norm.qs");
+      dat <- ov_qs_read("row_norm.qs");
       min.val <- min(abs(dat[dat!=0]))/10;
       dat <- LogNorm(dat, min.val);
       print("Perform log transformation for glasso ...");

@@ -13,7 +13,8 @@ CrossReferencing(
   chebi = F,
   kegg = T,
   metlin = F,
-  lipid = F
+  lipid = F,
+  mixed = F
 )
 }
 \arguments{

@@ -156,7 +156,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     param_list$useentropy <- FALSE;
   }
   
-  qs::qsave(param_list, file = "msn_param_list.qs");
+  ov_qs_save(param_list, file = "msn_param_list.qs");
   
   param_list$db_opt <- gsub(" ", "", param_list$db_opt);
   param_list$db_opt <- gsub("\\[", "c('", param_list$db_opt);
@@ -361,7 +361,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_write <- "write.table(dtx, file = \'compound_msn_results.tsv\', row.names = F, quote = FALSE, sep = \'\\t\')";
   str <- paste0(str, ";\n", cmd_write)
   
-  cmd_saving <- "mSet@MSnData[[\'precursors\']] <- mSet@MSnData[[\'scanrts_ms1\']] <- mSet@MSnData[[\'scanrts_ms2\']] <- mSet@MSnData[[\'scan_ms1\']] <- mSet@MSnData[[\'scan_ms2\']] <- NULL; qs::qsave(mSet, file = \'msn_mset_result.qs\')";
+  cmd_saving <- "mSet@MSnData[[\'precursors\']] <- mSet@MSnData[[\'scanrts_ms1\']] <- mSet@MSnData[[\'scanrts_ms2\']] <- mSet@MSnData[[\'scan_ms1\']] <- mSet@MSnData[[\'scan_ms2\']] <- NULL; ov_qs_save(mSet, file = \'msn_mset_result.qs\')";
   str <- paste0(str, ";\n", cmd_saving)
   
   cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
@@ -608,7 +608,7 @@ verifyParam <- function(param0_path, users.path) {
 #' @author Zhiqiang Pang
 #' @importFrom qs qsave
 spectraInclusion <- function(files, number){
-    qs::qsave(list(files, number), file = "IncludedSpectra.qs");
+    ov_qs_save(list(files, number), file = "IncludedSpectra.qs");
 }
 
 #' getSpectraInclusion
@@ -617,7 +617,7 @@ spectraInclusion <- function(files, number){
 #' @author Zhiqiang Pang
 #' @importFrom qs qread
 getSpectraInclusion <- function(){
-    return(qs::qread("IncludedSpectra.qs"));
+    return(ov_qs_read("IncludedSpectra.qs"));
 }
 
 #' updateSpectra3DPCA
@@ -775,7 +775,7 @@ save(selectRow_idx, file = 'selectRow_idx.rda')
   sort(selectRow_idx) -> selectRow_idx
   if(msopt=="true"){
     if(file.exists("compound_msn_results_index.qs")){
-        dt_ms2 <- qs::qread("compound_msn_results_index2MS1.qs")
+        dt_ms2 <- ov_qs_read("compound_msn_results_index2MS1.qs")
         dt_ms2[,1] -> peak_idx_ms2
         vec_idx <- selectRow_idx
         vec_idx <- vec_idx[!c(vec_idx %in% peak_idx_ms2)]
@@ -794,8 +794,8 @@ save(selectRow_idx, file = 'selectRow_idx.rda')
   cat(json.obj);
   sink();
 
-  qs::qsave(pca3d$score, "score3d.qs");
-  qs::qsave(pca3d$loading, "loading3d.qs");
+  ov_qs_save(pca3d$score, "score3d.qs");
+  ov_qs_save(pca3d$loading, "loading3d.qs");
   fileNm <- paste0("spectra_3d_loading", featureNM,".json");
 
   my.json.scatter(fileNm, T);
@@ -838,7 +838,7 @@ mzrt2ID2 <- function(mzrt){
 #' @noRd
 #' @author Zhiqiang Pang
 FTno2Num <- function(FTno){
-  FeatureOrder <- qs::qread("FeatureOrder.qs");  
+  FeatureOrder <- ov_qs_read("FeatureOrder.qs");  
   return(as.integer(FeatureOrder[FTno]));
 }
 
@@ -1134,16 +1134,16 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
 
 
   if(file.exists(paste0("EIC_layer_", featureOder,".qs"))){
-    res1 <- qs::qread(paste0("EIC_layer_", featureOder,".qs"));
+    res1 <- ov_qs_read(paste0("EIC_layer_", featureOder,".qs"));
     # Remove existing info of the peak of the sample
     if(any(res1$sample == sample)) {res1 <- res1[res1$sample != sample, ]}
     
     res2save <- rbind(res1, res)
-    qs::qsave(res2save, file = paste0("EIC_layer_", featureOder,".qs"))
+    ov_qs_save(res2save, file = paste0("EIC_layer_", featureOder,".qs"))
     if(nrow(res1)>0)  res1 <- cbind(res1, alpha1 = 0.03, alpha2 = 0.1);
     resf <- rbind(res1, cbind(res, alpha1 = 0.03, alpha2 = 0.1));
   } else {
-    qs::qsave(res, file = paste0("EIC_layer_", featureOder,".qs"));
+    ov_qs_save(res, file = paste0("EIC_layer_", featureOder,".qs"));
     resf <- cbind(res, alpha1 = 0.03, alpha2 = 0.1)
   }
   
@@ -1237,7 +1237,7 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     s_image[["plot_env"]][["mSet"]] <- 
     s_image[["plot_env"]][["js"]] <- NULL;
   
-  qs::qsave(s_image, file = paste0("EIC_image_", featureOder,".qs"))
+  ov_qs_save(s_image, file = paste0("EIC_image_", featureOder,".qs"))
   fileName = paste0("EIC_", title, "_group_", default.dpi, ".", "png");
   
   if (.on.public.web) {
@@ -1267,7 +1267,7 @@ PlotXICUpdate <- function(featureNum, format = "png", dpi = default.dpi, width =
     width <- 6;
   }
   
-  s_image <- qs::qread(file = paste0("EIC_image_", featureNum,".qs"))
+  s_image <- ov_qs_read(file = paste0("EIC_image_", featureNum,".qs"))
   fileName = paste0("EIC_", featureNum, "_updated_", dpi, ".", format);
   
   if (.on.public.web) {
@@ -1755,12 +1755,12 @@ GeneratePeakList <- function(userPath) {
       FeatureOrder <- order(intenVale[,1], decreasing = TRUE);
     }
   }
-  qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
+  ov_qs_save(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
             file = "formula2cmpd.qs")
 
   my.dat <- cbind(ann_data, intenVale, pvals, pfdr, cvs);
   my.dat <- my.dat[FeatureOrder,];
-  qs::qsave(FeatureOrder, file = "FeatureOrder.qs")
+  ov_qs_save(FeatureOrder, file = "FeatureOrder.qs")
   write.table(my.dat, sep = "\t",
               file = "peak_feature_summary.tsv",
               row.names = FALSE,
@@ -2044,7 +2044,7 @@ generateAsariPeakList <-  function(userPath) {
   
   FeatureOrder <- order(pvals)
   my.dat <- my.dat[FeatureOrder,]
-  qs::qsave(FeatureOrder, file = "FeatureOrder.qs")
+  ov_qs_save(FeatureOrder, file = "FeatureOrder.qs")
   
   write.table(my.dat, sep = "\t",
               file = "peak_feature_summary.tsv",
@@ -2055,7 +2055,7 @@ generateAsariPeakList <-  function(userPath) {
             quote = TRUE, 
             row.names = FALSE);
   
-  qs::qsave(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
+  ov_qs_save(mSet@peakAnnotation[["Formula2Cmpd"]][FeatureOrder], 
             file = "formula2cmpd.qs")
   
   
@@ -2709,7 +2709,7 @@ PerformResultSummary <- function(mSet = NA) {
     if(class(dt) == "try-error"){
         dt <- data.frame()
     }
-    param_list <- qs::qread("msn_param_list.qs");
+    param_list <- ov_qs_read("msn_param_list.qs");
 
     param_list$db_opt <- gsub(" ", "", param_list$db_opt);
     param_list$db_opt <- gsub("\\[", "", param_list$db_opt);
@@ -2733,7 +2733,7 @@ PerformResultSummary <- function(mSet = NA) {
 
 PerformExtractHMDBCMPD <- function(formula, featureOrder) {
 
-  res <- qs::qread("formula2cmpd.qs")
+  res <- ov_qs_read("formula2cmpd.qs")
   thisRes <- res[[featureOrder]][[formula]]
   hmdbids <- thisRes$hmdb;
   cmpds <- thisRes$cmpd;
@@ -2832,7 +2832,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   require("DBI")
   
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
-    mSet_raw <- qs::qread("msn_mset_result.qs")
+    mSet_raw <- ov_qs_read("msn_mset_result.qs")
     mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
     mSetObj[["analSet"]][["ms2data"]] <- mSet_raw@MSnData;
     if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
@@ -2862,7 +2862,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   }
 
   if(is.null(mSetObj[["analSet"]][["peak_mtx"]])){
-    mSet_raw <- qs::qread("msn_mset_result.qs")    
+    mSet_raw <- ov_qs_read("msn_mset_result.qs")    
     if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
       peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
       peak_mtx <- do.call(rbind, peak_list)
@@ -3026,7 +3026,7 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   }
 
   msmsmirror_set <- mSetObj[["imgSet"]][["msmsmirror"]]
-  qs::qsave(msmsmirror_set, file = "msmsmirror_set.qs")
+  ov_qs_save(msmsmirror_set, file = "msmsmirror_set.qs")
 
   return(.set.mSet(mSetObj));
 }
@@ -3059,7 +3059,7 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   save(mSetObj, MirrorPlotting,  parse_ms2peaks,peak_idx, sub_idx, interactive, ppm, file = "PerformMirrorPlotting_input.rda" )
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
     #stop("Your mSet object does not contain MS2 analysis results!")
-    mSet_raw <- qs::qread("msn_mset_result.qs")
+    mSet_raw <- ov_qs_read("msn_mset_result.qs")
     mSet_raw@MSnResults -> mSetObj[["analSet"]][["ms2res"]] -> MSnResults;
     mSet_raw@MSnData  -> mSetObj[["analSet"]][["ms2data"]]  -> MSnData;    
   } else {
@@ -3321,7 +3321,7 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
     mSetObj <- .get.mSet(mSetObj);
 
     if(is.null(mSetObj[["analSet"]][["ms2res"]])){
-      mSet_raw <- qs::qread("msn_mset_result.qs")
+      mSet_raw <- ov_qs_read("msn_mset_result.qs")
       mSetObj[["analSet"]][["ms2res"]] <- mSet_raw@MSnResults;
       if(is.list(mSet_raw@MSnData[["peak_mtx"]])){
         peak_list <- lapply(mSet_raw@MSnData[["peak_mtx"]], function(x){x[c(2,3,5,6)]})
@@ -3365,7 +3365,7 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
 
 
 extratExposomeClassName <- function(group){
-    res <- qs::qread("exposome_classification_summary.qs");
+    res <- ov_qs_read("exposome_classification_summary.qs");
 
     if(group == "All"){
         res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L)) 
@@ -3382,7 +3382,7 @@ extratExposomeClassName <- function(group){
 }
 
 extratExposomeClassNumber <- function(group){
-    res <- qs::qread("exposome_classification_summary.qs");
+    res <- ov_qs_read("exposome_classification_summary.qs");
     if(group == "All"){
         res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L))        
     } else {
@@ -3403,7 +3403,7 @@ generateCols <- function(number=NULL){
 }
 
 extratMetabolomeClassName <- function(group, level, merge_ratio=0){
-    metabolome_cls <- qs::qread("metabolome_classification_summary.qs")
+    metabolome_cls <- ov_qs_read("metabolome_classification_summary.qs")
     if(group == "All"){
         metabolome_df <- do.call(rbind, metabolome_cls)
     } else {
@@ -3433,7 +3433,7 @@ extratMetabolomeClassName <- function(group, level, merge_ratio=0){
 }
 
 extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
-    metabolome_cls <- qs::qread("metabolome_classification_summary.qs")
+    metabolome_cls <- ov_qs_read("metabolome_classification_summary.qs")
     if(group == "All"){
         metabolome_df <- do.call(rbind, metabolome_cls)
     } else {
@@ -3466,7 +3466,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 }
 
 checkMS2annotationExists <- function(feature_idx){
-    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
+    res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     if(feature_idx %in% res_dt[,1]){
         rowidx <- which(feature_idx == res_dt[,1])[1]
         colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
@@ -3479,7 +3479,7 @@ checkMS2annotationExists <- function(feature_idx){
 }
 
 extractSimScores <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
+    res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Score_1", "Score_2","Score_3","Score_4","Score_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3490,7 +3490,7 @@ extractSimScores <- function(feature_idx, topN){
 
 
 extractformulaNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
+    res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Formula_1", "Formula_2","Formula_3","Formula_4","Formula_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3501,7 +3501,7 @@ extractformulaNMs <- function(feature_idx, topN){
 
 
 extractcompoundNMs <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
+    res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("Compound_1", "Compound_2","Compound_3","Compound_4","Compound_5"), function(x){
             return(which(x == colnames(res_dt)))
@@ -3511,7 +3511,7 @@ extractcompoundNMs <- function(feature_idx, topN){
 }
 
 extractInchikeys <- function(feature_idx, topN){
-    res_dt <- qs::qread("compound_msn_results_index2MS1.qs")
+    res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     rowidx <- which(feature_idx == res_dt[,1])[1]
     colidx <- vapply(c("InchiKey_1", "InchiKey_2","InchiKey_3","InchiKey_4","InchiKey_5"), function(x){
             return(which(x == colnames(res_dt)))

@@ -40,6 +40,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{show}{Numeric, 1 or 0}
 
 \item{grey.scale}{Numeric, use grey-scale, 0 for no, and 1 for yes.}
+
+\item{cex.opt}{Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".}
 }
 \description{
 Sparse PLS-DA (from mixOmics) score plot

@@ -153,7 +153,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
     }
   }
   
-  qs::qsave(input, "mum_raw.qs");
+  ov_qs_save(input, "mum_raw.qs");
   
   if(!"p.value" %in% colnames(input)){
     mumDataContainsPval <- 0;
@@ -597,10 +597,10 @@ SanityCheckMummichogData <- function(mSetObj=NA){
   mSetObj$msgSet$check.msg <- NULL;
   if(mSetObj$dataSet$mum.type == "table"){
     mSetObj$paramSet$mumDataContainsPval <- 1;
-    orig.data<- qs::qread("data_orig.qs");
+    orig.data<- ov_qs_read("data_orig.qs");
     l = sapply(colnames(orig.data),function(x) return(unname(strsplit(x,"/", fixed=TRUE)[[1]][1])))
     colnames(orig.data) <- l;
-    qs::qsave(orig.data, file="data_orig.qs");
+    ov_qs_save(orig.data, file="data_orig.qs");
     
     if(.on.public.web){
       return(SanityCheckData(NA));
@@ -678,7 +678,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     return(0)
   }
   
-  rawdat <- qs::qread("mum_raw.qs");
+  rawdat <- ov_qs_read("mum_raw.qs");
   
   mz.raw <- as.character(ndat[[mz.col]])
   mznew <- parse_first_numeric(mz.raw)
@@ -720,12 +720,38 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     }
   }
   
-  # another check to ensure no missing or NA values
-  missing.inx <- apply(ndat, 2, function(x) any(is.na(x)))
-  
-  if(any(missing.inx)){
-    AddErrMsg("NA values found in the uploaded data!")
-    return(0)
+  # another check to ensure no missing or NA values — but be specific about
+  # which columns / rows are bad, and auto-drop affected rows (parallel to the
+  # m/z handling above) instead of aborting with a generic message. Excel error
+  # tokens like #DIV/0! and #N/A get parsed as NaN by data.table::fread.
+  na_per_col <- vapply(ndat, function(x) sum(is.na(x)), integer(1))
+  na_cols <- names(na_per_col)[na_per_col > 0]
+  if(length(na_cols) > 0){
+    # Collect row indices with any NA, then drop them in one pass.
+    na_row_mask <- Reduce(`|`, lapply(ndat[, na_cols, drop = FALSE], is.na))
+    bad_rows <- which(na_row_mask)
+    # Build a per-column summary for the user (column name, count, example row #).
+    # Use rownames so the reported index maps back to the original CSV data row,
+    # even if earlier m/z filtering already dropped rows from ndat.
+    row_labels <- rownames(ndat)
+    parts <- vapply(na_cols, function(col){
+      ex <- utils::head(row_labels[is.na(ndat[[col]])], 3)
+      sprintf("<b>%s</b> (%d, e.g. row %s)", col, na_per_col[[col]],
+              paste(ex, collapse = ", "))
+    }, character(1))
+    if(length(bad_rows) >= nrow(ndat)){
+      AddErrMsg(paste0("All rows contain NA/NaN in at least one column; ",
+                       "unable to proceed. Affected columns: ",
+                       paste(parts, collapse = "; "),
+                       ". Check your source file for Excel error codes ",
+                       "(#DIV/0!, #N/A, #NUM!, #REF!) or blank cells."))
+      return(0)
+    }
+    ndat <- ndat[-bad_rows, , drop = FALSE]
+    msg.vec <- c(msg.vec,
+      paste0("A total of <b>", length(bad_rows),
+             "</b> row(s) with NA/NaN values were removed. Affected columns: ",
+             paste(parts, collapse = "; "), "."))
   }
   
   read.msg <- mSetObj$msgSet$read.msg
@@ -1209,7 +1235,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj$path.hits <- convert2JsonList(cpds)
     mSetObj$path.pval <- as.numeric(dfcombo[,6])
     mSetObj <<- mSetObj;
-    matched_res <- qs::qread("mum_res.qs");
+    matched_res <- ov_qs_read("mum_res.qs");
     json.res <- list(
       cmpd.exp = mSetObj$cpd_exp,
       path.nms = rownames(dfcombo),
@@ -1316,7 +1342,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     mSetObj$path.pval <- as.numeric(df.combo[,6])
     
     mSetObj <<- mSetObj;
-    matched_res <- qs::qread("mum_res.qs");
+    matched_res <- ov_qs_read("mum_res.qs");
     
     json.res <- list(
       cmpd.exp = cpds.exp,
@@ -1387,7 +1413,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   if(.on.public.web){
     mum.url <- paste(rpath ,"libs/mummichog/", filenm, sep="");
     # print(paste("Adding mummichog library:", mum.url));
-    mummichog.lib <- try(qs::qread(mum.url), silent = TRUE)
+    mummichog.lib <- try(ov_qs_read(mum.url), silent = TRUE)
     if(class(mummichog.lib) == "try-error"){
         AddErrMsg("The database you have selected is not matched/found!")
         return(0)
@@ -1397,9 +1423,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     if(!file.exists(filenm)){
       mum.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", filenm, sep="");
       download.file(mum.url, destfile = filenm, method="libcurl", mode = "wb")
-      mummichog.lib <- qs::qread(filenm);
+      mummichog.lib <- ov_qs_read(filenm);
     }else{
-      mummichog.lib <- qs::qread(filenm);
+      mummichog.lib <- ov_qs_read(filenm);
     }
   }
   
@@ -1807,7 +1833,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     info <- strsplit(as.character(try2.df[,1]), split=";")
     df_ecs <- data.frame(ec=as.character(try2.df[,2]), mz=sapply(info, `[[`, 1), form=sapply(info, `[[`, 2), rt = sapply(info, `[[`, 3), cpd = sapply(info, `[[`, 4), stringsAsFactors = F)
     df_ecs$str_row_inx <- paste(df_ecs$mz, df_ecs$form, df_ecs$rt, sep = "___")
-    qs::qsave(df_ecs, "initial_ecs.qs")
+    ov_qs_save(df_ecs, "initial_ecs.qs")
     merged_ecs <- aggregate(. ~ str_row_inx, df_ecs, paste, collapse=";")
     
     # OPTIMIZED: Vectorized string processing instead of sapply/strsplit chains
@@ -1923,8 +1949,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   }
   
   fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
-  qs::qsave(matched_res, "mum_res.qs");
-  WriteMummichogFeaturePathMap(mSetObj, "mummichog_matched_feature_all.csv");
+  ov_qs_save(matched_res, "mum_res.qs");
   
   # now update expr. profile
   matched_mz <- matched_res[,1];
@@ -2029,7 +2054,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   # first do compound mapping
   for(meta_file in seq_along(metaFiles)){
     
-    mSetObj <- qs::qread(metaFiles[meta_file])
+    mSetObj <- ov_qs_read(metaFiles[meta_file])
     ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
     #print(paste0("compoundLibMeta"));
     #print(paste0("Got ", length(ref_mzlist), " mass features."))
@@ -2514,7 +2539,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   mSetObj$dataSet$ref_mzlist <- ref_mzlist
   
   mumRT <- unlist(lapply(metaMsetObj, "[[", "mumRT")) 
-  qs::qsave(matched_res, "mum_res.qs");
+  ov_qs_save(matched_res, "mum_res.qs");
   
   ##############################################
   # COMBINE EITHER P-VALUES
@@ -2744,7 +2769,7 @@ CalculateEffectSize <- function(mSetObj=NA, paired=FALSE, method="cohen"){
   permutation_hits <- permutation_record <- vector("list", permNum);
 
   # Pre-load and cache frequently accessed objects (avoid repeated I/O)
-  matched_res <- qs::qread("mum_res.qs");
+  matched_res <- ov_qs_read("mum_res.qs");
   ref_mzlist <- mSetObj$dataSet$ref_mzlist
   N <- mSetObj$dataSet$N
   total_matched <- mSetObj$total_matched_cpds
@@ -2826,7 +2851,7 @@ ComputeMummichogPermPvals <- function(input_cpdlist, total_matched_cpds, pathway
   permutation_hits <- permutation_record <- vector("list", permNum);
 
   # Pre-load and cache frequently accessed objects (avoid repeated I/O)
-  matched_res <- qs::qread("mum_res.qs");
+  matched_res <- ov_qs_read("mum_res.qs");
   ref_mzlist <- mSetObj$dataSet$ref_mzlist
   N <- mSetObj$dataSet$N
   total_matched <- mSetObj$total_matched_ecpds
@@ -3001,7 +3026,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   res.mat <- res.mat[hit.inx, , drop=FALSE];
   
   if(nrow(res.mat) <= 1){
-    matched_dbg <- try(qs::qread("mum_res.qs"), silent = TRUE)
+    matched_dbg <- try(ov_qs_read("mum_res.qs"), silent = TRUE)
     if(inherits(matched_dbg, "try-error")){
       matched_dbg <- NULL
     }
@@ -3034,7 +3059,7 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   mSetObj$path.nms <- path.nms[ord.inx]
   mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
   mSetObj$path.pval <- as.numeric(res.mat[,9])
-  matched_res <- qs::qread("mum_res.qs");
+  matched_res <- ov_qs_read("mum_res.qs");
   
   json.res <- list(
     cmpd.exp = mSetObj$cpd_exp,
@@ -3185,7 +3210,7 @@ sig.path.n <- sum(hit.inx)
 res.mat <- res.mat[hit.inx, , drop=FALSE];
 
 if(nrow(res.mat) <= 1){
-  matched_dbg <- try(qs::qread("mum_res.qs"), silent = TRUE)
+  matched_dbg <- try(ov_qs_read("mum_res.qs"), silent = TRUE)
   if(inherits(matched_dbg, "try-error")){
     matched_dbg <- NULL
   }
@@ -3234,7 +3259,7 @@ if(is.null(mSetObj$initPSEA) || mSetObj$initPSEA){
 mSetObj$path.nms <- path.nms[ord.inx]
 mSetObj$path.hits <- convert2JsonList(hits.all[ord.inx])
 mSetObj$path.pval <- as.numeric(res.mat[,5])
-matched_res <- qs::qread("mum_res.qs");
+matched_res <- ov_qs_read("mum_res.qs");
 
 json.res <- list(
   cmpd.exp = cpd.exp.vec,
@@ -3356,7 +3381,7 @@ json.res <- list(
 
   }
 
-  Cpd.Hits <- qs::qread("pathwaysFiltered.qs")
+  Cpd.Hits <- ov_qs_read("pathwaysFiltered.qs")
   Cpd.Hits <- unlist(lapply(seq_along(Cpd.Hits), function(i) paste(names(Cpd.Hits[[i]]), collapse = ";")))
   Cpd.Hits <- Cpd.Hits[Cpd.Hits != ""]
   
@@ -3459,7 +3484,7 @@ json.res <- list(
   mSetObj$mummi.gsea.resmat <- res.mat;
   mSetObj$paramSet$gsea.lib <- mSetObj$lib.organism;
 
-  EC.Hits <- qs::qread("pathwaysFiltered.qs")
+  EC.Hits <- ov_qs_read("pathwaysFiltered.qs")
   EC.Hits <- lapply(seq_along(EC.Hits), function(i) paste(names(EC.Hits[[i]]), collapse = ";"))
   res.mat <- cbind(res.mat, EC.Hits)
   fast.write.csv(res.mat, file=mSetObj$mum_nm_csv, row.names=TRUE);
@@ -4788,7 +4813,7 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
     ord.inx <- order(p.value)
     result.mat <- result.mat[ord.inx, ]
     fast.write.csv(result.mat, file = "mum_stat_result.csv")
-    qs::qsave(result.mat, "mum_stat_result_mat.qs")
+    ov_qs_save(result.mat, "mum_stat_result_mat.qs")
     tryCatch(ExportResultMatArrow(result.mat, "mum_stat_result"), error = function(e) {})
   }, error = function(e) { message("Failed to save stat result table: ", e$message) })
 
@@ -4855,20 +4880,21 @@ GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
 #' Get mummichog stat result table data for details view
 #' @export
 GetMumStatRowNames <- function() {
-  mat <- qs::qread("mum_stat_result_mat.qs")
+  mat <- ov_qs_read("mum_stat_result_mat.qs")
   return(rownames(mat))
 }
 #' @export
 GetMumStatColNames <- function() {
-  mat <- qs::qread("mum_stat_result_mat.qs")
+  mat <- ov_qs_read("mum_stat_result_mat.qs")
   return(colnames(mat))
 }
 #' @export
 GetMumStatMat <- function() {
-  mat <- qs::qread("mum_stat_result_mat.qs")
+  mat <- ov_qs_read("mum_stat_result_mat.qs")
   return(as.matrix(mat))
 }
 
+#' PlotMumVolcano
 #' @param format Image format
 #' @export
 PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pval.cutoff = 0.05, fc.cutoff = 0) {
@@ -5092,7 +5118,7 @@ GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
     return(0)
   }
   
-  matched_res <- qs::qread("mum_res.qs");
+  matched_res <- ov_qs_read("mum_res.qs");
   mz <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 1] 
   mass.diff <- matched_res[which(matched_res$Matched.Compound == cmpd.id), 4]
   tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];

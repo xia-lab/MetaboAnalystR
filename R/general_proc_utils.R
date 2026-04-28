@@ -20,7 +20,7 @@ SanityCheckData <- function(mSetObj=NA){
   #save.image("san.RData");
   mSetObj <- .get.mSet(mSetObj);
   if(file.exists("data_orig_0.qs")){  
-    orig.data <- qs::qread("data_orig_0.qs"); # use the original version
+    orig.data <- ov_qs_read("data_orig_0.qs"); # use the original version
   } else {
     return(0);
   }  
@@ -114,7 +114,7 @@ SanityCheckData <- function(mSetObj=NA){
       mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[index];
       
       mSetObj$dataSet$pair.checked <- TRUE;
-      #qs::qsave(orig.data, file="data_orig.qs");
+      #ov_qs_save(orig.data, file="data_orig.qs");
       
     } else {
       
@@ -191,7 +191,7 @@ SanityCheckData <- function(mSetObj=NA){
       mSetObj$dataSet$meta.info <- mSetObj$dataSet$meta.info[ord.inx, ,drop=F];
     }
     orig.data <- orig.data[ord.inx, , drop=FALSE];
-    qs::qsave(orig.data, file="data_orig.qs");
+    ov_qs_save(orig.data, file="data_orig.qs");
     if(mSetObj$dataSet$paired){
       mSetObj$dataSet$pairs <- mSetObj$dataSet$pairs[ord.inx];
     }
@@ -276,8 +276,8 @@ SanityCheckData <- function(mSetObj=NA){
   
   mSetObj$dataSet$proc.cls <- mSetObj$dataSet$cls <- mSetObj$dataSet$orig.cls;
   
-  qs::qsave(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
-  qs::qsave(as.data.frame(int.mat), "preproc.qs"); # working copy
+  ov_qs_save(as.data.frame(int.mat), "preproc.orig.qs"); # never modify this
+  ov_qs_save(as.data.frame(int.mat), "preproc.qs"); # working copy
   
 ## ------------------------------------------------------------------
 ##  QC / blank-sample consistency checks with minimum thresholds
@@ -397,9 +397,9 @@ PerformSanityClosure <- function(mSetObj=NA){
   # note, this is last step of sanity check
   # prepare for reproducible analysis
 
-  int.mat <- qs::qread("preproc.qs"); 
+  int.mat <- ov_qs_read("preproc.qs"); 
   mSetObj$dataSet$proc.feat.num <- ncol(int.mat);
-  qs::qsave(as.data.frame(int.mat), file="data_proc.qs");
+  ov_qs_save(as.data.frame(int.mat), file="data_proc.qs");
 
   return(.set.mSet(mSetObj));
 }
@@ -411,6 +411,8 @@ PerformSanityClosure <- function(mSetObj=NA){
 #'@usage RemoveMissingPercent(mSetObj, percent)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param percent Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5. 
+#'@param grpWise Logical, if TRUE apply the missing value filter group-wise (keep a feature if at least one group
+#'passes the threshold); if FALSE (default) apply globally across all samples.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -428,7 +430,7 @@ RemoveMissingByPercent <- function(mSetObj = NA,
     int.mat   <- mSetObj$dataSet$proc          # already-normalised
     writeBack <- TRUE
   } else {
-    int.mat   <- qs::qread("preproc.orig.qs")  # raw pre-processing copy
+    int.mat   <- ov_qs_read("preproc.orig.qs")  # raw pre-processing copy
     writeBack <- FALSE
   }
 
@@ -465,7 +467,7 @@ RemoveMissingByPercent <- function(mSetObj = NA,
   rm.cnt <- sum(!good.inx)            # variables removed
 
     #mSetObj$dataSet$proc <- as.data.frame(int.mat[, good.inx, drop = FALSE])
-    qs::qsave(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
+    ov_qs_save(as.data.frame(int.mat[, good.inx, drop = FALSE]), "preproc.qs")
   
 
   ## 4 · Log a concise message ------------------------------------------
@@ -511,6 +513,8 @@ fetchReplaceMsg <- function(mSetObj = NA) {
 #'replacement based on the minimum ("min), the mean ("mean"), or the median ("median") value of each feature columns,
 #'or several options to impute the missing values, using k-nearest neighbour ("KNN"), probabilistic PCA ("PPCA"), 
 #'Bayesian PCA ("BPCA") method, or Singular Value Decomposition ("svdImpute") 
+#'@param grpLod Logical, if TRUE apply limit of detection (LOD) imputation within each group. Default is FALSE.
+#'@param grpMeasure Logical, if TRUE use group-specific measurement for imputation. Default is FALSE.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -554,7 +558,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   }
   mt <- file.info(exist)$mtime
   src <- exist[which.max(mt)]
-  dat <- as.matrix(qs::qread(src))
+  dat <- as.matrix(ov_qs_read(src))
 
   pref <- switch(src,
                  "data.edit.qs" = c("edit.cls"),
@@ -682,8 +686,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
       
     } else {
       AddErrMsg(
-        "No QC samples found (by class label or name prefix ‘QC’). ",
-        "Please use non-QC based filtering."
+        "No QC samples found (by class label or name prefix ‘QC’). \n Please use non-QC based filtering."
       )
       return(0)
     }
@@ -771,7 +774,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     mSetObj$dataSet$meta.info <- my.sync$metadata;
   }
   
-  qs::qsave(int.mat, "data.filt.qs");
+  ov_qs_save(int.mat, "data.filt.qs");
 
   .set.mSet(mSetObj);
 
@@ -779,7 +782,7 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     return(1);
   }else{
     # note here, if no missing data, need to save a copy for normalization
-    qs::qsave(int.mat, file = "data_proc.qs");
+    ov_qs_save(int.mat, file = "data_proc.qs");
     return(2);
   }
 }
@@ -840,38 +843,39 @@ blankfeatureFiltering <- function(preproc, idx_blank, threshold) {
 
 
 
-ede <- function (x, y, index) 
+ede <- function (x, y, index)
 {
+  # Use plain if/else for scalar control flow with side-effect assignments.
+  # ifelse() forces both branches into a length-matched vector, so a branch
+  # ending with `if (...)` (no else) materialises NULL and crashes with
+  # "replacement has length zero" on the blank-subtraction code path.
 
   n = length(x)
   if (index == 1) {
     y = -y
   }
-    ifelse(n >= 4, {
-      LF = y - lin2(x[1], y[1], x[n], y[n], x)
-      jf1 = which.min(LF)
-      xf1 = x[jf1]
-      jf2 = which.max(LF)
-      xf2 = x[jf2]
-      res <- jf2 < jf1
-      if(length(res)==0){
-        jf1 = NaN
-        jf2 = NaN
-        xfx = NaN
-      } else {
-        ifelse(jf2 < jf1, {
-          xfx <- NaN
-        }, {
-          xfx <- 0.5 * (xf1 + xf2)
-          if(is.na(xfx)){xfx <- NaN}
-          if(length(xfx) == 0){xfx <- NaN}
-        })
-      }
-    }, {
+  if (n >= 4) {
+    LF = y - lin2(x[1], y[1], x[n], y[n], x)
+    jf1 = which.min(LF)
+    xf1 = x[jf1]
+    jf2 = which.max(LF)
+    xf2 = x[jf2]
+    res <- jf2 < jf1
+    if (length(res) == 0) {
       jf1 = NaN
       jf2 = NaN
       xfx = NaN
-    })
+    } else if (isTRUE(jf2 < jf1)) {
+      xfx <- NaN
+    } else {
+      xfx <- 0.5 * (xf1 + xf2)
+      if (length(xfx) == 0 || is.na(xfx)) xfx <- NaN
+    }
+  } else {
+    jf1 = NaN
+    jf2 = NaN
+    xfx = NaN
+  }
   out = matrix(c(jf1, jf2, xfx), nrow = 1, ncol = 3, byrow = TRUE)
   rownames(out) = "EDE"
   colnames(out) = c("j1", "j2", "chi")
@@ -898,24 +902,26 @@ bede <- function (x, y, index)
   iplast = B[1, 3]
   j <- 0
   while (!(is.nan(B[1, 3]))) {
-    ifelse(B[1, 2] >= B[1, 1] + 3, {
+    # Plain if/else so `break` is reached deterministically and no NULL
+    # branch can leak through ifelse()'s vector-recycling internals.
+    if (B[1, 2] >= B[1, 1] + 3) {
       j <- j + 1
       x2 <- x2[B[1, 1]:B[1, 2]]
       y2 <- y2[B[1, 1]:B[1, 2]]
       B <- ede(x2, y2, index)
-      ifelse(!(is.nan(B[1, 3])), {
+      if (!(is.nan(B[1, 3]))) {
         a = c(a, x2[B[1, 1]])
         b = c(b, x2[B[1, 2]])
         nped <- c(nped, length(x2))
         EDE <- c(EDE, B[1, 3])
         BEDE <- c(BEDE, B[1, 3])
         iplast = B[1, 3]
-      }, {
+      } else {
         break
-      })
-    }, {
+      }
+    } else {
       break
-    })
+    }
   }
   iters = as.data.frame(cbind(nped, a, b, BEDE))
   colnames(iters) = c("n", "a", "b", "EDE")
@@ -976,16 +982,16 @@ IsDataContainsNegative<-function(mSetObj=NA){
 UpdateFeatureName<-function(mSetObj=NA, old.nm, new.nm){
   mSetObj <- .get.mSet(mSetObj);
   if(!is.null(mSetObj$dataSet[["orig"]])){
-    orig.data <- qs::qread("data_orig.qs");
+    orig.data <- ov_qs_read("data_orig.qs");
     orig.data <- .update.feature.nm(orig.data, old.nm, new.nm);
-    qs::qsave(orig.data, file="data_orig.qs");
+    ov_qs_save(orig.data, file="data_orig.qs");
   }
   
   if(file.exists("data_proc.qs")){
-    proc.data <- qs::qread("data_proc.qs");
+    proc.data <- ov_qs_read("data_proc.qs");
     proc.data <- .update.feature.nm(proc.data, old.nm, new.nm);
     mSetObj$dataSet$proc.feat.num <- ncol(proc.data);
-    qs::qsave(proc.data, file="data_proc.qs");
+    ov_qs_save(proc.data, file="data_proc.qs");
 
     #if(!is.null(mSetObj$dataSet[["filt"]])){
     ##  mSetObj$dataSet$filt <- .update.feature.nm(mSetObj$dataSet$filt, old.nm, new.nm);
@@ -1116,9 +1122,9 @@ GetMissingTestMsg <- function(mSetObj=NA, type){
     cls <-mSetObj$dataSet$cls
     if(mSetObj$dataSet$cls.type == "disc" && length(levels(cls)) > 1){
         if(type == "filt"){
-          int.mat <- qs::qread("data.filt.qs");
+          int.mat <- ov_qs_read("data.filt.qs");
         }else{
-          int.mat <- qs::qread("preproc.orig.qs");
+          int.mat <- ov_qs_read("preproc.orig.qs");
         }
 
       miss.msg <- "";
@@ -1141,7 +1147,7 @@ GetMissNumMsg <- function(mSetObj = NA) {
   if(!file.exists("data.filt.qs")){
     return("NA");
   }
-  int.mat <- qs::qread("data.filt.qs")
+  int.mat <- ov_qs_read("data.filt.qs")
 
   ## count NAs
   totalCount <- length(int.mat)           # nrow * ncol
@@ -1203,9 +1209,9 @@ PlotMissingDistr <- function(mSetObj = NA,
   mSetObj <- .get.mSet(mSetObj)
 
   if(grepl("_filt", imgName)){
-    int.mat <- qs::qread("data.filt.qs");
+    int.mat <- ov_qs_read("data.filt.qs");
   }else{
-    int.mat <- qs::qread("preproc.orig.qs");
+    int.mat <- ov_qs_read("preproc.orig.qs");
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1332,9 +1338,9 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   
   mSetObj <- .get.mSet(mSetObj)
   if(grepl("_filt", imgName)){
-    int.mat <- qs::qread("data.filt.qs");
+    int.mat <- ov_qs_read("data.filt.qs");
   }else{
-    int.mat <- qs::qread("preproc.orig.qs")
+    int.mat <- ov_qs_read("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1448,9 +1454,9 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 
   # Load appropriate matrix
   int.mat <- if (grepl("_filt", prefix)) {
-    qs::qread("data.filt.qs")
+    ov_qs_read("data.filt.qs")
   } else {
-    qs::qread("preproc.orig.qs")
+    ov_qs_read("preproc.orig.qs")
   }
 
   if (is.vector(int.mat)) int.mat <- t(as.matrix(int.mat))
@@ -1539,16 +1545,17 @@ ExportMissingHeatmapJSON <- function(mSetObj = NA,
 }
 
 
-#' Check QC %RSD with pmp::filter_peaks_by_rsd
+#' Check QC RSD with pmp::filter_peaks_by_rsd
 #'
 #' Uses the Peak-Matrix-Processing (pmp) package to calculate the
-#' relative standard deviation (%RSD) of each feature across QC
+#' relative standard deviation (\%RSD) of each feature across QC
 #' injections and returns a concise QA message.
 #'
 #' @param mSetObj MetaboAnalystR object (default NA → pull from session)
-#' @param thr     RSD threshold (%) for the “pass-rate” statistic
+#' @param thr     RSD threshold percentage for the “pass-rate” statistic
 #' @return        Character string summarising QC precision
-
+#'
+#' @export
 CheckQCRSD <- function(mSetObj, thr = 30) {
     
     meta.ok <- !is.null(mSetObj$dataSet$meta.info)          &&        
@@ -1584,7 +1591,7 @@ CheckQCRSD <- function(mSetObj, thr = 30) {
       mSetObj$msgSet$qc.rsd.msg <- msg
       return(msg)
     }
-    raw <- t(qs::qread("preproc.qs"))                # rows = ?  cols = ?
+    raw <- t(ov_qs_read("preproc.qs"))                # rows = ?  cols = ?
     
     ## make sure rows = features, cols = samples
     if (ncol(raw) != length(cls)) raw <- t(raw)
@@ -1640,7 +1647,7 @@ PlotRSDViolin <- function(mSetObj = NA,
     return(0);
   }
 
-  raw <- t(qs::qread("preproc.qs"))      # rows = features, cols = samples
+  raw <- t(ov_qs_read("preproc.qs"))      # rows = features, cols = samples
 
   ## ── class vector --------------------------------------------------------
   cls <- if (!is.null(mSetObj$dataSet$cls) &&

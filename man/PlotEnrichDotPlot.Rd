@@ -11,7 +11,8 @@ PlotEnrichDotPlot(
   format = "png",
   dpi = default.dpi,
   width = NA,
-  maxNameLen = 40
+  maxNameLen = 40,
+  topN = 25
 )
 }
 \arguments{

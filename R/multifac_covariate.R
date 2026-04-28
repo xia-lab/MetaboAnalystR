@@ -364,6 +364,7 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
 #'@param feat.num Numeric, set the feature numbers, default is set to 15
 #'@param color.BW Use black-white for plot (T) or colors (F)
 #'@param type type, default is "type"
+#'@param nBins Integer, number of bins for grouping feature importance values in the partial dependence plot. Default is 3.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -564,7 +565,7 @@ CovariateScatter.Anal <- function(mSetObj,
   # Always use ORIGINAL normalized data (before any covariate adjustment)
   # Linear model handles covariates internally via the design matrix
   if(file.exists("data_norm_only.qs")){
-    feature_table <- t(qs::qread("data_norm_only.qs"))
+    feature_table <- t(ov_qs_read("data_norm_only.qs"))
     message("[CovScatter] Using original normalized data from data_norm_only.qs")
   } else if(!is.null(mSetObj$dataSet$norm.before.covariate)){
     feature_table <- t(mSetObj$dataSet$norm.before.covariate)
@@ -633,9 +634,14 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      # Strip "ID" column newer limma topTable prepends when rownames(fit)
+      # is non-null — defensive even though the conditional below is keyed
+      # off "logFC" presence rather than column 1.
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       # For multi-contrast (ANOVA), extract logFC from first contrast
       if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
         first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        if (!is.null(first.contrast$ID)) { rownames(first.contrast) <- first.contrast$ID; first.contrast$ID <- NULL; }
         rest$logFC <- first.contrast[rownames(rest), "logFC"]
       }
     } else {
@@ -648,8 +654,10 @@ CovariateScatter.Anal <- function(mSetObj,
       fit <- contrasts.fit(fit, contrast.matrix);
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf);
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       if (!("logFC" %in% colnames(rest)) && ncol(contrast.matrix) >= 1) {
         first.contrast <- topTable(fit, coef = 1, number = Inf, sort.by = "none")
+        if (!is.null(first.contrast$ID)) { rownames(first.contrast) <- first.contrast$ID; first.contrast$ID <- NULL; }
         rest$logFC <- first.contrast[rownames(rest), "logFC"]
       }
     }
@@ -687,12 +695,16 @@ CovariateScatter.Anal <- function(mSetObj,
 
       fit <- eBayes(fit);
       rest <- topTable(fit, number = Inf, coef = analysis.var);
+      # Strip the "ID" column newer limma topTable prepends when rownames(fit)
+      # is non-null. Otherwise the rename below targets the wrong column.
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
       colnames(rest)[1] <- analysis.var;
     } else {
       # No covariates selected - same as "without" analysis
       design <- model.matrix(formula(paste0("~ ", analysis.var)), data = covariates);
       fit <- eBayes(lmFit(feature_table, design));
       rest <- topTable(fit, number = Inf);
+      if (!is.null(rest$ID)) { rownames(rest) <- rest$ID; rest$ID <- NULL; }
     }
 
     ### Analysis WITHOUT covariates (simple model)
@@ -750,7 +762,7 @@ CovariateScatter.Anal <- function(mSetObj,
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file=fileName);
-  qs::qsave(rest, file = "covariate_result.qs");
+  ov_qs_save(rest, file = "covariate_result.qs");
   
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
@@ -941,7 +953,7 @@ CombineFacScatter.Anal <- function(mSetObj,
   my.ord.inx <- order(p.value, decreasing = FALSE);
   rest <- signif(rest[my.ord.inx,],5);
   fast.write.csv(rest,file= mSetObj$analSet$combineFac_filename);
-  qs::qsave(rest, file = "combine_factors_result.qs");
+  ov_qs_save(rest, file = "combine_factors_result.qs");
   
   # note the plot is always on raw scale for visualization purpose
   if(pval.type=="fdr"){
@@ -1198,7 +1210,7 @@ convertCovariate2Fun <- function(){
     if(!file.exists("covariate_result.qs")){
         return(0)
     }
-    dt <- qs::qread("covariate_result.qs");
+    dt <- ov_qs_read("covariate_result.qs");
     features <- rownames(dt)
     
     mzs <- vapply(features, function(x){
@@ -1921,6 +1933,7 @@ ResetCovariateAdjustment <- function(mSetObj = NA) {
 ## Plot PCA Before/After Covariate Adjustment
 ## Adapted from ProteoAnalyst
 ##################################################
+#' PlotCovariateAdjustmentPCA
 #' @description Generate side-by-side PCA plots showing data before and after covariate adjustment
 #' @param mSetObj Input the name of the bound mSet Object
 #' @param covariate Name of the primary covariate to show in the plot
@@ -2018,21 +2031,21 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
   # ggarrange is quarantined - run in subprocess via bridge files
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
+  ov_qs_save(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_rsclient(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(ggpubr); require(ggplot2); require(Cairo)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       combined <- ggpubr::ggarrange(input$p1, input$p2,
                                      ncol=2, common.legend=TRUE, legend="right")
       Cairo::Cairo(file=input$imgName, width=14, height=7,
                    unit="in", dpi=input$dpi, type=input$format, bg="white")
       print(combined)
       dev.off()
-      qs::qsave(TRUE, bridge_out, preset = "fast")
+      ov_qs_save(TRUE, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 120

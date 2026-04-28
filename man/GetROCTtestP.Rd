@@ -13,9 +13,13 @@ GetROCTtestP(data, cls)
 }
 \description{
 ROC p-vaues, used in higher function
+
+Fits a linear model per feature and returns logFC (model coefficient)
+  and moderated p-values via empirical Bayes. Works on normalized/transformed data
 }
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
 License: GNU GPL (>= 2)
+Compute logFC and moderated p-values using limma linear model
 }

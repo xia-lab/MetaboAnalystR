@@ -40,6 +40,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{show}{Show labels, 1 or 0}
 
 \item{grey.scale}{Numeric, use a grey scale (0) or not (1)}
+
+\item{cex.opt}{Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".}
 }
 \description{
 Plot PLS score plot

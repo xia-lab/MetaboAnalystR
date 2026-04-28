@@ -239,7 +239,7 @@ OrganizeJsonforNextwork <- function(mSetObj=NA){
   if(length(fun.ids) ==1) {fun.ids <- matrix(fun.ids)};
   enrichPath$path.id <- fun.ids;
   
-  ko <- qs::qread(paste0(rpath, "libs/ko.qs"));
+  ko <- ov_qs_read(paste0(rpath, "libs/ko.qs"));
   cmpd.map <- .get.my.lib("compound_db.qs");
 
   #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
@@ -425,7 +425,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
     hits.query <- hits.query[-rm.ids]
   }
 
-  ko <- qs::qread(paste0(rpath ,"libs/ko.qs"));
+  ko <- ov_qs_read(paste0(rpath ,"libs/ko.qs"));
   cmpd.map <- .get.my.lib("compound_db.qs");
 
   #conv.ko = ko[match(tolower(unlist(hits.all)), tolower(cmpd.map$kegg_id)),]
@@ -597,14 +597,14 @@ MapCmpd2KEGGNodes <- function(cmpds, net="ko01100"){
     # Read original library files for a list of pathways with assigned compounds to each
     
     if(.on.public.web){
-      pathway.lib <- qs::qread(paste(rpath ,"libs/mummichog/", lib, sep=""));
+      pathway.lib <- ov_qs_read(paste(rpath ,"libs/mummichog/", lib, sep=""));
     }else{
       if(!file.exists(lib)){
         path.url <- paste("https://www.metaboanalyst.ca/resources/libs/mummichog/", lib, sep="")
         download.file(path.url, destfile = lib, method="libcurl", mode = "wb")
-        pathway.lib <- qs::qread(lib);
+        pathway.lib <- ov_qs_read(lib);
       }else{
-        pathway.lib <- qs::qread(lib);
+        pathway.lib <- ov_qs_read(lib);
       }
     }
 

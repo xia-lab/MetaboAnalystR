@@ -15,6 +15,8 @@ FC.Anal(mSetObj, fc.thresh=2, cmp.type = 0, paired=FALSE)
 1 minus group 2}
 
 \item{paired}{Logical, TRUE or FALSE}
+
+\item{fc.method}{Character, the method to compute fold change: "classical" (default, mean/median ratio) or "limma" (log2 fold change via limma moderated model).}
 }
 \description{
 Perform fold change analysis, method can be mean or median

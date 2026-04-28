@@ -35,6 +35,8 @@ include in the pie-chart. By default this is set to 15.}
 
 \item{colPal}{Character, input the preferred R Color Brewer palette to be
 used for the pie chart. By default this is set to "Set1".}
+
+\item{includeOthers}{Logical, whether to include an "Others" category for classes beyond maxClass. Default is TRUE.}
 }
 \description{
 This function creates a pie-chart for compound classes

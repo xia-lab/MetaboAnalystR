@@ -14,18 +14,7 @@
     if(.on.public.web){
         lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
         print(paste("loading library:", lib.path));
-        # Try qs2 first, fall back to qs if it's a legacy format
-        result <- tryCatch({
-            qs2::qs_read(lib.path)
-        }, error = function(err) {
-            if(grepl("qs-legacy", err$message, ignore.case = TRUE)){
-                print("Legacy qs format detected, using qs::qread...")
-                qs::qread(lib.path, use_alt_rep=FALSE)
-            } else {
-                stop(err$message)
-            }
-        })
-        return(result);
+        return(ov_qs_read(lib.path));
     }
     # print(c("lib.path",lib.path))
     lib.download <- FALSE;
@@ -60,31 +49,21 @@
     # Try qs2 first, fall back to old qs if needed
     my.lib <- NULL
     tryCatch({
-        my.lib <- qs2::qs_read(lib.path);
-        print("Loaded files with qs2.")
+        my.lib <- ov_qs_read(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
+        print("Loaded files from MetaboAnalyst web-server.")
         },
         error = function(err) {
-          if(grepl("qs-legacy", err$message, ignore.case = TRUE)){
-            print("Legacy qs format detected, using qs::qread...")
-            tryCatch({
-              my.lib <<- qs::qread(lib.path, use_alt_rep=FALSE);
-              print("Loaded legacy qs file successfully.")
-            }, error = function(e2) {
-              print(paste("Failed to read with qs::qread:", e2$message))
-            })
-          } else {
-            print(paste("Reading data unsuccessful:", err$message))
-            print("Attempting to re-download file...")
-            tryCatch({
-              download.file(lib.url, destfile=filenm, method="curl")
-              my.lib <<- qs2::qs_read(lib.path);
-              print("Loaded necessary files.")
-            },
-            warning = function(w) { print('warning in curl download') },
-            error = function(err2) {
-              print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
-            })
-          }
+        print("Reading data unsuccessful, attempting to re-download file...")
+        tryCatch({
+            download.file(lib.url, destfile=filenm, method="curl")
+            my.lib <- ov_qs_read(lib.path);
+            print("Loaded necessary files.")
+        },
+        warning = function(w) { print('warning in curl download') },
+        error = function(err) {
+            print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
+        }
+        )
         })
     return(my.lib);
 }

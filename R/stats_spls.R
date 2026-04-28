@@ -1455,7 +1455,7 @@ mean_centering_per_study=function(data, study, scale, bias=FALSE)
   data.list.study = study_split(data, study)
   
   # center and scale data per group, and concatene the data
-  res = lapply(data.list.study, scale.function, scale = scale, bias = bias)
+  res = lapply(data.list.study, scale_function, scale = scale, bias = bias)
 
   # PERFORMANCE FIX (Issue #5): Extract list elements efficiently before rbind
   # Original: do.call("rbind", lapply(res,function(x){x[[1]]})) creates intermediate list
@@ -1527,7 +1527,7 @@ study_split = function(data, study)
   return(invisible(result))
 }
 
-scale.function=function(temp, scale = TRUE, bias = FALSE)
+scale_function=function(temp, scale = TRUE, bias = FALSE)
 {
   meanX = colMeans(temp, na.rm = TRUE)
   data.list.study.scale_i = t(t(temp) - meanX)
@@ -1906,6 +1906,7 @@ get.BER = function(X)
 }
 
 #predict.block.pls <-predict.block.spls <- predict.mint.splsda <- predict.pls <- 
+#' @exportS3Method
 predict.spls <- function(object, newdata, study.test, dist = c("all", "max.dist", "centroids.dist", "mahalanobis.dist"), multilevel = NULL, ...)
 {
   

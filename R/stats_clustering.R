@@ -488,6 +488,17 @@ PlotClustPCA <- function(mSetObj,
 #'@param colV Default is set to T
 #'@param border Indicate whether or not to show cell-borders, default is set to T
 #'@param grp.ave Logical, default is set to F
+#'@param fzCol Numeric, font size for column labels.
+#'@param fzRow Numeric, font size for row labels.
+#'@param fzAnno Numeric, font size for annotation labels.
+#'@param annoPer Numeric, proportion of the plot allocated for annotation.
+#'@param unitCol Numeric, unit size for columns.
+#'@param unitRow Numeric, unit size for rows.
+#'@param show.legend Logical, whether to display the color legend. Default is TRUE.
+#'@param show.annot.legend Logical, whether to display the annotation legend. Default is TRUE.
+#'@param showColnm Logical, whether to show column names. Default is TRUE.
+#'@param showRownm Logical, whether to show row names. Default is TRUE.
+#'@param download Logical, if TRUE generate a static downloadable heatmap instead of the interactive version. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -561,13 +572,22 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@param smplDist Input the sample distance method
 #'@param clstDist Input the clustering distance method
 #'@param palette Input color palette choice
-#'@param viewOpt Set heatmap options, default is set to "detail"
 #'@param rowV Default is set to T
 #'@param colV Default is set to T
 #'@param var.inx Default is set to NA
 #'@param border Indicate whether or not to show cell-borders, default is set to T
 #'@param grp.ave Logical, default is set to F
-#'@param metadata metadata
+#'@param fzCol Numeric, font size for column labels.
+#'@param fzRow Numeric, font size for row labels.
+#'@param fzAnno Numeric, font size for annotation labels.
+#'@param annoPer Numeric, proportion of the plot allocated for annotation.
+#'@param unitCol Numeric, unit size for columns.
+#'@param unitRow Numeric, unit size for rows.
+#'@param show.legend Logical, whether to display the color legend. Default is TRUE.
+#'@param show.annot.legend Logical, whether to display the annotation legend. Default is TRUE.
+#'@param showColnm Logical, whether to show column names. Default is TRUE.
+#'@param showRownm Logical, whether to show row names. Default is TRUE.
+#'@param maxFeature Integer, maximum number of features to display. Default is 2000.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -602,7 +622,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
   }else{
-    my.data <- qs::qread("prenorm.qs");
+    my.data <- ov_qs_read("prenorm.qs");
   }
   
   if(is.null(var.inx)){
@@ -774,22 +794,22 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
         }
         bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
         bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-        qs::qsave(list(dat = dat.t), bridge_in, preset = "fast")
+        ov_qs_save(list(dat = dat.t), bridge_in, preset = "fast")
         on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
         run_func_via_rsclient(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
-            input <- qs::qread(bridge_in)
+            input <- ov_qs_read(bridge_in)
             res <- vegan::vegdist(input$dat, method = "bray")
-            qs::qsave(res, bridge_out, preset = "fast")
+            ov_qs_save(res, bridge_out, preset = "fast")
           },
           args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
           timeout_sec = 120
         )
 
-        my.dist2 <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+        my.dist2 <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
         if (is.null(my.dist2)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
 
     }else{
@@ -813,22 +833,22 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
         }
         bridge_in2 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
         bridge_out2 <- sub("_in.qs", "_out.qs", bridge_in2)
-        qs::qsave(list(dat = dat.t), bridge_in2, preset = "fast")
+        ov_qs_save(list(dat = dat.t), bridge_in2, preset = "fast")
         on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
 
         run_func_via_rsclient(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
-            input <- qs::qread(bridge_in)
+            input <- ov_qs_read(bridge_in)
             res <- vegan::vegdist(input$dat, method = "bray")
-            qs::qsave(res, bridge_out, preset = "fast")
+            ov_qs_save(res, bridge_out, preset = "fast")
           },
           args = list(wd = getwd(), bridge_in = bridge_in2, bridge_out = bridge_out2),
           timeout_sec = 120
         )
 
-        my.dist <- if (file.exists(bridge_out2)) qs::qread(bridge_out2) else NULL
+        my.dist <- if (file.exists(bridge_out2)) ov_qs_read(bridge_out2) else NULL
         if (is.null(my.dist)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
 
     }else{
@@ -906,7 +926,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   if(dataOpt=="norm"){
     my.data <- mSetObj$dataSet$norm;
   }else{
-    my.data <- qs::qread("prenorm.qs");
+    my.data <- ov_qs_read("prenorm.qs");
   }
   
   if(is.null(var.inx)){
@@ -1042,25 +1062,25 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 
         bridge_in3 <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
         bridge_out3 <- sub("_in.qs", "_out.qs", bridge_in3)
-        qs::qsave(list(feat_mat = feat.mat, smpl_mat = smpl.mat), bridge_in3, preset = "fast")
+        ov_qs_save(list(feat_mat = feat.mat, smpl_mat = smpl.mat), bridge_in3, preset = "fast")
         on.exit(unlink(c(bridge_in3, bridge_out3)), add = TRUE)
 
         run_func_via_rsclient(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
-            input <- qs::qread(bridge_in)
+            input <- ov_qs_read(bridge_in)
             res <- list(
               rows = vegan::vegdist(input$feat_mat, method = "bray"),
               cols = vegan::vegdist(input$smpl_mat, method = "bray")
             )
-            qs::qsave(res, bridge_out, preset = "fast")
+            ov_qs_save(res, bridge_out, preset = "fast")
           },
           args = list(wd = getwd(), bridge_in = bridge_in3, bridge_out = bridge_out3),
           timeout_sec = 120
         )
 
-        bray_result <- if (file.exists(bridge_out3)) qs::qread(bridge_out3) else NULL
+        bray_result <- if (file.exists(bridge_out3)) ov_qs_read(bridge_out3) else NULL
         if (is.null(bray_result)) { AddErrMsg("Bray-Curtis distance computation failed!"); return(0) }
         dist.for.rows <- bray_result$rows
         dist.for.cols <- bray_result$cols

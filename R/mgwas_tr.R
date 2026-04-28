@@ -404,7 +404,7 @@ DecomposeGraph <- function(gObj, minNodeNum = 2){
 
 
 GetNetStatByType <- function(g){
-   # qs::qsave(g,"g.qs")
+   # ov_qs_save(g,"g.qs")
    # save.image("GetNetStatByType.RData")
   mSetObj <- .get.mSet(mSetObj);
   nd.queries <- V(g)$name;
@@ -516,7 +516,7 @@ PrepareNet <- function(mir.nm, file.nm){
 convertIgraph2JSON <- function(g, filenm){
   #filenm<<-filenm;
   mSetObj <- .get.mSet(mSetObj);
-  #qs::qsave(g,"g.qs");
+  #ov_qs_save(g,"g.qs");
 
   #save.image("net.RData");
   nms <- V(g)$name;
@@ -555,7 +555,7 @@ convertIgraph2JSON <- function(g, filenm){
   
   
   # now get coords
-  pos.xy <- PerformLayOut(g, layers, "Default");
+  pos.xy <- PerformLayOut_mr(g, layers, "Default");
   
   node.btw <- as.numeric(betweenness(g));
   node.dgr <- as.numeric(degree(g));
@@ -791,7 +791,7 @@ convertIgraph2JSON <- function(g, filenm){
 }
 
 
-PerformLayOut <- function(g, layers, algo, focus=""){
+PerformLayOut_mr <- function(g, layers, algo, focus=""){
   vc <- vcount(g);
   if(algo == "Default"){
     if(vc > 1000) {
@@ -871,7 +871,7 @@ UpdateNetworkLayout2 <- function(algo, filenm, focus){
   m <- as.matrix(my.nodes);
   layers = ceiling(match(V(current.mirnet)$name, m)/nrow(m));
   
-  pos.xy <- PerformLayOut(current.mirnet, layers, algo, focus);
+  pos.xy <- PerformLayOut_mr(current.mirnet, layers, algo, focus);
   nms <- V(current.mirnet)$name;
   nodes <- vector(mode="list");
   for(i in 1:length(nms)){

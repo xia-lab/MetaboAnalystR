@@ -17,7 +17,7 @@ my.impute.missing <- function(mSetObj = NA,
       return(0)
     }
     src <- ex[which.max(file.info(ex)$mtime)]
-    int.mat <- as.matrix(qs::qread(src))
+    int.mat <- as.matrix(ov_qs_read(src))
     cls.auto <- mSetObj$dataSet$proc.cls
     if (is.null(cls.auto) || length(cls.auto) != nrow(int.mat)) {
       cls.auto <- mSetObj$dataSet$filt.cls
@@ -199,7 +199,7 @@ my.impute.missing <- function(mSetObj = NA,
 
   mSetObj$dataSet$proc.feat.num <- ncol(new.mat)
   mSetObj$dataSet$proc.cls <- as.factor(cls.auto)
-  qs::qsave(as.data.frame(new.mat), file = "data_proc.qs")
+  ov_qs_save(as.data.frame(new.mat), file = "data_proc.qs")
   mSetObj$dataSet$filt <- NULL;
   mSetObj$msgSet$replace.msg <- msg
   

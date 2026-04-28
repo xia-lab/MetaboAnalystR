@@ -87,7 +87,7 @@ my.univ.report <- function(mSetObj=NA){
   
   ## generate subset with the threshold (p-value)
   sigones <- which(as.numeric(as.character(univAnal.mat$p.value.origin)) <= threshp);
-  orig.data<- qs::qread("data_orig.qs");
+  orig.data<- ov_qs_read("data_orig.qs");
   sigDataSet.orig <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
   sigDataSet.norm <- cbind(SampleID=rownames(orig.data), Label=mSetObj$dataSet$cls, orig.data[,c(sigones)])
   

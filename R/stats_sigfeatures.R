@@ -22,7 +22,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method,
+  ov_qs_save(list(data=mat, cls=cl, cls.num=mSetObj$dataSet$cls.num, method=method,
                   varequal=varequal, paired=paired, delta=delta,
                   cls.paired=as.numeric(mSetObj$dataSet$pairs)), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
@@ -31,7 +31,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       library(siggenes)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       data <- input$data; cls <- input$cls
       if(input$cls.num==2){
         if(input$paired) cls <- input$cls.paired
@@ -65,13 +65,13 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
       sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5))
       data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE)
 
-      qs::qsave(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat), bridge_out, preset = "fast")
+      ov_qs_save(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat), bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
   # Plotting uses custom sam.plot2() — must run in parent where it's defined
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=8, height=8, type="png", bg="white")
@@ -196,7 +196,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,
+  ov_qs_save(list(data=conc.ebam, cls=cl.ebam, isVarEq=isVarEq, method=method,
                   A0=A0, delta=delta, imgA0=imgA0, dpi=dpi), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
@@ -204,7 +204,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       library(siggenes)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       data <- input$data; cls <- input$cls
       ebam_a0 <- siggenes::find.a0(data, cls, var.equal=input$isVarEq, gene.names=rownames(data), rand=123)
 
@@ -225,13 +225,13 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
       sig.mat <- as.matrix(signif(summary.mat[,-1],5))
       data.table::fwrite(as.data.frame(sig.mat), file="ebam_sigfeatures.csv", row.names=TRUE)
 
-      qs::qsave(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, delta=input$delta), bridge_out, preset = "fast")
+      ov_qs_save(list(ebam_a0=A0, ebam_out=ebam_out, sig.mat=sig.mat, delta=input$delta), bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 300
   )
 
-  my.res <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  my.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
   # Plotting uses custom plotEbam() — must run in parent where it's defined
   Cairo::Cairo(file = imgSig, unit="in", dpi=dpi, width=7, height=7, type="png", bg="white")

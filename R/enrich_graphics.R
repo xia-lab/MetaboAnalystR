@@ -305,6 +305,7 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param topN Integer, the maximum number of top pathways to display in the bar plot. Default is 25.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -532,7 +533,7 @@ concplot <- function(mn, lower, upper, labels=NULL,
 # Jeff Xia, jeff.xia@mcgill.ca
 # McGill University, Canada
 # License: GNU GPL (>= 2)
-
+#' @exportS3Method
 image.plot <- function(..., add = FALSE, nlevel = 64,
                        horizontal = FALSE, legend.shrink = 0.9, legend.width = 1.2,
                        legend.mar = ifelse(horizontal, 3.1, 5.1), legend.lab = NULL,
@@ -687,7 +688,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
   }
 }
 
-
+#' @export
 "image.plot.info" <- function(...) {
   temp <- list(...)
   #
@@ -760,7 +761,7 @@ image.plot <- function(..., add = FALSE, nlevel = 64,
 # Copyright 2004-2007, Institute for Mathematics Applied Geosciences
 # University Corporation for Atmospheric Research
 # Licensed under the GPL -- www.gpl.org/licenses/gpl.html
-
+#' @export
 image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
                            legend.width = 1, horizontal = FALSE, legend.mar = NULL,
                            bigplot = NULL, smallplot = NULL, ...) {
@@ -847,7 +848,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   id <- names(pvalue);
 
     if(!exists("current.msetlib")){
-        current.msetlib <<- qs::qread("current.msetlib.qs");
+        current.msetlib <<- ov_qs_read("current.msetlib.qs");
 
    }
   geneSets <- current.msetlib$member;

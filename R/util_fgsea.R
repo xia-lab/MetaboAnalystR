@@ -12,7 +12,7 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   # so we pass the function definition itself through the bridge file
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  qs::qsave(list(mSetObj = mSetObj, pathways = pathways, stats = stats,
+  ov_qs_save(list(mSetObj = mSetObj, pathways = pathways, stats = stats,
                   ranks = ranks, nperm = nperm, minSize = minSize,
                   maxSize = maxSize, gseaParam = gseaParam,
                   .run_fgsea_inner = .run_fgsea_inner), bridge_in, preset = "fast")
@@ -22,17 +22,17 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(fgsea); require(BiocParallel); require(fastmatch); require(data.table)
-      input <- qs::qread(bridge_in)
+      input <- ov_qs_read(bridge_in)
       res <- input$.run_fgsea_inner(input$mSetObj, input$pathways, input$stats,
                                     input$ranks, input$nperm, input$minSize,
                                     input$maxSize, input$gseaParam)
-      qs::qsave(res, bridge_out, preset = "fast")
+      ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
     timeout_sec = 900
   )
 
-  response <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+  response <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
   if (is.null(response)) { AddErrMsg("fgsea subprocess failed"); return(0) }
   return(response)
 }
@@ -81,13 +81,13 @@ my.fgsea <- function(mSetObj, pathways, stats, ranks,
   # returns list of indexs of matches between pathways and rank names
   pathwaysPos <- lapply(pathways, function(p) { as.vector(na.omit(fastmatch::fmatch(p, names(ranks))))})
   pathwaysFiltered <- lapply(pathwaysPos, function(s) { ranks[s] })
-  qs::qsave(pathwaysFiltered, "pathwaysFiltered.qs")
+  ov_qs_save(pathwaysFiltered, "pathwaysFiltered.qs")
   
   # adjust for the fact that a single m/z feature can match to several compound identifiers (not when in EC space)
   # subsets m/z features responsible for a compound and matches it to total set of matched m/z features
   # returns the length
   
-  matched_res <- qs::qread("mum_res.qs");
+  matched_res <- ov_qs_read("mum_res.qs");
   
   if(mSetObj$dataSet$paramSet$mumRT){
     pathwaysSizes <- sapply(pathwaysFiltered, length)

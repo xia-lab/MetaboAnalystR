@@ -23,7 +23,7 @@ my.save.data <- function(mSetObj=NA){
   } else {
     if(file.exists("data_orig.qs")){
 
-      orig.data<- qs::qread("data_orig.qs");
+      orig.data<- ov_qs_read("data_orig.qs");
 
       tsFormat <- substring(mSetObj$dataSet$format,4,5)=="mf";
       # combine for single factor, while keep separate for metadata 
@@ -53,7 +53,7 @@ my.save.data <- function(mSetObj=NA){
           if(!tsFormat){
             lbls <- cbind("Label"= as.character(mSetObj$dataSet$proc.cls));
           }
-          proc.data <- qs::qread("data_proc.qs");
+          proc.data <- ov_qs_read("data_proc.qs");
         }
         if(!tsFormat){
             proc.data<-cbind(lbls, proc.data);

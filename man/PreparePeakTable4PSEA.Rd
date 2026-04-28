@@ -4,7 +4,7 @@
 \alias{PreparePeakTable4PSEA}
 \title{PreparePeakTable4PSEA}
 \usage{
-PreparePeakTable4PSEA(mSetObj = NA)
+PreparePeakTable4PSEA(mSetObj = NA, ranking.method = "classical")
 }
 \arguments{
 \item{mSetObj}{mSet Objective from previous step}

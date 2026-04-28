@@ -344,7 +344,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
     message("[ComputeEncasing] rdt.set.qs not found")
     return("NA")
   }
-  rdt.set <- qs::qread("rdt.set.qs")
+  rdt.set <- ov_qs_read("rdt.set.qs")
   pos.xyz <- rdt.set$pos.xyz
 
   inx <- rownames(pos.xyz) %in% names
@@ -358,7 +358,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   tryCatch({
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    qs::qsave(list(coords = coords, level = level), bridge_in, preset = "fast")
+    ov_qs_save(list(coords = coords, level = level), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_rsclient(
@@ -366,19 +366,19 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
         require(rgl)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         cov_mat <- cov(input$coords)
-        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) { qs::qsave(NULL, bridge_out, preset = "fast"); return(invisible(NULL)) }
+        if (any(is.na(cov_mat)) || det(cov_mat) <= 0) { ov_qs_save(NULL, bridge_out, preset = "fast"); return(invisible(NULL)) }
         center <- colMeans(input$coords)
         mesh <- list()
         mesh[[1]] <- rgl::ellipse3d(x = cov_mat, centre = center, level = input$level)
-        qs::qsave(mesh, bridge_out, preset = "fast")
+        ov_qs_save(mesh, bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
       timeout_sec = 120
     )
 
-    mesh <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+    mesh <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
     if (is.null(mesh)) {
       sink(filenm); cat("{}"); sink()
       return(filenm)
@@ -427,7 +427,7 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
     message("[ComputeEncasingBatch] rdt.set.qs not found")
     return("NA")
   }
-  rdt.set <- qs::qread("rdt.set.qs")
+  rdt.set <- ov_qs_read("rdt.set.qs")
   pos.xyz <- rdt.set$pos.xyz
 
   # Extract coords per group in master
@@ -441,7 +441,7 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
     # Single subprocess for all groups via bridge files
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    qs::qsave(list(groups = group_data, level = level), bridge_in, preset = "fast")
+    ov_qs_save(list(groups = group_data, level = level), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_rsclient(
@@ -449,7 +449,7 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
         require(rgl)
-        input <- qs::qread(bridge_in)
+        input <- ov_qs_read(bridge_in)
         res <- lapply(input$groups, function(g) {
           coords <- g$coords
           if (nrow(coords) < 3) return(NULL)
@@ -461,13 +461,13 @@ ComputeEncasingBatch <- function(filenm, type, groups.json, level=0.95, omics="N
             list(group = g$group, mesh = list(mesh))
           }, error = function(e) NULL)
         })
-        qs::qsave(res, bridge_out, preset = "fast")
+        ov_qs_save(res, bridge_out, preset = "fast")
       },
       args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
       timeout_sec = 120
     )
 
-    result_list <- if (file.exists(bridge_out)) qs::qread(bridge_out) else NULL
+    result_list <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
 
     if (is.null(result_list)) {
       sink(filenm); cat("{}"); sink()

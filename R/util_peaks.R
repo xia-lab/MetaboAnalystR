@@ -132,7 +132,7 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
     sampnames = snames
   );
 
-  qs::qsave(peakSet, "peakSet.qs");
+  ov_qs_save(peakSet, "peakSet.qs");
   mSetObj$msgSet$read.msg <- msg;
   return(.set.mSet(mSetObj));
 }

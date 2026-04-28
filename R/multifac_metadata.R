@@ -341,8 +341,8 @@ Read.TextDataTs <- function(mSetObj=NA, filePath, format="rowu"){
   mSetObj$dataSet$url.var.nms <- url.var.nms;
   mSetObj$dataSet$url.smp.nms <- url.smp.nms;
   
-  qs::qsave(conc, file="data_orig.qs");
-  qs::qsave(conc, file="data_orig_0.qs");
+  ov_qs_save(conc, file="data_orig.qs");
+  ov_qs_save(conc, file="data_orig_0.qs");
   mSetObj$msgSet$read.msg <- c(msg, paste("The uploaded data file contains ", nrow(conc),
                                           " (samples) by ", ncol(conc), " (", tolower(GetVariableLabel(mSetObj$dataSet$type)), ") data matrix.", sep=""));
   
@@ -514,7 +514,7 @@ SetDataTypeOfMeta <- function(mSetObj=NA){
     }
   }
   mSetObj$dataSet$meta.info <- meta.info
-  qs::qsave(meta.info, file = "info4batch.qs")
+  ov_qs_save(meta.info, file = "info4batch.qs")
   return(.set.mSet(mSetObj));
 }
 
@@ -657,6 +657,7 @@ mSetObj$analSet$combFacdf <- meta;
 #'@param dpi Input the dpi of the image to create
 #'@param width Input the width of the image to create
 #'@param meta Input the metadata to visualize
+#'@param meta2 Input the name of a second metadata variable for faceting or coloring. Optional.
 #'@param version version
 #'@author Jessica Ewald\email{jessica.ewald@mcgill.ca}
 #'McGill University, Canada

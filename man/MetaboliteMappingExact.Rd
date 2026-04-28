@@ -4,7 +4,7 @@
 \alias{MetaboliteMappingExact}
 \title{Mapping from different metabolite IDs}
 \usage{
-MetaboliteMappingExact(mSetObj = NA, q.type, lipid = F)
+MetaboliteMappingExact(mSetObj = NA, q.type, lipid = F, mixed = F)
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj.}
@@ -14,6 +14,9 @@ for PubChem CIDs, "chebi" for ChEBI IDs, "metlin" for METLIN IDs, and "hmdb_kegg
 
 \item{lipid}{Boolean, if features are lipids, a different database will be used for
 compound matching.}
+
+\item{mixed}{Boolean, if features contain a mix of metabolites and lipids, both databases will be merged
+for compound matching. Default is FALSE.}
 }
 \description{
 For compound names to other ids, can do exact or approximate matches

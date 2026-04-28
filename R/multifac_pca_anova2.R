@@ -21,7 +21,6 @@ aov.2wayrep <- function(x){
 #'@description Perform Two-way ANOVA 
 #'Perform repeated measure one-way anova
 #'@param x Input the data 
-#'@param time.fac Input the time factor 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -53,8 +52,9 @@ aov.2way <- function(x){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param thresh Input the p-value threshold 
 #'@param p.cor Select method for p-value correction, bonferroni, holm or fdr
-#'@param type Select b to perform between-subjects ANOVA, 
-#'and w for within-subjects ANOVA 
+#'@param designType Character, the design type for ANOVA. Options include "time0" (default), "time", "between", etc.
+#'@param phenOpt Character, specifies the phenotype option: "between" for between-subjects or "within" for within-subjects design. Default is "between".
+#'@param topN Integer, the maximum number of top significant features to retain. Default is 200.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -124,7 +124,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
   
   # only do for top topN (200 by default)
   if(dim(mSetObj$dataSet$norm)[2] > topN){
-    data.filt <-  qs::qread("data_proc.qs");
+    data.filt <-  ov_qs_read("data_proc.qs");
     metab.var <- apply(as.matrix(data.filt), 2, function(x){
       var(x/mean(x))
     })
@@ -378,6 +378,9 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@usage iPCA.Anal(mSetObj, fileNm, metaCol, metaShape)
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param fileNm select a file name
+#'@param metaCol Character, name of the metadata column to use for coloring points in the PCA plot.
+#'@param metaShape Character, name of the metadata column to use for point shapes in the PCA plot.
+#'@param colorGradient Character, color scheme for the plot. Default is "heat".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -496,8 +499,8 @@ pca3d$score$color_legend_breaks <- pretty(vals, 5)   # nice tick labels
   cat(json.obj);
   sink();
 
-  qs::qsave(pca3d$score, "score3d.qs");
-  qs::qsave(pca3d$loadings, "loading3d.qs");
+  ov_qs_save(pca3d$score, "score3d.qs");
+  ov_qs_save(pca3d$loadings, "loading3d.qs");
 
   my.json.scatter(fileNm, TRUE);
   return(.set.mSet(mSetObj));

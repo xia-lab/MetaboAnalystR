@@ -22,6 +22,8 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 \item{inx1}{Numeric, indicate the number of the principal component for the x-axis of the loading plot.}
 
 \item{inx2}{Numeric, indicate the number of the principal component for the y-axis of the loading plot.}
+
+\item{topnum}{Integer, the number of top contributing features to display on the biplot. Default is 10.}
 }
 \description{
 Rotate PCA analysis

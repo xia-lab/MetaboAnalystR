@@ -8,6 +8,12 @@ PrepareROCData(mSetObj = NA, sel.meta = "NA", factor1 = "NA", factor2 = "NA")
 }
 \arguments{
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
+
+\item{sel.meta}{Name of the metadata column to use for grouping; default is "NA" to use the default class labels}
+
+\item{factor1}{Name of the first factor level for binary classification; default is "NA"}
+
+\item{factor2}{Name of the second factor level for binary classification; default is "NA"}
 }
 \description{
 Prepare data for ROC analysis

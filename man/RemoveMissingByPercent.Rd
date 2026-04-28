@@ -10,6 +10,9 @@ RemoveMissingPercent(mSetObj, percent)
 \item{mSetObj}{Input the name of the created mSetObj (see InitDataObjects)}
 
 \item{percent}{Input the percentage cut-off you wish to use. For instance, 50 percent is represented by percent=0.5.}
+
+\item{grpWise}{Logical, if TRUE apply the missing value filter group-wise (keep a feature if at least one group
+passes the threshold); if FALSE (default) apply globally across all samples.}
 }
 \description{
 Remove variables based upon a user-defined percentage cut-off of missing values.

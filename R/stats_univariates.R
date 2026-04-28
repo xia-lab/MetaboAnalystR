@@ -6,6 +6,7 @@
 #'@param cmp.type Comparison type, 0 for group 1 minus group 2, and 1 for group 
 #'1 minus group 2
 #'@param paired Logical, TRUE or FALSE
+#'@param fc.method Character, the method to compute fold change: "classical" (default, mean/median ratio) or "limma" (log2 fold change via limma moderated model).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -23,7 +24,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
   if (fc.method == "limma" && !paired) {
     # Limma-based logFC - use row_norm (original scale, same as classical GetFC)
     # Log2-transform so limma logFC = log2 fold change
-    row.data <- qs::qread("row_norm.qs");
+    row.data <- ov_qs_read("row_norm.qs");
     row.log2 <- log2(as.matrix(row.data));
     row.log2[!is.finite(row.log2)] <- 0;
     limma.res <- GetLimmaFCandP(row.log2, mSetObj$dataSet$cls);
@@ -86,6 +87,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
+#'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -195,7 +197,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   
   if(paired){ 
     # compute the average of paired FC (unit is pair)
-    row.norm <- qs::qread("row_norm.qs");
+    row.norm <- ov_qs_read("row_norm.qs");
     data <- log2(row.norm);
     
     G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
@@ -211,7 +213,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   }else{
     # compute the FC of two group means (unit is group)
     
-    data <- qs::qread("row_norm.qs");
+    data <- ov_qs_read("row_norm.qs");
     m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
     m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
     
@@ -243,6 +245,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@param pvalType pvalType, can be "fdr" etc.
 #'@param all_results Logical, if TRUE, returns T-Test analysis results
 #'for all compounds. 
+#'@param tt.method Character, the t-test method to use: "classical" (default), "welch", "student", "wilcox" (non-parametric), or "limma" (moderated t-test).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -408,6 +411,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
+#'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -509,6 +513,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 #'@param threshp Numeric, indicate the p-value threshold
 #'@param equal.var Logical, indicates if the group variance is equal (T) or unequal (F)
 #'@param pval.type To indicate raw p-values, use "raw". To indicate FDR-adjusted p-values, use "fdr".  
+#'@param fc.method Character, the fold change method: "classical" (default) or "limma". When "limma" is used, moderated t-statistics are also applied.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -755,7 +760,7 @@ ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
     sig.p <- p.value[inx.imp];
     sig.fdr <- fdr.p[inx.imp];
     if(exists("aov.res")){
-      qs::qsave(aov.res[inx.imp], file="aov_res_imp.qs");
+      ov_qs_save(aov.res[inx.imp], file="aov_res_imp.qs");
     }
     sig.mat <- all.mat[inx.imp,];
     ord.inx <- order(sig.mat$p.value);
@@ -819,7 +824,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
       cls <- mSetObj$dataSet$cls;
       aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
     }else{
-      aov.imp <- qs::qread("aov_res_imp.qs");
+      aov.imp <- ov_qs_read("aov_res_imp.qs");
     }
     
     # note this is only for post-hoc analysis. max 1000 in case too large
@@ -887,6 +892,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@param width Input the width, there are 2 default widths, the first, width = NULL, is 10.5.
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
+#'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
