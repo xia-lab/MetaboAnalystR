@@ -141,7 +141,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     sub.dir <- paste0("kegg/jointpa/",libOpt);
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    qs2::qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
   }
@@ -222,10 +222,11 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     
     gene.mat <- mSetObj$dataSet$pathinteg.imps$gene.mat;
 
-    if(mSetObj$org %in% kegg.model.orgs){     
-       # rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), mSetObj[["dataSet"]][["q.type.gene"]], mSetObj$org);   
-        rownames(gene.mat) <- convert2KeggEntry(rownames(gene.mat), "entrez", mSetObj$org);     
-        na.inx <- is.na(rownames(gene.mat));
+    if(mSetObj$org %in% kegg.model.orgs){
+        # Joint pathway libraries store genes as "org:EntrezID", so once the
+        # gene list has been mapped to Entrez IDs there is no need to look up
+        # KEGG entries through genes_entries_130_species.sqlite here.
+        na.inx <- is.na(rownames(gene.mat)) | !nzchar(rownames(gene.mat));
         gene.mat <- gene.mat[!na.inx,, drop=FALSE];
     }
     gene.vec <- paste(mSetObj$org, ":", rownames(gene.mat), sep="");
@@ -472,7 +473,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
         print("Not a defined topological measure!");
        # print(topo);
     }
-    qs::qsave(imp.list, file="pathinteg.impTopo.qs");
+    qs2::qs_save(imp.list, file="pathinteg.impTopo.qs");
 
     # now, perform topological analysis		
     # calculate the sum of importance
@@ -576,7 +577,7 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
     }
     destfile <- paste0(mSetObj$org, ".qs");
     current.kegglib <<- .get.my.lib(destfile, sub.dir);
-    qs::qsave(current.kegglib, "current.kegglib.qs");
+    qs2::qs_save(current.kegglib, "current.kegglib.qs");
 
     load_igraph();
   }
@@ -740,7 +741,7 @@ GetIntegResultPathNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(!exists('current.kegglib')){
     if(file.exists("current.kegglib.qs")){
-        current.kegglib <<- qs::qread("current.kegglib.qs");
+        current.kegglib <<- qs2::qs_read("current.kegglib.qs");
     }
   }
   return(names(current.kegglib$path.ids)[match(rownames(mSetObj$dataSet$path.mat),current.kegglib$path.ids)]);
@@ -984,15 +985,15 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import igraph  
-#'@import qs
+#'@import igraph
+#'@import qs2
 PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png", dpi=NULL){
   
   mSetObj <- .get.mSet(mSetObj);
 
   if(!exists('current.kegglib')){
     if(file.exists("current.kegglib.qs")){
-        current.kegglib <<- qs::qread("current.kegglib.qs");
+        current.kegglib <<- qs2::qs_read("current.kegglib.qs");
     }
   }
   library(igraph);
@@ -1002,7 +1003,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
     g <- upgrade_graph(g); # to fix warning, can be removed for new version
   }
   phits <- mSetObj$dataSet$path.hits[[path.id]];
-  pathinteg.impTopo <- qs::qread("pathinteg.impTopo.qs");
+  pathinteg.impTopo <- qs2::qs_read("pathinteg.impTopo.qs");
   topo <- pathinteg.impTopo[[path.id]];
   
   # obtain up/down/stat information
@@ -1384,6 +1385,71 @@ GetIntegHTMLPathSet<-function(mSetObj=NA, pathName){
     all.nms[nd.inx] <- paste("<font color=\"red\">", "<b>", all.nms[nd.inx], "</b>", "</font>",sep="");
 
     return(cbind(pathName, paste(unique(all.nms), collapse="; ")));
+}
+
+GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
+    mSetObj <- .get.mSet(mSetObj);
+    path.id <- current.kegglib$path.ids[[pathName]];
+    if(is.null(path.id) || length(path.id) < 1 || is.na(path.id[1])){
+        return(character(0));
+    }
+
+    phits <- mSetObj$dataSet$path.hits[[path.id]];
+    if(is.null(phits)){
+        return(character(0));
+    }
+
+    all.ids <- current.kegglib$mset.list[[path.id]];
+    if(is.null(all.ids)){
+        return(character(0));
+    }
+
+    hits <- unique(as.character(all.ids[which(phits)]));
+    hits <- hits[!is.na(hits) & nzchar(hits)];
+    if(length(hits) == 0){
+        return(character(0));
+    }
+
+    hits <- unique(unlist(strsplit(hits, "[;\\s]+", perl = TRUE), use.names = FALSE));
+    hits <- hits[!is.na(hits) & nzchar(hits)];
+
+    out <- character(0);
+    gene.ids <- hits[!grepl("^cpd:", hits, ignore.case = TRUE) & !grepl("^C[0-9]{5}$", toupper(hits))];
+    cpd.ids <- hits[grepl("^cpd:", hits, ignore.case = TRUE) | grepl("^C[0-9]{5}$", toupper(hits))];
+    cpd.ids <- toupper(cpd.ids);
+    cpd.ids <- sub("^CPD:", "cpd:", cpd.ids);
+
+    if(length(gene.ids) > 0){
+        org.code <- mSetObj$org;
+        sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+        if(!file.exists(sqlite.path)){
+            sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
+            if(!file.exists(sqlite.path)){
+                sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
+                download.file(sqlite_url, destfile = sqlite.path, method = "curl")
+            }
+        }
+        con <- .get.sqlite.con(sqlite.path);
+        on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
+        gene.db <- dbReadTable(con, "entrez_ortholog");
+        raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
+        hit.inx <- match(raw.ids, gene.db[, "gene_id"]);
+
+        kos <- rep("", length(gene.ids));
+        for(i in seq_along(gene.ids)){
+            if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
+                ko <- as.character(gene.db[hit.inx[i], "accession"]);
+                if(!is.na(ko) && nzchar(ko)){
+                    kos[i] <- ko;
+                }
+            }
+        }
+        out <- kos[nzchar(kos)];
+    }
+
+    out <- unique(c(cpd.ids, out));
+    out <- out[!is.na(out) & nzchar(out)];
+    return(out);
 }
 
 

@@ -544,6 +544,385 @@ GetHTMLPathSet <- function(mSetObj=NA, msetNm){
   return(cbind(msetNm, paste(unique(nms), collapse="; ")));
 }
 
+#'Return matched compound/metabolite IDs for a pathway
+#'@description Return matched IDs (hits) for a selected pathway from pathway analysis results.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param msetNm Input pathway name or pathway ID
+#'@param id.type Output ID type: "native", "kegg", or "hmdb"
+#'@param uniqueOnly Return unique IDs only (default TRUE)
+#'@export
+GetMatchedPathCompoundIDs <- function(mSetObj=NA, msetNm, id.type="native", uniqueOnly=TRUE){
+  mSetObj <- .get.mSet(mSetObj);
+
+  path_key <- trimws(as.character(msetNm[1]))
+  if(missing(msetNm) || is.null(msetNm) || !nzchar(path_key)){
+    return(character(0));
+  }
+
+  # Mummichog / peak-set pathways store their own pathway list instead of
+  # relying on current.kegglib. Use that structure first when available.
+  if(!is.null(mSetObj$pathways) && !is.null(mSetObj$pathways$cpds)){
+    path_names <- mSetObj$pathways$name
+    path_ids <- mSetObj$pathways$id
+    path.inx <- which(!is.null(path_names) & path_names == path_key)
+    if(length(path.inx) == 0 && !is.null(path_ids)){
+      path.inx <- which(path_ids == path_key)
+    }
+    if(length(path.inx) == 0){
+      path.inx <- match(tolower(path_key), tolower(path_names))
+    }
+    if(length(path.inx) > 0 && !is.na(path.inx[1])){
+      path.inx <- path.inx[1]
+      hit.vec <- NULL
+      if(!is.null(mSetObj$path.hits)){
+        hit.vec <- mSetObj$path.hits[[path_key]]
+        if(is.null(hit.vec) && !is.null(path_names) && !is.null(path_names[path.inx])){
+          hit.vec <- mSetObj$path.hits[[path_names[path.inx]]]
+        }
+        if(is.null(hit.vec) && !is.null(path_ids) && !is.null(path_ids[path.inx])){
+          hit.vec <- mSetObj$path.hits[[path_ids[path.inx]]]
+        }
+      }
+      if(is.null(hit.vec)){
+        if(!is.null(mSetObj$input_cpdlist)){
+          hit.vec <- intersect(as.character(unlist(mSetObj$input_cpdlist, use.names = FALSE)), as.character(unlist(mSetObj$pathways$cpds[[path.inx]], use.names = FALSE)))
+        } else if(!is.null(mSetObj$total_matched_cpds)){
+          hit.vec <- intersect(as.character(unlist(mSetObj$total_matched_cpds, use.names = FALSE)), as.character(unlist(mSetObj$pathways$cpds[[path.inx]], use.names = FALSE)))
+        } else {
+          hit.vec <- character(0)
+        }
+      }
+
+      ids <- as.character(unname(hit.vec))
+      ids <- ids[!is.na(ids) & nzchar(ids)]
+      if(length(ids) == 0){
+        return(character(0))
+      }
+
+      id.type <- tolower(trimws(as.character(id.type[1])))
+      if(id.type == "kegg"){
+        ids <- toupper(ids)
+        ids <- sub("^CPD:", "", ids)
+        ids <- gsub(".*\\b(C[0-9]{5})\\b.*", "\\1", ids, perl=TRUE)
+        ids <- ids[grepl("^C[0-9]{5}$", ids)]
+      } else if(id.type == "hmdb"){
+        ids <- toupper(ids)
+        ids <- gsub(".*\\b(HMDB[0-9]+)\\b.*", "\\1", ids, perl=TRUE)
+        ids <- ids[grepl("^HMDB[0-9]+$", ids)]
+      }
+
+      if(isTRUE(uniqueOnly)){
+        ids <- unique(ids)
+      }
+      return(ids)
+    }
+  }
+
+  if(!exists('current.kegglib')){
+    current.kegglib <<- qs::qread("current.kegglib.qs");
+  }
+
+  if(missing(msetNm) || is.null(msetNm) || !nzchar(path_key)){
+    return(character(0));
+  }
+
+  path.key <- path_key;
+  path.id <- "";
+
+  # Direct pathway ID (e.g. ko00010 / map00010 / hsa00010)
+  if(path.key %in% names(current.kegglib$mset.list)){
+    path.id <- path.key;
+  } else if(path.key %in% current.kegglib$path.ids){
+    # Pathway name -> ID via reverse match
+    hit.inx <- which(current.kegglib$path.ids == path.key)[1];
+    if(!is.na(hit.inx)) path.id <- names(current.kegglib$path.ids)[hit.inx];
+  } else {
+    # Usually path.ids is name -> id mapping
+    path.id <- as.character(current.kegglib$path.ids[path.key]);
+    if(is.na(path.id) || !nzchar(path.id)){
+      nm.inx <- match(tolower(path.key), tolower(names(current.kegglib$path.ids)));
+      if(!is.na(nm.inx)) path.id <- as.character(current.kegglib$path.ids[nm.inx]);
+    }
+  }
+
+  if(is.na(path.id) || !nzchar(path.id)){
+    return(character(0));
+  }
+
+  hits <- NULL;
+  if(mSetObj$analSet$type == "pathora"){
+    hits <- mSetObj$analSet$ora.hits;
+  } else {
+    hits <- mSetObj$analSet$qea.hits;
+  }
+
+  if(is.null(hits)){
+    return(character(0));
+  }
+
+  hit.vec <- hits[[path.id]];
+  if(is.null(hit.vec) && !is.null(hits[[path.key]])){
+    hit.vec <- hits[[path.key]];
+  }
+  if(is.null(hit.vec)){
+    return(character(0));
+  }
+
+  ids <- as.character(unname(hit.vec));
+  ids <- ids[!is.na(ids) & nzchar(ids)];
+  if(length(ids) == 0){
+    return(character(0));
+  }
+
+  id.type <- tolower(trimws(as.character(id.type[1])));
+  if(id.type == "kegg"){
+    ids <- toupper(ids);
+    ids <- sub("^CPD:", "", ids);
+    ids <- gsub(".*\\b(C[0-9]{5})\\b.*", "\\1", ids, perl=TRUE);
+    ids <- ids[grepl("^C[0-9]{5}$", ids)];
+  } else if(id.type == "hmdb"){
+    ids <- toupper(ids);
+    ids <- gsub(".*\\b(HMDB[0-9]+)\\b.*", "\\1", ids, perl=TRUE);
+    ids <- ids[grepl("^HMDB[0-9]+$", ids)];
+  }
+
+  if(isTRUE(uniqueOnly)){
+    ids <- unique(ids);
+  }
+  return(ids);
+}
+
+#'Build context-specific ReconMap subnetwork (SQLite-backed)
+#'@description Query reconmap.sqlite in R and return Cytoscape.js-compatible JSON for pathway context.
+#'Duplicate metabolite instances are kept as separate glyph nodes; `compoundToNodeIds` tracks grouping.
+#'@param mSetObj Input mSet object
+#'@param pathwayName Optional pathway name/ID; if empty, uses top result pathways
+#'@param dbPath Path to reconmap.sqlite
+#'@param maxPathways Number of top pathways used when pathwayName is empty
+#'@param maxSeedCompounds Max unique seed compound IDs used
+#'@param maxNodes Max nodes in returned subnetwork
+#'@export
+GetReconmapSubnetworkJSON <- function(mSetObj=NA, pathwayName="", dbPath="/home/zgy/reconmap.sqlite",
+                                      maxPathways=20, maxSeedCompounds=120, maxNodes=1200){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(!file.exists(dbPath)){
+    return('{"elements":{"nodes":[],"edges":[]},"meta":{"error":"reconmap.sqlite not found"}}');
+  }
+  if(!requireNamespace("DBI", quietly = TRUE) || !requireNamespace("RSQLite", quietly = TRUE)){
+    return('{"elements":{"nodes":[],"edges":[]},"meta":{"error":"DBI/RSQLite unavailable"}}');
+  }
+
+  esc <- function(x) gsub("'", "''", as.character(x), fixed = TRUE)
+  json_escape <- function(x) {
+    x <- as.character(x)
+    x <- gsub("\\\\", "\\\\\\\\", x)
+    x <- gsub("\"", "\\\\\"", x)
+    x <- gsub("\n", "\\\\n", x)
+    x <- gsub("\r", "\\\\r", x)
+    x <- gsub("\t", "\\\\t", x)
+    x
+  }
+  in_clause <- function(vec){
+    vec <- unique(vec[!is.na(vec) & nzchar(vec)])
+    if(length(vec) == 0) return("('')")
+    paste0("('", paste(vapply(vec, esc, character(1)), collapse = "','"), "')")
+  }
+  as_num <- function(x){
+    y <- suppressWarnings(as.numeric(x))
+    ifelse(is.na(y), 0, y)
+  }
+
+  pathwayName <- trimws(as.character(pathwayName)[1])
+  maxPathways <- max(1L, as.integer(maxPathways))
+  maxSeedCompounds <- max(1L, as.integer(maxSeedCompounds))
+  maxNodes <- max(50L, as.integer(maxNodes))
+
+  # 1) Collect seed KEGG compounds from pathway analysis.
+  seed.cids <- character(0)
+  if(nzchar(pathwayName)){
+    seed.cids <- GetMatchedPathCompoundIDs(mSetObj, pathwayName, id.type = "kegg", uniqueOnly = TRUE)
+  } else {
+    pnames <- character(0)
+    if(!is.null(mSetObj$analSet$ora.mat) && nrow(mSetObj$analSet$ora.mat) > 0){
+      pnames <- rownames(mSetObj$analSet$ora.mat)
+    } else if(!is.null(mSetObj$analSet$qea.mat) && nrow(mSetObj$analSet$qea.mat) > 0){
+      pnames <- rownames(mSetObj$analSet$qea.mat)
+    }
+    if(length(pnames) > 0){
+      pnames <- pnames[seq_len(min(length(pnames), maxPathways))]
+      seed.cids <- unique(unlist(lapply(pnames, function(pn){
+        GetMatchedPathCompoundIDs(mSetObj, pn, id.type = "kegg", uniqueOnly = TRUE)
+      }), use.names = FALSE))
+    }
+  }
+  seed.cids <- unique(toupper(seed.cids))
+  seed.cids <- seed.cids[grepl("^C\\d{5}$", seed.cids)]
+  if(length(seed.cids) > maxSeedCompounds){
+    seed.cids <- seed.cids[seq_len(maxSeedCompounds)]
+  }
+
+  if(length(seed.cids) == 0){
+    return('{"elements":{"nodes":[],"edges":[]},"meta":{"seedCompounds":0}}');
+  }
+
+  con <- DBI::dbConnect(RSQLite::SQLite(), dbPath)
+  on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE)
+
+  # 2) Seed metabolite glyph nodes (multiple instances preserved).
+  q.seed <- paste0("SELECT DISTINCT node_id FROM node_kegg_compound WHERE cid IN ", in_clause(seed.cids))
+  seed.node.ids <- DBI::dbGetQuery(con, q.seed)$node_id
+  seed.node.ids <- unique(seed.node.ids[!is.na(seed.node.ids) & nzchar(seed.node.ids)])
+  if(length(seed.node.ids) == 0){
+    return('{"elements":{"nodes":[],"edges":[]},"meta":{"seedCompounds":', length(seed.cids), ',"seedNodes":0}}');
+  }
+
+  # 3) Expand one hop to enzymes, then one hop back to metabolites.
+  q.enz <- paste0(
+    "SELECT DISTINCT n.id AS id FROM node n ",
+    "JOIN edge e ON (n.id = e.source OR n.id = e.target) ",
+    "WHERE n.type='enzyme' AND (e.source IN ", in_clause(seed.node.ids), " OR e.target IN ", in_clause(seed.node.ids), ")"
+  )
+  enz.node.ids <- DBI::dbGetQuery(con, q.enz)$id
+  enz.node.ids <- unique(enz.node.ids[!is.na(enz.node.ids) & nzchar(enz.node.ids)])
+
+  q.met2 <- paste0(
+    "SELECT DISTINCT n.id AS id FROM node n ",
+    "JOIN edge e ON (n.id = e.source OR n.id = e.target) ",
+    "WHERE n.type='metabolite' AND (e.source IN ", in_clause(enz.node.ids), " OR e.target IN ", in_clause(enz.node.ids), ")"
+  )
+  met2.node.ids <- DBI::dbGetQuery(con, q.met2)$id
+  met2.node.ids <- unique(met2.node.ids[!is.na(met2.node.ids) & nzchar(met2.node.ids)])
+
+  node.ids <- unique(c(seed.node.ids, enz.node.ids, met2.node.ids))
+  if(length(node.ids) > maxNodes){
+    # keep all seed + enzymes first; then fill with metabolites.
+    keep <- unique(c(seed.node.ids, enz.node.ids))
+    remain <- setdiff(node.ids, keep)
+    if(length(keep) < maxNodes){
+      keep <- c(keep, remain[seq_len(min(length(remain), maxNodes - length(keep)))])
+    } else {
+      keep <- keep[seq_len(maxNodes)]
+    }
+    node.ids <- unique(keep)
+  }
+
+  # 4) Fetch nodes and annotations.
+  node.df <- DBI::dbGetQuery(con, paste0(
+    "SELECT id,type,name,species_id,reaction_id,x,y FROM node WHERE id IN ", in_clause(node.ids)
+  ))
+  cid.df <- DBI::dbGetQuery(con, paste0(
+    "SELECT node_id,cid FROM node_kegg_compound WHERE node_id IN ", in_clause(node.ids), " ORDER BY cid"
+  ))
+  rid.df <- DBI::dbGetQuery(con, paste0(
+    "SELECT node_id,rid FROM node_kegg_reaction WHERE node_id IN ", in_clause(node.ids), " ORDER BY rid"
+  ))
+  ec.df <- DBI::dbGetQuery(con, paste0(
+    "SELECT node_id,ec FROM node_ec_code WHERE node_id IN ", in_clause(node.ids), " ORDER BY ec"
+  ))
+
+  split_col <- function(df, key, val){
+    if(is.null(df) || nrow(df) == 0) return(list())
+    sp <- split(as.character(df[[val]]), as.character(df[[key]]))
+    lapply(sp, function(v) unique(v[!is.na(v) & nzchar(v)]))
+  }
+  node2cid <- split_col(cid.df, "node_id", "cid")
+  node2rid <- split_col(rid.df, "node_id", "rid")
+  node2ec <- split_col(ec.df, "node_id", "ec")
+
+  # 5) Fetch edges internal to selected nodes.
+  edge.df <- DBI::dbGetQuery(con, paste0(
+    "SELECT id,source,target,role,reaction_id,species_reference_id,species_id,stoichiometry ",
+    "FROM edge WHERE source IN ", in_clause(node.ids), " AND target IN ", in_clause(node.ids)
+  ))
+
+  # 6) Duplicate-instance map for UI dedup/grouping.
+  comp.map <- list()
+  if(nrow(cid.df) > 0){
+    split.ids <- split(as.character(cid.df$node_id), as.character(cid.df$cid))
+    for(k in names(split.ids)){
+      comp.map[[k]] <- unique(split.ids[[k]])
+    }
+  }
+
+  # 7) Build JSON manually (fast, explicit, predictable keys).
+  node.json <- character(0)
+  if(nrow(node.df) > 0){
+    for(i in seq_len(nrow(node.df))){
+      row <- node.df[i, ]
+      nid <- as.character(row$id)
+      ntype <- as.character(row$type)
+      cids <- node2cid[[nid]]; if(is.null(cids)) cids <- character(0)
+      rids <- node2rid[[nid]]; if(is.null(rids)) rids <- character(0)
+      ecs <- node2ec[[nid]]; if(is.null(ecs)) ecs <- character(0)
+      cids.json <- paste0("[", paste0("\"", json_escape(cids), "\"", collapse=","), "]")
+      rids.json <- paste0("[", paste0("\"", json_escape(rids), "\"", collapse=","), "]")
+      ecs.json <- paste0("[", paste0("\"", json_escape(ecs), "\"", collapse=","), "]")
+      node.json <- c(node.json, paste0(
+        "{\"data\":{",
+        "\"id\":\"", json_escape(nid), "\",",
+        "\"type\":\"", json_escape(ntype), "\",",
+        "\"name\":\"", json_escape(as.character(row$name)), "\",",
+        "\"speciesId\":\"", json_escape(as.character(row$species_id)), "\",",
+        "\"reactionId\":\"", json_escape(as.character(row$reaction_id)), "\",",
+        "\"keggCompoundIds\":", cids.json, ",",
+        "\"keggReactionIds\":", rids.json, ",",
+        "\"ecCodes\":", ecs.json,
+        "},\"position\":{",
+        "\"x\":", as_num(row$x), ",\"y\":", as_num(row$y),
+        "}}"
+      ))
+    }
+  }
+
+  edge.json <- character(0)
+  if(nrow(edge.df) > 0){
+    for(i in seq_len(nrow(edge.df))){
+      row <- edge.df[i, ]
+      edge.json <- c(edge.json, paste0(
+        "{\"data\":{",
+        "\"id\":\"", json_escape(as.character(row$id)), "\",",
+        "\"source\":\"", json_escape(as.character(row$source)), "\",",
+        "\"target\":\"", json_escape(as.character(row$target)), "\",",
+        "\"role\":\"", json_escape(as.character(row$role)), "\",",
+        "\"reactionId\":\"", json_escape(as.character(row$reaction_id)), "\",",
+        "\"speciesReferenceId\":\"", json_escape(as.character(row$species_reference_id)), "\",",
+        "\"speciesId\":\"", json_escape(as.character(row$species_id)), "\",",
+        "\"stoichiometry\":", as_num(row$stoichiometry),
+        "}}"
+      ))
+    }
+  }
+
+  comp.kv <- character(0)
+  if(length(comp.map) > 0){
+    for(k in names(comp.map)){
+      ids <- comp.map[[k]]
+      ids.json <- paste0("[", paste0("\"", json_escape(ids), "\"", collapse=","), "]")
+      comp.kv <- c(comp.kv, paste0("\"", json_escape(k), "\":", ids.json))
+    }
+  }
+
+  out <- paste0(
+    "{",
+    "\"elements\":{",
+    "\"nodes\":[", paste(node.json, collapse=","), "],",
+    "\"edges\":[", paste(edge.json, collapse=","), "]",
+    "},",
+    "\"compoundToNodeIds\":{", paste(comp.kv, collapse=","), "},",
+    "\"meta\":{",
+    "\"pathway\":\"", json_escape(pathwayName), "\",",
+    "\"seedCompounds\":", length(seed.cids), ",",
+    "\"seedGlyphNodes\":", length(seed.node.ids), ",",
+    "\"enzymeNodes\":", length(enz.node.ids), ",",
+    "\"totalNodes\":", nrow(node.df), ",",
+    "\"totalEdges\":", nrow(edge.df),
+    "}",
+    "}"
+  )
+  return(out)
+}
+
 GetORA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){

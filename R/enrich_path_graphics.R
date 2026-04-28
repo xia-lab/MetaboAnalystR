@@ -1004,6 +1004,71 @@ GetPathwayCompoundColors <- function(mSetObj=NA, pathName){
 
   mSetObj <- .get.mSet(mSetObj);
 
+  # Mummichog / peak-set pathway results keep the pathway hits directly on
+  # mSetObj$pathways and mSetObj$path.hits. Use those first when present.
+  if(!is.null(mSetObj$pathways) && !is.null(mSetObj$pathways$cpds)){
+    path.inx <- match(pathName, mSetObj$pathways$name)
+    if(is.na(path.inx) && !is.null(mSetObj$pathways$id)){
+      path.inx <- match(pathName, mSetObj$pathways$id)
+    }
+    if(is.na(path.inx)){
+      path.inx <- match(tolower(pathName), tolower(mSetObj$pathways$name))
+    }
+    if(!is.na(path.inx)){
+      all.nodes <- unique(as.character(unlist(mSetObj$pathways$cpds[[path.inx]], use.names = FALSE)))
+      if(length(all.nodes) == 0){
+        return(character(0));
+      }
+
+      hit.all <- character(0)
+      hit.sig <- character(0)
+
+      if(!is.null(mSetObj$path.hits)){
+        hit.all <- unique(as.character(unlist(mSetObj$path.hits[[path.inx]], use.names = FALSE)))
+        if(length(hit.all) == 0 && !is.null(mSetObj$pathways$name[path.inx])){
+          hit.all <- unique(as.character(unlist(mSetObj$path.hits[[mSetObj$pathways$name[path.inx]]], use.names = FALSE)))
+        }
+      }
+
+      if(!is.null(mSetObj$input_cpdlist)){
+        hit.sig <- unique(as.character(unlist(mSetObj$input_cpdlist, use.names = FALSE)))
+      } else if(!is.null(mSetObj$input_ecpdlist) && !is.null(mSetObj$ecpd_cpd_dict)){
+        hit.sig <- unique(as.character(unlist(mSetObj$ecpd_cpd_dict[match(unlist(mSetObj$input_ecpdlist, use.names = FALSE), names(mSetObj$ecpd_cpd_dict))], use.names = FALSE)))
+      }
+      if(length(hit.all) == 0){
+        hit.all <- hit.sig
+      }
+
+      fillcolvec <- rep("lightblue", length(all.nodes));
+      names(fillcolvec) <- all.nodes;
+      pvec <- rep(NA, length(all.nodes));
+      names(pvec) <- all.nodes;
+
+      refs <- all.nodes %in% hit.all
+      sigs <- all.nodes %in% hit.sig
+      if(length(hit.all) > 0){
+        fillcolvec[refs] <- "red";
+        pvec[refs] <- 0.05;
+      }
+      if(length(hit.sig) > 0){
+        fillcolvec[sigs] <- "red";
+        pvec[sigs] <- 0.05;
+      }
+
+      result <- character(0);
+      for(i in seq_along(all.nodes)){
+        node.id <- all.nodes[i];
+        color <- fillcolvec[node.id];
+        if(color != "lightblue" && color != "lightgrey"){
+          pval <- pvec[node.id];
+          pval.str <- ifelse(is.na(pval), "NA", sprintf("%.6f", pval));
+          result <- c(result, paste(node.id, color, pval.str, sep="|"));
+        }
+      }
+      return(result);
+    }
+  }
+
   # Check if KEGG library is loaded
   if(!exists("current.kegglib") || is.null(current.kegglib)){
     return(character(0));
@@ -1044,8 +1109,22 @@ GetPathwayCompoundColors <- function(mSetObj=NA, pathName){
     return(character(0));
   }
 
-  # Get all compounds in this pathway
-  all.nodes <- KEGGgraph::nodes(g);
+  # Get all compounds in this pathway.
+  # KEGGgraph::nodes() only works for graphNEL objects; current pathway
+  # libraries may store igraph objects, so handle both representations.
+  all.nodes <- tryCatch({
+    if (inherits(g, "igraph")) {
+      nm <- igraph::vertex_attr(g, "name");
+      if (is.null(nm) || length(nm) == 0) {
+        nm <- igraph::V(g)$name;
+      }
+      as.character(nm)
+    } else {
+      KEGGgraph::nodes(g);
+    }
+  }, error = function(e) {
+    character(0);
+  });
 
   # Initialize with default colors
   fillcolvec <- rep("lightblue", length(all.nodes));
@@ -1130,6 +1209,25 @@ GetPathwayCompoundColors <- function(mSetObj=NA, pathName){
 GetPathwayLibraryCompounds <- function(mSetObj=NA, pathName){
 
   mSetObj <- .get.mSet(mSetObj);
+
+  # Mummichog / peak-set pathways keep their compound memberships directly
+  # on mSetObj$pathways, so prefer that when present.
+  if(!is.null(mSetObj$pathways) && !is.null(mSetObj$pathways$cpds)){
+    path.inx <- match(pathName, mSetObj$pathways$name)
+    if(is.na(path.inx) && !is.null(mSetObj$pathways$id)){
+      path.inx <- match(pathName, mSetObj$pathways$id)
+    }
+    if(is.na(path.inx)){
+      path.inx <- match(tolower(pathName), tolower(mSetObj$pathways$name))
+    }
+    if(!is.na(path.inx)){
+      vals <- as.character(unlist(mSetObj$pathways$cpds[[path.inx]], use.names = FALSE))
+      vals <- toupper(vals)
+      vals <- vals[grepl("^C[0-9]{5}$", vals)]
+      vals <- unique(vals)
+      return(vals)
+    }
+  }
 
   if(!exists("current.kegglib") || is.null(current.kegglib)){
     return(character(0));

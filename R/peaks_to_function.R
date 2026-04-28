@@ -1924,6 +1924,7 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   
   fast.write.csv(matched_res, file="mummichog_matched_compound_all.csv", row.names=FALSE);
   qs::qsave(matched_res, "mum_res.qs");
+  WriteMummichogFeaturePathMap(mSetObj, "mummichog_matched_feature_all.csv");
   
   # now update expr. profile
   matched_mz <- matched_res[,1];
@@ -3052,9 +3053,10 @@ ComputeMummichogRTPermPvals <- function(input_ecpdlist, total_matched_ecpds, pat
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
+  WriteMummichogFeaturePathMap(mSetObj, "mummichog_matched_feature_all.csv");
 
-        if(is.null(mSetObj$imgSet$enrTables)){
-            mSetObj$imgSet$enrTables <- list();
+  if(is.null(mSetObj$imgSet$enrTables)){
+        mSetObj$imgSet$enrTables <- list();
         }
         vis.type <- "mumEnr";
         resTable <- res.mat[,c(2,3,5,9)];
@@ -3488,6 +3490,7 @@ json.res <- list(
   sink(mSetObj$mum_nm);
   cat(json.mat);
   sink();
+  WriteMummichogFeaturePathMap(mSetObj, "mummichog_matched_feature_all.csv");
   
   return(mSetObj);
 }
@@ -4039,6 +4042,168 @@ GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {
   }
 
   cbind(msetNm, paste(unique(nms), collapse = "; "))
+}
+
+#'Write a pathway-to-feature mapping table for mummichog results
+#'@description Flatten pathway hits to the original uploaded feature rows.
+#'The output keeps the original feature statistics and joins them to every
+#'pathway/compound match.
+#'@param mSetObj Input the name of the created mSetObj.
+#'@param file.name Output CSV file name.
+#'@noRd
+WriteMummichogFeaturePathMap <- function(mSetObj = NA, file.name = "mummichog_matched_feature_all.csv") {
+  mSetObj <- .get.mSet(mSetObj)
+
+  empty_out <- function() {
+    if (file.exists(file.name)) {
+      file.remove(file.name)
+    }
+    file.create(file.name)
+    return(0)
+  }
+
+  matched_res <- try(qs::qread("mum_res.qs"), silent = TRUE)
+  if (inherits(matched_res, "try-error") || is.null(matched_res) || !is.data.frame(matched_res) || nrow(matched_res) == 0) {
+    return(empty_out())
+  }
+  feat_tbl <- mSetObj$dataSet$mummi.proc
+  if (is.null(feat_tbl) || nrow(feat_tbl) == 0) {
+    return(empty_out())
+  }
+  feat_tbl <- as.data.frame(feat_tbl, stringsAsFactors = FALSE)
+  feat_tbl$Feature.ID <- if ("m.z" %in% colnames(feat_tbl)) as.character(feat_tbl$m.z) else as.character(rownames(feat_tbl))
+  if (!"m.z" %in% colnames(feat_tbl)) {
+    feat_tbl$m.z <- feat_tbl$Feature.ID
+  }
+  feat_tbl$m.z <- as.character(feat_tbl$m.z)
+  if ("r.t" %in% colnames(feat_tbl)) {
+    feat_tbl$r.t <- suppressWarnings(as.numeric(feat_tbl$r.t))
+  }
+
+  cmpd.db <- try(.get.my.lib("compound_db.qs"), silent = TRUE)
+  kegg2name <- NULL
+  if (!inherits(cmpd.db, "try-error") && !is.null(cmpd.db) && all(c("kegg_id", "name") %in% colnames(cmpd.db))) {
+    cmpd.db$kegg_id <- as.character(cmpd.db$kegg_id)
+    cmpd.db$name <- as.character(cmpd.db$name)
+    kegg2name <- stats::setNames(cmpd.db$name, cmpd.db$kegg_id)
+  }
+
+  matched_res$Query.Mass <- as.character(matched_res$Query.Mass)
+  matched_res$Matched.Compound <- as.character(matched_res$Matched.Compound)
+  if ("Empirical.Compound" %in% colnames(matched_res)) {
+    matched_res$Empirical.Compound <- as.character(matched_res$Empirical.Compound)
+  }
+
+  normalize_mum_id <- function(x) {
+    x <- as.character(x)
+    x <- trimws(x)
+    x <- gsub("^cpd:", "", x)
+    x <- gsub("^compound:", "", x)
+    x <- gsub("\\s+", "", x)
+    x[nzchar(x)]
+  }
+
+  split_mum_ids <- function(x) {
+    x <- normalize_mum_id(x)
+    if (!length(x)) {
+      return(character(0))
+    }
+    unique(unlist(strsplit(x, "[;|_]{2,}|;", perl = TRUE), use.names = FALSE))
+  }
+
+  path_names <- NULL
+  path_ids <- NULL
+  path_list_cpd <- NULL
+  path_list_ec <- NULL
+
+  if (!is.null(mSetObj$pathways) && !is.null(mSetObj$pathways$name) && length(mSetObj$pathways$name) > 0) {
+    path_names <- as.character(mSetObj$pathways$name)
+    path_ids <- if (!is.null(mSetObj$pathways$id)) as.character(mSetObj$pathways$id) else rep("", length(path_names))
+    if (!is.null(mSetObj$pathways$cpds)) {
+      path_list_cpd <- lapply(mSetObj$pathways$cpds, function(x) split_mum_ids(unlist(x, use.names = FALSE)))
+    }
+    if (!is.null(mSetObj$pathways$emp_cpds)) {
+      path_list_ec <- lapply(mSetObj$pathways$emp_cpds, function(x) split_mum_ids(unlist(x, use.names = FALSE)))
+    }
+  }
+
+  if (is.null(path_names) || length(path_names) == 0) {
+    return(empty_out())
+  }
+
+  cpd_to_path <- list()
+  ec_to_path <- list()
+  for (i in seq_along(path_names)) {
+    pnm <- path_names[i]
+    pid <- if (!is.null(path_ids) && length(path_ids) >= i) path_ids[i] else ""
+
+    if (!is.null(path_list_cpd) && length(path_list_cpd) >= i) {
+      for (cpd in path_list_cpd[[i]]) {
+        if (!nzchar(cpd)) next
+        cpd_to_path[[cpd]] <- unique(c(cpd_to_path[[cpd]], pnm))
+      }
+    }
+    if (!is.null(path_list_ec) && length(path_list_ec) >= i) {
+      for (ec in path_list_ec[[i]]) {
+        if (!nzchar(ec)) next
+        ec_to_path[[ec]] <- unique(c(ec_to_path[[ec]], pnm))
+      }
+    }
+  }
+
+  match_cols <- intersect(c("Empirical.Compound", "Matched.Compound"), colnames(matched_res))
+  if (!length(match_cols)) {
+    return(empty_out())
+  }
+
+  matched_rows <- vector("list", nrow(matched_res))
+  out_n <- 0L
+  for (r in seq_len(nrow(matched_res))) {
+    row <- matched_res[r, , drop = FALSE]
+    row_cpd <- normalize_mum_id(row$Matched.Compound)
+    row_ec <- if ("Empirical.Compound" %in% colnames(row)) normalize_mum_id(row$Empirical.Compound) else character(0)
+
+    paths <- character(0)
+    if (length(row_cpd) && !is.null(cpd_to_path[[row_cpd]])) {
+      paths <- c(paths, cpd_to_path[[row_cpd]])
+    }
+    if (length(row_ec) && !is.null(ec_to_path[[row_ec]])) {
+      paths <- c(paths, ec_to_path[[row_ec]])
+    }
+    paths <- unique(paths)
+    if (!length(paths)) {
+      next
+    }
+
+    for (pnm in paths) {
+      out_n <- out_n + 1L
+      expanded <- row[rep(1L, 1L), , drop = FALSE]
+      expanded$Pathway.Name <- pnm
+      expanded$Pathway.ID <- if (!is.null(path_ids) && pnm %in% path_names) path_ids[match(pnm, path_names)] else ""
+      expanded$Pathway.Compound.Total <- if (!is.null(path_list_cpd) && pnm %in% path_names) length(path_list_cpd[[match(pnm, path_names)]]) else NA_integer_
+      expanded$Pathway.Match.By <- paste(c(if (length(row_cpd) && !is.null(cpd_to_path[[row_cpd]]) && pnm %in% cpd_to_path[[row_cpd]]) "Matched.Compound",
+                                          if (length(row_ec) && !is.null(ec_to_path[[row_ec]]) && pnm %in% ec_to_path[[row_ec]]) "Empirical.Compound"),
+                                        collapse = ";")
+      if (!is.null(kegg2name) && "Matched.Compound" %in% colnames(expanded)) {
+        expanded$Matched.Compound.Name <- unname(kegg2name[as.character(expanded$Matched.Compound)])
+        expanded$Matched.Compound.Name[is.na(expanded$Matched.Compound.Name) | expanded$Matched.Compound.Name == ""] <- as.character(expanded$Matched.Compound[is.na(expanded$Matched.Compound.Name) | expanded$Matched.Compound.Name == ""])
+      }
+      matched_rows[[out_n]] <- expanded
+    }
+  }
+
+  if (out_n == 0L) {
+    return(empty_out())
+  }
+
+  out <- do.call(rbind, matched_rows[seq_len(out_n)])
+  out <- merge(out, feat_tbl, by.x = "Query.Mass", by.y = "m.z", all.x = TRUE, suffixes = c("", ".feat"))
+  if ("Pathway.Name" %in% colnames(out) && "Query.Mass" %in% colnames(out)) {
+    out <- out[order(as.character(out$Pathway.Name), as.character(out$Query.Mass)), , drop = FALSE]
+  }
+
+  fast.write.csv(out, file = file.name, row.names = FALSE)
+  return(nrow(out))
 }
 
 GetMummiResMatrix <- function(mSetObj=NA){

@@ -7,13 +7,25 @@
 # sub.dir is sub folder, leave NULL is under main lib folder
 .get.my.lib <- function(filenm, sub.dir=NULL){
 
+    print(filenm);
     if(!is.null(sub.dir)){
         sub.dir <- paste0(sub.dir, "/");
     }
     if(.on.public.web){
         lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
         print(paste("loading library:", lib.path));
-        return(qs::qread(lib.path));
+        # Try qs2 first, fall back to qs if it's a legacy format
+        result <- tryCatch({
+            qs2::qs_read(lib.path)
+        }, error = function(err) {
+            if(grepl("qs-legacy", err$message, ignore.case = TRUE)){
+                print("Legacy qs format detected, using qs::qread...")
+                qs::qread(lib.path, use_alt_rep=FALSE)
+            } else {
+                stop(err$message)
+            }
+        })
+        return(result);
     }
     # print(c("lib.path",lib.path))
     lib.download <- FALSE;
@@ -45,23 +57,34 @@
   
   
     # Deal w. corrupt downloaded files
+    # Try qs2 first, fall back to old qs if needed
+    my.lib <- NULL
     tryCatch({
-        my.lib <- qs::qread(lib.path); # this is a returned value, my.lib never called outside this function, should not be in global env.
-        print("Loaded files from MetaboAnalyst web-server.")
+        my.lib <- qs2::qs_read(lib.path);
+        print("Loaded files with qs2.")
         },
-        warning = function(w) { print('warning in load') },
         error = function(err) {
-        print("Reading data unsuccessful, attempting to re-download file...")
-        tryCatch({
-            download.file(lib.url, destfile=filenm, method="curl")
-            my.lib <- qs::qread(lib.path);
-            print("Loaded necessary files.")
-        },
-        warning = function(w) { print('warning in curl download') },
-        error = function(err) {
-            print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
-        }
-        )
+          if(grepl("qs-legacy", err$message, ignore.case = TRUE)){
+            print("Legacy qs format detected, using qs::qread...")
+            tryCatch({
+              my.lib <<- qs::qread(lib.path, use_alt_rep=FALSE);
+              print("Loaded legacy qs file successfully.")
+            }, error = function(e2) {
+              print(paste("Failed to read with qs::qread:", e2$message))
+            })
+          } else {
+            print(paste("Reading data unsuccessful:", err$message))
+            print("Attempting to re-download file...")
+            tryCatch({
+              download.file(lib.url, destfile=filenm, method="curl")
+              my.lib <<- qs2::qs_read(lib.path);
+              print("Loaded necessary files.")
+            },
+            warning = function(w) { print('warning in curl download') },
+            error = function(err2) {
+              print("Loading files from server unsuccessful. Ensure curl is downloaded on your computer.")
+            })
+          }
         })
     return(my.lib);
 }
@@ -201,6 +224,11 @@ load_RBGL <- function(){
 # Load BiocParallel
 load_biocparallel <- function(){
   suppressMessages(library(BiocParallel))
+}
+
+# Load qs2
+load_qs2 <- function(){
+  suppressMessages(library(qs2))
 }
 
 
