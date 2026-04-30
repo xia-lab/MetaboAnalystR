@@ -43,7 +43,7 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   }
   
   ## Detect if SLURM is available (server) or local execution
-  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker") || dir.exists("/data/glassfish/payara6_micro") || dir.exists("/home/glassfish/payara6_micro") || file.exists("/home/qiang/Documents/Regular_commands")
 
   ## Prepare Configuration script
   if(useSlurm){
@@ -123,7 +123,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   }
   
   ## Detect if SLURM is available
-  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker") || dir.exists("/data/glassfish/payara6_micro") || dir.exists("/home/glassfish/payara6_micro") || file.exists("/home/qiang/Documents/Regular_commands")
 
   ## Prepare Configuration script
   if(useSlurm){
@@ -485,7 +485,7 @@ CreateRawRscript4Asari <- function(guestName, planString, asari_str, rawfilenms.
   write.table("asari", file = "ms1_algorithm.txt", quote = F, sep = "", col.names = F, row.names = F)
   
   ## Detect if SLURM is available
-  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker")
+  useSlurm <- dir.exists("/home/glassfish/payara6/glassfish/domains/") || file.exists("/docker_marker") || dir.exists("/data/glassfish/payara6_micro") || dir.exists("/home/glassfish/payara6_micro") || file.exists("/home/qiang/Documents/Regular_commands")
 
   ## Prepare Configuration script
   if(useSlurm){
