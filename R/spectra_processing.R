@@ -399,6 +399,75 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
 }
 
 
+#' CountSlurmJobsAhead
+#'
+#' Count how many SLURM jobs are scheduled ahead of a target job ID,
+#' based on the current queue order from `squeue`.
+#'
+#' @param job_id Target SLURM job ID (numeric or character).
+#' @param user Optional user filter. If `NULL`, defaults to current user.
+#' @param states Job states passed to `squeue -t`.
+#' @param include_all_users Logical. If `TRUE`, do not filter by user.
+#' @return Number of jobs ahead of `job_id` in the current `squeue` order.
+#' Returns `NA_integer_` if `job_id` is not found.
+#' @export
+CountSlurmJobsAhead <- function(job_id,
+                                user = "glassfish",
+                                states = c("PD", "R"),
+                                include_all_users = FALSE) {
+  job_id <- as.character(job_id)
+
+  if (!nzchar(job_id)) {
+    stop("`job_id` must be a non-empty value.")
+  }
+
+  squeue_bin <- Sys.which("squeue")
+  if (!nzchar(squeue_bin)) {
+    stop("SLURM command 'squeue' is not available in PATH.")
+  }
+
+  if (!include_all_users) {
+    if (is.null(user) || !nzchar(user)) {
+      user <- Sys.getenv("USER", unset = "")
+    }
+    if (!nzchar(user)) {
+      stop("Unable to determine user. Provide `user` or set include_all_users = TRUE.")
+    }
+  }
+
+  args <- c("-h", "-o", "%i")
+
+  if (!include_all_users) {
+    args <- c(args, "-u", user)
+  }
+
+  if (!is.null(states) && length(states) > 0) {
+    args <- c(args, "-t", paste(states, collapse = ","))
+  }
+
+  queue_jobs <- tryCatch(
+    system2(squeue_bin, args = args, stdout = TRUE, stderr = TRUE),
+    error = function(e) {
+      stop("Failed to execute squeue: ", conditionMessage(e))
+    }
+  )
+
+  queue_jobs <- trimws(queue_jobs)
+  queue_jobs <- queue_jobs[nzchar(queue_jobs)]
+
+  if (length(queue_jobs) == 0) {
+    return(NA_integer_)
+  }
+
+  pos <- match(job_id, queue_jobs)
+  if (is.na(pos)) {
+    return(NA_integer_)
+  }
+
+  as.integer(pos - 1L)
+}
+
+
 #' CreateRawRscript4Asari
 #' @description used to create a running for raw spectra processing
 #' this file will be run by SLURM by using OptiLCMS and Asari from python.
