@@ -2070,9 +2070,9 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
 
   metaData[metaData == "NA"] <- NA
   if (length(disc.inx))
-    metaData[disc.inx] <- lapply(metaData[disc.inx], \(x) as.integer(x))
+    metaData[disc.inx] <- lapply(metaData[disc.inx], function(x) as.integer(x))
   if (length(cont.inx))
-    metaData[cont.inx] <- lapply(metaData[cont.inx], \(x) as.numeric(as.character(x)))
+    metaData[cont.inx] <- lapply(metaData[cont.inx], function(x) as.numeric(as.character(x)))
 
    cor_pmat <- function(df, method) {
     mat <- as.matrix(df)
