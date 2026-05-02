@@ -25,7 +25,6 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){

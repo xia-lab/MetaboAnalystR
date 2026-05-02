@@ -41,7 +41,6 @@ getFeatureNum <- function(mSetObj=NA){
 #'@param ratioNum Relevant only for biomarker analysis.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'@import qs
 #'@export
 #'
 Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, ratio=FALSE, ratioNum=20){
@@ -650,7 +649,6 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 #'Prepare data for normalization
 #'@description Function should always be initialized (new or overwrite previous prenorm object).
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@import qs
 #'@export
 
 

@@ -47,7 +47,6 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 RegisterData <- function(mSetObj=NA, dataSet){
@@ -70,7 +69,6 @@ RegisterData <- function(mSetObj=NA, dataSet){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 # 
 SanityCheckIndData<-function(mSetObj=NA, dataName){
@@ -360,7 +358,6 @@ GetAllDataNames <- function(){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
@@ -434,7 +431,6 @@ PerformDataNormalization <- function(data, norm.opt){
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   

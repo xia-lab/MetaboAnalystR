@@ -237,7 +237,6 @@ GetORA.pathNames <- function(mSetObj=NA){
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 # contains three inner functions to be compatible with microservice

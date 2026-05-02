@@ -119,7 +119,6 @@ Convert2MummichogMetaPath <- function(mSetObj=NA,
 #'to be used later in PerformMetaPSEA.
 #'Should be called after SetPeakEnrichMethod/SetMummichogPval
 #'@param mSetObj mSetObj
-#'@import qs
 #'@export
 savePeakListMetaData <- function(mSetObj=NA){
   
@@ -168,7 +167,6 @@ savePeakListMetaData <- function(mSetObj=NA){
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 PerformMetaPSEA <- function(mSetObj=NA,

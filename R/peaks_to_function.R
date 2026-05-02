@@ -76,7 +76,6 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 Read.PeakListData <- function(mSetObj=NA, filename = NA, 
                               meta.anal = FALSE,
@@ -588,7 +587,6 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
-#'@import qs
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
@@ -1087,7 +1085,6 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-#'@import qs
 
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, init=T){
   
@@ -5083,7 +5080,6 @@ CreateMummichogLibs <- function(folder, kegg_compounds){
 #' overwrite previous queries.
 #' @param mSetObj Input the name of the created mSetObj object.
 #' @param cmpd.id Input the name of the selected compound.
-#'@import qs
 #' @export
 GetCompoundDetails <- function(mSetObj=NA, cmpd.id){
   
