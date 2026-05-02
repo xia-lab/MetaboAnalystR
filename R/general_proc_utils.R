@@ -571,6 +571,16 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
   list(data = dat, cls = cls, source = src)
 }
 
+#'Check for BLANK samples
+#'@description CheckContainsBlank is used to check whether BLANK samples
+#'are present in the processed class labels.
+#'@usage CheckContainsBlank(mSetObj=NA)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@return Returns 1 if "BLANK" is found in class labels; otherwise returns 0.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 CheckContainsBlank <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
