@@ -1,5 +1,13 @@
 CXX_STD = CXX11
 
+# R does not recursively compile sources in subdirectories by default.
+# Explicitly list object files under src/c and src/cpp for Unix builds.
+BATCHOBJECTS=cpp/decorana.o c/Internal_utils_batch.o
+UTILSOBJECTS=c/util.o c/fastmatch.o c/nncgc.o cpp/melt.o
+XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
+INITOBJECT=Exports.o
+OBJECTS=$(BATCHOBJECTS) $(UTILSOBJECTS) $(XCMSOBJECTS) $(INITOBJECT)
+
 # Resolve Rcpp's include directory at compile time. Works on Linux
 # (cloud), macOS (Apple-clang), and Windows without baking in any
 # per-host absolute path. system.file() returns the directory of the
