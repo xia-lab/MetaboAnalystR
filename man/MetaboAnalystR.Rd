@@ -25,6 +25,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}
   \item Jianguo Xia \email{jeff.xia@mcgill.ca}
   \item Jasmine Chong \email{jasmine.chong@mail.mcgill.ca}
 }

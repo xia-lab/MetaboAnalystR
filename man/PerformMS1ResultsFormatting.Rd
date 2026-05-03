@@ -13,9 +13,9 @@ The formatted file is 'sample in columns'.}
 PerformMS1ResultsFormatting(file_path, type, meta_data = NA)
 }
 \arguments{
-\item{file_path}{}
+\item{file_path}{file_path}
 
-\item{type}{}
+\item{type}{type}
 
 \item{meta_data}{this is path to a table containing two columns, the first column is the sample names and second column is the group information}
 }
