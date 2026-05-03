@@ -1171,9 +1171,9 @@ var.na <- function(x){
   res
 }
 
-var.na <- function(x){
-   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
-}
+#var.na <- function(x){
+#   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
+#}
 
 ## fast T-tests/F-tests, and use cache to avoid redundant computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
@@ -1580,6 +1580,21 @@ PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog"
     return(my.enrich.net(mSetObj, netNm, overlapType, type, edgeMode ));
 }
 
+  #'Plot PCA Pair Summary with Metadata
+  #'@description Generate PCA pairwise summary plots with metadata overlays.
+  #'@usage PlotPCAPairSummaryMeta(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num, meta, metaShape=NULL)
+  #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+  #'@param imgName Base name of the output image file
+  #'@param format Output image format, default is "png"
+  #'@param dpi Image resolution in dots per inch, default is default.dpi
+  #'@param width Image width in inches; use NA for automatic sizing
+  #'@param pc.num Number of principal components to include
+  #'@param meta Metadata column name used for coloring
+  #'@param metaShape Optional metadata column name used for point shape
+  #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+  #'McGill University, Canada
+  #'License: GNU GPL (>= 2)
+  #'@export
 PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    imgName,
                                    format = "png",
