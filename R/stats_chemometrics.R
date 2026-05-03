@@ -1345,6 +1345,22 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 
 ######### biplot for PLSDA
 ########################
+#'Plot PLS-DA biplot
+#'@description Generate a PLS-DA biplot that overlays sample scores and top contributing
+#'variables based on VIP values for selected components.
+#'@usage PlotPLSBiplot(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, topnum=10)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Base name of the output image file
+#'@param format Output image format, default is "png"
+#'@param dpi Image resolution in dots per inch, default is default.dpi
+#'@param width Image width in inches; use NA for automatic sizing
+#'@param inx1 Index of the first component for x-axis
+#'@param inx2 Index of the second component for y-axis
+#'@param topnum Number of top variables to label in the biplot
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
 
   mSetObj <- .get.mSet(mSetObj);

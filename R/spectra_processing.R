@@ -976,9 +976,9 @@ retrieveAlgorithmInfo <- function(){
 
 #' plotSingleXIC
 #' @description plotSingleXIC
-#' @param mSet 
-#' @param featureNum 
-#' @param sample 
+#' @param mSet mSet Object
+#' @param featureNum featureNum number
+#' @param sample sample name
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
   
