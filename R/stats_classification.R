@@ -54,7 +54,7 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
 
 GetRandomNumbers <- function(){
   if(exists('.Random.seed')){
-    rm(.Random.seed);
+    rm(.Random.seed, envir = .GlobalEnv);
   }
   runif(1);
   return(.Random.seed[3:626]);
