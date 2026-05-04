@@ -1495,8 +1495,18 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 #'@export
 #'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(mSetObj$analSet$plsda$best.num)){
+    msg <- "Please perform cross-validation (PLSDA.CV) before running permutation testing.";
+    if(.on.public.web){
+      return(msg)
+    }else{
+      print(msg);
+      return(.set.mSet(mSetObj));
+    }
+  }
 
   orig.cls <- cls <- as.numeric(mSetObj$dataSet$cls);
   datmat <- as.matrix(mSetObj$dataSet$norm);
