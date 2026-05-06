@@ -2078,9 +2078,14 @@ generateAsariPeakList <-  function(userPath) {
   
   sample_data_log <- data;
   cvs <- round(apply(data, 1,FUN = CalCV),4)*100
-  lvls <- groups[groups != "QC"];
-  sample_data_log <- sample_data_log[,groups != "QC"];
+  #lvls <- groups[groups != "QC"];
+  #sample_data_log <- sample_data_log[,groups != "QC"];
+  #groups <- as.factor(lvls);
+  group_keep_idx <- groups != "QC" & !grepl("^blank$", groups, ignore.case = TRUE);
+  lvls <- groups[group_keep_idx];
+  sample_data_log <- sample_data_log[, group_keep_idx, drop = FALSE];
   groups <- as.factor(lvls);
+
   options(digits = 10) 
   ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
   pvals <- ttest_res[,2]
