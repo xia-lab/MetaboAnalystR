@@ -128,6 +128,7 @@ PCA.Anal <- function(mSetObj=NA){
   fast.write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
+
   return(.set.mSet(mSetObj));
 }
 
@@ -499,8 +500,10 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   par(op);
   dev.off();
 
-  permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
-  mSetObj$analSet$pca$permanova.res <-permanova_results;
+  if(nrow(mSetObj[['dataSet']][['meta.info']])<=200){
+    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
+    mSetObj$analSet$pca$permanova.res <-permanova_results;
+  }
   return(.set.mSet(mSetObj));
 }
 
@@ -666,7 +669,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+ 
   loadings<-as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2]));
   # Keep finite rows only to avoid blank plots when rotations contain NAs/Infs.
   keep.inx <- is.finite(loadings[,1]) & is.finite(loadings[,2]);
@@ -674,7 +677,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   # sort based on absolute values of 1, 2 
   ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
   loadings <- signif(loadings[ord.inx,,drop=FALSE],5);
-  
+
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
@@ -692,15 +695,15 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     w <- width;
   }
   h <- w;
-  
+
   mSetObj$imgSet$pca.loading <- imgName;
   plotType <- mSetObj$analSet$pca$loading.type;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   par(mar=c(6,5,2,6));
   plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-  
+
   mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
