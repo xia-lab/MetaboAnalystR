@@ -8,3 +8,4 @@ src/*.dll
 vignettes/*.png
 vignettes/*.Rmd
 *.o
+.positai
