@@ -184,3 +184,30 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   sink();
   return(1);
 }
+
+rsclient_isolated_exec <- function(func_body, input_data, packages = character(0),
+                                   timeout = 180, output_type = "qs") {
+  bridge_tmp <- file.path(tempdir(), "rsclient_bridge")
+  if (!dir.exists(bridge_tmp)) dir.create(bridge_tmp, recursive = TRUE)
+  uid <- paste0(sample(letters, 6), collapse = "")
+  input_path <- file.path(bridge_tmp, paste0(uid, "_in.qs"))
+  output_path <- file.path(bridge_tmp, paste0(uid, "_out.qs"))
+  ov_qs_save(input_data, input_path, preset = "fast"); Sys.sleep(0.02)
+  on.exit({ for (p in c(input_path, output_path)) if (file.exists(p)) unlink(p) }, add = TRUE)
+  result <- run_func_via_rsclient(
+    func = function(input_path, output_path, func_body, pkgs) {
+      tryCatch({
+        for (pkg in pkgs) suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+        res <- func_body(ov_qs_read(input_path))
+        ov_qs_save(res, output_path, preset = "fast"); Sys.sleep(0.02)
+        list(success = TRUE)
+      }, error = function(e) list(success = FALSE, message = e$message))
+    },
+    args = list(input_path = input_path, output_path = output_path,
+                func_body = func_body, pkgs = packages),
+    timeout_sec = timeout)
+  if (isTRUE(result$success) && file.exists(output_path)) return(ov_qs_read(output_path))
+  msg <- if (!is.null(result$message)) result$message else "RSclient subprocess failed"
+  message("[rsclient_isolated_exec] ", msg)
+  return(list(success = FALSE, message = msg))
+}
