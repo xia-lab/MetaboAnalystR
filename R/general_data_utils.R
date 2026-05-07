@@ -1167,7 +1167,11 @@ Setup.MapData <- function(mSetObj=NA, qvec){
   mSetObj$dataSet$cmpd <- qvec;  
   # Export as one-column CSV (no header, plain values)
   write.csv(qvec, file = "datalist.csv", row.names = FALSE, col.names = FALSE, quote = FALSE)
-  
+  if(mSetObj$analSet$type=="msetssp"){
+    # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
+    # These are in the same format as nm.map$hmdb used for other ORA modes
+    qvec -> mSetObj$dataSet$ssp.cmpd;
+  }
   return(.set.mSet(mSetObj))
 }
 

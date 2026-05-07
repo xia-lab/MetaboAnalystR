@@ -17,7 +17,7 @@
 CalculateHyperScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # --- 1. Prepare Query ---
   if(mSetObj$analSet$type=="msetssp"){
     # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
