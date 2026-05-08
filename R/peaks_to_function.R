@@ -4084,7 +4084,7 @@ WriteMummichogFeaturePathMap <- function(mSetObj = NA, file.name = "mummichog_ma
     return(0)
   }
 
-  matched_res <- try(qs::qread("mum_res.qs"), silent = TRUE)
+  matched_res <- try(qs2::qs_read("mum_res.qs"), silent = TRUE)
   if (inherits(matched_res, "try-error") || is.null(matched_res) || !is.data.frame(matched_res) || nrow(matched_res) == 0) {
     return(empty_out())
   }

@@ -37,8 +37,8 @@ test_that("Replace Min Works", {
   mSet <- ReplaceMin(mSet)
   
   expect_equal(length(mSet$dataSet), 20)
-  expect_equal(nrow(qs::qread("data_proc.qs")), 77)
-  expect_equal(ncol(qs::qread("data_proc.qs")), 63)
+  expect_equal(nrow(qs2::qs_read("data_proc.qs")), 77)
+  expect_equal(ncol(qs2::qs_read("data_proc.qs")), 63)
   expect_match(mSet$msgSet$replace.msg, 
                "Zero or missing values were replaced by 1/5 of the min positive value for each variable.")
 })

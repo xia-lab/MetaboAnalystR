@@ -618,7 +618,7 @@ GetMatchedPathCompoundIDs <- function(mSetObj=NA, msetNm, id.type="native", uniq
   }
 
   if(!exists('current.kegglib')){
-    current.kegglib <<- qs::qread("current.kegglib.qs");
+    current.kegglib <<- qs2::qs_read("current.kegglib.qs");
   }
 
   if(missing(msetNm) || is.null(msetNm) || !nzchar(path_key)){
