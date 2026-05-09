@@ -461,7 +461,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     mSetObj$dataSet$interbatch_dis <- interbatch_dis
     
   }
-  mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method);
+  if(.on.public.web){ PlotPCA.overview(NA, imgName, method=Method); mSetObj <- mSet } else { mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method) };
   plot.sample.trend(mSetObj,paste0(imgName,"trend_"),method=Method);
   plot.sample.dist(mSetObj,paste0(imgName,"dist_"))
   best.table <- mSetObj$dataSet$adjusted.mat

@@ -1063,7 +1063,7 @@ PlotInmexPath <- function(mSetObj=NA, pathName, width=NA, height=NA, format="png
   if(.on.public.web){ 
     return(PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi));  
   }else{ 
-    mSetObj <- PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi);   
+    if(.on.public.web){ PlotInmexGraph(NA, pathName, g, width, height, bg.cols, line.cols, format, dpi); mSetObj <- mSet } else { mSetObj <- PlotInmexGraph(mSetObj, pathName, g, width, height, bg.cols, line.cols, format, dpi) };
     #print("pathinteg graph has been created, please find it in mSet$imgSet$pathinteg.path")
     return(.set.mSet(mSetObj));
   }

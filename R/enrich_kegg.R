@@ -23,7 +23,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
   mSetObj <- .get.mSet(mSetObj);
   LoadKEGGKO_lib(category);
   #if(enrich.type == "hyper"){ else PerformKOEnrichAnalysis_Table
-  mSetObj <- PerformKOEnrichAnalysis_List(mSetObj, file.nm);
+  if(.on.public.web){ PerformKOEnrichAnalysis_List(NA, file.nm); mSetObj <- mSet } else { mSetObj <- PerformKOEnrichAnalysis_List(mSetObj, file.nm) };
   
   if(.on.public.web == FALSE){
     return(.set.mSet(mSetObj)); 

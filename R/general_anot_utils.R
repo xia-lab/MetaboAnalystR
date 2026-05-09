@@ -40,7 +40,7 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
     MetaboliteMappingExact(mSetObj, q.type, lipid, mixed);
     mSetObj <- .get.mSet(mSetObj);
   }else{
-    mSetObj <- MetaboliteMappingExact(mSetObj, q.type, lipid, mixed);
+    if(.on.public.web){ MetaboliteMappingExact(NA, q.type, lipid, mixed); mSetObj <- mSet } else { mSetObj <- MetaboliteMappingExact(mSetObj, q.type, lipid, mixed) };
   }
   
   # do some sanity check

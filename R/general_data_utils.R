@@ -248,7 +248,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     load("params.rda");
     mSetObj$paramSet$mumDataContainsPval <<- 1;
     
-    mSetObj<-UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
+    if(.on.public.web){ UpdateInstrumentParameters(NA, peakParams$ppm, peakParams$polarity, "yes", 0.02); mSetObj <- mSet } else { mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02) };
     mSetObj<-.rt.included(mSetObj, "seconds");
     #mSetObj<-Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
     mSetObj<-.get.mSet(NA);
@@ -258,7 +258,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
 }
 
 .init.MummiMSet <- function(mSetObj) {  
-  mSetObj<-SetPeakFormat(mSetObj, "pvalue");
+  if(.on.public.web){ SetPeakFormat(NA, "pvalue"); mSetObj <- mSet } else { mSetObj <- SetPeakFormat(mSetObj, "pvalue") };
   #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
   anal.type <<- "mummichog";
   api.base <<- "https://www.xialab.ca/api";
@@ -1238,7 +1238,7 @@ Read.ListFileData <- function(mSetObj=NA, filePath, sep="auto", has.header=FALSE
     return(0);
   }
 
-  mSetObj <- Setup.MapData(mSetObj, qvec);
+  if(.on.public.web){ Setup.MapData(NA, qvec); mSetObj <- mSet } else { mSetObj <- Setup.MapData(mSetObj, qvec) };
   return(1);
 }
 # this is only for SSP: for those with conc above threshold
@@ -1487,7 +1487,7 @@ process_metadata <- function(df) {
 
 Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
+    if(.on.public.web){ Read.TextData(NA, filePath, format, lbl.type, nmdr); mSetObj <- mSet } else { mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr) };
     mSetObj <- .get.mSet(mSetObj);
 
     conc <- ov_qs_read(file="data_orig_0.qs");
@@ -1525,10 +1525,10 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
 
 Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-    mSetObj <- Read.TextDataTs(mSetObj, filePath, format);
+    if(.on.public.web){ Read.TextDataTs(NA, filePath, format); mSetObj <- mSet } else { mSetObj <- Read.TextDataTs(mSetObj, filePath, format) };
     mSetObj <- .get.mSet(mSet);
 
-    mSetObj <- ReadMetaData(mSetObj, metaPath);
+    if(.on.public.web){ ReadMetaData(NA, metaPath); mSetObj <- mSet } else { mSetObj <- ReadMetaData(mSetObj, metaPath) };
     mSetObj <- .get.mSet(mSet);
 
     conc <- ov_qs_read(file="data_orig_0.qs");
