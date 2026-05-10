@@ -75,36 +75,141 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
   } else if(any(is.infinite(commonMat2))){
     commonMat2[is.infinite(commonMat2)]<- 0
   }
-  try(
+  .log_batch_error <- function(err, method_name){
+    AddErrMsg(paste0("Batch correction failed (method=", method_name, ")"))
+    AddErrMsg(paste0("Error message: ", conditionMessage(err)))
+
+    err_call <- conditionCall(err)
+    if (!is.null(err_call)) {
+      AddErrMsg(paste0("Error call: ", paste(deparse(err_call), collapse = " ")))
+    }
+
+    call_stack <- sys.calls()
+    if (length(call_stack) > 0) {
+      max_depth <- min(8, length(call_stack))
+      stack_tail <- call_stack[(length(call_stack) - max_depth + 1):length(call_stack)]
+      stack_msg <- vapply(stack_tail, function(cl) {
+        paste(deparse(cl), collapse = " ")
+      }, character(1))
+      AddErrMsg("Recent call stack (most recent last):")
+      for (i in seq_along(stack_msg)) {
+        AddErrMsg(paste0("  ", i, ". ", stack_msg[i]))
+      }
+    }
+  }
+
+  .is_missing <- function(x){
+    is.null(x) || any(is.na(x))
+  }
+
+  .require_input <- function(ok, label, method_name){
+    if(!ok){
+      AddErrMsg(paste0(label, " inforamtion is required for ", method_name, " !"))
+      return(FALSE)
+    }
+    TRUE
+  }
+
+  .require_index <- function(idx, label, method_name){
+    .require_input(!(is.null(idx) || any(is.na(idx)) || identical(idx, integer(0))), label, method_name)
+  }
+
+  .run_ruvr_isolated <- function(mat, cls){
+    bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
+    ov_qs_save(list(mat = mat, cls = cls), bridge_in, preset = "fast")
+    on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
+
+    run_func_via_rsclient(
+      func = function(wd, bridge_in, bridge_out) {
+        setwd(wd)
+        require(edgeR); require(RUVSeq)
+        input <- ov_qs_read(bridge_in)
+        # Inlined RUVr_cor logic
+        data <- t(input$mat)
+        class <- input$cls
+        QCm <- grep('IS', rownames(data))
+        if (length(colnames(data)) != length(unique(colnames(data)))) {
+          colnames(data)[(duplicated(colnames(data)))] <- paste0(colnames(data)[duplicated(colnames(data))], "_2")
+        }
+        design <- model.matrix(~class)
+        data[data <= 0] <- 0.0001
+        y <- edgeR::DGEList(counts = data, group = class)
+        y <- edgeR::calcNormFactors(y, method = "upperquartile")
+        y <- edgeR::estimateGLMCommonDisp(y, design)
+        y <- edgeR::estimateGLMTagwiseDisp(y, design)
+        fit <- edgeR::glmFit(y, design)
+        res <- residuals(fit, type = "deviance")
+        data.log <- log10(data)
+        seqRUVr <- RUVSeq::RUVr(data.log, QCm, k = 1, res, isLog = TRUE)[["normalizedCounts"]]
+        data.corrected <- exp(seqRUVr)
+        ov_qs_save(t(data.corrected), bridge_out, preset = "fast")
+      },
+      args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
+      timeout_sec = 300
+    )
+
+    out <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
+    if (is.null(out)) {
+      stop("RUVr correction failed in isolated subprocess!")
+    }
+    out
+  }
+
+  .run_auto_step <- function(step_name, expr){
+    tryCatch({
+      eval.parent(substitute(expr))
+      TRUE
+    }, error = function(e){
+      AddErrMsg(paste0("Auto mode skipped failed step: ", step_name))
+      AddErrMsg(paste0("  Error: ", conditionMessage(e)))
+      err_call <- conditionCall(e)
+      if(!is.null(err_call)){
+        AddErrMsg(paste0("  Call: ", paste(deparse(err_call), collapse = " ")))
+      }
+      FALSE
+    })
+  }
+
+  has_batch <- !is.null(batch.lbl2) && all(!is.na(as.character(unique(batch.lbl2))))
+  has_class <- !is.null(class.lbl2) && all(!is.na(as.character(unique(class.lbl2))))
+  has_order <- !(is.null(order.lbl2) || all(is.na(as.character(unique(order.lbl2)))) || any(is.na(order.lbl2)))
+
+  ok <- tryCatch({
     if (Method=="auto"){
       #### QCs Independent------------
       # Correction Method 1 - Combat
  
-      if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
-        print("Correcting with Combat...");
-        Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
-        mSetObj$dataSet$Combat_edata<-Combat_edata;
+      if (has_batch){
+        .run_auto_step("Combat", {
+          print("Correcting with Combat...");
+          Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
+          mSetObj$dataSet$Combat_edata<-Combat_edata;
+        })
       }
 
       # Correction Method 2 - WaveICA
       if(!.on.public.web){
-        if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
-            all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-            print("Correcting with WaveICA...");#require(WaveICA)
-            WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
-            mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+        if (has_batch && has_class){
+            .run_auto_step("WaveICA", {
+              print("Correcting with WaveICA...");#require(WaveICA)
+              WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
+              mSetObj$dataSet$WaveICA_edata<-WaveICA_edata;
+            })
         }
      }
 
       # Correction Method 3 - Eigens MS
-      if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-        print("Correcting with EigenMS...");
+      if (has_class){
+        .run_auto_step("EigenMS", {
+          print("Correcting with EigenMS...");
 
-        EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
-        mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
-        if (all(is.na(as.character(unique(batch.lbl2)))) | is.null(batch.lbl2)){  
-          mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
-        }
+          EigenMS_edata<-suppressWarnings(suppressMessages(EigenMS(commonMat2,class.lbl2)));
+          mSetObj$dataSet$EigenMS_edata<-EigenMS_edata;
+          if (!has_batch){  
+            mSetObj$dataSet$batch.cls <- factor(rep(1,length(mSetObj$dataSet$batch.cls)));
+          }
+        })
       }
 
       #### QCs (Quality Control Sample) Dependent---------
@@ -114,24 +219,26 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
         
         if (working_mode == "table" & (.on.public.web == F | as.numeric(object.size(mSetObj[["dataSet"]][["table"]])/1024/1024) < 0.82)){
           
-          if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2) & 
-              all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2) &
-              !(is.null(order.lbl2) | all(is.na(as.character(unique(order.lbl2)))) | any(is.na(order.lbl2)))){
-            print("Correcting with QC-RLSC...");
+          if (has_batch && has_class && has_order){
+              .run_auto_step("QC_RLSC", {
+                print("Correcting with QC-RLSC...");
 
-            QC_RLSC_edata<-QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs);
+                QC_RLSC_edata<-QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs);
 
-            mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+                mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
+              })
           }
         }
         # Correction Method 2 - QC-SVRC or QC-RFSC  # Ref:https://doi.org/10.1016/j.aca.2018.08.002
         # Future Options to make this script more powerful
         
         # Correction Method 4 - ANCOVA              # Ref:doi: 10.1007/s11306-016-1015-8
-        if (all(!is.na(as.character(unique(batch.lbl2)))) & !is.null(batch.lbl2)){
-          print("Correcting with ANCOVA...");
-          ANCOVA_edata<-ANCOVA(commonMat2, batch.lbl2, QCs);
-          if(!all(is.na(ANCOVA_edata))) {mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;}          
+        if (has_batch){
+            .run_auto_step("ANCOVA", {
+              print("Correcting with ANCOVA...");
+              ANCOVA_edata<-ANCOVA(commonMat2, batch.lbl2, QCs);
+              if(!all(is.na(ANCOVA_edata))) {mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;}          
+            })
         }
       }
       
@@ -139,67 +246,42 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       QCms<-grep("IS",colnames(commonMat2));
       if (!identical(QCms,integer(0))){
         # Correction Method 1 - RUV_random          # Ref:doi/10.1021/ac502439y
-        print("Correcting with RUV-random...");
-        RUV_random_edata<-RUV_random(commonMat2);
-        mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
+          .run_auto_step("RUV_random", {
+            print("Correcting with RUV-random...");
+            RUV_random_edata<-RUV_random(commonMat2);
+            mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
+          })
         
         # Correction Method 2 - RUV2                 # Ref:De Livera, A. M.; Bowne, J. Package metabolomics for R, 2012.
-        if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with RUV-2...");
-          RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
-          mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
+        if (has_class){
+            .run_auto_step("RUV_2", {
+              print("Correcting with RUV-2...");
+              RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
+              mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
+            })
         }
         # Correction Method 3.1 - RUV_sample        # Ref:https://www.nature.com/articles/nbt.2931
-        if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with RUVs...");
-          RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
-          mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
+        if (has_class){
+            .run_auto_step("RUV_s", {
+              print("Correcting with RUVs...");
+              RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
+              mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
+            })
         }
         # Correction Method 3.2 - RUVSeq_residual   # Ref:https://www.nature.com/articles/nbt.2931
-        if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with RUVr...");
-          bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
-          bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-          ov_qs_save(list(mat = commonMat2, cls = class.lbl2), bridge_in, preset = "fast")
-          on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
-
-          run_func_via_rsclient(
-            func = function(wd, bridge_in, bridge_out) {
-              setwd(wd)
-              require(edgeR); require(RUVSeq)
-              input <- ov_qs_read(bridge_in)
-              # Inlined RUVr_cor logic
-              data <- t(input$mat)
-              class <- input$cls
-              QCm <- grep('IS', rownames(data))
-              if (length(colnames(data)) != length(unique(colnames(data)))) {
-                colnames(data)[(duplicated(colnames(data)))] <- paste0(colnames(data)[duplicated(colnames(data))], "_2")
-              }
-              design <- model.matrix(~class)
-              data[data <= 0] <- 0.0001
-              y <- edgeR::DGEList(counts = data, group = class)
-              y <- edgeR::calcNormFactors(y, method = "upperquartile")
-              y <- edgeR::estimateGLMCommonDisp(y, design)
-              y <- edgeR::estimateGLMTagwiseDisp(y, design)
-              fit <- edgeR::glmFit(y, design)
-              res <- residuals(fit, type = "deviance")
-              data.log <- log10(data)
-              seqRUVr <- RUVSeq::RUVr(data.log, QCm, k = 1, res, isLog = TRUE)[["normalizedCounts"]]
-              data.corrected <- exp(seqRUVr)
-              ov_qs_save(t(data.corrected), bridge_out, preset = "fast")
-            },
-            args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
-            timeout_sec = 300
-          )
-
-          RUV_r_edata <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
-          if (is.null(RUV_r_edata)) { AddErrMsg("RUVr correction failed in isolated subprocess!"); return(0) }
-          mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
+        if (has_class){
+            .run_auto_step("RUV_r", {
+              print("Correcting with RUVr...");
+              RUV_r_edata <- .run_ruvr_isolated(commonMat2, class.lbl2)
+              mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
+            })
         }
         # Correction Method 3.3 - RUV_g             # Ref:https://www.nature.com/articles/nbt.2931
-        print("Correcting with RUVg...");
-        RUV_g_edata<-RUVg_cor(commonMat2);
-        mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
+          .run_auto_step("RUV_g", {
+            print("Correcting with RUVg...");
+            RUV_g_edata<-RUVg_cor(commonMat2);
+            mSetObj$dataSet$RUV_g_edata <- RUV_g_edata;
+          })
       }
       
       #### Internal standards based dependent methods--------
@@ -207,15 +289,19 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       if (!identical(ISs,integer(0))){
         
         # Correction Method 1 - NOMIS
-        print("Correcting with NOMIS...")
-        NOMIS_edata <- NOMIS(commonMat2)
-        mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
+          .run_auto_step("NOMIS", {
+            print("Correcting with NOMIS...")
+            NOMIS_edata <- NOMIS(commonMat2)
+            mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
+          })
         
         # Correction Method 2 - CCMN
-        if (all(!is.na(as.character(unique(class.lbl2)))) & !is.null(class.lbl2)){
-          print("Correcting with CCMN...")
-          CCMN_edata <- CCMN2(commonMat2,class.lbl2)
-          mSetObj$dataSet$CCMN_edata <- CCMN_edata;
+        if (has_class){
+            .run_auto_step("CCMN", {
+              print("Correcting with CCMN...")
+              CCMN_edata <- CCMN2(commonMat2,class.lbl2)
+              mSetObj$dataSet$CCMN_edata <- CCMN_edata;
+            })
         }
       }
       
@@ -238,72 +324,37 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
       #=======================================================================/
     } else if (Method=="Combat"){
       
-      if(any(is.na(batch.lbl2)) | is.null(batch.lbl2)){
-        AddErrMsg(paste0("batch inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_input(!.is_missing(batch.lbl2), "batch", Method)) return(F)
       
       Combat_edata<-combat(commonMat2,batch.lbl2,modcombat2);
       mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$Combat_edata <- Combat_edata;
       
     } else if (Method=="WaveICA"){
       
-      if(any(is.na(batch.lbl2)) | is.null(batch.lbl2)){
-        AddErrMsg(paste0("batch inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_input(!.is_missing(batch.lbl2), "batch", Method)) return(F)
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
       WaveICA_edata<-WaveICA(commonMat2,batch.lbl2,class.lbl2);
       mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$WaveICA_edata <- WaveICA_edata;
       
     } else if (Method=="EigenMS"){
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
       EigenMS_edata<-EigenMS(commonMat2,class.lbl2);
       mSetObj$dataSet$adjusted.mat<-mSetObj$dataSet$EigenMS_edata <- EigenMS_edata;
       
     } else if (Method=="QC_RLSC"){
       
-      if(any(is.na(batch.lbl2)) | is.null(batch.lbl2)){
-        AddErrMsg(paste0("batch inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      
-      if(any(is.na(order.lbl2)) | is.null(order.lbl2)){
-        AddErrMsg(paste0("order inforamtion is required for ",Method," !"))
-        return(F)
-      }
-   
-      if(any(is.na(QCs)) | is.null(QCs) | identical(QCs, integer(0))){
-        AddErrMsg(paste0("QC inforamtion is required for ",Method," !"))
-
-        return(F)
-      }
+      if(!.require_input(!.is_missing(batch.lbl2), "batch", Method)) return(F)
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
+      if(!.require_input(!.is_missing(order.lbl2), "order", Method)) return(F)
+      if(!.require_index(QCs, "QC", Method)) return(F)
       
       QC_RLSC_edata<-suppressWarnings(suppressMessages(QC_RLSC(commonMat2,batch.lbl2,class.lbl2,order.lbl2,QCs)));
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$QC_RLSC_edata <- QC_RLSC_edata;
       
     } else if (Method=="ANCOVA"){
       
-      if(any(is.na(batch.lbl2)) | is.null(batch.lbl2)){
-        AddErrMsg(paste0("batch inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      
-      if(any(is.na(QCs)) | is.null(QCs) | identical(QCs, integer(0))){
-        AddErrMsg(paste0("QC inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_input(!.is_missing(batch.lbl2), "batch", Method)) return(F)
+      if(!.require_index(QCs, "QC", Method)) return(F)
       
       ANCOVA_edata<-ANCOVA(commonMat2,batch.lbl2,QCs);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$ANCOVA_edata <- ANCOVA_edata;
@@ -311,11 +362,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     } else if (Method=="RUV_random"){
       
       QCms<-grep("IS",colnames(commonMat2));
-      
-      if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
-        AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(QCms, "Quality Control Metabolites", Method)) return(F)
 
       RUV_random_edata<-RUV_random(commonMat2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_random_edata <- RUV_random_edata;
@@ -323,14 +370,8 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     } else if (Method=="RUV_2"){
       
       QCms<-grep("IS",colnames(commonMat2));      
-      if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
-        AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(QCms, "Quality Control Metabolites", Method)) return(F)
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
       
       RUV_2_edata<-RUV_2(commonMat2,class.lbl2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_2_edata <- RUV_2_edata;
@@ -338,16 +379,8 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     } else if (Method=="RUV_s"){
       
       QCms<-grep("IS",colnames(commonMat2));
-      
-      if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
-        AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
-        return(F)
-      }
-
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(QCms, "Quality Control Metabolites", Method)) return(F)
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
       
       RUV_s_edata<-RUVs_cor(commonMat2,class.lbl2);
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_s_edata <- RUV_s_edata;
@@ -355,63 +388,16 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     } else if (Method=="RUV_r"){
       
       QCms<-grep("IS",colnames(commonMat2));
-      
-      if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
-        AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(QCms, "Quality Control Metabolites", Method)) return(F)
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
 
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
-      
-      bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
-      bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-      ov_qs_save(list(mat = commonMat2, cls = class.lbl2), bridge_in, preset = "fast")
-      on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
-
-      run_func_via_rsclient(
-        func = function(wd, bridge_in, bridge_out) {
-          setwd(wd)
-          require(edgeR); require(RUVSeq)
-          input <- ov_qs_read(bridge_in)
-          # Inlined RUVr_cor logic
-          data <- t(input$mat)
-          class <- input$cls
-          QCm <- grep('IS', rownames(data))
-          if (length(colnames(data)) != length(unique(colnames(data)))) {
-            colnames(data)[(duplicated(colnames(data)))] <- paste0(colnames(data)[duplicated(colnames(data))], "_2")
-          }
-          design <- model.matrix(~class)
-          data[data <= 0] <- 0.0001
-          y <- edgeR::DGEList(counts = data, group = class)
-          y <- edgeR::calcNormFactors(y, method = "upperquartile")
-          y <- edgeR::estimateGLMCommonDisp(y, design)
-          y <- edgeR::estimateGLMTagwiseDisp(y, design)
-          fit <- edgeR::glmFit(y, design)
-          res <- residuals(fit, type = "deviance")
-          data.log <- log10(data)
-          seqRUVr <- RUVSeq::RUVr(data.log, QCm, k = 1, res, isLog = TRUE)[["normalizedCounts"]]
-          data.corrected <- exp(seqRUVr)
-          ov_qs_save(t(data.corrected), bridge_out, preset = "fast")
-        },
-        args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
-        timeout_sec = 300
-      )
-
-      RUV_r_edata <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
-      if (is.null(RUV_r_edata)) { AddErrMsg("RUVr correction failed in isolated subprocess!"); return(0) }
+      RUV_r_edata <- .run_ruvr_isolated(commonMat2, class.lbl2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$RUV_r_edata <- RUV_r_edata;
       
     } else if (Method=="RUV_g"){
       
       QCms<-grep("IS",colnames(commonMat2));
-      
-      if(any(is.na(QCms)) | is.null(QCms) | identical(QCms, integer(0))){
-        AddErrMsg(paste0("Quality Control Metabolites inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(QCms, "Quality Control Metabolites", Method)) return(F)
 
 
       RUV_g_edata<-RUVg_cor(commonMat2);
@@ -420,32 +406,31 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     } else if (Method=="NOMIS"){
         
       ISs <- grep("IS",colnames(commonMat2));      
-      if(any(is.na(ISs)) | is.null(ISs) | identical(ISs, integer(0))){
-        AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(ISs, "Internal Standards", Method)) return(F)
 
       NOMIS_edata <- NOMIS(commonMat2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$NOMIS_edata <- NOMIS_edata;
       
     } else if (Method=="CCMN") {
       
-      if(any(is.na(class.lbl2)) | is.null(class.lbl2)){
-        AddErrMsg(paste0("class inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_input(!.is_missing(class.lbl2), "class", Method)) return(F)
       
       ISs <- grep("IS",colnames(commonMat2));      
-      if(any(is.na(ISs)) | is.null(ISs) | identical(ISs, integer(0))){
-        AddErrMsg(paste0("Internal Standards inforamtion is required for ",Method," !"))
-        return(F)
-      }
+      if(!.require_index(ISs, "Internal Standards", Method)) return(F)
 
       CCMN_edata <- CCMN2(commonMat2,class.lbl2)
       mSetObj$dataSet$adjusted.mat <- mSetObj$dataSet$CCMN_edata <- CCMN_edata;      
-    }    
-    ,silent=T)
+    }
+    TRUE
+  }, error = function(e) {
+    .log_batch_error(e, Method)
+    FALSE
+  })
 
+  if(!ok){
+    return(F)
+  }
+  cat("Finalizing batch effect correction.... \n")
   if (is.null(mSetObj$dataSet$adjusted.mat) | all(is.na(mSetObj$dataSet$adjusted.mat))){
     AddErrMsg(paste0("Your data or format is not valid! Please double check!"));
     return(F);
@@ -461,7 +446,12 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     mSetObj$dataSet$interbatch_dis <- interbatch_dis
     
   }
-  if(.on.public.web){ PlotPCA.overview(NA, imgName, method=Method); mSetObj <- mSet } else { mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method) };
+  cat("Start ploting PCA ... \n")
+  if(.on.public.web){ 
+    PlotPCA.overview(mSetObj, imgName, method=Method); #mSetObj <- mSet 
+  } else { 
+    mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method) 
+  };
   plot.sample.trend(mSetObj,paste0(imgName,"trend_"),method=Method);
   plot.sample.dist(mSetObj,paste0(imgName,"dist_"))
   best.table <- mSetObj$dataSet$adjusted.mat
@@ -475,7 +465,7 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     .set.mSet(mSetObj)
     return("T");
   }
-  
+  cat("Everything is completed. \n")
   end.time <- Sys.time()
   return(.set.mSet(mSetObj));
 }
