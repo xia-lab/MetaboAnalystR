@@ -1443,9 +1443,6 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
   return(list(height = h, width = w));
 }
 
-##
-## perform unsupervised data filter based on common measures
-##
 PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 
     nm <- msg <- NULL;
@@ -1537,13 +1534,50 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 }
 
 # make data and metadata share the same samples and in same order    
-.sync.data.metadata <- function(my.data, my.metadata){ 
+.sync.data.metadata <- function(my.data, my.metadata){
 
      if(!identical(rownames(my.data), rownames(my.metadata))){
 
         # now get the overlap, using first as anchor
         smpl.nms <- rownames(my.data);
         shared.inx <- smpl.nms %in% rownames(my.metadata);
+
+        # ── Rescue QC_*/BLANK_* samples missing from metadata ───────────
+        # Peak intensity tables routinely include process-control samples
+        # named `QC_*` (relative-standard-deviation filtering) and
+        # `BLANK_*` (blank-subtraction baseline). The metadata table
+        # typically only lists biological samples, so a naive intersect
+        # would drop the controls before they could be used by
+        # FilterVariable / blank subtraction. Detect them by name prefix
+        # (the same fallback FilterVariable uses at general_proc_utils.R
+        # line 649: `grepl("^qc", rownames(int.mat))`) and synthesize
+        # metadata rows so the first column carries `"QC"` / `"BLANK"`
+        # — that also lights up the class-label detector at
+        # general_proc_utils.R line 289.
+        qb.inx     <- grepl("^(QC|BLANK)([_.\\-]|[0-9]|$)", smpl.nms, ignore.case=TRUE);
+        rescue.inx <- qb.inx & !shared.inx;
+        if (any(rescue.inx) && ncol(my.metadata) > 0) {
+            rescue.nms <- smpl.nms[rescue.inx];
+            # Extend levels of any factor column so the new "QC"/"BLANK"
+            # values land cleanly rather than as NA.
+            if (is.factor(my.metadata[[1]])) {
+                cur.lvls <- levels(my.metadata[[1]]);
+                levels(my.metadata[[1]]) <- unique(c(cur.lvls, "QC", "BLANK"));
+            }
+            extra <- as.data.frame(matrix(NA, nrow=length(rescue.nms),
+                                          ncol=ncol(my.metadata)),
+                                   stringsAsFactors=FALSE);
+            colnames(extra) <- colnames(my.metadata);
+            rownames(extra) <- rescue.nms;
+            extra[[1]] <- ifelse(grepl("^QC", rescue.nms, ignore.case=TRUE),
+                                 "QC", "BLANK");
+            my.metadata <- rbind(my.metadata, extra);
+            shared.inx <- smpl.nms %in% rownames(my.metadata);
+            print(paste("Rescued", length(rescue.nms),
+                        "QC/BLANK process-control sample(s) absent from metadata:",
+                        paste(rescue.nms, collapse="; ")));
+        }
+
         shared.nms <- smpl.nms[shared.inx];
 
         if(sum(!shared.inx)>0){
@@ -1560,8 +1594,43 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
                 my.metadata[,i] <- droplevels(my.metadata[,i]);
             }
         }
-        
+
         print(paste("Successfully performed synchronization: a total of", length(shared.nms), "samples that are shared between the two tables are left.", collapse=" "));
+      }
+
+      # ── Class-label normalization for QC/BLANK-named samples ─────────
+      # Runs unconditionally (whether or not alignment was needed) because
+      # users may upload metadata with rows for QC_*/BLANK_* samples but
+      # leave the class column empty / NA. Without normalization those
+      # samples pass through to downstream class-based filters
+      # (FilterVariable's QC RSD at general_proc_utils.R line 645,
+      # .test.missing.sig line 363) with NA class, which makes the
+      # `grepl("^qc$", cls)` mask unpredictable. Force class = "QC" or
+      # "BLANK" so all class-based logic recognizes them consistently
+      # — and so the post-processing removal that the user expects
+      # ("They should be removed after sanity check and processing")
+      # fires cleanly via the class-label keep mask. Idempotent: rows
+      # already labeled QC/BLANK by the user (or by the rescue block
+      # above) are left untouched.
+      if (ncol(my.metadata) > 0) {
+          mn.nms      <- rownames(my.metadata);
+          qc.name.inx <- grepl("^QC([_.\\-]|[0-9]|$)",    mn.nms, ignore.case=TRUE);
+          bl.name.inx <- grepl("^BLANK([_.\\-]|[0-9]|$)", mn.nms, ignore.case=TRUE);
+          cls.col     <- my.metadata[[1]];
+          cls.empty   <- is.na(cls.col) | trimws(as.character(cls.col)) == "";
+          qc.fix      <- qc.name.inx & cls.empty;
+          bl.fix      <- bl.name.inx & cls.empty;
+          if (any(qc.fix) || any(bl.fix)) {
+              if (is.factor(my.metadata[[1]])) {
+                  levels(my.metadata[[1]]) <- unique(c(levels(my.metadata[[1]]), "QC", "BLANK"));
+              }
+              if (any(qc.fix)) my.metadata[qc.fix, 1] <- "QC";
+              if (any(bl.fix)) my.metadata[bl.fix, 1] <- "BLANK";
+              print(paste("Normalized class for",
+                          sum(qc.fix) + sum(bl.fix),
+                          "QC/BLANK-named sample(s) with empty class column:",
+                          paste(mn.nms[qc.fix | bl.fix], collapse="; ")));
+          }
       }
 
       return(list(data=my.data, metadata=my.metadata));
