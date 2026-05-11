@@ -981,7 +981,7 @@ retrieveAlgorithmInfo <- function(){
 #' @param sample sample name
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-  
+  save(mSet, featureNum, sample, showlabel, file = "plotSingleXIC__args.rda")
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -1015,6 +1015,25 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     sampleOrder <- 1;
   } else {
     sampleOrder <- which(sample == samples_names);
+  }
+
+  if(length(sampleOrder)==0){
+    # special case for asari case
+    # BLANK to be reincluded
+    raw_data <- mSet@rawOnDisk;
+    samples_names <- raw_data@phenoData@data[["sample_name"]];
+    rawFiles <- raw_data@processingData@files;
+    
+    if(any(raw_data@phenoData@data[["sample_group"]] == "MS2")) {
+      samples_names <- samples_names[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+      rawFiles <- rawFiles[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+    }
+    
+    if(is.null(sample)) {
+      sampleOrder <- 1;
+    } else {
+      sampleOrder <- which(sample == samples_names);
+    }
   }
   
   if(is.null(featureNum)) {
