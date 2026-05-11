@@ -932,11 +932,13 @@ cleanMem <- function() {
 
 # Memory functions
 ShowMemoryUse <- function(..., n=40) {
-    library(pryr);
-    sink(); # make sure print to screen
-    print(mem_used());
-    print(sessionInfo());
-    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+    if(requireNamespace("pryr", quietly = TRUE)){
+        library(pryr);
+        sink(); # make sure print to screen
+        print(mem_used());
+        print(sessionInfo());
+        print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));    
+    }
     print(warnings());
 }
 
