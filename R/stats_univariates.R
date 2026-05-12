@@ -527,7 +527,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   # Note, volcano is based on t-tests and fold change analysis
   # When fc.method is "limma", use moderated t-test for p-values too
   tt.method <- ifelse(fc.method == "limma", "limma", "classical")
-  if(.on.public.web){ Ttests.Anal(NA, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method); mSetObj <- mSet } else { mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) };
+  if(.on.public.web){ Ttests.Anal(NA, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) } else { mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) };
   mSetObj <- .get.mSet(mSetObj);
   p.value <- mSetObj$analSet$tt$p.value;
 
@@ -539,7 +539,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   p.log <- -log10(p.value);
 
   #### fc analysis
-  if(.on.public.web){ FC.Anal(NA, fcthresh, cmpType, paired, fc.method); mSetObj <- mSet } else { mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired, fc.method) };
+  if(.on.public.web){ FC.Anal(NA, fcthresh, cmpType, paired, fc.method) } else { mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired, fc.method) };
   mSetObj <- .get.mSet(mSetObj);
   
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);

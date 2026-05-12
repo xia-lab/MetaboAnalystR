@@ -54,10 +54,26 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj <- .get.mSet(mSetObj);
   data <- ov_qs_read("prenorm.qs");
   cls <- mSetObj$dataSet$prenorm.cls;
-  
+
   colNames <- colnames(data);
   rowNames <- rownames(data);
-  
+
+  # Reset per-call warning slot. UI fetches this via GetNormWarning() after
+  # success — keeping it on a dedicated field (not msg.vec or err.vec) makes
+  # sure we surface only warnings raised THIS call, not stale ones.
+  norm.warn <<- ""
+
+  # VSN does its own sample-level normalization + variance stabilization in a
+  # single model, so stacking a row-level norm before VSN violates the model
+  # assumptions. Warn but proceed (UI guard is the right long-term fix).
+  row.norm.opts <- c("QuantileNorm","GroupPQN","SamplePQN","CompNorm","SumNorm","MedianNorm","SpecNorm")
+  if (transNorm == "VsnNorm" && rowNorm %in% row.norm.opts) {
+    warn.msg <- paste0("VSN performs sample-level normalization internally; combining it with '",
+                       rowNorm, "' is not recommended. Use VSN alone, or pair the row norm with a log/sqrt transform instead.")
+    message("[WARNING] ", warn.msg)
+    norm.warn <<- warn.msg
+  }
+
   # row-wise normalization
   if(rowNorm=="QuantileNorm"){
     data<-QuantileNormalize(data);
@@ -289,7 +305,17 @@ SumNorm<-function(x){
 
 # normalize by median
 MedianNorm<-function(x){
-  x/median(x, na.rm=T);
+  m <- median(x, na.rm = TRUE)
+  if (!is.finite(m) || m == 0) {
+    # Sample median is 0 — typical of mostly-empty samples (BLANKs, sparsely
+    # detected QCs). Fall back to median of non-zero finite values; if those
+    # are also absent, leave the row alone rather than producing Inf/NaN that
+    # blows up downstream transforms (e.g. VSN).
+    nz <- x[is.finite(x) & x != 0]
+    m <- if (length(nz)) median(nz) else NA_real_
+    if (!is.finite(m) || m == 0) return(x)
+  }
+  x / m
 }
 
 # normalize by a reference sample (probability quotient normalization)
@@ -651,6 +677,18 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 
+
+#' Get the per-call normalization warning (cleared on each Normalization() call)
+#' so the UI can show statistically dubious combos (e.g. row norm + VSN) without
+#' confusing them with stale messages from earlier steps.
+#' @export
+GetNormWarning <- function(){
+  if(!exists("norm.warn")) return("")
+  msg <- norm.warn
+  norm.warn <<- ""   # one-shot
+  if(is.null(msg) || is.na(msg)) return("")
+  return(msg)
+}
 
 PreparePrenormData <- function(mSetObj=NA){
     print("save data - prenorm ....");

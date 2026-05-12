@@ -557,10 +557,28 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   
   if(anal.type == "mummichog"){
     is.rt <- mSetObj$paramSet$mumRT;
-    if(!is.rt){
-      mzs <- as.numeric(var.nms);
-      if(sum(is.na(mzs) > 0)){
+
+    # Auto-detect m/z__RT feature names. If RT is encoded in the labels but the
+    # user picked "no RT", flip mumRT on rather than rejecting the upload —
+    # rtIncluded on the form is easy to miss when the data already carries RT.
+    if(!isTRUE(is.rt) && any(grepl("__", as.character(var.nms), fixed = TRUE))){
+      mSetObj$paramSet$mumRT <- TRUE;
+      rt.type <- mSetObj$paramSet$mumRT.type;
+      if(is.null(rt.type) || is.na(rt.type) || !rt.type %in% c("minutes","seconds")){
+        mSetObj$paramSet$mumRT.type <- "seconds";
+      }
+      is.rt <- TRUE;
+      message("[INFO] Retention time detected in feature names (m/z__RT). Treating RT as ",
+              mSetObj$paramSet$mumRT.type, ".");
+    }
+
+    if(!isTRUE(is.rt)){
+      mzs <- suppressWarnings(as.numeric(var.nms));
+      bad.inx <- is.na(mzs);
+      if(any(bad.inx)){
         AddErrMsg("Make sure that feature names are numeric values (mass or m/z)!");
+        AddErrMsg(paste("First non-numeric feature names:",
+                        paste(utils::head(var.nms[bad.inx], 3), collapse = ", ")));
         return(0);
       }
     }
