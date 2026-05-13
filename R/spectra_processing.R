@@ -1828,7 +1828,7 @@ GeneratePeakList <- function(userPath) {
     pvals[is.nan(pvals)] <- 1;
     pfdr <-p.adjust(pvals, method = "fdr")
     pvals <- signif(pvals, 4)
-    pfdr <- round(signif(pfdr, 4), 4)
+    pfdr <- signif(pfdr, 4)
     FeatureOrder <- order(pvals)
     intenVale <- round(apply(sample_data_mean, 1, mean),1)
   } else {
@@ -2110,7 +2110,7 @@ generateAsariPeakList <-  function(userPath) {
   pvals <- ttest_res[,2]
   pfdr <-p.adjust(pvals, method = "fdr")
   pvals <- signif(pvals, 4)
-  pfdr <- round(signif(pfdr, 4), 4)
+  pfdr <- signif(pfdr, 4)
   
   pvals[is.nan(pvals)] = 1
   pfdr[is.nan(pfdr)] = 1
