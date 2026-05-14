@@ -558,6 +558,25 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   if(anal.type == "mummichog"){
     is.rt <- mSetObj$paramSet$mumRT;
 
+    # Accept '@' as an alias for '__' when separating m/z from retention
+    # time. Many LC-MS tools (XCMS, mzmine peakml export, OpenMS) emit
+    # 89.0243@30.62 by default; rejecting them forced users to rename
+    # features by hand. Normalize to '__' so every downstream splitter
+    # in spectra_processing.R / util_compatibility.R / util_listheatmap.R /
+    # meta_pathway.R works on a single canonical form. Only converts when
+    # the '@' sits between two numeric tokens so legitimate compound
+    # names containing '@' (rare but possible) aren't mangled.
+    at.mask <- grepl("^\\s*[0-9.eE+-]+@[0-9.eE+-]+\\s*$",
+                     as.character(var.nms));
+    if(any(at.mask)){
+      new.nms <- as.character(var.nms);
+      new.nms[at.mask] <- gsub("@", "__", new.nms[at.mask], fixed = TRUE);
+      message("[INFO] Normalized '@' separator to '__' in ",
+              sum(at.mask), " feature names (m/z@RT → m/z__RT).");
+      var.nms <- new.nms;
+      colnames(conc) <- var.nms;
+    }
+
     # Auto-detect m/z__RT feature names. If RT is encoded in the labels but the
     # user picked "no RT", flip mumRT on rather than rejecting the upload —
     # rtIncluded on the form is easy to miss when the data already carries RT.
