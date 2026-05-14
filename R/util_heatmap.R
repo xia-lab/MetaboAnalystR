@@ -32,25 +32,27 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
     feat_info_split <- matrix(unlist(strsplit(feat_info, sep, fixed=TRUE)), ncol=2, byrow=T)
     colnames(feat_info_split) <- c("m.z", "r.t")
 
-    duplicates <- duplicated(feat_info_split[,1])
-    if(any(duplicates)){
-      set.seed(123)
-      n_dup <- sum(duplicates)
-      feat_info_split[duplicates, 1] <- paste0(feat_info_split[duplicates, 1],
-                                                sample(1:999, n_dup, replace = FALSE))
-    }
-
     if(mSetObj$paramSet$mumRT.type == "minutes"){
       feat_info_split[,2] <- as.numeric(feat_info_split[,2]) * 60
     }
 
+    # The m/z__RT pair IS the feature ID — preserve it as-is. Bare m/z is
+    # expected to repeat across different RTs; that's not a duplicate, that's
+    # how LC-MS works. Only error if the same m/z AND same RT appears twice
+    # (a genuine duplicate that should be consolidated upstream).
     new_feats <- paste(feat_info_split[,1], feat_info_split[,2], sep = "__")
-    rownames(data) <- make.unique(new_feats)
-
-    rownames(res) <- l <- mSetObj$dataSet$ref_mzlist <- make.unique(feat_info_split[,1]);
-    retention_time <- as.numeric(feat_info_split[,2]);
-    names(retention_time) <- mSetObj$dataSet$ref_mzlist;
-    mSetObj$dataSet$ret_time <- retention_time;
+    dup.inx <- duplicated(new_feats)
+    if(any(dup.inx)){
+      dup.examples <- paste(utils::head(unique(new_feats[dup.inx]), 5), collapse = ", ")
+      AddErrMsg(paste("Duplicate m/z__RT features in input:", dup.examples,
+                      "— consolidate or remove duplicates before re-uploading."))
+      return(0)
+    }
+    rownames(data) <- new_feats
+    rownames(res) <- l <- mSetObj$dataSet$ref_mzlist <- new_feats
+    retention_time <- as.numeric(feat_info_split[,2])
+    names(retention_time) <- new_feats
+    mSetObj$dataSet$ret_time <- retention_time
 
     if(is.na(mSetObj$dataSet$rt_tol)){
       rt_tol <- max(mSetObj$dataSet$ret_time) * mSetObj$dataSet$rt_frac
