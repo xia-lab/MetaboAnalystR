@@ -3455,34 +3455,80 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
 }
 
 
-extratExposomeClassName <- function(group){
-    res <- ov_qs_read("exposome_classification_summary.qs");
+.getExposomeMetricCol <- function(res, mode = "count"){
+  mode <- tolower(mode)
+  if(mode == "intensity" && "Intensity" %in% colnames(res)){
+    return("Intensity")
+  }
 
-    if(group == "All"){
-        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L)) 
-        res_nms <- unique(res$Categories)
-    } else {
-        res_num <- res$Number[res$Group == group]
-        res_nms <- res$Categories[res$Group == group]
-    }
-    
-    res_idx <- order(res_num, decreasing = TRUE)
-    res_nmsx <- res_nms[res_idx]
-    
-    return(res_nmsx)
+  if("Number" %in% colnames(res)){
+    return("Number")
+  }
+
+  if("Intensity" %in% colnames(res)){
+    return("Intensity")
+  }
+
+  return(NULL)
+}
+
+extratExposomeClassNameByMode <- function(group, mode = "count"){
+  res <- ov_qs_read("exposome_classification_summary.qs")
+  metric_col <- .getExposomeMetricCol(res, mode)
+
+  if(is.null(metric_col)){
+    return(character(0))
+  }
+
+  metric_vals <- as.numeric(res[[metric_col]])
+  if(group == "All"){
+    res_nms <- unique(res$Categories)
+    res_num <- vapply(res_nms, function(x){sum(metric_vals[res$Categories == x], na.rm = TRUE)}, FUN.VALUE = numeric(1L))
+  } else {
+    idx <- res$Group == group
+    res_num <- metric_vals[idx]
+    res_nms <- res$Categories[idx]
+  }
+
+  keep_idx <- !is.na(res_nms)
+  res_nms <- res_nms[keep_idx]
+  res_num <- res_num[keep_idx]
+
+  res_idx <- order(res_num, decreasing = TRUE)
+  return(res_nms[res_idx])
+}
+
+extratExposomeClassValueByMode <- function(group, mode = "count"){
+  res <- ov_qs_read("exposome_classification_summary.qs")
+  metric_col <- .getExposomeMetricCol(res, mode)
+
+  if(is.null(metric_col)){
+    return(numeric(0))
+  }
+
+  metric_vals <- as.numeric(res[[metric_col]])
+  if(group == "All"){
+    res_nms <- unique(res$Categories)
+    res_num <- vapply(res_nms, function(x){sum(metric_vals[res$Categories == x], na.rm = TRUE)}, FUN.VALUE = numeric(1L))
+  } else {
+    idx <- res$Group == group
+    res_num <- metric_vals[idx]
+    res_nms <- res$Categories[idx]
+  }
+
+  keep_idx <- !is.na(res_nms)
+  res_num <- res_num[keep_idx]
+
+  res_idx <- order(res_num, decreasing = TRUE)
+  return(res_num[res_idx])
+}
+
+extratExposomeClassName <- function(group){
+  return(extratExposomeClassNameByMode(group, "count"))
 }
 
 extratExposomeClassNumber <- function(group){
-    res <- ov_qs_read("exposome_classification_summary.qs");
-    if(group == "All"){
-        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L))        
-    } else {
-        res_num <- res$Number[res$Group == group]
-    }
-    
-    res_idx <- order(res_num, decreasing = TRUE)
-    res_numx <- res_num[res_idx]
-    return(res_numx)
+  return(extratExposomeClassValueByMode(group, "count"))
 }
 
 
