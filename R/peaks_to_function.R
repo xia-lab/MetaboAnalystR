@@ -4791,55 +4791,80 @@ Export.SigMetaboliteNames <- function(mSetObj = NA, outPath = NA, fdr.cutoff = 0
     message("[Export.SigMetaboliteNames] WARN outPath missing"); return(NULL)
   }
 
-  feat_nm <- NULL
+  # Three-tier fallback so chained enrichment is not silently nuked when
+  # the strict FDR filter yields zero (common on small / noisy data, e.g.
+  # plasma_nmr.csv where limma's var.prior fails and most coefs end up NA).
+  #
+  #   Tier 1: FDR <= fdr.cutoff (default 0.05) — strict, preferred
+  #   Tier 2: raw p <= fdr.cutoff            — fallback when tier 1 = 0
+  #   Tier 3: top 10% by raw p-value         — last-resort capped at >=1
+  #
+  # Each call to pick_from_slot returns a list(names, tier, n) so the
+  # caller can log which path actually produced the feature set.
 
   pick_from_slot <- function(slot) {
     if (is.null(slot) || is.null(slot$p.value) || length(slot$p.value) == 0) return(NULL)
     nm <- names(slot$p.value)
+    pv <- slot$p.value
+    fdr <- slot$fdr.p
+    if (is.null(fdr) || length(fdr) != length(nm)) fdr <- p.adjust(pv, "fdr")
+
+    # Tier 1: use slot$inx.imp when present (already FDR/p-thresholded by Ttests.Anal),
+    # else recompute FDR <= fdr.cutoff
     if (!is.null(slot$inx.imp) && length(slot$inx.imp) == length(nm)) {
       sig <- nm[as.logical(slot$inx.imp) & !is.na(slot$inx.imp)]
-      if (length(sig) > 0) return(sig)
+      if (length(sig) > 0) return(list(names = sig, tier = "FDR<=cutoff(inx.imp)", n = length(sig)))
     }
-    fdr <- slot$fdr.p
-    if (is.null(fdr) || length(fdr) != length(nm)) fdr <- p.adjust(slot$p.value, "fdr")
-    nm[!is.na(fdr) & fdr <= fdr.cutoff]
+    sig <- nm[!is.na(fdr) & fdr <= fdr.cutoff]
+    if (length(sig) > 0) return(list(names = sig, tier = "FDR<=cutoff", n = length(sig)))
+
+    # Tier 2: raw p <= fdr.cutoff
+    sig <- nm[!is.na(pv) & pv <= fdr.cutoff]
+    if (length(sig) > 0) return(list(names = sig, tier = "rawP<=cutoff", n = length(sig)))
+
+    # Tier 3: top 10% by raw p-value (min 1)
+    valid <- !is.na(pv)
+    if (!any(valid)) return(NULL)
+    n_top <- max(1L, ceiling(sum(valid) * 0.10))
+    ord <- order(pv, na.last = NA)[seq_len(n_top)]
+    sig <- nm[ord]
+    if (length(sig) > 0) return(list(names = sig, tier = "topPct10", n = length(sig)))
+    NULL
   }
+
+  picked <- NULL; source_label <- NA_character_
 
   # Priority: covariate-adjusted limma (MF) first, then unadjusted t-test / ANOVA.
-  # MF workflows populate BOTH cov AND tt — but cov reflects the user's
-  # covariate-adjusted intent, so it wins over the unadjusted tt.
   if (file.exists("covariate_result.qs")) {
     rest <- tryCatch(ov_qs_read("covariate_result.qs"), error = function(e) NULL)
-    if (!is.null(rest) && "adj.P.Val" %in% colnames(rest)) {
-      keep <- !is.na(rest$adj.P.Val) & rest$adj.P.Val <= fdr.cutoff
-      feat_nm <- rownames(rest)[keep]
+    if (!is.null(rest) && "adj.P.Val" %in% colnames(rest) && "P.Value" %in% colnames(rest)) {
+      synth <- list(p.value = rest$P.Value, fdr.p = rest$adj.P.Val)
+      names(synth$p.value) <- rownames(rest)
+      names(synth$fdr.p)   <- rownames(rest)
+      picked <- pick_from_slot(synth)
+      if (!is.null(picked)) source_label <- "covariate_result.qs"
     }
   }
-  if (is.null(feat_nm) || length(feat_nm) == 0) {
-    feat_nm <- pick_from_slot(mSetObj$analSet$cov)
-  }
-  if (is.null(feat_nm) || length(feat_nm) == 0) {
-    feat_nm <- pick_from_slot(mSetObj$analSet$tt)
-  }
-  if (is.null(feat_nm) || length(feat_nm) == 0) {
-    feat_nm <- pick_from_slot(mSetObj$analSet$aov)
+  for (slot.nm in c("cov", "tt", "aov")) {
+    if (!is.null(picked)) break
+    p <- pick_from_slot(mSetObj$analSet[[slot.nm]])
+    if (!is.null(p)) { picked <- p; source_label <- paste0("analSet$", slot.nm) }
   }
 
-  if (is.null(feat_nm) || length(feat_nm) == 0) {
-    message("[Export.SigMetaboliteNames] WARN no significant features at FDR <= ", fdr.cutoff,
-            " in analSet$tt / aov / cov / covariate_result.qs")
+  if (is.null(picked) || length(picked$names) == 0) {
+    message("[Export.SigMetaboliteNames] WARN no usable features in analSet$tt / aov / cov / covariate_result.qs")
     return(NULL)
   }
 
-  # Drop blanks / NAs and dedupe — defensive against feature-name artifacts.
-  feat_nm <- unique(feat_nm[!is.na(feat_nm) & nzchar(feat_nm)])
+  feat_nm <- unique(picked$names[!is.na(picked$names) & nzchar(picked$names)])
   if (length(feat_nm) == 0) {
     message("[Export.SigMetaboliteNames] WARN feature names empty after dedupe"); return(NULL)
   }
 
   writeLines(feat_nm, outPath)
-  message("[Export.SigMetaboliteNames] wrote ", length(feat_nm),
-          " significant metabolite names to ", outPath)
+  message("[Export.SigMetaboliteNames] selected ", length(feat_nm),
+          " features via tier=", picked$tier, " source=", source_label,
+          " (cutoff=", fdr.cutoff, ") -> ", outPath)
   return(outPath)
 }
 
