@@ -3454,6 +3454,53 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
     return(paste0(cls_res, collapse = "; "))
 }
 
+GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
+  res <- tryCatch({
+    ov_qs_read("exposome_classification_summary.qs")
+  }, error = function(e) { NULL })
+
+  if (is.null(res)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data available."))
+  }
+
+  # Find the column that contains classLabel
+  match_col <- NULL
+  for (col in colnames(res)) {
+    if (any(as.character(res[[col]]) == classLabel)) {
+      match_col <- col
+      break
+    }
+  }
+
+  if (is.null(match_col)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No matching data found."))
+  }
+
+  filtered <- res[as.character(res[[match_col]]) == classLabel, , drop = FALSE]
+
+  if (nrow(filtered) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No matching compounds found."))
+  }
+
+  html <- paste0(
+    "<b>Class: ", classLabel, "</b><br>",
+    "<table style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<tr>",
+    paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
+           colnames(filtered), "</th>", collapse = ""),
+    "</tr>"
+  )
+  max_rows <- min(nrow(filtered), 50)
+  for (i in seq_len(max_rows)) {
+    html <- paste0(html, "<tr>",
+      paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
+             as.character(filtered[i, ]), "</td>", collapse = ""),
+      "</tr>")
+  }
+  html <- paste0(html, "</table>")
+  return(html)
+}
+
 
 .getExposomeMetricCol <- function(res, mode = "count"){
   mode <- tolower(mode)
