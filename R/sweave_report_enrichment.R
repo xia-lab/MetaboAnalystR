@@ -261,7 +261,32 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
              "\\clearpage\n\n"
   );
   cat(fig, file=rnwFile, append=TRUE, sep="\n");
-  
+
+  # Companion compound x set membership heatmap — same data behind the
+  # OraView Plotly viewer, rendered as a static PNG by PlotORAMembership.
+  # Only included when the file is present in imgSet (older runs without
+  # the companion artifact still produce a valid report).
+  if(!is.null(mSetObj$imgSet$mset_membership)){
+    membership.descr <- c(
+      "The figure below shows which input compounds map to which top-ranked",
+      "metabolite sets. Rows are your input compounds (that hit at least one",
+      "of the displayed sets); columns are the top enriched sets ranked",
+      "left-to-right by p-value. Filled cells indicate set membership."
+    );
+    cat(membership.descr, file=rnwFile, append=TRUE);
+    membership.fig <- c(
+      "\\begin{figure}[htp]",
+      "\\begin{center}",
+      paste("\\includegraphics[width=1.0\\textwidth]{", mSetObj$imgSet$mset_membership, "}", sep=""),
+      "\\caption{Compound x Metabolite Set Membership Heatmap}",
+      "\\end{center}",
+      paste("\\label{", mSetObj$imgSet$mset_membership, "}", sep=""),
+      "\\end{figure}",
+      "\\clearpage\n\n"
+    );
+    cat(membership.fig, file=rnwFile, append=TRUE, sep="\n");
+  }
+
   descr <- c("<<echo=false, results=tex>>=",
              "GetORATable(mSet)",
              "@",

@@ -121,7 +121,69 @@ CalculateHyperScore <- function(mSetObj=NA){
 
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   ExportResultMatArrow(mSetObj$analSet$ora.mat, "ora_result");
+  # Membership companion artifacts for OraView's pathway-map panel + the
+  # Dashboard / Report / Slide builders. ExportOraMembershipJson writes the
+  # interactive JSON; PlotORAMembership writes the static Cairo PNG that the
+  # report's \includegraphics + the gallery scan pick up.
+  ExportOraMembershipJson(mSetObj);
+  mSetObj <- PlotORAMembership(mSetObj, "mset_membership_0_");
   return(.set.mSet(mSetObj));
+}
+
+# Serialize compound x metabolite-set membership for the OraView pathway-map
+# viewer. Shape mirrors proteo's enrichment JSON: fun.anot keyed by set name
+# (already p-sorted via rownames(ora.mat)), parallel fun.pval/padj/hit.num/
+# total/fun.ids arrays, plus input.ids = full HMDB-mapped query so the viewer
+# can render absent rows. Read-only on mSetObj. Called from the AjaxCall
+# servlet on every viewer load (so the JSON regenerates on restored projects
+# and stays in sync with the current ora.mat / ora.hits).
+ExportOraMembershipJson <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if (is.null(mSetObj$analSet$ora.mat) || nrow(mSetObj$analSet$ora.mat) == 0) {
+    return(invisible(NULL));
+  }
+
+  ora.mat  <- mSetObj$analSet$ora.mat;
+  ord.sets <- rownames(ora.mat);
+  fun.anot <- mSetObj$analSet$ora.hits[ord.sets];
+
+  fun.pval <- as.numeric(ora.mat[, "Raw p"]); if (length(fun.pval) == 1) fun.pval <- matrix(fun.pval);
+  fun.padj <- as.numeric(ora.mat[, "FDR"]);   if (length(fun.padj) == 1) fun.padj <- matrix(fun.padj);
+  hit.num  <- paste0(ora.mat[, "hits"], "/", ora.mat[, "total"]);
+  if (length(hit.num) == 1) hit.num <- matrix(hit.num);
+  total    <- as.integer(ora.mat[, "total"]); if (length(total) == 1) total   <- matrix(total);
+  fun.ids  <- as.character(ord.sets);         if (length(fun.ids) == 1) fun.ids <- matrix(fun.ids);
+
+  if (isTRUE(mSetObj$analSet$type == "msetssp")) {
+    input.ids <- mSetObj$dataSet$ssp.cmpd;
+  } else {
+    nm.map    <- GetFinalNameMap(mSetObj);
+    valid.inx <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb));
+    input.ids <- nm.map$hmdb[valid.inx];
+  }
+  input.ids <- as.character(input.ids);
+  input.ids <- input.ids[!is.na(input.ids) & nzchar(input.ids)];
+  if (length(input.ids) == 1) input.ids <- matrix(input.ids);
+
+  lib.name <- if (is.null(mSetObj$analSet$msetlibname)) "" else mSetObj$analSet$msetlibname;
+
+  json.res <- list(
+    fun.link  = "",
+    fun.anot  = fun.anot,
+    fun.ids   = fun.ids,
+    fun.pval  = fun.pval,
+    fun.padj  = fun.padj,
+    hit.num   = hit.num,
+    total     = total,
+    input.ids = input.ids,
+    lib.name  = lib.name,
+    data.type = "singlelist"
+  );
+
+  sink("ora_membership.json");
+  cat(rjson::toJSON(json.res));
+  sink();
+  return(invisible(NULL));
 }
 
 #'Quantitative enrichment analysis with globaltest

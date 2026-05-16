@@ -499,6 +499,105 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   return(.set.mSet(mSetObj))
 }
 
+#'Plot the compound x metabolite-set membership heatmap.
+#'@description Static PNG companion to the Plotly viewer on OraView. Rows are
+#'the input compounds that hit at least one of the top-N enriched sets;
+#'columns are the sets ranked by p-value. Cells are binary (compound in set
+#'or not). Saved as Cairo PNG so the Dashboard gallery + Sweave report + slide
+#'builder pick it up alongside the existing ora bar chart / ora_dot.
+#'@param mSetObj Input mSetObj
+#'@param imgName Filename root (gets dpi + format suffix appended)
+#'@param format png / pdf
+#'@param dpi default.dpi
+#'@param width optional inches
+#'@param topN Cap on the number of sets shown; default 100 matches the viewer
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+PlotORAMembership <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, topN=100){
+
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$analSet$ora.mat) || nrow(mSetObj$analSet$ora.mat) == 0){
+    return(.set.mSet(mSetObj));
+  }
+
+  ora.mat  <- mSetObj$analSet$ora.mat;
+  ord.sets <- rownames(ora.mat);
+  if(length(ord.sets) > topN) ord.sets <- ord.sets[1:topN];
+  ora.hits <- mSetObj$analSet$ora.hits[ord.sets];
+
+  # Full HMDB-mapped query (same derivation as ExportOraMembershipJson).
+  if(isTRUE(mSetObj$analSet$type == "msetssp")){
+    input.ids <- mSetObj$dataSet$ssp.cmpd;
+  }else{
+    nm.map <- GetFinalNameMap(mSetObj);
+    valid  <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb));
+    input.ids <- nm.map$hmdb[valid];
+  }
+  input.ids <- as.character(input.ids);
+  input.ids <- input.ids[!is.na(input.ids) & nzchar(input.ids)];
+
+  # Rows = compounds with at least one hit across displayed sets (preserves
+  # user-input order). Falls back to the unique union of hits if the input
+  # list is empty (defensive — should never trigger when ora.mat has rows).
+  hit.ids <- unique(unlist(ora.hits, use.names=FALSE));
+  rows <- intersect(input.ids, hit.ids);
+  if(length(rows) == 0) rows <- hit.ids;
+  if(length(rows) == 0){
+    return(.set.mSet(mSetObj));
+  }
+
+  # Binary membership matrix (rows = compounds, cols = sets).
+  mat <- matrix(0, nrow=length(rows), ncol=length(ord.sets),
+                dimnames=list(rows, ord.sets));
+  for(j in seq_along(ord.sets)){
+    hits.j <- ora.hits[[ord.sets[j]]];
+    if(length(hits.j) > 0){
+      mat[rownames(mat) %in% hits.j, j] <- 1;
+    }
+  }
+
+  # Truncate long set names for axis legibility; keep enough to identify
+  # the pathway. Mirrors the Plotly viewer's LABEL_LEN baseline.
+  col.lbl <- substr(colnames(mat), 1, 60);
+
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  # Page sizing — width grows with columns, height with rows. Match the
+  # general "wider when many columns" feel of the bar / dot plots.
+  w <- if(!is.na(width) && width > 0) width else max(10, min(20, ncol(mat) * 0.13 + 4));
+  h <- max(6, min(20, nrow(mat) * 0.18 + 3.5));
+
+  mSetObj$imgSet$mset_membership <- imgName;
+  mSetObj$imgSet$current.img     <- imgName;
+
+  Cairo::Cairo(file=imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar = c(14, 14, 3, 1));
+
+  # image() expects z indexed by (x, y) so we transpose. Reverse y range so
+  # the first input compound renders at the top of the plot.
+  z <- t(mat);
+  image(x = seq_len(ncol(mat)),
+        y = seq_len(nrow(mat)),
+        z = z,
+        col = c("#f3f4f6", "#2980b9"),
+        breaks = c(-0.5, 0.5, 1.5),
+        axes = FALSE, xlab = "", ylab = "",
+        ylim = c(nrow(mat) + 0.5, 0.5));
+
+  axis(1, at = seq_len(ncol(mat)), labels = col.lbl, las = 2,
+       cex.axis = if(ncol(mat) > 60) 0.55 else 0.7);
+  axis(2, at = seq_len(nrow(mat)), labels = rownames(mat), las = 1,
+       cex.axis = if(nrow(mat) > 60) 0.55 else 0.7);
+  title(main = "Compound x Metabolite Set Membership", line = 1.2,
+        cex.main = 1.1);
+
+  dev.off();
+
+  return(.set.mSet(mSetObj));
+}
+
 
 # Utility function
 concplot <- function(mn, lower, upper, labels=NULL,
