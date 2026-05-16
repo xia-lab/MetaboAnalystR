@@ -3482,19 +3482,51 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
     return(paste0("<b>Class: ", classLabel, "</b><br>No matching compounds found."))
   }
 
+  # Show first 4 columns (Categories, Number, Intensity, Group) + Compounds
+  display_cols <- min(4L, ncol(filtered))
+  headers <- c(colnames(filtered)[seq_len(display_cols)], "Compounds")
+
   html <- paste0(
     "<b>Class: ", classLabel, "</b><br>",
     "<table style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
     "<tr>",
     paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
-           colnames(filtered), "</th>", collapse = ""),
+           headers, "</th>", collapse = ""),
     "</tr>"
   )
   max_rows <- min(nrow(filtered), 50)
   for (i in seq_len(max_rows)) {
+    # First 4 columns
+    cell_vals <- vapply(seq_len(display_cols), function(j) {
+      val <- filtered[[j]][i]
+      if (j == 3 && is.numeric(val)) formatC(val, digits = 2, format = "f") else as.character(val)
+    }, FUN.VALUE = character(1L))
+
+    # Compounds column: build PubChem hyperlinks from "Name||InchiKey" entries
+    cmpd_cell <- ""
+    if (ncol(filtered) >= 5) {
+      cmpds <- filtered[[5]][[i]]
+      cmpds <- cmpds[nchar(trimws(cmpds)) > 0]
+      if (length(cmpds) > 0) {
+        parts <- strsplit(cmpds, "\\|\\|")
+        links <- vapply(parts, function(p) {
+          nm  <- trimws(p[1])
+          key <- if (length(p) >= 2) trimws(p[2]) else ""
+          if (nchar(key) > 0) {
+            paste0("<a href='https://pubchem.ncbi.nlm.nih.gov/#query=", key,
+                   "' target='_blank'>", nm, "</a>")
+          } else {
+            nm
+          }
+        }, FUN.VALUE = character(1L))
+        cmpd_cell <- paste0(unique(links), collapse = "<br>")
+      }
+    }
+
     html <- paste0(html, "<tr>",
       paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
-             as.character(filtered[i, ]), "</td>", collapse = ""),
+             cell_vals, "</td>", collapse = ""),
+      "<td style='padding:4px 8px; border:1px solid #ccc; max-width:320px;'>", cmpd_cell, "</td>",
       "</tr>")
   }
   html <- paste0(html, "</table>")
