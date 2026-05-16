@@ -4677,17 +4677,98 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
   return(.set.mSet(mSetObj));
 }
 
-#' Perform statistical analysis for table input (ranking only, no conversion)
-#' @description Computes t-test/ANOVA or limma statistics for feature ranking.
-#'   Results are stored in mSetObj$analSet$tt for later use by Convert2Mummichog.
-#' @param mSetObj mSet Object
-#' @param ranking.method "classical" or "limma"
-#' @return Number of significant features (FDR < 0.05)
+#' Perform statistical analysis for mummichog table input (ranking only,
+#' no conversion).
+#'
+#' @description
+#' Computes per-feature p-values via limma's moderated statistics so the
+#' result populates \code{mSetObj$analSet$tt} for downstream
+#' \code{Convert2Mummichog}.
+#'
+#' Design decisions (frozen 2026-05-15):
+#' \enumerate{
+#'   \item \strong{Always limma.} Classical t-test / ANOVA paths are
+#'     deprecated for mummichog ranking. Limma's moderated statistics are
+#'     more robust at small sample sizes and accept covariate adjustment
+#'     uniformly across two-group, multi-group, and multi-factor designs.
+#'     Passing \code{ranking.method = "classical"} now issues a warning and
+#'     silently falls back to limma.
+#'   \item \strong{Adaptive significance floor.} Mummichog pathway analysis
+#'     needs a reasonable number of input features. After computing FDR at
+#'     the user-supplied \code{pval.cutoff}, we enforce a minimum of
+#'     \code{max(min.sig.count, ceiling(min.sig.frac * total))} features. If
+#'     the user threshold produces fewer than this floor, the threshold is
+#'     expanded to include exactly the top-ranked features by FDR. The
+#'     effective threshold and the rationale string are stored in
+#'     \code{analSet$tt} for visibility in the report.
+#' }
+#'
+#' @param mSetObj mSet Object.
+#' @param ranking.method Retained for API compatibility; only \code{"limma"}
+#'   is honored. \code{"classical"} triggers a warning and is treated as
+#'   \code{"limma"}.
+#' @param pval.cutoff User-supplied FDR threshold (default 0.05). Acts as a
+#'   floor before adaptive expansion kicks in.
+#' @param fc.cutoff Absolute log-fold-change threshold (default 0 = no FC
+#'   filter).
+#' @param ref.group Reference group label for the contrast. If \code{NA}, the
+#'   first level of \code{cls} is used.
+#' @param contrast.group Contrast group label. If \code{NA}, the second
+#'   level of \code{cls} is used.
+#' @param covariates Character vector of metadata column names to include as
+#'   covariates in the limma design matrix. \code{NA} or empty for none.
+#' @param min.sig.count Minimum number of significant features required for
+#'   mummichog input. Default 300.
+#' @param min.sig.frac Minimum fraction of total features required for
+#'   mummichog input. Default 0.10 (10 percent). The effective floor is
+#'   \code{max(min.sig.count, ceiling(min.sig.frac * total))}.
+#' @return Final number of significant features after adaptive expansion.
+#'   This is always \code{>= min(target.count, total.peaks)}.
 #' @export
-PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval.cutoff = 0.05, fc.cutoff = 0,
-                                ref.group = NA, contrast.group = NA, covariates = NA) {
+PerformMumTableStat <- function(mSetObj = NA, ranking.method = "limma", pval.cutoff = 0.05, fc.cutoff = 0,
+                                ref.group = NA, contrast.group = NA, covariates = NA,
+                                min.sig.count = 300L, min.sig.frac = 0.10) {
+  # Force limma. Classical path retained in source for git-blame readability
+  # but unreachable; see roxygen above.
+  if (!identical(ranking.method, "limma")) {
+    warning("[PerformMumTableStat] ranking.method='", ranking.method,
+            "' is deprecated; using 'limma' instead. See function docstring.")
+    ranking.method <- "limma"
+  }
   mSetObj <- .get.mSet(mSetObj)
   require(limma)
+
+  # Defensive precheck: PerformMumTableStat requires the upstream Phase A
+  # (Read.TextData / Read.TextDataTs + Normalization) to have populated
+  # both the normalized peak intensity matrix (mSet$dataSet$norm) and the
+  # class label vector (mSet$dataSet$cls). Without these, limma's lmFit
+  # cascades into ~50 confusing warnings + cryptic errors like
+  # `model.frame.default: invalid type (NULL) for variable 'cls'` and
+  # `if (ncol(mSet$dataSet$norm) < 1000) : argument is of length zero`.
+  # Fail fast with one actionable message instead.
+  norm_ok <- !is.null(mSetObj$dataSet$norm) && ncol(mSetObj$dataSet$norm) >= 1L
+  cls_ok  <- !is.null(mSetObj$dataSet$cls)  && length(mSetObj$dataSet$cls) >= 1L
+  if (!norm_ok || !cls_ok) {
+    norm_state <- if (is.null(mSetObj$dataSet$norm)) "NULL"
+                  else paste0(nrow(mSetObj$dataSet$norm), "x",
+                              ncol(mSetObj$dataSet$norm), " matrix")
+    cls_state  <- if (is.null(mSetObj$dataSet$cls)) "NULL"
+                  else paste0("length-", length(mSetObj$dataSet$cls), " vector")
+    err <- paste0(
+      "Statistical Ranking aborted: the prerequisite mSet state is not ",
+      "populated. Found dataSet$norm = ", norm_state,
+      ", dataSet$cls = ", cls_state, ". ",
+      "PerformMumTableStat needs both populated by the upstream workflow's ",
+      "Phase A (Read.TextData + Normalization). ",
+      "Likely cause: this chained workflow's upstream stat pass did not run, ",
+      "did not complete Normalization, or was omitted from the batch. ",
+      "Re-submit with the upstream stat workflow included, or use the ",
+      "standalone Peak Table to Pathways workflow (which runs its own Phase A).")
+    AddErrMsg(err)
+    message("[Mummichog stat] ABORT — ", err)
+    return(-1L)
+  }
+
   cls <- mSetObj$dataSet$cls
   # relevel() only supports unordered factors; metadata columns can be ordered.
   cls <- factor(cls, levels = levels(cls), ordered = FALSE)
@@ -4787,15 +4868,79 @@ PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval
     method.label <- paste0("ANOVA + logFC(", cont, " vs ", ref, ")")
   }
 
-  # Apply thresholds
-  sig.inx <- fdr.p < pval.cutoff
-  if (fc.cutoff > 0) sig.inx <- sig.inx & (abs(logfc) > fc.cutoff)
+  # ─── Adaptive significance threshold ─────────────────────────────────────
+  #
+  # User design (2026-05-15): mummichog pathway analysis needs a reasonable
+  # minimum number of input features to produce meaningful enrichment scores.
+  # We enforce a floor of max(min.sig.count, ceiling(min.sig.frac * total)).
+  # When the user's FDR cutoff would yield fewer than this floor, we expand
+  # the threshold to admit exactly the top-ranked features by FDR, and store
+  # the expansion rationale on analSet$tt so the report can surface it.
+  #
+  # This replaces the implicit limma fallback inside PreparePeakTable4PSEA —
+  # callers should call this function first to populate analSet$tt with
+  # documented ranking, then PreparePeakTable4PSEA's reuse path takes over.
+
+  # Step 1: significance at the user-supplied threshold
+  user.sig.inx <- fdr.p < pval.cutoff
+  if (fc.cutoff > 0) user.sig.inx <- user.sig.inx & (abs(logfc) > fc.cutoff)
+  user.sig.count <- sum(user.sig.inx, na.rm = TRUE)
+  total.peaks <- length(p.value)
+
+  # Step 2: adaptive floor (whichever of count vs frac is larger)
+  target.count <- max(min.sig.count, ceiling(min.sig.frac * total.peaks))
+  target.count <- min(target.count, total.peaks)  # can't exceed available
+
+  # Step 3: pick effective threshold
+  effective.cutoff <- pval.cutoff
+  expansion.applied <- FALSE
+  if (user.sig.count < target.count) {
+    # Rank by FDR ascending and find the cutoff that captures exactly
+    # target.count features. fc.cutoff is intentionally NOT re-applied
+    # during expansion — we honor the FC filter only when the user threshold
+    # already produced enough features; expansion takes top-by-significance.
+    valid.fdr <- fdr.p[!is.na(fdr.p)]
+    if (length(valid.fdr) >= target.count) {
+      ranked.fdr <- sort(valid.fdr, decreasing = FALSE)
+      effective.cutoff <- ranked.fdr[target.count] + 1e-12  # epsilon for inclusion
+      sig.inx <- !is.na(fdr.p) & fdr.p <= effective.cutoff
+    } else {
+      sig.inx <- !is.na(fdr.p)  # use everything we have
+      effective.cutoff <- if (length(valid.fdr) > 0) max(valid.fdr) + 1e-12 else 1.0
+    }
+    expansion.applied <- TRUE
+  } else {
+    sig.inx <- user.sig.inx
+  }
+
+  # Step 4: rationale string (surfaced to user in the report)
+  threshold.rationale <- if (expansion.applied) {
+    sprintf(paste0("Adaptive threshold expansion: only %d/%d features passed user FDR < %g; ",
+                   "expanded to FDR <= %g to include the top %d features ",
+                   "(floor = max(%d, %d%% of %d) = %d). Final input set: %d features."),
+            user.sig.count, total.peaks, pval.cutoff,
+            effective.cutoff, target.count,
+            min.sig.count, round(min.sig.frac * 100), total.peaks, target.count,
+            sum(sig.inx, na.rm = TRUE))
+  } else {
+    sprintf("User FDR threshold honored: %d/%d features passed FDR < %g (floor of %d not triggered).",
+            user.sig.count, total.peaks, pval.cutoff, target.count)
+  }
+  message("[Mummichog stat] ", threshold.rationale)
 
   # Store in analSet$tt format for Convert2Mummichog compatibility
   mSetObj$analSet$tt <- list(
     p.value = p.value, p.log = -log10(p.value), t.score = t.score,
     fdr.p = fdr.p, logfc = logfc,
-    sig.num = sum(sig.inx, na.rm = TRUE), inx.imp = sig.inx
+    sig.num = sum(sig.inx, na.rm = TRUE), inx.imp = sig.inx,
+    # Adaptive threshold metadata (used by report / dashboard message)
+    user.cutoff = pval.cutoff,
+    effective.cutoff = effective.cutoff,
+    target.count = target.count,
+    total.peaks = total.peaks,
+    expansion.applied = expansion.applied,
+    threshold.rationale = threshold.rationale,
+    method.label = method.label
   )
 
   # Save result table as CSV and Arrow for detailed view
@@ -4867,6 +5012,172 @@ GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
   message("[PRO] Computed p-value cutoff: ", signif(cutoff, 4), " to capture ", sum(sig.inx), " significant features")
 
   return(cutoff)
+}
+
+#' Export ranked peak list to mprt-format TSV for downstream chained mummichog
+#'
+#' @description Writes a tab-delimited file with columns m.z, p.value, t.score, r.t
+#' that the standalone MS Peaks to Pathways pipeline (Read.PeakListData → SetPeakFormat("mprt"))
+#' can consume directly. Source order: analSet$tt (limma/t-test/ANOVA via PerformMumTableStat),
+#' then on-disk covariate_result.qs (Linear Models for MF). Feature names are parsed for the
+#' "mz__rt" / "mz@rt" separator convention to recover m.z and r.t columns.
+#'
+#' This is the chain-artifact materializer: upstream stats / MF workflows call it at pass-end;
+#' the downstream chained mummichog workflow reads the resulting file as a fresh Phase A input,
+#' so each workflow remains a self-contained, resumable project with no shared-R-session contract.
+#'
+#' @param mSetObj mSet Object holding the upstream pass's analSet
+#' @param outPath Absolute path to write the TSV (overwritten if present)
+#' @return outPath on success; NULL on failure (writes [WARN] to message stream)
+#' @export
+Export.RankedPeakListMprt <- function(mSetObj = NA, outPath = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.na(outPath) || !nzchar(outPath)) {
+    message("[Export.RankedPeakListMprt] WARN outPath missing"); return(NULL)
+  }
+
+  feat_nm <- NULL; pvec <- NULL; tvec <- NULL
+
+  # Source priority: covariate-adjusted limma first (MF), then unadjusted t-test
+  # / ANOVA / limma (stat). When the MF workflow ran, both covariate_result.qs
+  # AND analSet$tt are present — the unadjusted tt would mis-represent the user's
+  # covariate-adjusted intent, so the file-on-disk takes precedence.
+  if (file.exists("covariate_result.qs")) {
+    rest <- tryCatch(ov_qs_read("covariate_result.qs"), error = function(e) NULL)
+    if (!is.null(rest) && "P.Value" %in% colnames(rest)) {
+      feat_nm <- rownames(rest)
+      pvec    <- as.numeric(rest$P.Value)
+      tvec    <- if ("t" %in% colnames(rest)) as.numeric(rest$t)
+                 else if ("F" %in% colnames(rest)) as.numeric(rest$F)
+                 else rep(0, length(pvec))
+    }
+  }
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    tt <- mSetObj$analSet$tt
+    if (!is.null(tt) && !is.null(tt$p.value) && length(tt$p.value) > 0) {
+      feat_nm <- names(tt$p.value)
+      pvec    <- as.numeric(tt$p.value)
+      tvec    <- if (!is.null(tt$t.score)) as.numeric(tt$t.score) else rep(0, length(pvec))
+    }
+  }
+
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    message("[Export.RankedPeakListMprt] WARN no analSet$tt and no covariate_result.qs — nothing to export")
+    return(NULL)
+  }
+
+  # Parse mz__rt / mz@rt feature names.
+  sep <- if (any(grepl("__", feat_nm, fixed = TRUE))) "__"
+         else if (any(grepl("@", feat_nm, fixed = TRUE))) "@" else NA_character_
+  if (!is.na(sep)) {
+    parts <- strsplit(feat_nm, sep, fixed = TRUE)
+    mz    <- vapply(parts, `[`, character(1), 1L)
+    rt    <- vapply(parts, function(x) if (length(x) > 1) x[2] else NA_character_, character(1))
+  } else {
+    mz <- feat_nm
+    rt <- rep("", length(feat_nm))
+  }
+
+  out <- data.frame(m.z = mz, p.value = pvec, t.score = tvec, r.t = rt,
+                    stringsAsFactors = FALSE)
+  # Drop rows without numeric m/z (defensive — Read.PeakListData rejects the file otherwise).
+  keep <- !is.na(suppressWarnings(as.numeric(out$m.z)))
+  out  <- out[keep, , drop = FALSE]
+  if (nrow(out) == 0) {
+    message("[Export.RankedPeakListMprt] WARN all rows failed numeric m/z parse"); return(NULL)
+  }
+
+  # Order by p-value ascending so the file is human-readable; mummichog re-ranks anyway.
+  out <- out[order(out$p.value, na.last = TRUE), , drop = FALSE]
+
+  utils::write.table(out, file = outPath, sep = "\t", quote = FALSE,
+                     row.names = FALSE, col.names = TRUE, na = "")
+  message("[Export.RankedPeakListMprt] wrote ", nrow(out), " peaks to ", outPath)
+  return(outPath)
+}
+
+#' Export significant metabolite names to a one-per-line text file for chained
+#' MSEA / Pathway ORA passes
+#'
+#' @description Writes the significant feature NAMES (compound / metabolite
+#' identifiers as they appear in the metabolite-table column headers) from an
+#' upstream Stats / MF pass to a plain-text file, one name per line, suitable
+#' for the standalone MSEA / Pathway ORA Phase A loader to consume via
+#' Setup.MapData + CrossReferencing. Source priority:
+#'   1. analSet$tt$inx.imp (T-test / limma / PerformMumTableStat)
+#'   2. analSet$aov$inx.imp (ANOVA)
+#'   3. analSet$cov$inx.imp (Multi-Factor Linear Models, in-memory)
+#'   4. covariate_result.qs on disk (MF fallback) filtered by adj.P.Val
+#'
+#' Falls back to the FDR cutoff when inx.imp is missing.
+#'
+#' Like Export.RankedPeakListMprt, this is a chain-artifact materializer:
+#' the chained MSEA / Pathora workflow then runs its own full Phase A on the
+#' resulting file, so each pass remains a self-contained, resumable project.
+#'
+#' @param mSetObj  mSet Object holding the upstream pass's analSet
+#' @param outPath  Absolute path to write the text file (overwritten if present)
+#' @param fdr.cutoff  FDR threshold used when no inx.imp index is available (default 0.05)
+#' @return outPath on success; NULL on failure
+#' @export
+Export.SigMetaboliteNames <- function(mSetObj = NA, outPath = NA, fdr.cutoff = 0.05) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.na(outPath) || !nzchar(outPath)) {
+    message("[Export.SigMetaboliteNames] WARN outPath missing"); return(NULL)
+  }
+
+  feat_nm <- NULL
+
+  pick_from_slot <- function(slot) {
+    if (is.null(slot) || is.null(slot$p.value) || length(slot$p.value) == 0) return(NULL)
+    nm <- names(slot$p.value)
+    if (!is.null(slot$inx.imp) && length(slot$inx.imp) == length(nm)) {
+      sig <- nm[as.logical(slot$inx.imp) & !is.na(slot$inx.imp)]
+      if (length(sig) > 0) return(sig)
+    }
+    fdr <- slot$fdr.p
+    if (is.null(fdr) || length(fdr) != length(nm)) fdr <- p.adjust(slot$p.value, "fdr")
+    nm[!is.na(fdr) & fdr <= fdr.cutoff]
+  }
+
+  # Priority: covariate-adjusted limma (MF) first, then unadjusted t-test / ANOVA.
+  # MF workflows populate BOTH cov AND tt — but cov reflects the user's
+  # covariate-adjusted intent, so it wins over the unadjusted tt.
+  if (file.exists("covariate_result.qs")) {
+    rest <- tryCatch(ov_qs_read("covariate_result.qs"), error = function(e) NULL)
+    if (!is.null(rest) && "adj.P.Val" %in% colnames(rest)) {
+      keep <- !is.na(rest$adj.P.Val) & rest$adj.P.Val <= fdr.cutoff
+      feat_nm <- rownames(rest)[keep]
+    }
+  }
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    feat_nm <- pick_from_slot(mSetObj$analSet$cov)
+  }
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    feat_nm <- pick_from_slot(mSetObj$analSet$tt)
+  }
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    feat_nm <- pick_from_slot(mSetObj$analSet$aov)
+  }
+
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    message("[Export.SigMetaboliteNames] WARN no significant features at FDR <= ", fdr.cutoff,
+            " in analSet$tt / aov / cov / covariate_result.qs")
+    return(NULL)
+  }
+
+  # Drop blanks / NAs and dedupe — defensive against feature-name artifacts.
+  feat_nm <- unique(feat_nm[!is.na(feat_nm) & nzchar(feat_nm)])
+  if (length(feat_nm) == 0) {
+    message("[Export.SigMetaboliteNames] WARN feature names empty after dedupe"); return(NULL)
+  }
+
+  writeLines(feat_nm, outPath)
+  message("[Export.SigMetaboliteNames] wrote ", length(feat_nm),
+          " significant metabolite names to ", outPath)
+  return(outPath)
 }
 
 #' Plot volcano for mummichog table input
