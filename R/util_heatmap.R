@@ -8,7 +8,7 @@ psea.heatmap.json <- function(mSetObj=NA, libOpt, libVersion, minLib, fileNm, fi
   data <- t(dataSet$norm)
   sig.ids <- rownames(data);
 
-  # Reuse existing stat results if available (from PerformMumTableStat)
+  # Reuse upstream analSet$tt if available
   if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value)) {
     pvals <- mSetObj$analSet$tt$p.value[sig.ids]
     tscores <- mSetObj$analSet$tt$t.score[sig.ids]

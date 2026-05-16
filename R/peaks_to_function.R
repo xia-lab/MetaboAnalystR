@@ -319,8 +319,7 @@ Convert2Mummichog <- function(mSetObj=NA,
                               rt.type="seconds",
                               test="tt", mode=NA){
 
-  # If PerformMumTableStat already computed analSet$tt (limma-based), use it
-  # regardless of test parameter — it contains p.value, t.score, fdr.p, logfc
+  # Reuse analSet$tt when upstream stats already computed it
   if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value) && test %in% c("tt", "aov")) {
     tt.pval <- sort(mSetObj$analSet$tt$p.value);
     fdr <- p.adjust(tt.pval, "fdr")
@@ -4599,12 +4598,11 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
 
   mSetObj <- .get.mSet(mSetObj);
 
-  # If PerformMumTableStat already computed analSet$tt, reuse it
   if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value)) {
     res <- mSetObj;
     ngrps <- length(levels(mSetObj$dataSet$cls));
     testmeth <- ifelse(ngrps > 2, "aov", "tt");
-    message("Reusing existing stat results from PerformMumTableStat");
+    message("Reusing existing stat results from upstream analSet$tt");
   } else if (ranking.method == "limma" && length(levels(mSetObj$dataSet$cls)) < 3) {
     # Use limma moderated statistics
     limma.res <- GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
@@ -4677,348 +4675,13 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
   return(.set.mSet(mSetObj));
 }
 
-#' Perform statistical analysis for mummichog table input (ranking only,
-#' no conversion).
-#'
-#' @description
-#' Computes per-feature p-values via limma's moderated statistics so the
-#' result populates \code{mSetObj$analSet$tt} for downstream
-#' \code{Convert2Mummichog}.
-#'
-#' Design decisions (frozen 2026-05-15):
-#' \enumerate{
-#'   \item \strong{Always limma.} Classical t-test / ANOVA paths are
-#'     deprecated for mummichog ranking. Limma's moderated statistics are
-#'     more robust at small sample sizes and accept covariate adjustment
-#'     uniformly across two-group, multi-group, and multi-factor designs.
-#'     Passing \code{ranking.method = "classical"} now issues a warning and
-#'     silently falls back to limma.
-#'   \item \strong{Adaptive significance floor.} Mummichog pathway analysis
-#'     needs a reasonable number of input features. After computing FDR at
-#'     the user-supplied \code{pval.cutoff}, we enforce a minimum of
-#'     \code{max(min.sig.count, ceiling(min.sig.frac * total))} features. If
-#'     the user threshold produces fewer than this floor, the threshold is
-#'     expanded to include exactly the top-ranked features by FDR. The
-#'     effective threshold and the rationale string are stored in
-#'     \code{analSet$tt} for visibility in the report.
-#' }
-#'
-#' @param mSetObj mSet Object.
-#' @param ranking.method Retained for API compatibility; only \code{"limma"}
-#'   is honored. \code{"classical"} triggers a warning and is treated as
-#'   \code{"limma"}.
-#' @param pval.cutoff User-supplied FDR threshold (default 0.05). Acts as a
-#'   floor before adaptive expansion kicks in.
-#' @param fc.cutoff Absolute log-fold-change threshold (default 0 = no FC
-#'   filter).
-#' @param ref.group Reference group label for the contrast. If \code{NA}, the
-#'   first level of \code{cls} is used.
-#' @param contrast.group Contrast group label. If \code{NA}, the second
-#'   level of \code{cls} is used.
-#' @param covariates Character vector of metadata column names to include as
-#'   covariates in the limma design matrix. \code{NA} or empty for none.
-#' @param min.sig.count Minimum number of significant features required for
-#'   mummichog input. Default 300.
-#' @param min.sig.frac Minimum fraction of total features required for
-#'   mummichog input. Default 0.10 (10 percent). The effective floor is
-#'   \code{max(min.sig.count, ceiling(min.sig.frac * total))}.
-#' @return Final number of significant features after adaptive expansion.
-#'   This is always \code{>= min(target.count, total.peaks)}.
-#' @export
-PerformMumTableStat <- function(mSetObj = NA, ranking.method = "limma", pval.cutoff = 0.05, fc.cutoff = 0,
-                                ref.group = NA, contrast.group = NA, covariates = NA,
-                                min.sig.count = 300L, min.sig.frac = 0.10) {
-  # Force limma. Classical path retained in source for git-blame readability
-  # but unreachable; see roxygen above.
-  if (!identical(ranking.method, "limma")) {
-    warning("[PerformMumTableStat] ranking.method='", ranking.method,
-            "' is deprecated; using 'limma' instead. See function docstring.")
-    ranking.method <- "limma"
-  }
-  mSetObj <- .get.mSet(mSetObj)
-  require(limma)
 
-  # Defensive precheck: PerformMumTableStat requires the upstream Phase A
-  # (Read.TextData / Read.TextDataTs + Normalization) to have populated
-  # both the normalized peak intensity matrix (mSet$dataSet$norm) and the
-  # class label vector (mSet$dataSet$cls). Without these, limma's lmFit
-  # cascades into ~50 confusing warnings + cryptic errors like
-  # `model.frame.default: invalid type (NULL) for variable 'cls'` and
-  # `if (ncol(mSet$dataSet$norm) < 1000) : argument is of length zero`.
-  # Fail fast with one actionable message instead.
-  norm_ok <- !is.null(mSetObj$dataSet$norm) && ncol(mSetObj$dataSet$norm) >= 1L
-  cls_ok  <- !is.null(mSetObj$dataSet$cls)  && length(mSetObj$dataSet$cls) >= 1L
-  if (!norm_ok || !cls_ok) {
-    norm_state <- if (is.null(mSetObj$dataSet$norm)) "NULL"
-                  else paste0(nrow(mSetObj$dataSet$norm), "x",
-                              ncol(mSetObj$dataSet$norm), " matrix")
-    cls_state  <- if (is.null(mSetObj$dataSet$cls)) "NULL"
-                  else paste0("length-", length(mSetObj$dataSet$cls), " vector")
-    err <- paste0(
-      "Statistical Ranking aborted: the prerequisite mSet state is not ",
-      "populated. Found dataSet$norm = ", norm_state,
-      ", dataSet$cls = ", cls_state, ". ",
-      "PerformMumTableStat needs both populated by the upstream workflow's ",
-      "Phase A (Read.TextData + Normalization). ",
-      "Likely cause: this chained workflow's upstream stat pass did not run, ",
-      "did not complete Normalization, or was omitted from the batch. ",
-      "Re-submit with the upstream stat workflow included, or use the ",
-      "standalone Peak Table to Pathways workflow (which runs its own Phase A).")
-    AddErrMsg(err)
-    message("[Mummichog stat] ABORT — ", err)
-    return(-1L)
-  }
-
-  cls <- mSetObj$dataSet$cls
-  # relevel() only supports unordered factors; metadata columns can be ordered.
-  cls <- factor(cls, levels = levels(cls), ordered = FALSE)
-  x <- mSetObj$dataSet$norm
-  ngrps <- length(levels(cls))
-
-  # Set reference group
-  if (!is.na(ref.group) && ref.group %in% levels(cls)) {
-    cls <- relevel(cls, ref = ref.group)
-  }
-  ref <- levels(cls)[1]
-
-  # Determine contrast group for logFC
-  if (!is.na(contrast.group) && contrast.group %in% levels(cls)) {
-    cont <- contrast.group
-  } else {
-    cont <- levels(cls)[2]
-  }
-  
-  # Limma contrast names must be syntactically valid in R.
-  cls.levels <- levels(cls)
-  cls.safe <- make.names(cls.levels, unique = TRUE)
-  names(cls.safe) <- cls.levels
-  ref.safe <- cls.safe[ref]
-  cont.safe <- cls.safe[cont]
-
-  # Build covariate matrix if specified (only used with limma method)
-  has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
-  cov.mat <- NULL
-  if (has.cov && ranking.method == "limma" && !is.null(mSetObj$dataSet$meta.info)) {
-    meta <- mSetObj$dataSet$meta.info
-    cov.cols <- intersect(covariates, colnames(meta))
-    if (length(cov.cols) > 0) {
-      cov.list <- list()
-      for (cn in cov.cols) {
-        v <- meta[, cn]
-        if (is.numeric(v)) {
-          cov.list[[cn]] <- v
-        } else {
-          cov.list[[cn]] <- as.factor(v)
-        }
-      }
-      cov.mat <- data.frame(cov.list, row.names = rownames(meta))
-      message("Covariates included in limma model: ", paste(cov.cols, collapse = ", "))
-    }
-  } else if (has.cov && ranking.method != "limma") {
-    message("Note: covariates are ignored for classical t-test/ANOVA method")
-  }
-
-  if (ranking.method == "limma" || ngrps == 2) {
-    # Limma: design with reference + optional covariates
-    if (!is.null(cov.mat)) {
-      design <- model.matrix(~0 + cls + ., data = cov.mat)
-    } else {
-      design <- model.matrix(~0 + cls)
-    }
-    colnames(design)[1:ngrps] <- unname(cls.safe)
-    contrast.name <- paste0(cont.safe, "-", ref.safe)
-    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
-    fit <- lmFit(t(as.matrix(x)), design)
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit)
-    tt <- topTable(fit, number = Inf, sort.by = "none")
-    p.value <- tt$P.Value
-    names(p.value) <- rownames(tt)
-    t.score <- tt$t
-    names(t.score) <- rownames(tt)
-    fdr.p <- tt$adj.P.Val
-    names(fdr.p) <- rownames(tt)
-    logfc <- tt$logFC
-    names(logfc) <- rownames(tt)
-    cov.label <- if (!is.null(cov.mat)) paste0(" adj:", paste(colnames(cov.mat), collapse=",")) else ""
-    method.label <- paste0("limma (", cont, " vs ", ref, cov.label, ")")
-
-  } else {
-    # Classical multi-group: ANOVA for overall p-values + limma for logFC of specific contrast (no covariates)
-    if(.on.public.web){ ANOVA.Anal(NA, F, pval.cutoff, FALSE); mSetObj <- mSet } else { mSetObj <- ANOVA.Anal(mSetObj, F, pval.cutoff, FALSE) }
-    mSetObj <- .get.mSet(mSetObj)
-    aov.res <- mSetObj$analSet$aov
-    p.value <- aov.res$p.value
-    fdr.p <- aov.res$fdr.p
-    t.score <- -log10(p.value)
-    names(t.score) <- names(p.value)
-
-    # logFC from specific contrast via limma (no covariates for classical method)
-    design <- model.matrix(~0 + cls)
-    colnames(design)[1:ngrps] <- unname(cls.safe)
-    contrast.name <- paste0(cont.safe, "-", ref.safe)
-    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
-    fit <- lmFit(t(as.matrix(x)), design)
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit)
-    tt.first <- topTable(fit, number = Inf, sort.by = "none")
-    logfc <- tt.first$logFC
-    names(logfc) <- rownames(tt.first)
-    logfc <- logfc[names(p.value)]
-    method.label <- paste0("ANOVA + logFC(", cont, " vs ", ref, ")")
-  }
-
-  # ─── Adaptive significance threshold ─────────────────────────────────────
-  #
-  # User design (2026-05-15): mummichog pathway analysis needs a reasonable
-  # minimum number of input features to produce meaningful enrichment scores.
-  # We enforce a floor of max(min.sig.count, ceiling(min.sig.frac * total)).
-  # When the user's FDR cutoff would yield fewer than this floor, we expand
-  # the threshold to admit exactly the top-ranked features by FDR, and store
-  # the expansion rationale on analSet$tt so the report can surface it.
-  #
-  # This replaces the implicit limma fallback inside PreparePeakTable4PSEA —
-  # callers should call this function first to populate analSet$tt with
-  # documented ranking, then PreparePeakTable4PSEA's reuse path takes over.
-
-  # Step 1: significance at the user-supplied threshold
-  user.sig.inx <- fdr.p < pval.cutoff
-  if (fc.cutoff > 0) user.sig.inx <- user.sig.inx & (abs(logfc) > fc.cutoff)
-  user.sig.count <- sum(user.sig.inx, na.rm = TRUE)
-  total.peaks <- length(p.value)
-
-  # Step 2: adaptive floor (whichever of count vs frac is larger)
-  target.count <- max(min.sig.count, ceiling(min.sig.frac * total.peaks))
-  target.count <- min(target.count, total.peaks)  # can't exceed available
-
-  # Step 3: pick effective threshold
-  effective.cutoff <- pval.cutoff
-  expansion.applied <- FALSE
-  if (user.sig.count < target.count) {
-    # Rank by FDR ascending and find the cutoff that captures exactly
-    # target.count features. fc.cutoff is intentionally NOT re-applied
-    # during expansion — we honor the FC filter only when the user threshold
-    # already produced enough features; expansion takes top-by-significance.
-    valid.fdr <- fdr.p[!is.na(fdr.p)]
-    if (length(valid.fdr) >= target.count) {
-      ranked.fdr <- sort(valid.fdr, decreasing = FALSE)
-      effective.cutoff <- ranked.fdr[target.count] + 1e-12  # epsilon for inclusion
-      sig.inx <- !is.na(fdr.p) & fdr.p <= effective.cutoff
-    } else {
-      sig.inx <- !is.na(fdr.p)  # use everything we have
-      effective.cutoff <- if (length(valid.fdr) > 0) max(valid.fdr) + 1e-12 else 1.0
-    }
-    expansion.applied <- TRUE
-  } else {
-    sig.inx <- user.sig.inx
-  }
-
-  # Step 4: rationale string (surfaced to user in the report)
-  threshold.rationale <- if (expansion.applied) {
-    sprintf(paste0("Adaptive threshold expansion: only %d/%d features passed user FDR < %g; ",
-                   "expanded to FDR <= %g to include the top %d features ",
-                   "(floor = max(%d, %d%% of %d) = %d). Final input set: %d features."),
-            user.sig.count, total.peaks, pval.cutoff,
-            effective.cutoff, target.count,
-            min.sig.count, round(min.sig.frac * 100), total.peaks, target.count,
-            sum(sig.inx, na.rm = TRUE))
-  } else {
-    sprintf("User FDR threshold honored: %d/%d features passed FDR < %g (floor of %d not triggered).",
-            user.sig.count, total.peaks, pval.cutoff, target.count)
-  }
-  message("[Mummichog stat] ", threshold.rationale)
-
-  # Store in analSet$tt format for Convert2Mummichog compatibility
-  mSetObj$analSet$tt <- list(
-    p.value = p.value, p.log = -log10(p.value), t.score = t.score,
-    fdr.p = fdr.p, logfc = logfc,
-    sig.num = sum(sig.inx, na.rm = TRUE), inx.imp = sig.inx,
-    # Adaptive threshold metadata (used by report / dashboard message)
-    user.cutoff = pval.cutoff,
-    effective.cutoff = effective.cutoff,
-    target.count = target.count,
-    total.peaks = total.peaks,
-    expansion.applied = expansion.applied,
-    threshold.rationale = threshold.rationale,
-    method.label = method.label
-  )
-
-  # Save result table as CSV and Arrow for detailed view
-  tryCatch({
-    result.mat <- data.frame(
-      Log2FC = signif(logfc, 5),
-      P.Value = signif(p.value, 5),
-      FDR = signif(fdr.p, 5),
-      negLogP = signif(-log10(p.value), 5)
-    )
-    rownames(result.mat) <- names(p.value)
-    ord.inx <- order(p.value)
-    result.mat <- result.mat[ord.inx, ]
-    fast.write.csv(result.mat, file = "mum_stat_result.csv")
-    ov_qs_save(result.mat, "mum_stat_result_mat.qs")
-    tryCatch(ExportResultMatArrow(result.mat, "mum_stat_result"), error = function(e) {})
-  }, error = function(e) { message("Failed to save stat result table: ", e$message) })
-
-  # Save volcano JSON for interactive Chart.js rendering
-  tryCatch({
-    volcano.data <- list(
-      names = names(p.value),
-      logFC = as.numeric(logfc),
-      negLogP = as.numeric(-log10(p.value)),
-      fdr = as.numeric(fdr.p)
-    )
-    jsonObj <- RJSONIO::toJSON(volcano.data)
-    sink("mum_volcano.json")
-    cat(jsonObj)
-    sink()
-  }, error = function(e) { message("Failed to save volcano JSON: ", e$message) })
-
-  message("Mummichog ranking: ", method.label, ". Sig: ", sum(sig.inx, na.rm = TRUE))
-  .set.mSet(mSetObj)
-  return(sum(sig.inx, na.rm = TRUE))
-}
-
-#' Compute p-value cutoff to exactly capture significant features from PerformMumTableStat
-#' @description After running PerformMumTableStat, find the p-value threshold that
-#'   captures all features where inx.imp == TRUE, keeping background peaks for permutation analysis
-#' @param mSetObj mSet Object
-#' @export
-GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
-  mSetObj <- .get.mSet(mSetObj)
-
-  # Check if analSet$tt exists with significance index
-  if (is.null(mSetObj$analSet$tt) || is.null(mSetObj$analSet$tt$inx.imp)) {
-    AddErrMsg("No statistical analysis results found. Run PerformMumTableStat first.")
-    return(0)
-  }
-
-  # Get significant features based on FDR and FC cutoffs
-  sig.inx <- mSetObj$analSet$tt$inx.imp
-  if (sum(sig.inx) == 0) {
-    AddErrMsg("No significant features found from statistical analysis.")
-    return(0)
-  }
-
-  # Get p-values for significant features
-  sig.pvals <- mSetObj$analSet$tt$p.value[sig.inx]
-
-  # Find the maximum p-value among significant features
-  # This will be our cutoff - it captures all significant features
-  max.sig.pval <- max(sig.pvals, na.rm = TRUE)
-
-  # Add small buffer to ensure all are included
-  cutoff <- max.sig.pval * 1.01
-
-  message("[PRO] Computed p-value cutoff: ", signif(cutoff, 4), " to capture ", sum(sig.inx), " significant features")
-
-  return(cutoff)
-}
 
 #' Export ranked peak list to mprt-format TSV for downstream chained mummichog
 #'
 #' @description Writes a tab-delimited file with columns m.z, p.value, t.score, r.t
 #' that the standalone MS Peaks to Pathways pipeline (Read.PeakListData → SetPeakFormat("mprt"))
-#' can consume directly. Source order: analSet$tt (limma/t-test/ANOVA via PerformMumTableStat),
+#' can consume directly. Source order: analSet$tt (limma/t-test/ANOVA via upstream stats),
 #' then on-disk covariate_result.qs (Linear Models for MF). Feature names are parsed for the
 #' "mz__rt" / "mz@rt" separator convention to recover m.z and r.t columns.
 #'
@@ -5105,7 +4768,7 @@ Export.RankedPeakListMprt <- function(mSetObj = NA, outPath = NA) {
 #' upstream Stats / MF pass to a plain-text file, one name per line, suitable
 #' for the standalone MSEA / Pathway ORA Phase A loader to consume via
 #' Setup.MapData + CrossReferencing. Source priority:
-#'   1. analSet$tt$inx.imp (T-test / limma / PerformMumTableStat)
+#'   1. analSet$tt$inx.imp (T-test / limma)
 #'   2. analSet$aov$inx.imp (ANOVA)
 #'   3. analSet$cov$inx.imp (Multi-Factor Linear Models, in-memory)
 #'   4. covariate_result.qs on disk (MF fallback) filtered by adj.P.Val
@@ -5180,84 +4843,7 @@ Export.SigMetaboliteNames <- function(mSetObj = NA, outPath = NA, fdr.cutoff = 0
   return(outPath)
 }
 
-#' Plot volcano for mummichog table input
-#' @description Plots logFC vs -log10(p) from the statistical analysis results
-#' @param mSetObj mSet Object
-#' @param imgName Image file name prefix
-#' @param dpi Resolution
-#' Get mummichog stat result table data for details view
-#' @export
-GetMumStatRowNames <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(rownames(mat))
-}
-#' @export
-GetMumStatColNames <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(colnames(mat))
-}
-#' @export
-GetMumStatMat <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(as.matrix(mat))
-}
-
-#' PlotMumVolcano
-#' @param format Image format
-#' @export
-PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pval.cutoff = 0.05, fc.cutoff = 0) {
-  require(ggplot2)
-  mSetObj <- .get.mSet(mSetObj)
-  tt <- mSetObj$analSet$tt
-  if (is.null(tt)) { return(0) }
-
-  p.val <- tt$p.value
-  fdr <- if (!is.null(tt$fdr.p)) tt$fdr.p else p.adjust(p.val, "fdr")
-
-  # Use stored logFC if available, otherwise compute
-  if (!is.null(tt$logfc)) {
-    logfc <- tt$logfc[names(p.val)]
-  } else {
-    limma.res <- tryCatch(GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls), error = function(e) NULL)
-    if (!is.null(limma.res)) {
-      logfc <- limma.res$logFC[names(p.val)]
-    } else {
-      logfc <- rep(0, length(p.val))
-    }
-  }
-
-  sig <- fdr < pval.cutoff
-  if (fc.cutoff > 0) sig <- sig & (abs(logfc) > fc.cutoff)
-
-  # Classify features as Up, Down, or Not significant
-  status <- rep("Not significant", length(p.val))
-  status[sig & logfc > 0] <- "Up"
-  status[sig & logfc < 0] <- "Down"
-  status <- factor(status, levels = c("Up", "Down", "Not significant"))
-
-  df <- data.frame(logFC = logfc, negLogP = -log10(p.val), status = status)
-
-  imgFile <- paste0(imgName, "dpi", dpi, ".", format)
-  Cairo::Cairo(file = imgFile, width = 7, height = 5.5, unit = "in", dpi = dpi, type = format, bg = "white")
-  g <- ggplot(df, aes(x = logFC, y = negLogP, color = status)) +
-    geom_point(alpha = 0.6, size = 1.5) +
-    scale_color_manual(values = c("Up" = "firebrick3", "Down" = "steelblue3", "Not significant" = "grey70"), name = "") +
-    geom_hline(yintercept = -log10(pval.cutoff), linetype = "dashed", color = "blue", alpha = 0.5) +
-    xlab("Log2(Fold Change)") + ylab("-Log10(P-value)") +
-    ggtitle("Volcano Plot") +
-    theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-  if (fc.cutoff > 0) {
-    g <- g + geom_vline(xintercept = c(-fc.cutoff, fc.cutoff), linetype = "dashed", color = "blue", alpha = 0.5)
-  }
-  print(g)
-  dev.off()
-  mSetObj$imgSet$mum.volcano <- imgFile
-  .set.mSet(mSetObj)
-  return(1)
-}
-
-CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 
+CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
                                   minLib, fileNm, filtOpt, version="v1"){
   
   return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
