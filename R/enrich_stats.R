@@ -121,13 +121,18 @@ CalculateHyperScore <- function(mSetObj=NA){
 
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   ExportResultMatArrow(mSetObj$analSet$ora.mat, "ora_result");
-  # Membership companion artifacts for OraView's pathway-map panel + the
-  # Dashboard / Report / Slide builders. ExportOraMembershipJson writes the
-  # interactive JSON; PlotORAMembership writes the static Cairo PNG that the
-  # report's \includegraphics + the gallery scan pick up.
-  ExportOraMembershipJson(mSetObj);
-  mSetObj <- PlotORAMembership(mSetObj, "mset_membership_0_");
-  return(.set.mSet(mSetObj));
+  # Persist the analSet to the global before invoking the membership
+  # companions. Both Export... and PlotORAMembership go through
+  # .get.mSet(NA) which fetches the global in .on.public.web mode — if we
+  # called them with a local `mSetObj` BEFORE persisting, they would
+  # operate on the previous global (no ora.mat yet) and silently no-op.
+  # PlotORAMembership additionally calls .set.mSet at its end (returns 1
+  # in web mode), so reassigning its return into `mSetObj` would clobber
+  # the local list with the integer 1 — the symptom that broke ORA earlier.
+  result <- .set.mSet(mSetObj);
+  ExportOraMembershipJson();
+  PlotORAMembership(NA, "mset_membership_0_");
+  return(result);
 }
 
 # Serialize compound x metabolite-set membership for the OraView pathway-map
