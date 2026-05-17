@@ -3533,6 +3533,80 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
   return(html)
 }
 
+GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
+  metabolome_cls <- tryCatch({
+    ov_qs_read("metabolome_classification_summary.qs")
+  }, error = function(e) { NULL })
+
+  if (is.null(metabolome_cls)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data available."))
+  }
+
+  if (group == "All") {
+    metabolome_df <- do.call(rbind, metabolome_cls)
+  } else {
+    metabolome_df <- metabolome_cls[[group]]
+  }
+
+  if (is.null(metabolome_df) || nrow(metabolome_df) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data for group: ", group))
+  }
+
+  if (!level %in% colnames(metabolome_df)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>Unknown taxonomy level: ", level))
+  }
+
+  filtered <- metabolome_df[as.character(metabolome_df[[level]]) == classLabel, , drop = FALSE]
+
+  # Deduplicate by InChiKey
+  if ("InChiKeys" %in% colnames(filtered)) {
+    filtered <- filtered[!duplicated(filtered$InChiKeys), , drop = FALSE]
+  }
+
+  if (nrow(filtered) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No compounds found."))
+  }
+
+  tax_cols <- c("Kingdoms", "Super_classes", "Classes", "Sub_classes")
+  display_cols <- tax_cols[tax_cols %in% colnames(filtered)]
+  headers <- c(display_cols, "Compound")
+
+  html <- paste0(
+    "<b>Class: ", classLabel, " &nbsp;&nbsp; Group: ", group, "</b><br>",
+    "<table style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<tr>",
+    paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
+           headers, "</th>", collapse = ""),
+    "</tr>"
+  )
+
+  max_rows <- min(nrow(filtered), 100L)
+  for (i in seq_len(max_rows)) {
+    cell_vals <- vapply(display_cols, function(col) {
+      as.character(filtered[[col]][i])
+    }, FUN.VALUE = character(1L))
+
+    cmpd_name <- if ("Compound" %in% colnames(filtered)) trimws(as.character(filtered$Compound[i])) else ""
+    hmdb_id   <- if ("HIMDBID"  %in% colnames(filtered)) trimws(as.character(filtered$HIMDBID[i]))  else ""
+    cmpd_cell <- if (nchar(cmpd_name) > 0 && nchar(hmdb_id) > 0) {
+      paste0("<a href='https://hmdb.ca/metabolites/", hmdb_id,
+             "' target='_blank'>", cmpd_name, "</a>")
+    } else if (nchar(cmpd_name) > 0) {
+      cmpd_name
+    } else {
+      ""
+    }
+
+    html <- paste0(html, "<tr>",
+      paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
+             cell_vals, "</td>", collapse = ""),
+      "<td style='padding:4px 8px; border:1px solid #ccc;'>", cmpd_cell, "</td>",
+      "</tr>")
+  }
+  html <- paste0(html, "</table>")
+  return(html)
+}
+
 
 .getExposomeMetricCol <- function(res, mode = "count"){
   mode <- tolower(mode)
@@ -3626,6 +3700,7 @@ extratMetabolomeClassName <- function(group, level, merge_ratio=0){
         metabolome_df <- metabolome_cls[[group]]
     }
     
+    metabolome_df <- metabolome_df[!duplicated(metabolome_df$InChiKeys), ]
     idx <- which(colnames(metabolome_df) == level)
     idx <- which(colnames(metabolome_df) == level)
     metabolome_tb<-table(metabolome_df[,idx])
@@ -3656,6 +3731,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
         metabolome_df <- metabolome_cls[[group]]
     }
 
+    metabolome_df <- metabolome_df[!duplicated(metabolome_df$InChiKeys), ]
     idx <- which(colnames(metabolome_df) == level)
     idx <- which(colnames(metabolome_df) == level)
     metabolome_tb<-table(metabolome_df[,idx])
