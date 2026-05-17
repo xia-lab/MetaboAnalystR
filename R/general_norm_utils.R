@@ -667,16 +667,6 @@ UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 
 
 
-# should always init (new or overwrite previous prenorm object)
-# note in right order that dataSet$edit will always performed using dataSet$filt (if it exists)
-# note dataSet$filt can be re-performed after dataSet$edit during analysis
-# need to make sure prenorm created using the latest information (based on both)
-
-#'Prepare data for normalization
-#'@description Function should always be initialized (new or overwrite previous prenorm object).
-#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@export
-
 
 #' Get the per-call normalization warning (cleared on each Normalization() call)
 #' so the UI can show statistically dubious combos (e.g. row norm + VSN) without
