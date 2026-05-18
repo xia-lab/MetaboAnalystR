@@ -3482,9 +3482,9 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
     return(paste0("<b>Class: ", classLabel, "</b><br>No matching compounds found."))
   }
 
-  # Show first 4 columns (Categories, Number, Intensity, Group) + Compounds
+  # Show first 4 columns (Categories, Number, Intensity, Group) + Compounds + Download
   display_cols <- min(4L, ncol(filtered))
-  headers <- c(colnames(filtered)[seq_len(display_cols)], "Compounds")
+  headers <- c(colnames(filtered)[seq_len(display_cols)], "Compounds", "Download")
 
   html <- paste0(
     "<b>Class: ", classLabel, "</b><br>",
@@ -3504,11 +3504,21 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
 
     # Compounds column: build PubChem hyperlinks from "Name||InchiKey" entries
     cmpd_cell <- ""
+    dl_cell   <- ""
     if (ncol(filtered) >= 5) {
       cmpds <- filtered[[5]][[i]]
       cmpds <- cmpds[nchar(trimws(cmpds)) > 0]
       if (length(cmpds) > 0) {
         parts <- strsplit(cmpds, "\\|\\|")
+        # Plain names for download file
+        all_names <- unique(vapply(parts, function(p) trimws(p[1]), character(1L)))
+        txt_content <- paste(all_names, collapse = "\n")
+        encoded_txt <- URLencode(txt_content, reserved = TRUE)
+        dl_fname    <- paste0("compounds_", gsub("[^A-Za-z0-9_-]", "_", classLabel), ".txt")
+        dl_cell <- paste0("<a href='data:text/plain;charset=utf-8,", encoded_txt,
+                          "' download='", dl_fname, "'",
+                          " style='white-space:nowrap;'>&#x21E9; Download (", length(all_names), ")</a>")
+        # Display links (first 20)
         links <- vapply(parts, function(p) {
           nm  <- trimws(p[1])
           key <- if (length(p) >= 2) trimws(p[2]) else ""
@@ -3519,7 +3529,9 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
             nm
           }
         }, FUN.VALUE = character(1L))
-        cmpd_cell <- paste0(unique(links), collapse = "<br>")
+        uniq_links <- unique(links)
+        suffix <- if (length(uniq_links) > 20) " etc." else ""
+        cmpd_cell <- paste0(paste0(uniq_links[seq_len(min(20L, length(uniq_links)))], collapse = "; "), suffix)
       }
     }
 
@@ -3527,6 +3539,7 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
       paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
              cell_vals, "</td>", collapse = ""),
       "<td style='padding:4px 8px; border:1px solid #ccc; max-width:320px;'>", cmpd_cell, "</td>",
+      "<td style='padding:4px 8px; border:1px solid #ccc; text-align:center;'>", dl_cell, "</td>",
       "</tr>")
   }
   html <- paste0(html, "</table>")
