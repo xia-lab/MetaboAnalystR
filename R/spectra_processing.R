@@ -3484,7 +3484,9 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
 
   # Show first 4 columns (Categories, Number, Intensity, Group) + Compounds + Download
   display_cols <- min(4L, ncol(filtered))
-  headers <- c(colnames(filtered)[seq_len(display_cols)], "Compounds", "Download")
+  raw_headers <- colnames(filtered)[seq_len(display_cols)]
+  raw_headers[raw_headers == "Intensity"] <- "Intensity (Sum)"
+  headers <- c(raw_headers, "Compounds", "Download")
 
   html <- paste0(
     "<b>Class: ", classLabel, "</b><br>",
@@ -3499,7 +3501,7 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
     # First 4 columns
     cell_vals <- vapply(seq_len(display_cols), function(j) {
       val <- filtered[[j]][i]
-      if (j == 3 && is.numeric(val)) formatC(val, digits = 2, format = "f") else as.character(val)
+      if (j == 3 && is.numeric(val)) formatC(val, digits = 3, format = "e") else as.character(val)
     }, FUN.VALUE = character(1L))
 
     # Compounds column: build PubChem hyperlinks from "Name||InchiKey" entries
@@ -3582,7 +3584,8 @@ GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
 
   tax_cols <- c("Kingdoms", "Super_classes", "Classes", "Sub_classes")
   display_cols <- tax_cols[tax_cols %in% colnames(filtered)]
-  headers <- c(display_cols, "Compound")
+  has_intensity <- "Intensity" %in% colnames(filtered)
+  headers <- c(display_cols, if (has_intensity) "Intensity (Sum)" else NULL, "Compound")
 
   html <- paste0(
     "<b>Class: ", classLabel, " &nbsp;&nbsp; Group: ", group, "</b><br>",
@@ -3599,6 +3602,11 @@ GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
       as.character(filtered[[col]][i])
     }, FUN.VALUE = character(1L))
 
+    intensity_cell <- if (has_intensity) {
+      val <- filtered[["Intensity"]][i]
+      if (is.numeric(val)) formatC(val, digits = 3, format = "e") else as.character(val)
+    } else NULL
+
     cmpd_name <- if ("Compound" %in% colnames(filtered)) trimws(as.character(filtered$Compound[i])) else ""
     hmdb_id   <- if ("HIMDBID"  %in% colnames(filtered)) trimws(as.character(filtered$HIMDBID[i]))  else ""
     cmpd_cell <- if (nchar(cmpd_name) > 0 && nchar(hmdb_id) > 0) {
@@ -3613,6 +3621,7 @@ GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
     html <- paste0(html, "<tr>",
       paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
              cell_vals, "</td>", collapse = ""),
+      if (!is.null(intensity_cell)) paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>", intensity_cell, "</td>") else "",
       "<td style='padding:4px 8px; border:1px solid #ccc;'>", cmpd_cell, "</td>",
       "</tr>")
   }
