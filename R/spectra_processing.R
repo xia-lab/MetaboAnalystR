@@ -3488,7 +3488,7 @@ GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
 
   html <- paste0(
     "<b>Class: ", classLabel, "</b><br>",
-    "<table style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<table id='expo-detail-table' style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
     "<tr>",
     paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
            headers, "</th>", collapse = ""),
@@ -3573,7 +3573,7 @@ GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
 
   html <- paste0(
     "<b>Class: ", classLabel, " &nbsp;&nbsp; Group: ", group, "</b><br>",
-    "<table style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<table id='metabo-detail-table' style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
     "<tr>",
     paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
            headers, "</th>", collapse = ""),
