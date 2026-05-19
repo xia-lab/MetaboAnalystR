@@ -97,8 +97,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
              "list data, as well as MS spectra (NetCDF, mzXML, mzDATA).",
              "Users need to specify the data types when uploading their data in order for",
              "MetaboAnalyst to select the correct algorithm to process them.\n",
-             table.count <- table.count + 1
-             paste("Table", table.count,"summarizes the result of the data processing steps.\n")
+             paste("Table", table.count<<-table.count+1,"summarizes the result of the data processing steps.\n")
   );
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -202,8 +201,7 @@ CreateStatIOdoc <- function(mSetObj=NA){
                "Please note, the name of the parent folder is used as class label for each sample.\n");
     cat(descr, file=rnwFile, append=TRUE);
     cat("\n\n", file=rnwFile, append=TRUE);
-    fig.count <- fig.count + 1
-    cat(c(mSetObj$msgSet$xset.msg, paste("Please see Figure", fig.count, "for a summary graph.")), file=rnwFile, append=TRUE, sep="\n");
+    cat(c(mSetObj$msgSet$xset.msg, paste("Please see Figure", fig.count<<-fig.count+1, "for a summary graph.")), file=rnwFile, append=TRUE, sep="\n");
     
     cmdhist <- c(
       "\\begin{figure}[htp]",
@@ -368,26 +366,20 @@ CreateUNIVdoc <- function(mSetObj=NA){
   if(isEmptyMatrix(mSetObj$analSet$fc$sig.mat)){
     fc.img <- fc.tab<-NULL;
   }else{
-    fig.count <- fig.count + 1
-    fc.img <- paste("Figure", fig.count,"shows the important features identified by fold change analysis.");
-    table.count <- table.count + 1
-    fc.tab<-paste("Table", table.count,"shows the details of these features;");
+    fc.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by fold change analysis.");
+    fc.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
   }
   if(isEmptyMatrix(mSetObj$analSet$tt$sig.mat)){
     tt.img <- tt.tab<-NULL;
   }else{
-    fig.count <- fig.count + 1
-    tt.img <- paste("Figure", fig.count,"shows the important features identified by t-tests.");
-    table.count <- table.count + 1
-    tt.tab<-paste("Table", table.count,"shows the details of these features;");
+    tt.img <- paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by t-tests.");
+    tt.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
   }
   if(isEmptyMatrix(mSetObj$analSet$volcano$sig.mat)){
     volcano.img <- volcano.tab<-NULL;
   }else{
-    fig.count <- fig.count + 1
-    volcano.img <-paste("Figure", fig.count,"shows the important features identified by volcano plot.");
-    table.count <- table.count + 1
-    volcano.tab<-paste("Table", table.count,"shows the details of these features.");
+    volcano.img <-paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by volcano plot.");
+    volcano.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features.");
   }
   
   descr <- c("\\subsection{Univariate Analysis}\n",
@@ -510,8 +502,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
   if(isEmptyMatrix(mSetObj$analSet$aov$sig.mat)){
     anova.tab<-NULL;
   }else{
-    table.count <- table.count + 1
-    anova.tab <- paste("Table", table.count,"shows the details of these features.",
+    anova.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.",
                        "The \\texttt{post-hoc Sig. Comparison} column shows the comparisons between different levels",
                        "that are significant given the p value threshold. ");
   }
@@ -526,8 +517,7 @@ CreateANOVAdoc <- function(mSetObj=NA){
              "(Tukey's HSD). The univariate analyses provide a preliminary overview about features that are",
              "potentially significant in discriminating the conditions under study.",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the important features identified by ANOVA analysis."),
+             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by ANOVA analysis."),
              anova.tab,
              "\n");
   
@@ -584,8 +574,7 @@ CreateCorrDoc <- function(mSetObj=NA){
                "time changes; while a pattern of \\texttt{3-2-1-3} can be used to search compounds",
                "that decrease at first, then bounce back to the original level.",
                "\n\n",
-               fig.count <- fig.count + 1
-               paste("Figure", fig.count, "shows the overall correlation heatmap."),
+               paste("Figure", fig.count<<-fig.count+1, "shows the overall correlation heatmap."),
                "\n");
     
     cat(descr, file=rnwFile, append=TRUE);
@@ -608,8 +597,7 @@ CreateCorrDoc <- function(mSetObj=NA){
     if(isEmptyMatrix(mSetObj$analSet$cor.res)){
       cor.tab <- NULL;
     }else{
-      table.count <- table.count + 1
-      cor.tab <- paste("Table", table.count,"shows the details of these features.");
+      cor.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.");
     }
     
     descr <- c("\\subsection{Correlation Analysis}\n",
@@ -621,8 +609,7 @@ CreateCorrDoc <- function(mSetObj=NA){
                "time changes; while a pattern of \\texttt{3-2-1-3} can be used to search compounds",
                "that decrease at first, then bounce back to the original level.",
                "\n\n",
-               fig.count <- fig.count + 1
-               paste("Figure", fig.count, "shows the important features identified by correlation analysis."),
+               paste("Figure", fig.count<<-fig.count+1, "shows the important features identified by correlation analysis."),
                cor.tab,
                "\n");
     
@@ -676,18 +663,12 @@ CreatePCAdoc <- function(mSetObj=NA){
              "The calculation is based on singular value decomposition.",
              "\n\n",
              "The Rscript \\texttt{chemometrics.R} is required.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"is pairwise score plots providing an overview of the various seperation patterns among the most significant PCs;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"is the scree plot showing the variances explained by the selected PCs;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the 2-D scores plot between selected PCs;"),
-             fig.count <- fig.count + 1
-             #paste("Figure", fig.count,"shows the 3-D scores plot between selected PCs;"),
-             fig.count <- fig.count + 1
-             #paste("Figure", fig.count,"shows the loadings plot between the selected PCs;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the biplot between the selected PCs.\n"),
+             paste("Figure", fig.count<<-fig.count+1,"is pairwise score plots providing an overview of the various seperation patterns among the most significant PCs;"),
+             paste("Figure", fig.count<<-fig.count+1,"is the scree plot showing the variances explained by the selected PCs;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected PCs;"),
+             #paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected PCs;"),
+             #paste("Figure", fig.count<<-fig.count+1,"shows the loadings plot between the selected PCs;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the biplot between the selected PCs.\n"),
              "Interactive 3-D scores plots are not included here and can be directly downloaded from website.\n");
 
   cat(descr, file=rnwFile, append=TRUE);
@@ -790,23 +771,16 @@ CreatePLSdoc <- function(mSetObj=NA){
              "group. Therefore, the coefficient of each feature will be different depending on which group you want to predict.",
              "The average of the feature coefficients are used to indicate the overall coefficient-based importance. ",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the overview of scores plots;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the 2-D scores plot between selected components;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the 3-D scores plot between selected components;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the loading plot between the selected components;"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the overview of scores plots;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the loading plot between the selected components;"));
   cat(descr, file=rnwFile, append=TRUE);
   cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
 
-  fig.count <- fig.count + 1
-  descr <- c(paste("Figure", fig.count,"shows the classification performance with different number of components;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the results of permutation test for model validation;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows important features identified by PLS-DA.\n"));
+  descr <- c(paste("Figure", fig.count<<-fig.count+1,"shows the classification performance with different number of components;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the results of permutation test for model validation;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows important features identified by PLS-DA.\n"));
   cat(descr, file=rnwFile, append=TRUE);
   
   
@@ -912,16 +886,11 @@ CreateSPLSDAdoc <- function(mSetObj=NA){
              "Users can control the sparseness of the model by controlling the number of components in the model and the number ",
              "of variables in each component. For more information, please refer to Cao et al. 2011 (PMC3133555). ",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the overview of scores plots;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the 2-D scores plot between selected components;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the loading plot of the top ranked features;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the 3-D scores plot between selected components;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the performance of the sPLS-DA model evaluated using cross-validations;"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the overview of scores plots;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the 2-D scores plot between selected components;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the loading plot of the top ranked features;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the 3-D scores plot between selected components;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the performance of the sPLS-DA model evaluated using cross-validations;"));
   cat(descr, file=rnwFile, append=TRUE);
   cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
 
@@ -997,14 +966,10 @@ CreateOPLSDAdoc <- function(mSetObj=NA){
              "cross-validation to ensure model reliability. For further details, please refer to Worley and Powers 2013 (PMC4465187) ",
              "and Worley and Powers 2016 (PMC4990351). The permutation testing for OPLS-DA is provided from Szymanska et al. 2012.",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the score plot for all metabolite features;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the variable importance in an OPLS-DA model;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the model overview;"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the results of the permutation tests for the models;"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the score plot for all metabolite features;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the variable importance in an OPLS-DA model;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the model overview;"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the results of the permutation tests for the models;"));
   cat(descr, file=rnwFile, append=TRUE);
   cat(.get.scatter.params.text("latex"), file=rnwFile, append=TRUE);
 
@@ -1064,8 +1029,7 @@ CreateSAMdoc <- function(mSetObj=NA){
   if(isEmptyMatrix(mSetObj$analSet$sam.cmpds)){
     sam.tab <- NULL;
   }else{
-    table.count <- table.count + 1
-    sam.tab <- paste("Table", table.count,"shows the details of these features.");
+    sam.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.");
   }
   
   descr <- c("\\subsection{Significance Analysis of Microarray (SAM)}\n",
@@ -1082,8 +1046,7 @@ CreateSAMdoc <- function(mSetObj=NA){
              "SAM and Efron's empirical Bayes approaches},2008, R package version 1.16.0}.",
              "Users need to specify the \\texttt{Delta} value to control FDR in order to proceed.",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the significant features identified by SAM."),
+             paste("Figure", fig.count<<-fig.count+1,"shows the significant features identified by SAM."),
              sam.tab,
              "\n");
   
@@ -1129,8 +1092,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
   if(isEmptyMatrix(mSetObj$analSet$ebam.cmpds)){
     ebam.tab<-NULL;
   }else{
-    table.count <- table.count + 1
-    ebam.tab <- paste("Table", table.count,"shows the details of these features.");
+    ebam.tab <- paste("Table", table.count<<-table.count+1,"shows the details of these features.");
   }
   
   descr <- c("\\subsection{Empirical Bayesian Analysis of Microarray (EBAM)}\n",
@@ -1145,8 +1107,7 @@ CreateEBAMdoc <- function(mSetObj=NA){
              "\\texttt{siggenes} package\\footnote{Holger Schwender. \\textit{siggenes: Multiple testing using",
              "SAM and Efron's empirical Bayes approaches},2008,R package version 1.16.0}.",
              "\n\n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the important features identified by EBAM."),
+             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by EBAM."),
              ebam.tab,
              "\n");
   
@@ -1202,10 +1163,8 @@ CreateHCdoc <- function(mSetObj=NA){
              "as a visual aid in addition to the dendrogram.",
              "\n\n",
              "Hierachical clustering is performed with the \\texttt{hclust} function in package \\texttt{stat}.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the clustering result in the form of a dendrogram."),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the clustering result in the form of a heatmap.\n"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the clustering result in the form of a dendrogram."),
+             paste("Figure", fig.count<<-fig.count+1,"shows the clustering result in the form of a heatmap.\n"));
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -1264,10 +1223,8 @@ CreateSOMdoc <- function(mSetObj=NA){
              "\n\n",
              "The SOM is performed using the R \\texttt{som} package\\footnote{Jun Yan. \\textit{som:",
              "Self-Organizing Map}, 2004, R package version 0.3-4}.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the SOM clustering results."),
-             table.count <- table.count + 1
-             paste("Table", table.count,"shows the members in each cluster from SOM analysis.\n"));
+             paste("Figure", fig.count<<-fig.count+1,"shows the SOM clustering results."),
+             paste("Table", table.count<<-table.count+1,"shows the members in each cluster from SOM analysis.\n"));
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -1319,10 +1276,8 @@ CreateKMdoc <- function(mSetObj=NA){
              "\n\n",
              "K-means analysis is performed using the \\texttt{kmeans} function in the",
              "package \\texttt{stat}.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows clustering the results."),
-             table.count <- table.count + 1
-             paste("Table", table.count,"shows the members in each cluster from K-means analysis.\n"));
+             paste("Figure", fig.count<<-fig.count+1,"shows clustering the results."),
+             paste("Table", table.count<<-table.count+1,"shows the members in each cluster from K-means analysis.\n"));
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -1377,14 +1332,10 @@ CreateRFdoc <- function(mSetObj=NA){
              "\n\n",
              "RF analysis is performed using the \\texttt{randomForest} package\\footnote{Andy Liaw and",
              "Matthew Wiener. \\textit{Classification and Regression by randomForest}, 2002, R News}.",
-             table.count <- table.count + 1
-             paste("Table", table.count,"shows the confusion matrix of random forest."),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the cumulative error rates of random forest analysis for given parameters.\n"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the important features ranked by random forest.\n"),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count,"shows the outlier measures of all samples for the given parameters.\n"));
+             paste("Table", table.count<<-table.count+1,"shows the confusion matrix of random forest."),
+             paste("Figure", fig.count<<-fig.count+1,"shows the cumulative error rates of random forest analysis for given parameters.\n"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the important features ranked by random forest.\n"),
+             paste("Figure", fig.count<<-fig.count+1,"shows the outlier measures of all samples for the given parameters.\n"));
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -1464,10 +1415,8 @@ CreateSVMdoc <- function(mSetObj=NA){
              "will be evaluated.",
              "\n\n",
              "In total,", length(mSetObj$analSet$svm$ladder), "models (levels) were created using",paste(mSetObj$analSet$svm$ladder, collapse=', '), "selected feature subsets.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count, "shows the SVM classification performance using recursive feature selection."),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count, "shows the signicant features used by the best classifiers.\n"));
+             paste("Figure", fig.count<<-fig.count+1, "shows the SVM classification performance using recursive feature selection."),
+             paste("Figure", fig.count<<-fig.count+1, "shows the signicant features used by the best classifiers.\n"));
   
   cat(descr, file=rnwFile, append=TRUE);
   

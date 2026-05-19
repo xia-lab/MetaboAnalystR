@@ -163,8 +163,7 @@ CreatePowerParametersDoc <- function(mSetObj=NA){
              " of the test-statistics and p-values, providing context for whether or not the normalization was sufficient.",
              " The shape of the test-statistic should follow a near-normal distribution, and the majority of p-values",
              " should be close to zero. \n", 
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count, "shows various diagnostic plots of the pilot data for power analysis."));
+             paste("Figure", fig.count<<-fig.count+1, "shows various diagnostic plots of the pilot data for power analysis."));
   cat(descr, file=rnwFile, append=TRUE);
   
   powerparamhist <- c( "\\begin{figure}[htp]",
@@ -208,10 +207,8 @@ CreatePowerAnalDoc <- function(mSetObj){
              " users will be able to determine the most appropriate sample size and its associated predicted power for future studies.",
              " The power analysis provides invaluable insight for proper experimental design, as well as strengthens the ability to detect",
              " true differences within a metabolomic data set.",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count," shows the density of estimated effect sizes, and "),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count," shows the predicted power curve."))
+             paste("Figure", fig.count<<-fig.count+1," shows the density of estimated effect sizes, and "),
+             paste("Figure", fig.count<<-fig.count+1," shows the predicted power curve."))
   cat(descr, file=rnwFile, append=TRUE)
   
   powerprofile <- c( "\\begin{figure}[htp]",

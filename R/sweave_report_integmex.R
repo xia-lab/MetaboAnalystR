@@ -167,10 +167,8 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
              "and \\textbf{molecule view}. Only the overview is shown below.",
              "Pathway views and molecule views are generated dynamically based on your interactions with the",
              "visualization system. They are available in your downloaded files. \n",
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count, " shows the overview of all pathways with hits to your queries."),
-             fig.count <- fig.count + 1
-             paste("Figure", fig.count, " shows the last pathway you inspected."),
+             paste("Figure", fig.count<<-fig.count+1, " shows the overview of all pathways with hits to your queries."),
+             paste("Figure", fig.count<<-fig.count+1, " shows the last pathway you inspected."),
              "\n"
             );
   cat(descr, file=rnwFile, append=TRUE, sep="\n");
