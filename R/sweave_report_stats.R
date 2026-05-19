@@ -1,3 +1,8 @@
+# DEPRECATED — OmicsVerse Pro uses XiaLabPro/R/Rmarkdown_*.R for all report
+# generation. This file is retained as a reference copy for the public
+# standalone MetaboAnalystR package and must not be modified here.
+# Do not call these functions from OmicsVerse server-side code.
+
 # Helper: format scatter plot parameters as report text (shared across report formats)
 if (!exists(".get.scatter.params.text", mode = "function")) {
   .get.scatter.params.text <- function(format = "html") {

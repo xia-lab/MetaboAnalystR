@@ -1,3 +1,8 @@
+# DEPRECATED — OmicsVerse Pro uses XiaLabPro/R/Rmarkdown_*.R for all report
+# generation. This file is retained as a reference copy for the public
+# standalone MetaboAnalystR package and must not be modified here.
+# Do not call these functions from OmicsVerse server-side code.
+
 #'Create report of analyses
 #'@description Report generation using Sweave
 #'Note: most analyses were already performed, only need to embed
@@ -218,7 +223,8 @@ CreateNORMdoc <- function(mSetObj=NA){
               "\\end{enumerate}",
               "\n\n",
               if(exists("norm", where=mSetObj$imgSet)){
-                paste("Figure", fig.count<<-fig.count+1,"shows the effects before and after normalization.\n");
+                fig.count <- fig.count + 1
+                paste("Figure", fig.count,"shows the effects before and after normalization.\n");
               },
               norm.desc,
               "\n\n")
