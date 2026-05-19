@@ -232,11 +232,13 @@ CreateUnivarBiomarkersDoc<-function(mSetObj=NA){
              " the overall accuracy of different biomarkers. \n");
   cat(descr, file=rnwFile, append=TRUE);
   
-  descr <- paste("Figure", fig.count<<-fig.count+1, "ROC curve of an individual biomarker.")
+  fig.count <- fig.count + 1
+  descr <- paste("Figure", fig.count, "ROC curve of an individual biomarker.")
   
   cat(descr, file=rnwFile, append=TRUE);
   
-  descr <- paste("Figure", fig.count<<-fig.count+1, "Boxplot of an individual biomarker.")
+  fig.count <- fig.count + 1
+  descr <- paste("Figure", fig.count, "Boxplot of an individual biomarker.")
   
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -331,10 +333,14 @@ CreateMultiBiomarkersDoc<-function(mSetObj=NA){
              " will indicate the model selected. If it is 0, it means the plot is for all biomarker models. A -1 means it used the best model, and an",
              " input 1-6 to plot a ROC curve for one of the top six models.",
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1, ". shows the ROC curves of all or a single biomarker model based on the average cross validation performance."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the predicted class probabilities of all samples using a selected biomarker model."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the predictive accuracy of biomarker models with an increasing number of features."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the significant features of single biomarker model ranked by importance."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the ROC curves of all or a single biomarker model based on the average cross validation performance."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the predicted class probabilities of all samples using a selected biomarker model."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the predictive accuracy of biomarker models with an increasing number of features."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the significant features of single biomarker model ranked by importance."),
              "\n");
   
   cat(descr, file=rnwFile, append=TRUE);
@@ -432,10 +438,14 @@ CreateModelBiomarkersDoc<-function(mSetObj=NA){
              " but not for new samples. Additionally, in order to get a decent ROC curve for validation, it is recommended that the hold-out data contains a balanced number", 
              " of samples from both groups and that it contain at least 8 hold-out samples (i.e. 4 from each group).", 
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1, ". shows the ROC curve of the created biomarker model based upon its average cross validation performance."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the predicted class probabilities of all samples using the user-created classifier."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the predictive accuracy of the user-created biomarker model."),
-             paste("Figure", fig.count<<-fig.count+1, ". shows the results of the permutation tests for the user-created biomarker model."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the ROC curve of the created biomarker model based upon its average cross validation performance."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the predicted class probabilities of all samples using the user-created classifier."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the predictive accuracy of the user-created biomarker model."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count, ". shows the results of the permutation tests for the user-created biomarker model."),
              "\n");
   
   cat(descr, file=rnwFile, append=TRUE);

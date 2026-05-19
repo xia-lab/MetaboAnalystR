@@ -55,7 +55,8 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
              "Samples can be in rows or columns for data file. The metadata table must have the same sample names. ",
              "For time-series data, the time points group must be named as \\textbf{Time} and \\textbf{Subject}.",
              "Users need to specify the data types when uploading their data in order for MetaboAnalyst to select the correct algorithm to process them.\n",
-             paste("Table", table.count<<-table.count+1,"summarizes the result of the data checking steps.\n")
+             table.count <- table.count + 1
+             paste("Table", table.count,"summarizes the result of the data checking steps.\n")
   );
   cat(descr, file=rnwFile, append=TRUE);
   
@@ -398,7 +399,8 @@ CreateAOV2doc <- function(mSetObj=NA){
   if(isEmptyMatrix(mSetObj$analSet$aov2$sig.mat)){
     aov2.tab<-NULL;
   }else{
-    aov2.tab<-paste("Table", table.count<<-table.count+1,"shows the details of these features;");
+    table.count <- table.count + 1
+    aov2.tab<-paste("Table", table.count,"shows the details of these features;");
   }
   
   descr <- c("\\subsection{Univariate Analysis}\n",
@@ -409,7 +411,8 @@ CreateAOV2doc <- function(mSetObj=NA){
              "However, time series data contains samples measured from the same subjects from different time points.",
              "Therefore within-subjects ANOVA should be used.",
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features identified by ANOVA analysis."),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the important features identified by ANOVA analysis."),
              aov2.tab,
              "\n");
   
@@ -457,19 +460,22 @@ CreateASCAdoc <- function(mSetObj=NA){
   if(isEmptyMatrix(asca$sig.list[["Model.a"]])){
     asca.tab1<-NULL;
   }else{
-    asca.tab1<-paste("Table", table.count<<-table.count+1,paste("shows features well-modelled by ", mSetObj$dataSet$facA.lbl, ". ", sep=""));
+    table.count <- table.count + 1
+    asca.tab1<-paste("Table", table.count,paste("shows features well-modelled by ", mSetObj$dataSet$facA.lbl, ". ", sep=""));
   }
   
   if(isEmptyMatrix(asca$sig.list[["Model.b"]])){
     asca.tab2<-NULL;
   }else{
-    asca.tab2<-paste("Table", table.count<<-table.count+1,paste("shows features well-modelled by ", mSetObj$dataSet$facB.lbl, ". ", sep=""));
+    table.count <- table.count + 1
+    asca.tab2<-paste("Table", table.count,paste("shows features well-modelled by ", mSetObj$dataSet$facB.lbl, ". ", sep=""));
   }
   
   if(isEmptyMatrix(asca$sig.list[["Model.ab"]])){
     asca.tab3<-NULL;
   }else{
-    asca.tab3<-paste("Table", table.count<<-table.count+1, "shows features well-modelled by Interaction model. ");
+    table.count <- table.count + 1
+    asca.tab3<-paste("Table", table.count, "shows features well-modelled by Interaction model. ");
   }
   
   descr <- c("\\subsection{ANOVA - Simultaneous Component Analysis (ASCA)}\n",
@@ -492,14 +498,22 @@ CreateASCAdoc <- function(mSetObj=NA){
              "Squared Prediction Errors (SPE) associated with each variables",
              "Variables with low SPE and higher leverage are modeled well after the major patterns.",
              "\n\n",
-             paste("Figure", fig.count<<-fig.count+1,"shows the scree plots for each effect model.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the major patterns associated with factor A.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the major patterns associated with factor B.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the major patterns associated with interaction.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the results of model validations through permutations.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features associated with factor A.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the important features associated with factor B.\n"),
-             paste("Figure", fig.count<<-fig.count+1,"shows the features that are important in the interaction.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the scree plots for each effect model.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the major patterns associated with factor A.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the major patterns associated with factor B.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the major patterns associated with interaction.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the results of model validations through permutations.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the important features associated with factor A.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the important features associated with factor B.\n"),
+             fig.count <- fig.count + 1
+             paste("Figure", fig.count,"shows the features that are important in the interaction.\n"),
              "\n\n",
              asca.tab1,
              asca.tab2,
