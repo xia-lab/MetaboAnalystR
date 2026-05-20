@@ -195,8 +195,8 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@export
 #'@import gplots
 #'
-PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, target, cor.method, 
-                          colors, fix.col, no.clst, fz, unit, corrCutoff=0){
+PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, target, cor.method,
+                          colors, fix.col, no.clst, fz, unit, corrCutoff=0, maxFeat=0){
 
   mSetObj <- .get.mSet(mSetObj);
   main <- xlab <- ylab <- NULL;
@@ -206,7 +206,15 @@ PlotCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   if(target == 'row'){
     data <- t(data);
   }
-  
+
+  # Caller-specified feature cap (e.g. AI workflow: top 20%, max 250, when > 500 features)
+  maxFeat <- as.integer(maxFeat)
+  if (maxFeat > 0 && ncol(data) > maxFeat) {
+    filter.val <- apply(data.matrix(data), 2, IQR, na.rm = TRUE)
+    rk <- rank(-filter.val, ties.method = "random")
+    data <- as.data.frame(data[, rk <= maxFeat, drop = FALSE])
+  }
+
   if(.on.public.web){
     if(ncol(data) > 1000){
         filter.val <- apply(data.matrix(data), 2, IQR, na.rm=T);
@@ -329,8 +337,36 @@ if (grepl("^p-", cor.method) || grepl("^partial_", cor.method)) {
     as_json <- paste0("{ \"x\":", as_json, ",\"evals\": [],\"jsHooks\": []}")
  
     #print(plotjs)
-    write(as_json, plotjs)  
-    fast.write.csv(signif(corr.mat, 7), file="correlation_table.csv");
+    write(as_json, plotjs)
+    fast.write.csv(signif(corr.mat, 7), file="correlation_table.csv")
+
+    # Write a report-only static PNG via pheatmap.
+    # Uses rpt_ prefix so the dashboard gallery scan skips it — the gallery
+    # already shows heatmap_correlation.png from the browser Plotly capture.
+    # my.corr.mat is already in final order; cluster_rows/cols both FALSE.
+    tryCatch({
+        pm_dim    <- max(8, min(20, round(ncol(my.corr.mat) * 12 / 72, 2)))
+        pm_colors <- colorRampPalette(colors)(100)
+        pm_breaks <- if (isTRUE(fix.col)) seq(-1, 1, length.out = 101) else NULL
+        rpt_img   <- "rpt_corr_heatmap.png"
+        pheatmap::pheatmap(
+            my.corr.mat,
+            color        = pm_colors,
+            breaks       = pm_breaks,
+            cluster_rows = FALSE,
+            cluster_cols = FALSE,
+            fontsize     = fz,
+            fontsize_row = fz,
+            fontsize_col = fz,
+            filename     = rpt_img,
+            width        = pm_dim,
+            height       = pm_dim
+        )
+        mSetObj$imgSet$corr.report.img <- rpt_img
+    }, error = function(e) {
+        warning("PlotCorrHeatMap: static PNG save failed: ", conditionMessage(e))
+    })
+
     return(.set.mSet(mSetObj));
 }
 

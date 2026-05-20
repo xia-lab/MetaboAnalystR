@@ -602,7 +602,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     if(.on.public.web){
       return(SanityCheckData(NA));
     }else{
-      if(.on.public.web){ SanityCheckData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckData(mSetObj) }
+      if(.on.public.web){ SanityCheckData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckData(mSetObj) }
       return(.set.mSet(mSetObj));
     }
   }
@@ -4579,12 +4579,12 @@ ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", 
     is.rt <- mSetObj$paramSet$mumRT;
     mSetObj <- .get.mSet();
     .on.public.web <<- F;
-    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- mSet } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     SetPeakFormat(mSetObj, "mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt");
     
-    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- mSet } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
-    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
     .on.public.web <<- T;
     return(.set.mSet(mSetObj));
 }
@@ -4642,13 +4642,13 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
     mSetObj <- .get.mSet();
     .on.public.web <<- F;
     
-    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- mSet } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     
     SetPeakFormat(mSetObj, "mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt");
     
-    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- mSet } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
-    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
     .on.public.web <<- T;
 
     # don't forget the original!
@@ -4666,11 +4666,11 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
       return(0);
     }
     
-    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- mSet } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     mSetObj$paramSet$peakFormat <- "mpt"; # SetPeakFormat("mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
-    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- mSet } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
-    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
   }
   return(.set.mSet(mSetObj));
 }
@@ -4887,16 +4887,16 @@ Prepare4IntegNetwork <- function(mSetObj = NA, netLib = "global"){
   mSetObj <- .get.mSet(mSetObj);
   # mSet <<- mSetObj <- NULL;
   # mSetObj <- InitDataObjects("conc", "network", FALSE)
-  if(.on.public.web){ SetOrganism(NA, "hsa"); mSetObj <- mSet } else { mSetObj <- SetOrganism(mSetObj, "hsa") }
+  if(.on.public.web){ SetOrganism(NA, "hsa"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetOrganism(mSetObj, "hsa") }
   cmpdList <- PrepareIntegCMPDList(mSetObj)
   cmpdList <- paste(cmpdList, collapse = "\n")
-  if(.on.public.web){ PerformCmpdMapping(NA, cmpdList, "hsa", "kegg"); mSetObj <- mSet } else { mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg") }
-  if(.on.public.web){ CreateMappingResultTable(NA); mSetObj <- mSet } else { mSetObj <- CreateMappingResultTable(mSetObj) };
+  if(.on.public.web){ PerformCmpdMapping(NA, cmpdList, "hsa", "kegg"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg") }
+  if(.on.public.web){ CreateMappingResultTable(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- CreateMappingResultTable(mSetObj) };
   mSet <- GetNetworkGeneMappingResultTable(mSet);
-  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- mSet } else { mSetObj <- PrepareNetworkData(mSetObj) };
+  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) };
   idtype <<- "gene&cmpd";
-  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- mSet } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
-  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- mSet } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
+  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
   mSetObj <- .get.mSet(mSetObj);
 
   if(netLib != "global") {
@@ -4910,10 +4910,10 @@ Prepare4TarIntegNetwork <- function(mSetObj = NA, netLib = "global"){
 
   mSetObj <- .get.mSet(mSetObj);
   mSet <- GetNetworkGeneMappingResultTable(mSet);
-  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- mSet } else { mSetObj <- PrepareNetworkData(mSetObj) };
+  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) };
   idtype <<- "gene&cmpd";
-  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- mSet } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
-  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- mSet } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
+  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
   mSetObj <- .get.mSet(mSetObj);
   if(netLib != "global") {
     OrganizeTarJsonforNextwork(mSetObj)
@@ -5422,17 +5422,17 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
     .on.public.web <<- F;
     is.rt <- mSetObj$paramSet$mumRT;
     #mSetObj<-PreparePrenormData(mSetObj)
-    if(.on.public.web){ Normalization(NA, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20); mSetObj <- mSet } else { mSetObj <- Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20) }
-    if(.on.public.web){ Ttests.Anal(NA, F, 0.05, FALSE, TRUE); mSetObj <- mSet } else { mSetObj <- Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE) }
-    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode); mSetObj <- mSet } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode) };
+    if(.on.public.web){ Normalization(NA, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20) }
+    if(.on.public.web){ Ttests.Anal(NA, F, 0.05, FALSE, TRUE); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE) }
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode) };
     mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE)
-    if(.on.public.web){ SetPeakFormat(NA, "mpt"); mSetObj <- mSet } else { mSetObj <- SetPeakFormat(mSetObj, "mpt") }
+    if(.on.public.web){ SetPeakFormat(NA, "mpt"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakFormat(mSetObj, "mpt") }
     #mSetObj<-UpdateInstrumentParameters(mSetObj, 10, mSetObj$dataSet$mode);
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
-    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- mSet } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
-    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
-    if(.on.public.web){ SetPeakEnrichMethod(NA, "mum", "v2"); mSetObj <- mSet } else { mSetObj <- SetPeakEnrichMethod(mSetObj, "mum", "v2") }
-    if(.on.public.web){ SetMummichogPval(NA, 0.05); mSetObj <- mSet } else { mSetObj <- SetMummichogPval(mSetObj, 0.05) }
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
+    if(.on.public.web){ SetPeakEnrichMethod(NA, "mum", "v2"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakEnrichMethod(mSetObj, "mum", "v2") }
+    if(.on.public.web){ SetMummichogPval(NA, 0.05); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetMummichogPval(mSetObj, 0.05) }
     .on.public.web <<- T;
     .set.mSet(mSetObj);
     anal.type <<- "integ";

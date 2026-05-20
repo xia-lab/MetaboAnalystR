@@ -634,14 +634,17 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   if(ncol(hc.dat) > 1000 ){
      includeRowNames <- FALSE;
   }
-  if(.on.public.web){
-    if(ncol(hc.dat) > maxFeature){
-        filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
-        rk <- rank(-filter.val, ties.method='random');
-        hc.dat <- hc.dat[,rk <= maxFeature];
-        print(paste("Data is reduced to max allowed vars based on IQR: ", maxFeature));
-    }
+  # Apply feature cap regardless of deployment mode (public web uses default 2000; AI workflow passes smaller value)
+  if(ncol(hc.dat) > maxFeature){
+    filter.val <- apply(hc.dat, 2, IQR, na.rm=T);
+    rk <- rank(-filter.val, ties.method='random');
+    hc.dat <- hc.dat[,rk <= maxFeature];
+    print(paste("Data is reduced to max allowed vars based on IQR: ", maxFeature));
   }
+
+  # Capture feature names BEFORE truncation so PlotStaticHeatMap can render the
+  # same subset as the interactive widget (reloads full data via dataOpt otherwise)
+  static_hm_features <- colnames(hc.dat)
 
   colnames(hc.dat) <- substr(colnames(hc.dat),1,18) # some names are too long
   
@@ -889,8 +892,9 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     .set.mSet(mSetObj)
   mSetObj <- PlotStaticHeatMap(mSetObj, baseName, format, dpi, width, dataOpt, scaleOpt, smplDist, clstDist,
                                palette, fzCol, fzRow, viewOpt = "overview", rowV = rowV, colV = colV,
-                               var.inx = var.inx, border = border, grp.ave = grp.ave, show.legend = show.legend,
-                               show.annot.legend = show.annot.legend, includeRowNames = includeRowNames)
+                               var.inx = static_hm_features, border = border, grp.ave = grp.ave,
+                               show.legend = show.legend, show.annot.legend = show.annot.legend,
+                               includeRowNames = includeRowNames)
   return(mSetObj);
 }
 

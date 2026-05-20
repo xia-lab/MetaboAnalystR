@@ -884,7 +884,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
 
 ## R functions used to define the adducts for met-analysis
 Customize.MetaAdduct <- function(mSet, name, name2, qvec, mode){
-  mSetObj <- .get.mSet(mSet)
+  mSetObj <- .get.mSet(mSetObj)
   # fileNM <- tools::file_path_sans_ext(basename(name));
   # fileNM <- gsub("_", "", fileNM);
   #
@@ -1016,9 +1016,9 @@ PrepareMetaPath <- function(mSetObj = NA,
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data
     .set.mSet(mSetObj);
-    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- mSet } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
+    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
     mSetObj <- .get.mSet(mSetObj);
-    if(.on.public.web){ Convert2MummichogMetaPath(NA, rt, rds.file=FALSE, rt.type, "all", mode); mSetObj <- mSet } else { mSetObj <- Convert2MummichogMetaPath(mSetObj, rt, rds.file=FALSE, rt.type, "all", mode) };
+    if(.on.public.web){ Convert2MummichogMetaPath(NA, rt, rds.file=FALSE, rt.type, "all", mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2MummichogMetaPath(mSetObj, rt, rds.file=FALSE, rt.type, "all", mode) };
     mSetObj <- .get.mSet(mSetObj);
     fileNM <- mSetObj$dataSet$name;
     fileNM <- gsub("\\.[^.]*$", "", basename(fileNM));
@@ -1043,7 +1043,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data    
     .set.mSet(mSetObj);
-    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- mSet } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
+    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, 
                                          rt, rds.file=FALSE, 
@@ -1062,7 +1062,7 @@ PrepareMetaPath <- function(mSetObj = NA,
     mSetObj$dataSet <- UniqueDataSet(c(mSetObj[["dataSet"]], dataSet));
     # Here is dealing with the single ion mode data
     .set.mSet(mSetObj);
-    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- mSet } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
+    if(.on.public.web){ Ttests.Anal(NA, F, pcutoff, FALSE, TRUE); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Ttests.Anal(mSetObj, F, pcutoff, FALSE, TRUE) };
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- Convert2MummichogMetaPath(mSetObj, 
                                          rt, rds.file=FALSE, 
@@ -1087,15 +1087,15 @@ PrepareMetaPath <- function(mSetObj = NA,
   mSetObj<-defineVersion(mSetObj,dataName,dataName2,version)
     .set.mSet(mSetObj);
 
-  if(.on.public.web){ SetPeakFormat(NA, "mpt"); mSetObj <- mSet } else { mSetObj <- SetPeakFormat(mSetObj, "mpt") };
-  if(.on.public.web){ UpdateInstrumentParameters(NA, ppm, mode); mSetObj <- mSet } else { mSetObj <- UpdateInstrumentParameters(mSetObj, ppm, mode) };
-  if(.on.public.web){ Read.PeakListData(NA, filename, meta.anal=TRUE, method="both"); mSetObj <- mSet } else { mSetObj <- Read.PeakListData(mSetObj, filename, meta.anal=TRUE, method="both") };
-  if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
+  if(.on.public.web){ SetPeakFormat(NA, "mpt"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakFormat(mSetObj, "mpt") };
+  if(.on.public.web){ UpdateInstrumentParameters(NA, ppm, mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- UpdateInstrumentParameters(mSetObj, ppm, mode) };
+  if(.on.public.web){ Read.PeakListData(NA, filename, meta.anal=TRUE, method="both"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename, meta.anal=TRUE, method="both") };
+  if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
   
   if(.on.public.web){
     res <- SetMummichogPval(mSetObj, pcutoff);
   }else{
-    if(.on.public.web){ SetMummichogPval(NA, pcutoff); mSetObj <- mSet } else { mSetObj <- SetMummichogPval(mSetObj, pcutoff) };
+    if(.on.public.web){ SetMummichogPval(NA, pcutoff); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetMummichogPval(mSetObj, pcutoff) };
   }
   mSetObj <- .get.mSet(mSetObj);
   mSetObj<-UpgradeDataSet(mSetObj, 
@@ -1161,7 +1161,7 @@ ReadMetaPathTable <- function(mSetObj = NA,  dataNM, dataFormat, dataType) {
   if(dataType == "massPeaks"){
 
     # Handle mass peaks for mummichog
-    if(.on.public.web){ Read.TextData(NA, dataNM, dataFormat, "disc"); mSetObj <- mSet } else { mSetObj <- Read.TextData(mSetObj, dataNM, dataFormat, "disc") };
+    if(.on.public.web){ Read.TextData(NA, dataNM, dataFormat, "disc"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.TextData(mSetObj, dataNM, dataFormat, "disc") };
     mSetObj <- .get.mSet(mSetObj);
   
     fileDataNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", dataNM);
@@ -1259,7 +1259,7 @@ ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dat
   
   if(dataType == "massPeaks"){
     # Handle mass peaks for mummichog - DATA 1
-    if(.on.public.web){ Read.TextData(NA, dataNM, dataFormat, "disc"); mSetObj <- mSet } else { mSetObj <- Read.TextData(mSetObj, dataNM, dataFormat, "disc") };
+    if(.on.public.web){ Read.TextData(NA, dataNM, dataFormat, "disc"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.TextData(mSetObj, dataNM, dataFormat, "disc") };
     mSetObj <- .get.mSet(mSetObj);
     fileDataNM <- sub(pattern = "(.*)\\..*$", replacement = "\\1", dataNM);
     file.rename(from = "data_orig.qs", 
@@ -1303,7 +1303,7 @@ ReadMetaPathTableMix <- function(mSetObj = NA,  dataNM, dataNM2, dataFormat, dat
     .set.mSet(mSetObj);
 
     # Handle mass peaks for mummichog - DATA 2
-    if(.on.public.web){ Read.TextData(NA, dataNM2, dataFormat, "disc"); mSetObj <- mSet } else { mSetObj <- Read.TextData(mSetObj, dataNM2, dataFormat, "disc") };
+    if(.on.public.web){ Read.TextData(NA, dataNM2, dataFormat, "disc"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.TextData(mSetObj, dataNM2, dataFormat, "disc") };
     mSetObj <- .get.mSet(mSetObj);
     fileDataNM2 <- sub(pattern = "(.*)\\..*$", replacement = "\\1", dataNM2);
     file.rename(from = "data_orig.qs", 
@@ -1852,12 +1852,12 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj$dataSet <- c(mSetObj[["dataSet"]],dataSet)
     .set.mSet(mSetObj);
 
-    if(.on.public.web){ SanityCheckData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckData(mSetObj) };
-    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- mSet } else { mSetObj <- PerformSanityClosure(mSetObj) };
-    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- mSet } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
+    if(.on.public.web){ SanityCheckData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckData(mSetObj) };
+    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformSanityClosure(mSetObj) };
+    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
     mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
     mSetObj <- PreparePrenormData(mSetObj);
-    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- mSet } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
+    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
 
@@ -1877,12 +1877,12 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj$dataSet <- c(mSetObj[["dataSet"]],dataSet);
     .set.mSet(mSetObj);
 
-    if(.on.public.web){ SanityCheckData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckData(mSetObj) };
-    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- mSet } else { mSetObj <- PerformSanityClosure(mSetObj) };
-    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- mSet } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
+    if(.on.public.web){ SanityCheckData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckData(mSetObj) };
+    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformSanityClosure(mSetObj) };
+    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
     mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
     mSetObj <- PreparePrenormData(mSetObj);
-    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- mSet } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
+    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
@@ -1894,12 +1894,12 @@ MetaPathNormalization <- function(mSetObj = NA, sampleNor, tranform, scale = "NU
     mSetObj$dataSet <- c(mSetObj[["dataSet"]],dataSet);
     .set.mSet(mSetObj);
  
-    if(.on.public.web){ SanityCheckData(NA); mSetObj <- mSet } else { mSetObj <- SanityCheckData(mSetObj) };
-    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- mSet } else { mSetObj <- PerformSanityClosure(mSetObj) };
-    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- mSet } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
+    if(.on.public.web){ SanityCheckData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckData(mSetObj) };
+    if(.on.public.web){ PerformSanityClosure(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformSanityClosure(mSetObj) };
+    if(.on.public.web){ FilterVariable(NA, "F", 25, "iqr", NULL); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- FilterVariable(mSetObj, "F", 25, "iqr", NULL) };
     mSetObj <- ImputeMissingVar(mSetObj, method="lod", grpLod=F, grpMeasure=F)
     mSetObj <- PreparePrenormData(mSetObj);
-    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- mSet } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
+    if(.on.public.web){ Normalization(NA, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Normalization(mSetObj, sampleNor, tranform, scale, ratio=FALSE, ratioNum=20) };
     mSetObj <- .get.mSet(mSetObj);
     mSetObj <- UpdateDataSet(mSetObj, mSetObj$dataSet);
     mSetObj$dataSet <- CleanDataSet;
@@ -1992,18 +1992,18 @@ Prepare4Network <- function(mSetObj = NA){
   mSetObj <- .get.mSet(mSetObj);
 
   tryCatch({
-    if(.on.public.web){ SetOrganism(NA, "hsa"); mSetObj <- mSet } else { mSetObj <- SetOrganism(mSetObj, "hsa") }
+    if(.on.public.web){ SetOrganism(NA, "hsa"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetOrganism(mSetObj, "hsa") }
     cmpdList <- PrepareCMPDList()
 
     cmpdList <- paste(cmpdList, collapse = "\n")
-    if(.on.public.web){ PerformCmpdMapping(NA, cmpdList, "hsa", "kegg"); mSetObj <- mSet } else { mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg") }
+    if(.on.public.web){ PerformCmpdMapping(NA, cmpdList, "hsa", "kegg"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg") }
 
     #mSetObj <- CreateMappingResultTable(mSetObj)
-    if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- mSet } else { mSetObj <- PrepareNetworkData(mSetObj) }
+    if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) }
 
     idtype <<- "cmpd";
-    if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- mSet } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
-    if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- mSet } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
+    if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+    if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
     mSetObj <- .get.mSet(mSetObj);
 
     .set.mSet(mSetObj)

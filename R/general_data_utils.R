@@ -248,7 +248,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     load("params.rda");
     mSetObj$paramSet$mumDataContainsPval <<- 1;
     
-    if(.on.public.web){ UpdateInstrumentParameters(NA, peakParams$ppm, peakParams$polarity, "yes", 0.02); mSetObj <- mSet } else { mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02) };
+    if(.on.public.web){ UpdateInstrumentParameters(NA, peakParams$ppm, peakParams$polarity, "yes", 0.02); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02) };
     mSetObj<-.rt.included(mSetObj, "seconds");
     #mSetObj<-Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
     mSetObj<-.get.mSet(NA);
@@ -258,7 +258,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
 }
 
 .init.MummiMSet <- function(mSetObj) {  
-  if(.on.public.web){ SetPeakFormat(NA, "pvalue"); mSetObj <- mSet } else { mSetObj <- SetPeakFormat(mSetObj, "pvalue") };
+  if(.on.public.web){ SetPeakFormat(NA, "pvalue"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakFormat(mSetObj, "pvalue") };
   #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
   anal.type <<- "mummichog";
   api.base <<- "https://www.xialab.ca/api";
@@ -1275,7 +1275,7 @@ Read.ListFileData <- function(mSetObj=NA, filePath, sep="auto", has.header=FALSE
     return(0);
   }
 
-  if(.on.public.web){ Setup.MapData(NA, qvec); mSetObj <- mSet } else { mSetObj <- Setup.MapData(mSetObj, qvec) };
+  if(.on.public.web){ Setup.MapData(NA, qvec); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Setup.MapData(mSetObj, qvec) };
   return(1);
 }
 # this is only for SSP: for those with conc above threshold
@@ -1483,7 +1483,7 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
 }
 
 SetAnalType <- function(mSetObj=NA, anal.type){
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- .get.mSet(mSetObj);
     mSetObj$analSet$type <- anal.type;
     anal.type <<- anal.type;
     return(.set.mSet(mSetObj))
