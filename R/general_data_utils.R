@@ -1524,7 +1524,7 @@ process_metadata <- function(df) {
 
 Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-    if(.on.public.web){ Read.TextData(NA, filePath, format, lbl.type, nmdr); mSetObj <- mSet } else { mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr) };
+    mSetObj <- Read.TextData(mSetObj, filePath, format, lbl.type, nmdr);
     mSetObj <- .get.mSet(mSetObj);
 
     conc <- ov_qs_read(file="data_orig_0.qs");
@@ -1562,11 +1562,11 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
 
 Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
-    if(.on.public.web){ Read.TextDataTs(NA, filePath, format); mSetObj <- mSet } else { mSetObj <- Read.TextDataTs(mSetObj, filePath, format) };
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- Read.TextDataTs(mSetObj, filePath, format);
+    mSetObj <- .get.mSet(mSetObj);
 
-    if(.on.public.web){ ReadMetaData(NA, metaPath); mSetObj <- mSet } else { mSetObj <- ReadMetaData(mSetObj, metaPath) };
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- ReadMetaData(mSetObj, metaPath);
+    mSetObj <- .get.mSet(mSetObj);
 
     conc <- ov_qs_read(file="data_orig_0.qs");
     int.mat <- conc;
