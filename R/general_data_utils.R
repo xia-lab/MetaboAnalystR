@@ -830,6 +830,17 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=default.dpi, width=NA){
   #save.image("plot.RData");
   mSetObj <- .get.mSet(mSetObj);
+
+  ## Function-scoped safe column extractor: tries exact name then make.names
+  ## version. Returns NULL (not an error) when neither matches so callers can
+  ## fall back instead of producing a column-less data.frame → ggplot error.
+  .safe.col <- function(mat, nm) {
+    if (is.null(mat) || is.null(nm) || nchar(nm) == 0) return(NULL)
+    if (nm %in% colnames(mat)) return(mat[, nm])
+    nm2 <- make.names(nm)
+    if (nm2 %in% colnames(mat)) return(mat[, nm2])
+    NULL
+  }
   
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
@@ -896,11 +907,22 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     
     ## Precompute color scheme for discrete cases
     col <- unique(GetColorSchema(sel.cls))
-    
+
+    orig.vals <- .safe.col(proc.data, cmpdNm)
+    if (is.null(orig.vals)) orig.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    norm.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    if (is.null(norm.vals)) norm.vals <- orig.vals
+    if (is.null(orig.vals)) {
+      message("[PlotCmpdSummary] feature '", cmpdNm,
+              "' not found in proc.data or norm — skipping plot")
+      dev.off()
+      return(imgName)
+    }
+
     ## If grouping is discrete
     if (cls.type == "disc") {
       # ORIGINAL concentrations
-      df.orig <- data.frame(value = proc.data[, cmpdNm], group = factor(sel.cls))
+      df.orig <- data.frame(value = orig.vals, group = factor(sel.cls))
       p.orig <- ggplot(df.orig, aes(x = group, y = value, fill = group)) +
         (if (plotType == "violin") geom_violin(trim = FALSE)
          else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
@@ -919,7 +941,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
         )
       
       # NORMALIZED concentrations
-      df.norm <- data.frame(value = mSetObj$dataSet$norm[, cmpdNm], group = factor(sel.cls))
+      df.norm <- data.frame(value = norm.vals, group = factor(sel.cls))
       p.norm <- ggplot(df.norm, aes(x = group, y = value, fill = group)) +
         (if (plotType == "violin") geom_violin(trim = FALSE)
          else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
@@ -943,7 +965,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       xvar        <- as.numeric(as.character(sel.cls))
       color.range <- range(xvar, na.rm = TRUE)
       
-      df.orig <- data.frame(x = xvar, y = proc.data[, cmpdNm])
+      df.orig <- data.frame(x = xvar, y = orig.vals)
 
       p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
         geom_point(size = 1.8, color = "black") +        # points are black
@@ -958,7 +980,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
             legend.position = "none"
         );
 
-      df.norm <- data.frame(x = xvar, y = mSetObj$dataSet$norm[, cmpdNm])
+      df.norm <- data.frame(x = xvar, y = norm.vals)
 
       p.norm <- ggplot(df.norm, aes(x = x, y = y)) +
         geom_point(size = 1.8, color = "black") +  # points are now all black
@@ -1021,7 +1043,12 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     xvar <- as.numeric(as.character(xvar))
     
     ## y-axis = compound abundance
-    yvar <- mSetObj$dataSet$norm[, cmpdNm]
+    yvar <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    if (is.null(yvar)) {
+      message("[PlotCmpdSummary/multi] feature '", cmpdNm, "' not found in norm — skipping")
+      dev.off()
+      return(imgName)
+    }
     
     ## secondary variable (color, shape, etc.)
     group.var <- mSetObj$dataSet$meta.info[, meta2]
