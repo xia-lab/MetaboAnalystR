@@ -889,12 +889,26 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   mSetObj$imgSet$cmpdSum <- imgName;
   
   if(!mSetObj$dataSet$design.type %in% c("time", "time0", "multi") || meta2 == "NA"){
-    ## Load processed data and align to normalized samples
-    proc.data <- ov_qs_read("data_proc.qs")
-    smpl.nms  <- rownames(mSetObj$dataSet$norm)
-    proc.data <- proc.data[smpl.nms, , drop = FALSE]
-    
-    ## Open Cairo device
+    ## Load processed data with graceful fallback (data_proc.qs may be absent for
+    ## some workflow paths; norm is the authoritative fallback)
+    proc.data <- tryCatch({
+      pd <- ov_qs_read("data_proc.qs")
+      pd[rownames(mSetObj$dataSet$norm), , drop = FALSE]
+    }, error = function(e) NULL)
+
+    ## Resolve values BEFORE opening Cairo — prevents empty image files when the
+    ## compound name isn't found in either matrix (e.g. make.names mismatch)
+    orig.vals <- .safe.col(proc.data, cmpdNm)
+    if (is.null(orig.vals)) orig.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    norm.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    if (is.null(norm.vals)) norm.vals <- orig.vals
+    if (is.null(orig.vals)) {
+      message("[PlotCmpdSummary] feature '", cmpdNm,
+              "' not found in proc.data or norm — skipping plot")
+      return(invisible(imgName))
+    }
+
+    ## Open Cairo only after confirming data is available
     Cairo::Cairo(
       file   = imgName,
       unit   = "in",
@@ -904,20 +918,9 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       type   = format,
       bg     = "white"
     )
-    
+
     ## Precompute color scheme for discrete cases
     col <- unique(GetColorSchema(sel.cls))
-
-    orig.vals <- .safe.col(proc.data, cmpdNm)
-    if (is.null(orig.vals)) orig.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
-    norm.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
-    if (is.null(norm.vals)) norm.vals <- orig.vals
-    if (is.null(orig.vals)) {
-      message("[PlotCmpdSummary] feature '", cmpdNm,
-              "' not found in proc.data or norm — skipping plot")
-      dev.off()
-      return(imgName)
-    }
 
     ## If grouping is discrete
     if (cls.type == "disc") {
