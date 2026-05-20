@@ -902,7 +902,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     if (is.null(orig.vals)) orig.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
     norm.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
     if (is.null(norm.vals)) norm.vals <- orig.vals
-    if (is.null(orig.vals)) {
+    if (is.null(orig.vals) || length(orig.vals) == 0) {
       message("[PlotCmpdSummary] feature '", cmpdNm,
               "' not found in proc.data or norm — skipping plot")
       return(invisible(imgName))

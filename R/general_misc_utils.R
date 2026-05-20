@@ -451,12 +451,12 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
 #'License: GNU GPL (>= 2)
 #'
 CleanNumber <-function(bdata){
-  if(sum(bdata==Inf)>0){
+  if(sum(bdata==Inf, na.rm=TRUE)>0){
     inx <- bdata == Inf;
     bdata[inx] <- NA;
     bdata[inx] <- 999999;
   }
-  if(sum(bdata==-Inf)>0){
+  if(sum(bdata==-Inf, na.rm=TRUE)>0){
     inx <- bdata == -Inf;
     bdata[inx] <- NA;
     bdata[inx] <- -999999;
