@@ -105,18 +105,25 @@ GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30){
 #'@export
 #'
 SetCurrentGroups <- function(mSetObj=NA, grps){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(length(levels(mSetObj$dataSet$cls.all))>2){
+
+  # norm.all / cls.all are only populated for biomarker (ROC) analysis.
+  # For regular stat analysis they are NULL — fall back to norm / cls so
+  # this function does not destroy the current norm matrix.
+  norm.base <- mSetObj$dataSet$norm.all
+  cls.base  <- mSetObj$dataSet$cls.all
+  if (is.null(norm.base)) norm.base <- mSetObj$dataSet$norm
+  if (is.null(cls.base))  cls.base  <- mSetObj$dataSet$cls
+
+  if (!is.null(cls.base) && length(levels(cls.base)) > 2) {
     grp.nms <- strsplit(grps, " vs. ")[[1]];
-    # now extract the data for the two groups
-    hit.inx <- as.character(mSetObj$dataSet$cls.all) %in% grp.nms;
-    mSetObj$dataSet$cls <- factor(mSetObj$dataSet$cls.all[hit.inx]);
-    mSetObj$dataSet$norm <- mSetObj$dataSet$norm.all[hit.inx, ];
-  }else{
-    mSetObj$dataSet$cls <- mSetObj$dataSet$cls.all;
-    mSetObj$dataSet$norm <- mSetObj$dataSet$norm.all;
+    hit.inx <- as.character(cls.base) %in% grp.nms;
+    mSetObj$dataSet$cls  <- factor(cls.base[hit.inx]);
+    mSetObj$dataSet$norm <- norm.base[hit.inx, , drop=FALSE];
+  } else {
+    mSetObj$dataSet$cls  <- cls.base;
+    mSetObj$dataSet$norm <- norm.base;
   }
   return(.set.mSet(mSetObj));
 }
