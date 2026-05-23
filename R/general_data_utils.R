@@ -40,7 +40,15 @@ Reload.scripts.on.demand <- function(){
 
 .get.mSet <- function(obj=NA){
   if(.on.public.web){
-    return(mSetObj)
+    # Defensive lookup: get0() is a SINGLE hash lookup with a built-in
+    # fallback, so this is as cheap as the original lexical resolution
+    # (return(mSetObj)) but doesn't blow up when mSetObj hasn't been
+    # initialized yet — e.g. preRenderView hooks querying R state on a
+    # fresh session before any upload. Callers follow the idiomatic
+    # `mSetObj <- .get.mSet(...); if (is.null(mSetObj)) return(...)`
+    # pattern, so a NULL return propagates safely.
+    return(get0("mSetObj", envir = .GlobalEnv,
+                inherits = FALSE, ifnotfound = NULL))
   }else{
     return(obj);
   }
