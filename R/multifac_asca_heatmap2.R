@@ -289,6 +289,8 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   # ----------------------------------------------------
   # INTERACTIVE PLOT (iheatmapr)
   # ----------------------------------------------------
+  require(dplyr)
+  require(iheatmapr)
   p <- iheatmap(data1sc, name="value", x_categorical=TRUE,
                 layout=list(font=list(size=fzAnno)),
                 colors=colors,
@@ -1835,6 +1837,8 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
     h = min(2000,nrow(met)*14+50);
  
    met <- scale_mat(met,  "column")
+   require(dplyr)
+   require(iheatmapr)
     p <- iheatmap(met,  name = " ", 
                   colors = colors, 
           colorbar_grid = setup_colorbar_grid(y_start = 0.85)) %>%
