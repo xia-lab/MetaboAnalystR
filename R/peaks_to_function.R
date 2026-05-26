@@ -95,9 +95,10 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   
   # first check if mode included
   mumDataContainsMode <- "mode" %in% user_cols;
-  
+  mode.info <- NULL;
+
   if(mumDataContainsMode){
-    mode.info <- input$mode  
+    mode.info <- input$mode
     input <- subset(input, select=-mode)
     user_cols <- gsub("[^[:alnum:]]", "", colnames(input))
   }
@@ -179,9 +180,11 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   if(mSetObj$dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
   }else if(mSetObj$dataSet$mode == "negative"){
-    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig) )
-  }else{ # mixed
+    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig))
+  }else if(!is.null(mode.info)){ # mixed with explicit mode column
     mSetObj$dataSet$pos_inx <- mode.info == "positive"
+  }else{ # mixed but no mode column — default positive
+    mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
   }
   
   mSetObj$paramSet$mumRT = rt;
