@@ -833,7 +833,7 @@ p <- ggplot() +
     panel.grid.minor = element_blank(),
     axis.line = element_blank(),
   plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
-  coord_fixed(ratio = 1, clip = "off")
+  coord_cartesian(clip = "off")
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(p );
   dev.off();
