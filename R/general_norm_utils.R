@@ -680,6 +680,18 @@ GetNormWarning <- function(){
   return(msg)
 }
 
+#
+# should always init (new or overwrite previous prenorm object)
+# note in right order that dataSet$edit will always performed using dataSet$filt (if it exists)
+# note dataSet$filt can be re-performed after dataSet$edit during analysis
+# need to make sure prenorm created using the latest information (based on both)
+
+#' PreparePrenormData
+#'Prepare data for normalization
+#'@description Function should always be initialized (new or overwrite previous prenorm object).
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+
 PreparePrenormData <- function(mSetObj=NA){
     print("save data - prenorm ....");
     .prepare.prenorm.data(mSetObj);
