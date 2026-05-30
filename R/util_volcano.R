@@ -71,7 +71,7 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
     
     # Create the ggplot
     p <- ggplot(data = de, aes(x = fc.log, y = p.log, label = label, Fold.Change = Fold.Change, P.Value= P.Value)) +
-        geom_point(aes(size = size, color =FoldChange, fill=FoldChange), shape = 21, stroke = 0.3) +
+        geom_point(aes(size = p.log, color =FoldChange, fill=FoldChange), shape = 21, stroke = 0.3) +
         scale_color_gradient2(low = "black", mid = "black", high = "black", midpoint = 0,
                           limits = fc_range, space = "Lab", na.value = "black", guide="none") +
         scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, name = "Log2(FC)",
