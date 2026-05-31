@@ -586,6 +586,7 @@ GetPathCol <- function(colInx){
 GetSumCol <- function(type, exp) {
    #print(c(type, exp))
   mSetObj <- .get.mSet(mSetObj)
+
   tab <- mSetObj$dataSet$tableView;
    if(exists("harmonized.dat",mSetObj$dataSet)){
       harmonized.dat <- mSetObj$dataSet$harmonized.dat[mSetObj$dataSet$harmonized.dat$mr_keep,];
