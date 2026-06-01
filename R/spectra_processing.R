@@ -3780,6 +3780,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 }
 
 checkMS2annotationExists <- function(feature_idx){
+    if (!ov_qs_exists("compound_msn_results_index2MS1.qs")) return(0L)
     res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     if(feature_idx %in% res_dt[,1]){
         rowidx <- which(feature_idx == res_dt[,1])[1]
