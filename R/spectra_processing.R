@@ -399,6 +399,40 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
 }
 
 
+#' SubmitSlurmJob
+#'
+#' Submit a SLURM batch job via `sbatch` and return the numeric job ID.
+#'
+#' @param script_path Full path to the shell script to submit.
+#' @return Numeric SLURM job ID on success, or -1L on failure.
+#' @export
+SubmitSlurmJob <- function(script_path) {
+  sbatch_bin <- Sys.which("sbatch")
+  if (!nzchar(sbatch_bin)) {
+    warning("SLURM command 'sbatch' is not available in PATH.")
+    return(-1L)
+  }
+  output <- tryCatch(
+    system2(sbatch_bin, args = script_path, stdout = TRUE, stderr = TRUE),
+    error = function(e) {
+      warning("Failed to execute sbatch: ", conditionMessage(e))
+      return(character(0))
+    }
+  )
+  # sbatch prints: "Submitted batch job <ID>"
+  job_line <- output[nzchar(output)]
+  if (length(job_line) == 0) {
+    return(-1L)
+  }
+  digits <- gsub("[^0-9]", "", paste(job_line, collapse = ""))
+  if (!nzchar(digits)) {
+    warning("Unexpected sbatch output: ", paste(job_line, collapse = " "))
+    return(-1L)
+  }
+  as.integer(digits)
+}
+
+
 #' CountSlurmJobsAhead
 #'
 #' Count how many SLURM jobs are scheduled ahead of a target job ID,
