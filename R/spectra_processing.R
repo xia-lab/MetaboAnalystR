@@ -432,6 +432,65 @@ SubmitSlurmJob <- function(script_path) {
   as.integer(digits)
 }
 
+#' GetJobStatusText
+#'
+#' Read the last N lines of a job status log file and format for HTML display.
+#' Fallback for Java ProcessBuilder approach.
+#'
+#' @param file_path Full path to the log file (e.g., "metaboanalyst_spec_proc.txt").
+#' @param num_lines Number of lines to read from end (default 12).
+#' @param home_dir User home directory path (for path filtering in output).
+#' @return Formatted HTML string with <br /> line separators.
+#' @export
+GetJobStatusText <- function(file_path, num_lines = 12L, home_dir = NULL) {
+  if (!file.exists(file_path)) {
+    return("")
+  }
+  
+  all_lines <- tryCatch(
+    readLines(file_path, warn = FALSE),
+    error = function(e) {
+      warning("Failed to read file: ", file_path)
+      return(character(0))
+    }
+  )
+  
+  if (length(all_lines) == 0) {
+    return("")
+  }
+  
+  n <- length(all_lines)
+  start_idx <- max(1L, n - num_lines + 1L)
+  lines <- all_lines[start_idx:n]
+  
+  formatted_lines <- character()
+  for (i in seq_along(lines)) {
+    line <- lines[i]
+    
+    if (grepl("ERROR:", line, fixed = TRUE)) {
+      line <- gsub("ERROR:", "<b>ERROR:</b>", line, fixed = TRUE)
+    } else if (startsWith(line, "Step")) {
+      line <- paste0("<b><font color=\"blue\">", line, "</font></b>")
+    } else if (grepl("Everything for MS1 spectra has been finished successfully !", line, fixed = TRUE)) {
+      line <- "<b>Everything for MS1 spectra has been finished successfully !</b>"
+    } else if (line == "") {
+      next
+    } else if (startsWith(line, ">")) {
+      line <- sub("^>", "", line)
+    } else if (startsWith(line, ".......")) {
+      line <- gsub(".", "", line, fixed = TRUE)
+    } else if (!is.null(home_dir) && grepl(home_dir, line, fixed = TRUE)) {
+      line <- gsub(home_dir, "", line, fixed = TRUE)
+    } else if (grepl("MessageOutput", line, fixed = TRUE) || grepl("ecol = ", line, fixed = TRUE)) {
+      next
+    }
+    
+    formatted_lines <- c(formatted_lines, line)
+  }
+  
+  result <- paste(formatted_lines, "<br />", sep = "", collapse = "")
+  result
+}
 
 #' CountSlurmJobsAhead
 #'
