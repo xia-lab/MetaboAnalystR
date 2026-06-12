@@ -1195,10 +1195,37 @@ PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
         res <- try(rowcolFt(data, cls, var.equal = var.equal));
     }else{
         res <- try(rowcoltt(data, cls, FALSE, 1L, FALSE));
-    }  
+    }
 
     if(class(res) == "try-error") {
-        res <- cbind(NA, NA);
+        # Self-hosted fallback: the native two-group t-test routine used by
+        # rowcoltt() (XiaLabCppLib / .Call("rowcolttests")) is unavailable on
+        # this build, so rowcoltt() errors and 2-group comparisons would yield
+        # NA p-values. Compute a vectorized two-sample t-test in pure R so the
+        # p-values are still produced. >2-group uses pure-R rowcolFt above and
+        # never reaches here.
+        lev <- levels(cls);
+        if(length(lev) == 2){
+            g1 <- data[, cls == lev[1], drop=FALSE];
+            g2 <- data[, cls == lev[2], drop=FALSE];
+            n1 <- rowSums(!is.na(g1)); n2 <- rowSums(!is.na(g2));
+            m1 <- rowMeans(g1, na.rm=TRUE); m2 <- rowMeans(g2, na.rm=TRUE);
+            v1 <- rowSums((g1 - m1)^2, na.rm=TRUE)/(n1 - 1);
+            v2 <- rowSums((g2 - m2)^2, na.rm=TRUE)/(n2 - 1);
+            if(isTRUE(var.equal)){
+                sp2 <- ((n1 - 1)*v1 + (n2 - 1)*v2)/(n1 + n2 - 2);
+                se  <- sqrt(sp2*(1/n1 + 1/n2));
+                df  <- n1 + n2 - 2;
+            } else {
+                se  <- sqrt(v1/n1 + v2/n2);
+                df  <- (v1/n1 + v2/n2)^2 / ((v1/n1)^2/(n1 - 1) + (v2/n2)^2/(n2 - 1));
+            }
+            tstat <- (m1 - m2)/se;
+            pval  <- 2*pt(abs(tstat), df, lower.tail=FALSE);
+            res <- data.frame(statistic = tstat, p.value = pval, row.names = rownames(data));
+        } else {
+            res <- cbind(NA, NA);
+        }
     }else{
         # res <- cbind(res$statistic, res$p.value);
         # make sure row names are kept

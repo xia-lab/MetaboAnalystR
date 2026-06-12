@@ -1968,11 +1968,26 @@ generateAsariPeakList <-  function(userPath) {
   features <- paste0(ftable$mz, "__", ftable$rtime)
   ftable1 <- ftable[,c(12:ncol(ftable))]
   allSamples <- colnames(ftable1)
-  allGroups <- 
+  allGroups <-
     vapply(allSamples, FUN = function(x){
       idx <- which(mSet@rawOnDisk@phenoData@data[["sample_name"]] == x)
       mSet@rawOnDisk@phenoData@data[["sample_group"]][idx]
     }, character(1L))
+  # The OptiLCMS import only resolves QC/blank labels (from filename); biological
+  # samples come back as a single "Sample" group, which collapses the downstream
+  # t-test to one level (NA p-values). The real grouping lives in
+  # spectra_group_meta.csv (Sample,Label), staged by SpectraJobService. Apply it
+  # here, keyed by sample name; samples absent from the meta (QC/blank) keep their
+  # import label.
+  if (file.exists("spectra_group_meta.csv")) {
+    grp_meta <- tryCatch(
+      read.csv("spectra_group_meta.csv", stringsAsFactors = FALSE, check.names = FALSE),
+      error = function(e) NULL)
+    if (!is.null(grp_meta) && all(c("Sample", "Label") %in% colnames(grp_meta))) {
+      m <- match(allSamples, grp_meta$Sample)
+      allGroups[!is.na(m)] <- as.character(grp_meta$Label[m[!is.na(m)]])
+    }
+  }
   ftable2 <- t(data.frame(Groups = allGroups))
   ftable3 <- data.frame(Samples = c("Groups", features))
   ftable0 <- rbind(ftable2, ftable1)
