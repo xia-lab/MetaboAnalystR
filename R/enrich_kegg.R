@@ -442,6 +442,7 @@ Save2KEGGJSON <- function(mSetObj, hits.query, res.mat, file.nm, hits.all){
   expr = as.list(dataSet$data)
   names(expr) <- rownames(dataSet$data)
   json.res <- list(
+    orgCode = mSetObj$org,
     expr.mat = expr,
     hits.query = hits.query,
     hits.edge = hits.edge,
