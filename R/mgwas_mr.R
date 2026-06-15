@@ -153,7 +153,11 @@ readOpenGWASKey <- function(){
 extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
   
    cat("Processing into extractGwasDB from local \n")
-   if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
+   ld_gwas <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) paste0(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "/") else "";
+   if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_nonProxy.sqlite"))){  # Docker shared library mount (OMICS_LIB_DIR)
+        database_path <- paste0(ld_gwas, "openGWAS_nonProxy.sqlite");
+        database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+   }else if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
         database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite";
         database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
    }else if(file.exists("/Users/xialab/Dropbox/sqlite")){

@@ -213,7 +213,18 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     # perform deconvolution
     # progress 120
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
-    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+    ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+    if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering,
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold,
+                                    ", database_path = \'", ms2db_lib, "\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco,
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = ", param_list$ppm1,
                                     ", ppm2 = ", param_list$ppm2,
@@ -308,7 +319,16 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   # progress 150
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
-  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+  ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+  if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5,
+                                     database_path = \'", ms2db_lib, "\',
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ",
+                                     databaseOptions =", param_list$db_opt, ")");
+  } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = ", param_list$ppm1, ",
                                      ppm2 = ", param_list$ppm2, ",
@@ -367,7 +387,11 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
   str <- paste0(str, ";\n", cmd_summarize)
 
-  if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
+  fragdb_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "FragsAnnotateDB_v02042024.sqlite") else "";
+  if(nzchar(fragdb_lib) && file.exists(fragdb_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+    export_msn_all <- paste0("OptiLCMS:::PerformAllMirrorPlotting(\'", fragdb_lib, "\')");
+    str <- paste0(str, ";\n", export_msn_all)
+  } else if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
     export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite\')";
     str <- paste0(str, ";\n", export_msn_all)
   } else if (file.exists("/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite")){
