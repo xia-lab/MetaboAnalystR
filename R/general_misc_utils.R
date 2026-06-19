@@ -105,6 +105,13 @@ ov_qs_read <- function(file, ...) {
 }
 
 ov_qs_save <- function(obj, file, ...) {
+  # Self-heal a reaped target dir: long-lived Rserve sessions can have their
+  # tempdir() removed by the OS /tmp cleaner, after which every write to a
+  # bridge_*.qs / arrow export under it fails with "Failed to open for
+  # writing. Does the directory exist?" and cascades into NULL results
+  # (PCA/SAM/etc.). Recreate the parent dir before writing.
+  .d <- dirname(file)
+  if (!dir.exists(.d)) dir.create(.d, recursive = TRUE, showWarnings = FALSE)
   .args <- list(...)
   for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
   do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
@@ -123,6 +130,18 @@ ov_qs_exists <- function(file) {
 # =============================================================================
 
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
+  # Docker self-host: a NESTED RSclient connection (an Rserve session opening a
+  # connection back to Rserve on 6311) reliably crashes the spawned worker with
+  # "Fatal error: unable to initialize the JIT", which leaves the caller looping
+  # and breaks PCA/heatmap/arrow-export/etc. The subprocess buys nothing here,
+  # so run the function in-process. `func` is a self-contained closure that
+  # exchanges data through its bridge files via the globally-defined ov_qs_*
+  # helpers, so it behaves identically run here or in a worker.
+  if (file.exists("/.dockerenv")) {
+    setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+    on.exit(setTimeLimit(elapsed = Inf), add = TRUE)
+    return(invisible(do.call(func, args)))
+  }
   conn <- RSclient::RS.connect(host = "localhost", port = 6311)
   on.exit(try(RSclient::RS.close(conn), silent = TRUE))
   # Inject the qs wrapper helpers into the subprocess R session so callers
@@ -146,6 +165,8 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
       stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
     }
     ov_qs_save <- function(obj, file, ...) {
+      .d <- dirname(file)
+      if (!dir.exists(.d)) dir.create(.d, recursive = TRUE, showWarnings = FALSE)
       .args <- list(...)
       for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
       do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
