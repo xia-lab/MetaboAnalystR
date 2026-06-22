@@ -565,6 +565,14 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
           legend.text  = element_text(size = 12),
           legend.title = element_text(size = 13))
 
+  # Record this call (original imgName, before the dpi/ext suffix) so the
+  # dashboard's per-figure "Refine" can resolve the figure (gallery key =
+  # imgName base) back to its producing command. After the early-return guards
+  # so we only record when a PNG is written. Append to the LOCAL mSetObj$cmdSet
+  # (committed by the final .set.mSet), not via RecordRCommand()'s return value
+  # (which is 1 on the public web).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotEnrichPieChart(mSet, "', enrichType, '", "', imgName, '", "', format, '", ', dpi, ')'))
+
   img.file <- paste0(imgName, "dpi", dpi, ".", format)
   # size heuristic
   long.name <- max(nchar(as.character(pie.data$Group)))

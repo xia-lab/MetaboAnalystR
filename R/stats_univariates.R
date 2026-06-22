@@ -118,7 +118,13 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
     label = names(fc$inx.imp)
   )
-  
+
+  # Method-standard: persist the figure's underlying data table so the AI
+  # "Refine" control can re-plot from data and users can regenerate the figure
+  # in any tool. Helper lives in wf_method.R; guard so the public
+  # package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("fc", fc_data), error = function(e) NULL)
+
   # Get the maximum absolute fold change for plotting limits
   topVal <- max(abs(fc$fc.log))
   ylim <- c(-topVal, topVal)
@@ -443,6 +449,12 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     P.Value = mSetObj$analSet$tt$p.value,
     FDR = mSetObj$analSet$tt$fdr.p
   )
+
+  # Method-standard: persist the figure's underlying data table (p-value, FDR,
+  # significance per feature) for Refine + cross-tool regeneration. Helper lives
+  # in wf_method.R; guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("tt", tt_data), error = function(e) NULL)
+
   p.thresh <- mSetObj$analSet$tt$raw.thresh
   adjust.method <- mSetObj$analSet$tt$adjust.method
   # Assuming your data frame is set up correctly as tt_data

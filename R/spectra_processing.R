@@ -56,6 +56,21 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
 
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). This generator gets no source_path
+  # arg, so derive the metabo rscripts home from the _script_loader.R global
+  # `compilePath` (set in this Rserve session), normalize to absolute, and only inject
+  # when the patches file resolves.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
@@ -135,7 +150,20 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
-  
+
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). No source_path arg here either —
+  # derive the metabo rscripts home from the _script_loader.R global `compilePath`.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");

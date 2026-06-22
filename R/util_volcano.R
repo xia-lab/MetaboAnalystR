@@ -41,6 +41,12 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
   de$Status <- as.factor(de$Status);
 
+  # Method-standard: persist the figure's underlying data table (fold-change,
+  # p-value, status per feature) so the AI "Refine" control can re-plot from data
+  # and users can regenerate the figure in any tool. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("volcano", de), error = function(e) NULL)
+
   # Rank by p-value (primary, higher -log10(p) = more significant) then FC (tiebreaker)
   de$combinedRank <- order(order(-de$p.log, -abs(de$fc.log)))
 
