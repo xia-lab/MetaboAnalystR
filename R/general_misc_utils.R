@@ -4,6 +4,46 @@
 ### McGill University, Canada
 ### License: GNU GPL (>= 2)
 
+.load.scripts.on.demand <- function(fileName=""){
+  candidates <- unique(c(
+    fileName,
+    paste0(rpath, "rscripts/MetaboAnalystR/R/", fileName),
+    paste0(rpath, "rscripts/XiaLabPro/R/", fileName),
+    if (exists("loadPath")) paste0(loadPath, fileName) else character(0),
+    if (exists("loadPathOMS")) paste0(loadPathOMS, fileName) else character(0)
+  ));
+
+  script.path <- candidates[file.exists(candidates)][1];
+
+  if (is.na(script.path) || is.null(script.path)) {
+    r.candidates <- sub("\\.Rc$", ".R", candidates);
+    script.path <- r.candidates[file.exists(r.candidates)][1];
+  }
+
+  if (is.na(script.path) || is.null(script.path)) {
+    stop(paste("Script not found:", fileName, "(.Rc or .R)"));
+  }
+
+  if (grepl("\\.Rc$", script.path)) {
+    compiler::loadcmp(script.path, .GlobalEnv);
+  } else {
+    source(script.path, local = FALSE);
+  }
+
+  # Keep track of lazily loaded scripts so recovered sessions can reload them.
+  try({
+    mSetObj <- .get.mSet(NA);
+    if (!is.null(mSetObj$paramSet)) {
+      rel.path <- sub("^\\.\\./\\.\\./", "", script.path);
+      old <- mSetObj$paramSet$loaded.scripts;
+      mSetObj$paramSet$loaded.scripts <- unique(c(old, rel.path));
+      .set.mSet(mSetObj);
+    }
+  }, silent = TRUE);
+
+  invisible(1);
+}
+
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
     lod <- min(x[x>0], na.rm=T)/5;
@@ -1646,7 +1686,7 @@ GetPrimaryType <- function(analysis.var){
 PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog", edgeMode="overview"){
 
     if(!exists("my.mummichog.enrich.net")){ 
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/utils_enrichnet.Rc"));
+        .load.scripts.on.demand("utils_enrichnet.Rc");
     }
     return(my.enrich.net(mSetObj, netNm, overlapType, type, edgeMode ));
 }
@@ -1675,7 +1715,7 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    meta,
                                    metaShape = NULL){
     if(!exists(".plot.pca.pair.meta")){ 
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.Rc"));
+        .load.scripts.on.demand("util_pcapair.Rc");
     }
     return(.plot.pca.pair.meta(mSetObj,
                                    imgName,

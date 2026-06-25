@@ -145,6 +145,9 @@ CrossReferencingAPI <- function(mSetObj=NA, inputType){
     mSetObj <- .get.mSet(mSetObj);
     toSend <- list(mSet = mSetObj, inputType = inputType, analType = anal.type)
     saveRDS(toSend, "tosend.rds");
+    if(!exists("my.namemap.api")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     return(my.namemap.api());
 }
 

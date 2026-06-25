@@ -56,6 +56,9 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     }
  
     saveRDS(toSend, "tosend.rds")
+    if(!exists("my.ora.kegg")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     return(my.ora.kegg());
   }
  

@@ -1,4 +1,3 @@
-
 Reload.scripts.on.demand <- function(){
   mSetObj <- .get.mSet(NA)
   
@@ -19,8 +18,7 @@ Reload.scripts.on.demand <- function(){
   
   # Reload each script using the determined rpath prefix
   for (relPath in mSetObj$paramSet$loaded.scripts) {
-    complete_path <- paste0(rpath, relPath)
-    compiler::loadcmp(complete_path)
+    .load.scripts.on.demand(paste0(rpath, relPath))
   }
   
   return(1)
@@ -723,6 +721,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'License: GNU GPL (>= 2)
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
+  .load.scripts.on.demand("util_savedata.Rc");
   return(my.save.data(mSetObj));
 }
 

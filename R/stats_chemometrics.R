@@ -1899,10 +1899,16 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
-      rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      load_metabo_script_for_child <- function(fileName=""){
+        rc.path <- paste0("../../rscripts/MetaboAnalystR/R/", fileName)
+        r.path <- sub("\\.Rc$", ".R", rc.path)
+        if (file.exists(rc.path)) {
+          compiler::loadcmp(rc.path, .GlobalEnv)
+        } else if (file.exists(r.path)) {
+          source(r.path, local = FALSE)
+        }
       }
+      load_metabo_script_for_child("stats_opls.Rc")
       res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=NA, crossvalI=input$cv.num)
       ov_qs_save(res, bridge_out, preset = "fast")
     },
@@ -2305,10 +2311,16 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
-      rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      load_metabo_script_for_child <- function(fileName=""){
+        rc.path <- paste0("../../rscripts/MetaboAnalystR/R/", fileName)
+        r.path <- sub("\\.Rc$", ".R", rc.path)
+        if (file.exists(rc.path)) {
+          compiler::loadcmp(rc.path, .GlobalEnv)
+        } else if (file.exists(r.path)) {
+          source(r.path, local = FALSE)
+        }
       }
+      load_metabo_script_for_child("stats_opls.Rc")
       res <- perform_opls(input$data, input$cls, predI=1, permI=input$perm.num, orthoI=NA, crossvalI=input$cv.num)
       ov_qs_save(res, bridge_out, preset = "fast")
     },
@@ -2451,10 +2463,16 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
-      rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))
+      load_metabo_script_for_child <- function(fileName=""){
+        rc.path <- paste0("../../rscripts/MetaboAnalystR/R/", fileName)
+        r.path <- sub("\\.Rc$", ".R", rc.path)
+        if (file.exists(rc.path)) {
+          compiler::loadcmp(rc.path, .GlobalEnv)
+        } else if (file.exists(r.path)) {
+          source(r.path, local = FALSE)
+        }
       }
+      load_metabo_script_for_child("stats_spls.Rc")
       res <- splsda(input$data, input$cls, ncomp=input$comp.num, keepX=input$comp.var.nums)
       if(input$doCV){
         perf.res <- perf.splsda(res, dist="centroids.dist", validation=input$validOpt, folds=input$foldNum)

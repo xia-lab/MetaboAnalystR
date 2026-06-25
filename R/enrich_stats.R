@@ -48,6 +48,9 @@ CalculateHyperScore <- function(mSetObj=NA){
                      filter = mSetObj$api$filter, oraVec = mSetObj$api$oraVec, excludeNum = mSetObj$api$excludeNum)
     }
     saveRDS(toSend, "tosend.rds")
+    if(!exists("my.hyperscore.kegg")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     return(my.hyperscore.kegg());
   }
   

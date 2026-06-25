@@ -5,6 +5,80 @@
 ## Part of the Rserve/qs to Apache Arrow migration
 ###################################################
 
+#' Read a qs/qs2 file with backward-compatible fallback
+#' @param file Path to qs or qs2 file
+#' @return The deserialized R object
+#' @export
+ov_qs_read <- function(file, ...) {
+  read_with_qs2 <- function(path) {
+    if (requireNamespace("qs2", quietly = TRUE)) {
+      res <- try(qs2::qs_read(path, ...), silent = TRUE)
+      if (!inherits(res, "try-error")) {
+        return(res)
+      }
+    }
+    qs::qread(path, ...)
+  }
+
+  if (file.exists(file)) {
+    return(read_with_qs2(file))
+  }
+
+  lower_file <- tolower(file)
+  if (endsWith(lower_file, ".qs")) {
+    alt_file <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
+    if (file.exists(alt_file)) {
+      return(read_with_qs2(alt_file))
+    }
+  } else if (endsWith(lower_file, ".qs2")) {
+    alt_file <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
+    if (file.exists(alt_file)) {
+      return(read_with_qs2(alt_file))
+    }
+  }
+
+  stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+}
+
+#' Save a qs/qs2 file with compatibility for legacy qs arguments
+#' @param obj R object to serialize
+#' @param file Output path
+#' @return Invisibly returns file
+#' @export
+ov_qs_save <- function(obj, file, ...) {
+  args <- list(...)
+
+  if (requireNamespace("qs2", quietly = TRUE)) {
+    for (arg_name in c("preset", "nthreads", "check_hash")) {
+      args[[arg_name]] <- NULL
+    }
+    do.call(qs2::qs_save, c(list(object = obj, file = file), args))
+  } else {
+    do.call(qs::qsave, c(list(x = obj, file = file), args))
+  }
+
+  invisible(file)
+}
+
+#' Check for qs/qs2 file existence with extension fallback
+#' @param file Path to qs or qs2 file
+#' @return TRUE when file or matching alternate extension exists
+#' @export
+ov_qs_exists <- function(file) {
+  if (file.exists(file)) {
+    return(TRUE)
+  }
+
+  lower_file <- tolower(file)
+  if (endsWith(lower_file, ".qs")) {
+    return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
+  }
+  if (endsWith(lower_file, ".qs2")) {
+    return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
+  }
+  FALSE
+}
+
 # Helper: write feather with subprocess isolation or direct
 .write_feather_safe <- function(df, arrow_path, compress = "uncompressed") {
   if (file.exists(arrow_path)) { unlink(arrow_path); Sys.sleep(0.01) }

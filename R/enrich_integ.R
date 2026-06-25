@@ -264,6 +264,9 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
                     topoMethod = topo, enrichAnal = enrich, org = mSetObj$org)
     }
     saveRDS(toSend, "tosend.rds")
+    if(!exists("my.integ.kegg")){
+      .load.scripts.on.demand("util_api.Rc");
+    }
     return(my.integ.kegg());
   }
 
