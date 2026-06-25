@@ -17,7 +17,8 @@ PlotCorrHeatMap(
   no.clst,
   fz,
   unit,
-  corrCutoff = 0
+  corrCutoff = 0,
+  maxFeat = 0
 )
 }
 \arguments{

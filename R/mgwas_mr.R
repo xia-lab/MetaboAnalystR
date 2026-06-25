@@ -88,10 +88,15 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
       rownames(dat) <- dat$row
       res = length(which(!dat$mr_keep))+(nrow(mSetObj$dataSet$tableView)-nrow(dat))
       nr = nrow(dat)
+
       if(steigerOpt=="use_steiger"){
        dat$samplesize.exposure <- sapply(dat$samplesize.exposure, function(x) eval(parse(text = x)))
        dat$samplesize.outcome <- mSetObj$dataSet$outcome$sample_size
-      dat <- TwoSampleMR::steiger_filtering(dat)
+      
+       nms_rw <- row.names(dat)
+       dat <- TwoSampleMR::steiger_filtering(dat)
+       row.names(dat) <- nms_rw
+
        #print(dat$steiger_dir)
        dat<-dat[dat$steiger_dir,]
        dat$steiger_pval <- signif(dat$steiger_pval, digits = 4)
@@ -105,6 +110,7 @@ PerformSnpFiltering <- function(mSetObj=NA, ldclumpOpt,ldProxyOpt, ldProxies, ld
        mSetObj$dataSet$harmonized.dat <- dat;
        # update tableView to reflect filtered SNPs (only keep mr_keep=TRUE rows)
        surviving.rows <- rownames(dat[dat$mr_keep, ]);
+
        mSetObj$dataSet$tableView <- mSetObj$dataSet$tableView[surviving.rows, ];
      if(!exists("tableView.orig",   mSetObj$dataSet)){
         mSetObj$dataSet$tableView.orig <- dat
@@ -147,7 +153,11 @@ readOpenGWASKey <- function(){
 extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as.logical(ldProxies)){
   
    cat("Processing into extractGwasDB from local \n")
-   if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
+   ld_gwas <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) paste0(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "/") else "";
+   if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_nonProxy.sqlite"))){  # Docker shared library mount (OMICS_LIB_DIR)
+        database_path <- paste0(ld_gwas, "openGWAS_nonProxy.sqlite");
+        database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+   }else if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
         database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite";
         database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
    }else if(file.exists("/Users/xialab/Dropbox/sqlite")){

@@ -128,6 +128,7 @@ PCA.Anal <- function(mSetObj=NA){
   fast.write.csv(signif(mSetObj$analSet$pca$rotation,5), file="pca_loadings.csv");
   mSetObj$analSet$pca$loading.type <- "all";
   mSetObj$custom.cmpds <- c();
+
   return(.set.mSet(mSetObj));
 }
 
@@ -317,7 +318,14 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   stds <-mSetObj$analSet$pca$std[1:scree.num];
   pcvars<-mSetObj$analSet$pca$variance[1:scree.num];
   cumvars<-mSetObj$analSet$pca$cum.var[1:scree.num];
-  
+
+  # Method-standard: persist the figure's underlying data table for Refine +
+  # cross-tool regeneration. Helper lives in wf_method.R; guard so
+  # the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("pca_scree", data.frame(PC = seq_along(pcvars), VarianceExplained = pcvars, CumulativeVariance = cumvars)),
+    error = function(e) NULL)
+
   ylims <- range(c(pcvars,cumvars));
   extd<-(ylims[2]-ylims[1])/10
   miny<- ifelse(ylims[1]-extd>0, ylims[1]-extd, 0);
@@ -399,6 +407,13 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   pc1 = mSetObj$analSet$pca$x[, pcx];
   pc2 = mSetObj$analSet$pca$x[, pcy];
   text.lbls<-substr(names(pc1),1,14) # some names may be too long
+
+  # Method-standard: persist the figure's underlying data table (PC scores +
+  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("pca_score2d", data.frame(Sample = names(pc1), PCx = pc1, PCy = pc2, Group = mSetObj$dataSet$cls)),
+    error = function(e) NULL)
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -499,8 +514,10 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   par(op);
   dev.off();
 
-  permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
-  mSetObj$analSet$pca$permanova.res <-permanova_results;
+  if(nrow(mSetObj[['dataSet']][['meta.info']])<=200){
+    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
+    mSetObj$analSet$pca$permanova.res <-permanova_results;
+  }
   return(.set.mSet(mSetObj));
 }
 
@@ -666,7 +683,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+ 
   loadings<-as.matrix(cbind(mSetObj$analSet$pca$rotation[,inx1],mSetObj$analSet$pca$rotation[,inx2]));
   # Keep finite rows only to avoid blank plots when rotations contain NAs/Infs.
   keep.inx <- is.finite(loadings[,1]) & is.finite(loadings[,2]);
@@ -674,11 +691,16 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   # sort based on absolute values of 1, 2 
   ord.inx <- order(-abs(loadings[,1]), -abs(loadings[,2]));
   loadings <- signif(loadings[ord.inx,,drop=FALSE],5);
-  
+
   ldName1<-paste("Loadings", inx1);
   ldName2<-paste("Loadings", inx2);
   colnames(loadings)<-c(ldName1, ldName2);
   mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
+
+  # Method-standard: persist the figure's underlying data table for Refine +
+  # cross-tool regeneration. Helper lives in wf_method.R; guard so
+  # the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_loading", loadings), error = function(e) NULL)
 
   # Arrow export for zero-copy Java access (PCA loadings)
   ExportResultMatArrow(loadings, "pca_load");
@@ -692,15 +714,15 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     w <- width;
   }
   h <- w;
-  
+
   mSetObj$imgSet$pca.loading <- imgName;
   plotType <- mSetObj$analSet$pca$loading.type;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   par(mar=c(6,5,2,6));
   plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
-  
+
   mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
@@ -786,7 +808,12 @@ ind_data <- data.frame(
   PC2 = scores[, choices[2]] / lam[2],
   Group = cls
 )
- 
+
+  # Method-standard: persist the figure's underlying data table (sample scores +
+  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_biplot", ind_data), error = function(e) NULL)
+
 loadings <- pca$rotation
 var_data <- data.frame(
   PC1 = loadings[, choices[1]] * lam[1],
@@ -830,7 +857,7 @@ p <- ggplot() +
     panel.grid.minor = element_blank(),
     axis.line = element_blank(),
   plot.title = element_text(size = 14, face = "bold", hjust = 0.5)  )+
-  coord_fixed(ratio = 1, clip = "off")
+  coord_cartesian(clip = "off")
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(p );
   dev.off();
@@ -1345,6 +1372,22 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 
 ######### biplot for PLSDA
 ########################
+#'Plot PLS-DA biplot
+#'@description Generate a PLS-DA biplot that overlays sample scores and top contributing
+#'variables based on VIP values for selected components.
+#'@usage PlotPLSBiplot(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, topnum=10)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Base name of the output image file
+#'@param format Output image format, default is "png"
+#'@param dpi Image resolution in dots per inch, default is default.dpi
+#'@param width Image width in inches; use NA for automatic sizing
+#'@param inx1 Index of the first component for x-axis
+#'@param inx2 Index of the second component for y-axis
+#'@param topnum Number of top variables to label in the biplot
+#'@author Jeff Xia\email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
 PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -1479,8 +1522,18 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 #'@export
 #'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(mSetObj$analSet$plsda$best.num)){
+    msg <- "Please perform cross-validation (PLSDA.CV) before running permutation testing.";
+    if(.on.public.web){
+      return(msg)
+    }else{
+      print(msg);
+      return(.set.mSet(mSetObj));
+    }
+  }
 
   orig.cls <- cls <- as.numeric(mSetObj$dataSet$cls);
   datmat <- as.matrix(mSetObj$dataSet$norm);

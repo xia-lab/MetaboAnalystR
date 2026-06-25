@@ -17,7 +17,7 @@
 CalculateHyperScore <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
-  
+
   # --- 1. Prepare Query ---
   if(mSetObj$analSet$type=="msetssp"){
     # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
@@ -121,7 +121,74 @@ CalculateHyperScore <- function(mSetObj=NA){
 
   fast.write.csv(mSetObj$analSet$ora.mat, file="msea_ora_result.csv");
   ExportResultMatArrow(mSetObj$analSet$ora.mat, "ora_result");
-  return(.set.mSet(mSetObj));
+  # Persist the analSet to the global before invoking the membership
+  # companions. Both Export... and PlotORAMembership go through
+  # .get.mSet(NA) which fetches the global in .on.public.web mode — if we
+  # called them with a local `mSetObj` BEFORE persisting, they would
+  # operate on the previous global (no ora.mat yet) and silently no-op.
+  # PlotORAMembership additionally calls .set.mSet at its end (returns 1
+  # in web mode), so reassigning its return into `mSetObj` would clobber
+  # the local list with the integer 1 — the symptom that broke ORA earlier.
+  result <- .set.mSet(mSetObj);
+  ExportOraMembershipJson();
+  PlotORAMembership(NA, "mset_membership_0_");
+  return(result);
+}
+
+# Serialize compound x metabolite-set membership for the OraView pathway-map
+# viewer. Shape mirrors proteo's enrichment JSON: fun.anot keyed by set name
+# (already p-sorted via rownames(ora.mat)), parallel fun.pval/padj/hit.num/
+# total/fun.ids arrays, plus input.ids = full HMDB-mapped query so the viewer
+# can render absent rows. Read-only on mSetObj. Called from the AjaxCall
+# servlet on every viewer load (so the JSON regenerates on restored projects
+# and stays in sync with the current ora.mat / ora.hits).
+ExportOraMembershipJson <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if (is.null(mSetObj$analSet$ora.mat) || nrow(mSetObj$analSet$ora.mat) == 0) {
+    return(invisible(NULL));
+  }
+
+  ora.mat  <- mSetObj$analSet$ora.mat;
+  ord.sets <- rownames(ora.mat);
+  fun.anot <- mSetObj$analSet$ora.hits[ord.sets];
+
+  fun.pval <- as.numeric(ora.mat[, "Raw p"]); if (length(fun.pval) == 1) fun.pval <- matrix(fun.pval);
+  fun.padj <- as.numeric(ora.mat[, "FDR"]);   if (length(fun.padj) == 1) fun.padj <- matrix(fun.padj);
+  hit.num  <- paste0(ora.mat[, "hits"], "/", ora.mat[, "total"]);
+  if (length(hit.num) == 1) hit.num <- matrix(hit.num);
+  total    <- as.integer(ora.mat[, "total"]); if (length(total) == 1) total   <- matrix(total);
+  fun.ids  <- as.character(ord.sets);         if (length(fun.ids) == 1) fun.ids <- matrix(fun.ids);
+
+  if (isTRUE(mSetObj$analSet$type == "msetssp")) {
+    input.ids <- mSetObj$dataSet$ssp.cmpd;
+  } else {
+    nm.map    <- GetFinalNameMap(mSetObj);
+    valid.inx <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb));
+    input.ids <- nm.map$hmdb[valid.inx];
+  }
+  input.ids <- as.character(input.ids);
+  input.ids <- input.ids[!is.na(input.ids) & nzchar(input.ids)];
+  if (length(input.ids) == 1) input.ids <- matrix(input.ids);
+
+  lib.name <- if (is.null(mSetObj$analSet$msetlibname)) "" else mSetObj$analSet$msetlibname;
+
+  json.res <- list(
+    fun.link  = "",
+    fun.anot  = fun.anot,
+    fun.ids   = fun.ids,
+    fun.pval  = fun.pval,
+    fun.padj  = fun.padj,
+    hit.num   = hit.num,
+    total     = total,
+    input.ids = input.ids,
+    lib.name  = lib.name,
+    data.type = "singlelist"
+  );
+
+  sink("ora_membership.json");
+  cat(rjson::toJSON(json.res));
+  sink();
+  return(invisible(NULL));
 }
 
 #'Quantitative enrichment analysis with globaltest
@@ -497,6 +564,14 @@ PlotEnrichPieChart <- function(mSetObj=NA, enrichType, imgName, format="png", dp
     theme(plot.margin = unit(c(5, 7.5, 2.5, 5), "pt"),
           legend.text  = element_text(size = 12),
           legend.title = element_text(size = 13))
+
+  # Record this call (original imgName, before the dpi/ext suffix) so the
+  # dashboard's per-figure "Refine" can resolve the figure (gallery key =
+  # imgName base) back to its producing command. After the early-return guards
+  # so we only record when a PNG is written. Append to the LOCAL mSetObj$cmdSet
+  # (committed by the final .set.mSet), not via RecordRCommand()'s return value
+  # (which is 1 on the public web).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotEnrichPieChart(mSet, "', enrichType, '", "', imgName, '", "', format, '", ', dpi, ')'))
 
   img.file <- paste0(imgName, "dpi", dpi, ".", format)
   # size heuristic

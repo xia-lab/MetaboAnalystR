@@ -40,6 +40,15 @@ my.impute.missing <- function(mSetObj = NA,
   } else {
     grp <- as.character(cls.auto)
   }
+
+  blank_bool <- mSetObj$dataSet$blank.bool;
+  if(is.null(blank_bool)){
+    blank_bool <- FALSE
+  }
+
+  if(("BLANK" %in% (grp)) & blank_bool){
+    grp <- grp[grp != "BLANK", drop = TRUE]
+  }
   
   if (length(grp) != nrow(int.mat)) {
     AddErrMsg("Group vector length mismatch with data!");

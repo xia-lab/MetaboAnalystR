@@ -458,6 +458,13 @@ PlotPathSummary<-function(mSetObj=NA,
     }
   }
 
+  # Record this call (original imgName, before the dpi/ext suffix) so the
+  # dashboard's per-figure "Refine" can resolve the pathway-overview figure
+  # (gallery key = imgName base) back to its producing command. Append to the
+  # LOCAL mSetObj$cmdSet (committed by the final .set.mSet), not via
+  # RecordRCommand()'s return value (which is 1 on the public web).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotPathSummary(mSet, ', isTRUE(show.grid), ', "', imgName, '", "', format, '", ', dpi, ')'));
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
 
   if(is.na(width)){

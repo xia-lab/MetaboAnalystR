@@ -56,6 +56,21 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
 
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). This generator gets no source_path
+  # arg, so derive the metabo rscripts home from the _script_loader.R global
+  # `compilePath` (set in this Rserve session), normalize to absolute, and only inject
+  # when the patches file resolves.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
@@ -135,7 +150,20 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
-  
+
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). No source_path arg here either —
+  # derive the metabo rscripts home from the _script_loader.R global `compilePath`.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
@@ -213,7 +241,18 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     # perform deconvolution
     # progress 120
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
-    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+    ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+    if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering,
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold,
+                                    ", database_path = \'", ms2db_lib, "\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco,
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = ", param_list$ppm1,
                                     ", ppm2 = ", param_list$ppm2,
@@ -308,7 +347,16 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   # progress 150
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
-  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+  ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+  if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5,
+                                     database_path = \'", ms2db_lib, "\',
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ",
+                                     databaseOptions =", param_list$db_opt, ")");
+  } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = ", param_list$ppm1, ",
                                      ppm2 = ", param_list$ppm2, ",
@@ -367,7 +415,11 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
   str <- paste0(str, ";\n", cmd_summarize)
 
-  if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
+  fragdb_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "FragsAnnotateDB_v02042024.sqlite") else "";
+  if(nzchar(fragdb_lib) && file.exists(fragdb_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+    export_msn_all <- paste0("OptiLCMS:::PerformAllMirrorPlotting(\'", fragdb_lib, "\')");
+    str <- paste0(str, ";\n", export_msn_all)
+  } else if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
     export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite\')";
     str <- paste0(str, ";\n", export_msn_all)
   } else if (file.exists("/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite")){
@@ -398,6 +450,99 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   return(1)
 }
 
+
+#' SubmitSlurmJob
+#'
+#' Submit a SLURM batch job via `sbatch` and return the numeric job ID.
+#'
+#' @param script_path Full path to the shell script to submit.
+#' @return Numeric SLURM job ID on success, or -1L on failure.
+#' @export
+SubmitSlurmJob <- function(script_path) {
+  sbatch_bin <- Sys.which("sbatch")
+  if (!nzchar(sbatch_bin)) {
+    warning("SLURM command 'sbatch' is not available in PATH.")
+    return(-1L)
+  }
+  output <- tryCatch(
+    system2(sbatch_bin, args = script_path, stdout = TRUE, stderr = TRUE),
+    error = function(e) {
+      warning("Failed to execute sbatch: ", conditionMessage(e))
+      return(character(0))
+    }
+  )
+  # sbatch prints: "Submitted batch job <ID>"
+  job_line <- output[nzchar(output)]
+  if (length(job_line) == 0) {
+    return(-1L)
+  }
+  digits <- gsub("[^0-9]", "", paste(job_line, collapse = ""))
+  if (!nzchar(digits)) {
+    warning("Unexpected sbatch output: ", paste(job_line, collapse = " "))
+    return(-1L)
+  }
+  as.integer(digits)
+}
+
+#' GetJobStatusText
+#'
+#' Read the last N lines of a job status log file and format for HTML display.
+#' Fallback for Java ProcessBuilder approach.
+#'
+#' @param file_path Full path to the log file (e.g., "metaboanalyst_spec_proc.txt").
+#' @param num_lines Number of lines to read from end (default 12).
+#' @param home_dir User home directory path (for path filtering in output).
+#' @return Formatted HTML string with <br /> line separators.
+#' @export
+GetJobStatusText <- function(file_path, num_lines = 12L, home_dir = NULL) {
+  if (!file.exists(file_path)) {
+    return("")
+  }
+  
+  all_lines <- tryCatch(
+    readLines(file_path, warn = FALSE),
+    error = function(e) {
+      warning("Failed to read file: ", file_path)
+      return(character(0))
+    }
+  )
+  
+  if (length(all_lines) == 0) {
+    return("")
+  }
+  
+  n <- length(all_lines)
+  start_idx <- max(1L, n - num_lines + 1L)
+  lines <- all_lines[start_idx:n]
+  
+  formatted_lines <- character()
+  for (i in seq_along(lines)) {
+    line <- lines[i]
+    
+    if (grepl("ERROR:", line, fixed = TRUE)) {
+      line <- gsub("ERROR:", "<b>ERROR:</b>", line, fixed = TRUE)
+    } else if (startsWith(line, "Step")) {
+      line <- paste0("<b><font color=\"blue\">", line, "</font></b>")
+    } else if (grepl("Everything for MS1 spectra has been finished successfully !", line, fixed = TRUE)) {
+      line <- "<b>Everything for MS1 spectra has been finished successfully !</b>"
+    } else if (line == "") {
+      next
+    } else if (startsWith(line, ">")) {
+      line <- sub("^>", "", line)
+    } else if (startsWith(line, ".......")) {
+      line <- gsub(".", "", line, fixed = TRUE)
+    } else if (!is.null(home_dir) && grepl(home_dir, line, fixed = TRUE)) {
+      line <- gsub(home_dir, "", line, fixed = TRUE)
+    } else if (grepl("MessageOutput", line, fixed = TRUE) || grepl("ecol = ", line, fixed = TRUE)) {
+      next
+    }
+    
+    formatted_lines <- c(formatted_lines, line)
+  }
+  
+  result <- paste(formatted_lines, "<br />", sep = "", collapse = "")
+  result
+}
 
 #' CountSlurmJobsAhead
 #'
@@ -976,12 +1121,12 @@ retrieveAlgorithmInfo <- function(){
 
 #' plotSingleXIC
 #' @description plotSingleXIC
-#' @param mSet 
-#' @param featureNum 
-#' @param sample 
+#' @param mSet mSet Object
+#' @param featureNum featureNum number
+#' @param sample sample name
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-  
+  save(mSet, featureNum, sample, showlabel, file = "plotSingleXIC__args.rda")
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -1015,6 +1160,25 @@ plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel
     sampleOrder <- 1;
   } else {
     sampleOrder <- which(sample == samples_names);
+  }
+
+  if(length(sampleOrder)==0){
+    # special case for asari case
+    # BLANK to be reincluded
+    raw_data <- mSet@rawOnDisk;
+    samples_names <- raw_data@phenoData@data[["sample_name"]];
+    rawFiles <- raw_data@processingData@files;
+    
+    if(any(raw_data@phenoData@data[["sample_group"]] == "MS2")) {
+      samples_names <- samples_names[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+      rawFiles <- rawFiles[raw_data@phenoData@data[["sample_group"]] !="MS2"]
+    }
+    
+    if(is.null(sample)) {
+      sampleOrder <- 1;
+    } else {
+      sampleOrder <- which(sample == samples_names);
+    }
   }
   
   if(is.null(featureNum)) {
@@ -1809,7 +1973,7 @@ GeneratePeakList <- function(userPath) {
     pvals[is.nan(pvals)] <- 1;
     pfdr <-p.adjust(pvals, method = "fdr")
     pvals <- signif(pvals, 4)
-    pfdr <- round(signif(pfdr, 4), 4)
+    pfdr <- signif(pfdr, 4)
     FeatureOrder <- order(pvals)
     intenVale <- round(apply(sample_data_mean, 1, mean),1)
   } else {
@@ -1856,11 +2020,26 @@ generateAsariPeakList <-  function(userPath) {
   features <- paste0(ftable$mz, "__", ftable$rtime)
   ftable1 <- ftable[,c(12:ncol(ftable))]
   allSamples <- colnames(ftable1)
-  allGroups <- 
+  allGroups <-
     vapply(allSamples, FUN = function(x){
       idx <- which(mSet@rawOnDisk@phenoData@data[["sample_name"]] == x)
       mSet@rawOnDisk@phenoData@data[["sample_group"]][idx]
     }, character(1L))
+  # The OptiLCMS import only resolves QC/blank labels (from filename); biological
+  # samples come back as a single "Sample" group, which collapses the downstream
+  # t-test to one level (NA p-values). The real grouping lives in
+  # spectra_group_meta.csv (Sample,Label), staged by SpectraJobService. Apply it
+  # here, keyed by sample name; samples absent from the meta (QC/blank) keep their
+  # import label.
+  if (file.exists("spectra_group_meta.csv")) {
+    grp_meta <- tryCatch(
+      read.csv("spectra_group_meta.csv", stringsAsFactors = FALSE, check.names = FALSE),
+      error = function(e) NULL)
+    if (!is.null(grp_meta) && all(c("Sample", "Label") %in% colnames(grp_meta))) {
+      m <- match(allSamples, grp_meta$Sample)
+      allGroups[!is.na(m)] <- as.character(grp_meta$Label[m[!is.na(m)]])
+    }
+  }
   ftable2 <- t(data.frame(Groups = allGroups))
   ftable3 <- data.frame(Samples = c("Groups", features))
   ftable0 <- rbind(ftable2, ftable1)
@@ -2078,15 +2257,20 @@ generateAsariPeakList <-  function(userPath) {
   
   sample_data_log <- data;
   cvs <- round(apply(data, 1,FUN = CalCV),4)*100
-  lvls <- groups[groups != "QC"];
-  sample_data_log <- sample_data_log[,groups != "QC"];
+  #lvls <- groups[groups != "QC"];
+  #sample_data_log <- sample_data_log[,groups != "QC"];
+  #groups <- as.factor(lvls);
+  group_keep_idx <- groups != "QC" & !grepl("^blank$", groups, ignore.case = TRUE);
+  lvls <- groups[group_keep_idx];
+  sample_data_log <- sample_data_log[, group_keep_idx, drop = FALSE];
   groups <- as.factor(lvls);
+
   options(digits = 10) 
   ttest_res <- PerformFastUnivTests(t(sample_data_log), as.factor(groups))
   pvals <- ttest_res[,2]
   pfdr <-p.adjust(pvals, method = "fdr")
   pvals <- signif(pvals, 4)
-  pfdr <- round(signif(pfdr, 4), 4)
+  pfdr <- signif(pfdr, 4)
   
   pvals[is.nan(pvals)] = 1
   pfdr[is.nan(pfdr)] = 1
@@ -3430,35 +3614,256 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
     return(paste0(cls_res, collapse = "; "))
 }
 
+GetExposomePieClassDetails <- function(mSetObj=NA, classLabel){
+  res <- tryCatch({
+    ov_qs_read("exposome_classification_summary.qs")
+  }, error = function(e) { NULL })
+
+  if (is.null(res)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data available."))
+  }
+
+  # Find the column that contains classLabel
+  match_col <- NULL
+  for (col in colnames(res)) {
+    if (any(as.character(res[[col]]) == classLabel)) {
+      match_col <- col
+      break
+    }
+  }
+
+  if (is.null(match_col)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No matching data found."))
+  }
+
+  filtered <- res[as.character(res[[match_col]]) == classLabel, , drop = FALSE]
+
+  if (nrow(filtered) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No matching compounds found."))
+  }
+
+  # Show first 4 columns (Categories, Number, Intensity, Group) + Compounds + Download
+  display_cols <- min(4L, ncol(filtered))
+  raw_headers <- colnames(filtered)[seq_len(display_cols)]
+  raw_headers[raw_headers == "Intensity"] <- "Intensity (Sum)"
+  headers <- c(raw_headers, "Compounds", "Download")
+
+  html <- paste0(
+    "<b>Class: ", classLabel, "</b><br>",
+    "<table id='expo-detail-table' style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<tr>",
+    paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
+           headers, "</th>", collapse = ""),
+    "</tr>"
+  )
+  max_rows <- min(nrow(filtered), 50)
+  for (i in seq_len(max_rows)) {
+    # First 4 columns
+    cell_vals <- vapply(seq_len(display_cols), function(j) {
+      val <- filtered[[j]][i]
+      if (j == 3 && is.numeric(val)) formatC(val, digits = 3, format = "e") else as.character(val)
+    }, FUN.VALUE = character(1L))
+
+    # Compounds column: build PubChem hyperlinks from "Name||InchiKey" entries
+    cmpd_cell <- ""
+    dl_cell   <- ""
+    if (ncol(filtered) >= 5) {
+      cmpds <- filtered[[5]][[i]]
+      cmpds <- cmpds[nchar(trimws(cmpds)) > 0]
+      if (length(cmpds) > 0) {
+        parts <- strsplit(cmpds, "\\|\\|")
+        # Plain names for download file
+        all_names <- unique(vapply(parts, function(p) trimws(p[1]), character(1L)))
+        txt_content <- paste(all_names, collapse = "\n")
+        encoded_txt <- URLencode(txt_content, reserved = TRUE)
+        dl_fname    <- paste0("compounds_", gsub("[^A-Za-z0-9_-]", "_", classLabel), ".txt")
+        dl_cell <- paste0("<a href='data:text/plain;charset=utf-8,", encoded_txt,
+                          "' download='", dl_fname, "'",
+                          " style='white-space:nowrap;'>&#x21E9; Download (", length(all_names), ")</a>")
+        # Display links (first 20)
+        links <- vapply(parts, function(p) {
+          nm  <- trimws(p[1])
+          key <- if (length(p) >= 2) trimws(p[2]) else ""
+          if (nchar(key) > 0) {
+            paste0("<a href='https://pubchem.ncbi.nlm.nih.gov/#query=", key,
+                   "' target='_blank'>", nm, "</a>")
+          } else {
+            nm
+          }
+        }, FUN.VALUE = character(1L))
+        uniq_links <- unique(links)
+        suffix <- if (length(uniq_links) > 20) " etc." else ""
+        cmpd_cell <- paste0(paste0(uniq_links[seq_len(min(20L, length(uniq_links)))], collapse = "; "), suffix)
+      }
+    }
+
+    html <- paste0(html, "<tr>",
+      paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
+             cell_vals, "</td>", collapse = ""),
+      "<td style='padding:4px 8px; border:1px solid #ccc; max-width:320px;'>", cmpd_cell, "</td>",
+      "<td style='padding:4px 8px; border:1px solid #ccc; text-align:center;'>", dl_cell, "</td>",
+      "</tr>")
+  }
+  html <- paste0(html, "</table>")
+  return(html)
+}
+
+GetMetabolomePieClassDetails <- function(mSetObj=NA, classLabel, group, level){
+  metabolome_cls <- tryCatch({
+    ov_qs_read("metabolome_classification_summary.qs")
+  }, error = function(e) { NULL })
+
+  if (is.null(metabolome_cls)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data available."))
+  }
+
+  if (group == "All") {
+    metabolome_df <- do.call(rbind, metabolome_cls)
+  } else {
+    metabolome_df <- metabolome_cls[[group]]
+  }
+
+  if (is.null(metabolome_df) || nrow(metabolome_df) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No data for group: ", group))
+  }
+
+  if (!level %in% colnames(metabolome_df)) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>Unknown taxonomy level: ", level))
+  }
+
+  filtered <- metabolome_df[as.character(metabolome_df[[level]]) == classLabel, , drop = FALSE]
+
+  # Deduplicate by InChiKey
+  if ("InChiKeys" %in% colnames(filtered)) {
+    filtered <- filtered[!duplicated(filtered$InChiKeys), , drop = FALSE]
+  }
+
+  if (nrow(filtered) == 0) {
+    return(paste0("<b>Class: ", classLabel, "</b><br>No compounds found."))
+  }
+
+  tax_cols <- c("Kingdoms", "Super_classes", "Classes", "Sub_classes")
+  display_cols <- tax_cols[tax_cols %in% colnames(filtered)]
+  has_intensity <- "Intensity" %in% colnames(filtered)
+  headers <- c(display_cols, if (has_intensity) "Intensity (Sum)" else NULL, "Compound")
+
+  html <- paste0(
+    "<b>Class: ", classLabel, " &nbsp;&nbsp; Group: ", group, "</b><br>",
+    "<table id='metabo-detail-table' style='border-collapse:collapse; font-size:12px; margin-top:8px;'>",
+    "<tr>",
+    paste0("<th style='padding:4px 8px; border:1px solid #ccc; background:#f0f0f0;'>",
+           headers, "</th>", collapse = ""),
+    "</tr>"
+  )
+
+  max_rows <- min(nrow(filtered), 100L)
+  for (i in seq_len(max_rows)) {
+    cell_vals <- vapply(display_cols, function(col) {
+      as.character(filtered[[col]][i])
+    }, FUN.VALUE = character(1L))
+
+    intensity_cell <- if (has_intensity) {
+      val <- filtered[["Intensity"]][i]
+      if (is.numeric(val)) formatC(val, digits = 3, format = "e") else as.character(val)
+    } else NULL
+
+    cmpd_name <- if ("Compound" %in% colnames(filtered)) trimws(as.character(filtered$Compound[i])) else ""
+    hmdb_id   <- if ("HIMDBID"  %in% colnames(filtered)) trimws(as.character(filtered$HIMDBID[i]))  else ""
+    cmpd_cell <- if (nchar(cmpd_name) > 0 && nchar(hmdb_id) > 0) {
+      paste0("<a href='https://hmdb.ca/metabolites/", hmdb_id,
+             "' target='_blank'>", cmpd_name, "</a>")
+    } else if (nchar(cmpd_name) > 0) {
+      cmpd_name
+    } else {
+      ""
+    }
+
+    html <- paste0(html, "<tr>",
+      paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>",
+             cell_vals, "</td>", collapse = ""),
+      if (!is.null(intensity_cell)) paste0("<td style='padding:4px 8px; border:1px solid #ccc;'>", intensity_cell, "</td>") else "",
+      "<td style='padding:4px 8px; border:1px solid #ccc;'>", cmpd_cell, "</td>",
+      "</tr>")
+  }
+  html <- paste0(html, "</table>")
+  return(html)
+}
+
+
+.getExposomeMetricCol <- function(res, mode = "count"){
+  mode <- tolower(mode)
+  if(mode == "intensity" && "Intensity" %in% colnames(res)){
+    return("Intensity")
+  }
+
+  if("Number" %in% colnames(res)){
+    return("Number")
+  }
+
+  if("Intensity" %in% colnames(res)){
+    return("Intensity")
+  }
+
+  return(NULL)
+}
+
+extratExposomeClassNameByMode <- function(group, mode = "count"){
+  res <- ov_qs_read("exposome_classification_summary.qs")
+  metric_col <- .getExposomeMetricCol(res, mode)
+
+  if(is.null(metric_col)){
+    return(character(0))
+  }
+
+  metric_vals <- as.numeric(res[[metric_col]])
+  if(group == "All"){
+    res_nms <- unique(res$Categories)
+    res_num <- vapply(res_nms, function(x){sum(metric_vals[res$Categories == x], na.rm = TRUE)}, FUN.VALUE = numeric(1L))
+  } else {
+    idx <- res$Group == group
+    res_num <- metric_vals[idx]
+    res_nms <- res$Categories[idx]
+  }
+
+  keep_idx <- !is.na(res_nms)
+  res_nms <- res_nms[keep_idx]
+  res_num <- res_num[keep_idx]
+
+  res_idx <- order(res_num, decreasing = TRUE)
+  return(res_nms[res_idx])
+}
+
+extratExposomeClassValueByMode <- function(group, mode = "count"){
+  res <- ov_qs_read("exposome_classification_summary.qs")
+  metric_col <- .getExposomeMetricCol(res, mode)
+
+  if(is.null(metric_col)){
+    return(numeric(0))
+  }
+
+  metric_vals <- as.numeric(res[[metric_col]])
+  if(group == "All"){
+    res_nms <- unique(res$Categories)
+    res_num <- vapply(res_nms, function(x){sum(metric_vals[res$Categories == x], na.rm = TRUE)}, FUN.VALUE = numeric(1L))
+  } else {
+    idx <- res$Group == group
+    res_num <- metric_vals[idx]
+    res_nms <- res$Categories[idx]
+  }
+
+  keep_idx <- !is.na(res_nms)
+  res_num <- res_num[keep_idx]
+
+  res_idx <- order(res_num, decreasing = TRUE)
+  return(res_num[res_idx])
+}
 
 extratExposomeClassName <- function(group){
-    res <- ov_qs_read("exposome_classification_summary.qs");
-
-    if(group == "All"){
-        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L)) 
-        res_nms <- unique(res$Categories)
-    } else {
-        res_num <- res$Number[res$Group == group]
-        res_nms <- res$Categories[res$Group == group]
-    }
-    
-    res_idx <- order(res_num, decreasing = TRUE)
-    res_nmsx <- res_nms[res_idx]
-    
-    return(res_nmsx)
+  return(extratExposomeClassNameByMode(group, "count"))
 }
 
 extratExposomeClassNumber <- function(group){
-    res <- ov_qs_read("exposome_classification_summary.qs");
-    if(group == "All"){
-        res_num <- vapply(unique(res$Categories), function(x){as.integer(sum(res$Number[res$Categories == x]))}, FUN.VALUE = integer(1L))        
-    } else {
-        res_num <- res$Number[res$Group == group]
-    }
-    
-    res_idx <- order(res_num, decreasing = TRUE)
-    res_numx <- res_num[res_idx]
-    return(res_numx)
+  return(extratExposomeClassValueByMode(group, "count"))
 }
 
 
@@ -3477,6 +3882,7 @@ extratMetabolomeClassName <- function(group, level, merge_ratio=0){
         metabolome_df <- metabolome_cls[[group]]
     }
     
+    metabolome_df <- metabolome_df[!duplicated(metabolome_df$InChiKeys), ]
     idx <- which(colnames(metabolome_df) == level)
     idx <- which(colnames(metabolome_df) == level)
     metabolome_tb<-table(metabolome_df[,idx])
@@ -3507,6 +3913,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
         metabolome_df <- metabolome_cls[[group]]
     }
 
+    metabolome_df <- metabolome_df[!duplicated(metabolome_df$InChiKeys), ]
     idx <- which(colnames(metabolome_df) == level)
     idx <- which(colnames(metabolome_df) == level)
     metabolome_tb<-table(metabolome_df[,idx])
@@ -3533,6 +3940,7 @@ extratMetabolomeClassNumber <- function(group, level, merge_ratio=0){
 }
 
 checkMS2annotationExists <- function(feature_idx){
+    if (!ov_qs_exists("compound_msn_results_index2MS1.qs")) return(0L)
     res_dt <- ov_qs_read("compound_msn_results_index2MS1.qs")
     if(feature_idx %in% res_dt[,1]){
         rowidx <- which(feature_idx == res_dt[,1])[1]

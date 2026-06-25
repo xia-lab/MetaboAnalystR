@@ -54,7 +54,7 @@ RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
 
 GetRandomNumbers <- function(){
   if(exists('.Random.seed')){
-    rm(.Random.seed);
+    rm(.Random.seed, envir = .GlobalEnv);
   }
   runif(1);
   return(.Random.seed[3:626]);
@@ -90,7 +90,14 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   h <- w*5/8;
   
   mSetObj$imgSet$rf.cls <- imgName;
-  
+
+  # Method-standard: persist the figure's underlying data table (OOB error rate
+  # per tree) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("rf_cls", as.data.frame(mSetObj$analSet$rf$err.rate)),
+    error = function(e) NULL)
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   #par(mfrow=c(2,1));
   par(mar=c(4,4,3,2));
@@ -132,14 +139,22 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   mSetObj <- .get.mSet(mSetObj);
   
   vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
+
+  # Method-standard: persist the figure's underlying data table (importance per
+  # feature) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("rf_imp", data.frame(Feature = names(vip.score), MeanDecreaseAccuracy = as.numeric(vip.score))),
+    error = function(e) NULL)
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
   }else if(width == 0){
     w <- 7;
-    
+
   }else{
-    w <- width;    
+    w <- width;
   }
   h <- w-1;
   mSetObj$imgSet$rf.imp <- imgName;
@@ -187,7 +202,14 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   cols <- ExpandSchema(cls, col.def);
   
   dist.res <- randomForest::outlier(mSetObj$analSet$rf);
-  
+
+  # Method-standard: persist the figure's underlying data table (outlying measure
+  # per sample) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("rf_outlier", data.frame(Sample = names(dist.res), Group = cls, OutlyingMeasure = as.numeric(dist.res))),
+    error = function(e) NULL)
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;

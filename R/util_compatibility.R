@@ -7,8 +7,8 @@
 #' User need to specify the type in the 2nd argument, type. This argument can be msdial, mzmine, asari and xcms
 #' Please note, if your original data does not contain meta information, you need to manually add them in the generated "metaboanalyst_input.csv" file
 #' The formatted file is 'sample in columns'.
-#' @param file_path 
-#' @param type 
+#' @param file_path file_path
+#' @param type type
 #' @param meta_data this is path to a table containing two columns, the first column is the sample names and second column is the group information
 #' @export
 PerformMS1ResultsFormatting <- function(file_path, type, meta_data = NA){

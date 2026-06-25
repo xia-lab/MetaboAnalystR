@@ -727,6 +727,8 @@ FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var
     ## store back
     mSetObj$dataSet$proc.cls <- mSetObj$dataSet$filt.cls <- cls
 
+    mSetObj$dataSet$blank.bool <- blank.subtraction
+
     ## ── summary message ────────────────────────────────────────────
     n.feat.after  <- ncol(int.mat)
     n.feat.removed <- n.feat.before - n.feat.after
@@ -1134,7 +1136,16 @@ GetMissingTestMsg <- function(mSetObj=NA, type){
         }
 
       miss.msg <- "";
-      kw.p <- .test.missing.sig(int.mat, cls);
+      blank_bool <- mSetObj$dataSet$blank.bool;
+      if(is.null(blank_bool)){
+        blank_bool <- FALSE
+      }
+      if(("BLANK" %in% levels(cls)) & blank_bool){
+        cls1 <- cls[cls != "BLANK", drop = TRUE]
+      } else {
+        cls1 <- cls
+      }
+      kw.p <- .test.missing.sig(int.mat, cls1);
       
       mSetObj$dataSet$missTest <- kw.p;
       mSetObj$msgSet$miss.msg <- paste0("Kruskal-Wallis test: <b>p = ", signif(kw.p, 3), "</b>.");
@@ -1207,9 +1218,9 @@ PlotMissingDistr <- function(mSetObj = NA,
                              groupCol = NULL) {
 
   require("ggplot2")
-  require("qs")
+  require("qs2")
   require("Cairo");
-  library(patchwork);
+  library("patchwork");
 
   ## -------- Retrieve data & completeness ------------------------------
   mSetObj <- .get.mSet(mSetObj)
@@ -1258,8 +1269,19 @@ PlotMissingDistr <- function(mSetObj = NA,
   }
 
   ## -------- Data frame for plotting -----------------------------------
-  df <- data.frame(Group = grp.vec, Percent = pct.missing)
-  df2 <- data.frame(Group = grp.vec, Average = smpl.avg);
+  blank_bool <- mSetObj$dataSet$blank.bool;
+  if(is.null(blank_bool)){
+    blank_bool <- FALSE
+  }
+
+  if(("BLANK" %in% levels(grp.vec)) & blank_bool){
+    grp.vec1 <- grp.vec[grp.vec != "BLANK", drop = TRUE]
+  } else {
+    grp.vec1 <- grp.vec
+  }
+  
+  df <- data.frame(Group = grp.vec1, Percent = pct.missing)
+  df2 <- data.frame(Group = grp.vec1, Average = smpl.avg);
 
   ## -------- Device size -----------------------------------------------
   height <- 3 + grp.num * 0.25           # simple heuristic
@@ -1339,7 +1361,7 @@ PlotMissingHeatmap <- function(mSetObj = NA,
                                    to.json = TRUE,
                                    to.image = TRUE) {
   require("ggplot2")
-  require("qs")
+  require("qs2")
   require("Cairo")
   
   mSetObj <- .get.mSet(mSetObj)
@@ -1453,7 +1475,7 @@ PlotMissingHeatmap <- function(mSetObj = NA,
 #' @export
 ExportMissingHeatmapJSON <- function(mSetObj = NA,
                                      fileName = "missing_heatmap.json") {
-  require("qs")
+  require("qs2")
   require("rjson")
 
   mSetObj <- .get.mSet(mSetObj)

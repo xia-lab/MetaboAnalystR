@@ -118,7 +118,13 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
     label = names(fc$inx.imp)
   )
-  
+
+  # Method-standard: persist the figure's underlying data table so the AI
+  # "Refine" control can re-plot from data and users can regenerate the figure
+  # in any tool. Helper lives in wf_method.R; guard so the public
+  # package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("fc", fc_data), error = function(e) NULL)
+
   # Get the maximum absolute fold change for plotting limits
   topVal <- max(abs(fc$fc.log))
   ylim <- c(-topVal, topVal)
@@ -443,6 +449,12 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     P.Value = mSetObj$analSet$tt$p.value,
     FDR = mSetObj$analSet$tt$fdr.p
   )
+
+  # Method-standard: persist the figure's underlying data table (p-value, FDR,
+  # significance per feature) for Refine + cross-tool regeneration. Helper lives
+  # in wf_method.R; guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("tt", tt_data), error = function(e) NULL)
+
   p.thresh <- mSetObj$analSet$tt$raw.thresh
   adjust.method <- mSetObj$analSet$tt$adjust.method
   # Assuming your data frame is set up correctly as tt_data
@@ -527,7 +539,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   # Note, volcano is based on t-tests and fold change analysis
   # When fc.method is "limma", use moderated t-test for p-values too
   tt.method <- ifelse(fc.method == "limma", "limma", "classical")
-  mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method);
+  if(.on.public.web){ Ttests.Anal(NA, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) } else { mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) };
   mSetObj <- .get.mSet(mSetObj);
   p.value <- mSetObj$analSet$tt$p.value;
 
@@ -539,7 +551,7 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
   p.log <- -log10(p.value);
 
   #### fc analysis
-  mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired, fc.method);
+  if(.on.public.web){ FC.Anal(NA, fcthresh, cmpType, paired, fc.method) } else { mSetObj <- FC.Anal(mSetObj, fcthresh, cmpType, paired, fc.method) };
   mSetObj <- .get.mSet(mSetObj);
   
   fcthresh = ifelse(fcthresh>1, fcthresh, 1/fcthresh);

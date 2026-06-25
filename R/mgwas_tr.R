@@ -74,6 +74,7 @@ my.edges <- as.data.frame(mir.resu[, c(1,3,5,6)])
 colnames(my.edges)[1:4] <- c("from", "to", "predicate", "pmid")
 
 # Create the graph with edge attributes
+require("igraph")
 mir.graph <- simplify(
   graph_from_data_frame(
     my.edges,

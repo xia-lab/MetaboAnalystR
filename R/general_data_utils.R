@@ -40,7 +40,15 @@ Reload.scripts.on.demand <- function(){
 
 .get.mSet <- function(obj=NA){
   if(.on.public.web){
-    return(mSetObj)
+    # Defensive lookup: get0() is a SINGLE hash lookup with a built-in
+    # fallback, so this is as cheap as the original lexical resolution
+    # (return(mSetObj)) but doesn't blow up when mSetObj hasn't been
+    # initialized yet — e.g. preRenderView hooks querying R state on a
+    # fresh session before any upload. Callers follow the idiomatic
+    # `mSetObj <- .get.mSet(...); if (is.null(mSetObj)) return(...)`
+    # pattern, so a NULL return propagates safely.
+    return(get0("mSetObj", envir = .GlobalEnv,
+                inherits = FALSE, ifnotfound = NULL))
   }else{
     return(obj);
   }
@@ -248,7 +256,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     load("params.rda");
     mSetObj$paramSet$mumDataContainsPval <<- 1;
     
-    mSetObj<-UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02);
+    if(.on.public.web){ UpdateInstrumentParameters(NA, peakParams$ppm, peakParams$polarity, "yes", 0.02); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- UpdateInstrumentParameters(mSetObj, peakParams$ppm, peakParams$polarity, "yes", 0.02) };
     mSetObj<-.rt.included(mSetObj, "seconds");
     #mSetObj<-Read.TextData(mSetObj, "metaboanalyst_input.csv", "colu", "disc");
     mSetObj<-.get.mSet(NA);
@@ -258,7 +266,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
 }
 
 .init.MummiMSet <- function(mSetObj) {  
-  mSetObj<-SetPeakFormat(mSetObj, "pvalue");
+  if(.on.public.web){ SetPeakFormat(NA, "pvalue"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakFormat(mSetObj, "pvalue") };
   #TableFormatCoerce("metaboanalyst_input.csv", "OptiLCMS", "mummichog");
   anal.type <<- "mummichog";
   api.base <<- "https://www.xialab.ca/api";
@@ -310,6 +318,9 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   if(file.exists("/data/sqlite/")){ #vip server
     url.pre <<- "/data/sqlite/";
     plink.path <<- "/home/glassfish/plink/";
+  }else if(nzchar(Sys.getenv("OMICS_LIB_DIR", "")) && dir.exists(Sys.getenv("OMICS_LIB_DIR", "")) && any(file.info(list.files(Sys.getenv("OMICS_LIB_DIR", ""), pattern = "\\.sqlite$", full.names = TRUE))$size > 0, na.rm = TRUE)){  # Docker shared library mount (OMICS_LIB_DIR)
+    url.pre <<- paste0(sub("/+$", "", Sys.getenv("OMICS_LIB_DIR", "")), "/");
+    plink.path <<- paste0(sub("/+$", "", Sys.getenv("OMICS_LIB_DIR", "")), "/plink/");
   }else if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
     url.pre <<- "/home/glassfish/sqlite/";
     plink.path <<- "/home/glassfish/plink/";
@@ -557,10 +568,47 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   
   if(anal.type == "mummichog"){
     is.rt <- mSetObj$paramSet$mumRT;
-    if(!is.rt){
-      mzs <- as.numeric(var.nms);
-      if(sum(is.na(mzs) > 0)){
+
+    # Accept '@' as an alias for '__' when separating m/z from retention
+    # time. Many LC-MS tools (XCMS, mzmine peakml export, OpenMS) emit
+    # 89.0243@30.62 by default; rejecting them forced users to rename
+    # features by hand. Normalize to '__' so every downstream splitter
+    # in spectra_processing.R / util_compatibility.R / util_listheatmap.R /
+    # meta_pathway.R works on a single canonical form. Only converts when
+    # the '@' sits between two numeric tokens so legitimate compound
+    # names containing '@' (rare but possible) aren't mangled.
+    at.mask <- grepl("^\\s*[0-9.eE+-]+@[0-9.eE+-]+\\s*$",
+                     as.character(var.nms));
+    if(any(at.mask)){
+      new.nms <- as.character(var.nms);
+      new.nms[at.mask] <- gsub("@", "__", new.nms[at.mask], fixed = TRUE);
+      message("[INFO] Normalized '@' separator to '__' in ",
+              sum(at.mask), " feature names (m/z@RT → m/z__RT).");
+      var.nms <- new.nms;
+      colnames(conc) <- var.nms;
+    }
+
+    # Auto-detect m/z__RT feature names. If RT is encoded in the labels but the
+    # user picked "no RT", flip mumRT on rather than rejecting the upload —
+    # rtIncluded on the form is easy to miss when the data already carries RT.
+    if(!isTRUE(is.rt) && any(grepl("__", as.character(var.nms), fixed = TRUE))){
+      mSetObj$paramSet$mumRT <- TRUE;
+      rt.type <- mSetObj$paramSet$mumRT.type;
+      if(is.null(rt.type) || is.na(rt.type) || !rt.type %in% c("minutes","seconds")){
+        mSetObj$paramSet$mumRT.type <- "seconds";
+      }
+      is.rt <- TRUE;
+      message("[INFO] Retention time detected in feature names (m/z__RT). Treating RT as ",
+              mSetObj$paramSet$mumRT.type, ".");
+    }
+
+    if(!isTRUE(is.rt)){
+      mzs <- suppressWarnings(as.numeric(var.nms));
+      bad.inx <- is.na(mzs);
+      if(any(bad.inx)){
         AddErrMsg("Make sure that feature names are numeric values (mass or m/z)!");
+        AddErrMsg(paste("First non-numeric feature names:",
+                        paste(utils::head(var.nms[bad.inx], 3), collapse = ", ")));
         return(0);
       }
     }
@@ -793,6 +841,17 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=default.dpi, width=NA){
   #save.image("plot.RData");
   mSetObj <- .get.mSet(mSetObj);
+
+  ## Function-scoped safe column extractor: tries exact name then make.names
+  ## version. Returns NULL (not an error) when neither matches so callers can
+  ## fall back instead of producing a column-less data.frame → ggplot error.
+  .safe.col <- function(mat, nm) {
+    if (is.null(mat) || is.null(nm) || nchar(nm) == 0) return(NULL)
+    if (nm %in% colnames(mat)) return(mat[, nm])
+    nm2 <- make.names(nm)
+    if (nm2 %in% colnames(mat)) return(mat[, nm2])
+    NULL
+  }
   
   if(is.null(mSetObj$paramSet$cmpdSummaryType)){
     mSetObj$paramSet$cmpdSummaryType <- "violin";
@@ -841,12 +900,26 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
   mSetObj$imgSet$cmpdSum <- imgName;
   
   if(!mSetObj$dataSet$design.type %in% c("time", "time0", "multi") || meta2 == "NA"){
-    ## Load processed data and align to normalized samples
-    proc.data <- ov_qs_read("data_proc.qs")
-    smpl.nms  <- rownames(mSetObj$dataSet$norm)
-    proc.data <- proc.data[smpl.nms, , drop = FALSE]
-    
-    ## Open Cairo device
+    ## Load processed data with graceful fallback (data_proc.qs may be absent for
+    ## some workflow paths; norm is the authoritative fallback)
+    proc.data <- tryCatch({
+      pd <- ov_qs_read("data_proc.qs")
+      pd[rownames(mSetObj$dataSet$norm), , drop = FALSE]
+    }, error = function(e) NULL)
+
+    ## Resolve values BEFORE opening Cairo — prevents empty image files when the
+    ## compound name isn't found in either matrix (e.g. make.names mismatch)
+    orig.vals <- .safe.col(proc.data, cmpdNm)
+    if (is.null(orig.vals)) orig.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    norm.vals <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    if (is.null(norm.vals)) norm.vals <- orig.vals
+    if (is.null(orig.vals) || length(orig.vals) == 0) {
+      message("[PlotCmpdSummary] feature '", cmpdNm,
+              "' not found in proc.data or norm — skipping plot")
+      return(invisible(imgName))
+    }
+
+    ## Open Cairo only after confirming data is available
     Cairo::Cairo(
       file   = imgName,
       unit   = "in",
@@ -856,14 +929,14 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       type   = format,
       bg     = "white"
     )
-    
+
     ## Precompute color scheme for discrete cases
     col <- unique(GetColorSchema(sel.cls))
-    
+
     ## If grouping is discrete
     if (cls.type == "disc") {
       # ORIGINAL concentrations
-      df.orig <- data.frame(value = proc.data[, cmpdNm], group = factor(sel.cls))
+      df.orig <- data.frame(value = orig.vals, group = factor(sel.cls))
       p.orig <- ggplot(df.orig, aes(x = group, y = value, fill = group)) +
         (if (plotType == "violin") geom_violin(trim = FALSE)
          else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
@@ -882,7 +955,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
         )
       
       # NORMALIZED concentrations
-      df.norm <- data.frame(value = mSetObj$dataSet$norm[, cmpdNm], group = factor(sel.cls))
+      df.norm <- data.frame(value = norm.vals, group = factor(sel.cls))
       p.norm <- ggplot(df.norm, aes(x = group, y = value, fill = group)) +
         (if (plotType == "violin") geom_violin(trim = FALSE)
          else geom_boxplot(outlier.shape = NA, outlier.colour = NA)) +
@@ -906,7 +979,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
       xvar        <- as.numeric(as.character(sel.cls))
       color.range <- range(xvar, na.rm = TRUE)
       
-      df.orig <- data.frame(x = xvar, y = proc.data[, cmpdNm])
+      df.orig <- data.frame(x = xvar, y = orig.vals)
 
       p.orig <- ggplot(df.orig, aes(x = x, y = y)) +
         geom_point(size = 1.8, color = "black") +        # points are black
@@ -921,7 +994,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
             legend.position = "none"
         );
 
-      df.norm <- data.frame(x = xvar, y = mSetObj$dataSet$norm[, cmpdNm])
+      df.norm <- data.frame(x = xvar, y = norm.vals)
 
       p.norm <- ggplot(df.norm, aes(x = x, y = y)) +
         geom_point(size = 1.8, color = "black") +  # points are now all black
@@ -984,7 +1057,12 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
     xvar <- as.numeric(as.character(xvar))
     
     ## y-axis = compound abundance
-    yvar <- mSetObj$dataSet$norm[, cmpdNm]
+    yvar <- .safe.col(mSetObj$dataSet$norm, cmpdNm)
+    if (is.null(yvar)) {
+      message("[PlotCmpdSummary/multi] feature '", cmpdNm, "' not found in norm — skipping")
+      dev.off()
+      return(imgName)
+    }
     
     ## secondary variable (color, shape, etc.)
     group.var <- mSetObj$dataSet$meta.info[, meta2]
@@ -1167,7 +1245,11 @@ Setup.MapData <- function(mSetObj=NA, qvec){
   mSetObj$dataSet$cmpd <- qvec;  
   # Export as one-column CSV (no header, plain values)
   write.csv(qvec, file = "datalist.csv", row.names = FALSE, col.names = FALSE, quote = FALSE)
-  
+  if(mSetObj$analSet$type=="msetssp"){
+    # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
+    # These are in the same format as nm.map$hmdb used for other ORA modes
+    qvec -> mSetObj$dataSet$ssp.cmpd;
+  }
   return(.set.mSet(mSetObj))
 }
 
@@ -1234,7 +1316,7 @@ Read.ListFileData <- function(mSetObj=NA, filePath, sep="auto", has.header=FALSE
     return(0);
   }
 
-  mSetObj <- Setup.MapData(mSetObj, qvec);
+  if(.on.public.web){ Setup.MapData(NA, qvec); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Setup.MapData(mSetObj, qvec) };
   return(1);
 }
 # this is only for SSP: for those with conc above threshold
@@ -1442,7 +1524,7 @@ GetNMDRStudy <- function(mSetObj=NA, StudyID){
 }
 
 SetAnalType <- function(mSetObj=NA, anal.type){
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- .get.mSet(mSetObj);
     mSetObj$analSet$type <- anal.type;
     anal.type <<- anal.type;
     return(.set.mSet(mSetObj))
@@ -1522,10 +1604,10 @@ Read.TextDataDose <- function(mSetObj=NA, filePath, format="rowu",
 Read.TextDataDoseWithMeta <- function(mSetObj=NA, filePath, metaPath, format="rowu", 
                           lbl.type="disc", nmdr = FALSE){
     mSetObj <- Read.TextDataTs(mSetObj, filePath, format);
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- .get.mSet(mSetObj);
 
     mSetObj <- ReadMetaData(mSetObj, metaPath);
-    mSetObj <- .get.mSet(mSet);
+    mSetObj <- .get.mSet(mSetObj);
 
     conc <- ov_qs_read(file="data_orig_0.qs");
     int.mat <- conc;

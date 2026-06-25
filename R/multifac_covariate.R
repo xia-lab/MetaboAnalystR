@@ -589,7 +589,7 @@ CovariateScatter.Anal <- function(mSetObj,
     }
   }
   
-  covariates <- covariates[match(colnames(feature_table), rownames(covariates)),]
+  covariates <- covariates[match(colnames(feature_table), rownames(covariates)), , drop = FALSE]
   if (block != "NA"){    
     if(mSetObj$dataSet$meta.types[block] == "cont"){
       AddErrMsg("Blocking factor can not be continuous data type.")

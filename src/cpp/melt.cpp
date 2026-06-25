@@ -99,15 +99,24 @@ SEXP rep_each_(SEXP x, int n) {
       return output;
       break;
     }
-      DO_REP_EACH(STRSXP, SEXP, STRING_PTR);
     case LGLSXP:
       DO_REP_EACH(LGLSXP, int, LOGICAL);
     case CPLXSXP:
       DO_REP_EACH(CPLXSXP, Rcomplex, COMPLEX);
     case RAWSXP:
       DO_REP_EACH(RAWSXP, Rbyte, RAW);
-    case VECSXP:
-      DO_REP_EACH(VECSXP, SEXP, STRING_PTR);
+    case VECSXP: {
+      int counter = 0;
+      Shield<SEXP> output(Rf_allocVector(VECSXP, nout));
+      for (int i = 0; i < xn; ++i) {
+        for (int j = 0; j < n; ++j) {
+          SET_VECTOR_ELT(output, counter, VECTOR_ELT(x, i));
+          ++counter;
+        }
+      }
+      return output;
+      break;
+    }
     default: {
       stop("Unhandled RTYPE");
       return R_NilValue;
@@ -288,12 +297,10 @@ List melt_dataframe(const DataFrame& data,
   // 'value' is made by concatenating each of the 'value' variables
   output[n_id + 1] = concatenate(data, measure_ind, factorsAsStrings);
   if (!Rf_isNull(measure_attributes)) {
-    SET_ATTRIB(output[n_id + 1], measure_attributes);
-    // we also need to make sure the OBJECT bit is set for other 'object' types
-    // see: http://stackoverflow.com/questions/24059460/melt-data-frame-changes-behavior-how-posixct-columns-are-printed
-    // if we've entered this code block, the measure_attributes has been
-    // populated because all value variables have identical attributes
-    SET_OBJECT(output[n_id + 1], OBJECT(data[measure_ind[0]]));
+    // Set attributes using the public R API for compatibility with modern headers.
+    for (SEXP attr = measure_attributes; attr != R_NilValue; attr = CDR(attr)) {
+      Rf_setAttrib(output[n_id + 1], TAG(attr), CAR(attr));
+    }
   }
 
   // Make the List more data.frame like

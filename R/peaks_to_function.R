@@ -95,9 +95,10 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   
   # first check if mode included
   mumDataContainsMode <- "mode" %in% user_cols;
-  
+  mode.info <- NULL;
+
   if(mumDataContainsMode){
-    mode.info <- input$mode  
+    mode.info <- input$mode
     input <- subset(input, select=-mode)
     user_cols <- gsub("[^[:alnum:]]", "", colnames(input))
   }
@@ -179,9 +180,11 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   if(mSetObj$dataSet$mode == "positive"){
     mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
   }else if(mSetObj$dataSet$mode == "negative"){
-    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig) )
-  }else{ # mixed
+    mSetObj$dataSet$pos_inx <- rep(FALSE, nrow(mSetObj$dataSet$mummi.orig))
+  }else if(!is.null(mode.info)){ # mixed with explicit mode column
     mSetObj$dataSet$pos_inx <- mode.info == "positive"
+  }else{ # mixed but no mode column — default positive
+    mSetObj$dataSet$pos_inx <- rep(TRUE, nrow(mSetObj$dataSet$mummi.orig))
   }
   
   mSetObj$paramSet$mumRT = rt;
@@ -319,8 +322,7 @@ Convert2Mummichog <- function(mSetObj=NA,
                               rt.type="seconds",
                               test="tt", mode=NA){
 
-  # If PerformMumTableStat already computed analSet$tt (limma-based), use it
-  # regardless of test parameter — it contains p.value, t.score, fdr.p, logfc
+  # Reuse analSet$tt when upstream stats already computed it
   if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value) && test %in% c("tt", "aov")) {
     tt.pval <- sort(mSetObj$analSet$tt$p.value);
     fdr <- p.adjust(tt.pval, "fdr")
@@ -603,7 +605,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
     if(.on.public.web){
       return(SanityCheckData(NA));
     }else{
-      mSetObj <- SanityCheckData(mSetObj)
+      if(.on.public.web){ SanityCheckData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckData(mSetObj) }
       return(.set.mSet(mSetObj));
     }
   }
@@ -4084,7 +4086,7 @@ WriteMummichogFeaturePathMap <- function(mSetObj = NA, file.name = "mummichog_ma
     return(0)
   }
 
-  matched_res <- try(qs::qread("mum_res.qs"), silent = TRUE)
+  matched_res <- try(qs2::qs_read("mum_res.qs"), silent = TRUE)
   if (inherits(matched_res, "try-error") || is.null(matched_res) || !is.data.frame(matched_res) || nrow(matched_res) == 0) {
     return(empty_out())
   }
@@ -4580,12 +4582,12 @@ ProcessConvert2Mummichog <- function(mSetObj=NA, is.rt=F, mumRT.type="seconds", 
     is.rt <- mSetObj$paramSet$mumRT;
     mSetObj <- .get.mSet();
     .on.public.web <<- F;
-    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode);
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     SetPeakFormat(mSetObj, "mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt");
     
-    mSetObj<-Read.PeakListData(mSetObj, filename);
-    mSetObj<-SanityCheckMummichogData(mSetObj);
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
     .on.public.web <<- T;
     return(.set.mSet(mSetObj));
 }
@@ -4599,12 +4601,11 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
 
   mSetObj <- .get.mSet(mSetObj);
 
-  # If PerformMumTableStat already computed analSet$tt, reuse it
   if (!is.null(mSetObj$analSet$tt) && !is.null(mSetObj$analSet$tt$p.value)) {
     res <- mSetObj;
     ngrps <- length(levels(mSetObj$dataSet$cls));
     testmeth <- ifelse(ngrps > 2, "aov", "tt");
-    message("Reusing existing stat results from PerformMumTableStat");
+    message("Reusing existing stat results from upstream analSet$tt");
   } else if (ranking.method == "limma" && length(levels(mSetObj$dataSet$cls)) < 3) {
     # Use limma moderated statistics
     limma.res <- GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls);
@@ -4644,13 +4645,13 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
     mSetObj <- .get.mSet();
     .on.public.web <<- F;
     
-    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode);
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     
     SetPeakFormat(mSetObj, "mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt");
     
-    mSetObj<-Read.PeakListData(mSetObj, filename);
-    mSetObj<-SanityCheckMummichogData(mSetObj);
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) };
     .on.public.web <<- T;
 
     # don't forget the original!
@@ -4668,285 +4669,209 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
       return(0);
     }
     
-    mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode);
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, testmeth, mSetObj$dataSet$mode) };
     mSetObj$paramSet$peakFormat <- "mpt"; # SetPeakFormat("mpt")
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
-    mSetObj <- Read.PeakListData(mSetObj, filename);
-    mSetObj <- SanityCheckMummichogData(mSetObj)
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
   }
   return(.set.mSet(mSetObj));
 }
 
-#' Perform statistical analysis for table input (ranking only, no conversion)
-#' @description Computes t-test/ANOVA or limma statistics for feature ranking.
-#'   Results are stored in mSetObj$analSet$tt for later use by Convert2Mummichog.
-#' @param mSetObj mSet Object
-#' @param ranking.method "classical" or "limma"
-#' @return Number of significant features (FDR < 0.05)
+
+
+#' Export ranked peak list to mprt-format TSV for downstream chained mummichog
+#'
+#' @description Writes a tab-delimited file with columns m.z, p.value, t.score, r.t
+#' that the standalone MS Peaks to Pathways pipeline (Read.PeakListData → SetPeakFormat("mprt"))
+#' can consume directly. Source order: analSet$tt (limma/t-test/ANOVA via upstream stats),
+#' then on-disk covariate_result.qs (Linear Models for MF). Feature names are parsed for the
+#' "mz__rt" / "mz@rt" separator convention to recover m.z and r.t columns.
+#'
+#' This is the chain-artifact materializer: upstream stats / MF workflows call it at pass-end;
+#' the downstream chained mummichog workflow reads the resulting file as a fresh Phase A input,
+#' so each workflow remains a self-contained, resumable project with no shared-R-session contract.
+#'
+#' @param mSetObj mSet Object holding the upstream pass's analSet
+#' @param outPath Absolute path to write the TSV (overwritten if present)
+#' @return outPath on success; NULL on failure (writes [WARN] to message stream)
 #' @export
-PerformMumTableStat <- function(mSetObj = NA, ranking.method = "classical", pval.cutoff = 0.05, fc.cutoff = 0,
-                                ref.group = NA, contrast.group = NA, covariates = NA) {
+Export.RankedPeakListMprt <- function(mSetObj = NA, outPath = NA) {
   mSetObj <- .get.mSet(mSetObj)
-  require(limma)
-  cls <- mSetObj$dataSet$cls
-  # relevel() only supports unordered factors; metadata columns can be ordered.
-  cls <- factor(cls, levels = levels(cls), ordered = FALSE)
-  x <- mSetObj$dataSet$norm
-  ngrps <- length(levels(cls))
 
-  # Set reference group
-  if (!is.na(ref.group) && ref.group %in% levels(cls)) {
-    cls <- relevel(cls, ref = ref.group)
+  if (is.na(outPath) || !nzchar(outPath)) {
+    message("[Export.RankedPeakListMprt] WARN outPath missing"); return(NULL)
   }
-  ref <- levels(cls)[1]
 
-  # Determine contrast group for logFC
-  if (!is.na(contrast.group) && contrast.group %in% levels(cls)) {
-    cont <- contrast.group
-  } else {
-    cont <- levels(cls)[2]
-  }
-  
-  # Limma contrast names must be syntactically valid in R.
-  cls.levels <- levels(cls)
-  cls.safe <- make.names(cls.levels, unique = TRUE)
-  names(cls.safe) <- cls.levels
-  ref.safe <- cls.safe[ref]
-  cont.safe <- cls.safe[cont]
+  feat_nm <- NULL; pvec <- NULL; tvec <- NULL
 
-  # Build covariate matrix if specified (only used with limma method)
-  has.cov <- !identical(covariates, NA) && length(covariates) > 0 && !is.na(covariates[1])
-  cov.mat <- NULL
-  if (has.cov && ranking.method == "limma" && !is.null(mSetObj$dataSet$meta.info)) {
-    meta <- mSetObj$dataSet$meta.info
-    cov.cols <- intersect(covariates, colnames(meta))
-    if (length(cov.cols) > 0) {
-      cov.list <- list()
-      for (cn in cov.cols) {
-        v <- meta[, cn]
-        if (is.numeric(v)) {
-          cov.list[[cn]] <- v
-        } else {
-          cov.list[[cn]] <- as.factor(v)
-        }
-      }
-      cov.mat <- data.frame(cov.list, row.names = rownames(meta))
-      message("Covariates included in limma model: ", paste(cov.cols, collapse = ", "))
+  # Source priority: covariate-adjusted limma first (MF), then unadjusted t-test
+  # / ANOVA / limma (stat). When the MF workflow ran, both covariate_result.qs
+  # AND analSet$tt are present — the unadjusted tt would mis-represent the user's
+  # covariate-adjusted intent, so the file-on-disk takes precedence.
+  if (file.exists("covariate_result.qs")) {
+    rest <- tryCatch(ov_qs_read("covariate_result.qs"), error = function(e) NULL)
+    if (!is.null(rest) && "P.Value" %in% colnames(rest)) {
+      feat_nm <- rownames(rest)
+      pvec    <- as.numeric(rest$P.Value)
+      tvec    <- if ("t" %in% colnames(rest)) as.numeric(rest$t)
+                 else if ("F" %in% colnames(rest)) as.numeric(rest$F)
+                 else rep(0, length(pvec))
     }
-  } else if (has.cov && ranking.method != "limma") {
-    message("Note: covariates are ignored for classical t-test/ANOVA method")
   }
-
-  if (ranking.method == "limma" || ngrps == 2) {
-    # Limma: design with reference + optional covariates
-    if (!is.null(cov.mat)) {
-      design <- model.matrix(~0 + cls + ., data = cov.mat)
-    } else {
-      design <- model.matrix(~0 + cls)
-    }
-    colnames(design)[1:ngrps] <- unname(cls.safe)
-    contrast.name <- paste0(cont.safe, "-", ref.safe)
-    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
-    fit <- lmFit(t(as.matrix(x)), design)
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit)
-    tt <- topTable(fit, number = Inf, sort.by = "none")
-    p.value <- tt$P.Value
-    names(p.value) <- rownames(tt)
-    t.score <- tt$t
-    names(t.score) <- rownames(tt)
-    fdr.p <- tt$adj.P.Val
-    names(fdr.p) <- rownames(tt)
-    logfc <- tt$logFC
-    names(logfc) <- rownames(tt)
-    cov.label <- if (!is.null(cov.mat)) paste0(" adj:", paste(colnames(cov.mat), collapse=",")) else ""
-    method.label <- paste0("limma (", cont, " vs ", ref, cov.label, ")")
-
-  } else {
-    # Classical multi-group: ANOVA for overall p-values + limma for logFC of specific contrast (no covariates)
-    mSetObj <- ANOVA.Anal(mSetObj, F, pval.cutoff, FALSE)
-    mSetObj <- .get.mSet(mSetObj)
-    aov.res <- mSetObj$analSet$aov
-    p.value <- aov.res$p.value
-    fdr.p <- aov.res$fdr.p
-    t.score <- -log10(p.value)
-    names(t.score) <- names(p.value)
-
-    # logFC from specific contrast via limma (no covariates for classical method)
-    design <- model.matrix(~0 + cls)
-    colnames(design)[1:ngrps] <- unname(cls.safe)
-    contrast.name <- paste0(cont.safe, "-", ref.safe)
-    contrast.matrix <- makeContrasts(contrasts = contrast.name, levels = colnames(design))
-    fit <- lmFit(t(as.matrix(x)), design)
-    fit <- contrasts.fit(fit, contrast.matrix)
-    fit <- eBayes(fit)
-    tt.first <- topTable(fit, number = Inf, sort.by = "none")
-    logfc <- tt.first$logFC
-    names(logfc) <- rownames(tt.first)
-    logfc <- logfc[names(p.value)]
-    method.label <- paste0("ANOVA + logFC(", cont, " vs ", ref, ")")
-  }
-
-  # Apply thresholds
-  sig.inx <- fdr.p < pval.cutoff
-  if (fc.cutoff > 0) sig.inx <- sig.inx & (abs(logfc) > fc.cutoff)
-
-  # Store in analSet$tt format for Convert2Mummichog compatibility
-  mSetObj$analSet$tt <- list(
-    p.value = p.value, p.log = -log10(p.value), t.score = t.score,
-    fdr.p = fdr.p, logfc = logfc,
-    sig.num = sum(sig.inx, na.rm = TRUE), inx.imp = sig.inx
-  )
-
-  # Save result table as CSV and Arrow for detailed view
-  tryCatch({
-    result.mat <- data.frame(
-      Log2FC = signif(logfc, 5),
-      P.Value = signif(p.value, 5),
-      FDR = signif(fdr.p, 5),
-      negLogP = signif(-log10(p.value), 5)
-    )
-    rownames(result.mat) <- names(p.value)
-    ord.inx <- order(p.value)
-    result.mat <- result.mat[ord.inx, ]
-    fast.write.csv(result.mat, file = "mum_stat_result.csv")
-    ov_qs_save(result.mat, "mum_stat_result_mat.qs")
-    tryCatch(ExportResultMatArrow(result.mat, "mum_stat_result"), error = function(e) {})
-  }, error = function(e) { message("Failed to save stat result table: ", e$message) })
-
-  # Save volcano JSON for interactive Chart.js rendering
-  tryCatch({
-    volcano.data <- list(
-      names = names(p.value),
-      logFC = as.numeric(logfc),
-      negLogP = as.numeric(-log10(p.value)),
-      fdr = as.numeric(fdr.p)
-    )
-    jsonObj <- RJSONIO::toJSON(volcano.data)
-    sink("mum_volcano.json")
-    cat(jsonObj)
-    sink()
-  }, error = function(e) { message("Failed to save volcano JSON: ", e$message) })
-
-  message("Mummichog ranking: ", method.label, ". Sig: ", sum(sig.inx, na.rm = TRUE))
-  .set.mSet(mSetObj)
-  return(sum(sig.inx, na.rm = TRUE))
-}
-
-#' Compute p-value cutoff to exactly capture significant features from PerformMumTableStat
-#' @description After running PerformMumTableStat, find the p-value threshold that
-#'   captures all features where inx.imp == TRUE, keeping background peaks for permutation analysis
-#' @param mSetObj mSet Object
-#' @export
-GetPvalCutoffForSigFeatures <- function(mSetObj = NA) {
-  mSetObj <- .get.mSet(mSetObj)
-
-  # Check if analSet$tt exists with significance index
-  if (is.null(mSetObj$analSet$tt) || is.null(mSetObj$analSet$tt$inx.imp)) {
-    AddErrMsg("No statistical analysis results found. Run PerformMumTableStat first.")
-    return(0)
-  }
-
-  # Get significant features based on FDR and FC cutoffs
-  sig.inx <- mSetObj$analSet$tt$inx.imp
-  if (sum(sig.inx) == 0) {
-    AddErrMsg("No significant features found from statistical analysis.")
-    return(0)
-  }
-
-  # Get p-values for significant features
-  sig.pvals <- mSetObj$analSet$tt$p.value[sig.inx]
-
-  # Find the maximum p-value among significant features
-  # This will be our cutoff - it captures all significant features
-  max.sig.pval <- max(sig.pvals, na.rm = TRUE)
-
-  # Add small buffer to ensure all are included
-  cutoff <- max.sig.pval * 1.01
-
-  message("[PRO] Computed p-value cutoff: ", signif(cutoff, 4), " to capture ", sum(sig.inx), " significant features")
-
-  return(cutoff)
-}
-
-#' Plot volcano for mummichog table input
-#' @description Plots logFC vs -log10(p) from the statistical analysis results
-#' @param mSetObj mSet Object
-#' @param imgName Image file name prefix
-#' @param dpi Resolution
-#' Get mummichog stat result table data for details view
-#' @export
-GetMumStatRowNames <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(rownames(mat))
-}
-#' @export
-GetMumStatColNames <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(colnames(mat))
-}
-#' @export
-GetMumStatMat <- function() {
-  mat <- ov_qs_read("mum_stat_result_mat.qs")
-  return(as.matrix(mat))
-}
-
-#' PlotMumVolcano
-#' @param format Image format
-#' @export
-PlotMumVolcano <- function(mSetObj = NA, imgName, dpi = 150, format = "png", pval.cutoff = 0.05, fc.cutoff = 0) {
-  require(ggplot2)
-  mSetObj <- .get.mSet(mSetObj)
-  tt <- mSetObj$analSet$tt
-  if (is.null(tt)) { return(0) }
-
-  p.val <- tt$p.value
-  fdr <- if (!is.null(tt$fdr.p)) tt$fdr.p else p.adjust(p.val, "fdr")
-
-  # Use stored logFC if available, otherwise compute
-  if (!is.null(tt$logfc)) {
-    logfc <- tt$logfc[names(p.val)]
-  } else {
-    limma.res <- tryCatch(GetLimmaFCandP(mSetObj$dataSet$norm, mSetObj$dataSet$cls), error = function(e) NULL)
-    if (!is.null(limma.res)) {
-      logfc <- limma.res$logFC[names(p.val)]
-    } else {
-      logfc <- rep(0, length(p.val))
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    tt <- mSetObj$analSet$tt
+    if (!is.null(tt) && !is.null(tt$p.value) && length(tt$p.value) > 0) {
+      feat_nm <- names(tt$p.value)
+      pvec    <- as.numeric(tt$p.value)
+      tvec    <- if (!is.null(tt$t.score)) as.numeric(tt$t.score) else rep(0, length(pvec))
     }
   }
 
-  sig <- fdr < pval.cutoff
-  if (fc.cutoff > 0) sig <- sig & (abs(logfc) > fc.cutoff)
-
-  # Classify features as Up, Down, or Not significant
-  status <- rep("Not significant", length(p.val))
-  status[sig & logfc > 0] <- "Up"
-  status[sig & logfc < 0] <- "Down"
-  status <- factor(status, levels = c("Up", "Down", "Not significant"))
-
-  df <- data.frame(logFC = logfc, negLogP = -log10(p.val), status = status)
-
-  imgFile <- paste0(imgName, "dpi", dpi, ".", format)
-  Cairo::Cairo(file = imgFile, width = 7, height = 5.5, unit = "in", dpi = dpi, type = format, bg = "white")
-  g <- ggplot(df, aes(x = logFC, y = negLogP, color = status)) +
-    geom_point(alpha = 0.6, size = 1.5) +
-    scale_color_manual(values = c("Up" = "firebrick3", "Down" = "steelblue3", "Not significant" = "grey70"), name = "") +
-    geom_hline(yintercept = -log10(pval.cutoff), linetype = "dashed", color = "blue", alpha = 0.5) +
-    xlab("Log2(Fold Change)") + ylab("-Log10(P-value)") +
-    ggtitle("Volcano Plot") +
-    theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-  if (fc.cutoff > 0) {
-    g <- g + geom_vline(xintercept = c(-fc.cutoff, fc.cutoff), linetype = "dashed", color = "blue", alpha = 0.5)
+  if (is.null(feat_nm) || length(feat_nm) == 0) {
+    message("[Export.RankedPeakListMprt] WARN no analSet$tt and no covariate_result.qs — nothing to export")
+    return(NULL)
   }
-  print(g)
-  dev.off()
-  mSetObj$imgSet$mum.volcano <- imgFile
-  .set.mSet(mSetObj)
-  return(1)
+
+  # Parse mz__rt / mz@rt feature names.
+  sep <- if (any(grepl("__", feat_nm, fixed = TRUE))) "__"
+         else if (any(grepl("@", feat_nm, fixed = TRUE))) "@" else NA_character_
+  if (!is.na(sep)) {
+    parts <- strsplit(feat_nm, sep, fixed = TRUE)
+    mz    <- vapply(parts, `[`, character(1), 1L)
+    rt    <- vapply(parts, function(x) if (length(x) > 1) x[2] else NA_character_, character(1))
+  } else {
+    mz <- feat_nm
+    rt <- rep("", length(feat_nm))
+  }
+
+  out <- data.frame(m.z = mz, p.value = pvec, t.score = tvec, r.t = rt,
+                    stringsAsFactors = FALSE)
+  # Drop rows without numeric m/z (defensive — Read.PeakListData rejects the file otherwise).
+  keep <- !is.na(suppressWarnings(as.numeric(out$m.z)))
+  out  <- out[keep, , drop = FALSE]
+  if (nrow(out) == 0) {
+    message("[Export.RankedPeakListMprt] WARN all rows failed numeric m/z parse"); return(NULL)
+  }
+
+  # Order by p-value ascending so the file is human-readable; mummichog re-ranks anyway.
+  out <- out[order(out$p.value, na.last = TRUE), , drop = FALSE]
+
+  utils::write.table(out, file = outPath, sep = "\t", quote = FALSE,
+                     row.names = FALSE, col.names = TRUE, na = "")
+  message("[Export.RankedPeakListMprt] wrote ", nrow(out), " peaks to ", outPath)
+  return(outPath)
 }
 
-CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion, 
+#' Export significant metabolite names to a one-per-line text file for chained
+#' MSEA / Pathway ORA passes
+#'
+#' @description Writes the significant feature NAMES (compound / metabolite
+#' identifiers as they appear in the metabolite-table column headers) from an
+#' upstream Stats / MF pass to a plain-text file, one name per line, suitable
+#' for the standalone MSEA / Pathway ORA Phase A loader to consume via
+#' Setup.MapData + CrossReferencing. Source priority:
+#'   1. analSet$tt$inx.imp (T-test / limma)
+#'   2. analSet$aov$inx.imp (ANOVA)
+#'   3. analSet$cov$inx.imp (Multi-Factor Linear Models, in-memory)
+#'   4. covariate_result.qs on disk (MF fallback) filtered by adj.P.Val
+#'
+#' Falls back to the FDR cutoff when inx.imp is missing.
+#'
+#' Like Export.RankedPeakListMprt, this is a chain-artifact materializer:
+#' the chained MSEA / Pathora workflow then runs its own full Phase A on the
+#' resulting file, so each pass remains a self-contained, resumable project.
+#'
+#' @param mSetObj  mSet Object holding the upstream pass's analSet
+#' @param outPath  Absolute path to write the text file (overwritten if present)
+#' @param fdr.cutoff  FDR threshold used when no inx.imp index is available (default 0.05)
+#' @return outPath on success; NULL on failure
+#' @export
+Export.SigMetaboliteNames <- function(mSetObj = NA, outPath = NA, fdr.cutoff = 0.05) {
+  mSetObj <- .get.mSet(mSetObj)
+
+  if (is.na(outPath) || !nzchar(outPath)) {
+    message("[Export.SigMetaboliteNames] WARN outPath missing"); return(NULL)
+  }
+
+  # Three-tier fallback so chained enrichment is not silently nuked when
+  # the strict FDR filter yields zero (common on small / noisy data, e.g.
+  # plasma_nmr.csv where limma's var.prior fails and most coefs end up NA).
+  #
+  #   Tier 1: FDR <= fdr.cutoff (default 0.05) — strict, preferred
+  #   Tier 2: raw p <= fdr.cutoff            — fallback when tier 1 = 0
+  #   Tier 3: top 10% by raw p-value         — last-resort capped at >=1
+  #
+  # Each call to pick_from_slot returns a list(names, tier, n) so the
+  # caller can log which path actually produced the feature set.
+
+  pick_from_slot <- function(slot) {
+    if (is.null(slot) || is.null(slot$p.value) || length(slot$p.value) == 0) return(NULL)
+    nm <- names(slot$p.value)
+    pv <- slot$p.value
+    fdr <- slot$fdr.p
+    if (is.null(fdr) || length(fdr) != length(nm)) fdr <- p.adjust(pv, "fdr")
+
+    # Tier 1: use slot$inx.imp when present (already FDR/p-thresholded by Ttests.Anal),
+    # else recompute FDR <= fdr.cutoff
+    if (!is.null(slot$inx.imp) && length(slot$inx.imp) == length(nm)) {
+      sig <- nm[as.logical(slot$inx.imp) & !is.na(slot$inx.imp)]
+      if (length(sig) > 0) return(list(names = sig, tier = "FDR<=cutoff(inx.imp)", n = length(sig)))
+    }
+    sig <- nm[!is.na(fdr) & fdr <= fdr.cutoff]
+    if (length(sig) > 0) return(list(names = sig, tier = "FDR<=cutoff", n = length(sig)))
+
+    # Tier 2: raw p <= fdr.cutoff
+    sig <- nm[!is.na(pv) & pv <= fdr.cutoff]
+    if (length(sig) > 0) return(list(names = sig, tier = "rawP<=cutoff", n = length(sig)))
+
+    # Tier 3: top 10% by raw p-value (min 1)
+    valid <- !is.na(pv)
+    if (!any(valid)) return(NULL)
+    n_top <- max(1L, ceiling(sum(valid) * 0.10))
+    ord <- order(pv, na.last = NA)[seq_len(n_top)]
+    sig <- nm[ord]
+    if (length(sig) > 0) return(list(names = sig, tier = "topPct10", n = length(sig)))
+    NULL
+  }
+
+  picked <- NULL; source_label <- NA_character_
+
+  # Priority: covariate-adjusted limma (MF) first, then unadjusted t-test / ANOVA.
+  if (file.exists("covariate_result.qs")) {
+    rest <- tryCatch(ov_qs_read("covariate_result.qs"), error = function(e) NULL)
+    if (!is.null(rest) && "adj.P.Val" %in% colnames(rest) && "P.Value" %in% colnames(rest)) {
+      synth <- list(p.value = rest$P.Value, fdr.p = rest$adj.P.Val)
+      names(synth$p.value) <- rownames(rest)
+      names(synth$fdr.p)   <- rownames(rest)
+      picked <- pick_from_slot(synth)
+      if (!is.null(picked)) source_label <- "covariate_result.qs"
+    }
+  }
+  for (slot.nm in c("cov", "tt", "aov")) {
+    if (!is.null(picked)) break
+    p <- pick_from_slot(mSetObj$analSet[[slot.nm]])
+    if (!is.null(p)) { picked <- p; source_label <- paste0("analSet$", slot.nm) }
+  }
+
+  if (is.null(picked) || length(picked$names) == 0) {
+    message("[Export.SigMetaboliteNames] WARN no usable features in analSet$tt / aov / cov / covariate_result.qs")
+    return(NULL)
+  }
+
+  feat_nm <- unique(picked$names[!is.na(picked$names) & nzchar(picked$names)])
+  if (length(feat_nm) == 0) {
+    message("[Export.SigMetaboliteNames] WARN feature names empty after dedupe"); return(NULL)
+  }
+
+  writeLines(feat_nm, outPath)
+  message("[Export.SigMetaboliteNames] selected ", length(feat_nm),
+          " features via tier=", picked$tier, " source=", source_label,
+          " (cutoff=", fdr.cutoff, ") -> ", outPath)
+  return(outPath)
+}
+
+CreateListHeatmapJson <- function(mSetObj=NA, libOpt, libVersion,
                                   minLib, fileNm, filtOpt, version="v1"){
   
   return(my.list.heatmap(mSetObj, libOpt, libVersion, minLib, fileNm, filtOpt, version));
@@ -4965,16 +4890,16 @@ Prepare4IntegNetwork <- function(mSetObj = NA, netLib = "global"){
   mSetObj <- .get.mSet(mSetObj);
   # mSet <<- mSetObj <- NULL;
   # mSetObj <- InitDataObjects("conc", "network", FALSE)
-  mSetObj <- SetOrganism(mSetObj, "hsa")
+  if(.on.public.web){ SetOrganism(NA, "hsa"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetOrganism(mSetObj, "hsa") }
   cmpdList <- PrepareIntegCMPDList(mSetObj)
   cmpdList <- paste(cmpdList, collapse = "\n")
-  mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg")
-  mSetObj <- CreateMappingResultTable(mSetObj);
+  if(.on.public.web){ PerformCmpdMapping(NA, cmpdList, "hsa", "kegg"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformCmpdMapping(mSetObj, cmpdList, "hsa", "kegg") }
+  if(.on.public.web){ CreateMappingResultTable(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- CreateMappingResultTable(mSetObj) };
   mSet <- GetNetworkGeneMappingResultTable(mSet);
-  mSetObj <- PrepareNetworkData(mSetObj);
+  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) };
   idtype <<- "gene&cmpd";
-  mSetObj <- PrepareKeggQueryJson(mSetObj);
-  mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
+  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
   mSetObj <- .get.mSet(mSetObj);
 
   if(netLib != "global") {
@@ -4988,10 +4913,10 @@ Prepare4TarIntegNetwork <- function(mSetObj = NA, netLib = "global"){
 
   mSetObj <- .get.mSet(mSetObj);
   mSet <- GetNetworkGeneMappingResultTable(mSet);
-  mSetObj <- PrepareNetworkData(mSetObj);
+  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) };
   idtype <<- "gene&cmpd";
-  mSetObj <- PrepareKeggQueryJson(mSetObj);
-  mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0")
+  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") }
   mSetObj <- .get.mSet(mSetObj);
   if(netLib != "global") {
     OrganizeTarJsonforNextwork(mSetObj)
@@ -5500,17 +5425,17 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
     .on.public.web <<- F;
     is.rt <- mSetObj$paramSet$mumRT;
     #mSetObj<-PreparePrenormData(mSetObj)
-    mSetObj<-Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20)
-    mSetObj<-Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE)
-    mSetObj<-Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode);
+    if(.on.public.web){ Normalization(NA, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Normalization(mSetObj, "MedianNorm", "LogNorm", "AutoNorm", ratio=FALSE, ratioNum=20) }
+    if(.on.public.web){ Ttests.Anal(NA, F, 0.05, FALSE, TRUE); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Ttests.Anal(mSetObj, F, 0.05, FALSE, TRUE) }
+    if(.on.public.web){ Convert2Mummichog(NA, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Convert2Mummichog(mSetObj, is.rt, F, mSetObj$paramSet$mumRT.type, "tt", mSetObj$dataSet$mode) };
     mSetObj<-InitDataObjects("mass_all", "mummichog", FALSE)
-    mSetObj<-SetPeakFormat(mSetObj, "mpt")
+    if(.on.public.web){ SetPeakFormat(NA, "mpt"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakFormat(mSetObj, "mpt") }
     #mSetObj<-UpdateInstrumentParameters(mSetObj, 10, mSetObj$dataSet$mode);
     filename <- paste0("mummichog_input_", Sys.Date(), ".txt")
-    mSetObj<-Read.PeakListData(mSetObj, filename);
-    mSetObj<-SanityCheckMummichogData(mSetObj)
-    mSetObj<-SetPeakEnrichMethod(mSetObj, "mum", "v2")
-    mSetObj<-SetMummichogPval(mSetObj, 0.05)
+    if(.on.public.web){ Read.PeakListData(NA, filename); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- Read.PeakListData(mSetObj, filename) };
+    if(.on.public.web){ SanityCheckMummichogData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SanityCheckMummichogData(mSetObj) }
+    if(.on.public.web){ SetPeakEnrichMethod(NA, "mum", "v2"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetPeakEnrichMethod(mSetObj, "mum", "v2") }
+    if(.on.public.web){ SetMummichogPval(NA, 0.05); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- SetMummichogPval(mSetObj, 0.05) }
     .on.public.web <<- T;
     .set.mSet(mSetObj);
     anal.type <<- "integ";

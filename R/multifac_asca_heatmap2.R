@@ -137,25 +137,42 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="")
   mSetObj$imgSet$htmaptwo <- imgName
 
+  print(paste("[DEBUG] useTopFeature =", useTopFeature, "| rankingMethod =", rankingMethod, "| topFeature =", topFeature))
   if (useTopFeature) {
     if (rankingMethod == "aov2") {
+      print(paste("[DEBUG] aov2 sig.mat is null:", is.null(mSetObj$analSet$aov2$sig.mat)))
+      if (!is.null(mSetObj$analSet$aov2$sig.mat)) {
+        print(paste("[DEBUG] aov2 sig.mat dim:", paste(dim(mSetObj$analSet$aov2$sig.mat), collapse="x")))
+        print(paste("[DEBUG] data colnames sample:", paste(head(colnames(data), 3), collapse=", ")))
+        print(paste("[DEBUG] sig.mat rownames sample:", paste(head(rownames(mSetObj$analSet$aov2$sig.mat), 3), collapse=", ")))
+      }
       if (is.null(mSetObj$analSet$aov2$sig.mat)) {
         AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.")
         return(0)
       }
       mat <- as.matrix(mSetObj$analSet$aov2$sig.mat)
+      var.nms <- intersect(rownames(mat), colnames(data))
+      print(paste("[DEBUG] aov2 var.nms length:", length(var.nms)))
+      n <- min(topFeature, length(var.nms))
+      var.nms <- var.nms[seq_len(n)]
     } else if (rankingMethod == "lm") {
       if (is.null(mSetObj$analSet$cov$sig.mat)) {
         AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.")
         return(0)
       }
       mat <- as.matrix(mSetObj$analSet$cov$sig.mat)
+      var.nms <- intersect(rownames(mat), colnames(data))
+      n <- min(topFeature, length(var.nms))
+      var.nms <- var.nms[seq_len(n)]
     } else if (rankingMethod == "rf") {
       if (is.null(mSetObj$analSet$cov$rf.sigmat)) {
         AddErrMsg("Please make sure the selected method has been performed beforehand and the number of significant features is above 0.")
         return(0)
       }
       mat <- as.matrix(mSetObj$analSet$rf.sigmat)
+      var.nms <- intersect(rownames(mat), colnames(data))
+      n <- min(topFeature, length(var.nms))
+      var.nms <- var.nms[seq_len(n)]
     } else {
       # Select top N features by ranking method (IQR, mean, etc.)
       if (rankingMethod == "iqr") {
@@ -272,6 +289,8 @@ PlotHeatMap2 <- function(mSetObj=NA, imgName, dataOpt="norm",
   # ----------------------------------------------------
   # INTERACTIVE PLOT (iheatmapr)
   # ----------------------------------------------------
+  require(dplyr)
+  require(iheatmapr)
   p <- iheatmap(data1sc, name="value", x_categorical=TRUE,
                 layout=list(font=list(size=fzAnno)),
                 colors=colors,
@@ -1818,6 +1837,8 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
     h = min(2000,nrow(met)*14+50);
  
    met <- scale_mat(met,  "column")
+   require(dplyr)
+   require(iheatmapr)
     p <- iheatmap(met,  name = " ", 
                   colors = colors, 
           colorbar_grid = setup_colorbar_grid(y_start = 0.85)) %>%

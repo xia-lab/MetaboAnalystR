@@ -2,7 +2,8 @@
 % Please edit documentation in R/general_norm_utils.R
 \name{PreparePrenormData}
 \alias{PreparePrenormData}
-\title{Prepare data for normalization}
+\title{PreparePrenormData
+Prepare data for normalization}
 \usage{
 PreparePrenormData(mSetObj = NA)
 }

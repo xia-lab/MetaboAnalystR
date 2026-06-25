@@ -105,6 +105,13 @@ ov_qs_read <- function(file, ...) {
 }
 
 ov_qs_save <- function(obj, file, ...) {
+  # Self-heal a reaped target dir: long-lived Rserve sessions can have their
+  # tempdir() removed by the OS /tmp cleaner, after which every write to a
+  # bridge_*.qs / arrow export under it fails with "Failed to open for
+  # writing. Does the directory exist?" and cascades into NULL results
+  # (PCA/SAM/etc.). Recreate the parent dir before writing.
+  .d <- dirname(file)
+  if (!dir.exists(.d)) dir.create(.d, recursive = TRUE, showWarnings = FALSE)
   .args <- list(...)
   for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
   do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
@@ -123,6 +130,18 @@ ov_qs_exists <- function(file) {
 # =============================================================================
 
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
+  # Docker self-host: a NESTED RSclient connection (an Rserve session opening a
+  # connection back to Rserve on 6311) reliably crashes the spawned worker with
+  # "Fatal error: unable to initialize the JIT", which leaves the caller looping
+  # and breaks PCA/heatmap/arrow-export/etc. The subprocess buys nothing here,
+  # so run the function in-process. `func` is a self-contained closure that
+  # exchanges data through its bridge files via the globally-defined ov_qs_*
+  # helpers, so it behaves identically run here or in a worker.
+  if (file.exists("/.dockerenv")) {
+    setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+    on.exit(setTimeLimit(elapsed = Inf), add = TRUE)
+    return(invisible(do.call(func, args)))
+  }
   conn <- RSclient::RS.connect(host = "localhost", port = 6311)
   on.exit(try(RSclient::RS.close(conn), silent = TRUE))
   # Inject the qs wrapper helpers into the subprocess R session so callers
@@ -146,6 +165,8 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
       stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
     }
     ov_qs_save <- function(obj, file, ...) {
+      .d <- dirname(file)
+      if (!dir.exists(.d)) dir.create(.d, recursive = TRUE, showWarnings = FALSE)
       .args <- list(...)
       for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
       do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
@@ -451,12 +472,12 @@ CleanData <-function(bdata, removeNA=T, removeNeg=T, removeConst=T){
 #'License: GNU GPL (>= 2)
 #'
 CleanNumber <-function(bdata){
-  if(sum(bdata==Inf)>0){
+  if(sum(bdata==Inf, na.rm=TRUE)>0){
     inx <- bdata == Inf;
     bdata[inx] <- NA;
     bdata[inx] <- 999999;
   }
-  if(sum(bdata==-Inf)>0){
+  if(sum(bdata==-Inf, na.rm=TRUE)>0){
     inx <- bdata == -Inf;
     bdata[inx] <- NA;
     bdata[inx] <- -999999;
@@ -932,11 +953,13 @@ cleanMem <- function() {
 
 # Memory functions
 ShowMemoryUse <- function(..., n=40) {
-    library(pryr);
-    sink(); # make sure print to screen
-    print(mem_used());
-    print(sessionInfo());
-    print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));
+    if(requireNamespace("pryr", quietly = TRUE)){
+        library(pryr);
+        sink(); # make sure print to screen
+        print(mem_used());
+        print(sessionInfo());
+        print(.ls.objects(..., order.by="Size", decreasing=TRUE, head=TRUE, n=n));    
+    }
     print(warnings());
 }
 
@@ -1171,9 +1194,9 @@ var.na <- function(x){
   res
 }
 
-var.na <- function(x){
-   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
-}
+#var.na <- function(x){
+#   return(substr(bigTxt, nchar(bigTxt)-nchar(endTxt)+1, nchar(bigTxt)) == endTxt);
+#}
 
 ## fast T-tests/F-tests, and use cache to avoid redundant computing
 PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
@@ -1193,10 +1216,37 @@ PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
         res <- try(rowcolFt(data, cls, var.equal = var.equal));
     }else{
         res <- try(rowcoltt(data, cls, FALSE, 1L, FALSE));
-    }  
+    }
 
     if(class(res) == "try-error") {
-        res <- cbind(NA, NA);
+        # Self-hosted fallback: the native two-group t-test routine used by
+        # rowcoltt() (XiaLabCppLib / .Call("rowcolttests")) is unavailable on
+        # this build, so rowcoltt() errors and 2-group comparisons would yield
+        # NA p-values. Compute a vectorized two-sample t-test in pure R so the
+        # p-values are still produced. >2-group uses pure-R rowcolFt above and
+        # never reaches here.
+        lev <- levels(cls);
+        if(length(lev) == 2){
+            g1 <- data[, cls == lev[1], drop=FALSE];
+            g2 <- data[, cls == lev[2], drop=FALSE];
+            n1 <- rowSums(!is.na(g1)); n2 <- rowSums(!is.na(g2));
+            m1 <- rowMeans(g1, na.rm=TRUE); m2 <- rowMeans(g2, na.rm=TRUE);
+            v1 <- rowSums((g1 - m1)^2, na.rm=TRUE)/(n1 - 1);
+            v2 <- rowSums((g2 - m2)^2, na.rm=TRUE)/(n2 - 1);
+            if(isTRUE(var.equal)){
+                sp2 <- ((n1 - 1)*v1 + (n2 - 1)*v2)/(n1 + n2 - 2);
+                se  <- sqrt(sp2*(1/n1 + 1/n2));
+                df  <- n1 + n2 - 2;
+            } else {
+                se  <- sqrt(v1/n1 + v2/n2);
+                df  <- (v1/n1 + v2/n2)^2 / ((v1/n1)^2/(n1 - 1) + (v2/n2)^2/(n2 - 1));
+            }
+            tstat <- (m1 - m2)/se;
+            pval  <- 2*pt(abs(tstat), df, lower.tail=FALSE);
+            res <- data.frame(statistic = tstat, p.value = pval, row.names = rownames(data));
+        } else {
+            res <- cbind(NA, NA);
+        }
     }else{
         # res <- cbind(res$statistic, res$p.value);
         # make sure row names are kept
@@ -1441,9 +1491,6 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
   return(list(height = h, width = w));
 }
 
-##
-## perform unsupervised data filter based on common measures
-##
 PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 
     nm <- msg <- NULL;
@@ -1535,13 +1582,50 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
 }
 
 # make data and metadata share the same samples and in same order    
-.sync.data.metadata <- function(my.data, my.metadata){ 
+.sync.data.metadata <- function(my.data, my.metadata){
 
      if(!identical(rownames(my.data), rownames(my.metadata))){
 
         # now get the overlap, using first as anchor
         smpl.nms <- rownames(my.data);
         shared.inx <- smpl.nms %in% rownames(my.metadata);
+
+        # ── Rescue QC_*/BLANK_* samples missing from metadata ───────────
+        # Peak intensity tables routinely include process-control samples
+        # named `QC_*` (relative-standard-deviation filtering) and
+        # `BLANK_*` (blank-subtraction baseline). The metadata table
+        # typically only lists biological samples, so a naive intersect
+        # would drop the controls before they could be used by
+        # FilterVariable / blank subtraction. Detect them by name prefix
+        # (the same fallback FilterVariable uses at general_proc_utils.R
+        # line 649: `grepl("^qc", rownames(int.mat))`) and synthesize
+        # metadata rows so the first column carries `"QC"` / `"BLANK"`
+        # — that also lights up the class-label detector at
+        # general_proc_utils.R line 289.
+        qb.inx     <- grepl("^(QC|BLANK)([_.\\-]|[0-9]|$)", smpl.nms, ignore.case=TRUE);
+        rescue.inx <- qb.inx & !shared.inx;
+        if (any(rescue.inx) && ncol(my.metadata) > 0) {
+            rescue.nms <- smpl.nms[rescue.inx];
+            # Extend levels of any factor column so the new "QC"/"BLANK"
+            # values land cleanly rather than as NA.
+            if (is.factor(my.metadata[[1]])) {
+                cur.lvls <- levels(my.metadata[[1]]);
+                levels(my.metadata[[1]]) <- unique(c(cur.lvls, "QC", "BLANK"));
+            }
+            extra <- as.data.frame(matrix(NA, nrow=length(rescue.nms),
+                                          ncol=ncol(my.metadata)),
+                                   stringsAsFactors=FALSE);
+            colnames(extra) <- colnames(my.metadata);
+            rownames(extra) <- rescue.nms;
+            extra[[1]] <- ifelse(grepl("^QC", rescue.nms, ignore.case=TRUE),
+                                 "QC", "BLANK");
+            my.metadata <- rbind(my.metadata, extra);
+            shared.inx <- smpl.nms %in% rownames(my.metadata);
+            print(paste("Rescued", length(rescue.nms),
+                        "QC/BLANK process-control sample(s) absent from metadata:",
+                        paste(rescue.nms, collapse="; ")));
+        }
+
         shared.nms <- smpl.nms[shared.inx];
 
         if(sum(!shared.inx)>0){
@@ -1558,8 +1642,43 @@ PerformFeatureFilter <- function(int.mat, filter, filter.cutoff, anal.type){
                 my.metadata[,i] <- droplevels(my.metadata[,i]);
             }
         }
-        
+
         print(paste("Successfully performed synchronization: a total of", length(shared.nms), "samples that are shared between the two tables are left.", collapse=" "));
+      }
+
+      # ── Class-label normalization for QC/BLANK-named samples ─────────
+      # Runs unconditionally (whether or not alignment was needed) because
+      # users may upload metadata with rows for QC_*/BLANK_* samples but
+      # leave the class column empty / NA. Without normalization those
+      # samples pass through to downstream class-based filters
+      # (FilterVariable's QC RSD at general_proc_utils.R line 645,
+      # .test.missing.sig line 363) with NA class, which makes the
+      # `grepl("^qc$", cls)` mask unpredictable. Force class = "QC" or
+      # "BLANK" so all class-based logic recognizes them consistently
+      # — and so the post-processing removal that the user expects
+      # ("They should be removed after sanity check and processing")
+      # fires cleanly via the class-label keep mask. Idempotent: rows
+      # already labeled QC/BLANK by the user (or by the rescue block
+      # above) are left untouched.
+      if (ncol(my.metadata) > 0) {
+          mn.nms      <- rownames(my.metadata);
+          qc.name.inx <- grepl("^QC([_.\\-]|[0-9]|$)",    mn.nms, ignore.case=TRUE);
+          bl.name.inx <- grepl("^BLANK([_.\\-]|[0-9]|$)", mn.nms, ignore.case=TRUE);
+          cls.col     <- my.metadata[[1]];
+          cls.empty   <- is.na(cls.col) | trimws(as.character(cls.col)) == "";
+          qc.fix      <- qc.name.inx & cls.empty;
+          bl.fix      <- bl.name.inx & cls.empty;
+          if (any(qc.fix) || any(bl.fix)) {
+              if (is.factor(my.metadata[[1]])) {
+                  levels(my.metadata[[1]]) <- unique(c(levels(my.metadata[[1]]), "QC", "BLANK"));
+              }
+              if (any(qc.fix)) my.metadata[qc.fix, 1] <- "QC";
+              if (any(bl.fix)) my.metadata[bl.fix, 1] <- "BLANK";
+              print(paste("Normalized class for",
+                          sum(qc.fix) + sum(bl.fix),
+                          "QC/BLANK-named sample(s) with empty class column:",
+                          paste(mn.nms[qc.fix | bl.fix], collapse="; ")));
+          }
       }
 
       return(list(data=my.data, metadata=my.metadata));
@@ -1580,6 +1699,21 @@ PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog"
     return(my.enrich.net(mSetObj, netNm, overlapType, type, edgeMode ));
 }
 
+  #'Plot PCA Pair Summary with Metadata
+  #'@description Generate PCA pairwise summary plots with metadata overlays.
+  #'@usage PlotPCAPairSummaryMeta(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num, meta, metaShape=NULL)
+  #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+  #'@param imgName Base name of the output image file
+  #'@param format Output image format, default is "png"
+  #'@param dpi Image resolution in dots per inch, default is default.dpi
+  #'@param width Image width in inches; use NA for automatic sizing
+  #'@param pc.num Number of principal components to include
+  #'@param meta Metadata column name used for coloring
+  #'@param metaShape Optional metadata column name used for point shape
+  #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+  #'McGill University, Canada
+  #'License: GNU GPL (>= 2)
+  #'@export
 PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    imgName,
                                    format = "png",
