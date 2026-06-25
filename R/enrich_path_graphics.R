@@ -914,10 +914,10 @@ if(ylabNM == "-log10(p)"){
     sizeref <- max(data$radi, na.rm = TRUE) / ifelse(is.mummi.path, 15, 25)
     ggp <- plot_ly(data, x = ~x, y = ~y, type = 'scatter', mode = 'markers',
                    marker = list(
-                     size = ~radi, 
+                     size = ~radi,
                      sizeref = sizeref,
-                     color = ~y, 
-                     colorscale = 'Heat',
+                     color = ~y,
+                     colorscale = list(c(0, "yellow"), c(1, "red")),
                      line = list(color = 'black', width = 1),  # Add black outline
                      colorbar = list(
                        title = ylabNM,
@@ -928,7 +928,9 @@ if(ylabNM == "-log10(p)"){
                    text = ~text,  # Add tooltip
                    hoverinfo = 'text') %>%
       layout(
-        autosize = FALSE, 
+        autosize = FALSE,
+        plot_bgcolor = 'white',
+        paper_bgcolor = 'white',
         xaxis = list(
           title = xlabNM,
           range = if (!is.na(xlim)) c(min(data$x), max(data$x)) else NULL,
@@ -947,12 +949,23 @@ if(ylabNM == "-log10(p)"){
     return(ggp)
   }else{
     
-    p <- ggplot(data, aes(x = x, y = y, size = radi, fill = y, label = path, text = text)) +
-      geom_point(shape=21) + # 21 is filled circle
-      scale_size_continuous(range = if(is.mummi.path) c(1.5, 5.5) else c(2, 10),name=xlabNM) +
-      scale_fill_gradient(low = "#FFFFED", high = "#FF0000", name=ylabNM) +
+    library(ggrepel);
+    p <- ggplot(data, aes(x = x, y = y)) +
+      geom_point(aes(size = radi, color = y), stroke = 0.5) +
+      scale_size_continuous(range = c(1, 5), name = "radi.vec") +
+      scale_color_gradient(low = "yellow", high = "red", name = ylabNM) +
       labs(x = xlabNM, y = ylabNM) +
-      theme_bw()
+      theme_minimal() +
+      theme(plot.background = element_rect(fill = "white", colour = NA),
+            panel.background = element_rect(fill = "white", colour = NA))
+
+    # Label the most significant pathways (top 5 by -log10 p) with repelled text,
+    # matching the mummichog ("mum") plot's geom_text_repel annotations.
+    n_labels <- min(5, nrow(data))
+    if (n_labels > 0) {
+      top_indices <- head(order(-data$y), n_labels)
+      p <- p + ggrepel::geom_text_repel(aes(label = path), data = data[top_indices, ], size = 3)
+    }
 
     if (!is.na(xlim)) {
       p <- p + xlim(min(x), max(x))
@@ -965,9 +978,9 @@ if(ylabNM == "-log10(p)"){
     if (show.grid) {
       p <- p + theme(panel.grid.major = element_line(colour = "blue"),
                      panel.grid.minor = element_line(colour = "blue"))
-    } else {
-      p <- p + theme(panel.grid = element_blank())
     }
+    # When show.grid is FALSE, keep theme_minimal()'s default light grey
+    # gridlines so the overall theme matches the mummichog ("mum") plot.
     
     # Adjust width and height
     if (is.na(width)) {
@@ -1258,4 +1271,39 @@ GetPathwayLibraryCompounds <- function(mSetObj=NA, pathName){
   vals <- vals[grepl("^C[0-9]{5}$", vals)];
   vals <- unique(vals);
   return(vals);
+}
+
+
+# Returns a named character vector (KO -> gene symbol) for the given organism.
+# Used by the KEGG network viewer to label enzyme nodes/edges with gene symbols.
+GetKoGeneSymbols <- function(org) {
+  message("[GetKoGeneSymbols] called with org=", org);
+  sqlite.path <- "/home/glassfish/sqlite/genes_entries_130_species.sqlite";
+  message("[GetKoGeneSymbols] sqlite path=", sqlite.path, " exists=", file.exists(sqlite.path));
+  con <- RSQLite::dbConnect(RSQLite::SQLite(), sqlite.path);
+  tbls <- RSQLite::dbListTables(con);
+  message("[GetKoGeneSymbols] tables count=", length(tbls), " org in tables=", org %in% tbls);
+  if (!(org %in% tbls)) {
+    RSQLite::dbDisconnect(con);
+    message("[GetKoGeneSymbols] org not found in sqlite, returning empty");
+    return(jsonlite::toJSON(setNames(list(), character(0)), auto_unbox = TRUE));
+  }
+  df <- RSQLite::dbReadTable(con, org);
+  RSQLite::dbDisconnect(con);
+  message("[GetKoGeneSymbols] rows=", nrow(df), " cols=", paste(names(df), collapse=","));
+  if (!("KO" %in% names(df)) || !("Gene_Symbol" %in% names(df))) {
+    message("[GetKoGeneSymbols] missing KO or Gene_Symbol column, returning empty");
+    return(jsonlite::toJSON(setNames(list(), character(0)), auto_unbox = TRUE));
+  }
+  valid <- df[!is.na(df$KO) & nzchar(trimws(df$KO)) &
+              !is.na(df$Gene_Symbol) & nzchar(trimws(df$Gene_Symbol)), ];
+  message("[GetKoGeneSymbols] valid rows=", nrow(valid));
+  if (nrow(valid) == 0) {
+    message("[GetKoGeneSymbols] no valid rows, returning empty");
+    return(jsonlite::toJSON(setNames(list(), character(0)), auto_unbox = TRUE));
+  }
+  ko_map <- tapply(valid$Gene_Symbol, valid$KO,
+    function(x) paste(unique(trimws(x)), collapse = ";"));
+  message("[GetKoGeneSymbols] mapped ", length(ko_map), " KO entries for org=", org);
+  return(jsonlite::toJSON(as.list(ko_map), auto_unbox = TRUE));
 }
