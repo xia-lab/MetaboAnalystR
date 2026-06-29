@@ -318,7 +318,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
   if(file.exists("/data/sqlite/")){ #vip server
     url.pre <<- "/data/sqlite/";
     plink.path <<- "/home/glassfish/plink/";
-  }else if(nzchar(Sys.getenv("OMICS_LIB_DIR", "")) && dir.exists(Sys.getenv("OMICS_LIB_DIR", "")) && any(file.info(list.files(Sys.getenv("OMICS_LIB_DIR", ""), pattern = "\\.sqlite$", full.names = TRUE))$size > 0, na.rm = TRUE)){  # Docker shared library mount (OMICS_LIB_DIR)
+  }else if(nzchar(Sys.getenv("OMICS_LIB_DIR", "")) && dir.exists(Sys.getenv("OMICS_LIB_DIR", "")) && any(file.info(list.files(Sys.getenv("OMICS_LIB_DIR", ""), pattern = "\\.sqlite$", full.names = TRUE))$size > 0, na.rm = TRUE)){  # shared sqlite library directory
     url.pre <<- paste0(sub("/+$", "", Sys.getenv("OMICS_LIB_DIR", "")), "/");
     plink.path <<- paste0(sub("/+$", "", Sys.getenv("OMICS_LIB_DIR", "")), "/plink/");
   }else if(file.exists("/home/glassfish/sqlite/")){ #.on.public.web
