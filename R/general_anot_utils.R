@@ -543,6 +543,7 @@ doGeneIDMapping <- function(q.vec, org, type){
 }
 
 doGeneEntryMapping <- function(q.vec, org, type){
+
   sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
   if(!file.exists(sqlite.path)){
     #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
@@ -576,6 +577,9 @@ doGeneEntryMapping <- function(q.vec, org, type){
 
   #kegg_entries <- db.map[hit.inx, "KEGG_entry"];
   kegg_entries <- db.map[hit.inx, "GeneID"];
+  if((length(hit.inx)>0) & (all(is.na(kegg_entries)))){
+      kegg_entries <- gsub("\\sCDS", "", db.map[hit.inx, "KEGG_entry"]);
+  }
   rm(db.map, q.vec); gc();
   dbDisconnect(con);
   return(kegg_entries);
