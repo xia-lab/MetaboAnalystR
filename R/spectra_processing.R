@@ -242,7 +242,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     # progress 120
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
     ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
-    if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+    if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # shared sqlite library directory
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = ", param_list$ppm1,
                                     ", ppm2 = ", param_list$ppm2,
@@ -348,7 +348,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
   ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
-  if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+  if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # shared sqlite library directory
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = ", param_list$ppm1, ",
                                      ppm2 = ", param_list$ppm2, ",
@@ -416,7 +416,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   str <- paste0(str, ";\n", cmd_summarize)
 
   fragdb_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "FragsAnnotateDB_v02042024.sqlite") else "";
-  if(nzchar(fragdb_lib) && file.exists(fragdb_lib)){  # Docker shared library mount (OMICS_LIB_DIR)
+  if(nzchar(fragdb_lib) && file.exists(fragdb_lib)){  # shared sqlite library directory
     export_msn_all <- paste0("OptiLCMS:::PerformAllMirrorPlotting(\'", fragdb_lib, "\')");
     str <- paste0(str, ";\n", export_msn_all)
   } else if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){

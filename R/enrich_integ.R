@@ -1423,28 +1423,55 @@ GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
         org.code <- mSetObj$org;
         sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
         if(!file.exists(sqlite.path)){
+
             sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
             if(!file.exists(sqlite.path)){
                 sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
                 download.file(sqlite_url, destfile = sqlite.path, method = "curl")
             }
-        }
-        con <- .get.sqlite.con(sqlite.path);
-        on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
-        gene.db <- dbReadTable(con, "entrez_ortholog");
-        raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
-        hit.inx <- match(raw.ids, gene.db[, "gene_id"]);
-
-        kos <- rep("", length(gene.ids));
-        for(i in seq_along(gene.ids)){
-            if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
-                ko <- as.character(gene.db[hit.inx[i], "accession"]);
-                if(!is.na(ko) && nzchar(ko)){
-                    kos[i] <- ko;
+            
+            con <- .get.sqlite.con(sqlite.path);
+            on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
+            gene.db <- dbReadTable(con, org.code);
+            raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
+            if(!all(is.na( gene.db[, "GeneID"]))){
+                hit.inx <- match(raw.ids, gene.db[, "GeneID"]);
+            } else {
+                hit.inx <- match(raw.ids, gsub("\\sCDS","",gene.db[, "GeneID"]));
+            }
+            
+            kos <- rep("", length(gene.ids));
+            for(i in seq_along(gene.ids)){
+                if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
+                    ko <- as.character(gene.db[hit.inx[i], "KO"]);
+                    if(!is.na(ko) && nzchar(ko)){
+                        kos[i] <- ko;
+                    }
                 }
             }
+            out <- kos[nzchar(kos)];
+
+        } else {
+
+            con <- .get.sqlite.con(sqlite.path);
+            on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
+            gene.db <- dbReadTable(con, "entrez_ortholog");
+            raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
+            hit.inx <- match(raw.ids, gene.db[, "gene_id"]);
+
+            kos <- rep("", length(gene.ids));
+            for(i in seq_along(gene.ids)){
+                if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
+                    ko <- as.character(gene.db[hit.inx[i], "accession"]);
+                    if(!is.na(ko) && nzchar(ko)){
+                        kos[i] <- ko;
+                    }
+                }
+            }
+            out <- kos[nzchar(kos)];
+
         }
-        out <- kos[nzchar(kos)];
+
     }
 
     out <- unique(c(cpd.ids, out));
