@@ -649,7 +649,7 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 #'
 
 PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", dpi=default.dpi, width=NA, labelNum=5, interactive=F){
-
+    .load.scripts.on.demand("util_volcano.Rc");
     return(my.plot.volcano(mSetObj, imgName, plotLbl, plotTheme, format, dpi,  width, labelNum, interactive));
 }
 

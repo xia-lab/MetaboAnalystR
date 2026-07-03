@@ -66,31 +66,36 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   require(ggplot2);
   require(scales);
   
-  # size on p values, further boost for sig
-  de$size <- rescale(de$p.log, to = c(1.0, 4))
-  de$size[imp.inx] <- de$size[imp.inx] + 0.5;
-
   # Create a new variable for gradient coloring based on ALL nodes, as this is continuous, threshold is for plot only
 
     de$FoldChange <- de$fc.log;
-    fc_range <- range(de$fc.log); 
-    
+    fc_range <- range(de$fc.log);
+
+    # Clamp the size value at -log10(p)=8 so highly significant points render at
+    # max size instead of being dropped (older ggplot2 lacks scale oob support).
+    de$p.size <- pmin(de$p.log, 8);
+
     # Create the ggplot
     p <- ggplot(data = de, aes(x = fc.log, y = p.log, label = label, Fold.Change = Fold.Change, P.Value= P.Value)) +
-        geom_point(aes(size = p.log, color =FoldChange, fill=FoldChange), shape = 21, stroke = 0.3) +
+        geom_point(aes(size = p.size, color =FoldChange, fill=FoldChange), shape = 21, stroke = 0.3) +
         scale_color_gradient2(low = "black", mid = "black", high = "black", midpoint = 0,
                           limits = fc_range, space = "Lab", na.value = "black", guide="none") +
         scale_fill_gradient2(low = "blue", mid = "grey", high = "red", midpoint = 0, name = "Log2(FC)",
                           limits = fc_range, space = "Lab", na.value = "grey", guide = "colourbar") +
         scale_size_continuous(name = "P-value", range = c(1, 6), limits = c(0, 8), breaks = c(0, 1, 1.3, 2, 3), labels = c("1.0", "0.1", "0.05", "0.01", "0.001")) +
+        scale_y_continuous(expand = expansion(mult = c(0.02, 0.08))) +
         geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black") +
         geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
         labs(x = "log2(FC)", y = "-log10(p-value)") +
+        coord_cartesian(clip = "off") +
         theme_minimal() +
         theme(legend.position = "right");
 
   if(plotLbl){
-    p <- p +  ggrepel::geom_text_repel();
+    p <- p +  ggrepel::geom_text_repel(max.overlaps = Inf, box.padding = 0.5,
+                                       point.padding = 0.2, min.segment.length = 0,
+                                       segment.color = "grey50", segment.size = 0.3,
+                                       size = 3, seed = 123);
   }
   mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme, labelNum=labelNum);
   
@@ -104,8 +109,11 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
     }else{
       p <- p + theme_classic();
     }
+    # Re-apply after the theme swap above (a complete theme resets margins),
+    # so labels/ticks pushed to the panel edge are not clipped.
+    p <- p + theme(legend.position = "right", plot.margin = margin(12, 14, 6, 6));
   }
-  
+
   if(interactive){
     library(plotly);
     ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 900, height = 600, margin = mSetObj$imgSet$margin.config)

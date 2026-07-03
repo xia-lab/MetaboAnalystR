@@ -4,6 +4,38 @@
 ### McGill University, Canada
 ### License: GNU GPL (>= 2)
 
+# Lazily load a compiled (.Rc) or source (.R) script into the global env on demand.
+# Resolves the file against the loader globals (loadPath/rpath/loadPathOMS) set in
+# _script_loader.R, falling back from .Rc to .R when no compiled copy exists.
+.load.scripts.on.demand <- function(fileName=""){
+  candidates <- unique(c(
+    fileName,
+    if (exists("rpath")) paste0(rpath, "rscripts/MetaboAnalystR/R/", fileName) else character(0),
+    if (exists("rpath")) paste0(rpath, "rscripts/XiaLabPro/R/", fileName) else character(0),
+    if (exists("loadPath")) paste0(loadPath, fileName) else character(0),
+    if (exists("loadPathOMS")) paste0(loadPathOMS, fileName) else character(0)
+  ));
+
+  script.path <- candidates[file.exists(candidates)][1];
+
+  if (is.na(script.path) || is.null(script.path)) {
+    r.candidates <- sub("\\.Rc$", ".R", candidates);
+    script.path <- r.candidates[file.exists(r.candidates)][1];
+  }
+
+  if (is.na(script.path) || is.null(script.path)) {
+    stop(paste("Script not found:", fileName, "(.Rc or .R)"));
+  }
+
+  if (grepl("\\.Rc$", script.path)) {
+    compiler::loadcmp(script.path, .GlobalEnv);
+  } else {
+    source(script.path, local = FALSE);
+  }
+
+  invisible(1);
+}
+
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
     lod <- min(x[x>0], na.rm=T)/5;
