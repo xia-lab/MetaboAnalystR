@@ -618,8 +618,7 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
 
   # Store in mSetObj
   mSetObj$enrichNet <- netData
-  
-  print(paste("Network saved as:", netName))
+
   pheno.comps <- list();
   pheno.comps[["enrichNet"]] <- g;
   pheno.comps[["enrichNet_bipartite"]] <- bg;

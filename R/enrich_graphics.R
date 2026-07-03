@@ -244,9 +244,17 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=default.dpi, width=NA)
 #'@export
 
 PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA, topN = 25){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  # Record this call into the command history so the AI dashboard's per-figure
+  # "Refine" control can resolve the figure (gallery key = imgName base) back to
+  # its producing command. The recorded string must contain the QUOTED imgName.
+  # Append directly to the LOCAL mSetObj$cmdSet (committed by this function's
+  # final .set.mSet) — NOT via RecordRCommand()'s return value, which is 1 on the
+  # public web (.set.mSet) and would clobber mSetObj.
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotORA(mSet, "', imgName, '", "', imgOpt, '", "', format, '", ', dpi, ')'));
+
   # --- 1. PREPARE DATA FOR NETWORK (Use ALL data, Keep Original IDs) ---
   # The network needs the IDs (rownames) to match the database, not English names.
   res.mat.all <- mSetObj$analSet$ora.mat;
@@ -416,9 +424,15 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'@export
 
 PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA, maxNameLen = 40, topN=25){
-  
+
   mSetObj <- .get.mSet(mSetObj)
   if(.on.public.web){ load_ggplot() }
+
+  # Record this call so the dashboard's per-figure "Refine" can resolve the
+  # figure (gallery key = imgName base) back to its producing command. Append to
+  # the LOCAL mSetObj$cmdSet (committed by the final .set.mSet), not via
+  # RecordRCommand()'s return value (which is 1 on the public web).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotEnrichDotPlot(mSet, "', enrichType, '", "', imgName, '", "', format, '", ', dpi, ')'))
   
   # local helper: truncate and disambiguate duplicates created by truncation
   .trunc_unique <- function(x, maxlen){
@@ -561,6 +575,14 @@ PlotORAMembership <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   # Truncate long set names for axis legibility; keep enough to identify
   # the pathway. Mirrors the Plotly viewer's LABEL_LEN baseline.
   col.lbl <- substr(colnames(mat), 1, 60);
+
+  # Record this call (with the ORIGINAL imgName, before the dpi/ext suffix is
+  # appended below) so the dashboard's per-figure "Refine" can resolve the
+  # figure (gallery key = imgName base) back to its producing command. Placed
+  # after the early-return guards so we only record when a PNG is written.
+  # Append to the LOCAL mSetObj$cmdSet (committed by the final .set.mSet), not
+  # via RecordRCommand()'s return value (which is 1 on the public web).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotORAMembership(mSet, "', imgName, '", "', format, '", ', dpi, ')'));
 
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
 

@@ -403,3 +403,60 @@ ConvertKEGGtoName <- function(mSetObj = NA,
 
   return(out)
 }
+
+# Returns 1 when the current data set carries a per-sample concentration matrix
+# (so PlotCmpdSummary can draw a box/violin plot), 0 otherwise. A compound list
+# input only has a query/name map and no concentration matrix, so it returns 0.
+HasConcDataForBoxplot <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  norm <- mSetObj$dataSet$norm
+  if (is.null(norm) || is.null(dim(norm))) {
+    return(0)
+  }
+  if (nrow(norm) < 1 || ncol(norm) < 1) {
+    return(0)
+  }
+  return(1)
+}
+
+# Given a KEGG compound id (e.g. "C00033" or "cpd:C00033"), return the original
+# user input feature/column name that maps to it. The returned name matches the
+# column names in mSetObj$dataSet$norm / data_proc.qs so it can be fed directly
+# to PlotCmpdSummary() to draw the box/violin plot for that data point.
+# Returns "" when no matched input feature corresponds to the KEGG id.
+GetCmpdNameByKeggId <- function(mSetObj = NA, kegg.id) {
+  mSetObj <- .get.mSet(mSetObj)
+  nm.map <- mSetObj$name.map
+
+  if (is.null(nm.map) || is.null(nm.map$query.vec) || is.null(nm.map$hit.inx)) {
+    return("")
+  }
+
+  target <- toupper(trimws(kegg.id))
+  target <- sub("^CPD:", "", target)
+  if (target == "" || target == "NA") {
+    return("")
+  }
+
+  hit.inx     <- nm.map$hit.inx
+  match.state <- nm.map$match.state
+  query.vec   <- nm.map$query.vec
+
+  # Only matched queries have a usable db row (hit.inx of 0 means no match and
+  # would be silently dropped by R vector indexing, so filter those out first).
+  valid <- which(!is.na(match.state) & match.state == 1 &
+                   !is.na(hit.inx) & hit.inx > 0)
+  if (length(valid) == 0) {
+    return("")
+  }
+
+  cmpd.db  <- .get.my.lib("compound_db.qs")
+  kegg.ids <- toupper(cmpd.db$kegg_id[hit.inx[valid]])
+
+  found <- which(!is.na(kegg.ids) & kegg.ids == target)
+  if (length(found) == 0) {
+    return("")
+  }
+
+  return(query.vec[valid[found[1]]])
+}

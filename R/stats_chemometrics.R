@@ -318,7 +318,14 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   stds <-mSetObj$analSet$pca$std[1:scree.num];
   pcvars<-mSetObj$analSet$pca$variance[1:scree.num];
   cumvars<-mSetObj$analSet$pca$cum.var[1:scree.num];
-  
+
+  # Method-standard: persist the figure's underlying data table for Refine +
+  # cross-tool regeneration. Helper lives in wf_method.R; guard so
+  # the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("pca_scree", data.frame(PC = seq_along(pcvars), VarianceExplained = pcvars, CumulativeVariance = cumvars)),
+    error = function(e) NULL)
+
   ylims <- range(c(pcvars,cumvars));
   extd<-(ylims[2]-ylims[1])/10
   miny<- ifelse(ylims[1]-extd>0, ylims[1]-extd, 0);
@@ -400,6 +407,13 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   pc1 = mSetObj$analSet$pca$x[, pcx];
   pc2 = mSetObj$analSet$pca$x[, pcy];
   text.lbls<-substr(names(pc1),1,14) # some names may be too long
+
+  # Method-standard: persist the figure's underlying data table (PC scores +
+  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(
+    WfSaveFigureData("pca_score2d", data.frame(Sample = names(pc1), PCx = pc1, PCy = pc2, Group = mSetObj$dataSet$cls)),
+    error = function(e) NULL)
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -683,6 +697,11 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   colnames(loadings)<-c(ldName1, ldName2);
   mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
 
+  # Method-standard: persist the figure's underlying data table for Refine +
+  # cross-tool regeneration. Helper lives in wf_method.R; guard so
+  # the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_loading", loadings), error = function(e) NULL)
+
   # Arrow export for zero-copy Java access (PCA loadings)
   ExportResultMatArrow(loadings, "pca_load");
 
@@ -789,7 +808,12 @@ ind_data <- data.frame(
   PC2 = scores[, choices[2]] / lam[2],
   Group = cls
 )
- 
+
+  # Method-standard: persist the figure's underlying data table (sample scores +
+  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
+  # guard so the public package still runs standalone.
+  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_biplot", ind_data), error = function(e) NULL)
+
 loadings <- pca$rotation
 var_data <- data.frame(
   PC1 = loadings[, choices[1]] * lam[1],

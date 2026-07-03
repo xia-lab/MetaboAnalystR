@@ -58,8 +58,6 @@ CrossReferencing <- function(mSetObj=NA, q.type, hmdb=T, pubchem=T,
   }
   
   if(!.on.public.web){
-    print(mSetObj$msgSet$nmcheck.msg)
-    
     if(length(todo.inx) == length(mSetObj$name.map$hit.inx)){
       AddErrMsg("Name matching failed! Please make sure that correct standardized feature names are used!")
       return(0)

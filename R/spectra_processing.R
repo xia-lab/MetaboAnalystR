@@ -56,6 +56,21 @@ CreateRawRscript <- function(guestName, planString, planString2, rawfilenms.vec)
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
 
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). This generator gets no source_path
+  # arg, so derive the metabo rscripts home from the _script_loader.R global
+  # `compilePath` (set in this Rserve session), normalize to absolute, and only inject
+  # when the patches file resolves.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
@@ -135,7 +150,20 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   ## Prepare R script for running
   # need to require("OptiLCMS")
   str <- paste0('library(OptiLCMS)');
-  
+
+  # Apply runtime patches + load OptiLCMS R from the BUNDLED source so R
+  # edits ship via mvn package (no R CMD INSTALL). No source_path arg here either —
+  # derive the metabo rscripts home from the _script_loader.R global `compilePath`.
+  .ov_rs_home <- tryCatch(normalizePath(get0("compilePath", envir = .GlobalEnv,
+                                             ifnotfound = NA_character_),
+                                       mustWork = FALSE),
+                         error = function(e) NA_character_)
+  if (!is.na(.ov_rs_home) &&
+      file.exists(file.path(.ov_rs_home, "XiaLabPro", "R", "ov_optilcms_patches.R"))) {
+    str <- paste0(str, ";\n", "source('", .ov_rs_home, "/XiaLabPro/R/ov_optilcms_patches.R')");
+    str <- paste0(str, ";\n", "ov.load.optilcms.source('", .ov_rs_home, "')");
+  }
+
   # Set working dir & init env & files included
   str <- paste0(str, ";\n", "metaboanalyst_env <- new.env()");
   str <- paste0(str, ";\n", "setwd(\'",users.path,"\')");
@@ -213,7 +241,18 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     # perform deconvolution
     # progress 120
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
-    if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+    ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+    if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # shared sqlite library directory
+      cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
+                                    ppm1 = ", param_list$ppm1,
+                                    ", ppm2 = ", param_list$ppm2,
+                                    ", sn = 12, filtering = ", param_list$filtering,
+                                    ", window_size = ", param_list$win_size,
+                                    ", intensity_thresh = ", param_list$intensity_threshold,
+                                    ", database_path = \'", ms2db_lib, "\',
+                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco,
+                                    ", useEntropy = ", param_list$useentropy, ")");
+    } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = ", param_list$ppm1,
                                     ", ppm2 = ", param_list$ppm2,
@@ -308,7 +347,16 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   # progress 150
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 10/12: MS/MS spectra database searching is starting ...\n this step may take some time.. \n\'),ecol = \'\',progress = 150)";
   str <- paste0(str, ";\n", cmd_prgs)
-  if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
+  ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+  if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # shared sqlite library directory
+    cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
+                                     ppm1 = ", param_list$ppm1, ",
+                                     ppm2 = ", param_list$ppm2, ",
+                                     rt_tol = 5,
+                                     database_path = \'", ms2db_lib, "\',
+                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ",
+                                     databaseOptions =", param_list$db_opt, ")");
+  } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
                                      ppm1 = ", param_list$ppm1, ",
                                      ppm2 = ", param_list$ppm2, ",
@@ -367,7 +415,11 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_summarize <- "mSet <- OptiLCMS:::SummarizeAllResults4Reference(mSet)"
   str <- paste0(str, ";\n", cmd_summarize)
 
-  if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
+  fragdb_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "FragsAnnotateDB_v02042024.sqlite") else "";
+  if(nzchar(fragdb_lib) && file.exists(fragdb_lib)){  # shared sqlite library directory
+    export_msn_all <- paste0("OptiLCMS:::PerformAllMirrorPlotting(\'", fragdb_lib, "\')");
+    str <- paste0(str, ";\n", export_msn_all)
+  } else if(file.exists("/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite")){
     export_msn_all <- "OptiLCMS:::PerformAllMirrorPlotting(\'/data/COMPOUND_DBs/MSBUDDY/FragsAnnotateDB_v02042024.sqlite\')";
     str <- paste0(str, ";\n", export_msn_all)
   } else if (file.exists("/home/glassfish/sqlite/FragsAnnotateDB_v02042024.sqlite")){
@@ -1968,11 +2020,26 @@ generateAsariPeakList <-  function(userPath) {
   features <- paste0(ftable$mz, "__", ftable$rtime)
   ftable1 <- ftable[,c(12:ncol(ftable))]
   allSamples <- colnames(ftable1)
-  allGroups <- 
+  allGroups <-
     vapply(allSamples, FUN = function(x){
       idx <- which(mSet@rawOnDisk@phenoData@data[["sample_name"]] == x)
       mSet@rawOnDisk@phenoData@data[["sample_group"]][idx]
     }, character(1L))
+  # The OptiLCMS import only resolves QC/blank labels (from filename); biological
+  # samples come back as a single "Sample" group, which collapses the downstream
+  # t-test to one level (NA p-values). The real grouping lives in
+  # spectra_group_meta.csv (Sample,Label), staged by SpectraJobService. Apply it
+  # here, keyed by sample name; samples absent from the meta (QC/blank) keep their
+  # import label.
+  if (file.exists("spectra_group_meta.csv")) {
+    grp_meta <- tryCatch(
+      read.csv("spectra_group_meta.csv", stringsAsFactors = FALSE, check.names = FALSE),
+      error = function(e) NULL)
+    if (!is.null(grp_meta) && all(c("Sample", "Label") %in% colnames(grp_meta))) {
+      m <- match(allSamples, grp_meta$Sample)
+      allGroups[!is.na(m)] <- as.character(grp_meta$Label[m[!is.na(m)]])
+    }
+  }
   ftable2 <- t(data.frame(Groups = allGroups))
   ftable3 <- data.frame(Samples = c("Groups", features))
   ftable0 <- rbind(ftable2, ftable1)
