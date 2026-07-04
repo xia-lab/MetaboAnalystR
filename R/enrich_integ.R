@@ -933,6 +933,10 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
         match.state<-mSetObj$dataSet$gene.name.map$match.state;
         mSetObj$dataSet$gene.name.map$hit.inx <- hit.inx;
 
+        has.value <- function(x) {
+          length(x) > 0 && !is.na(x[1]) && nzchar(trimws(as.character(x[1])))
+        }
+
         for (i in 1:length(qvec)){
           if(match.state[i]==1){
             pre.style<-"";
@@ -943,15 +947,48 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
           }
           hit <-gene.db[hit.inx[i], ,drop=F];
 
+          mapped.id <- if(match.state[i] == 1 && has.value(hit.values[i])) {
+            trimws(as.character(hit.values[i]))
+          } else {
+            NA_character_
+          }
+          gene.id <- if(has.value(hit$GeneID)) as.character(hit$GeneID[1]) else NA_character_
+          gene.symbol <- if(has.value(hit$Gene_Symbol)) as.character(hit$Gene_Symbol[1]) else NA_character_
+          gene.name <- if(has.value(hit$Gene_Name)) as.character(hit$Gene_Name[1]) else NA_character_
+          kegg.id <- if(has.value(hit$KEGG_entry)) {
+            sub("\\s+CDS$", "", trimws(as.character(hit$KEGG_entry[1])))
+          } else {
+            mapped.id
+          }
+
+          hit.url <- if(has.value(gene.id)) {
+            paste0("https://www.ncbi.nlm.nih.gov/gene/", gene.id)
+          } else if(has.value(kegg.id)) {
+            paste0("https://www.kegg.jp/entry/", org, ":", kegg.id)
+          } else {
+            NA_character_
+          }
+          hit.html <- if(match.state[i] == 1 && has.value(mapped.id)) {
+            if(has.value(hit.url)) paste0("<a href=\"", hit.url, "\" target=\"_blank\">", mapped.id, "</a>") else mapped.id
+          } else {
+            "-"
+          }
+          symbol.html <- if(match.state[i] == 1 && has.value(gene.symbol)) gene.symbol else "-"
+          name.html <- if(match.state[i] == 1 && has.value(gene.name)) {
+            if(has.value(hit.url)) paste0("<a href=\"", hit.url, "\" target=\"_blank\">", gene.name, "</a>") else gene.name
+          } else {
+            "-"
+          }
+
           html.res[i, ]<-c(paste(pre.style, qvec[i], post.style, sep=""),
-                           paste(ifelse(match.state[i]==0 || is.na(hit$GeneID),"-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>",hit$GeneID,"</a>", sep="")),  sep=""),
-                           paste(ifelse(match.state[i]==0 || is.na(hit$Gene_Symbol), "-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>", hit$Gene_Symbol,"</a>", sep="")), sep=""),
-                           paste(ifelse(match.state[i]==0 || is.na(hit$Gene_Name),"-", paste("<a href=http://www.ncbi.nlm.nih.gov/gene/", hit$GeneID, " target='_blank'>",hit$Gene_Name,"</a>", sep="")), sep=""),
+                           hit.html,
+                           symbol.html,
+                           name.html,
                            ifelse(match.state[i]!=1,"View",""));
           csv.res[i, ]<-c(qvec[i],
-                          ifelse(match.state[i]==0, "NA", hit$GeneID),
-                          ifelse(match.state[i]==0, "NA", hit$Gene_Symbol),
-                          ifelse(match.state[i]==0, "NA", hit$Gene_Name),
+                          ifelse(match.state[i]==0 || !has.value(mapped.id), "NA", mapped.id),
+                          ifelse(match.state[i]==0 || !has.value(gene.symbol), "NA", gene.symbol),
+                          ifelse(match.state[i]==0 || !has.value(gene.name), "NA", gene.name),
                           match.state[i]);
         }
 
@@ -1424,8 +1461,11 @@ GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
         sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
         if(!file.exists(sqlite.path)){
 
-            sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
-            if(!file.exists(sqlite.path)){
+            sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+            if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
+                sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
+            }
+            if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
                 sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
                 download.file(sqlite_url, destfile = sqlite.path, method = "curl")
             }
@@ -1437,7 +1477,7 @@ GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
             if(!all(is.na( gene.db[, "GeneID"]))){
                 hit.inx <- match(raw.ids, gene.db[, "GeneID"]);
             } else {
-                hit.inx <- match(raw.ids, gsub("\\sCDS","",gene.db[, "GeneID"]));
+                hit.inx <- match(raw.ids, sub("\\s+CDS$", "", gene.db[, "KEGG_entry"]));
             }
             
             kos <- rep("", length(gene.ids));
