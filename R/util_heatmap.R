@@ -196,7 +196,7 @@ rsclient_isolated_exec <- function(func_body, input_data, packages = character(0
   output_path <- file.path(bridge_tmp, paste0(uid, "_out.qs"))
   ov_qs_save(input_data, input_path, preset = "fast"); Sys.sleep(0.02)
   on.exit({ for (p in c(input_path, output_path)) if (file.exists(p)) unlink(p) }, add = TRUE)
-  result <- run_func_via_rc_microservice(
+  result <- run_func_via_microservice(
     func = function(input_path, output_path, func_body, pkgs) {
       tryCatch({
         for (pkg in pkgs) suppressPackageStartupMessages(library(pkg, character.only = TRUE))

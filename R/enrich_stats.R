@@ -284,7 +284,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   ov_qs_save(list(cls=phenotype, data=msea.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rc_microservice(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(globaltest)

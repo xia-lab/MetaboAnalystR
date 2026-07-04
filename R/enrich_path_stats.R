@@ -357,7 +357,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     ov_qs_save(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-    run_func_via_rc_microservice(
+    run_func_via_microservice(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         require(globaltest)
@@ -386,7 +386,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     ov_qs_save(list(cls=mSetObj$dataSet$cls, data=path.data, subsets=hits, cov.df=cov.df), bridge_in2, preset = "fast")
     on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
 
-    run_func_via_rc_microservice(
+    run_func_via_microservice(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         require(GlobalAncova)

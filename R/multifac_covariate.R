@@ -2034,7 +2034,7 @@ PlotCovariateAdjustmentPCA <- function(mSetObj = NA, covariate, imgName="covaria
   ov_qs_save(list(p1 = p1, p2 = p2, imgName = imgName, dpi = dpi, format = format), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rc_microservice(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(ggpubr); require(ggplot2); require(Cairo)
