@@ -60,7 +60,7 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
     ov_qs_save(list(coords_per_group = coords_per_group, level = level, group_names = group_names), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-    run_func_via_rsclient(
+    run_func_via_microservice(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)

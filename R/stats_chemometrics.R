@@ -97,7 +97,7 @@ PCA.Anal <- function(mSetObj=NA){
   ov_qs_save(list(pca = pca), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(factoextra)
@@ -143,7 +143,7 @@ PCA.Anal <- function(mSetObj=NA){
   ov_qs_save(list(data_dist = data.dist, grp = grp, cls_type = cls.type), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(vegan)
@@ -1919,7 +1919,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
   ov_qs_save(list(data=datmat, cls=cls, cv.num=cv.num), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
@@ -2325,7 +2325,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
   ov_qs_save(list(data=datmat, cls=cls, perm.num=num, cv.num=cv.num), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
@@ -2471,7 +2471,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
                   doCV=doCV, validOpt=validOpt, foldNum=foldNum), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       input <- ov_qs_read(bridge_in)
@@ -3301,7 +3301,7 @@ ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
   ov_qs_save(list(distM = distM, cls = cls, n_perm = numPermutations), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-  run_func_via_rsclient(
+  run_func_via_microservice(
     func = function(wd, bridge_in, bridge_out) {
       setwd(wd)
       require(vegan)

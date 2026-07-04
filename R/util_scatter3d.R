@@ -383,7 +383,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
     ov_qs_save(list(coords = coords, level = level), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-    run_func_via_rsclient(
+    run_func_via_microservice(
       func = function(wd, bridge_in, bridge_out) {
         setwd(wd)
         Sys.setenv(RGL_USE_NULL = TRUE)
