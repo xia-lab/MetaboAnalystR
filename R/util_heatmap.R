@@ -208,7 +208,7 @@ rsclient_isolated_exec <- function(func_body, input_data, packages = character(0
     args = list(input_path = input_path, output_path = output_path,
                 func_body = func_body, pkgs = packages),
     timeout_sec = timeout)
-  if (isTRUE(result$success) && file.exists(output_path)) return(ov_qs_read(output_path))
+  if (file.exists(output_path)) return(ov_qs_read(output_path))  # bridge-file existence = success (callr returns NULL)
   msg <- if (!is.null(result$message)) result$message else "RSclient subprocess failed"
   message("[rsclient_isolated_exec] ", msg)
   return(list(success = FALSE, message = msg))

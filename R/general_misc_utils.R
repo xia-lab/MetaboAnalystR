@@ -165,6 +165,13 @@ ov_qs_exists <- function(file) {
 run_func_via_rc_microservice <- function(...) run_func_via_microservice(...)
 
 run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
+  # Default to the more efficient RSclient fork. The host app sets on.OmicsVerse = TRUE at startup to
+  # force a fresh callr subprocess in deployments where a nested RSclient fork is unstable (a startup
+  # flag is used rather than a filesystem probe, which is not a reliable signal).
+  if (!isTRUE(tryCatch(get("on.OmicsVerse", envir = globalenv()), error = function(e) FALSE)) &&
+      requireNamespace("RSclient", quietly = TRUE)) {
+    return(run_func_via_rsclient(func, args, timeout_sec))
+  }
   # Run the closure in a fresh, short-lived R process (a microservice), which then exits and reclaims
   # all memory it used plus any packages it attached. Replaces the old nested Rserve-client path, which
   # reliably crashed the worker with "Fatal error: unable to initialize the JIT" (Rserve error 127) —
@@ -207,10 +214,8 @@ run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
   # so run the function in-process. `func` is a self-contained closure that
   # exchanges data through its bridge files via the globally-defined ov_qs_*
   # helpers, so it behaves identically run here or in a worker.
-  if (file.exists("/.dockerenv")) {
-    setTimeLimit(elapsed = timeout_sec, transient = TRUE)
-    on.exit(setTimeLimit(elapsed = Inf), add = TRUE)
-    return(invisible(do.call(func, args)))
+  if (isTRUE(tryCatch(get("on.OmicsVerse", envir = globalenv()), error = function(e) FALSE))) {
+    return(run_func_via_microservice(func, args, timeout_sec))
   }
   conn <- RSclient::RS.connect(host = "localhost", port = 6311)
   on.exit(try(RSclient::RS.close(conn), silent = TRUE))
