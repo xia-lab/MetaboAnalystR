@@ -171,7 +171,7 @@ run_func_via_rc_microservice <- function(func, args = list(), timeout_sec = 60) 
   # files, so the child only needs those helpers defined; the result travels back through the files.
   if (requireNamespace("callr", quietly = TRUE)) {
     ok <- tryCatch({
-      res <- callr::r(
+      callr::r(
         func = function(func, args) {
           ov_qs_read <- function(file, ...) {
             if (file.exists(file)) { r <- try(qs2::qs_read(file, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(file, ...)) }
@@ -188,7 +188,7 @@ run_func_via_rc_microservice <- function(func, args = list(), timeout_sec = 60) 
       )
       TRUE
     }, error = function(e) { message("[rc_microservice] child failed (", conditionMessage(e), "); running in-process"); FALSE })
-    if (isTRUE(ok)) return(invisible(res))
+    if (isTRUE(ok)) return(invisible(NULL))
   }
   # Fallback: run in-process (correct result; no separate-process memory reclaim).
   setTimeLimit(elapsed = timeout_sec, transient = TRUE)
