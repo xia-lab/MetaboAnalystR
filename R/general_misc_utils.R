@@ -161,6 +161,41 @@ ov_qs_exists <- function(file) {
 # RSclient subprocess execution (Rserve fork — shared by Public and Pro)
 # =============================================================================
 
+run_func_via_rc_microservice <- function(func, args = list(), timeout_sec = 60) {
+  # Run the closure in a fresh, short-lived R process (a microservice), which then exits and reclaims
+  # all memory it used plus any packages it attached. Replaces the old nested Rserve-client path, which
+  # reliably crashed the worker with "Fatal error: unable to initialize the JIT" (Rserve error 127) —
+  # the failure that left count normalization (logcount/RLE/TMM/MORlog) throwing and downstream DE
+  # running on raw counts. Falls back to in-process if callr is unavailable or the child errors, so a
+  # caller never breaks. `func` is a self-contained closure that exchanges data via ov_qs_* bridge
+  # files, so the child only needs those helpers defined; the result travels back through the files.
+  if (requireNamespace("callr", quietly = TRUE)) {
+    ok <- tryCatch({
+      res <- callr::r(
+        func = function(func, args) {
+          ov_qs_read <- function(file, ...) {
+            if (file.exists(file)) { r <- try(qs2::qs_read(file, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(file, ...)) }
+            if (endsWith(tolower(file), ".qs")) { v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2"); if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) } }
+            else if (endsWith(tolower(file), ".qs2")) { v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs"); if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) } }
+            stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
+          }
+          ov_qs_save <- function(obj, file, ...) { .a <- list(...); for (.k in c("preset", "nthreads", "check_hash")) .a[[.k]] <- NULL; do.call(qs2::qs_save, c(list(object = obj, file = file), .a)); invisible(file) }
+          ov_qs_exists <- function(file) { if (file.exists(file)) return(TRUE); if (endsWith(tolower(file), ".qs")) return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2"))); if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs"))); FALSE }
+          assign("ov_qs_read", ov_qs_read, globalenv()); assign("ov_qs_save", ov_qs_save, globalenv()); assign("ov_qs_exists", ov_qs_exists, globalenv())
+          do.call(func, args)
+        },
+        args = list(func = func, args = args), timeout = timeout_sec, show = FALSE
+      )
+      TRUE
+    }, error = function(e) { message("[rc_microservice] child failed (", conditionMessage(e), "); running in-process"); FALSE })
+    if (isTRUE(ok)) return(invisible(res))
+  }
+  # Fallback: run in-process (correct result; no separate-process memory reclaim).
+  setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+  on.exit(setTimeLimit(elapsed = Inf), add = TRUE)
+  invisible(do.call(func, args))
+}
+
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
   # Self-host: a NESTED RSclient connection (an Rserve session opening a
   # connection back to Rserve on 6311) reliably crashes the spawned worker with

@@ -799,7 +799,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
         ov_qs_save(list(dat = dat.t), bridge_in, preset = "fast")
         on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
-        run_func_via_rsclient(
+        run_func_via_rc_microservice(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
@@ -838,7 +838,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
         ov_qs_save(list(dat = dat.t), bridge_in2, preset = "fast")
         on.exit(unlink(c(bridge_in2, bridge_out2)), add = TRUE)
 
-        run_func_via_rsclient(
+        run_func_via_rc_microservice(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
@@ -1067,7 +1067,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
         ov_qs_save(list(feat_mat = feat.mat, smpl_mat = smpl.mat), bridge_in3, preset = "fast")
         on.exit(unlink(c(bridge_in3, bridge_out3)), add = TRUE)
 
-        run_func_via_rsclient(
+        run_func_via_rc_microservice(
           func = function(wd, bridge_in, bridge_out) {
             setwd(wd)
             require(vegan)
