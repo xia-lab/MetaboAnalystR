@@ -161,6 +161,9 @@ ov_qs_exists <- function(file) {
 # RSclient subprocess execution (Rserve fork — shared by Public and Pro)
 # =============================================================================
 
+# Backward-compatible alias: external/community callers of the old name still resolve.
+run_func_via_rc_microservice <- function(...) run_func_via_microservice(...)
+
 run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
   # Run the closure in a fresh, short-lived R process (a microservice), which then exits and reclaims
   # all memory it used plus any packages it attached. Replaces the old nested Rserve-client path, which
