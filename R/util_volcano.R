@@ -112,6 +112,17 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
     # Re-apply after the theme swap above (a complete theme resets margins),
     # so labels/ticks pushed to the panel edge are not clipped.
     p <- p + theme(legend.position = "right", plot.margin = margin(12, 14, 6, 6));
+
+    # Annotate total down-regulated count (top-left) and up-regulated count
+    # (top-right) using the significant up/down sets. Black text — the points
+    # already carry the up/down colour.
+    n_up <- sum(de$Status == "UP");
+    n_down <- sum(de$Status == "DOWN");
+    p <- p +
+        ggplot2::annotate("text", x = -Inf, y = Inf, label = paste0("Down: ", n_down),
+                          hjust = -0.12, vjust = 1.6, color = "black", fontface = "bold", size = 4) +
+        ggplot2::annotate("text", x = Inf, y = Inf, label = paste0("Up: ", n_up),
+                          hjust = 1.12, vjust = 1.6, color = "black", fontface = "bold", size = 4);
   }
 
   if(interactive){
