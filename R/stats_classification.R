@@ -272,7 +272,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
   #create a sig table for display
   sig.var <- rev(sort(FreqInd));
   sig.var <- as.matrix(sig.var); # 1-column matrix
-  colnames(sig.var) <- "Freqency";
+  colnames(sig.var) <- "Frequency";
   
   fast.write.csv(sig.var, file="svm_sigfeatures.csv");
   
