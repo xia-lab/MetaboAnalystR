@@ -597,6 +597,11 @@ doAllGeneIDMapping <- function(gene.vec, org, idType){
     } else {
       entrezs <- doGeneIDMapping(gene.vec, org, idType);
     }
+    # keep the original identifier when it cannot be resolved to a symbol/name
+    # (e.g. organisms whose gene list is keyed by the KEGG symbol), so result
+    # tables show the gene rather than NA
+    na.inx <- is.na(entrezs);
+    if(any(na.inx)){ entrezs[na.inx] <- gene.vec[na.inx]; }
     return(entrezs);
 }
 
