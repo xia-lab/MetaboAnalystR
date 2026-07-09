@@ -74,7 +74,7 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
   
   # check the class labels
   if(!is.null(mSetObj$dataSet$batch.cls)){
-    if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]])) & !setequal(levels(cls.nms), levels(mSet[["dataSet"]][["class.cls"]]))){
+    if(!setequal(levels(cls.nms), levels(mSetObj$dataSet$batch.cls[[1]])) & !setequal(levels(cls.nms), levels(mSetObj[["dataSet"]][["class.cls"]]))){
       AddErrMsg("The class labels in current data is different from the previous!");
       return("F");
     }
