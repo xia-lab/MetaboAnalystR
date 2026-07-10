@@ -2293,7 +2293,10 @@ generateAsariPeakList <-  function(userPath) {
                                                       Formula = my.dat$Formula, 
                                                       HMDBID = HMDBIDs)
   
-  FeatureOrder <- order(pvals)
+  # Single-group / degenerate comparisons make PerformFastUnivTests return a
+  # scalar, so pvals is length 1; order(pvals) would then collapse my.dat to its
+  # first row. Fall back to intensity order so every feature is retained.
+  FeatureOrder <- if (length(pvals) == nrow(my.dat)) order(pvals) else order(my.dat$intenVale, decreasing = TRUE)
   my.dat <- my.dat[FeatureOrder,]
   ov_qs_save(FeatureOrder, file = "FeatureOrder.qs")
   
