@@ -81,13 +81,25 @@
   }
 
   ## PERMANOVA p-values for all PC pairs ------------------------------
-  pc.mat   <- as.matrix(data)
-  pval.mat <- matrix(NA_real_, pc.num, pc.num)
+  ## The p-values depend only on the PC scores, the selected meta variable,
+  ## and pc.num — NOT on dpi/format/width. Cache them keyed on those inputs so
+  ## that re-rendering the same plot (e.g. a 300 dpi download after the 72 dpi
+  ## preview) reuses the values instead of re-running the vegan permutations.
+  pc.mat    <- as.matrix(data)
+  cache.key <- paste(meta, cls.type, pc.num,
+                     paste0(as.character(cls), collapse = "|"), sep = "_")
+  cached    <- mSetObj$analSet$pca$pair.pval.cache
 
-  for (i in 1:(pc.num - 1))
-    for (j in (i + 1):pc.num)
-      pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j],
-                                             cls, cls.type)
+  if (!is.null(cached) && identical(cached$key, cache.key)) {
+    pval.mat <- cached$pval.mat
+  } else {
+    pval.mat <- matrix(NA_real_, pc.num, pc.num)
+    for (i in 1:(pc.num - 1))
+      for (j in (i + 1):pc.num)
+        pval.mat[i, j] <- ComputePERMANOVAstat(pc.mat[, i], pc.mat[, j],
+                                               cls, cls.type)
+    mSetObj$analSet$pca$pair.pval.cache <- list(key = cache.key, pval.mat = pval.mat)
+  }
   
   ## helper for upper-triangle density + p-value -----------------------
   upper_density_with_p <- function(p.mat) {

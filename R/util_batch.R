@@ -25,7 +25,8 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     mSetObj[["dataSet"]][["table"]] <- commonMat2 <- do.call(rbind, mSetObj$dataSet$batch);
     mSetObj[["dataSet"]][["batch.cls"]] <- batch.lbl2 <- factor(batch.lbls,levels=names(mSetObj$dataSet$batch), ordered=T);
     mSetObj[["dataSet"]][["class.cls"]] <- class.lbl2 <- factor(cls.lbls);
-    
+    order.lbl2 <- NULL; # multiple batch files carry no injection-order info
+
     working_mode <- "file";
     
   } else if (class(mSetObj[["dataSet"]][["batch.cls"]])=="factor") {
