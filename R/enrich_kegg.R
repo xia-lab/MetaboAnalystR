@@ -38,6 +38,7 @@ PerformKOEnrichAnalysis_KO01100 <- function(mSetObj=NA, category, file.nm){
 #'@param file.nm Input the file name 
 #'@param mSetObj mSetObj object
 PerformKOEnrichAnalysis_List <- function(mSetObj, file.nm){
+  mSetObj <- .get.mSet(mSetObj);
   #save.image("list.RData");
   if(idtype == "cmpd"){
     current.set <- current.cmpd.set;
@@ -277,7 +278,7 @@ OrganizeTarJsonforNextwork <- function(mSetObj=NA){
     x0 <- x[grepl("cpd:",x)]
     if(length(x0) > 0){gsub("cpd:","",x0)}
   })
-  my.hits$my.hits.cmpd <- my.hits.cmpd[sapply(my.hits.cmpd, function(x){length(x) != 0})]
+  my.hits$my.hits.cmpds <- my.hits.cmpd[sapply(my.hits.cmpd, function(x){length(x) != 0})]
   my.hits.genes <- lapply(my.hits0, FUN = function(x) {
     x[!grepl("cpd:",x)]
   })
