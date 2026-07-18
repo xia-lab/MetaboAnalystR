@@ -151,15 +151,21 @@ if(length(cidx)>0){
     res.mat <- res.mat[c("Name", setdiff(names(res.mat), "Name"))]
     csv.nm <- paste(file.nm, ".csv", sep="");
 
-  gene.vec <- current.universe;
-  sym.vec <- doAllGeneIDMapping(gene.vec, mSetObj$org, "entrez");
-  gene.nms <- sym.vec;
-
-  current.geneset.symb <- lapply(current.geneset, 
-                       function(x) {
-                         gene.nms[gene.vec%in%unlist(x)];
+  # Gene-symbol mapping only applies to gene queries. For a compound-only network
+  # (idtype == "cmpd") current.universe holds compound IDs and there is no organism
+  # gene DB to map against, so skip it — otherwise doAllGeneIDMapping errors on the
+  # empty/compound org (the network JSON is already written by Save2KEGGJSON above).
+  if (exists("idtype") && identical(idtype, "cmpd")) {
+    current.geneset.symb <- list();
+  } else {
+    gene.vec <- current.universe;
+    sym.vec <- doAllGeneIDMapping(gene.vec, mSetObj$org, "entrez");
+    gene.nms <- sym.vec;
+    current.geneset.symb <- lapply(current.geneset,
+                         function(x) {
+                           gene.nms[gene.vec%in%unlist(x)];
+    });
   }
-  );
 
     mSetObj$imgSet$enrTables[[vis.type]] <- list();
     mSetObj$imgSet$enrTables[[vis.type]]$table <- res.mat;
