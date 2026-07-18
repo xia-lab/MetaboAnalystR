@@ -4948,6 +4948,31 @@ Prepare4TarIntegNetwork <- function(mSetObj = NA, netLib = "global"){
   return(.set.mSet(mSetObj))
 }
 
+#'Prepare the KEGG global metabolic network (ko01100) for a compound-only result
+#'@description Compound counterpart of Prepare4TarIntegNetwork, for pathway
+#'analysis / metabolite-set results that have no gene layer. Clears any gene
+#'state so PrepareNetworkData and PrepareKeggQueryJson take the compound branch
+#'(idtype "cmpd"), then writes network_enrichment_pathway_0.json + network_query.json.
+#'@param mSetObj Input name of the created mSet Object
+#'@param netLib "allp" (all complete pathways) or "global"
+#'@export
+Prepare4KeggNetwork <- function(mSetObj = NA, netLib = "allp"){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj$dataSet$gene.mat <- NULL;
+  mSetObj$dataSet$gene <- NULL;
+  if(!is.null(mSetObj$dataSet$gene.name.map)){ mSetObj$dataSet$gene.name.map$hit.kos <- NULL; }
+  if(.on.public.web){ .set.mSet(mSetObj) } else { mSetObj <- .set.mSet(mSetObj) };
+  if(.on.public.web){ PrepareNetworkData(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareNetworkData(mSetObj) };
+  idtype <<- "cmpd";
+  if(.on.public.web){ PrepareKeggQueryJson(NA); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PrepareKeggQueryJson(mSetObj) };
+  if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") };
+  mSetObj <- .get.mSet(mSetObj);
+  if(netLib != "global"){
+    OrganizeTarJsonforNextwork(mSetObj);
+  }
+  return(.set.mSet(mSetObj));
+}
+
 #'Set organism for further analysis
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param org Set organism ID
