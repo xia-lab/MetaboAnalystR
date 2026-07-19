@@ -7,14 +7,27 @@
 # sub.dir is sub folder, leave NULL is under main lib folder
 .get.my.lib <- function(filenm, sub.dir=NULL){
 
-    print(filenm);
     if(!is.null(sub.dir)){
         sub.dir <- paste0(sub.dir, "/");
     }
     if(.on.public.web){
         lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
+        # In-session cache: these library .qs files are large and read-only, and the
+        # same one is requested many times in a single run (compound name-mapping
+        # reads it once per enrichment library), so re-reading from disk on every
+        # call is wasteful. Cache by path; R copy-on-modify keeps callers that mutate
+        # the returned object from corrupting the cached copy.
+        if(!exists(".my.lib.cache", envir=.GlobalEnv)){
+            assign(".my.lib.cache", new.env(parent=emptyenv()), envir=.GlobalEnv);
+        }
+        .cache <- get(".my.lib.cache", envir=.GlobalEnv);
+        if(!is.null(.cache[[lib.path]])){
+            return(.cache[[lib.path]]);
+        }
         print(paste("loading library:", lib.path));
-        return(ov_qs_read(lib.path));
+        .obj <- ov_qs_read(lib.path);
+        .cache[[lib.path]] <- .obj;
+        return(.obj);
     }
     # print(c("lib.path",lib.path))
     lib.download <- FALSE;
