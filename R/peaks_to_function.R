@@ -77,16 +77,33 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
-Read.PeakListData <- function(mSetObj=NA, filename = NA, 
+# Map peak-list column headers to the canonical m.z / p.value / t.score / r.t roles.
+# Matching is case-insensitive and tolerant of common header variants (e.g. "Mz",
+# "MZ", "mass", "Retention time", "Pval", "t-stat") so a correctly-ordered peak list
+# is not rejected only because its columns are named differently.
+.canon.peak.cols <- function(nms) {
+  x <- tolower(gsub("[^[:alnum:]]", "", nms));
+  alias <- c(mass = "mz", mzmass = "mz", massz = "mz", mzvalue = "mz",
+             retention = "rt", retentiontime = "rt", rtmin = "rt", rtsec = "rt", rtime = "rt",
+             pval = "pvalue", pvals = "pvalue", pvalues = "pvalue",
+             tstat = "tscore", tstats = "tscore", tstatistic = "tscore",
+             tscores = "tscore", statistic = "tscore");
+  hit <- x %in% names(alias);
+  x[hit] <- alias[x[hit]];
+  x
+}
+
+Read.PeakListData <- function(mSetObj=NA, filename = NA,
                               meta.anal = FALSE,
                               method = "pvalue") {
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
-  file_name <- tools::file_path_sans_ext(basename(filename)) 
+
+  file_name <- tools::file_path_sans_ext(basename(filename))
   mumDataContainsPval = 1; #whether initial data contains pval or not
   input <- as.data.frame(.readDataTable(filename));
-  user_cols <- gsub("[^[:alnum:]]", "", colnames(input));
+  colnames(input) <- .canon.peak.cols(colnames(input));
+  user_cols <- colnames(input);
   mummi.cols <- c("m.z", "p.value", "t.score", "r.t")
   
   if(meta.anal & method %in% c("es", "both")){
@@ -100,12 +117,24 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   if(mumDataContainsMode){
     mode.info <- input$mode
     input <- subset(input, select=-mode)
-    user_cols <- gsub("[^[:alnum:]]", "", colnames(input))
+    user_cols <- colnames(input)
   }
-  
+
   # next check what column names are there
   hit <- "mz" %in% user_cols;
-  
+
+  # No header maps to m/z: fall back to the convention that the FIRST column is the
+  # mass / m/z, provided its values are numeric and positive (sanity-check the
+  # values, not just the name).
+  if(sum(hit) < 1 && ncol(input) >= 1){
+    v1 <- suppressWarnings(as.numeric(as.character(input[[1]])));
+    if(any(is.finite(v1)) && all(v1[is.finite(v1)] > 0)){
+      user_cols[1] <- "mz";
+      colnames(input) <- user_cols;
+      hit <- TRUE;
+    }
+  }
+
   if(sum(hit) < 1){
     AddErrMsg("Missing information, data must contain a 'm.z' column!");
     return(0);

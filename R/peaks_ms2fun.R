@@ -619,7 +619,8 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   file_name <- tools::file_path_sans_ext(basename(msfile)) 
   mumDataContainsPval = 1; #whether initial data contains pval or not
   input <- as.data.frame(.readDataTable(msfile));
-  user_cols <- gsub("[^[:alnum:]]", "", colnames(input));
+  colnames(input) <- .canon.peak.cols(colnames(input));
+  user_cols <- colnames(input);
   mummi.cols <- c("m.z", "p.value", "t.score", "r.t");
   
   filems2_name <- tools::file_path_sans_ext(basename(msmsfile))
@@ -656,12 +657,23 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   if(mumDataContainsMode){
     mode.info <- input$mode  
     input <- subset(input, select=-mode)
-    user_cols <- gsub("[^[:alnum:]]", "", colnames(input))
+    user_cols <- colnames(input)
   }
-  
+
   # next check what column names are there
   hit <- "mz" %in% user_cols;
-  
+
+  # No header maps to m/z: fall back to the convention that the FIRST column is the
+  # mass / m/z, provided its values are numeric and positive.
+  if(sum(hit) < 1 && ncol(input) >= 1){
+    v1 <- suppressWarnings(as.numeric(as.character(input[[1]])));
+    if(any(is.finite(v1)) && all(v1[is.finite(v1)] > 0)){
+      user_cols[1] <- "mz";
+      colnames(input) <- user_cols;
+      hit <- TRUE;
+    }
+  }
+
   if(sum(hit) < 1){
     AddErrMsg("Missing information, data must contain a 'm.z' column!");
     return(0);
