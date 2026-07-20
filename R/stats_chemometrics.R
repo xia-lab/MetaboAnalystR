@@ -728,7 +728,15 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
   
   if(plotType=="all"){
-    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    lbl.inx <- seq_len(nrow(loadings));
+    # With many features the labels overprint into an unreadable mass; above 100 keep only
+    # the peripheral features (largest distance from the origin = highest contribution) so the
+    # informative outliers stay legible. All points are still plotted, only labels are thinned.
+    if(nrow(loadings) > 100){
+      d <- sqrt(loadings[,1]^2 + loadings[,2]^2);
+      lbl.inx <- utils::head(order(d, decreasing=TRUE), 100);
+    }
+    text(loadings[lbl.inx,1],loadings[lbl.inx,2], labels=substr(rownames(loadings)[lbl.inx], 1, 16), pos=4, col="blue", xpd=T);
   }else if(plotType == "custom"){
     if(length(mSetObj$custom.cmpds) > 0){
       hit.inx <- rownames(loadings) %in% mSetObj$custom.cmpds;
@@ -1273,7 +1281,15 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
   
   if(plotType=="all"){
-    text(loadings[,1],loadings[,2], labels=substr(rownames(loadings), 1, 16), pos=4, col="blue", xpd=T);
+    lbl.inx <- seq_len(nrow(loadings));
+    # With many features the labels overprint into an unreadable mass; above 100 keep only
+    # the peripheral features (largest distance from the origin = highest contribution) so the
+    # informative outliers stay legible. All points are still plotted, only labels are thinned.
+    if(nrow(loadings) > 100){
+      d <- sqrt(loadings[,1]^2 + loadings[,2]^2);
+      lbl.inx <- utils::head(order(d, decreasing=TRUE), 100);
+    }
+    text(loadings[lbl.inx,1],loadings[lbl.inx,2], labels=substr(rownames(loadings)[lbl.inx], 1, 16), pos=4, col="blue", xpd=T);
   }else if(plotType == "custom"){
     if(length(mSetObj$custom.cmpds) > 0){
       hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
