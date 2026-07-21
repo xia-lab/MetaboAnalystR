@@ -417,20 +417,35 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
   sub.norm <- sub$data;
   sub.cls  <- sub$cls;
 
-  if (tt.method == "limma" && !nonpar && !paired) {
+  if (tt.method == "limma" && !nonpar) {
     # Limma moderated t-test
     require(limma)
-    design <- model.matrix(~sub.cls)
-    fit <- lmFit(t(as.matrix(sub.norm)), design)
-    fit <- eBayes(fit)
-    tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
+    if (paired) {
+      # Paired design: block on the SUBJECT (pair id) so the group effect is
+      # estimated WITHIN subject — the moderated-t analogue of a paired t-test.
+      # Previously the limma branch excluded paired data, so paired+limma fell
+      # through to the classical paired t-test (GetTtestRes) and produced results
+      # identical to the "Classical" option while being labelled "Limma".
+      pr <- as.numeric(mSetObj$dataSet$pairs)[sub$keep];
+      subject <- factor(abs(pr));
+      design <- model.matrix(~ subject + sub.cls);
+      fit <- lmFit(t(as.matrix(sub.norm)), design);
+      fit <- eBayes(fit);
+      cond.coef <- tail(colnames(design), 1L);   # the group (sub.cls) coefficient
+      tt.res <- topTable(fit, coef = cond.coef, number = Inf, sort.by = "none");
+    } else {
+      design <- model.matrix(~sub.cls)
+      fit <- lmFit(t(as.matrix(sub.norm)), design)
+      fit <- eBayes(fit)
+      tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
+    }
     t.stat <- tt.res$t
     p.value <- tt.res$P.Value
     names(t.stat) <- names(p.value) <- rownames(tt.res)
     # Reorder to match norm columns
     t.stat <- t.stat[colnames(mSetObj$dataSet$norm)]
     p.value <- p.value[colnames(mSetObj$dataSet$norm)]
-  } else if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
+  } else if(.on.public.web & !nonpar & !paired & RequireFastUnivTests(mSetObj)){
     res <- PerformFastUnivTests(sub.norm, sub.cls, var.equal=equal.var);
     t.stat <- res[,1];
     p.value <- res[,2];

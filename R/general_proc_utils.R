@@ -1257,6 +1257,22 @@ PlotMissingDistr <- function(mSetObj = NA,
     grp.type <- "disc"
   }
 
+  ## -------- Paired design: group by CONDITION, not the pair id ---------
+  ## In a paired design the class column holds the signed pair index
+  ## (1,-1,2,-2,...): the magnitude is the subject and the sign is the
+  ## experimental condition. Grouping by it directly yields one group per
+  ## subject (1,2,3 / -1,-2,-3); collapse to the two conditions (the sign).
+  ## Guarded so it only triggers on the genuine signed encoding (numeric, no
+  ## zero, and both signs present) and never on an ordinary group column.
+  if (isTRUE(mSetObj$dataSet$paired)) {
+    gv.num <- suppressWarnings(as.numeric(as.character(grp.vec)))
+    if (all(!is.na(gv.num)) && all(gv.num != 0) && any(gv.num > 0) && any(gv.num < 0)) {
+      grp.vec  <- factor(ifelse(gv.num > 0, "Group 1", "Group 2"))
+      groupCol <- "Group"
+      grp.type <- "disc"
+    }
+  }
+
   ## -------- Cast by type & colour scale -------------------------------
   if (grp.type == "cont") {
     grp.vec    <- as.numeric(grp.vec)
