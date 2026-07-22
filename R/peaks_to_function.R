@@ -4708,6 +4708,108 @@ PreparePeakTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
 }
 
 
+#' PreparePeakCompoundTable4PSEA
+#' @param mSetObj mSet Objective from previous step
+#' @param ranking.method ranking method passed to PreparePeakTable4PSEA
+#' @export
+#' @author Zhiqiang Pang, Jeff Xia
+PreparePeakCompoundTable4PSEA <- function(mSetObj=NA, ranking.method="classical"){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  peak_tbl_path <- mSetObj$dataSet$data.file.path;
+  cmpd_tbl_path <- mSetObj$dataSet$cmpd.file.path;
+
+cat("==peak_tbl_path===> ", peak_tbl_path, "\n");
+  cat("==cmpd_tbl_path===> ", cmpd_tbl_path, "\n");
+  cat("Preparing peak and compound tables for PSEA analysis...\n");
+
+  if(is.null(peak_tbl_path) || is.na(peak_tbl_path) || !nzchar(peak_tbl_path)){
+    AddErrMsg("Missing peak table file path. Please upload a valid peak table first.");
+    return(0);
+  }
+  if(is.null(cmpd_tbl_path) || is.na(cmpd_tbl_path) || !nzchar(cmpd_tbl_path)){
+    AddErrMsg("Missing compound table file path. Please upload a valid compound/annotation table first.");
+    return(0);
+  }
+
+  ms2id <- mSetObj$paramSet$ms2id.type;
+  if(is.null(ms2id) || is.na(ms2id) || !nzchar(ms2id)){
+    ms2id <- "inchikeys";
+  }
+
+  if(.on.public.web){
+    SetMS2IDType(NA, ms2id);
+    mSetObj <- .get.mSet(mSetObj);
+  } else {
+    mSetObj <- SetMS2IDType(mSetObj, ms2id);
+    if(identical(mSetObj, 0)){
+      return(0);
+    }
+  }
+
+  prep_res <- PreparePeakTable4PSEA(mSetObj, ranking.method);
+  if(identical(prep_res, 0)){
+    return(0);
+  }
+  mSetObj <- .get.mSet(mSetObj);
+
+  id_pattern <- switch(ms2id,
+                       hmdb_ids = "HMDB",
+                       pubchem_cids = "CID|PubChem",
+                       pubchem_sids = "SID|PubChem",
+                       smiles = "SMILES|Smile",
+                       inchikeys = "InchiKey",
+                       "InchiKey")
+
+  cmpd_list_file <- paste0("mummichog_compound_list_", Sys.Date(), ".txt");
+  fmt_ok <- TRUE
+  tryCatch({
+    FormatPeakCompoundTable(
+      compoundTablePath = cmpd_tbl_path,
+      peakTablePath = peak_tbl_path,
+      outputFilePath = cmpd_list_file,
+      idColumnPattern = id_pattern
+    )
+  }, error = function(e){
+    AddErrMsg(paste0("Failed to format compound table: ", e$message));
+    fmt_ok <<- FALSE
+  })
+
+  if(!fmt_ok){
+    return(0)
+  }
+
+  peak_list_file <- paste0("mummichog_input_", Sys.Date(), ".txt");
+
+  if(.on.public.web){
+    ok <- Read.PeakMS2ListData(NA, peak_list_file, cmpd_list_file);
+    if(identical(ok, 0)){
+      return(0);
+    }
+    mSetObj <- .get.mSet(mSetObj);
+    if(SanityCheckMummichogData(NA) == 0){
+      return(0);
+    }
+    mSetObj <- .get.mSet(mSetObj);
+    mSetObj$dataSet$mum.type <- "table";
+    .set.mSet(mSetObj);
+    return(1);
+  } else {
+    mSetObj <- Read.PeakMS2ListData(mSetObj, peak_list_file, cmpd_list_file);
+    if(identical(mSetObj, 0)){
+      return(0);
+    }
+    mSetObj <- SanityCheckMummichogData(mSetObj);
+    if(identical(mSetObj, 0)){
+      return(0);
+    }
+    mSetObj$dataSet$mum.type <- "table";
+    return(.set.mSet(mSetObj));
+  }
+}
+
+
 
 #' Export ranked peak list to mprt-format TSV for downstream chained mummichog
 #'
@@ -5494,14 +5596,40 @@ doHeatmapMummichogTest <- function(mSetObj=NA, nm, libNm, ids){
     .set.mSet(mSetObj);
     anal.type <<- "integ";
   }else{
-    gene.vec <- unlist(strsplit(ids, "; "));
+    gene.vec <- trimws(unlist(strsplit(ids, ";", fixed = TRUE)));
+    gene.vec <- gene.vec[nzchar(gene.vec)];
+    if(length(gene.vec) < 1){
+      AddErrMsg("No valid selected features were found for enrichment.");
+      return(0);
+    }
+
+    has_cmpd_ref <- !is.null(mSetObj$dataSet$ref_cmpdlist) && length(mSetObj$dataSet$ref_cmpdlist) > 0 &&
+      any(nzchar(as.character(mSetObj$dataSet$ref_cmpdlist)));
+    has_cmpd_orig <- !is.null(mSetObj$dataSet$cmpd.orig) && length(mSetObj$dataSet$cmpd.orig) > 0 &&
+      any(nzchar(as.character(mSetObj$dataSet$cmpd.orig)));
+    has_cmpd_path <- !is.null(mSetObj$dataSet$cmpd.file.path) && !is.na(mSetObj$dataSet$cmpd.file.path) &&
+      nzchar(mSetObj$dataSet$cmpd.file.path);
+    has_compound_info <- has_cmpd_ref || has_cmpd_orig || has_cmpd_path;
+
+    if(!has_cmpd_ref && has_cmpd_orig){
+      mSetObj$dataSet$ref_cmpdlist <- as.matrix(mSetObj$dataSet$cmpd.orig);
+      has_cmpd_ref <- TRUE;
+    }
+
+    mSetObj$paramSet$ContainsMS2 <- isTRUE(has_compound_info);
+
     anal.type <<- "mummichog";
     mSetObj$paramSet$anal.type <- "mummichog";  # Must set this for .init.Permutations to use correct path
     is.rt <- mSetObj$paramSet$mumRT;
     if(is.rt){
-      feat_info_split <- matrix(unlist(strsplit(gene.vec, "__", fixed=TRUE)), ncol=2, byrow=T)
-      colnames(feat_info_split) <- c("m.z", "r.t")
-      mSetObj$dataSet$input_mzlist <- as.numeric(feat_info_split[,1]);
+      feat_parts <- strsplit(gene.vec, "__", fixed = TRUE);
+      mz_vals <- suppressWarnings(as.numeric(vapply(feat_parts, function(x) if(length(x) >= 1) x[1] else NA_character_, FUN.VALUE = character(1L))));
+      if(any(!is.finite(mz_vals))){
+        bad_examples <- paste(utils::head(gene.vec[!is.finite(mz_vals)], 5), collapse = ", ");
+        AddErrMsg(paste0("Invalid selected feature format. Expected 'mz__rt'. Examples: ", bad_examples));
+        return(0);
+      }
+      mSetObj$dataSet$input_mzlist <- mz_vals;
       mSetObj$dataSet$N <- length(mSetObj$dataSet$input_mzlist);
     }else{
       mSetObj$dataSet$input_mzlist <- gene.vec;
