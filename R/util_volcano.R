@@ -57,10 +57,15 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
     de$label <- rownames(de);
   }else if(labelNum == 0){
     de$label <- NA;
-  }else if(labelNum < 0 || labelNum > length(rownames(de))){
+  }else if(labelNum < 0){
     de$label[imp.inx] <- rownames(de)[imp.inx];
   }else{
-    de$label[c(1:labelNum)] <- rownames(de)[c(1:labelNum)];
+    # label the top labelNum most-significant features on each side (up / down);
+    # de is already ordered most-significant first, so head() takes the top of each.
+    up.inx   <- which(de$Status == "UP");
+    down.inx <- which(de$Status == "DOWN");
+    sel <- c(utils::head(up.inx, labelNum), utils::head(down.inx, labelNum));
+    de$label[sel] <- rownames(de)[sel];
   }
 
   require(ggplot2);
