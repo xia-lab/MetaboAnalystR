@@ -21,8 +21,38 @@
                                    cpd.treep,
                                    cpd.treen){
 
-  ref_mzlist <- as.numeric(mSetObj$dataSet$ref_mzlist);
-  ref_cmpdlist <- as.matrix(mSetObj$dataSet$ref_cmpdlist);
+  ref_mzlist_raw <- as.character(mSetObj$dataSet$ref_mzlist);
+  ref_mzlist <- suppressWarnings(as.numeric(ref_mzlist_raw));
+  if(any(is.na(ref_mzlist))){
+    ref_mzlist <- suppressWarnings(as.numeric(sub("__.*$", "", ref_mzlist_raw)));
+  }
+  if(any(is.na(ref_mzlist))){
+    bad.examples <- paste(utils::head(unique(ref_mzlist_raw[is.na(ref_mzlist)]), 5), collapse = ", ")
+    AddErrMsg(paste("Invalid m/z values found after preprocessing. Examples:", bad.examples))
+    return(0)
+  }
+
+  ref_cmpdlist <- mSetObj$dataSet$ref_cmpdlist;
+  if(is.null(ref_cmpdlist)){
+    ref_cmpdlist <- mSetObj$dataSet$cmpd.orig;
+  }
+  if(is.null(ref_cmpdlist)){
+    # Keep shape stable for downstream indexing and skip MS2 filtration when annotations are absent.
+    ref_cmpdlist <- matrix("", nrow = length(ref_mzlist), ncol = 1)
+  } else if(is.vector(ref_cmpdlist) && !is.list(ref_cmpdlist)){
+    ref_cmpdlist <- matrix(as.character(ref_cmpdlist), ncol = 1)
+  } else {
+    ref_cmpdlist <- as.matrix(ref_cmpdlist)
+  }
+
+  if(nrow(ref_cmpdlist) != length(ref_mzlist)){
+    cmpd_fix <- matrix("", nrow = length(ref_mzlist), ncol = ncol(ref_cmpdlist))
+    n_copy <- min(nrow(ref_cmpdlist), nrow(cmpd_fix))
+    if(n_copy > 0){
+      cmpd_fix[seq_len(n_copy), ] <- ref_cmpdlist[seq_len(n_copy), , drop = FALSE]
+    }
+    ref_cmpdlist <- cmpd_fix
+  }
   
   print(paste0("Got ", length(ref_mzlist), " mass features."))
   print(paste0("Got ", length(ref_cmpdlist[ref_cmpdlist != ""]), " Compound features."))
@@ -34,7 +64,6 @@
   ref_mzlistn <- ref_mzlist[!pos_inx];
   
   # split all compounds identified (users' input) from MS2
-  ref_cmpdlist <- mSetObj$dataSet$ref_cmpdlist;
   ref_cmpdlistp <- ref_cmpdlist[pos_inx,];
   ref_cmpdlistn <- ref_cmpdlist[!pos_inx,];
   
@@ -640,8 +669,63 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
     new_cmpd_input -> cmpd_input
     colnames(cmpd_input) <- paste0("CMPD_", seq(ncol(cmpd_input)));
     mSetObj$dataSet$cmpd.orig <-cmpd_input
+  } else if (all(c("mzmin", "mzmax", "rtmin", "rtmax") %in% tolower(gsub("[^[:alnum:]_]", "", colnames(cmpd_input))))) {
+    # Support spectra-processing annotation tables with mz/rt ranges and non-equal row counts
+    cmpd_nms <- tolower(gsub("[^[:alnum:]_]", "", colnames(cmpd_input)));
+
+    # Derive per-peak mz/rt from the peak table
+    mz_vec <- suppressWarnings(as.numeric(input[[1]]));
+    if("mz" %in% user_cols){
+      mz_vec <- suppressWarnings(as.numeric(input[[which(user_cols == "mz")[1]]]))
+    }
+
+    rt_vec <- NULL
+    if("rt" %in% user_cols){
+      rt_vec <- suppressWarnings(as.numeric(input[[which(user_cols == "rt")[1]]]))
+    } else if("r.t" %in% user_cols){
+      rt_vec <- suppressWarnings(as.numeric(input[[which(user_cols == "r.t")[1]]]))
+    }
+
+    if(any(!is.finite(mz_vec)) || is.null(rt_vec) || any(!is.finite(rt_vec))){
+      AddErrMsg("Compound table with mz/rt ranges requires peak data containing valid m/z and retention-time values.");
+      return(0);
+    }
+
+    mzmin <- suppressWarnings(as.numeric(cmpd_input[, which(cmpd_nms == "mzmin")[1]]));
+    mzmax <- suppressWarnings(as.numeric(cmpd_input[, which(cmpd_nms == "mzmax")[1]]));
+    rtmin <- suppressWarnings(as.numeric(cmpd_input[, which(cmpd_nms == "rtmin")[1]]));
+    rtmax <- suppressWarnings(as.numeric(cmpd_input[, which(cmpd_nms == "rtmax")[1]]));
+    valid_cmpd <- is.finite(mzmin) & is.finite(mzmax) & is.finite(rtmin) & is.finite(rtmax);
+
+    cand_idx <- grep("^(compound|inchikey|formula|score|database)_[0-9]+$", cmpd_nms);
+    if(length(cand_idx) < 1){
+      cand_idx <- setdiff(seq_len(ncol(cmpd_input)), which(cmpd_nms %in% c("mzmin", "mzmax", "rtmin", "rtmax")));
+    }
+
+    if(length(cand_idx) < 1){
+      AddErrMsg("No candidate annotation columns were found in the compound table.");
+      return(0);
+    }
+
+    cmpd_map <- matrix("", nrow = nrow(input), ncol = length(cand_idx));
+    for(ii in seq_len(nrow(input))){
+      hit_rows <- valid_cmpd & (mz_vec[ii] >= mzmin) & (mz_vec[ii] <= mzmax) & (rt_vec[ii] >= rtmin) & (rt_vec[ii] <= rtmax);
+      if(any(hit_rows)){
+        for(jj in seq_along(cand_idx)){
+          vals <- as.character(cmpd_input[hit_rows, cand_idx[jj]]);
+          vals <- unique(vals[!(is.na(vals) | vals == "" | vals == "NA")]);
+          if(length(vals) > 0){
+            cmpd_map[ii, jj] <- paste(vals, collapse = ";");
+          }
+        }
+      }
+    }
+
+    cmpd_input <- as.data.frame(cmpd_map, stringsAsFactors = FALSE);
+    colnames(cmpd_input) <- paste0("CMPD_", seq(ncol(cmpd_input)));
+    mSetObj$dataSet$cmpd.orig <- cmpd_input
   } else {
-    AddErrMsg("Peak table and compound candidate table have different rows. Please correct.");
+    AddErrMsg("Peak and compound tables are not aligned. Please provide either: (1) equal-row tables, (2) an index-based compound table, or (3) a spectra annotation table with mzmin/mzmax/rtmin/rtmax.");
     return(0);
   }
   
@@ -743,6 +827,185 @@ Read.PeakMS2ListData <- function(mSetObj=NA,
   mSetObj$dataSet$meta.info <- as.matrix(1); # Define a value to avoid bug
   
   return(.set.mSet(mSetObj));
+}
+
+#'@export
+Read.PeakMS2TableData <- function(mSetObj=NA,
+                                  msfile = NA,
+                                  msmsfile = NA,
+                                  format = "colu",
+                                  lbl.type = "disc") {
+
+  mSetObj <- .get.mSet(mSetObj);
+cat("msfile ===> ", msfile, "\n")
+cat("msmsfile ===> ", msmsfile, "\n")
+  mSetObj$dataSet$data.file.path <- msfile;
+  mSetObj$dataSet$cmpd.file.path <- msmsfile;
+  # Reuse existing table parser/validator for the MS1 peak intensity table
+  mSetObj <- Read.TextData(mSetObj, msfile, format, lbl.type);
+  mSetObj <- .get.mSet(mSetObj);
+cat("msfile ===> ", msfile, "\n")
+cat("msmsfile ===> ", msmsfile, "\n")
+  mSetObj$dataSet$data.file.path <- msfile;
+  mSetObj$dataSet$cmpd.file.path <- msmsfile;
+  cmpd_input <- as.data.frame(.readDataTable(msmsfile), stringsAsFactors = FALSE);
+  if(nrow(cmpd_input) < 1 || ncol(cmpd_input) < 1){
+    AddErrMsg("The compound annotation table is empty or unreadable.");
+    return(0);
+  }
+
+  # Basic format checks against spectra-processing output layout
+  nms <- tolower(gsub("[^[:alnum:]_]", "", colnames(cmpd_input)));
+  req.cols <- c("mzmin", "mzmax", "rtmin", "rtmax");
+  if(!all(req.cols %in% nms)){
+    AddErrMsg("Compound annotation table must contain columns mzmin, mzmax, rtmin, and rtmax.");
+    return(0);
+  }
+
+  has.hit.cols <- any(grepl("^(compound|inchikey|formula|score|database)_[0-9]+$", nms));
+  if(!has.hit.cols){
+    AddErrMsg("Compound annotation table must contain one or more candidate hit columns (e.g., Compound_1, InchiKey_1, Formula_1, Score_1, Database_1).");
+    return(0);
+  }
+
+  # Validate table pairing by mz/rt overlap instead of row count.
+  # Peak table features are expected as "mz__rt" in the first-column labels.
+  peak_features <- names(mSetObj$dataSet$url.var.nms);
+  if(is.null(peak_features) || length(peak_features) == 0){
+    AddErrMsg("Unable to retrieve feature names from the peak table. Please upload a valid peak table with feature labels in the first column.");
+    return(0);
+  }
+
+  split_feat <- strsplit(as.character(peak_features), "__", fixed = TRUE);
+  feat_mz <- suppressWarnings(as.numeric(vapply(split_feat, function(x) if(length(x) >= 1) x[1] else NA_character_, FUN.VALUE = character(1L))));
+  feat_rt <- suppressWarnings(as.numeric(vapply(split_feat, function(x) if(length(x) >= 2) x[2] else NA_character_, FUN.VALUE = character(1L))));
+  valid_feat <- is.finite(feat_mz) & is.finite(feat_rt);
+
+  if(!any(valid_feat)){
+    AddErrMsg("No valid peak features were found in 'mz__rt' format. Please upload a correctly formatted peak table.");
+    return(0);
+  }
+
+  feat_mz <- feat_mz[valid_feat];
+  feat_rt <- feat_rt[valid_feat];
+
+  mzmin <- suppressWarnings(as.numeric(cmpd_input[, which(nms == "mzmin")[1]]));
+  mzmax <- suppressWarnings(as.numeric(cmpd_input[, which(nms == "mzmax")[1]]));
+  rtmin <- suppressWarnings(as.numeric(cmpd_input[, which(nms == "rtmin")[1]]));
+  rtmax <- suppressWarnings(as.numeric(cmpd_input[, which(nms == "rtmax")[1]]));
+
+  valid_cmpd <- is.finite(mzmin) & is.finite(mzmax) & is.finite(rtmin) & is.finite(rtmax);
+  if(!any(valid_cmpd)){
+    AddErrMsg("Compound annotation table has no valid mz/rt range rows. Please check mzmin/mzmax/rtmin/rtmax values.");
+    return(0);
+  }
+
+  cmpd_matched <- rep(FALSE, length(mzmin));
+  valid_idx <- which(valid_cmpd);
+  for(i in valid_idx){
+    mz_hits <- (feat_mz >= mzmin[i]) & (feat_mz <= mzmax[i]);
+    if(any(mz_hits)){
+      rt_hits <- (feat_rt[mz_hits] >= rtmin[i]) & (feat_rt[mz_hits] <= rtmax[i]);
+      cmpd_matched[i] <- any(rt_hits);
+    }
+  }
+
+  total_valid_cmpd <- length(valid_idx);
+  unmatched_valid_cmpd <- sum(!cmpd_matched[valid_idx]);
+  unmatched_ratio <- unmatched_valid_cmpd / total_valid_cmpd;
+
+  if(unmatched_ratio > 0.5){
+    AddErrMsg(paste0(
+      "Peak and compound tables do not appear to be paired: ",
+      unmatched_valid_cmpd, " of ", total_valid_cmpd,
+      " compound rows (", round(unmatched_ratio * 100, 1),
+      "%) could not be matched to any peak feature by mz/rt ranges. ",
+      "Please upload correct paired tables."
+    ));
+    return(0);
+  }
+
+  cmpd_input <- as.data.frame(apply(cmpd_input, 2, function(x){x[is.na(x)] <- ""; x}), stringsAsFactors = FALSE);
+  mSetObj$dataSet$cmpd.orig <- cmpd_input;
+  mSetObj$paramSet$ContainsMS2 <- TRUE;
+  mSetObj$msgSet$read.msg <- c(mSetObj$msgSet$read.msg,
+                               paste("A total of", nrow(cmpd_input), "MS2 annotation rows were found in your uploaded compound table."),
+                               paste(unmatched_valid_cmpd, "of", total_valid_cmpd, "compound rows had no peak-feature match by mz/rt range."));
+
+  return(.set.mSet(mSetObj));
+}
+
+#'@export
+FormatPeakCompoundTable <- function(compoundTablePath,
+                                    peakTablePath,
+                                    outputFilePath = NA,
+                                    idColumnPattern = "InchiKey") {
+
+  cmpd_tbl <- as.data.frame(.readDataTable(compoundTablePath), stringsAsFactors = FALSE)
+  peak_tbl <- as.data.frame(.readDataTable(peakTablePath), stringsAsFactors = FALSE)
+
+  if(nrow(cmpd_tbl) < 1 || ncol(cmpd_tbl) < 1){
+    stop("Compound table is empty or unreadable.")
+  }
+  if(nrow(peak_tbl) < 2 || ncol(peak_tbl) < 1){
+    stop("Peak table is empty or does not contain feature rows.")
+  }
+
+  # First column in peak table should contain feature labels in mz__rt format.
+  peak_features <- as.character(peak_tbl[-1, 1])
+  split_feat <- strsplit(peak_features, "__", fixed = TRUE)
+  peak_mz <- suppressWarnings(as.numeric(vapply(split_feat, function(x) if(length(x) >= 1) x[1] else NA_character_, FUN.VALUE = character(1L))))
+  peak_rt <- suppressWarnings(as.numeric(vapply(split_feat, function(x) if(length(x) >= 2) x[2] else NA_character_, FUN.VALUE = character(1L))))
+
+  valid_peak <- is.finite(peak_mz) & is.finite(peak_rt)
+  if(!any(valid_peak)){
+    stop("No valid peak features found in mz__rt format in the first column of the peak table.")
+  }
+
+  cmpd_nms <- tolower(gsub("[^[:alnum:]_]", "", colnames(cmpd_tbl)))
+  req_cols <- c("mzmin", "mzmax", "rtmin", "rtmax")
+  if(!all(req_cols %in% cmpd_nms)){
+    stop("Compound table must contain mzmin, mzmax, rtmin, and rtmax columns.")
+  }
+
+  mzmin <- suppressWarnings(as.numeric(cmpd_tbl[, which(cmpd_nms == "mzmin")[1]]))
+  mzmax <- suppressWarnings(as.numeric(cmpd_tbl[, which(cmpd_nms == "mzmax")[1]]))
+  rtmin <- suppressWarnings(as.numeric(cmpd_tbl[, which(cmpd_nms == "rtmin")[1]]))
+  rtmax <- suppressWarnings(as.numeric(cmpd_tbl[, which(cmpd_nms == "rtmax")[1]]))
+
+  valid_cmpd <- is.finite(mzmin) & is.finite(mzmax) & is.finite(rtmin) & is.finite(rtmax)
+  idx <- rep(NA_integer_, nrow(cmpd_tbl))
+
+  mz_use <- peak_mz[valid_peak]
+  rt_use <- peak_rt[valid_peak]
+  peak_pos <- which(valid_peak)
+
+  for(i in seq_len(nrow(cmpd_tbl))){
+    if(!valid_cmpd[i]){
+      next
+    }
+    hits <- which(mz_use >= mzmin[i] & mz_use <= mzmax[i] & rt_use >= rtmin[i] & rt_use <= rtmax[i])
+    if(length(hits) > 0){
+      # Use 1-based index of peak rows excluding peak_tbl header row, consistent with existing index-based format.
+      idx[i] <- peak_pos[hits[1]]
+    }
+  }
+
+  id_cols <- grep(idColumnPattern, colnames(cmpd_tbl), ignore.case = TRUE)
+  if(length(id_cols) < 1){
+    id_cols <- grep("^InchiKey", colnames(cmpd_tbl), ignore.case = TRUE)
+  }
+  if(length(id_cols) < 1){
+    stop("No compound ID columns found (e.g., InchiKey_*).")
+  }
+
+  out_tbl <- cbind(index = idx, cmpd_tbl[, id_cols, drop = FALSE])
+
+  if(!is.na(outputFilePath) && nzchar(outputFilePath)){
+    utils::write.table(out_tbl, file = outputFilePath, row.names = FALSE, quote = FALSE, sep = "\t")
+  }
+
+  return(out_tbl)
 }
 
 #'@export

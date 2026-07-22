@@ -341,6 +341,8 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
     plink.path <<- "/Users/lzy/sqlite/plink/";
   }else if(file.exists("/home/qiang/Music/")){# qiang local
     url.pre <<-"/home/qiang/sqlite/";
+  }else if(file.exists("/Volumes/ExtremeSSD/Projects/Netbeans/PublicTools")){# qiang macbook pro
+    url.pre <<-"/Volumes/ExtremeSSD/Projects/Netbeans/PublicTools/sqlite/";
   }else{
     #url.pre <<- paste0(dirname(system.file("database", "sqlite/GeneID_25Species_JE/ath_genes.sqlite", package="MetaboAnalystR")), "/")
     url.pre <<- "";
