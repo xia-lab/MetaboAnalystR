@@ -590,6 +590,20 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
       colnames(conc) <- var.nms;
     }
 
+    # Same rescue for a single '_' separator (89.0243_30.62), emitted by some exporters.
+    # Only converts when the '_' sits between two numeric tokens; a single-'_' match can
+    # never span the canonical '__' form, so already-'__' names and names that legitimately
+    # contain '_' are left intact.
+    us.mask <- grepl("^\\s*[0-9.eE+-]+_[0-9.eE+-]+\\s*$", as.character(var.nms));
+    if(any(us.mask)){
+      new.nms <- as.character(var.nms);
+      new.nms[us.mask] <- sub("_", "__", new.nms[us.mask], fixed = TRUE);
+      message("[INFO] Normalized single '_' separator to '__' in ",
+              sum(us.mask), " feature names (m/z_RT → m/z__RT).");
+      var.nms <- new.nms;
+      colnames(conc) <- var.nms;
+    }
+
     # Auto-detect m/z__RT feature names. If RT is encoded in the labels but the
     # user picked "no RT", flip mumRT on rather than rejecting the upload —
     # rtIncluded on the form is easy to miss when the data already carries RT.

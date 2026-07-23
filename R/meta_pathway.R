@@ -81,7 +81,14 @@ Convert2MummichogMetaPath <- function(mSetObj=NA,
     
     if(rt){ # taking retention time information from feature name itself
       
-      feat_info <- mummi_new[,1]
+      feat_info <- as.character(mummi_new[,1])
+      # Normalize m/z@RT / m/z_RT feature-name separators to the canonical '__' before
+      # splitting, so studies exported with '@' or a single '_' parse the same as '__'.
+      # Numeric-token guard leaves any non-mz/rt labels untouched.
+      at.mask <- grepl("^\\s*[0-9.eE+-]+@[0-9.eE+-]+\\s*$", feat_info);
+      if(any(at.mask)){ feat_info[at.mask] <- gsub("@", "__", feat_info[at.mask], fixed=TRUE); }
+      us.mask <- grepl("^\\s*[0-9.eE+-]+_[0-9.eE+-]+\\s*$", feat_info);
+      if(any(us.mask)){ feat_info[us.mask] <- sub("_", "__", feat_info[us.mask], fixed=TRUE); }
       feat_info_split <- matrix(unlist(strsplit(feat_info, "__", fixed=TRUE)), ncol=2, byrow=T)
       colnames(feat_info_split) <- c("m.z", "r.t")
       
