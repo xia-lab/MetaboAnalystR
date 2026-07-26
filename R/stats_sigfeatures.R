@@ -61,7 +61,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
       }
 
       summary.mat <- summary(sam_out, delta)@mat.sig
-      sig.mat <- as.matrix(signif(summary.mat[,-c(1,6)],5))
+      sig.mat <- as.matrix(signif(summary.mat[,-c(1,3,6)],5))
       data.table::fwrite(as.data.frame(sig.mat), file="sam_sigfeatures.csv", row.names=TRUE)
 
       ov_qs_save(list(sam.res=sam_out, sam.delta=delta, sig.mat=sig.mat), bridge_out, preset = "fast")

@@ -457,22 +457,25 @@ get_pheatmap_dims <- function(dat, annotation, view.type, width, cellheight = 15
   
   if(view.type == "overview"){
     if(is.na(width)){
-      if(w > 9){
-        w <- 9;
-      }
-    }else if(width == 0){
-      if(w > 7.2){
+      # Use the label-aware natural size; cap only to bound very large sets. The
+      # old hard 9-in cap + square-forcing crammed row/column labels for datasets
+      # with many samples/features, so tall/wide data keeps its own aspect here.
+      w <- min(w, 24);
+      h <- min(h, 30);
+    }else{
+      if(width == 0){
+        if(w > 7.2){
+          w <- 7.2;
+        }
+      }else{
         w <- 7.2;
       }
-      
-    }else{
-      w <- 7.2;
-    }
-    if(h > w){
-      h <- w+1.2;
+      if(h > w){
+        h <- w;
+      }
     }
   }
-  
+
   return(list(height = h, width = w));
 }
 
