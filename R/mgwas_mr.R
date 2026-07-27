@@ -157,6 +157,12 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
    if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_nonProxy.sqlite"))){  # shared sqlite library directory
         database_path <- paste0(ld_gwas, "openGWAS_nonProxy.sqlite");
         database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+   }else if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_withProxy.sqlite"))){
+        # The large (23 GB) non-proxy panel is optional and not installed here:
+        # fall back to the withProxy panel shipped in the standard bundle for both
+        # the primary and the proxy query (they point at the same file).
+        database_path <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+        database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
    }else if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
         database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite";
         database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
@@ -179,15 +185,27 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   con <- dbConnect(RSQLite::SQLite(), database_path)
   query_stat <- paste0("SELECT * FROM ", outcome.idx)
   res <- dbGetQuery(con, query_stat)
-  meta_res <- dbGetQuery(con, "SELECT * FROM outcome_meta_table")
+  # Two panel layouts: the non-proxy panel keeps per-outcome tables lean and stores
+  # the outcome metadata in a separate outcome_meta_table (cbind'd on below). The
+  # withProxy panel (used as the fallback primary when non-proxy isn't installed)
+  # carries those metadata columns inline in each per-outcome table and has no
+  # outcome_meta_table, so detect the layout rather than assume the meta table.
+  has_meta_table <- DBI::dbExistsTable(con, "outcome_meta_table")
+  if(has_meta_table){
+    meta_res <- dbGetQuery(con, "SELECT * FROM outcome_meta_table")
+  }
   dbDisconnect(con)
-  
+
   res_dt1 <- res[res$SNP %in% snps,]
-  meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+  if(has_meta_table){
+    meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+    res_outcome_dt <- cbind(res_dt1, meta_dt)
+  } else {
+    # withProxy fat layout: per-outcome table already carries the meta columns.
+    res_outcome_dt <- res_dt1
+  }
   
-  res_outcome_dt <- cbind(res_dt1, meta_dt)
-  
-  if(proxies){
+  if(proxies && !identical(database_path, database_path2)){
     con <- dbConnect(RSQLite::SQLite(), database_path2)
     query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
     res2 <- dbGetQuery(con, query_stat2)
