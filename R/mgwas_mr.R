@@ -157,6 +157,12 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
    if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_nonProxy.sqlite"))){  # shared sqlite library directory
         database_path <- paste0(ld_gwas, "openGWAS_nonProxy.sqlite");
         database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+   }else if(nzchar(ld_gwas) && file.exists(paste0(ld_gwas, "openGWAS_withProxy.sqlite"))){
+        # The large (23 GB) non-proxy panel is optional and not installed here:
+        # fall back to the withProxy panel shipped in the standard bundle for both
+        # the primary and the proxy query (they point at the same file).
+        database_path <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
+        database_path2 <- paste0(ld_gwas, "openGWAS_withProxy.sqlite");
    }else if(file.exists("/Users/lzy/sqlite/openGWAS_nonProxy.sqlite")){
         database_path <- "/Users/lzy/sqlite/openGWAS_nonProxy.sqlite";
         database_path2 <- "/Users/lzy/sqlite/openGWAS_withProxy.sqlite"
@@ -179,15 +185,27 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   con <- dbConnect(RSQLite::SQLite(), database_path)
   query_stat <- paste0("SELECT * FROM ", outcome.idx)
   res <- dbGetQuery(con, query_stat)
-  meta_res <- dbGetQuery(con, "SELECT * FROM outcome_meta_table")
+  # Two panel layouts: the non-proxy panel keeps per-outcome tables lean and stores
+  # the outcome metadata in a separate outcome_meta_table (cbind'd on below). The
+  # withProxy panel (used as the fallback primary when non-proxy isn't installed)
+  # carries those metadata columns inline in each per-outcome table and has no
+  # outcome_meta_table, so detect the layout rather than assume the meta table.
+  has_meta_table <- DBI::dbExistsTable(con, "outcome_meta_table")
+  if(has_meta_table){
+    meta_res <- dbGetQuery(con, "SELECT * FROM outcome_meta_table")
+  }
   dbDisconnect(con)
-  
+
   res_dt1 <- res[res$SNP %in% snps,]
-  meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+  if(has_meta_table){
+    meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+    res_outcome_dt <- cbind(res_dt1, meta_dt)
+  } else {
+    # withProxy fat layout: per-outcome table already carries the meta columns.
+    res_outcome_dt <- res_dt1
+  }
   
-  res_outcome_dt <- cbind(res_dt1, meta_dt)
-  
-  if(proxies){
+  if(proxies && !identical(database_path, database_path2)){
     con <- dbConnect(RSQLite::SQLite(), database_path2)
     query_stat2 <- paste0("SELECT * FROM ", outcome.idx)
     res2 <- dbGetQuery(con, query_stat2)
@@ -216,6 +234,16 @@ PerformMRAnalysis <- function(mSetObj=NA){
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
   mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
+  # Cochran's Q needs >= 2 SNPs per method; with a single instrument (or too few)
+  # mr_heterogeneity() returns an empty / 0-column data.frame and the fixed column
+  # selections below (e.g. [6:8], [5:8]) would error. Coerce to the canonical
+  # 8-column structure with 0 rows, so heterogeneity is reported as unavailable
+  # ("-") instead of crashing the whole MR run.
+  if(!is.data.frame(mr_heterogeneity.res) || ncol(mr_heterogeneity.res) < 8){
+    mr_heterogeneity.res <- data.frame(id.exposure=character(0), id.outcome=character(0),
+        outcome=character(0), exposure=character(0), method=character(0),
+        Q=numeric(0), Q_df=numeric(0), Q_pval=numeric(0), stringsAsFactors=FALSE);
+  }
   #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
   fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
   #"Q"           "Q_df"        "Q_pval"
@@ -223,11 +251,21 @@ PerformMRAnalysis <- function(mSetObj=NA){
   
   # Test for directional horizontal pleiotropy
   mr_pleiotropy_test.res <- TwoSampleMR::mr_pleiotropy_test(dat);
+  # MR-Egger intercept (directional pleiotropy) needs >= 3 SNPs; coerce an empty
+  # result to the canonical 7-column structure with 0 rows so the [5:7] selections
+  # and merges below don't error for a single-instrument MR.
+  if(!is.data.frame(mr_pleiotropy_test.res) || ncol(mr_pleiotropy_test.res) < 7){
+    mr_pleiotropy_test.res <- data.frame(id.exposure=character(0), id.outcome=character(0),
+        outcome=character(0), exposure=character(0), egger_intercept=numeric(0),
+        se=numeric(0), pval=numeric(0), stringsAsFactors=FALSE);
+  }
   fast.write.csv(mr_pleiotropy_test.res, file="mr_pleiotropy_results.csv", row.names=FALSE);
   mr.hetero.num <- mr_heterogeneity.res[5:8];
   mr.res.num <- mr.res[4:9];
   mr.pleio.num <- mr_pleiotropy_test.res[5:7];
-  mr.pleio.num$method <- "MR Egger";
+  # Assigning a scalar to $method errors on a 0-row frame ("replacement has 1 row,
+  # data has 0"), which occurs when pleiotropy wasn't computable (too few SNPs).
+  if(nrow(mr.pleio.num) > 0){ mr.pleio.num$method <- "MR Egger"; } else { mr.pleio.num$method <- character(0); }
   merge1 <- merge(mr.res.num, mr.hetero.num, by="method", all.x=TRUE);
   merge2 <- merge(merge1, mr.pleio.num, by="method", all.x=TRUE);
   #rownames(merge2) <- merge2$method;
