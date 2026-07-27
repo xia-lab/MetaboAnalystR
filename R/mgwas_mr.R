@@ -234,6 +234,16 @@ PerformMRAnalysis <- function(mSetObj=NA){
   #Analysing 'HMDB0000042' on 'ebi-a-GCST007799'
   # Heterogeneity tests
   mr_heterogeneity.res <- TwoSampleMR::mr_heterogeneity(dat);
+  # Cochran's Q needs >= 2 SNPs per method; with a single instrument (or too few)
+  # mr_heterogeneity() returns an empty / 0-column data.frame and the fixed column
+  # selections below (e.g. [6:8], [5:8]) would error. Coerce to the canonical
+  # 8-column structure with 0 rows, so heterogeneity is reported as unavailable
+  # ("-") instead of crashing the whole MR run.
+  if(!is.data.frame(mr_heterogeneity.res) || ncol(mr_heterogeneity.res) < 8){
+    mr_heterogeneity.res <- data.frame(id.exposure=character(0), id.outcome=character(0),
+        outcome=character(0), exposure=character(0), method=character(0),
+        Q=numeric(0), Q_df=numeric(0), Q_pval=numeric(0), stringsAsFactors=FALSE);
+  }
   #rownames(mr_heterogeneity.res) <- mr_heterogeneity.res$method;
   fast.write.csv(mr_heterogeneity.res, file="mr_heterogeneity_results.csv", row.names=FALSE);
   #"Q"           "Q_df"        "Q_pval"
@@ -241,11 +251,21 @@ PerformMRAnalysis <- function(mSetObj=NA){
   
   # Test for directional horizontal pleiotropy
   mr_pleiotropy_test.res <- TwoSampleMR::mr_pleiotropy_test(dat);
+  # MR-Egger intercept (directional pleiotropy) needs >= 3 SNPs; coerce an empty
+  # result to the canonical 7-column structure with 0 rows so the [5:7] selections
+  # and merges below don't error for a single-instrument MR.
+  if(!is.data.frame(mr_pleiotropy_test.res) || ncol(mr_pleiotropy_test.res) < 7){
+    mr_pleiotropy_test.res <- data.frame(id.exposure=character(0), id.outcome=character(0),
+        outcome=character(0), exposure=character(0), egger_intercept=numeric(0),
+        se=numeric(0), pval=numeric(0), stringsAsFactors=FALSE);
+  }
   fast.write.csv(mr_pleiotropy_test.res, file="mr_pleiotropy_results.csv", row.names=FALSE);
   mr.hetero.num <- mr_heterogeneity.res[5:8];
   mr.res.num <- mr.res[4:9];
   mr.pleio.num <- mr_pleiotropy_test.res[5:7];
-  mr.pleio.num$method <- "MR Egger";
+  # Assigning a scalar to $method errors on a 0-row frame ("replacement has 1 row,
+  # data has 0"), which occurs when pleiotropy wasn't computable (too few SNPs).
+  if(nrow(mr.pleio.num) > 0){ mr.pleio.num$method <- "MR Egger"; } else { mr.pleio.num$method <- character(0); }
   merge1 <- merge(mr.res.num, mr.hetero.num, by="method", all.x=TRUE);
   merge2 <- merge(merge1, mr.pleio.num, by="method", all.x=TRUE);
   #rownames(merge2) <- merge2$method;
