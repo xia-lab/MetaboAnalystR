@@ -392,7 +392,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@export
 #'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
-                        equal.var=TRUE, pvalType="fdr", all_results=FALSE, tt.method="classical"){
+                        equal.var=TRUE, pvalType="fdr", all_results=FALSE, tt.method="limma"){
 
   mSetObj <- .get.mSet(mSetObj);
 
@@ -420,6 +420,17 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
   if (tt.method == "limma" && !nonpar) {
     # Limma moderated t-test
     require(limma)
+    # Optional covariate adjustment. Only applied when covariates are assigned and usable, so
+    # an unadjusted design builds exactly the model it did before. exists() keeps the package
+    # working standalone, where the metadata helpers are not loaded.
+    cov.df <- NULL
+    if (exists("ov_meta_covariate_frame")) {
+      cov.df <- try(ov_meta_covariate_frame(rownames(sub.norm),
+                                            mSetObj$dataSet$meta.info), silent = TRUE)
+      if (inherits(cov.df, "try-error") || is.null(cov.df) || ncol(cov.df) == 0L) cov.df <- NULL
+    }
+    cov.nms <- if (is.null(cov.df)) character(0) else colnames(cov.df)
+    cov.trm <- if (length(cov.nms)) paste0(" + `", cov.nms, "`", collapse = "") else ""
     if (paired) {
       # Paired design: block on the SUBJECT (pair id) so the group effect is
       # estimated WITHIN subject — the moderated-t analogue of a paired t-test.
@@ -428,13 +439,27 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       # identical to the "Classical" option while being labelled "Limma".
       pr <- as.numeric(mSetObj$dataSet$pairs)[sub$keep];
       subject <- factor(abs(pr));
-      design <- model.matrix(~ subject + sub.cls);
+      # sub.cls stays LAST so cond.coef below still selects the group coefficient.
+      dd <- data.frame(subject = subject, sub.cls = sub.cls);
+      if (length(cov.nms)) dd <- cbind(dd, cov.df);
+      design <- model.matrix(as.formula(paste0("~ subject", cov.trm, " + sub.cls")), data = dd);
+      if (length(cov.nms) && qr(design)$rank < ncol(design)) {
+        warning("Ttests.Anal: covariates make the paired design rank-deficient; running unadjusted.");
+        design <- model.matrix(~ subject + sub.cls);
+      }
       fit <- lmFit(t(as.matrix(sub.norm)), design);
       fit <- eBayes(fit);
       cond.coef <- tail(colnames(design), 1L);   # the group (sub.cls) coefficient
       tt.res <- topTable(fit, coef = cond.coef, number = Inf, sort.by = "none");
     } else {
-      design <- model.matrix(~sub.cls)
+      # sub.cls stays FIRST so coef = 2 still selects the group coefficient.
+      dd <- data.frame(sub.cls = sub.cls);
+      if (length(cov.nms)) dd <- cbind(dd, cov.df);
+      design <- model.matrix(as.formula(paste0("~ sub.cls", cov.trm)), data = dd)
+      if (length(cov.nms) && qr(design)$rank < ncol(design)) {
+        warning("Ttests.Anal: covariates make the design rank-deficient; running unadjusted.");
+        design <- model.matrix(~ sub.cls)
+      }
       fit <- lmFit(t(as.matrix(sub.norm)), design)
       fit <- eBayes(fit)
       tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
@@ -694,9 +719,12 @@ Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
 
   mSetObj <- .get.mSet(mSetObj);
 
-  # Note, volcano is based on t-tests and fold change analysis
-  # When fc.method is "limma", use moderated t-test for p-values too
-  tt.method <- ifelse(fc.method == "limma", "limma", "classical")
+  # Note, volcano is based on t-tests and fold change analysis.
+  # The p-value axis must use the same test as the T-test view, otherwise the same dataset
+  # reports two different p-values for one feature depending on which page it is read from.
+  # It therefore follows Ttests.Anal's default rather than being derived from fc.method
+  # (which selects how the fold change is computed, a separate choice).
+  tt.method <- if (identical(fc.method, "limma")) "limma" else formals(Ttests.Anal)$tt.method
   if(.on.public.web){ Ttests.Anal(NA, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) } else { mSetObj <- Ttests.Anal(mSetObj, nonpar, threshp, paired, equal.var, pval.type, tt.method=tt.method) };
   mSetObj <- .get.mSet(mSetObj);
   p.value <- mSetObj$analSet$tt$p.value;
