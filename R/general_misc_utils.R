@@ -1337,7 +1337,35 @@ GetCurrentPathForScheduler <- function(){
     return(path)
 }
 
+# Round numerics on CSV export. A double carries ~15 significant digits; for normalized
+# intensities, log-CPM and p-values that is roughly ten digits of arithmetic noise, and it
+# dominates the file: a 16354 x 134 normalized matrix wrote 37.6 MB, 58% of which was
+# trailing digits. Applied per COLUMN, never to a whole data.frame -- signif() over a
+# character column errors -- and only to doubles, so integer counts and IDs stay exact.
+# Digits come from an option so the precision can be tuned without editing every package:
+#   options(ov.csv.signif = 8)   # more precision
+#   options(ov.csv.signif = 0)   # disable, write full precision
+# Any failure returns the input untouched: rounding must never be able to break a write.
+.ov_signif_cols <- function(dat, digits = getOption("ov.csv.signif", 6)) {
+    tryCatch({
+        if (is.null(dat)) return(dat);
+        if (is.null(digits) || !is.numeric(digits) || length(digits) != 1 ||
+            is.na(digits) || digits <= 0) return(dat);
+        if (is.matrix(dat)) {
+            if (is.double(dat)) dat <- signif(dat, digits);
+            return(dat);
+        }
+        if (is.data.frame(dat)) {
+            for (.j in seq_along(dat)) {
+                if (is.double(dat[[.j]])) dat[[.j]] <- signif(dat[[.j]], digits);
+            }
+        }
+        dat;
+    }, error = function(e) dat);
+}
+
 fast.write.csv <- function(dat, file, row.names=TRUE){
+    dat <- .ov_signif_cols(dat);
     tryCatch(
         {
            if(is.data.frame(dat)){
