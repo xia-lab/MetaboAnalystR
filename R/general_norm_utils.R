@@ -578,6 +578,50 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@export
 # note: feature.nm.vec, smpl.nm.vec, grp.nm.vec all set up
+#' Drop QC / BLANK samples from the working dataset
+#' @description Process controls, not study samples: BLANK measures background and QC
+#'   measures analytical drift. Both are needed for processing and for the QC overview,
+#'   but once a comparison starts they are analysed as if they were biological
+#'   conditions -- which makes fold changes, t-tests, ANOVA, clustering and
+#'   classification meaningless, and shows "QC" as a class in a PLS-DA.
+#'
+#'   Deliberately routed through UpdateData rather than subsetting here: that is the
+#'   one place allowed to delete samples, and it already keeps the abundance table,
+#'   the class vector, preproc.qs and meta.info consistent with each other. Hand-rolling
+#'   the subset risks the matrix and the labels drifting apart, which mislabels samples
+#'   silently instead of failing.
+#'
+#'   Call AFTER the QC overview (the with-QC PCA) and BEFORE every other analysis.
+#'   No-op when no controls are present, so it is safe to leave in a workflow whose
+#'   data has none.
+#' @param mSetObj Input mSetObj
+#' @export
+RemoveControlSamples <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj);
+  cls <- mSetObj$dataSet$proc.cls;
+  if (is.null(cls)) return(.set.mSet(mSetObj));
+
+  lvls <- unique(as.character(cls));
+  ctrl <- lvls[toupper(trimws(lvls)) %in% c("QC", "BLANK")];
+  if (length(ctrl) == 0) return(.set.mSet(mSetObj));      # nothing to remove
+
+  keep <- setdiff(lvls, ctrl);
+  # Refuse rather than empty the design: a run whose only levels ARE controls, or
+  # which would be left with a single group, still analyses as the user set it up.
+  if (length(keep) < 2) {
+    AddMsg(paste0("QC/BLANK not removed: only ", length(keep),
+                  " non-control group would remain."));
+    return(.set.mSet(mSetObj));
+  }
+
+  AddMsg(paste0("Removed control samples (", paste(ctrl, collapse = ", "),
+                ") before statistical analysis."));
+  feature.nm.vec <<- character(0);   # delete no features
+  smpl.nm.vec    <<- character(0);   # delete no individual samples
+  grp.nm.vec     <<- keep;           # keep only the study groups
+  UpdateData(mSetObj);
+}
+
 UpdateData <- function(mSetObj = NA, order.group = FALSE) {
 
   mSetObj <- .get.mSet(mSetObj)              # fetch current object
