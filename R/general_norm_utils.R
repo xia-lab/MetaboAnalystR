@@ -231,6 +231,13 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   mSetObj$dataSet$rownorm.method <- rownm;
   mSetObj$dataSet$trans.method <- transnm;
   mSetObj$dataSet$scale.method <- scalenm;
+  # The three fields above hold display LABELS ("Log10 Normalization", "N/A"), which
+  # cannot be fed back into this function. Keep the option CODES too, so a later
+  # re-normalization (e.g. after samples are dropped) can replay exactly what was
+  # applied here instead of assuming a default.
+  mSetObj$dataSet$norm.opts <- list(rowNorm = rowNorm, transNorm = transNorm,
+                                    scaleNorm = scaleNorm, ref = ref,
+                                    ratio = ratio, ratioNum = ratioNum);
   mSetObj$dataSet$norm.all <- NULL; # this is only for biomarker ROC analysis
 
   ov_qs_save(mSetObj$dataSet$norm, file="complete_norm.qs");

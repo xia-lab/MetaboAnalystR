@@ -176,7 +176,11 @@ PCA.Anal <- function(mSetObj=NA){
       } else {
         grp <- as.factor(grp)
         res <- vegan::adonis2(data_dist ~ grp)
-        if (length(levels(grp)) > 2) {
+        # >= 2, not > 2: a two-group design has exactly one pair, and reporting it
+        # keeps the table describing the groups actually analysed. With > 2 the
+        # two-group case produced nothing, so an earlier multi-group run's table
+        # stayed on disk and was read as if it applied to the current comparison.
+        if (length(levels(grp)) >= 2) {
           co <- combn(unique(as.character(grp)), 2)
           nco <- ncol(co)
           out <- data.frame(matrix(NA, nrow = nco, ncol = 5))
@@ -213,6 +217,10 @@ PCA.Anal <- function(mSetObj=NA){
     result$pair.res$pairs <- NULL
     result$pair.res <- signif(result$pair.res, 5)
     fast.write.csv(result$pair.res, file = "pca_pairwise_permanova.csv")
+  } else {
+    # Nothing to report for this design: drop any table a previous run left behind
+    # rather than let it be read as the current result.
+    unlink("pca_pairwise_permanova.csv")
   }
   return(list(result$res, result$pair.res))
 }
@@ -463,8 +471,10 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       pts.array[,,i] <- .compute.group.ellipse(pc1[inx], pc2[inx], sp)
     }
     
-    xrg <- range(pc1, pts.array[,1,]);
-    yrg <- range(pc2, pts.array[,2,]);
+    # A skipped ellipse is an all-NA slice; without na.rm the range is NA and
+    # plot() then fails on non-finite xlim/ylim, losing the whole scores plot.
+    xrg <- range(pc1, pts.array[,1,], na.rm = TRUE);
+    yrg <- range(pc2, pts.array[,2,], na.rm = TRUE);
     x.ext<-(xrg[2]-xrg[1])/12;
     y.ext<-(yrg[2]-yrg[1])/12;
     xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
@@ -1042,8 +1052,10 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
 
-  xrg <- range(lv1, pts.array[,1,]);
-  yrg <- range(lv2, pts.array[,2,]);
+  # A skipped ellipse is an all-NA slice; without na.rm the range is NA and
+  # plot() then fails on non-finite xlim/ylim, losing the whole scores plot.
+  xrg <- range(lv1, pts.array[,1,], na.rm = TRUE);
+  yrg <- range(lv2, pts.array[,2,], na.rm = TRUE);
   x.ext<-(xrg[2]-xrg[1])/12;
   y.ext<-(yrg[2]-yrg[1])/12;
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
@@ -2045,8 +2057,10 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
   
-  xrg <- range(lv1, pts.array[,1,]);
-  yrg <- range(lv2, pts.array[,2,]);
+  # A skipped ellipse is an all-NA slice; without na.rm the range is NA and
+  # plot() then fails on non-finite xlim/ylim, losing the whole scores plot.
+  xrg <- range(lv1, pts.array[,1,], na.rm = TRUE);
+  yrg <- range(lv2, pts.array[,2,], na.rm = TRUE);
   x.ext<-(xrg[2]-xrg[1])/12;
   y.ext<-(yrg[2]-yrg[1])/12;
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
@@ -2639,8 +2653,10 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
     pts.array[,,i] <- .compute.group.ellipse(lv1[inx], lv2[inx], sp)
   }
   
-  xrg <- range(lv1, pts.array[,1,]);
-  yrg <- range(lv2, pts.array[,2,]);
+  # A skipped ellipse is an all-NA slice; without na.rm the range is NA and
+  # plot() then fails on non-finite xlim/ylim, losing the whole scores plot.
+  xrg <- range(lv1, pts.array[,1,], na.rm = TRUE);
+  yrg <- range(lv2, pts.array[,2,], na.rm = TRUE);
   x.ext <- (xrg[2]-xrg[1])/12;
   y.ext <- (yrg[2]-yrg[1])/12;
   xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);

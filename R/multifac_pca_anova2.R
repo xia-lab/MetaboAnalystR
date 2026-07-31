@@ -670,7 +670,9 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
       pts.array[, , i] <- .compute.group.ellipse(pc1[inx], pc2[inx], sp)
     }
     
-    xrg <- range(pc1, pts.array[, 1, ]);  yrg <- range(pc2, pts.array[, 2, ])
+    # A skipped ellipse is an all-NA slice; without na.rm the range is NA and
+    # plot() then fails on non-finite xlim/ylim, losing the whole scores plot.
+    xrg <- range(pc1, pts.array[, 1, ], na.rm = TRUE);  yrg <- range(pc2, pts.array[, 2, ], na.rm = TRUE)
     ext <- function(r) diff(r) / 12
     xlim <- c(xrg[1] - ext(xrg), xrg[2] + ext(xrg))
     ylim <- c(yrg[1] - ext(yrg), yrg[2] + ext(yrg))
