@@ -611,6 +611,24 @@ GetUniqueMetaNames <-function(mSetObj=NA, metadata){
 }
 
 
+#' Indices of QC / BLANK samples within a factor
+#' @description In untargeted LC-MS these are process-control injections, not study
+#'   samples: BLANK measures background and QC measures analytical drift. They belong
+#'   in processing (blank subtraction, drift correction) and in the data OVERVIEW, but
+#'   never in a comparison -- a QC level entering a model is analysed as if it were a
+#'   biological condition, which is how a PLS-DA ends up classifying "QC" as a third
+#'   group. Matched on the exact level label (case- and whitespace-insensitive), not on
+#'   a substring of the sample name: sample-name sniffing is what makes the existing
+#'   batch_effect_utils QC detection inconsistent (prefix at one call site, grepl at
+#'   another), and a substring rule would also swallow a real group like "QC_treated".
+#' @param x a factor or character vector of level labels
+#' @return integer indices of control samples (possibly empty)
+.ov.control.sample.idx <- function(x) {
+  if (is.null(x)) return(integer(0));
+  lab <- toupper(trimws(as.character(x)));
+  which(lab %in% c("QC", "BLANK"));
+}
+
 SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
   # print(c("SetSelectedMetaInfo",meta0,meta1))
   mSetObj <- .get.mSet(mSetObj);
@@ -619,6 +637,22 @@ SetSelectedMetaInfo <- function(dataName="", meta0, meta1, block1){
     return(0)
   }else{
     rmidx <- which(meta.info[, meta0]=="NA" | is.na(meta.info[, meta0]))
+    # Drop QC / BLANK from the COMPARISON set, reusing the same rmidx path that
+    # already removes samples with missing metadata. This function gates statistics,
+    # clustering and classification; the overview plots read the full dataset and so
+    # still show the controls, and processing-stage use (blank subtraction, QC-based
+    # drift correction) runs earlier and is untouched.
+    #
+    # Guarded: if removing them would leave fewer than two groups the removal is
+    # skipped, so a dataset whose only levels ARE controls still analyses rather than
+    # failing with an empty class vector.
+    ctrlidx <- .ov.control.sample.idx(meta.info[, meta0]);
+    if (length(ctrlidx) > 0) {
+      keep.lab <- as.character(meta.info[, meta0])[-unique(c(rmidx, ctrlidx))];
+      if (length(unique(keep.lab)) >= 2) {
+        rmidx <- unique(c(rmidx, ctrlidx));
+      }
+    }
     if(meta1 != "NA"){
       rmidx <- c(rmidx,which(meta.info[, meta1]=="NA") | is.na(meta.info[, meta1]))
     }
