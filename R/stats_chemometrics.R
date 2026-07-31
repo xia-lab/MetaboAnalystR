@@ -52,6 +52,23 @@ GetEllipseRadius <- function(level, method, n) {
   n <- length(x)
   if (n < 3) return(matrix(NA, npoints, 2))
   groupVar <- var(cbind(x, y), na.rm = TRUE)
+  # Counting samples is not enough. With a handful of near-collinear points the
+  # covariance is numerically singular in one direction, and ellipse() then draws
+  # a needle spanning the whole panel — a 4-sample group rendered as a diagonal
+  # sliver from corner to corner, which reads as a huge confidence region when it
+  # actually means "no reliable spread". Skip the ellipse when the smaller
+  # principal axis carries a negligible share of the variance; the group's points
+  # are still plotted, they just get no misleading envelope.
+  # Threshold is on the ELLIPSE AXIS ratio (sqrt of the eigenvalue ratio), because
+  # that is the property actually seen: 0.1 means the minor axis is a tenth of the
+  # major, i.e. already a sliver. Measured on real 4-sample groups, a near-collinear
+  # one gives an eigenvalue ratio ~1e-3 (axis ratio ~0.03) while a genuinely spread
+  # group gives ~0.7 (axis ratio ~0.8) — the two regimes are orders of magnitude
+  # apart, so the exact cut is not delicate.
+  ev <- tryCatch(eigen(groupVar, symmetric = TRUE, only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (is.null(ev) || any(!is.finite(ev)) || max(ev) <= 0) return(matrix(NA, npoints, 2))
+  if (sqrt(max(min(ev), 0) / max(ev)) < 0.1) return(matrix(NA, npoints, 2))
   groupMean <- c(mean(x, na.rm = TRUE), mean(y, na.rm = TRUE))
   radius <- GetEllipseRadius(params$level, params$method, n)
   ellipse::ellipse(groupVar, centre = groupMean, t = radius, npoints = npoints)
