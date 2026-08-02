@@ -4,6 +4,23 @@
 ### McGill University, Canada
 ### License: GNU GPL (>= 2)
 
+# ROCR::prediction treats the alphabetically-last label as the positive class, but
+# Predict.class returns the probability of the SECOND factor level. Those agree only
+# when the levels happen to be in alphabetical order; when they are not, every AUC
+# comes out as 1 - AUC. Pass the level order explicitly so the positive class is always
+# the second level. For numeric labels this returns the sorted values, i.e. no change.
+GetLabelOrdering <- function(labels){
+  x <- if(is.list(labels)) labels[[1]] else labels;
+  if(is.factor(x)){
+    # Restricted to the labels actually present: ROCR rejects an ordering naming a
+    # class the data does not contain, which a factor subset to two groups without
+    # droplevels still carries. intersect keeps the LEVEL order, which is the point.
+    intersect(levels(x), unique(as.character(unlist(labels))));
+  }else{
+    sort(unique(as.vector(unlist(labels))));
+  }
+}
+
 #'Numbers for subset selection
 #'@description Return a series of number for subsets selection
 #'@param feat.len Input the feature length
@@ -346,7 +363,7 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
       prob.out <- Predict.class(x.train, y.train, x.test, cls.method, lvNum);
       
       # calculate AUC for each
-      pred <- ROCR::prediction(prob.out, y.test);
+      pred <- ROCR::prediction(prob.out, y.test, label.ordering = GetLabelOrdering(y.test));
       auc.mat[irun, inum] <- slot(ROCR::performance(pred, "auc"), "y.values")[[1]];
       
       perf.outp[[inum]][[irun]] <- prob.out;
@@ -365,7 +382,7 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
   act.vec <- unlist(actualCls); # same for all subsets
   for(m in 1:length(nFeatures)){
     prob.vec <- unlist(perf.outp[[m]]);
-    pred <- ROCR::prediction(prob.vec, act.vec);
+    pred <- ROCR::prediction(prob.vec, act.vec, label.ordering = GetLabelOrdering(act.vec));
     preds[[m]] <- pred; # prediction obj
     #auc.vec[m] <- slot(performance(pred, "auc"), "y.values")[[1]];
   }
@@ -464,7 +481,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
     prob.out <- res$prob.out;
     
     # calculate AUC for each
-    pred <- ROCR::prediction(prob.out, y.test);
+    pred <- ROCR::prediction(prob.out, y.test, label.ordering = GetLabelOrdering(y.test));
     auc.vec[irun] <- slot(ROCR::performance(pred, "auc"), "y.values")[[1]];
     perf.outp[[irun]] <- prob.out;
     pred.out <- as.factor(ifelse(prob.out > 0.5, 1, 0));
@@ -479,7 +496,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
   
   prob.vec <- unlist(perf.outp);
   act.vec <- unlist(actualCls);
-  preds <- ROCR::prediction(prob.vec, act.vec);
+  preds <- ROCR::prediction(prob.vec, act.vec, label.ordering = GetLabelOrdering(act.vec));
   auc <- mean(auc.vec);
   auc.ci <- GetCIs(as.matrix(auc.vec));
   
@@ -1551,7 +1568,8 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx,
     
   }else if(mdl.inx > 0){ 
     
-    preds <- ROCR::prediction(mSetObj$analSet$multiROC$pred.cv[[mdl.inx]], mSetObj$analSet$multiROC$true.cv);
+    preds <- ROCR::prediction(mSetObj$analSet$multiROC$pred.cv[[mdl.inx]], mSetObj$analSet$multiROC$true.cv,
+                              label.ordering = GetLabelOrdering(mSetObj$analSet$multiROC$true.cv));
     auroc <- round(mSetObj$analSet$multiROC$auc.vec[mdl.inx],3);
     auc.ci <- mSetObj$analSet$multiROC$auc.ci[mdl.inx];
     perf <- ROCR::performance(preds, "tpr", "fpr");
@@ -1685,7 +1703,8 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     
   }else if(mdl.inx > 0 && anal.mode=="explore"){ 
     
-    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv[[mdl.inx]], mSetObj$analSet$ROCtest$true.cv);
+    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv[[mdl.inx]], mSetObj$analSet$ROCtest$true.cv,
+                              label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[mdl.inx],3);
     auc.ci <- mSetObj$analSet$ROCtest$auc.ci[mdl.inx];
     perf <- ROCR::performance(preds, "tpr", "fpr");
@@ -1720,7 +1739,8 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     
   }else{ # plot ROC of specific model and save the table for details
     
-    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv);
+    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv,
+                              label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[1],3)
     auc.ci <- mSetObj$analSet$ROCtest$auc.ci;
     
@@ -2096,7 +2116,7 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
   }
   
   # get the AUROC for permuted data
-  pred <- ROCR::prediction(perf.outp, actualCls);
+  pred <- ROCR::prediction(perf.outp, actualCls, label.ordering = GetLabelOrdering(actualCls));
   aucs <- try(unlist(slot(ROCR::performance(pred, "auc"), "y.values")));
   if (class(aucs)=="try-error"){
     AddErrMsg("Not enough distinct predictions to compute area under the ROC curve. Increase sample size or reduce permutation number.");
@@ -2219,7 +2239,8 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
     
     # now add the original ROC
     
-    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv);
+    preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv,
+                              label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[1],3)
     perf <- ROCR::performance(preds, "tpr", "fpr");
     # need to replace Inf with 1
