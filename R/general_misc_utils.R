@@ -165,13 +165,8 @@ ov_qs_exists <- function(file) {
 run_func_via_rc_microservice <- function(...) run_func_via_microservice(...)
 
 run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
-  # Default to the more efficient RSclient fork. The host app sets on.ov = TRUE at startup to
-  # force a fresh callr subprocess in deployments where a nested RSclient fork is unstable (a startup
-  # flag is used rather than a filesystem probe, which is not a reliable signal).
-  if (!isTRUE(tryCatch(get("on.ov", envir = globalenv()), error = function(e) FALSE)) &&
-      requireNamespace("RSclient", quietly = TRUE)) {
-    return(run_func_via_rsclient(func, args, timeout_sec))
-  }
+  # RSclient has been retired — always run in a fresh callr subprocess (falling
+  # back to in-process below); never dispatch to the nested RSclient fork.
   # Run the closure in a fresh, short-lived R process (a microservice), which then exits and reclaims
   # all memory it used plus any packages it attached. Replaces the old nested Rserve-client path, which
   # reliably crashed the worker with "Fatal error: unable to initialize the JIT" (Rserve error 127) —
@@ -180,7 +175,8 @@ run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
   # caller never breaks. `func` is a self-contained closure that exchanges data via ov_qs_* bridge
   # files, so the child only needs those helpers defined; the result travels back through the files.
   if (requireNamespace("callr", quietly = TRUE)) {
-    ok <- tryCatch({
+    child_failed <- FALSE
+    res <- tryCatch(
       callr::r(
         func = function(func, args) {
           ov_qs_read <- function(file, ...) {
@@ -195,10 +191,9 @@ run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
           do.call(func, args)
         },
         args = list(func = func, args = args), timeout = timeout_sec, show = FALSE
-      )
-      TRUE
-    }, error = function(e) { message("[rc_microservice] child failed (", conditionMessage(e), "); running in-process"); FALSE })
-    if (isTRUE(ok)) return(invisible(NULL))
+      ),
+      error = function(e) { message("[rc_microservice] child failed (", conditionMessage(e), "); running in-process"); child_failed <<- TRUE; NULL })
+    if (!child_failed) return(res)
   }
   # Fallback: run in-process (correct result; no separate-process memory reclaim).
   setTimeLimit(elapsed = timeout_sec, transient = TRUE)
