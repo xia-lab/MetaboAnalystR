@@ -147,6 +147,10 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   }
   
   mSetObj$dataSet$pathinteg.method <- libOpt;
+  # Keep the enrichment and topology choices too: the report states which settings produced
+  # the result, and only libOpt was being retained.
+  mSetObj$dataSet$pathinteg.enrich <- enrich;
+  mSetObj$dataSet$pathinteg.topo   <- topo;
   mSetObj$dataSet$path.mat <- NULL;
   
   if(libOpt == "genetic" && !is.null(mSetObj$dataSet$pathinteg.imps$gene.mat)){
