@@ -4876,6 +4876,26 @@ Export.RankedPeakListMprt <- function(mSetObj = NA, outPath = NA) {
     rt <- rep("", length(feat_nm))
   }
 
+  # IS THIS EVEN AN LC-MS PEAK TABLE? Decide before building the frame.
+  #
+  # This exporter is a chain-artifact producer registered on pass_end for EVERY stat / mf pass,
+  # so it runs whether or not a mummichog consumer is queued. On a named-compound concentration
+  # table the feature names are "Glucose", "Alanine", ... — not m/z — so every row failed the
+  # numeric parse below and the pass ended on "WARN all rows failed numeric m/z parse". That is
+  # the correct outcome reported as if it were a fault: nothing is lost, because mummichog
+  # cannot consume a compound table at all. Reported as a warning on every such run, it is
+  # noise that reads like a defect.
+  #
+  # Checked on a MAJORITY, not on all: a genuine peak table can carry a few unparseable rows
+  # (an annotated feature among the peaks), and those should still be dropped row-wise below.
+  mz.num <- suppressWarnings(as.numeric(mz))
+  if (mean(!is.na(mz.num)) < 0.5) {
+    message("[Export.RankedPeakListMprt] SKIP: features are compound names, not m/z ",
+            "(", sum(!is.na(mz.num)), " of ", length(mz.num), " parse as numeric) — ",
+            "a ranked peak list is only meaningful for LC-MS peaks, so none was written.")
+    return(NULL)
+  }
+
   out <- data.frame(m.z = mz, p.value = pvec, t.score = tvec, r.t = rt,
                     stringsAsFactors = FALSE)
   # Drop rows without numeric m/z (defensive — Read.PeakListData rejects the file otherwise).
