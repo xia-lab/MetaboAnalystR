@@ -5119,7 +5119,19 @@ Prepare4KeggNetwork <- function(mSetObj = NA, netLib = "allp"){
   if(.on.public.web){ PerformKOEnrichAnalysis_KO01100(NA, "pathway","network_enrichment_pathway_0"); mSetObj <- .get.mSet(mSetObj) } else { mSetObj <- PerformKOEnrichAnalysis_KO01100(mSetObj, "pathway","network_enrichment_pathway_0") };
   mSetObj <- .get.mSet(mSetObj);
   if(netLib != "global"){
-    OrganizeTarJsonforNextwork(mSetObj);
+    # OrganizeTarJsonforNextwork rewrites the pathway hits using dataSet$path.hits and
+    # dataSet$path.mat, which only the integrative pathway analysis produces. A
+    # compound-only result has neither, and indexing them yields a zero-length list whose
+    # names() assignment then fails. Keep the ko01100 result written above instead.
+    hits.path <- mSetObj[["dataSet"]][["path.hits"]];
+    if(exists("current.kegglib") && length(hits.path) > 0 &&
+       length(hits.path) == length(current.kegglib$path.ids) &&
+       !is.null(mSetObj[["dataSet"]][["path.mat"]])){
+      OrganizeTarJsonforNextwork(mSetObj);
+    } else {
+      message("Prepare4KeggNetwork: no pathway hit table for netLib '", netLib,
+              "' - keeping the global ko01100 network.");
+    }
   }
   return(.set.mSet(mSetObj));
 }
