@@ -274,7 +274,7 @@ QueryPhenoSQLite <- function(table.nm, genes, cmpds, min.score){
     sqlite.path <- paste0(url.pre, "MetPriCNet.sqlite");
     pheno.db <- .get.sqlite.con(sqlite.path);
   }else{
-    download.file("https://www.xialab.ca/resources/sqlite/MetPriCNet.sqlite", "MetPriCNet.sqlite")
+    download.file("https://www.xialab.ca/resources/sqlite/MetPriCNet.sqlite", "MetPriCNet.sqlite",mode="wb")
     pheno.db <- dbConnect(SQLite(), "MetPriCNet.sqlite");
   }
   
