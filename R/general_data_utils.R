@@ -19,8 +19,8 @@ Reload.scripts.on.demand <- function(){
   
   # Reload each script using the determined rpath prefix
   for (relPath in mSetObj$paramSet$loaded.scripts) {
-    complete_path <- paste0(rpath, relPath)
-    compiler::loadcmp(complete_path)
+    complete_path <- sub("\\.Rc$", ".R", paste0(rpath, relPath))
+    source(complete_path, local = FALSE)
   }
   
   return(1)

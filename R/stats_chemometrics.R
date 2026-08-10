@@ -1969,8 +1969,8 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
       setwd(wd)
       input <- ov_qs_read(bridge_in)
       rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"))){
+        source(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"), local = FALSE)
       }
       res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=NA, crossvalI=input$cv.num)
       ov_qs_save(res, bridge_out, preset = "fast")
@@ -2377,8 +2377,8 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
       setwd(wd)
       input <- ov_qs_read(bridge_in)
       rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.Rc"))
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"))){
+        source(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"), local = FALSE)
       }
       res <- perform_opls(input$data, input$cls, predI=1, permI=input$perm.num, orthoI=NA, crossvalI=input$cv.num)
       ov_qs_save(res, bridge_out, preset = "fast")
@@ -2523,8 +2523,8 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
       setwd(wd)
       input <- ov_qs_read(bridge_in)
       rpath <- "../../"
-      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))){
-        compiler::loadcmp(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.Rc"))
+      if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.R"))){
+        source(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_spls.R"), local = FALSE)
       }
       res <- splsda(input$data, input$cls, ncomp=input$comp.num, keepX=input$comp.var.nums)
       if(input$doCV){

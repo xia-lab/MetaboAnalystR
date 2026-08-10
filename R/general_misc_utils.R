@@ -27,11 +27,7 @@
     stop(paste("Script not found:", fileName, "(.Rc or .R)"));
   }
 
-  if (grepl("\\.Rc$", script.path)) {
-    compiler::loadcmp(script.path, .GlobalEnv);
-  } else {
-    source(script.path, local = FALSE);
-  }
+  source(sub("\\.Rc$", ".R", script.path), local = FALSE);
 
   invisible(1);
 }
@@ -1794,8 +1790,8 @@ GetPrimaryType <- function(analysis.var){
 
 PrepareEnrichNet<-function(mSetObj, netNm, overlapType="mixed", type="mummichog", edgeMode="overview"){
 
-    if(!exists("my.mummichog.enrich.net")){ 
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/utils_enrichnet.Rc"));
+    if(!exists("my.enrich.net")){ 
+        source(paste0(rpath ,"rscripts/MetaboAnalystR/R/utils_enrichnet.R"), local = FALSE);
     }
     return(my.enrich.net(mSetObj, netNm, overlapType, type, edgeMode ));
 }
@@ -1824,7 +1820,7 @@ PlotPCAPairSummaryMeta <- function(mSetObj = NA,
                                    meta,
                                    metaShape = NULL){
     if(!exists(".plot.pca.pair.meta")){ 
-        compiler::loadcmp(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.Rc"));
+        source(paste0(rpath ,"rscripts/MetaboAnalystR/R/util_pcapair.R"), local = FALSE);
     }
     return(.plot.pca.pair.meta(mSetObj,
                                    imgName,
