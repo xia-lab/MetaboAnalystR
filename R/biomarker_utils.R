@@ -59,7 +59,9 @@ GetFeatureNumbers <- function(feat.len){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30){
+GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30, rseed = 28051968){
+
+  set.seed(rseed);
   
   nTotalSample <- length(y);
   
