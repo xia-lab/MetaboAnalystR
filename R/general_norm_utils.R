@@ -93,10 +93,12 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
   }else if(rowNorm=="GroupPQN"){
     grp.inx <- cls == ref;
     ref.smpl <- apply(data[grp.inx, , drop=FALSE], 2, mean);
+    AddPqnRefWarning(ref.smpl, paste0("reference group '", ref, "'"));
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
     rownm<-"Probabilistic Quotient Normalization by a reference group";
   }else if(rowNorm=="SamplePQN"){
     ref.smpl <- data[ref, , drop=FALSE];
+    AddPqnRefWarning(ref.smpl, paste0("reference sample '", ref, "'"));
     data<-t(apply(data, 1, ProbNorm, ref.smpl));
     rownm<-"Probabilistic Quotient Normalization by a reference sample";
   }else if(rowNorm=="CompNorm"){
@@ -325,10 +327,47 @@ MedianNorm<-function(x){
   x / m
 }
 
+# Warn when the PQN reference carries little usable signal. A feature whose
+# reference value is zero or missing produces no comparable quotient, so it is
+# excluded from the scaling median; a large share of them means the scaling rests
+# on only a few features. This is what an unfiltered peak table with many
+# all-zero features produces, so the message names the count and the remedy.
+# Appends to norm.warn rather than overwriting — other checks may already have set it.
+AddPqnRefWarning <- function(ref.smpl, what){
+  ref <- as.numeric(ref.smpl);
+  n <- length(ref);
+  if(n == 0) return(invisible(FALSE));
+  bad <- sum(!is.finite(ref) | ref <= 0);
+  if(bad == 0) return(invisible(FALSE));
+  if(bad == n){
+    warn.msg <- paste0("Every feature of the ", what, " is zero or missing, so no scaling ",
+                       "factor could be computed and the samples were left unscaled. Apply ",
+                       "data filtering to remove empty features, or pick another reference.");
+  }else if(bad*5 >= n){          # >= 20% of the reference unusable
+    warn.msg <- paste0(bad, " of ", n, " features (", round(100*bad/n),
+                       "%) in the ", what, " are zero or missing. Those features cannot ",
+                       "contribute to the quotient median, so normalization rests on the ",
+                       "remaining ", n - bad, ". Data filtering removes empty features ",
+                       "before normalization.");
+  }else{
+    return(invisible(FALSE));
+  }
+  message("[WARNING] ", warn.msg);
+  norm.warn <<- if(exists("norm.warn") && nzchar(norm.warn)) paste0(norm.warn, " ", warn.msg) else warn.msg;
+  invisible(TRUE);
+}
+
 # normalize by a reference sample (probability quotient normalization)
 # ref should be the name of the reference sample
 ProbNorm<-function(x, ref.smpl){
-  x/median(as.numeric(x/ref.smpl), na.rm=T)
+  # Only comparable features may enter the quotient median. A zero reference gives
+  # x/0 = Inf and 0/0 = NaN; na.rm drops NaN but NOT Inf, so once more than half the
+  # references are zero the median is Inf and x/Inf zeroes the whole sample.
+  # is.finite() excludes Inf/-Inf/NA/NaN together, which na.rm alone does not.
+  r <- as.numeric(x / ref.smpl)
+  r <- r[is.finite(r) & r > 0]
+  if (!length(r)) return(x)   # nothing comparable — leave unscaled (caller warns)
+  x / median(r)
 }
 
 # normalize by a reference reference (i.e. creatinine)
