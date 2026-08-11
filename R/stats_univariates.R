@@ -22,7 +22,9 @@
 # pair is set the first two class levels are used, preserving prior behaviour.
 
 # Return the validated pair of group names to compare (length-2 character vector,
-# ordered so grps[1] is the reference / left side of the volcano).
+# ordered so grps[1] is the NUMERATOR: with cmp.type=0 the fold change is
+# grps[1]/grps[2], so a feature higher in grps[1] has a positive log2 FC and sits on
+# the right of the volcano.
 .getComparisonGroups <- function(mSetObj){
   cls  <- mSetObj$dataSet$cls;
   lvls <- levels(cls);
@@ -48,9 +50,9 @@
 #'@description For data sets with more than two groups, choose which two groups
 #'are compared (GroupA vs GroupB). Call this before \code{Ttests.Anal},
 #'\code{FC.Anal} or \code{Volcano.Anal}. Pass \code{grpA=NULL} (or "") to reset
-#'to the default (first two class levels). \code{grpA} is the reference shown on
-#'the left/negative side of the volcano; with \code{cmpType=0} the fold change is
-#'GroupA vs GroupB.
+#'to the default (first two class levels). \code{grpA} is the numerator: with
+#'\code{cmpType=0} the fold change is GroupA/GroupB, so a feature higher in GroupA
+#'has a positive log2 fold change and sits on the right of the volcano.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param grpA Character, first (reference) group name
 #'@param grpB Character, second group name
@@ -464,7 +466,11 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
       fit <- eBayes(fit)
       tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
     }
-    t.stat <- tt.res$t
+    # The group coefficient is level[2]-level[1], while the fold change, the classical
+    # t-test and the fast t-test are all level[1]-level[2]. Negate for the same reason
+    # FC.Anal negates limma's logFC, so a feature's t and its fold change agree in sign
+    # and the t.score ranking that feeds pathway analysis points the same way.
+    t.stat <- -tt.res$t
     p.value <- tt.res$P.Value
     names(t.stat) <- names(p.value) <- rownames(tt.res)
     # Reorder to match norm columns
@@ -1006,7 +1012,24 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
   nonpar <- mSetObj$analSet$aov$nonpar;
   cmp.res <- NULL;
   post.nm <- NULL;
-  
+
+  # No feature passed the threshold. Report the lowest-p features rather than nothing,
+  # the same fallback ANOVA.Anal applies to its own table. Without this the code below
+  # builds a 4-column frame from the scalar placeholders and assigns 5 column names.
+  if(sig.num == 0){
+    top <- mSetObj$analSet$aov$sig.mat;   # ANOVA.Anal already holds the 10 lowest-p features
+    if(is.null(top) || nrow(top) == 0){
+      return(.set.mSet(mSetObj));
+    }
+    nms <- rownames(top);
+    sig.f   <- stats::setNames(as.numeric(top[,1]), nms);
+    sig.p   <- stats::setNames(as.numeric(top[,2]), nms);
+    sig.fdr <- stats::setNames(as.numeric(top[,4]), nms);
+    all.nms <- names(mSetObj$analSet$aov$p.value);
+    inx.imp <- stats::setNames(all.nms %in% nms, all.nms);
+    sig.num <- length(nms);
+  }
+
   if(nonpar){
     sig.mat <- data.frame(signif(sig.f,5), signif(sig.p,5), signif(-log10(sig.p),5), signif(sig.fdr,5), 'NA');
     colnames(sig.mat) <- c("chi.squared", "p.value", "-log10(p)", "FDR", "Post-Hoc");
@@ -1017,7 +1040,9 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
     # do post-hoc only for signficant entries
     # note aov obj is not avaible using fast version
     # need to recompute using slower version for the sig ones
-    if(.on.public.web & RequireFastUnivTests(mSetObj)){
+    # aov_res_imp.qs is written by ANOVA.Anal only when something passed the threshold,
+    # so the fallback above has no cached fits to read and recomputes them.
+    if((.on.public.web & RequireFastUnivTests(mSetObj)) || !file.exists("aov_res_imp.qs")){
       data <- as.matrix(mSetObj$dataSet$norm);
       cls <- mSetObj$dataSet$cls;
       aov.imp <- apply(data[,inx.imp,drop=FALSE], 2, aof, cls);
