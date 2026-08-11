@@ -197,65 +197,6 @@ run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
   invisible(do.call(func, args))
 }
 
-run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
-  # Self-host: a NESTED RSclient connection (an Rserve session opening a
-  # connection back to Rserve on 6311) reliably crashes the spawned worker with
-  # "Fatal error: unable to initialize the JIT", which leaves the caller looping
-  # and breaks PCA/heatmap/arrow-export/etc. The subprocess buys nothing here,
-  # so run the function in-process. `func` is a self-contained closure that
-  # exchanges data through its bridge files via the globally-defined ov_qs_*
-  # helpers, so it behaves identically run here or in a worker.
-  if (isTRUE(tryCatch(get("on.ov", envir = globalenv()), error = function(e) FALSE))) {
-    return(run_func_via_microservice(func, args, timeout_sec))
-  }
-  conn <- RSclient::RS.connect(host = "localhost", port = 6311)
-  on.exit(try(RSclient::RS.close(conn), silent = TRUE))
-  # Inject the qs wrapper helpers into the subprocess R session so callers
-  # writing ov_qs_read(f) / ov_qs_save(obj, f) inside their subprocess func
-  # body work transparently — the subprocess is a fresh R session and does
-  # not inherit master-session helpers otherwise.
-  RSclient::RS.eval(conn, quote({
-    ov_qs_read <- function(file, ...) {
-      if (file.exists(file)) {
-        r <- try(qs2::qs_read(file, ...), silent = TRUE)
-        if (!inherits(r, "try-error")) return(r)
-        return(qs::qread(file, ...))
-      }
-      if (endsWith(tolower(file), ".qs")) {
-        v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
-        if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
-      } else if (endsWith(tolower(file), ".qs2")) {
-        v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
-        if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
-      }
-      stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
-    }
-    ov_qs_save <- function(obj, file, ...) {
-      .d <- dirname(file)
-      if (!dir.exists(.d)) dir.create(.d, recursive = TRUE, showWarnings = FALSE)
-      .args <- list(...)
-      for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
-      do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
-      invisible(file)
-    }
-    ov_qs_exists <- function(file) {
-      if (file.exists(file)) return(TRUE)
-      if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
-      if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
-      FALSE
-    }
-  }))
-  RSclient::RS.assign(conn, ".exec_wd", getwd())
-  RSclient::RS.assign(conn, ".exec_func", func)
-  RSclient::RS.assign(conn, ".exec_args", args)
-  RSclient::RS.assign(conn, ".exec_timeout", timeout_sec)
-  RSclient::RS.eval(conn, quote({
-    setwd(.exec_wd)
-    setTimeLimit(elapsed = .exec_timeout, transient = TRUE)
-    on.exit(setTimeLimit(elapsed = Inf))
-    do.call(.exec_func, .exec_args)
-  }))
-}
 
 SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMethod="chisq") {
   scatter.opts <<- list(
