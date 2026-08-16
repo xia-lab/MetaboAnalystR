@@ -1358,37 +1358,46 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl
   
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 9; 
-  h <- 8;
-  
+  w <- 9;
+  h <- 7;
+
   mSetObj$imgSet$roc.prob.plot <- imgName;
   mSetObj$imgSet$roc.prob.name <- mdl.inx
-  
-  
+
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  set.seed(123);
-  y <- rnorm(length(prob.vec));
-  max.y <- max(abs(y));
-  ylim <- max.y*c(-1.05, 1.05);
-  
-  xlim <- c(0, 1.0);
-  
-  op <- par(mar=c(4,4,3,6));
-  pchs <- ifelse(as.numeric(cls) == 1, 1, 19);
-  
-  colors <- ifelse(show==1, "darkgrey", "black");
-  ROCR::plot(prob.vec, y, pch=pchs, col=colors, xlim=xlim, ylim= ylim, xlab = "Predicted Class Probabilities", ylab="Samples");
-  abline(h = 0, lty = 2, col="grey");
-  abline(v = 0.5, lty = 2, col="grey");
-  
+
+  # The true class sets the band and the predicted probability sets the horizontal position,
+  # so a misclassified sample is a point that has crossed the 0.5 line out of its own band.
+  # The vertical spread is a fixed low-discrepancy sequence rather than a random draw, so the
+  # same result always renders the same figure.
+  cls.i <- as.numeric(cls);
+  y <- ifelse(cls.i == 1, -0.5, 0.5) +
+       (((seq_along(prob.vec) * 0.6180339887) %% 1) - 0.5) * 0.70;
+  ylim <- c(-0.95, 0.95);
+  xlim <- c(-0.06, 1.06);
+  pal <- rep(c("#5a9bd4", "#d76a6a"), length.out=max(2, nlevels(cls)));
+
+  op <- par(mar=c(4,7,3,2));
+  plot(prob.vec, y, type="n", xlim=xlim, ylim=ylim, yaxt="n",
+       xlab = "Predicted Class Probabilities", ylab="");
+  abline(v = 0.5, lty = 2, col="grey40");
+  abline(h = 0, col="grey85");
+  axis(2, at=c(-0.5, 0.5), labels=head(c(levels(cls), "", ""), 2), las=1, tick=FALSE);
+  mtext("True class", side=2, line=5);
+  points(prob.vec, y, pch=19, col=pal[cls.i], cex=1.05);
+
+  wrong.all <- (prob.vec > 0.5) != (cls.i == 2);
+  if(sum(wrong.all) > 0){
+    points(prob.vec[wrong.all], y[wrong.all], pch=1, cex=1.9, col="grey20", lwd=1.4);
+  }
+
   par(xpd=T);
-  legend("right",inset=c(-0.11,0), legend = unique(as.character(cls)), pch=unique(pchs));
   
   test.y <- test.x <- 0;
   if(showPred){
-    test.y <- rnorm(length(mSetObj$analSet$multiROC$test.res));
     test.x <- mSetObj$analSet$multiROC$test.res;
+    test.y <- (((seq_along(test.x) * 0.6180339887) %% 1) - 0.5) * 1.5;
     
     pchs <- ifelse(as.numeric(mSetObj$dataSet$test.cls) == 1, 1, 19);
     points(test.x, test.y, pch=pchs, cex=1.5, col="red");
@@ -1407,7 +1416,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl
     
     wrong.inx <- (pred.vec != as.numeric(cls)-1) & pred.vec == 1;
     if(sum(wrong.inx) > 0){
-      text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=4);
+      text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=4, cex=0.8);
     }
     
     # first wrong pred as 0 (left side)
@@ -1415,7 +1424,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl
     pred.vec <- ifelse(prob.vec < 0.5, 0, 0.5);
     wrong.inx <- pred.vec != as.numeric(cls)-1 & pred.vec == 0;
     if(sum(wrong.inx) > 0){
-      text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=2);
+      text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=2, cex=0.8);
     }
     
     if(showPred){
@@ -1514,35 +1523,42 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 9; h <- 8;
-  
+  w <- 9; h <- 7;
+
   mSetObj$imgSet$roc.testprob.plot <- imgName;
   mSetObj$imgSet$roc.testprob.name <- mdl.inx
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  set.seed(123);
-  y <- rnorm(length(prob.vec));
-  max.y <- max(abs(y));
-  ylim <- max.y*c(-1.05, 1.05);
-  
-  xlim <- c(0, 1.0);
-  
-  op <- par(mar=c(4,4,3,6));
-  pchs <- ifelse(as.numeric(cls) == 1, 1, 19);
-  
-  colors <- ifelse(show==1, "darkgrey", "black");
-  ROCR::plot(prob.vec, y, pch=pchs, col=colors, xlim=xlim, ylim= ylim, xlab = "Predicted Class Probabilities", ylab="Samples");
-  abline(h = 0, lty = 2, col="grey");
-  abline(v = 0.5, lty = 2, col="grey");
-  
+
+  # Same layout as PlotProbView: true class sets the band, predicted probability sets the
+  # horizontal position, and the vertical spread is fixed rather than randomly drawn.
+  cls.i <- as.numeric(cls);
+  y <- ifelse(cls.i == 1, -0.5, 0.5) +
+       (((seq_along(prob.vec) * 0.6180339887) %% 1) - 0.5) * 0.70;
+  ylim <- c(-0.95, 0.95);
+  xlim <- c(-0.06, 1.06);
+  pal <- rep(c("#5a9bd4", "#d76a6a"), length.out=max(2, nlevels(cls)));
+
+  op <- par(mar=c(4,7,3,2));
+  plot(prob.vec, y, type="n", xlim=xlim, ylim=ylim, yaxt="n",
+       xlab = "Predicted Class Probabilities", ylab="");
+  abline(v = 0.5, lty = 2, col="grey40");
+  abline(h = 0, col="grey85");
+  axis(2, at=c(-0.5, 0.5), labels=head(c(levels(cls), "", ""), 2), las=1, tick=FALSE);
+  mtext("True class", side=2, line=5);
+  points(prob.vec, y, pch=19, col=pal[cls.i], cex=1.05);
+
+  wrong.all <- (prob.vec > 0.5) != (cls.i == 2);
+  if(sum(wrong.all) > 0){
+    points(prob.vec[wrong.all], y[wrong.all], pch=1, cex=1.9, col="grey20", lwd=1.4);
+  }
+
   par(xpd=T);
-  legend("right",inset=c(-0.11,0), legend = unique(as.character(cls)), pch=unique(pchs));
   
   test.y <- test.x <- 0;
   if(showPred){
-    test.y <- rnorm(length(mSetObj$analSet$ROCtest$test.res));
     test.x <- mSetObj$analSet$ROCtest$test.res;
+    test.y <- (((seq_along(test.x) * 0.6180339887) %% 1) - 0.5) * 1.5;
     
     pchs <- ifelse(as.numeric(mSetObj$dataSet$test.cls) == 1, 1, 19);
     points(test.x, test.y, pch=pchs, cex=1.5, col="red");
