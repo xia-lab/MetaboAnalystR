@@ -442,13 +442,13 @@ PerformMetaPSEA <- function(mSetObj=NA,
     
     # combine p-values
     if(pval.method=="fisher"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) sumlog(x))
-    } else if(pval.method=="edgington"){ 
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) sump(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sumlog(x))
+    } else if(pval.method=="edgington"){
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sump(x))
     } else if(pval.method=="stouffer"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) sumz(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::sumz(x))
     } else if(pval.method=="vote"){
-      meta.pvals <- apply(as.matrix(path2), 1, function(x) votep(x))
+      meta.pvals <- apply(as.matrix(path2), 1, function(x) metap::votep(x))
     } else if(pval.method=="min"){
       Meta.P <- apply(as.matrix(path2), 1, function(x) min(x))
     } else if(pval.method=="max") {
@@ -626,7 +626,7 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
       }
     }
     
-    wd <- melt(w);
+    wd <- reshape2::melt(w);
     wd <- wd[wd[,1] != wd[,2],];
     wd <- wd[!is.na(wd[,3]),];
     g <- graph_from_data_frame(wd[,-3], directed=F);
@@ -766,11 +766,11 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     
     ratio_String <- cbind(rownames(path_results), ratio_String);
     
-    ratio2 <- melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "enrichment ratio");
+    ratio2 <- reshape2::melt(ratio, id.vars = "Pathway", variable.name = "Study", value.name = "enrichment ratio");
     
     #path_results <- path_results[, -length(colnames(path_results))];
     path_results$Pathway <- rownames(path_results);
-    path_results2 <- melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "p-value");
+    path_results2 <- reshape2::melt(path_results, id.vars = "Pathway", variable.name = "Study", value.name = "p-value");
     
     res_table <- cbind(ratio_String, path_results$Meta.P);
     colnames(res_table)[c(1, length(colnames(res_table)))] <- c("Pathways", "Meta.P")

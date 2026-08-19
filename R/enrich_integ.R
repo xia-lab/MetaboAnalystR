@@ -529,19 +529,19 @@ PerformIntegPathwayAnalysis <- function(mSetObj=NA, topo="dc", enrich="hyper",
   hitsg <- path2$Hits;
 
   if(is.null(integMethod)){
-    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {metap::sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
   } else if(integMethod == "fisher") {
-    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {metap::sumlog(c(path2$FET[x], path2$`Raw p`[x]))$p});
   } else if(integMethod == "edgington") {
-    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {sump(c(path2$FET[x], path2$`Raw p`[x]))$p});
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {metap::sump(c(path2$FET[x], path2$`Raw p`[x]))$p});
   } else if(integMethod == "stouffer") {
     mergP <- sapply(seq(nrow(path2)), FUN= function(x) {
       if(path2$FET[x] == 1) {pval1 <- 0.999} else {pval1 <- path2$FET[x]}
       if(path2$`Raw p`[x] == 1) {pval2 <- 0.999} else {pval2 <- path2$`Raw p`[x]}
-      sumz(c(pval1,pval2))$p
+      metap::sumz(c(pval1,pval2))$p
       });
   } else if(integMethod == "vote") {
-    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {votep(c(path2$FET[x], path2$`Raw p`[x]))$p});
+    mergP <- sapply(seq(nrow(path2)), FUN= function(x) {metap::votep(c(path2$FET[x], path2$`Raw p`[x]))$p});
   } else if(integMethod == "min") {
     mergP <- sapply(seq(nrow(path2)), FUN= function(x) {min(c(path2$FET[x], path2$`Raw p`[x]))});
   } else if(integMethod == "max") {
