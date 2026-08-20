@@ -459,12 +459,17 @@ Read.TextData <- function(mSetObj=NA, filePath, format="rowu",
         return(1);
       }
       cls.lbl <- dat[,1];
+      # `[.data.frame` silently uniquifies duplicate column names (.1/.2 suffixes),
+      # hiding real duplicate feature ids from the handling below — capture the
+      # file's true names before subsetting and reapply them
+      var.nms <- colnames(dat)[-1];
       conc <- dat[,-1, drop=FALSE];
-      var.nms <- colnames(conc);
+      colnames(conc) <- var.nms;
       if(lbl.type == "no"){ #no class label
         cls.lbl <- rep(1, nrow(dat));
+        var.nms <- colnames(dat);
         conc <- dat[,, drop=FALSE]; 
-        var.nms <- colnames(conc);
+        colnames(conc) <- var.nms;
       }
     }else{ # sample in col
       msg<-c(msg, "Samples are in columns and features in rows.");
@@ -562,10 +567,25 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
+    # merge duplicate feature ids by the user-selected statistic when available
+    merged <- FALSE;
+    if(exists("ov_merge_duplicate_features")){
+      tmp <- t(conc);
+      rownames(tmp) <- var.nms;
+      dres <- ov_merge_duplicate_features(tmp);
+      if(!is.null(dres$data)){
+        conc <- t(dres$data);
+        var.nms <- rownames(dres$data);
+        msg <- c(msg, dres$msg);
+        merged <- TRUE;
+      }
+    }
+    if(!merged){
+      dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+      AddErrMsg("Duplicate feature names are not allowed!");
+      AddErrMsg(dup.nm);
+      return(0);
+    }
   }
   
   if(anal.type == "mummichog"){

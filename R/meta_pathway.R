@@ -1453,6 +1453,19 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
     }
     
     if(length(unique(var.nms))!=length(var.nms)){
+      merged <- FALSE;
+      if(exists("ov_merge_duplicate_features")){
+        tmp <- t(conc);
+        rownames(tmp) <- var.nms;
+        dres <- ov_merge_duplicate_features(tmp);
+        if(!is.null(dres$data)){
+          conc <- t(dres$data);
+          var.nms <- rownames(dres$data);
+          msg <- c(msg, dres$msg);
+          merged <- TRUE;
+        }
+      }
+      if(!merged){
       dup.inx <- which(duplicated(var.nms));
       msg <- c(msg, paste("Error: a total of", length(dup.inx), "duplicate feature names found!"));
       if(length(dup.inx) > 9){
@@ -1461,6 +1474,7 @@ SanityCheckMetaPathTable<-function(mSetObj=NA, dataName, dataName2){
       dup.nm <- paste("Duplicated names [max 9]: ", var.nms[dup.inx], collapse=" ");
       AddErrMsg(dup.nm);
       return(0);
+      }
     }else{
       msg <- c(msg, "All feature names are unique");
     }

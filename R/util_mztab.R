@@ -201,10 +201,24 @@ my.parse.mztab <- function(mSetObj=NA, filename, identifier = "name") {
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return(0);
+    merged <- FALSE;
+    if(exists("ov_merge_duplicate_features")){
+      tmp <- t(conc);
+      rownames(tmp) <- var.nms;
+      dres <- ov_merge_duplicate_features(tmp);
+      if(!is.null(dres$data)){
+        conc <- t(dres$data);
+        var.nms <- rownames(dres$data);
+        msg <- c(msg, dres$msg);
+        merged <- TRUE;
+      }
+    }
+    if(!merged){
+      dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+      AddErrMsg("Duplicate feature names are not allowed!");
+      AddErrMsg(dup.nm);
+      return(0);
+    }
   }
   
   # now check for special characters in the data labels

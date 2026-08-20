@@ -88,10 +88,23 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return("F");
+    merged <- FALSE;
+    if(exists("ov_merge_duplicate_features")){
+      tmp <- t(conc);
+      rownames(tmp) <- var.nms;
+      dres <- ov_merge_duplicate_features(tmp);
+      if(!is.null(dres$data)){
+        conc <- t(dres$data);
+        var.nms <- rownames(dres$data);
+        merged <- TRUE;
+      }
+    }
+    if(!merged){
+      dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+      AddErrMsg("Duplicate feature names are not allowed!");
+      AddErrMsg(dup.nm);
+      return("F");
+    }
   }
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
@@ -271,10 +284,23 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return("F");
+    merged <- FALSE;
+    if(exists("ov_merge_duplicate_features")){
+      tmp <- t(conc);
+      rownames(tmp) <- var.nms;
+      dres <- ov_merge_duplicate_features(tmp);
+      if(!is.null(dres$data)){
+        conc <- t(dres$data);
+        var.nms <- rownames(dres$data);
+        merged <- TRUE;
+      }
+    }
+    if(!merged){
+      dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+      AddErrMsg("Duplicate feature names are not allowed!");
+      AddErrMsg(dup.nm);
+      return("F");
+    }
   }
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){
@@ -458,10 +484,23 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
   }
   
   if(length(unique(var.nms))!=length(var.nms)){
-    dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
-    AddErrMsg("Duplicate feature names are not allowed!");
-    AddErrMsg(dup.nm);
-    return("F");
+    merged <- FALSE;
+    if(exists("ov_merge_duplicate_features")){
+      tmp <- t(conc);
+      rownames(tmp) <- var.nms;
+      dres <- ov_merge_duplicate_features(tmp);
+      if(!is.null(dres$data)){
+        conc <- t(dres$data);
+        var.nms <- rownames(dres$data);
+        merged <- TRUE;
+      }
+    }
+    if(!merged){
+      dup.nm <- paste(var.nms[duplicated(var.nms)], collapse=" ");
+      AddErrMsg("Duplicate feature names are not allowed!");
+      AddErrMsg(dup.nm);
+      return("F");
+    }
   }
   # now check for special characters in the data labels
   if(sum(is.na(iconv(smpl.nms)))>0){

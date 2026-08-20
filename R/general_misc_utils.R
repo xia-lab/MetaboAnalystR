@@ -276,7 +276,12 @@ SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMetho
     }
 
     # need to remove potential empty columns !! NOTE the single |, not || which is for atomic operation
-    dat <- dat[!sapply(dat, function(x) all(x == "" | is.na(x)))];
+    # `[.data.frame` silently uniquifies duplicate column names (.1/.2 suffixes);
+    # keep the file's real names so duplicate-feature handling downstream can see them
+    .keep.inx <- !sapply(dat, function(x) all(x == "" | is.na(x)));
+    .orig.col.nms <- colnames(dat)[.keep.inx];
+    dat <- dat[.keep.inx];
+    colnames(dat) <- .orig.col.nms;
 
     if (save.copy) {
         if (ncol(dat) == 1) {
