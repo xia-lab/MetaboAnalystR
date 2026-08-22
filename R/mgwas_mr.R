@@ -199,6 +199,15 @@ extractGwasDB <- function(snps=exposure.snp, outcomes = outcome.id, proxies = as
   res_dt1 <- res[res$SNP %in% snps,]
   if(has_meta_table){
     meta_dt <- meta_res[meta_res$id.outcome == outcomes,]
+    # When none of the exposure SNPs are present in this outcome panel, res_dt1 has 0
+    # rows while meta_dt has 1 — cbind() then dies with "arguments imply differing
+    # number of rows: 0, 1" (surfaced to the user as the generic "SNP filtering failed;
+    # check your R connection"). Drop meta_dt to 0 rows so the result is a well-formed
+    # EMPTY frame; the caller's `nrow(outcome.dat) == 0` guard then reports
+    # "The selected combination of SNP(s) and disease outcome yielded no available data."
+    if(nrow(res_dt1) == 0){
+      meta_dt <- meta_dt[0, , drop = FALSE]
+    }
     res_outcome_dt <- cbind(res_dt1, meta_dt)
   } else {
     # withProxy fat layout: per-outcome table already carries the meta columns.
