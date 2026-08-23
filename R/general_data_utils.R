@@ -624,6 +624,20 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
       colnames(conc) <- var.nms;
     }
 
+    # Same rescue for a '/' separator (0.4425/385 or 385/0.4425), the classic
+    # peak-intensity-table label format. Only converts when the '/' sits between
+    # two numeric tokens so compound names containing '/' (e.g. lipid
+    # species PC(16:0/18:1)) are left intact.
+    sl.mask <- grepl("^\\s*[0-9.eE+-]+/[0-9.eE+-]+\\s*$", as.character(var.nms));
+    if(any(sl.mask)){
+      new.nms <- as.character(var.nms);
+      new.nms[sl.mask] <- sub("/", "__", new.nms[sl.mask], fixed = TRUE);
+      message("[INFO] Normalized '/' separator to '__' in ",
+              sum(sl.mask), " feature names (m/z/RT → m/z__RT).");
+      var.nms <- new.nms;
+      colnames(conc) <- var.nms;
+    }
+
     # Auto-detect m/z__RT feature names. If RT is encoded in the labels but the
     # user picked "no RT", flip mumRT on rather than rejecting the upload —
     # rtIncluded on the form is easy to miss when the data already carries RT.
