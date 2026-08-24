@@ -75,7 +75,7 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png",
   if(mSetObj$dataSet$cls.type == "disc"){
 
     col.def <-  GetColorSchema(cls);
-    all.cols <- ExpandSchema(cls, col.def);
+    cols <- ExpandSchema(cls, col.def);
 
     Plot3D(mSetObj$analSet$pca$x[, inx1], mSetObj$analSet$pca$x[, inx2], mSetObj$analSet$pca$x[, inx3], xlab= xlabel, ylab=ylabel,
            zlab=zlabel, angle =angl, color=cols, pch=pchs);
