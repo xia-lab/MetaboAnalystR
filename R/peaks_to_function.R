@@ -1789,6 +1789,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
   matched_res <- matched_res[, c(3,2,7,8,4,5)];
   colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time", "RT.Rank");
 
+  # drop currency metabolites here, before empirical compounds and before mum_res.qs is saved
+  matched_res <- .drop.currency.matches(matched_res, mSetObj);
+
   if(!mSetObj$paramSet$mumRT && version=="v2"){
     matched_res <- matched_res[,-(5:6)]
   }
@@ -2223,6 +2226,9 @@ PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, 
     # re-order columns for output
     matched_res <- matched_res[, c(3,2,6,7,4)];
     colnames(matched_res) <- c("Query.Mass", "Matched.Compound", "Matched.Form", "Mass.Diff", "Retention.Time");
+
+    # same removal on the meta-analysis matching path
+    matched_res <- .drop.currency.matches(matched_res, mSetObj);
     
     if(metaLevel == "cpd"){
       fileName = paste0("mummichog_matched_compound_", mSetObj$dataSet$fileName, "_all.csv")
@@ -4404,6 +4410,79 @@ all_currency <- c('C00001', 'C00080', 'C00007', 'C00006', 'C00005', 'C00003',
 
 primary_ions <- c('M+H[1+]', 'M+Na[1+]', 'M-H2O+H[1+]', 'M-H[-]', 'M-2H[2-]', 'M-H2O-H[-]',
                   'M+H [1+]', 'M+Na [1+]', 'M-H2O+H [1+]', 'M-H [1-]', 'M-2H [2-]', 'M-H2O-H [1-]')
+
+# Remove currency-metabolite matches from the peak/compound matching table.
+#
+# Currency metabolites (water, ATP, NAD, ...) are ubiquitous, and the "Currency Metabolite
+# Customization" dialog on mummichog/LibraryView.xhtml states that removing them improves
+# pathway analysis; the report text likewise says they are "removed from further analysis".
+# Until now that removal was applied ONLY to the query list (input_cpdlist -> hits.sig, see
+# the cpd1 filters below), so matched_res, total_matched_cpds, hits.all and
+# mummichog_matched_compound_all.csv still carried them. Applying it here - at the matching
+# step, before empirical compounds are built and before mum_res.qs is saved - makes every
+# downstream consumer see the same compound set.
+#
+# Honours a user-customised list: PerformCurrencyMapping() -> mSetObj$curr.map ->
+# .setup.psea.library() assigns currency / currency_r, which is what is read here.
+.drop.currency.matches <- function(matched_res, mSetObj){
+
+  # "Exclude currency compounds" checkbox on mummichog/LibraryView.xhtml, default ON.
+  # Only an explicit FALSE turns it off; NULL (an older mSet, or MetaboAnalystR used outside
+  # the web app) filters. Unchecked reproduces the previous behaviour exactly: currency is
+  # then removed only from the query list by the cpd1 filters below, never from the matched
+  # table, the reference universe or hits.all.
+  if(identical(mSetObj$paramSet$exclude.currency, FALSE)){
+    return(matched_res);
+  }
+
+  if(.on.public.web){
+    currency_tmp <- currency;
+  } else {
+    if(!exists("currency_r")){currency_r <- currency}
+    currency_tmp <- currency_r;
+  }
+
+  # "" is a member of the default vector - never let it match a blank Matched.Compound
+  currency_tmp <- currency_tmp[!is.na(currency_tmp) & nzchar(currency_tmp)];
+  if(length(currency_tmp) == 0){
+    return(matched_res);
+  }
+
+  drop.inx <- matched_res[, "Matched.Compound"] %in% currency_tmp;
+
+  # nothing to drop, or currency accounts for every match - in the latter case keep the table
+  # rather than hand a zero-row frame to the empirical-compound and dictionary code downstream
+  if(!any(drop.inx) || all(drop.inx)){
+    return(matched_res);
+  }
+
+  print(paste0("Removed ", sum(drop.inx), " currency metabolite matches (",
+               length(unique(matched_res[drop.inx, "Matched.Compound"])), " compounds)."));
+
+  matched_res <- matched_res[!drop.inx, , drop=FALSE];
+  rownames(matched_res) <- NULL;
+  matched_res;
+}
+
+#'Set whether currency metabolites are excluded from peak/compound matching
+#'@description Backs the "Exclude currency compounds" checkbox on the mummichog Library page.
+#'TRUE (the default) removes currency matches at the matching step, so they are absent from the
+#'matched table, the reference compound universe and the pathway hit lists. FALSE restores the
+#'earlier behaviour, where currency was removed from the query list only.
+#'@param mSetObj Input the name of the created mSetObj object
+#'@param exclude Logical, whether to exclude currency metabolites
+#'@export
+SetExcludeCurrency <- function(mSetObj=NA, exclude=TRUE){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(is.null(mSetObj$paramSet)){
+    mSetObj$paramSet <- list();
+  }
+  mSetObj$paramSet$exclude.currency <- as.logical(exclude);
+
+  return(.set.mSet(mSetObj));
+}
 
 # mz tolerance based on instrument type
 # input: a vector of mz,
