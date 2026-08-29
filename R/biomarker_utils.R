@@ -3380,19 +3380,39 @@ GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
   runRanksMat <- do.call("cbind", freqRank);
   
   # order by their median rank across runs
-  ordRunRanksMat <- as.data.frame(runRanksMat[order(apply(runRanksMat, 1, median)),]);
-  
+  ord.inx <- order(apply(runRanksMat, 1, median));
+  ordRunRanksMat <- as.data.frame(runRanksMat[ord.inx,]);
+
   # Then rank by mean importance measures
   impsMat <- as.data.frame(do.call("cbind", feat.outp));
   impsVec <- apply(impsMat, 1, mean);
-  
+
+  # Same row order as ordRunRanksMat, so the two can be compared element-wise below.
+  ordImpsMat <- as.matrix(impsMat[ord.inx, , drop=FALSE]);
+
   # if(anal.mode == "explore"){
   # now count the number being selected in the bestFeatNum
-  selectedMat <- apply(ordRunRanksMat, 2, function(x) x <= bestFeatNum);
+  #
+  # A feature is selected in a run only if it is BOTH inside the top bestFeatNum AND
+  # actually carries importance in that run. The rank test alone is not enough for a
+  # sparse learner: elastic net gives most features a coefficient of exactly 0, rank()
+  # AVERAGES those ties into one middling rank, and every tied feature then passes
+  # `<= bestFeatNum` together as soon as bestFeatNum reaches that rank. On a 124-feature
+  # run about 90 features tie at zero and land on rank ~80, so the 100-feature model
+  # marked ALL of them selected in EVERY run: the frequency column became a flat 1.0,
+  # which tripped PlotImpBiomarkers' degenerate-case guard and made the "Frequencies of
+  # being selected" figure silently render Average Importance -- the two plots on the
+  # results page were identical for every elastic net run.
+  #
+  # Zero importance means the learner left the feature OUT, so counting it as selected
+  # was wrong independently of how the plot then behaved. The added test is a no-op for
+  # SVM / PLS-DA / Random Forests, whose importance measures (squared weights, VIP,
+  # MeanDecreaseAccuracy) are continuous and effectively never exactly zero.
+  selectedMat <- (as.matrix(ordRunRanksMat) <= bestFeatNum) & (ordImpsMat > 0);
   # }else{
   #   selectedMat <- ordRunRanksMat;
   # }
-  
+
   # calculate percentage of being selected in the best subsets
   percentVec <- apply(selectedMat, 1, sum)/ncol(ordRunRanksMat);
   
