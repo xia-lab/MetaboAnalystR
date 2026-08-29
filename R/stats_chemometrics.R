@@ -151,13 +151,14 @@ PCA.Anal <- function(mSetObj=NA){
 
 ## use a PERMANOVA to partition the Euclidean distance by groups (discrete) or
 # by a continuous covariate, based on the current score plot
-.calculateDistSig <- function(pc.mat, grp, cls.type = "disc") {
+.calculateDistSig <- function(pc.mat, grp, cls.type = "disc",
+                              permutations = getOption("ov.permanova.nperm", 199L)) {
 
   data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  ov_qs_save(list(data_dist = data.dist, grp = grp, cls_type = cls.type), bridge_in, preset = "fast")
+  ov_qs_save(list(data_dist = data.dist, grp = grp, cls_type = cls.type, n_perm = permutations), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_microservice(
@@ -168,14 +169,15 @@ PCA.Anal <- function(mSetObj=NA){
       data_dist <- input$data_dist
       grp <- input$grp
       cls_type <- input$cls_type
+      n_perm <- input$n_perm
 
       if (cls_type == "cont") {
         if (!is.numeric(grp)) stop("'grp' must be numeric when cls.type = 'cont'")
-        res <- vegan::adonis2(data_dist ~ grp)
+        res <- vegan::adonis2(data_dist ~ grp, permutations = n_perm)
         pair.res <- NULL
       } else {
         grp <- as.factor(grp)
-        res <- vegan::adonis2(data_dist ~ grp)
+        res <- vegan::adonis2(data_dist ~ grp, permutations = n_perm)
         # >= 2, not > 2: a two-group design has exactly one pair, and reporting it
         # keeps the table describing the groups actually analysed. With > 2 the
         # two-group case produced nothing, so an earlier multi-group run's table
@@ -189,7 +191,7 @@ PCA.Anal <- function(mSetObj=NA){
             ij <- grp %in% c(co[1, j], co[2, j])
             Dij <- as.dist(as.matrix(data_dist)[ij, ij])
             fij <- data.frame(fij = grp[ij])
-            a <- vegan::adonis2(Dij ~ fij, data = fij, permutations = 999)
+            a <- vegan::adonis2(Dij ~ fij, data = fij, permutations = n_perm)
             out[j, 1] <- paste(co[1, j], 'vs', co[2, j])
             out[j, 2] <- a$SumOfSqs[1]; out[j, 3] <- a$F[1]
             out[j, 4] <- a$R2[1]; out[j, 5] <- a$`Pr(>F)`[1]
@@ -542,7 +544,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   dev.off();
 
   if(nrow(mSetObj[['dataSet']][['meta.info']])<=200){
-    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls, 999)
+    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls)
     mSetObj$analSet$pca$permanova.res <-permanova_results;
   }
   return(.set.mSet(mSetObj));
@@ -3295,12 +3297,12 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   dev.off();
 }
 
-ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999, cls.type = "disc") {
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 199L), cls.type = "disc") {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
-  
+
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls, cls.type)
+  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations)
   
   # Extract the main results
   resTab <- res[[1]][1, ]
@@ -3328,12 +3330,12 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = 999, cls.type = "d
   )
 }
 
-ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = 999) {
+ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = getOption("ov.permanova.nperm", 199L)) {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
 
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls, cls.type)
+  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations)
 
   # Extract the main results
   resTab <- res[[1]][1, ]

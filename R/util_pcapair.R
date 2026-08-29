@@ -87,6 +87,7 @@
   ## preview) reuses the values instead of re-running the vegan permutations.
   pc.mat    <- as.matrix(data)
   cache.key <- paste(meta, cls.type, pc.num,
+                     getOption("ov.permanova.nperm", 199L),
                      paste0(as.character(cls), collapse = "|"), sep = "_")
   cached    <- mSetObj$analSet$pca$pair.pval.cache
 
