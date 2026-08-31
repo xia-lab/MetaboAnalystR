@@ -142,6 +142,12 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
   
   if(length(colnames(input) %in% mummi.cols) == 1){
     peakFormat <- mSetObj$paramSet$peakFormat;
+    # .canon.peak.cols above rewrote the header to its bare canonical form ("m.z" -> "mz").
+    # The multi-column branch below renames matched columns back to the dotted names, but
+    # this single-column branch kept "mz" while every consumer below reads input$m.z — the
+    # cbind then dropped the m/z values and the dimnames assignment failed, so the one-column
+    # ranked-m/z format errored on upload (live 2026-08-31, Dendritic Cells example included).
+    colnames(input)[colnames(input) == "mz"] <- "m.z";
   }else{
     # subset to what's needed for ms peaks
     # then rename columns
