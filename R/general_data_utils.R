@@ -70,7 +70,15 @@ Reload.scripts.on.demand <- function(){
 #'@export
 #'@import methods
 
-InitDataObjects <- function(data.type, anal.type, paired=FALSE, default.dpi=default.dpi){
+InitDataObjects <- function(data.type, anal.type, paired=FALSE,
+                            default.dpi=if(exists("default.dpi", envir=.GlobalEnv, inherits=FALSE))
+                                          get("default.dpi", envir=.GlobalEnv) else 72){
+  # The default reads the GLOBAL of the same name explicitly. `default.dpi=default.dpi`
+  # was a self-reference — the promise resolved to the parameter itself, so every call
+  # that omitted the argument died with "promise already under evaluation" the moment
+  # the assign below forced it (the package's own 3-argument calls included). A plain
+  # `=72` would be wrong the other way: it would overwrite a resolution a deployment
+  # has already chosen. Keep the global when one is set; start at 72 otherwise.
   rpath <<- "../../";
   #default.dpi <<- default.dpi;
   assign("default.dpi", default.dpi, envir = .GlobalEnv)
