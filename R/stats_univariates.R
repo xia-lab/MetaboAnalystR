@@ -888,7 +888,17 @@ FisherLSD <- function(aov.obj, thresh){
 #'License: GNU GPL (>= 2)
 parseTukey <- function(tukey, cut.off){
   inx <- tukey$cls[,"p adj"] <= cut.off;
-  paste(rownames(tukey$cls)[inx], collapse="; ");
+  .posthocPairs(rownames(tukey$cls)[inx], tukey$cls[inx, "p adj"]);
+}
+
+# "A - B (p=0.0012); A - C (p=0.031)": each significant pair with the p-value it was
+# judged on. The names alone told the reader which pairs differ but not how strongly,
+# and the p-values were computed and then dropped. LSD p-values are rounded to 6
+# decimals upstream, so an exact 0 is shown as its bound.
+.posthocPairs <- function(nms, pvals){
+  if(length(nms) == 0) return("");
+  ptxt <- ifelse(pvals == 0, "p<1e-06", paste0("p=", signif(pvals, 3)));
+  paste0(nms, " (", ptxt, ")", collapse="; ");
 }
 
 #'Return only the signicant comparison names
@@ -900,7 +910,7 @@ parseTukey <- function(tukey, cut.off){
 #'License: GNU GPL (>= 2)
 parseFisher <- function(fisher, cut.off){
   inx <- fisher[,"pvalue"] <= cut.off;
-  paste(rownames(fisher)[inx], collapse="; ");
+  .posthocPairs(rownames(fisher)[inx], fisher[inx, "pvalue"]);
 }
 
 #' Perform ANOVA analysis
@@ -1058,16 +1068,28 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
       aov.imp <- aov.imp[inx.imp];
     }
     
+    # Every pairwise comparison, one row each, to anova_posthoc_pairs.csv: the table's
+    # post-hoc column names only the significant pairs, and a reader who asks about a
+    # pair that did not pass has nowhere else to find its p-value.
+    pair.rows <- function(nm, tab, dcol, pcol){
+      data.frame(Feature = nm, Comparison = rownames(tab), Difference = signif(tab[, dcol], 5),
+                 p.value = signif(tab[, pcol], 5), stringsAsFactors = FALSE, row.names = NULL);
+    }
     if(post.hoc=="tukey"){
       tukey.res<-lapply(aov.imp, TukeyHSD, conf.level=1-thresh);
       my.cmp.res <- unlist(lapply(tukey.res, parseTukey, cut.off=thresh));
       post.nm = "Tukey's HSD";
+      pairs.df <- do.call(rbind, lapply(names(tukey.res), function(nm) pair.rows(nm, tukey.res[[nm]]$cls, "diff", "p adj")));
     }else{
       fisher.res<-lapply(aov.imp, FisherLSD, thresh);
       my.cmp.res <- unlist(lapply(fisher.res, parseFisher, cut.off=thresh));
       post.nm = "Fisher's LSD";
+      pairs.df <- do.call(rbind, lapply(names(fisher.res), function(nm) pair.rows(nm, fisher.res[[nm]], "Difference", "pvalue")));
     }
-    
+    if(!is.null(pairs.df) && nrow(pairs.df) > 0){
+      pairs.df <- pairs.df[order(match(pairs.df$Feature, names(sort(sig.p))), pairs.df$p.value), , drop=FALSE];
+      fast.write.csv(pairs.df, file="anova_posthoc_pairs.csv", row.names=FALSE);
+    }
     cmp.res <- my.cmp.res;
     # post hoc only top 1000;
     
