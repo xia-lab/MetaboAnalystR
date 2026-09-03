@@ -584,7 +584,9 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
       if(!is.null(dres$data)){
         conc <- t(dres$data);
         var.nms <- rownames(dres$data);
-        msg <- c(msg, dres$msg);
+        if(!is.null(dres$msg)){
+          msg <- c(msg, paste0("<font color=\"orange\">", dres$msg, "</font>"));
+        }
         merged <- TRUE;
       }
     }
@@ -594,6 +596,8 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
       AddErrMsg(dup.nm);
       return(0);
     }
+  } else {
+    msg <- c(msg, "No duplicate features detected");
   }
   
   if(anal.type == "mummichog"){
