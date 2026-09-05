@@ -939,6 +939,16 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
   
   datmat <- as.matrix(mSetObj$dataSet$norm);
   pls.res <- pls::plsr(cls~datmat, method='oscorespls', ncomp=comp.num);
+
+  # The formula interface keeps a model frame (a second copy of datmat) plus a terms
+  # attribute whose environment is this call frame - so the fit holds on to datmat, cls
+  # and mSetObj itself, and every later save of mSetObj drags the whole session through
+  # it (12.6 MB -> 82.2 MB for a 191 x 6838 table). Nothing downstream reads $model or
+  # $terms, so drop them before the fit is stored. PCA is unaffected because prcomp
+  # takes the matrix directly and never builds a model frame.
+  pls.res$model <- NULL;
+  attr(pls.res$terms, ".Environment") <- baseenv();
+
   mSetObj$analSet$plsr <- pls.res;
   mSetObj$analSet$plsr$reg <- reg;
   mSetObj$analSet$plsr$loading.type <- "all";
