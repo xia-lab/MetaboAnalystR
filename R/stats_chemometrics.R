@@ -3004,7 +3004,7 @@ GetPLSSigMat<-function(mSetObj=NA, type){
   }else{
     sig.mat <- mSetObj$analSet$plsr$imp.loads;
   }
-  return(CleanNumber(signif(as.matrix(sig.mat),5)));
+  return(unname(CleanNumber(signif(as.matrix(sig.mat),5))));
 }
 
 GetPLSSigRowNames<-function(mSetObj=NA, type){
@@ -3093,7 +3093,9 @@ GetPLSLoadMat <- function(mSetObj=NA){
   pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
   pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
   write(pointMapJson,"pointMap2.json")
-  return(res)
+  # Java reads the row names separately (GetPLSLoadCmpds); shipping them again as
+  # dimnames doubles the QAP1 payload for no gain, so drop them here.
+  return(unname(res))
 }
 
 GetPCALoadAxesSpec <- function(mSetObj=NA){
@@ -3182,7 +3184,7 @@ GetOPLSSigMat <- function(mSetObj=NA, type){
   pointMap <- setNames(rownames(res), paste(0, seq_len(nrow(res)) - 1, sep = ":"))
   pointMapJson <- RJSONIO::toJSON(pointMap, pretty = TRUE)
   write(pointMapJson,"pointMap3.json")
-  return(res)
+  return(unname(res))
 }
 
 GetDefaultSPLSCVComp <- function(mSetObj=NA){
