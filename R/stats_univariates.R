@@ -1296,9 +1296,9 @@ GetFcSigUpMat <- function(mSetObj=NA){
   lod <- mSetObj$analSet$fc$fc.log;
   red.inx<- which(mSetObj$analSet$fc$inx.up);
   if(sum(red.inx) > 0){
-    return(as.matrix(cbind(red.inx, lod[red.inx])));
+    return(unname(as.matrix(cbind(red.inx, lod[red.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1317,9 +1317,9 @@ GetFcSigDnMat <- function(mSetObj=NA){
   lod <- mSetObj$analSet$fc$fc.log;
   blue.inx<- which(mSetObj$analSet$fc$inx.down);
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+    return(unname(as.matrix(cbind(blue.inx, lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1339,9 +1339,9 @@ GetFcUnsigMat <- function(mSetObj=NA){
   inx.imp <- mSetObj$analSet$fc$inx.up | mSetObj$analSet$fc$inx.down;
   blue.inx<- which(!inx.imp);
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+    return(unname(as.matrix(cbind(blue.inx, lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1400,9 +1400,9 @@ GetAnovaUpMat <- function(mSetObj=NA){
   lod <- mSetObj$analSet$aov$p.log;
   red.inx<- which(mSetObj$analSet$aov$inx.imp);
   if(sum(red.inx) > 0){
-    return(as.matrix(cbind(red.inx, lod[red.inx])));
+    return(unname(as.matrix(cbind(red.inx, lod[red.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1421,9 +1421,9 @@ GetAnovaDnMat <- function(mSetObj=NA){
   lod <- mSetObj$analSet$aov$p.log;
   blue.inx <- which(!mSetObj$analSet$aov$inx.imp);
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+    return(unname(as.matrix(cbind(blue.inx, lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1482,9 +1482,9 @@ GetTtUpMat <- function(mSetObj=NA){
   lod <- mSetObj$analSet$tt$p.log;
   red.inx<- which(mSetObj$analSet$tt$inx.imp);
   if(sum(red.inx) > 0){
-    return(as.matrix(cbind(red.inx, lod[red.inx])));
+    return(unname(as.matrix(cbind(red.inx, lod[red.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1504,9 +1504,9 @@ GetTtDnMat <- function(mSetObj=NA){
   blue.inx <- which(!mSetObj$analSet$tt$inx.imp);
   
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+    return(unname(as.matrix(cbind(blue.inx, lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1651,9 +1651,9 @@ GetVolcanoDnMat <- function(mSetObj=NA){
   if(sum(blue.inx)>0){
     xs <- vcn$fc.log[blue.inx]
     ys <- vcn$p.log[blue.inx];
-    return(as.matrix(cbind(xs, ys)));
+    return(unname(as.matrix(cbind(xs, ys))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1665,9 +1665,9 @@ GetVolcanoUpLftMat <- function(mSetObj=NA){
   if(sum(red.inx)>0){
     xs <- vcn$fc.log[red.inx]
     ys <- vcn$p.log[red.inx];
-    return(as.matrix(cbind(xs, ys)));
+    return(unname(as.matrix(cbind(xs, ys))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -1679,9 +1679,9 @@ GetVolcanoUpRgtMat <- function(mSetObj=NA){
   if(sum(red.inx)>0){
     xs <- vcn$fc.log[red.inx]
     ys <- vcn$p.log[red.inx];
-    return(as.matrix(cbind(xs, ys)));
+    return(unname(as.matrix(cbind(xs, ys))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 

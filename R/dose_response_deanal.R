@@ -334,9 +334,9 @@ GetDoseUpMat <- function(mSetObj=NA){
   fc <- mSetObj$analSet$dose$fc.log;
   inx<- which(mSetObj$analSet$dose$inx.up);
   if(sum(inx) > 0){
-    return(as.matrix(cbind(fc[inx], lod[inx])));
+    return(unname(as.matrix(cbind(fc[inx], lod[inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -358,9 +358,9 @@ GetDoseDnMat <- function(mSetObj=NA){
   if(is.null(mSetObj$analSet$dose$inx.down)){return(NULL)}
   inx <- which(mSetObj$analSet$dose$inx.down);
   if(sum(inx) > 0){
-    return(as.matrix(cbind(fc[inx], lod[inx])));
+    return(unname(as.matrix(cbind(fc[inx], lod[inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -381,9 +381,9 @@ GetDoseUnsigMat <- function(mSetObj=NA){
 
   inx <- which(mSetObj$analSet$dose$inx.unsig);
   if(sum(inx) > 0){
-    return(as.matrix(cbind(fc[inx], lod[inx])));
+    return(unname(as.matrix(cbind(fc[inx], lod[inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 

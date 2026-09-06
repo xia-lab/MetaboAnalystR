@@ -553,9 +553,9 @@ GetAnova2UpMat<-function(mSetObj=NA){
   lod <- mSetObj$analSet$aov2$p.log;
   red.inx<- which(mSetObj$analSet$aov2$inx.imp);
   if(sum(red.inx) > 0){
-    return(as.matrix(cbind(red.inx, lod[red.inx])));
+    return(unname(as.matrix(cbind(red.inx, lod[red.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -574,9 +574,9 @@ GetAnova2DnMat<-function(mSetObj=NA){
   lod <- mSetObj$analSet$aov2$p.log;
   blue.inx <- which(!mSetObj$analSet$aov2$inx.imp);
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(blue.inx, lod[blue.inx])));
+    return(unname(as.matrix(cbind(blue.inx, lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 

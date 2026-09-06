@@ -4,9 +4,9 @@ GetCovUpMat<-function(mSetObj=NA){
   pval.no <- mSetObj$analSet$cov$p.value.no;
   red.inx<- which(mSetObj$analSet$cov$inx.imp);
   if(sum(red.inx) > 0){
-    return(as.matrix(cbind(pval.no[red.inx], lod[red.inx])));
+    return(unname(as.matrix(cbind(pval.no[red.inx], lod[red.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
@@ -26,9 +26,9 @@ GetCovDnMat<-function(mSetObj=NA){
   pval.no <- mSetObj$analSet$cov$p.value.no;
   blue.inx <- which(!mSetObj$analSet$cov$inx.imp);
   if(sum(blue.inx) > 0){
-    return(as.matrix(cbind(pval.no[blue.inx], lod[blue.inx])));
+    return(unname(as.matrix(cbind(pval.no[blue.inx], lod[blue.inx]))));
   }else{
-    return(as.matrix(cbind(-1, -1)));
+    return(unname(as.matrix(cbind(-1, -1))));
   }
 }
 
