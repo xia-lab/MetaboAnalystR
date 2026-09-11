@@ -12,17 +12,20 @@
   method <- "chisq"
   type <- "norm"
   scaleMode <- "independent"
+  hideTightEllipse <- FALSE
   tryCatch({
     if (exists("GetScatterOptions")) {
       opts <- GetScatterOptions()
       if (!is.null(opts$confidenceLevel)) level <- opts$confidenceLevel
       if (!is.null(opts$confMethod)) method <- opts$confMethod
       if (!is.null(opts$scaleMode)) scaleMode <- opts$scaleMode
+      if (!is.null(opts$hideTightEllipse)) hideTightEllipse <- opts$hideTightEllipse
       if (method == "f") type <- "t"
     }
   }, error = function(e) {})
   list(level = level, method = method, type = type,
-       use.asp = (scaleMode == "uniform"), scaleMode = scaleMode)
+       use.asp = (scaleMode == "uniform"), scaleMode = scaleMode,
+       hideTightEllipse = hideTightEllipse)
 }
 
 # Keep old name as alias
@@ -41,6 +44,30 @@ GetEllipseRadius <- function(level, method, n) {
   return(sqrt(qchisq(level, 2)))
 }
 
+#' Axis-ratio "sliver" test shared by the base-R ellipse path (.compute.group.ellipse,
+#' used by the PCA/PLS-DA/oPLS-DA/sPLS-DA score plots) and the ggplot2 biplot path
+#' (.ellipse.layer.data, used by PlotPCABiplot/PlotPLSBiplot).
+#' With a handful of near-collinear points the covariance is numerically singular
+#' in one direction, and an ellipse drawn from it is a needle spanning the whole
+#' panel -- a 4-sample group rendered as a diagonal sliver from corner to corner,
+#' which reads as a huge confidence region when it actually means "no reliable
+#' spread". Threshold is on the ELLIPSE AXIS ratio (sqrt of the eigenvalue ratio),
+#' because that is the property actually seen: 0.1 means the minor axis is a
+#' tenth of the major, i.e. already a sliver. Measured on real 4-sample groups, a
+#' near-collinear one gives an eigenvalue ratio ~1e-3 (axis ratio ~0.03) while a
+#' genuinely spread group gives ~0.7 (axis ratio ~0.8) -- the two regimes are
+#' orders of magnitude apart, so the exact cut is not delicate.
+#' @return the axis ratio, or NA if n < 3 or the covariance is singular/degenerate
+#'   (those groups can't get an ellipse at all, regardless of this test)
+.ellipse.axis.ratio <- function(x, y) {
+  if (length(x) < 3) return(NA_real_)
+  groupVar <- tryCatch(var(cbind(x, y), na.rm = TRUE), error = function(e) NULL)
+  ev <- tryCatch(eigen(groupVar, symmetric = TRUE, only.values = TRUE)$values,
+                 error = function(e) NULL)
+  if (is.null(ev) || any(!is.finite(ev)) || max(ev) <= 0) return(NA_real_)
+  sqrt(max(min(ev), 0) / max(ev))
+}
+
 #' Compute confidence ellipse points for one group
 #' Handles both chi-squared and F-distribution methods, guards n < 3
 #' @param x vector of x-coordinates for the group
@@ -52,23 +79,15 @@ GetEllipseRadius <- function(level, method, n) {
   n <- length(x)
   if (n < 3) return(matrix(NA, npoints, 2))
   groupVar <- var(cbind(x, y), na.rm = TRUE)
-  # Counting samples is not enough. With a handful of near-collinear points the
-  # covariance is numerically singular in one direction, and ellipse() then draws
-  # a needle spanning the whole panel — a 4-sample group rendered as a diagonal
-  # sliver from corner to corner, which reads as a huge confidence region when it
-  # actually means "no reliable spread". Skip the ellipse when the smaller
-  # principal axis carries a negligible share of the variance; the group's points
-  # are still plotted, they just get no misleading envelope.
-  # Threshold is on the ELLIPSE AXIS ratio (sqrt of the eigenvalue ratio), because
-  # that is the property actually seen: 0.1 means the minor axis is a tenth of the
-  # major, i.e. already a sliver. Measured on real 4-sample groups, a near-collinear
-  # one gives an eigenvalue ratio ~1e-3 (axis ratio ~0.03) while a genuinely spread
-  # group gives ~0.7 (axis ratio ~0.8) — the two regimes are orders of magnitude
-  # apart, so the exact cut is not delicate.
-  ev <- tryCatch(eigen(groupVar, symmetric = TRUE, only.values = TRUE)$values,
-                 error = function(e) NULL)
-  if (is.null(ev) || any(!is.finite(ev)) || max(ev) <= 0) return(matrix(NA, npoints, 2))
-  if (sqrt(max(min(ev), 0) / max(ev)) < 0.1) return(matrix(NA, npoints, 2))
+  axisRatio <- .ellipse.axis.ratio(x, y)
+  if (is.na(axisRatio)) return(matrix(NA, npoints, 2))
+  # Off by default -- an omitted ellipse with no on-screen explanation was reported
+  # as a display bug (an ellipse silently missing looks identical whether the
+  # group's spread is a genuine sliver or the plot just failed); showing the
+  # sliver is more transparent than hiding it unless the user opts in.
+  if (isTRUE(params$hideTightEllipse) && axisRatio < 0.1) {
+    return(matrix(NA, npoints, 2))
+  }
   groupMean <- c(mean(x, na.rm = TRUE), mean(y, na.rm = TRUE))
   radius <- GetEllipseRadius(params$level, params$method, n)
   ellipse::ellipse(groupVar, centre = groupMean, t = radius, npoints = npoints)
@@ -95,6 +114,27 @@ GetEllipseRadius <- function(level, method, n) {
          type = 'n', main = main, asp = asp, ...)
   }
   grid(col = "lightgray", lty = "dotted", lwd = 1)
+}
+
+#' Data for a ggplot2 stat_ellipse() layer, with near-collinear "sliver" groups
+#' dropped when the session's hideTightEllipse option is on (see
+#' .ellipse.axis.ratio). Off by default: returns data unchanged, so every
+#' group's ellipse shows (ggplot2's own stat_ellipse already skips a group
+#' with fewer than 3 points on its own; that is unaffected here).
+#' Used by the PCA/PLS biplots -- their ellipses are drawn per Group by
+#' ggplot2 itself (aes(fill = Group)), not via .compute.group.ellipse.
+#' @param data data frame with one row per sample
+#' @param xcol,ycol names of the x/y coordinate columns
+#' @param groupcol name of the grouping column
+.ellipse.layer.data <- function(data, xcol, ycol, groupcol) {
+  if (!isTRUE(.get.scatter.params()$hideTightEllipse)) return(data)
+  groups <- as.character(data[[groupcol]])
+  isTight <- vapply(split(seq_len(nrow(data)), groups), function(idx) {
+    ratio <- .ellipse.axis.ratio(data[[xcol]][idx], data[[ycol]][idx])
+    !is.na(ratio) && ratio < 0.1
+  }, logical(1))
+  tightGroups <- names(isTight)[isTight]
+  data[!(groups %in% tightGroups), , drop = FALSE]
 }
 
 #'Perform PCA analysis
@@ -872,7 +912,7 @@ group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_name
  ylabel = paste("PC",inx2, "(", round(100*mSetObj$analSet$pca$variance[inx2],1), "%)");
 p <- ggplot() +
   geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-  stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
+  stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group"), aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
@@ -1509,7 +1549,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   
   p <- ggplot() +
     geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-    stat_ellipse(data = ind_data, aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
+    stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group"), aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
     geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
     geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),

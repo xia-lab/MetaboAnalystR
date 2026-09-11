@@ -299,8 +299,11 @@ scale_range <- function(x, new_min = 0, new_max = 1) {
 # scaleMode: "independent" (per-axis) or "uniform" (proportional)
 # confidenceLevel: 0.50-0.99 (default 0.95)
 # confMethod: "chisq" (chi-squared, large samples) or "f" (F-distribution, small samples)
-SetScatterOptions <- function(scaleMode="independent", confidenceLevel=0.95, confMethod="chisq") {
-  opts <- list(scaleMode = scaleMode, confidenceLevel = as.numeric(confidenceLevel), confMethod = confMethod)
+# hideTightEllipse: FALSE (default) shows every group's ellipse, including a thin
+#   "sliver" for a near-collinear group; TRUE hides that group's ellipse instead
+SetScatterOptions <- function(scaleMode="independent", confidenceLevel=0.95, confMethod="chisq", hideTightEllipse=FALSE) {
+  opts <- list(scaleMode = scaleMode, confidenceLevel = as.numeric(confidenceLevel), confMethod = confMethod,
+               hideTightEllipse = isTRUE(as.logical(hideTightEllipse)))
   # Always store in GlobalEnv as reliable fallback
   assign(".scatter.opts", opts, envir = .GlobalEnv)
   # Also try to persist in rdt.set.qs
@@ -323,7 +326,7 @@ GetScatterOptions <- function() {
     opts <- get(".scatter.opts", envir = .GlobalEnv)
   }
   if (is.null(opts)) {
-    opts <- list(scaleMode = "independent", confidenceLevel = 0.95, confMethod = "chisq")
+    opts <- list(scaleMode = "independent", confidenceLevel = 0.95, confMethod = "chisq", hideTightEllipse = FALSE)
   }
   return(opts)
 }
