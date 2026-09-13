@@ -9,12 +9,17 @@
 #'of hits using 1-phyper. Since phyper is a cumulative probability,
 #'to get P(X>=hit.num) => P(X>(hit.num-1))
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param method "hyperg" (default, over-representation test on a significant-hits
+#'list) or "gsea_like" (preranked GSEA over a COMPLETE ranked compound list --
+#'the submitted order is the rank, first-listed = most significant; see
+#'CalculateOraScore's "gsea_like" branch in enrich_path_stats.R, which this
+#'mirrors for metabolite sets instead of KEGG pathway topology).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-CalculateHyperScore <- function(mSetObj=NA){
+CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   
   mSetObj <- .get.mSet(mSetObj);
 
@@ -103,14 +108,79 @@ CalculateHyperScore <- function(mSetObj=NA){
   
   set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
   
-  res.mat <- matrix(NA, nrow=set.size, ncol=6);        
+  res.mat <- matrix(NA, nrow=set.size, ncol=6);
   rownames(res.mat) <- names(current.mset);
   colnames(res.mat) <- c("total", "expected", "hits", "Raw p", "Holm p", "FDR");
-  
+
   res.mat[,1] <- set.num
   res.mat[,2] <- q.size * (set.num / uniq.count)
   res.mat[,3] <- hit.num
-  res.mat[,4] <- phyper(hit.num - 1, set.num, uniq.count - set.num, q.size, lower.tail = FALSE);
+
+  if(method == "gsea_like"){
+    # Preranked GSEA over the COMPLETE submitted list -- rank comes from the order
+    # the user submitted the compounds in (first-listed = most significant), the
+    # same convention CalculateOraScore's "gsea_like" uses for pathway topology
+    # analysis (enrich_path_stats.R). "hits"/hit.num above are reused UNCHANGED --
+    # they already mean "set members present anywhere in the submitted list" for
+    # hyperg too, so no separate hit-set definition is needed here the way pathway
+    # analysis needed one (mummi_like there uses a different, top-fraction-only
+    # hit set; there is no such competing definition in this module).
+    ranks <- rev(seq_along(ora.vec.filtered));
+    names(ranks) <- ora.vec.filtered;
+    ranks <- ranks[!duplicated(names(ranks))];
+
+    if(length(ranks) < 3){
+      AddErrMsg("Too few mapped compounds (after removing duplicates) to run GSEA-based enrichment analysis!");
+      return(0);
+    }
+
+    # Run fgsea in an ISOLATED callr subprocess via run_func_via_microservice -- never
+    # call fgsea::fgsea() directly in-process here. See enrich_path_stats.R's
+    # "gsea_like" branch for the full explanation: fgsea's BiocParallel backend can
+    # fork worker processes, and a fork inside the live Rserve worker can corrupt its
+    # open socket to the Java client, breaking every subsequent call on that
+    # connection.
+    gsea.err <- NULL;
+    bridge_in <- paste0(tempdir(), "/mset_gsea_like_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
+    ov_qs_save(list(pathways=current.mset, ranks=ranks, maxSize=length(ranks),
+                    nPermSimple=1000), bridge_in, preset="fast");
+    fgsea.res <- tryCatch({
+      run_func_via_microservice(
+        func = function(bridge_in, bridge_out) {
+          require(fgsea);
+          input <- ov_qs_read(bridge_in);
+          res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=1,
+                              maxSize=input$maxSize, eps=0, scoreType="pos",
+                              nPermSimple=input$nPermSimple);
+          ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
+        },
+        args = list(bridge_in=bridge_in, bridge_out=bridge_out),
+        timeout_sec = 300
+      );
+      if(!file.exists(bridge_out)) stop("fgsea subprocess produced no output");
+      ov_qs_read(bridge_out);
+    }, error=function(e){ gsea.err <<- conditionMessage(e); NULL});
+    unlink(c(bridge_in, bridge_out));
+
+    if(is.null(fgsea.res) || nrow(fgsea.res)==0){
+      AddErrMsg(paste0("GSEA-based enrichment analysis returned no results",
+                        if(!is.null(gsea.err)) paste0(" (", gsea.err, ")") else "", "!"));
+      return(0);
+    }
+
+    fgsea.res <- as.data.frame(fgsea.res);
+    rownames(fgsea.res) <- fgsea.res$pathway;
+    fgsea.res <- fgsea.res[names(current.mset), , drop=FALSE];
+
+    res.mat[,4] <- fgsea.res$pval;
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected metabolite set enrichment method is `GSEA (preranked)`.\n\n",
+      "- Ranking: submitted list order (first-listed = most significant)"
+    );
+  } else {
+    res.mat[,4] <- phyper(hit.num - 1, set.num, uniq.count - set.num, q.size, lower.tail = FALSE);
+  }
   res.mat[,5] <- p.adjust(res.mat[,4], "holm");
   res.mat[,6] <- p.adjust(res.mat[,4], "fdr");
   
