@@ -11,10 +11,14 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param method "hyperg" (default) or "fisher": over-representation test on a
 #'significant-hits list. "mummi_like" (permutation-based) or "gsea_like" (preranked
-#'GSEA): both need a COMPLETE ranked compound list -- the submitted order is the
-#'rank, first-listed = most significant; see CalculateOraScore's matching branches
-#'in enrich_path_stats.R, which this mirrors for metabolite sets instead of KEGG
-#'pathway topology (no Impact/topology column here).
+#'GSEA): both need a COMPLETE ranked compound list. For "gsea_like", ranking comes
+#'from Setup.CmpdRankScore (a real numeric score per compound -- fold change,
+#'signed p-value, etc) when one has been provided; otherwise it falls back to the
+#'submitted order (first-listed = most significant), same two input options
+#'PeakUploadView.xhtml already offers for the peak-based module ("1 column,
+#'ranked by ..." vs "3 columns" with real p-value/t-score). See CalculateOraScore's
+#'matching branches in enrich_path_stats.R, which this mirrors for metabolite sets
+#'instead of KEGG pathway topology (no Impact/topology column here).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -25,6 +29,7 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   mSetObj <- .get.mSet(mSetObj);
 
   # --- 1. Prepare Query ---
+  rank.score.map <- NULL;
   if(mSetObj$analSet$type=="msetssp"){
     # ssp.cmpd contains selected compound names (HMDB names from ssp.mat column 1)
     # These are in the same format as nm.map$hmdb used for other ORA modes
@@ -33,8 +38,18 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
     nm.map <- GetFinalNameMap(mSetObj);
     valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
     ora.vec <- nm.map$hmdb[valid.inx];
+
+    # Optional real-valued rank score (Setup.CmpdRankScore), aligned to the SAME
+    # valid.inx mask used for ora.vec above -- i.e. one entry per name in ora.vec,
+    # by name (not position), so it survives any later filtering of ora.vec/
+    # ora.vec.filtered regardless of how many more subsetting steps happen below.
+    if(!is.null(mSetObj$dataSet$cmpd.rank.score) &&
+       length(mSetObj$dataSet$cmpd.rank.score) == length(mSetObj$dataSet$cmpd)){
+      rank.score.map <- mSetObj$dataSet$cmpd.rank.score[valid.inx];
+      names(rank.score.map) <- ora.vec;
+    }
   }
-  
+
   q.size <- length(ora.vec);
   if(all(is.na(ora.vec)) || q.size==0) {
     AddErrMsg("No valid HMDB compound names found!");
@@ -168,17 +183,32 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){
-    # Preranked GSEA over the COMPLETE submitted list -- rank comes from the order
-    # the user submitted the compounds in (first-listed = most significant), the
-    # same convention CalculateOraScore's "gsea_like" uses for pathway topology
-    # analysis (enrich_path_stats.R). "hits"/hit.num above are reused UNCHANGED --
-    # they already mean "set members present anywhere in the submitted list" for
-    # hyperg too, so no separate hit-set definition is needed here the way pathway
-    # analysis needed one (mummi_like above uses a different, top-fraction-only hit
-    # set; the two branches are independent here, same as in enrich_path_stats.R).
-    ranks <- rev(seq_along(ora.vec.filtered));
-    names(ranks) <- ora.vec.filtered;
-    ranks <- ranks[!duplicated(names(ranks))];
+    # Preranked GSEA over the COMPLETE submitted list. Two input options, exactly
+    # mirroring the peak-based mummichog/GSEA module's "1 column" vs "3 column"
+    # upload formats (PeakUploadView.xhtml):
+    #  - a real numeric score per compound (Setup.CmpdRankScore -- fold change,
+    #    signed p-value, etc, e.g. a vendor differential report) -> real preranked
+    #    GSEA, two-tailed ("std") when the scores carry both signs;
+    #  - otherwise, submitted order (first-listed = most significant) -> "pos"
+    #    one-tailed, since a plain position index has no "opposite direction".
+    # "hits"/hit.num above are reused UNCHANGED in both cases -- they already mean
+    # "set members present anywhere in the submitted list" for hyperg too, so no
+    # separate hit-set definition is needed here the way pathway analysis needed
+    # one (mummi_like above uses a different, top-fraction-only hit set; the two
+    # branches are independent here, same as in enrich_path_stats.R).
+    used.real.score <- FALSE;
+    if(!is.null(rank.score.map)){
+      ranks <- rank.score.map[ora.vec.filtered];
+      ranks <- ranks[is.finite(ranks)];
+      ranks <- ranks[!duplicated(names(ranks))];
+      used.real.score <- length(ranks) > 0;
+    }
+    if(!used.real.score){
+      ranks <- rev(seq_along(ora.vec.filtered));
+      names(ranks) <- ora.vec.filtered;
+      ranks <- ranks[!duplicated(names(ranks))];
+    }
+    score.type <- if(used.real.score && any(ranks < 0)) "std" else "pos";
 
     if(length(ranks) < 3){
       AddErrMsg("Too few mapped compounds (after removing duplicates) to run GSEA-based enrichment analysis!");
@@ -195,14 +225,14 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
     bridge_in <- paste0(tempdir(), "/mset_gsea_like_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
     ov_qs_save(list(pathways=current.mset, ranks=ranks, maxSize=length(ranks),
-                    nPermSimple=1000), bridge_in, preset="fast");
+                    scoreType=score.type, nPermSimple=1000), bridge_in, preset="fast");
     fgsea.res <- tryCatch({
       run_func_via_microservice(
         func = function(bridge_in, bridge_out) {
           require(fgsea);
           input <- ov_qs_read(bridge_in);
           res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=1,
-                              maxSize=input$maxSize, eps=0, scoreType="pos",
+                              maxSize=input$maxSize, eps=0, scoreType=input$scoreType,
                               nPermSimple=input$nPermSimple);
           ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
         },
@@ -227,7 +257,8 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
     res.mat[,4] <- fgsea.res$pval;
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected metabolite set enrichment method is `GSEA (preranked)`.\n\n",
-      "- Ranking: submitted list order (first-listed = most significant)"
+      if(used.real.score) "- Ranking: user-provided numeric rank score (fold change / signed p-value / etc)"
+      else "- Ranking: submitted list order (first-listed = most significant)"
     );
   } else if(method == "hyperg"){
     res.mat[,4] <- phyper(hit.num - 1, set.num, uniq.count - set.num, q.size, lower.tail = FALSE);

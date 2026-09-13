@@ -601,15 +601,184 @@ GetRefLibCheckMsg<-function(mSetObj=NA){
 #'@param TorF Input metabolome filter
 #'@export
 SetMetabolomeFilter<-function(mSetObj=NA, TorF){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(!.on.public.web){
     mSetObj$api$filter <- TorF
   }
-  
+
   mSetObj$dataSet$use.metabo.filter <- TorF;
   return(.set.mSet(mSetObj));
+}
+
+#'Set per-compound rank scores for preranked GSEA-style enrichment
+#'@description The complete-ranked-list input has two forms, exactly mirroring
+#'the peak-based mummichog/GSEA module's "1 column" vs "3 column" upload formats
+#'(PeakUploadView.xhtml): a plain ordered compound list (no score; rank = submitted
+#'order), or a compound list carrying one numeric score per compound (fold change,
+#'a signed p-value, etc, e.g. a vendor differential report with no raw per-sample
+#'values). This function stores the latter -- one numeric score per compound, in
+#'the same order as dataSet$cmpd -- so CalculateOraScore/CalculateHyperScore's
+#'"gsea_like" branch can run genuine preranked GSEA (real magnitude, two-tailed
+#'when scores carry both signs) instead of falling back to submission-order-only
+#'ranking. Calling this is entirely optional; when it hasn't been called (or the
+#'stored vector doesn't match the current compound list), "gsea_like" transparently
+#'falls back to order-based ranking as before.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param scoreVec Numeric vector, same length and order as dataSet$cmpd
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec){
+  mSetObj <- .get.mSet(mSetObj);
+
+  scoreVec <- suppressWarnings(as.numeric(scoreVec));
+  if(length(scoreVec) != length(mSetObj$dataSet$cmpd)){
+    AddErrMsg("Rank score vector length does not match the number of compounds!");
+    return(0);
+  }
+
+  mSetObj$dataSet$cmpd.rank.score <- scoreVec;
+  return(.set.mSet(mSetObj));
+}
+
+#'Read a ranked compound list (name + fold change + p-value/FDR) for preranked GSEA
+#'@description The data-loading entry point for the terminal/API mode counterpart
+#'to pasting a one-column ranked list in the web upload page: reads a table with
+#'one row per compound and a compound-name column plus a fold-change and/or
+#'p-value column -- e.g. a vendor differential-abundance report (Metabolon, etc.)
+#'covering EVERY compound, not just the significant ones. Auto-detects the
+#'compound-name column (a header among "compound"/"name"/"metabolite"/"cmpd"/
+#'"biochemical", else the first non-numeric column) and the fold-change/p-value
+#'columns by common header aliases. Initializes a fresh mSetObj (data.type="list",
+#'anal.type="msetora"), populates dataSet$cmpd, runs CrossReferencing(NA,"name")
+#'to map names to HMDB, and stores the requested rank score via
+#'Setup.CmpdRankScore. Call SetCurrentMsetLib()/SetCurrentPathLib() afterwards to
+#'pick the library, then CalculateHyperScore("gsea_like")/CalculateOraScore(...,
+#'"gsea_like").
+#'@param mSetObj Ignored (kept for signature symmetry with other Setup.* functions);
+#'this always starts a FRESH session via InitDataObjects, matching how ORA/QEA's
+#'own compound-list entry points behave.
+#'@param filePath Path to the ranked-compound table (csv/tsv/txt)
+#'@param rankMetric "signed_p" (default; sign(log2FC) * -log10(p-value), the
+#'standard preranked-GSEA score), "fc" (log2 fold change alone), or "p"
+#'(-log10(p-value), unsigned -- for a list with no fold-change column).
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+Setup.CmpdRankData <- function(mSetObj=NA, filePath, rankMetric="signed_p"){
+
+  if(!rankMetric %in% c("signed_p", "fc", "p")){
+    AddErrMsg("rankMetric must be one of: signed_p, fc, p");
+    return(0);
+  }
+
+  dat <- .readDataTable(filePath);
+  if(inherits(dat, "try-error") || is.null(dat) || !is.data.frame(dat) || nrow(dat) == 0){
+    AddErrMsg("Data format error - failed to read the ranked compound list!");
+    return(0);
+  }
+
+  hdr <- tolower(trimws(colnames(dat)));
+  find.col <- function(aliases){
+    hit <- which(hdr %in% aliases);
+    if(length(hit)) hit[1] else NA_integer_;
+  }
+
+  cmpd.col <- find.col(c("compound", "compound name", "name", "metabolite", "cmpd", "cmpd.name", "biochemical"));
+  if(is.na(cmpd.col)){
+    # Fall back to the first column that is not entirely numeric.
+    is.num.col <- vapply(dat, function(x) suppressWarnings(all(!is.na(as.numeric(as.character(x))))), logical(1));
+    non.num <- which(!is.num.col);
+    if(!length(non.num)){
+      AddErrMsg("Could not find a compound-name column in the uploaded file (expected a header like Compound/Name/Metabolite)!");
+      return(0);
+    }
+    cmpd.col <- non.num[1];
+  }
+
+  fc.col  <- find.col(c("fc", "fold change", "foldchange", "log2fc", "log2foldchange", "log2(fc)"));
+  p.col   <- find.col(c("p", "p.value", "pvalue", "p value", "raw p", "pval"));
+
+  if(rankMetric %in% c("signed_p", "p") && is.na(p.col)){
+    AddErrMsg(paste0("rankMetric=\"", rankMetric, "\" requires a p-value column, but none was found (expected a header like p.value/pvalue/raw p)!"));
+    return(0);
+  }
+  if(rankMetric %in% c("signed_p", "fc") && is.na(fc.col)){
+    AddErrMsg(paste0("rankMetric=\"", rankMetric, "\" requires a fold-change column, but none was found (expected a header like FC/fold change/log2FC)!"));
+    return(0);
+  }
+
+  cmpd.nms <- trimws(as.character(dat[[cmpd.col]]));
+  fc.vec <- if(!is.na(fc.col)) suppressWarnings(as.numeric(as.character(dat[[fc.col]]))) else rep(NA_real_, nrow(dat));
+  p.vec  <- if(!is.na(p.col))  suppressWarnings(as.numeric(as.character(dat[[p.col]])))  else rep(NA_real_, nrow(dat));
+
+  # A p-value of exactly 0 (common after rounding in a vendor export) scores as
+  # Inf on the -log10 scale, dwarfing every real compound and making it the sole
+  # "leading edge" hit of every pathway it belongs to. Clamp it to the smallest
+  # OTHER nonzero p-value in the list rather than let one rounded value dominate.
+  if(any(p.vec == 0, na.rm=TRUE)){
+    finite.p <- p.vec[!is.na(p.vec) & p.vec > 0];
+    floor.p <- if(length(finite.p)) min(finite.p) else .Machine$double.eps;
+    p.vec[!is.na(p.vec) & p.vec == 0] <- floor.p;
+  }
+
+  score <- switch(rankMetric,
+    fc       = fc.vec,
+    p        = -log10(p.vec),
+    signed_p = sign(fc.vec) * -log10(p.vec)
+  );
+
+  valid <- !is.na(cmpd.nms) & nzchar(cmpd.nms) & is.finite(score);
+  dup <- duplicated(cmpd.nms) & valid;
+  keep <- valid & !dup;
+  if(sum(keep) < 10){
+    AddErrMsg("Too few rows with both a compound name and a finite rank score (need at least 10)!");
+    return(0);
+  }
+  cmpd.nms <- cmpd.nms[keep];
+  score    <- score[keep];
+
+  # InitDataObjects/CrossReferencing return a literal 1/0 status code ONLY under
+  # .on.public.web=TRUE (the live app's calling convention); when this package is
+  # loaded plainly (library(MetaboAnalystR) -- testthat, or any non-web embedding),
+  # .on.public.web defaults FALSE and BOTH functions instead return the mSetObj
+  # object directly (their own final `return(.set.mSet(mSetObj))` resolves that way
+  # in FALSE mode). Branch exactly like CrossReferencing itself already does
+  # internally, so this works correctly under either convention rather than only
+  # the live app's.
+  mSetObj0 <- InitDataObjects("list", "msetora", FALSE);
+  if(.on.public.web){
+    if(!isTRUE(mSetObj0 == 1)){
+      AddErrMsg("Failed to initialize the analysis session!");
+      return(0);
+    }
+    mSetObj <- .get.mSet(NA);
+  }else{
+    mSetObj <- mSetObj0;
+  }
+
+  mSetObj$dataSet$cmpd <- cmpd.nms;
+  .set.mSet(mSetObj);   # TRUE mode: publishes to the session global for CrossReferencing
+                        # to read next; FALSE mode: no-op, mSetObj is already current.
+
+  rc2 <- CrossReferencing(mSetObj, "name");
+  if(.on.public.web){
+    if(!isTRUE(rc2 == 1)){
+      AddErrMsg("Compound name matching failed - see the name-check message for details!");
+      return(0);
+    }
+    mSetObj <- .get.mSet(NA);
+  }else{
+    mSetObj <- rc2;
+  }
+
+  return(Setup.CmpdRankScore(mSetObj, score));
 }
 
 

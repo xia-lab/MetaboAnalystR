@@ -30,6 +30,17 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     ora.vec <- nm.map$hmdbid[valid.inx];
   }
 
+  # Optional real-valued rank score (Setup.CmpdRankScore), aligned to the SAME
+  # valid.inx mask used for ora.vec above -- i.e. one entry per id in ora.vec, by
+  # name (not position), so it survives the later `ora.vec <- ora.vec[ora.vec %in%
+  # my.univ]` filtering below regardless of how many entries get dropped there.
+  rank.score.map <- NULL;
+  if(!is.null(mSetObj$dataSet$cmpd.rank.score) &&
+     length(mSetObj$dataSet$cmpd.rank.score) == length(mSetObj$dataSet$cmpd)){
+    rank.score.map <- mSetObj$dataSet$cmpd.rank.score[valid.inx];
+    names(rank.score.map) <- ora.vec;
+  }
+
   q.size<-length(ora.vec);
   if(all(is.na(ora.vec)) | q.size==0) {
     if(mSetObj$pathwaylibtype == "KEGG"){
@@ -184,10 +195,15 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){
-    # Preranked GSEA over the COMPLETE submitted list -- rank comes from the order the
-    # user submitted the compounds in (first-listed = most significant), the same
-    # ranking convention "mummi_like" above already uses for this one-column-list
-    # input format; no separate numeric fold-change/p-value column is required.
+    # Preranked GSEA over the COMPLETE submitted list. Two input options, exactly
+    # mirroring the peak-based mummichog/GSEA module's "1 column" vs "3 column"
+    # upload formats (PeakUploadView.xhtml):
+    #  - a real numeric score per compound (Setup.CmpdRankScore -- fold change,
+    #    signed p-value, etc, e.g. a vendor differential report) -> real preranked
+    #    GSEA, two-tailed ("std") when the scores carry both signs;
+    #  - otherwise, submitted order (first-listed = most significant) -> "pos"
+    #    one-tailed, the same ranking convention "mummi_like" above already uses
+    #    for this one-column-list input format.
     perm.num <- 100
     if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
       tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
@@ -196,18 +212,25 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       }
     }
 
-    ranks <- rev(seq_along(ora.vec));
-    names(ranks) <- ora.vec;
-    ranks <- ranks[!duplicated(names(ranks))];
+    used.real.score <- FALSE;
+    if(!is.null(rank.score.map)){
+      ranks <- rank.score.map[ora.vec];
+      ranks <- ranks[is.finite(ranks)];
+      ranks <- ranks[!duplicated(names(ranks))];
+      used.real.score <- length(ranks) > 0;
+    }
+    if(!used.real.score){
+      ranks <- rev(seq_along(ora.vec));
+      names(ranks) <- ora.vec;
+      ranks <- ranks[!duplicated(names(ranks))];
+    }
+    score.type <- if(used.real.score && any(ranks < 0)) "std" else "pos";
 
     if(length(ranks) < 3){
       AddErrMsg("Too few mapped compounds (after removing duplicates) to run GSEA-based pathway analysis!");
       return(0);
     }
 
-    # scoreType="pos": ranks here are a plain position-based score (1..N, always positive) --
-    # there is no "opposite direction" the way up/down fold-change ranks have, so the
-    # one-tailed positive scoring fgsea itself recommends for all-positive stats applies.
     # maxSize is bounded (not Inf) -- some fgsea versions mishandle an infinite maxSize.
     #
     # Run fgsea in an ISOLATED callr subprocess via run_func_via_microservice, exactly
@@ -224,14 +247,14 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     bridge_in <- paste0(tempdir(), "/gsea_like_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
     ov_qs_save(list(pathways=current.mset, ranks=ranks, maxSize=length(ranks),
-                    nPermSimple=max(1000, perm.num*10)), bridge_in, preset="fast");
+                    scoreType=score.type, nPermSimple=max(1000, perm.num*10)), bridge_in, preset="fast");
     fgsea.res <- tryCatch({
       run_func_via_microservice(
         func = function(bridge_in, bridge_out) {
           require(fgsea);
           input <- ov_qs_read(bridge_in);
           res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=1,
-                              maxSize=input$maxSize, eps=0, scoreType="pos",
+                              maxSize=input$maxSize, eps=0, scoreType=input$scoreType,
                               nPermSimple=input$nPermSimple);
           ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
         },
@@ -279,7 +302,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     hit.num <- matched.size;
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected over-representation analysis method is `GSEA (preranked)`.\n\n",
-      "- Ranking: submitted list order (first-listed = most significant)\n",
+      if(used.real.score) "- Ranking: user-provided numeric rank score (fold change / signed p-value / etc)\n"
+      else "- Ranking: submitted list order (first-listed = most significant)\n",
       "- Permutations (fgsea nPermSimple): `", max(1000, perm.num*10), "`"
     );
   } else{
