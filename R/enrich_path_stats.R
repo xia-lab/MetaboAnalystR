@@ -232,17 +232,23 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     # score peaks) and tends to be much larger than a fixed cutoff, which is why an
     # earlier version of this code (using leadingEdge as "Hits") showed far more hits
     # than mummi_like's fixed top-10% cutoff -- the reverse of the untargeted (peak-
-    # based) mummichog-vs-GSEA relationship users are used to. leadingEdge is kept for
-    # the Impact column below (the compounds actually driving the enrichment signal).
-    le.list <- fgsea.res$leadingEdge;
-    names(le.list) <- gd.sets;
+    # based) mummichog-vs-GSEA relationship users are used to.
+    #
+    # `hits` (used for BOTH the Hits count below and the shared Impact calculation at
+    # the bottom of this function, res.mat[,8] <- mapply(sum(x[y]), imp.list, hits))
+    # must be the SAME compound set that "Hits" counts -- exactly how hyperg/fisher
+    # and mummi_like each already reuse one "hits" list for both columns. Reconstruct
+    # it explicitly (matching fgsea's own `size`) rather than reusing leadingEdge,
+    # which is a smaller/different subset and left Impact on a different, incomparable
+    # scale from every other method (leadingEdge was never used for anything after
+    # this fix; recomputing per-pathway overlap here is the only remaining use).
     matched.size <- fgsea.res$size;
     names(matched.size) <- gd.sets;
+    hits <- lapply(current.mset, function(x){ x[x %in% names(ranks)] });
 
     res.mat[,3] <- matched.size;
     res.mat[,4] <- fgsea.res$pval;
     hit.num <- matched.size;
-    hits <- le.list;
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected over-representation analysis method is `GSEA (preranked)`.\n\n",
       "- Ranking: submitted list order (first-listed = most significant)\n",
