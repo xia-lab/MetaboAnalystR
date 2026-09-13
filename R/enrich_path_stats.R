@@ -209,11 +209,39 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     # there is no "opposite direction" the way up/down fold-change ranks have, so the
     # one-tailed positive scoring fgsea itself recommends for all-positive stats applies.
     # maxSize is bounded (not Inf) -- some fgsea versions mishandle an infinite maxSize.
+    #
+    # Run fgsea in an ISOLATED callr subprocess via run_func_via_microservice, exactly
+    # like my.fgsea/.run_fgsea_inner (util_fgsea.R) already do for the peak-based
+    # mummichog GSEA -- never call fgsea::fgsea() directly in-process here. fgsea's
+    # BiocParallel backend can fork worker processes; a fork inside the live Rserve
+    # worker inherits (and can corrupt) its open socket to the Java client, breaking
+    # every subsequent R call on that connection until the user reconnects (observed:
+    # "discarding buffer because too big" on the Java side, then unrelated calls like
+    # getPathwayMatchedNodeIds failing with "invalid parameter" right after a gsea_like
+    # run). run_func_via_microservice's own comment documents this exact failure class
+    # from an earlier, unrelated feature (count normalization).
     gsea.err <- NULL;
+    bridge_in <- paste0(tempdir(), "/gsea_like_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
+    bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
+    ov_qs_save(list(pathways=current.mset, ranks=ranks, maxSize=length(ranks),
+                    nPermSimple=max(1000, perm.num*10)), bridge_in, preset="fast");
     fgsea.res <- tryCatch({
-      fgsea::fgsea(pathways=current.mset, stats=ranks, minSize=1, maxSize=length(ranks),
-                   eps=0, scoreType="pos", nPermSimple=max(1000, perm.num*10));
+      run_func_via_microservice(
+        func = function(bridge_in, bridge_out) {
+          require(fgsea);
+          input <- ov_qs_read(bridge_in);
+          res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=1,
+                              maxSize=input$maxSize, eps=0, scoreType="pos",
+                              nPermSimple=input$nPermSimple);
+          ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
+        },
+        args = list(bridge_in=bridge_in, bridge_out=bridge_out),
+        timeout_sec = 300
+      );
+      if(!file.exists(bridge_out)) stop("fgsea subprocess produced no output");
+      ov_qs_read(bridge_out);
     }, error=function(e){ gsea.err <<- conditionMessage(e); NULL});
+    unlink(c(bridge_in, bridge_out));
 
     if(is.null(fgsea.res) || nrow(fgsea.res)==0){
       AddErrMsg(paste0("GSEA-based pathway analysis returned no results",
