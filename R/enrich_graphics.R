@@ -302,6 +302,77 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
   return(.set.mSet(mSetObj));
 }
 
+#'Plot rank-based (GSEA) metabolite-set enrichment overview
+#'@description Horizontal bar chart of the normalized enrichment score (NES) for the top
+#'metabolite sets from CalculateGseaScore (analSet$gsea.mat), ordered by significance and
+#'coloured by direction: positive NES (enriched among the up-ranked compounds) vs negative
+#'(down-ranked). The GSEA counterpart to PlotORA's enrichment-ratio bar chart.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi. For "png" images, the default dpi is 72.
+#'@param width Input the width; NA or 0 = the default 9 in.
+#'@param topN Integer, the maximum number of top sets (by p-value) to display. Default is 25.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+PlotCmpdRankGsea <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, topN=25){
+
+  mSetObj <- .get.mSet(mSetObj);
+  # Same command-history convention as PlotORA (the AI dashboard's "Refine" resolves the
+  # figure back to this recorded call; it must contain the QUOTED imgName).
+  mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotCmpdRankGsea(mSet, "', imgName, '", "', format, '", ', dpi, ')'));
+
+  res <- mSetObj$analSet$gsea.mat;
+  if(is.null(res) || nrow(res) == 0){
+    AddErrMsg("No rank-based enrichment result to plot - run CalculateGseaScore first!");
+    return(0);
+  }
+  # gsea.mat is already p-sorted; keep the top N, then order the bars by NES.
+  if(nrow(res) > topN){
+    res <- res[1:topN, , drop=FALSE];
+  }
+  nes <- as.numeric(res[, "NES"]);
+  names(nes) <- GetShortNames(rownames(res));
+  ord <- order(nes);
+  nes <- nes[ord];
+  fdr <- as.numeric(res[ord, "FDR"]);
+  # Warm for positive, cool for negative; significant (FDR < 0.1) sets saturated, the rest pale.
+  cols <- ifelse(nes >= 0, ifelse(fdr < 0.1, "#d7301f", "#fcae91"),
+                           ifelse(fdr < 0.1, "#2171b5", "#9ecae1"));
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width) || width == 0){
+    w <- 9;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  mSetObj$imgSet$gsea_nes <- imgName;
+  mSetObj$imgSet$current.img <- imgName;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  # Extra bottom margin: the legend sits BELOW the x-axis, outside the plot, because bars
+  # of similar NES leave no empty corner inside it.
+  op <- par(mar=c(9,20,4,2), xpd=TRUE);
+  title <- "Rank-Based Enrichment Overview";
+  if(nrow(res) <= topN){
+    title <- paste0(title, " (top ", nrow(res), ")");
+  }
+  barplot(nes, horiz=TRUE, col=cols, border=NA, xlab="Normalized enrichment score (NES)",
+          las=1, cex.names=0.75, space=0.5, main=title);
+  par(xpd=FALSE); abline(v=0, col="grey40"); par(xpd=TRUE);
+  legend("bottom", inset=c(0, -0.25), ncol=2, bty="n", cex=0.75,
+         fill=c("#d7301f", "#fcae91", "#2171b5", "#9ecae1"),
+         legend=c("Up-ranked, FDR < 0.1", "Up-ranked", "Down-ranked, FDR < 0.1", "Down-ranked"));
+  par(op);
+  dev.off();
+
+  return(.set.mSet(mSetObj));
+}
+
 #'Plot QEA overview
 #'@description Plot QEA overview
 #'@usage PlotQEA.Overview(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA)

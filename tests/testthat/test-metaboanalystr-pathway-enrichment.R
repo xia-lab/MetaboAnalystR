@@ -147,3 +147,39 @@ test_that("GSEA Rank-Based Enrichment Module Works", {
   expect_true(all(mSet$analSet$gsea.mat[, "total"] <= length(mSet$dataSet$cmpd)));
 })
 
+test_that("GSEA on an order-only ranked list falls back to list position", {
+  # The web UI routes EVERY "gsea_like" selection to CalculateGseaScore, and a ranked
+  # list can arrive as a plain ordered name list with no score column (the "Complete
+  # Ranked Metabolites" paste box). That used to fail with "No rank score found";
+  # it must rank by submission order instead, exactly as CalculateHyperScore's own
+  # gsea_like branch does. Glycolysis compounds are listed FIRST, so the same
+  # gluconeogenesis/glycolysis signal as above should top the table.
+  rm(list = ls())
+
+  mSet <- InitDataObjects("conc", "msetora", FALSE);
+  cmpd.vec <- c("Glucose", "Fructose", "Pyruvate", "Lactate", "Alanine", "Glutamine",
+                "Glutamate", "Aspartate", "Serine", "Glycine", "Threonine", "Valine",
+                "Leucine", "Isoleucine", "Adenosine", "Guanosine", "Inosine", "Uridine",
+                "Hypoxanthine", "Creatine", "Creatinine", "Choline", "Betaine", "Carnitine",
+                "Citrate", "Isocitrate", "Succinate", "Fumarate", "Malate", "Oxaloacetate");
+  mSet <- Setup.MapData(mSet, cmpd.vec);
+  mSet <- CrossReferencing(mSet, "name");
+  expect_true(is.null(mSet$dataSet$cmpd.rank.score));
+
+  mSet <- SetCurrentMsetLib(mSet, "smpdb_pathway", 2);
+  mSet <- CalculateGseaScore(mSet);
+
+  expect_true(is.list(mSet));
+  expect_true(nrow(mSet$analSet$gsea.mat) > 0);
+  expect_match(tolower(rownames(mSet$analSet$gsea.mat)[1]), "gluc");
+  # Positional ranks are all positive -> one-tailed scoring, so no negative NES can appear.
+  expect_true(all(mSet$analSet$gsea.mat[, "NES"] >= 0));
+
+  # The NES bar chart (the manual result page's / dashboard's figure for this analysis).
+  mSet <- PlotCmpdRankGsea(mSet, "gsea_nes_test_", "png", 72);
+  expect_true(is.list(mSet));
+  expect_true(file.exists("gsea_nes_test_dpi72.png"));
+  expect_equal(mSet$imgSet$gsea_nes, "gsea_nes_test_dpi72.png");
+  unlink("gsea_nes_test_dpi72.png");
+})
+

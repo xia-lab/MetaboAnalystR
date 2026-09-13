@@ -298,8 +298,9 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
 #'score -- fold change, a signed p-value, etc, e.g. a vendor differential report
 #'with no raw per-sample values available -- this runs preranked GSEA (fgsea)
 #'against the currently selected metabolite-set library, using every compound
-#'in the list rather than only a significant subset. Requires
-#'Setup.CmpdRankScore() and SetCurrentMsetLib() to already have been called, and
+#'in the list rather than only a significant subset. Uses the per-compound score
+#'when Setup.CmpdRankScore() supplied one, otherwise the submitted list order
+#'(first-listed = most significant). Requires SetCurrentMsetLib() to already have been called, and
 #'CrossReferencing(mSetObj, "name") to already have mapped dataSet$cmpd to HMDB
 #'names -- the same precondition CalculateHyperScore has. Reports a richer,
 #'GSEA-standard table (ES/NES/Leading edge) than CalculateHyperScore's
@@ -318,16 +319,21 @@ CalculateGseaScore <- function(mSetObj=NA, minSize=3, maxSize=500){
 
   mSetObj <- .get.mSet(mSetObj);
 
-  score <- mSetObj$dataSet$cmpd.rank.score;
-  if(is.null(score)){
-    AddErrMsg("No rank score found - call Setup.CmpdRankScore first!");
-    return(0);
-  }
-
   nm.map <- GetFinalNameMap(mSetObj);
   valid.inx <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb));
 
-  ranks <- score[valid.inx];
+  # Same two input options as CalculateHyperScore's "gsea_like" branch: a real
+  # per-compound score (Setup.CmpdRankScore) when one was supplied, otherwise the
+  # submitted list ORDER (first-listed = most significant). The web UI routes every
+  # "gsea_like" selection here regardless of which form the ranked list arrived in,
+  # so an order-only list must not error out.
+  score <- mSetObj$dataSet$cmpd.rank.score;
+  used.real.score <- !is.null(score) && length(score) == length(mSetObj$dataSet$cmpd);
+  if(used.real.score){
+    ranks <- score[valid.inx];
+  } else {
+    ranks <- rev(seq_len(sum(valid.inx)));
+  }
   names(ranks) <- nm.map$hmdb[valid.inx];
 
   # Drop non-finite scores (e.g. a compound with p==0 -> Inf, or a genuinely
@@ -374,7 +380,12 @@ CalculateGseaScore <- function(mSetObj=NA, minSize=3, maxSize=500){
   gsea.err <- NULL;
   bridge_in <- paste0(tempdir(), "/cmpd_rank_gsea_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
-  ov_qs_save(list(pathways=current.mset, ranks=ranks, minSize=minSize, maxSize=maxSize), bridge_in, preset="fast");
+  # Two-tailed ("std") only when the score genuinely carries both directions; a
+  # one-signed score (-log10 p, or positional order) has no "down" side, and fgsea
+  # warns about exactly that under its default scoreType.
+  score.type <- if(used.real.score && any(ranks < 0)) "std" else "pos";
+  ov_qs_save(list(pathways=current.mset, ranks=ranks, minSize=minSize, maxSize=maxSize,
+                  scoreType=score.type), bridge_in, preset="fast");
   fgseaRes <- tryCatch({
     run_func_via_microservice(
       func = function(bridge_in, bridge_out) {
@@ -382,7 +393,7 @@ CalculateGseaScore <- function(mSetObj=NA, minSize=3, maxSize=500){
         input <- ov_qs_read(bridge_in);
         set.seed(123);
         res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=input$minSize,
-                            maxSize=input$maxSize, eps=0);
+                            maxSize=input$maxSize, eps=0, scoreType=input$scoreType);
         ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
       },
       args = list(bridge_in=bridge_in, bridge_out=bridge_out),
