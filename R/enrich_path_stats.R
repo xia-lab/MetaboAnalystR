@@ -200,16 +200,24 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     names(ranks) <- ora.vec;
     ranks <- ranks[!duplicated(names(ranks))];
 
+    if(length(ranks) < 3){
+      AddErrMsg("Too few mapped compounds (after removing duplicates) to run GSEA-based pathway analysis!");
+      return(0);
+    }
+
     # scoreType="pos": ranks here are a plain position-based score (1..N, always positive) --
     # there is no "opposite direction" the way up/down fold-change ranks have, so the
     # one-tailed positive scoring fgsea itself recommends for all-positive stats applies.
+    # maxSize is bounded (not Inf) -- some fgsea versions mishandle an infinite maxSize.
+    gsea.err <- NULL;
     fgsea.res <- tryCatch({
-      fgsea(pathways=current.mset, stats=ranks, minSize=1, maxSize=Inf,
-            eps=0, scoreType="pos", nPermSimple=max(1000, perm.num*10));
-    }, error=function(e){NULL});
+      fgsea::fgsea(pathways=current.mset, stats=ranks, minSize=1, maxSize=length(ranks),
+                   eps=0, scoreType="pos", nPermSimple=max(1000, perm.num*10));
+    }, error=function(e){ gsea.err <<- conditionMessage(e); NULL});
 
     if(is.null(fgsea.res) || nrow(fgsea.res)==0){
-      AddErrMsg("GSEA-based pathway analysis returned no results!");
+      AddErrMsg(paste0("GSEA-based pathway analysis returned no results",
+                        if(!is.null(gsea.err)) paste0(" (", gsea.err, ")") else "", "!"));
       return(0);
     }
 
