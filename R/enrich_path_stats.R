@@ -9,7 +9,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param nodeImp Indicate the pathway topology analysis, "rbc" for relative-betweeness centrality, 
 #'and "dgr" for out-degree centrality. 
-#'@param method is "fisher", "hyperg", or "mummi_like"
+#'@param method is "fisher", "hyperg", "mummi_like" (permutation-based), or "gsea_like" (preranked GSEA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -182,6 +182,53 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       "The selected over-representation analysis method is `Mummichog`.\n\n",
       "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
       "- Permutations: `", perm.num, "`"
+    );
+  } else if(method == "gsea_like"){
+    # Preranked GSEA over the COMPLETE submitted list -- rank comes from the order the
+    # user submitted the compounds in (first-listed = most significant), the same
+    # ranking convention "mummi_like" above already uses for this one-column-list
+    # input format; no separate numeric fold-change/p-value column is required.
+    perm.num <- 100
+    if(!is.null(mSetObj$paramSet$pathqea.mummi.perm.num)){
+      tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+      if(!is.na(tmp.perm) && tmp.perm >= 10){
+        perm.num <- tmp.perm
+      }
+    }
+
+    ranks <- rev(seq_along(ora.vec));
+    names(ranks) <- ora.vec;
+    ranks <- ranks[!duplicated(names(ranks))];
+
+    # scoreType="pos": ranks here are a plain position-based score (1..N, always positive) --
+    # there is no "opposite direction" the way up/down fold-change ranks have, so the
+    # one-tailed positive scoring fgsea itself recommends for all-positive stats applies.
+    fgsea.res <- tryCatch({
+      fgsea(pathways=current.mset, stats=ranks, minSize=1, maxSize=Inf,
+            eps=0, scoreType="pos", nPermSimple=max(1000, perm.num*10));
+    }, error=function(e){NULL});
+
+    if(is.null(fgsea.res) || nrow(fgsea.res)==0){
+      AddErrMsg("GSEA-based pathway analysis returned no results!");
+      return(0);
+    }
+
+    fgsea.res <- as.data.frame(fgsea.res);
+    rownames(fgsea.res) <- fgsea.res$pathway;
+    fgsea.res <- fgsea.res[gd.sets, , drop=FALSE];
+
+    le.list <- fgsea.res$leadingEdge;
+    names(le.list) <- gd.sets;
+    le.sizes <- vapply(le.list, length, integer(1));
+
+    res.mat[,3] <- le.sizes;
+    res.mat[,4] <- fgsea.res$pval;
+    hit.num <- le.sizes;
+    hits <- le.list;
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected over-representation analysis method is `GSEA (preranked)`.\n\n",
+      "- Ranking: submitted list order (first-listed = most significant)\n",
+      "- Permutations (fgsea nPermSimple): `", max(1000, perm.num*10), "`"
     );
   } else{
     AddErrMsg(paste0("Unknown over-representation analysis method: ", method));
