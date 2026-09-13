@@ -291,6 +291,139 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   return(result);
 }
 
+#'Rank-based (GSEA) metabolite-set enrichment on a preranked compound list
+#'@description The rank-based counterpart to CalculateHyperScore (ORA: needs a
+#'significant hit list) and CalculateGlobalTestScore (QEA: needs a per-sample
+#'concentration matrix). For a compound list that already carries a per-compound
+#'score -- fold change, a signed p-value, etc, e.g. a vendor differential report
+#'with no raw per-sample values available -- this runs preranked GSEA (fgsea)
+#'against the currently selected metabolite-set library, using every compound
+#'in the list rather than only a significant subset. Requires
+#'Setup.CmpdRankScore() and SetCurrentMsetLib() to already have been called, and
+#'CrossReferencing(mSetObj, "name") to already have mapped dataSet$cmpd to HMDB
+#'names -- the same precondition CalculateHyperScore has. Reports a richer,
+#'GSEA-standard table (ES/NES/Leading edge) than CalculateHyperScore's
+#'"gsea_like" method, which instead keeps the same 6-column schema hyperg/
+#'fisher/mummi_like share so all four can be swapped via one UI control; use
+#'whichever output shape the caller needs.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param minSize,maxSize Pathway size bounds, evaluated on member compounds
+#'actually present in the ranked list (same convention fgsea itself uses).
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+CalculateGseaScore <- function(mSetObj=NA, minSize=3, maxSize=500){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  score <- mSetObj$dataSet$cmpd.rank.score;
+  if(is.null(score)){
+    AddErrMsg("No rank score found - call Setup.CmpdRankScore first!");
+    return(0);
+  }
+
+  nm.map <- GetFinalNameMap(mSetObj);
+  valid.inx <- !(is.na(nm.map$hmdb) | duplicated(nm.map$hmdb));
+
+  ranks <- score[valid.inx];
+  names(ranks) <- nm.map$hmdb[valid.inx];
+
+  # Drop non-finite scores (e.g. a compound with p==0 -> Inf, or a genuinely
+  # missing input value) -- fgsea requires a finite numeric stat per entry, and
+  # silently coercing these would let one bad row corrupt the whole ranking.
+  finite.inx <- is.finite(ranks);
+  if(any(!finite.inx)){
+    ranks <- ranks[finite.inx];
+  }
+
+  if(length(ranks) < 10){
+    AddErrMsg("Too few compounds with both a valid HMDB match and a finite rank score to run GSEA (need at least 10)!");
+    return(0);
+  }
+
+  if(!exists("current.msetlib", envir = .GlobalEnv)){
+    current.msetlib <<- ov_qs_read("current.msetlib.qs");
+  }
+  current.mset <- current.msetlib$member;
+
+  # Deliberately NOT applying mSetObj$dataSet$use.metabo.filter / metabo.filter.hmdb here
+  # (the "reference metabolome" restriction ORA/QEA use to cut their background population
+  # down to a platform's measurable compounds). That control answers a question preranked
+  # GSEA doesn't have: fgsea::fgsea() already computes each pathway's EFFECTIVE size as the
+  # intersection of its members with names(ranks) -- the compounds actually in THIS ranked
+  # list -- not the pathway's full library-defined membership, and only that intersection
+  # drives the enrichment score, the minSize/maxSize cutoff, and the leading edge. The
+  # ranked list the user submitted already IS the complete, correct background universe;
+  # additionally filtering current.mset against a separate reference-metabolome list would
+  # only ever narrow pathway membership by a second, unrelated criterion, understating a
+  # pathway's true (measured) size.
+
+  if(!requireNamespace("fgsea", quietly = TRUE)){
+    AddErrMsg("The fgsea package is required for rank-based enrichment but is not installed!");
+    return(0);
+  }
+
+  # Run fgsea in an ISOLATED callr subprocess via run_func_via_microservice -- never
+  # call fgsea::fgsea() directly in-process here. fgsea's BiocParallel backend can
+  # fork worker processes, and a fork inside a live Rserve worker can corrupt its open
+  # socket to the Java client, breaking every subsequent R call on that connection
+  # until the user reconnects. Matches the same pattern CalculateOraScore's /
+  # CalculateHyperScore's "gsea_like" branches already use.
+  gsea.err <- NULL;
+  bridge_in <- paste0(tempdir(), "/cmpd_rank_gsea_", paste0(sample(letters, 6, replace=TRUE), collapse=""), "_in.qs");
+  bridge_out <- sub("_in.qs", "_out.qs", bridge_in);
+  ov_qs_save(list(pathways=current.mset, ranks=ranks, minSize=minSize, maxSize=maxSize), bridge_in, preset="fast");
+  fgseaRes <- tryCatch({
+    run_func_via_microservice(
+      func = function(bridge_in, bridge_out) {
+        require(fgsea);
+        input <- ov_qs_read(bridge_in);
+        set.seed(123);
+        res <- fgsea::fgsea(pathways=input$pathways, stats=input$ranks, minSize=input$minSize,
+                            maxSize=input$maxSize, eps=0);
+        ov_qs_save(as.data.frame(res), bridge_out, preset="fast");
+      },
+      args = list(bridge_in=bridge_in, bridge_out=bridge_out),
+      timeout_sec = 300
+    );
+    if(!file.exists(bridge_out)) stop("fgsea subprocess produced no output");
+    ov_qs_read(bridge_out);
+  }, error=function(e){ gsea.err <<- conditionMessage(e); NULL});
+  unlink(c(bridge_in, bridge_out));
+
+  if(is.null(fgseaRes) || nrow(fgseaRes) == 0){
+    AddErrMsg(paste0("No metabolite set met the size criteria for GSEA (check minSize/maxSize and the selected library)",
+                      if(!is.null(gsea.err)) paste0(" (", gsea.err, ")") else "", "!"));
+    return(0);
+  }
+  fgseaRes <- as.data.frame(fgseaRes);
+
+  fgseaRes <- fgseaRes[order(fgseaRes$pval), ];
+  leadingEdge.chr <- vapply(fgseaRes$leadingEdge, paste, character(1), collapse="; ");
+
+  res.mat <- data.frame(
+    total = fgseaRes$size,
+    ES = signif(fgseaRes$ES, 5),
+    NES = signif(fgseaRes$NES, 5),
+    `Raw p` = signif(fgseaRes$pval, 5),
+    FDR = signif(fgseaRes$padj, 5),
+    `Leading edge` = leadingEdge.chr,
+    check.names = FALSE,
+    row.names = fgseaRes$pathway,
+    stringsAsFactors = FALSE
+  );
+
+  mSetObj$analSet$gsea.mat <- res.mat;
+  mSetObj$analSet$gsea.hits <- setNames(lapply(fgseaRes$leadingEdge, function(x) x), fgseaRes$pathway);
+
+  fast.write.csv(res.mat, file="msea_gsea_result.csv");
+  ExportResultMatArrow(res.mat, "gsea_result");
+
+  return(.set.mSet(mSetObj));
+}
+
 # Serialize compound x metabolite-set membership for the OraView pathway-map
 # viewer. Shape mirrors proteo's enrichment JSON: fun.anot keyed by set name
 # (already p-sorted via rownames(ora.mat)), parallel fun.pval/padj/hit.num/
