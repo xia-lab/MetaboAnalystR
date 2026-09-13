@@ -9,11 +9,12 @@
 #'of hits using 1-phyper. Since phyper is a cumulative probability,
 #'to get P(X>=hit.num) => P(X>(hit.num-1))
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param method "hyperg" (default, over-representation test on a significant-hits
-#'list) or "gsea_like" (preranked GSEA over a COMPLETE ranked compound list --
-#'the submitted order is the rank, first-listed = most significant; see
-#'CalculateOraScore's "gsea_like" branch in enrich_path_stats.R, which this
-#'mirrors for metabolite sets instead of KEGG pathway topology).
+#'@param method "hyperg" (default) or "fisher": over-representation test on a
+#'significant-hits list. "mummi_like" (permutation-based) or "gsea_like" (preranked
+#'GSEA): both need a COMPLETE ranked compound list -- the submitted order is the
+#'rank, first-listed = most significant; see CalculateOraScore's matching branches
+#'in enrich_path_stats.R, which this mirrors for metabolite sets instead of KEGG
+#'pathway topology (no Impact/topology column here).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
@@ -116,15 +117,65 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   res.mat[,2] <- q.size * (set.num / uniq.count)
   res.mat[,3] <- hit.num
 
-  if(method == "gsea_like"){
+  if(method == "fisher"){
+    res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
+    mSetObj$msgSet$rich.msg <- "The selected metabolite set enrichment method is `Fisher's exact test`.";
+  } else if(method == "mummi_like"){
+    # Permutation-based, mirroring CalculateOraScore's "mummi_like" branch in
+    # enrich_path_stats.R (pathway topology) -- adapted for metabolite sets, which
+    # have no Impact/topology column. As with that branch (and per the confirmed
+    # design principle that ranked-list methods use the submitted list itself as
+    # the background universe, not the full library), the hypergeometric universe
+    # here is q.size (the measured/ranked list size), not uniq.count (the full
+    # library, which only classical hyperg/fisher above use).
+    top.frac <- 0.10;
+    perm.num <- 100;
+
+    sig.n <- floor(length(ora.vec.filtered) * top.frac);
+    sig.n <- max(1, min(sig.n, length(ora.vec.filtered)));
+    sig.vec <- unique(ora.vec.filtered[seq_len(sig.n)]);
+    sig.n <- length(sig.vec);
+
+    measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec.filtered))}), use.names=FALSE);
+    obs.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, sig.vec))}), use.names=FALSE);
+
+    res.mat[,2] <- sig.n * (measured.set.num / max(1, q.size));
+    res.mat[,3] <- obs.hits;
+
+    obs.p <- rep(1, length(current.mset));
+    valid.inx <- which(measured.set.num > 0 & q.size > 0);
+    if(length(valid.inx) > 0){
+      obs.p[valid.inx] <- phyper(obs.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=FALSE);
+    }
+
+    perm.le.count <- rep(0L, length(current.mset));
+    for(b in seq_len(perm.num)){
+      perm.sig <- sample(ora.vec.filtered, size=sig.n, replace=FALSE);
+      perm.hits <- unlist(lapply(current.mset, function(x){length(intersect(x, perm.sig))}), use.names=FALSE);
+      perm.p <- rep(1, length(current.mset));
+      if(length(valid.inx) > 0){
+        perm.p[valid.inx] <- phyper(perm.hits[valid.inx]-1, measured.set.num[valid.inx], q.size-measured.set.num[valid.inx], sig.n, lower.tail=FALSE);
+      }
+      perm.le.count <- perm.le.count + as.integer(perm.p <= obs.p);
+    }
+    res.mat[,4] <- (perm.le.count + 1) / (perm.num + 1);
+
+    hit.num <- obs.hits;
+    hits <- lapply(current.mset, function(x){intersect(x, sig.vec)});
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected metabolite set enrichment method is `Permutation-based (Mummichog-inspired)`.\n\n",
+      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
+      "- Permutations: `", perm.num, "`"
+    );
+  } else if(method == "gsea_like"){
     # Preranked GSEA over the COMPLETE submitted list -- rank comes from the order
     # the user submitted the compounds in (first-listed = most significant), the
     # same convention CalculateOraScore's "gsea_like" uses for pathway topology
     # analysis (enrich_path_stats.R). "hits"/hit.num above are reused UNCHANGED --
     # they already mean "set members present anywhere in the submitted list" for
     # hyperg too, so no separate hit-set definition is needed here the way pathway
-    # analysis needed one (mummi_like there uses a different, top-fraction-only
-    # hit set; there is no such competing definition in this module).
+    # analysis needed one (mummi_like above uses a different, top-fraction-only hit
+    # set; the two branches are independent here, same as in enrich_path_stats.R).
     ranks <- rev(seq_along(ora.vec.filtered));
     names(ranks) <- ora.vec.filtered;
     ranks <- ranks[!duplicated(names(ranks))];
@@ -178,8 +229,12 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
       "The selected metabolite set enrichment method is `GSEA (preranked)`.\n\n",
       "- Ranking: submitted list order (first-listed = most significant)"
     );
-  } else {
+  } else if(method == "hyperg"){
     res.mat[,4] <- phyper(hit.num - 1, set.num, uniq.count - set.num, q.size, lower.tail = FALSE);
+    mSetObj$msgSet$rich.msg <- "The selected metabolite set enrichment method is `Hypergeometric test`.";
+  } else {
+    AddErrMsg(paste0("Unknown metabolite set enrichment method: ", method));
+    return(0);
   }
   res.mat[,5] <- p.adjust(res.mat[,4], "holm");
   res.mat[,6] <- p.adjust(res.mat[,4], "fdr");
