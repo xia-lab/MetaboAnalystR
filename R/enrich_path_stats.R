@@ -159,7 +159,7 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
 
     sig.n <- floor(length(ora.vec) * top.frac)
     sig.n <- max(1, min(sig.n, length(ora.vec)))
-    sig.vec <- unique(ora.vec[seq_len(sig.n)])
+    sig.vec <- unique(.rank.for.top.fraction(ora.vec, rank.score.map)[seq_len(sig.n)])
     sig.n <- length(sig.vec)
 
     measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec))}), use.names=FALSE)
@@ -191,7 +191,8 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     hits <- lapply(current.mset, function(x){intersect(x, sig.vec)})
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected over-representation analysis method is `Mummichog`.\n\n",
-      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
+      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`",
+      if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order", "\n",
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){

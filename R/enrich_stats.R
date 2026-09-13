@@ -3,6 +3,19 @@
 ### McGill University, Canada
 ### License: GNU GPL (>= 2)
 
+# The "significant" top fraction of a ranked list for the permutation-based method. With a
+# real per-compound score (Setup.CmpdRankScore) the fraction is taken by |score| — the
+# largest changes in EITHER direction, as mummichog picks its significant peaks by
+# significance regardless of direction; a signed fold change must not be read as
+# "positive first". Without a score, the submitted order is the rank (first = most
+# significant). Returns the ordered vector; the caller cuts it.
+.rank.for.top.fraction <- function(vec, rank.score.map){
+  if(is.null(rank.score.map)) return(vec);
+  sc <- rank.score.map[vec];
+  sc[!is.finite(sc)] <- -Inf;   # unscored compounds sort last
+  vec[order(-abs(sc))];
+}
+
 #'Over-representation analysis using hypergeometric tests
 #'@description Over-representation analysis using hypergeometric tests
 #'The probability is calculated from obtaining equal or higher number
@@ -148,7 +161,7 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
 
     sig.n <- floor(length(ora.vec.filtered) * top.frac);
     sig.n <- max(1, min(sig.n, length(ora.vec.filtered)));
-    sig.vec <- unique(ora.vec.filtered[seq_len(sig.n)]);
+    sig.vec <- unique(.rank.for.top.fraction(ora.vec.filtered, rank.score.map)[seq_len(sig.n)]);
     sig.n <- length(sig.vec);
 
     measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec.filtered))}), use.names=FALSE);
@@ -179,7 +192,8 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
     hits <- lapply(current.mset, function(x){intersect(x, sig.vec)});
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected metabolite set enrichment method is `Permutation-based (Mummichog-inspired)`.\n\n",
-      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`\n",
+      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`",
+      if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order", "\n",
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){
@@ -286,8 +300,11 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   # in web mode), so reassigning its return into `mSetObj` would clobber
   # the local list with the integer 1 — the symptom that broke ORA earlier.
   result <- .set.mSet(mSetObj);
-  ExportOraMembershipJson();
-  PlotORAMembership(NA, "mset_membership_0_");
+  # Pass the object, not NA: on the public web .get.mSet(obj) resolves to the same global
+  # just persisted; loaded as a plain package (testthat) .get.mSet(NA) has no global to
+  # return and both companions fail on an atomic value.
+  ExportOraMembershipJson(mSetObj);
+  PlotORAMembership(mSetObj, "mset_membership_0_");
   return(result);
 }
 

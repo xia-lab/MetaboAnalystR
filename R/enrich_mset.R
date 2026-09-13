@@ -626,13 +626,14 @@ SetMetabolomeFilter<-function(mSetObj=NA, TorF){
 #'stored vector doesn't match the current compound list), "gsea_like" transparently
 #'falls back to order-based ranking as before.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param scoreType "fc" (default), "p" or "stat" -- what the score column is; see the body.
 #'@param scoreVec Numeric vector, same length and order as dataSet$cmpd
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec){
+Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec, scoreType="fc"){
   mSetObj <- .get.mSet(mSetObj);
 
   scoreVec <- suppressWarnings(as.numeric(scoreVec));
@@ -640,8 +641,33 @@ Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec){
     AddErrMsg("Rank score vector length does not match the number of compounds!");
     return(0);
   }
+  # What the column IS decides how it ranks -- the same three metrics Setup.CmpdRankData
+  # accepts, so a pasted score and an uploaded table rank identically:
+  #   "fc"   signed (log) fold change: used as is, direction = sign, magnitude = strength;
+  #   "p"    p-value / FDR: smaller = more significant, so it becomes -log10(p) (a p of
+  #          exactly 0 is clamped to the smallest other p, as in Setup.CmpdRankData);
+  #   "stat" a signed statistic (t, sign(FC) * -log10 p): used as is.
+  # After this, "larger |score| = more significant" holds for every metric, which is what
+  # the permutation top fraction (|score|) and fgsea (scoreType std / pos) rely on.
+  if(!scoreType %in% c("fc", "p", "stat")){
+    AddErrMsg("scoreType must be one of: fc, p, stat");
+    return(0);
+  }
+  if(scoreType == "p"){
+    if(any(scoreVec < 0 | scoreVec > 1, na.rm=TRUE)){
+      AddErrMsg("The score column was declared a p-value, but it has values outside [0, 1]!");
+      return(0);
+    }
+    if(any(scoreVec == 0, na.rm=TRUE)){
+      finite.p <- scoreVec[!is.na(scoreVec) & scoreVec > 0];
+      floor.p <- if(length(finite.p)) min(finite.p) else .Machine$double.eps;
+      scoreVec[!is.na(scoreVec) & scoreVec == 0] <- floor.p;
+    }
+    scoreVec <- -log10(scoreVec);
+  }
 
   mSetObj$dataSet$cmpd.rank.score <- scoreVec;
+  mSetObj$dataSet$cmpd.rank.score.type <- scoreType;
   return(.set.mSet(mSetObj));
 }
 

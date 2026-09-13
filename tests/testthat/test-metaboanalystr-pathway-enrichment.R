@@ -183,3 +183,54 @@ test_that("GSEA on an order-only ranked list falls back to list position", {
   unlink("gsea_nes_test_dpi72.png");
 })
 
+
+test_that("Permutation-based enrichment takes its top fraction by |score| when scores are given", {
+  # A scored (signed fold change) list, deliberately UNSORTED: the ten largest changes are
+  # the LAST ten lines, and half of them are negative. mummi_like used to take the first 10%
+  # of the list as pasted — ignoring the scores — so with a scored list its "significant"
+  # set was whatever happened to be typed first. It must now be the largest |score|s,
+  # up or down, as mummichog picks its top peaks by significance regardless of direction.
+  rm(list = ls())
+  mSet <- InitDataObjects("conc", "msetora", FALSE)
+  filler <- c("Uridine", "Hypoxanthine", "Creatine", "Creatinine", "Choline", "Betaine",
+              "Carnitine", "Histidine", "Arginine", "Lysine", "Methionine", "Cysteine",
+              "Tyrosine", "Phenylalanine", "Tryptophan", "Proline", "Asparagine",
+              "Ornithine", "Citrulline", "Taurine", "Uracil", "Cytosine", "Thymine",
+              "Adenine", "Guanine", "Xanthine", "Allantoin", "Spermidine", "Putrescine",
+              "Inosine", "Adenosine", "Guanosine", "Glutamine", "Glutamate", "Aspartate",
+              "Serine", "Glycine", "Threonine", "Valine", "Leucine")
+  big <- c("Glucose", "Fructose", "Pyruvate", "Lactate", "Citrate",
+           "Isocitrate", "Succinate", "Fumarate", "Malate", "Oxaloacetate")
+  cmpds  <- c(filler, big)
+  scores <- c(runif(length(filler), -0.5, 0.5), c(4.1, 3.9, -3.8, 3.7, -3.6, 3.5, -3.4, 3.3, -3.2, 3.1))
+  mSet <- Setup.MapData(mSet, cmpds); mSet <- CrossReferencing(mSet, "name")
+  mSet <- Setup.CmpdRankScore(mSet, scores)
+  mSet <- SetMetabolomeFilter(mSet, FALSE)
+  mSet <- SetCurrentMsetLib(mSet, "smpdb_pathway", 2)
+  mSet <- CalculateHyperScore(mSet, "mummi_like")
+  expect_true(is.list(mSet))
+  # every hit of every set comes from the top-|score| compounds (the last ten lines)
+  nm  <- GetFinalNameMap(mSet)
+  hit <- unique(unlist(mSet$analSet$ora.hits))
+  big.hmdb <- nm$hmdb[match(big, nm$query)]
+  expect_true(length(hit) > 0)
+  expect_true(all(hit %in% big.hmdb))
+  expect_match(mSet$msgSet$rich.msg, "by \\|score\\|")
+
+  # The same list with the score column declared a P-VALUE: smallest first. The ten big
+  # changes now get the ten SMALLEST p-values; everything else ~0.5. Setup.CmpdRankScore
+  # turns p into -log10(p), so the same |score| rule picks them — a raw p-value never
+  # ranks "largest first".
+  pvals <- c(runif(length(filler), 0.2, 0.9), c(1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 7e-6, 8e-6, 9e-6, 1e-5))
+  mSet <- Setup.CmpdRankScore(mSet, pvals, "p")
+  expect_true(all(mSet$dataSet$cmpd.rank.score >= 0))
+  expect_equal(mSet$dataSet$cmpd.rank.score.type, "p")
+  mSet <- CalculateHyperScore(mSet, "mummi_like")
+  hit <- unique(unlist(mSet$analSet$ora.hits))
+  expect_true(length(hit) > 0)
+  expect_true(all(hit %in% big.hmdb))
+  # and a column declared p-value that is not one is refused (AddErrMsg needs the global
+  # message store the web app initialises; give it one here)
+  current.msg <<- ""; err.vec <<- character(0)
+  expect_equal(Setup.CmpdRankScore(mSet, scores, "p"), 0)
+})
