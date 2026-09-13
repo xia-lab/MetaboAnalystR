@@ -104,7 +104,13 @@ MetaboliteMappingExact <- function(mSetObj=NA, q.type, lipid = F, mixed = F){
   }else if(anal.type %in% c("msetora", "msetssp", "msetqea") & mixed){
     cmpd.db_met <- .get.my.lib("compound_db.qs")
     cmpd.db_lipid <- .get.my.lib("lipid_compound_db.qs")
-    cmpd.db <- unique(rbind(cmpd.db_met, cmpd.db_lipid[,1:8]))
+    # Select lipid_compound_db's columns BY NAME (matching compound_db_met's own
+    # column set), not by hardcoded position ([,1:8]) -- lipid_compound_db carries
+    # extra columns (exactmass, formula, inchi_key, super_class, main_class,
+    # sub_class) beyond the shared base set, and both files also now carry a
+    # trailing compound_id column, so a fixed "first 8 columns" slice silently broke
+    # (rbind column-count mismatch) the moment either file's column count changed.
+    cmpd.db <- unique(rbind(cmpd.db_met, cmpd.db_lipid[, colnames(cmpd.db_met)]))
   }else if(anal.type == "utils"){
     cmpd.db <- .get.my.lib("master_compound_db.qs");
   }else{
