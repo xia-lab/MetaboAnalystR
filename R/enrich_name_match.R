@@ -330,6 +330,17 @@ CreateMappingResultTable <- function(mSetObj=NA) {
   html.res <- html.res[,return.cols, drop=F];
   csv.res <- csv.res[,return.cols, drop=F];
 
+  # The Compound ID Conversion utility also reports the library's STABLE compound id
+  # (compound_id: HMDB > KEGG > PubChem > MAID-... for compounds with no external id --
+  # tools/assign_compound_ids.R, Sep 2026), appended as the LAST column so every existing
+  # column keeps its position for the Java readers that walk the table by index.
+  if(anal.type == "utils" && "compound_id" %in% colnames(cmpd.db)){
+    cid <- ifelse(match.state == 1, as.character(cmpd.db$compound_id[hit.inx]), NA);
+    cid[is.na(cid) | cid == "" | cid == "NA"] <- NA;
+    html.res <- cbind(html.res, ifelse(is.na(cid), "-", cid));
+    csv.res  <- cbind(csv.res, "Compound ID" = ifelse(is.na(cid), "NA", cid));
+  }
+
   # store the value for report
   mSetObj$dataSet$map.table <- csv.res;
   fast.write.csv(csv.res, file="name_map.csv", row.names=F);
