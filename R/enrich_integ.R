@@ -766,6 +766,51 @@ GetGeneHitsRowNumber<-function(mSetObj=NA){
   return(length(mSetObj$dataSet$gene.name.map$match.state));
 }
 
+#'Get signed fold-change values for joint pathway network nodes
+#'@description Returns the user-supplied (signed) fold-change / expression value
+#'for each matched feature in the integrated pathway analysis, so the interactive
+#'KEGG network viewer can colour nodes by up-/down-regulation. Metabolites are keyed
+#'by KEGG compound id ("CPD:Cxxxxx") and genes/proteins by KEGG Orthology id ("Kxxxxx").
+#'The raw input matrices (pathinteg.imps$cmpd.mat / gene.mat) are used so the value is
+#'the genuine signed fold change the user uploaded, not the topology-coded copy.
+#'@param mSetObj Input name of the created mSet Object
+#'@return A character vector of "id|value" records (empty if no fold changes available).
+#'@export
+GetIntegPathwayNodeFC <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  out <- character(0);
+  imps <- mSetObj$dataSet$pathinteg.imps;
+  if(is.null(imps)){
+    return(out);
+  }
+
+  # --- Metabolites: keyed by KEGG compound id (rownames of cmpd.mat) ---
+  cm <- imps$cmpd.mat;
+  if(!is.null(cm) && nrow(cm) > 0 && ncol(cm) > 0){
+    cids <- toupper(as.character(rownames(cm)));
+    cfc <- suppressWarnings(as.numeric(cm[, 1]));
+    ok <- !is.na(cids) & nzchar(cids) & !is.na(cfc);
+    if(any(ok)){
+      out <- c(out, paste0("CPD:", cids[ok], "|", cfc[ok]));
+    }
+  }
+
+  # --- Genes/proteins: KO ids aligned index-wise with gene.mat rows ---
+  gm <- imps$gene.mat;
+  kos <- mSetObj$dataSet$gene.name.map$hit.kos;
+  if(!is.null(gm) && nrow(gm) > 0 && ncol(gm) > 0 &&
+     !is.null(kos) && length(kos) == nrow(gm)){
+    gfc <- suppressWarnings(as.numeric(gm[, 1]));
+    kos <- toupper(as.character(kos));
+    ok <- !is.na(kos) & nzchar(kos) & !is.na(gfc);
+    if(any(ok)){
+      out <- c(out, paste0(kos[ok], "|", gfc[ok]));
+    }
+  }
+
+  return(out);
+}
+
 GetGeneMappingResultTable<-function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
