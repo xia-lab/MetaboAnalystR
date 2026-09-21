@@ -332,6 +332,32 @@ SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMetho
     return(dbConnect(SQLite(), sqlite.path, synchronous = NULL));
 }
 
+# Resolve a local sqlite database, (re)downloading when the shared copy is
+# absent or 0 bytes. A 0-byte file (a failed/partial download, a placeholder, or
+# a broken shared copy) is treated as missing and unlinked before re-fetching, so
+# it can never permanently block its own replacement -- the class of bug that
+# silently returns an empty database with no tables. Returns a path to a
+# non-empty file, or stops if the database cannot be obtained.
+.ensure.sqlite.db <- function(shared.path, url){
+    # 1) usable shared copy (e.g. /home/glassfish/sqlite/) -> use it as-is
+    if(file.exists(shared.path) && isTRUE(file.info(shared.path)$size > 0)){
+        return(shared.path);
+    }
+    # 2) otherwise (re)fetch into the working directory
+    dl.path <- file.path(getwd(), basename(shared.path));
+    if(file.exists(dl.path) && isTRUE(file.info(dl.path)$size > 0)){
+        return(dl.path);
+    }
+    if(file.exists(dl.path)){ unlink(dl.path); }   # drop stale/empty partial
+    res <- try(download.file(url, destfile = dl.path, method = "curl"), silent = TRUE);
+    if(inherits(res, "try-error") || !file.exists(dl.path) || !isTRUE(file.info(dl.path)$size > 0)){
+        if(file.exists(dl.path)){ unlink(dl.path); }  # never leave a 0-byte file behind
+        stop(paste0("Unable to obtain required sqlite database '", basename(shared.path),
+                    "' from ", url));
+    }
+    return(dl.path);
+}
+
 #'Transform two column text to data matrix
 #'@description Transform two column input text to data matrix (single column data frame)
 #'@param txtInput Input text

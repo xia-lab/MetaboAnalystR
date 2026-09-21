@@ -766,6 +766,57 @@ GetGeneHitsRowNumber<-function(mSetObj=NA){
   return(length(mSetObj$dataSet$gene.name.map$match.state));
 }
 
+# Map a vector of (entrez) gene ids to KEGG Orthology (KO) ids, returning a vector
+# aligned 1:1 with the input ("" where no KO). Uses the SAME sqlite tables/logic as
+# GetIntegPathMatchedNodeIds (which marks the matched enzyme edges), so the KO keys
+# produced here match the KOs on those edges — required for the viewer to colour hit
+# enzyme edges by fold change.
+.integEntrez2KO <- function(mSetObj, entrez.vec){
+  n <- length(entrez.vec);
+  kos <- rep("", n);
+  if(n == 0){ return(kos); }
+  org.code <- mSetObj$org;
+  raw.ids <- sub("^[a-zA-Z]{2,4}:", "", as.character(entrez.vec));
+  sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
+  if(!file.exists(sqlite.path)){
+    sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+    if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
+      sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
+    }
+    if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
+      sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
+      try(download.file(sqlite_url, destfile = sqlite.path, method = "curl"), silent = TRUE);
+    }
+    if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){ return(kos); }
+    con <- .get.sqlite.con(sqlite.path);
+    on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
+    gene.db <- dbReadTable(con, org.code);
+    if(!all(is.na(gene.db[, "GeneID"]))){
+      hit.inx <- match(raw.ids, gene.db[, "GeneID"]);
+    } else {
+      hit.inx <- match(raw.ids, sub("\\s+CDS$", "", gene.db[, "KEGG_entry"]));
+    }
+    for(i in seq_len(n)){
+      if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
+        ko <- as.character(gene.db[hit.inx[i], "KO"]);
+        if(!is.na(ko) && nzchar(ko)){ kos[i] <- ko; }
+      }
+    }
+  } else {
+    con <- .get.sqlite.con(sqlite.path);
+    on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
+    gene.db <- dbReadTable(con, "entrez_ortholog");
+    hit.inx <- match(raw.ids, gene.db[, "gene_id"]);
+    for(i in seq_len(n)){
+      if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
+        ko <- as.character(gene.db[hit.inx[i], "accession"]);
+        if(!is.na(ko) && nzchar(ko)){ kos[i] <- ko; }
+      }
+    }
+  }
+  return(kos);
+}
+
 #'Get signed fold-change values for joint pathway network nodes
 #'@description Returns the user-supplied (signed) fold-change / expression value
 #'for each matched feature in the integrated pathway analysis, so the interactive
@@ -797,14 +848,29 @@ GetIntegPathwayNodeFC <- function(mSetObj=NA){
 
   # --- Genes/proteins: KO ids aligned index-wise with gene.mat rows ---
   gm <- imps$gene.mat;
-  kos <- mSetObj$dataSet$gene.name.map$hit.kos;
-  if(!is.null(gm) && nrow(gm) > 0 && ncol(gm) > 0 &&
-     !is.null(kos) && length(kos) == nrow(gm)){
+  if(!is.null(gm) && nrow(gm) > 0 && ncol(gm) > 0){
+    ens <- as.character(rownames(gm));       # gene.mat rownames are entrez ids
     gfc <- suppressWarnings(as.numeric(gm[, 1]));
-    kos <- toupper(as.character(kos));
-    ok <- !is.na(kos) & nzchar(kos) & !is.na(gfc);
-    if(any(ok)){
-      out <- c(out, paste0(kos[ok], "|", gfc[ok]));
+    # Map each gene.mat row (entrez) to its KO using the SAME sqlite mapping as the
+    # matched-edge logic (GetIntegPathMatchedNodeIds), so the KO keys line up with the
+    # enzyme edges the viewer marks as matched. Aligned 1:1 with gene.mat rows.
+    kos <- tryCatch(as.character(.integEntrez2KO(mSetObj, ens)), error=function(e) NULL);
+    if(!is.null(kos) && length(kos) == length(ens)){
+      kos <- toupper(kos);
+      ok <- !is.na(kos) & nzchar(kos) & !is.na(gfc);
+      if(any(ok)){
+        out <- c(out, paste0(kos[ok], "|", gfc[ok]));
+      }
+    } else {
+      # fallback: index-align hit.kos with gene.mat rows when the mapping is unavailable
+      hk <- mSetObj$dataSet$gene.name.map$hit.kos;
+      if(!is.null(hk) && length(hk) == nrow(gm)){
+        hk <- toupper(as.character(hk));
+        ok <- !is.na(hk) & nzchar(hk) & !is.na(gfc);
+        if(any(ok)){
+          out <- c(out, paste0(hk[ok], "|", gfc[ok]));
+        }
+      }
     }
   }
 

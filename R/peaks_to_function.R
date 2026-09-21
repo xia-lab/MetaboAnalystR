@@ -4022,13 +4022,52 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = def
 ####### Getters For Web #######
 ###############################
 
-GetMatchingDetails <- function(mSetObj=NA, cmpd.id){  
+GetMatchingDetails <- function(mSetObj=NA, cmpd.id){
   mSetObj <- .get.mSet(mSetObj);
   forms <- mSetObj$cpd_form_dict[[cmpd.id]];
   tscores <- mSetObj$cpd_exp_dict[[cmpd.id]];
   # create html table
-  res <- paste("<li>", "<b>", forms, "</b>: ", round(tscores,2), "</li>",sep="", collapse="");  
+  res <- paste("<li>", "<b>", forms, "</b>: ", round(tscores,2), "</li>",sep="", collapse="");
   return(res);
+}
+
+#'Get signed per-compound values for mummichog KEGG network node colouring
+#'@description Returns a signed value per matched KEGG compound so the interactive
+#'network viewer can colour metabolite nodes by up-/down-regulation. The value is the
+#'mean of the per-peak t.scores that matched each compound (from mSetObj$cpd_exp_dict,
+#'keyed by KEGG compound id). Directional info is only meaningful when the uploaded
+#'peak table carried a t.score / log2FC column (otherwise the scores are zero-filled).
+#'@param mSetObj Input name of the created mSet Object
+#'@return A character vector of "CPD:Cxxxxx|value" records (empty if none available).
+#'@export
+GetMummichogNodeFC <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  out <- character(0);
+  dict <- mSetObj$cpd_exp_dict;
+  if(!is.null(dict) && length(dict) > 0){
+    ids <- names(dict);
+    for(i in seq_along(dict)){
+      id <- toupper(as.character(ids[i]));
+      id <- sub("^CPD:", "", id);
+      if(is.na(id) || !nzchar(id)){ next; }
+      v <- suppressWarnings(as.numeric(dict[[i]]));
+      v <- v[!is.na(v)];
+      if(length(v) == 0){ next; }
+      mv <- mean(v);
+      if(is.na(mv)){ next; }
+      out <- c(out, paste0("CPD:", id, "|", mv));
+    }
+  } else {
+    # fallback to the scalar summary vector if the dict is absent
+    ce <- mSetObj$cpd_exp;
+    if(!is.null(ce) && length(ce) > 0){
+      ids <- sub("^CPD:", "", toupper(as.character(names(ce))));
+      vals <- suppressWarnings(as.numeric(ce));
+      ok <- !is.na(ids) & nzchar(ids) & !is.na(vals);
+      if(any(ok)){ out <- paste0("CPD:", ids[ok], "|", vals[ok]); }
+    }
+  }
+  return(out);
 }
 
 GetMummichogHTMLPathSet <- function(mSetObj = NA, msetNm) {

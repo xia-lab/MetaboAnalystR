@@ -497,14 +497,11 @@ HMDBID2KEGGID<-function(ids){
 #'
 doGeneIDMapping <- function(q.vec, org, type){
   sqlite.path <- paste0(url.pre, org, "_genes.sqlite");
-  if(!file.exists(sqlite.path)){
-    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
-    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/", 
-                         org, "_genes.sqlite");
-    sqlite.path <- paste0(getwd(), "/",org, "_genes.sqlite")
-    download.file(sqlite_url,destfile = sqlite.path, method = "curl")
-  }
-  con <- .get.sqlite.con(sqlite.path); 
+  #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+  sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/",
+                       org, "_genes.sqlite");
+  sqlite.path <- .ensure.sqlite.db(sqlite.path, sqlite_url);
+  con <- .get.sqlite.con(sqlite.path);
   
   if(type == "symbol"){
     db.map = dbReadTable(con, "entrez")
@@ -549,12 +546,9 @@ doGeneIDMapping <- function(q.vec, org, type){
 doGeneEntryMapping <- function(q.vec, org, type){
 
   sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
-  if(!file.exists(sqlite.path)){
-    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
-    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
-    sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
-    download.file(sqlite_url,destfile = sqlite.path, method = "curl")
-  }
+  #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+  sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
+  sqlite.path <- .ensure.sqlite.db(sqlite.path, sqlite_url);
   con <- .get.sqlite.con(sqlite.path);
   db.map = dbReadTable(con, org);
 
@@ -613,12 +607,9 @@ doAllGeneIDMapping <- function(gene.vec, org, idType){
 
 convert2KeggEntry <- function(q.vec, type, org){
     sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
-    if(!file.exists(sqlite.path)){
-      #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
-      sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
-      sqlite.path <- paste0(getwd(), "/","genes_entries_130_species.sqlite")
-      download.file(sqlite_url,destfile = sqlite.path, method = "curl")
-    }
+    #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
+    sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
+    sqlite.path <- .ensure.sqlite.db(sqlite.path, sqlite_url);
     con <- .get.sqlite.con(sqlite.path);
     db.map <- dbReadTable(con, org);
 
