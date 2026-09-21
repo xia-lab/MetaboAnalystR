@@ -1572,61 +1572,35 @@ GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
     cpd.ids <- sub("^CPD:", "cpd:", cpd.ids);
 
     if(length(gene.ids) > 0){
-        org.code <- mSetObj$org;
-        sqlite.path <- paste0(url.pre, org.code, "_genes.sqlite");
-        if(!file.exists(sqlite.path)){
-
-            sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
-            if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
-                sqlite.path <- paste0(getwd(), "/", "genes_entries_130_species.sqlite");
-            }
-            if(!file.exists(sqlite.path) || file.size(sqlite.path) == 0){
-                sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
-                download.file(sqlite_url, destfile = sqlite.path, method = "curl")
-            }
-            
-            con <- .get.sqlite.con(sqlite.path);
-            on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
-            gene.db <- dbReadTable(con, org.code);
-            raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
-            if(!all(is.na( gene.db[, "GeneID"]))){
-                hit.inx <- match(raw.ids, gene.db[, "GeneID"]);
-            } else {
-                hit.inx <- match(raw.ids, sub("\\s+CDS$", "", gene.db[, "KEGG_entry"]));
-            }
-            
+        raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
+        # Primary: the shared per-org sqlite mapper (same tables/logic the enzyme
+        # edges use, so KO keys line up). Aligned 1:1 with gene.ids ("" = no KO).
+        kos <- tryCatch(as.character(.integEntrez2KO(mSetObj, gene.ids)),
+                        error = function(e) rep("", length(gene.ids)));
+        if(length(kos) != length(gene.ids)){
             kos <- rep("", length(gene.ids));
-            for(i in seq_along(gene.ids)){
-                if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
-                    ko <- as.character(gene.db[hit.inx[i], "KO"]);
-                    if(!is.na(ko) && nzchar(ko)){
-                        kos[i] <- ko;
-                    }
-                }
-            }
-            out <- kos[nzchar(kos)];
-
-        } else {
-
-            con <- .get.sqlite.con(sqlite.path);
-            on.exit(try(DBI::dbDisconnect(con), silent = TRUE), add = TRUE);
-            gene.db <- dbReadTable(con, "entrez_ortholog");
-            raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
-            hit.inx <- match(raw.ids, gene.db[, "gene_id"]);
-
-            kos <- rep("", length(gene.ids));
-            for(i in seq_along(gene.ids)){
-                if(!is.na(hit.inx[i]) && hit.inx[i] > 0){
-                    ko <- as.character(gene.db[hit.inx[i], "accession"]);
-                    if(!is.na(ko) && nzchar(ko)){
-                        kos[i] <- ko;
-                    }
-                }
-            }
-            out <- kos[nzchar(kos)];
-
         }
-
+        # Fallback: the annotation-time entrez->KO map the module already built
+        # (gene.name.map: hit.values entrez <-> hit.kos, via doGene2KONameMapping).
+        # This is independent of the server-side sqlite, so enzymes still match
+        # when the sqlite lookup is missing/empty (e.g. schema/db not present).
+        gmap <- mSetObj$dataSet$gene.name.map;
+        need <- which(!nzchar(kos));
+        if(length(need) > 0 && !is.null(gmap) &&
+           !is.null(gmap$hit.values) && !is.null(gmap$hit.kos)){
+            map.ent <- sub("^[a-zA-Z]{2,4}:", "", as.character(gmap$hit.values));
+            map.ko <- as.character(gmap$hit.kos);
+            fx <- match(raw.ids[need], map.ent);
+            for(j in seq_along(need)){
+                if(!is.na(fx[j])){
+                    ko <- map.ko[fx[j]];
+                    if(!is.na(ko) && nzchar(ko)){
+                        kos[need[j]] <- ko;
+                    }
+                }
+            }
+        }
+        out <- kos[nzchar(kos)];
     }
 
     out <- unique(c(cpd.ids, out));
