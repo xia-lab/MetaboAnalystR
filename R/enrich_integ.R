@@ -1573,34 +1573,22 @@ GetIntegPathMatchedNodeIds <- function(mSetObj=NA, pathName){
 
     if(length(gene.ids) > 0){
         raw.ids <- sub("^[a-zA-Z]{2,4}:", "", gene.ids);
-        # Primary: the shared per-org sqlite mapper (same tables/logic the enzyme
-        # edges use, so KO keys line up). Aligned 1:1 with gene.ids ("" = no KO).
-        kos <- tryCatch(as.character(.integEntrez2KO(mSetObj, gene.ids)),
-                        error = function(e) rep("", length(gene.ids)));
-        if(length(kos) != length(gene.ids)){
-            kos <- rep("", length(gene.ids));
-        }
-        # Fallback: the annotation-time entrez->KO map the module already built
-        # (gene.name.map: hit.values entrez <-> hit.kos, via doGene2KONameMapping).
-        # This is independent of the server-side sqlite, so enzymes still match
-        # when the sqlite lookup is missing/empty (e.g. schema/db not present).
-        gmap <- mSetObj$dataSet$gene.name.map;
-        need <- which(!nzchar(kos));
-        if(length(need) > 0 && !is.null(gmap) &&
-           !is.null(gmap$hit.values) && !is.null(gmap$hit.kos)){
-            map.ent <- sub("^[a-zA-Z]{2,4}:", "", as.character(gmap$hit.values));
-            map.ko <- as.character(gmap$hit.kos);
-            fx <- match(raw.ids[need], map.ent);
-            for(j in seq_along(need)){
-                if(!is.na(fx[j])){
-                    ko <- map.ko[fx[j]];
-                    if(!is.na(ko) && nzchar(ko)){
-                        kos[need[j]] <- ko;
-                    }
-                }
-            }
-        }
-        out <- kos[nzchar(kos)];
+        out.kos <- character(0);
+        # (1) Per-org sqlite mapper: KO ids that match the pathway KGML enzyme edges
+        #     (used by the interactive pathway viewer). May be empty if the sqlite is
+        #     unavailable (e.g. local dev, or a non-model org's db is missing).
+        k1 <- tryCatch(as.character(.integEntrez2KO(mSetObj, gene.ids)),
+                       error = function(e) character(0));
+        out.kos <- c(out.kos, k1[!is.na(k1) & nzchar(k1)]);
+        # (2) ko_dic mapper (doGene2KONameMapping): entrez->KO from ko_dic.csv. Reliable
+        #     for human entrez and independent of the server sqlite; crucially its KO
+        #     ids match the GLOBAL ko01100 network edges. Union of both id sources so
+        #     enzymes highlight in BOTH the pathway viewer and the global KEGG network,
+        #     even when the per-org sqlite lookup yields nothing.
+        k2 <- tryCatch(as.character(doGene2KONameMapping(raw.ids)),
+                       error = function(e) character(0));
+        out.kos <- c(out.kos, k2[!is.na(k2) & nzchar(k2)]);
+        out <- unique(out.kos);
     }
 
     out <- unique(c(cpd.ids, out));
