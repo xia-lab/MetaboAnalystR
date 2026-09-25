@@ -12,6 +12,81 @@
 #'License: GNU GPL (>= 2)
 #'@export
 #'
+# ---------------------------------------------------------------------------
+# Pairwise comparison selection (for data sets with more than two groups)
+# ---------------------------------------------------------------------------
+# t-test, fold-change and volcano analyses compare exactly TWO groups. When the
+# data has >2 groups the user picks which pair via SetCurrentComparison(); the
+# choice is stored on mSetObj$dataSet$comp.groups and honoured by every path
+# (classical, Welch, Wilcoxon, limma and the fast C++ univariate tests). When no
+# pair is set the first two class levels are used, preserving prior behaviour.
+
+# Return the validated pair of group names to compare (length-2 character vector,
+# ordered so grps[1] is the NUMERATOR: with cmp.type=0 the fold change is
+# grps[1]/grps[2], so a feature higher in grps[1] has a positive log2 FC and sits on
+# the right of the volcano.
+.getComparisonGroups <- function(mSetObj){
+  cls  <- mSetObj$dataSet$cls;
+  lvls <- levels(cls);
+  grps <- mSetObj$dataSet$comp.groups;
+  if(is.null(grps) || length(grps) != 2 || !all(grps %in% lvls) || grps[1] == grps[2]){
+    grps <- lvls[1:2];
+  }
+  grps;
+}
+
+# Restrict a samples-in-rows matrix + its class factor to the comparison pair.
+# Returns a 2-level factor ordered (grpA, grpB) so downstream level[1]/level[2]
+# logic and limma contrasts point at the requested groups. Used by the paths
+# that consume all groups at once (limma, fast univariate F/t tests).
+.getComparisonSubset <- function(data, cls, grps){
+  keep <- as.character(cls) %in% grps;
+  list(data = data[keep, , drop = FALSE],
+       cls  = factor(as.character(cls[keep]), levels = grps),
+       keep = keep);
+}
+
+#'Set the comparison pair for t-test / fold-change / volcano analysis
+#'@description For data sets with more than two groups, choose which two groups
+#'are compared (GroupA vs GroupB). Call this before \code{Ttests.Anal},
+#'\code{FC.Anal} or \code{Volcano.Anal}. Pass \code{grpA=NULL} (or "") to reset
+#'to the default (first two class levels). \code{grpA} is the numerator: with
+#'\code{cmpType=0} the fold change is GroupA/GroupB, so a feature higher in GroupA
+#'has a positive log2 fold change and sits on the right of the volcano.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param grpA Character, first (reference) group name
+#'@param grpB Character, second group name
+#'@export
+SetCurrentComparison <- function(mSetObj=NA, grpA=NULL, grpB=NULL){
+  mSetObj <- .get.mSet(mSetObj);
+  lvls <- levels(mSetObj$dataSet$cls);
+  if(is.null(grpA) || is.null(grpB) || grpA == "" || grpB == ""){
+    mSetObj$dataSet$comp.groups <- NULL;   # reset to default (first two levels)
+    return(.set.mSet(mSetObj));
+  }
+  if(!all(c(grpA, grpB) %in% lvls)){
+    AddErrMsg(paste0("Invalid comparison group(s). Available groups: ",
+                     paste(lvls, collapse = ", ")));
+    return(.set.mSet(mSetObj));
+  }
+  if(grpA == grpB){
+    AddErrMsg("The two comparison groups must be different.");
+    return(.set.mSet(mSetObj));
+  }
+  mSetObj$dataSet$comp.groups <- c(grpA, grpB);
+  return(.set.mSet(mSetObj));
+}
+
+#'Get available group names for pairwise comparison
+#'@description Returns the class labels available for selecting a comparison
+#'pair in the t-test / fold-change / volcano pages.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetComparisonGroupNames <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  levels(mSetObj$dataSet$cls);
+}
+
 FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.method="classical"){
 
   mSetObj <- .get.mSet(mSetObj);
@@ -25,9 +100,12 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
     # Limma-based logFC - use row_norm (original scale, same as classical GetFC)
     # Log2-transform so limma logFC = log2 fold change
     row.data <- ov_qs_read("row_norm.qs");
-    row.log2 <- log2(as.matrix(row.data));
+    # restrict to the selected comparison pair (limma uses the full design matrix)
+    grps <- .getComparisonGroups(mSetObj);
+    sub <- .getComparisonSubset(row.data, mSetObj$dataSet$cls, grps);
+    row.log2 <- log2(as.matrix(sub$data));
     row.log2[!is.finite(row.log2)] <- 0;
-    limma.res <- GetLimmaFCandP(row.log2, mSetObj$dataSet$cls);
+    limma.res <- GetLimmaFCandP(row.log2, sub$cls);
     # Limma coef=2 gives level[2]-level[1], but classical does level[1]/level[2]
     # Negate to match classical direction
     fc.log <- signif(-limma.res$logFC, 5);
@@ -194,15 +272,19 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
   
   mSetObj <- .get.mSet(mSetObj);
-  
-  if(paired){ 
+
+  # groups to compare (selected pair for >2-group data; else first two levels).
+  # row.norm holds all samples, so we pick the two groups by index and ignore the rest.
+  grps <- .getComparisonGroups(mSetObj);
+
+  if(paired){
     # compute the average of paired FC (unit is pair)
     row.norm <- ov_qs_read("row_norm.qs");
     data <- log2(row.norm);
-    
-    G1 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]
-    G2 <- data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]
-    
+
+    G1 <- data[which(mSetObj$dataSet$cls==grps[1]), ]
+    G2 <- data[which(mSetObj$dataSet$cls==grps[2]), ]
+
     if(cmpType == 0){
       fc.mat <- G1-G2;
     }else{
@@ -212,10 +294,10 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
     fc.all <- signif(2^fc.log, 5);
   }else{
     # compute the FC of two group means (unit is group)
-    
+
     data <- ov_qs_read("row_norm.qs");
-    m1 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]), ]);
-    m2 <- colMeans(data[which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]), ]);
+    m1 <- colMeans(data[which(mSetObj$dataSet$cls==grps[1]), ]);
+    m2 <- colMeans(data[which(mSetObj$dataSet$cls==grps[2]), ]);
     
     # create a named matrix of sig vars for display
     if(cmpType == 0){
@@ -268,11 +350,20 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
     tt.method <- "classical"
   }
 
+  # groups to compare (selected pair for >2-group data; else first two levels).
+  # Paths that consume ALL groups at once (limma design matrix, fast C++ tests)
+  # need the data + class factor restricted to the two groups; the classical
+  # GetTtestRes path picks the two groups by index internally.
+  grps <- .getComparisonGroups(mSetObj);
+  sub  <- .getComparisonSubset(mSetObj$dataSet$norm, mSetObj$dataSet$cls, grps);
+  sub.norm <- sub$data;
+  sub.cls  <- sub$cls;
+
   if (tt.method == "limma" && !nonpar && !paired) {
     # Limma moderated t-test
     require(limma)
-    design <- model.matrix(~mSetObj$dataSet$cls)
-    fit <- lmFit(t(as.matrix(mSetObj$dataSet$norm)), design)
+    design <- model.matrix(~sub.cls)
+    fit <- lmFit(t(as.matrix(sub.norm)), design)
     fit <- eBayes(fit)
     tt.res <- topTable(fit, coef = 2, number = Inf, sort.by = "none")
     t.stat <- tt.res$t
@@ -281,8 +372,8 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
     # Reorder to match norm columns
     t.stat <- t.stat[colnames(mSetObj$dataSet$norm)]
     p.value <- p.value[colnames(mSetObj$dataSet$norm)]
-  } else if(.on.public.web & !nonpar & RequireFastUnivTests(mSetObj)){
-    res <- PerformFastUnivTests(mSetObj$dataSet$norm, mSetObj$dataSet$cls, var.equal=equal.var);
+  } else if(.on.public.web & !nonpar & !paired & RequireFastUnivTests(mSetObj)){
+    res <- PerformFastUnivTests(sub.norm, sub.cls, var.equal=equal.var);
     t.stat <- res[,1];
     p.value <- res[,2];
     names(t.stat) <- names(p.value) <- colnames(mSetObj$dataSet$norm);
@@ -1296,9 +1387,11 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'License: GNU GPL (>= 2)
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   
-  mSetObj <- .get.mSet(mSetObj);  
-  inx1 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[1]);
-  inx2 <- which(mSetObj$dataSet$cls==levels(mSetObj$dataSet$cls)[2]);
+  mSetObj <- .get.mSet(mSetObj);
+  # groups to compare (selected pair for >2-group data; else first two levels)
+  grps <- .getComparisonGroups(mSetObj);
+  inx1 <- which(mSetObj$dataSet$cls==grps[1]);
+  inx2 <- which(mSetObj$dataSet$cls==grps[2]);
   if(length(inx1) ==1 || length(inx2) == 1){
     equal.var <- TRUE; # overwrite use option if one does not have enough replicates
   }
