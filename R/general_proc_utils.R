@@ -585,6 +585,9 @@ CheckContainsBlank <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   
   cls <- mSetObj$dataSet$proc.cls;
+  if(!.on.public.web){
+    return(.set.mSet(mSetObj))
+  }
   if("BLANK" %in% cls){
     return(1)
   } else {
