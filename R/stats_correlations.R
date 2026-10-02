@@ -696,11 +696,16 @@ KendallCorrFunc <- function(var1, var2, data){
 }
 
 ComputeDSPC <- function(mSetObj=NA){
-     # PerformDSPC (and its helper DGlasso) live in networks_enrich.R, which is
-     # not part of the stats module's loaded scripts. Load it on demand so the
-     # DSPC correlation network can be built from the Statistics module.
+     # The DSPC correlation network relies on the network-analysis scripts, which
+     # are not part of the stats module's loaded scripts. Load them on demand so
+     # DSPC can be built from the Statistics module:
+     #   networks_enrich.R -> PerformDSPC (+ helper DGlasso)
+     #   networks_view.R   -> CreateGraph and the net-stat getters called next
      if(!exists("PerformDSPC")){
          .load.scripts.on.demand("networks_enrich.Rc");
+     }
+     if(!exists("CreateGraph")){
+         .load.scripts.on.demand("networks_view.Rc");
      }
      return(PerformDSPC(mSetObj));
 }
