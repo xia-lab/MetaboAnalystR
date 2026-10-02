@@ -162,52 +162,45 @@ ov_qs_exists <- function(file) {
 # RSclient subprocess execution (Rserve fork — shared by Public and Pro)
 # =============================================================================
 
+# Ported from OmicsVerse (xia-lab/MetaboAnalystR origin/master): the nested RSclient
+# fork path reliably crashed the worker with "Fatal error: unable to initialize the JIT"
+# (Rserve error 127). run_func_via_microservice runs the closure in a fresh callr
+# subprocess (then exits, reclaiming memory), and falls back to in-process if callr is
+# unavailable or the child errors, so a caller never breaks. `func` is a self-contained
+# closure that exchanges data via ov_qs_* bridge files; the result travels back via files.
+run_func_via_microservice <- function(func, args = list(), timeout_sec = 60) {
+  if (requireNamespace("callr", quietly = TRUE)) {
+    child_failed <- FALSE
+    res <- tryCatch(
+      callr::r(
+        func = function(func, args) {
+          ov_qs_read <- function(file, ...) {
+            if (!requireNamespace("qs2", quietly = TRUE)) stop("ov_qs_read requires the qs2 package (qs2::qs_read).", call. = FALSE)
+            if (file.exists(file)) { r <- try(qs2::qs_read(file, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r) }
+            if (endsWith(tolower(file), ".qs")) { v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2"); if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r) } }
+            else if (endsWith(tolower(file), ".qs2")) { v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs"); if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r) } }
+            stop("ov_qs_read: qs2::qs_read could not read .qs/.qs2 file: ", file, call. = FALSE)
+          }
+          ov_qs_save <- function(obj, file, ...) { .a <- list(...); for (.k in c("preset", "nthreads", "check_hash")) .a[[.k]] <- NULL; do.call(qs2::qs_save, c(list(object = obj, file = file), .a)); invisible(file) }
+          ov_qs_exists <- function(file) { if (file.exists(file)) return(TRUE); if (endsWith(tolower(file), ".qs")) return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2"))); if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs"))); FALSE }
+          assign("ov_qs_read", ov_qs_read, globalenv()); assign("ov_qs_save", ov_qs_save, globalenv()); assign("ov_qs_exists", ov_qs_exists, globalenv())
+          do.call(func, args)
+        },
+        args = list(func = func, args = args), timeout = timeout_sec, show = FALSE
+      ),
+      error = function(e) { message("[rc_microservice] child failed (", conditionMessage(e), "); running in-process"); child_failed <<- TRUE; NULL })
+    if (!child_failed) return(res)
+  }
+  # Fallback: run in-process (correct result; no separate-process memory reclaim).
+  setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+  on.exit(setTimeLimit(elapsed = Inf), add = TRUE)
+  invisible(do.call(func, args))
+}
+
+# Backward-compatible alias: all existing callers of run_func_via_rsclient now use the
+# callr microservice path above instead of the retired nested-RSclient fork.
 run_func_via_rsclient <- function(func, args = list(), timeout_sec = 60) {
-  conn <- RSclient::RS.connect(host = "localhost", port = 6311)
-  on.exit(try(RSclient::RS.close(conn), silent = TRUE))
-  # Inject the qs wrapper helpers into the subprocess R session so callers
-  # writing ov_qs_read(f) / ov_qs_save(obj, f) inside their subprocess func
-  # body work transparently — the subprocess is a fresh R session and does
-  # not inherit master-session helpers otherwise.
-  RSclient::RS.eval(conn, quote({
-    ov_qs_read <- function(file, ...) {
-      if (file.exists(file)) {
-        r <- try(qs2::qs_read(file, ...), silent = TRUE)
-        if (!inherits(r, "try-error")) return(r)
-        return(qs::qread(file, ...))
-      }
-      if (endsWith(tolower(file), ".qs")) {
-        v2 <- paste0(substr(file, 1, nchar(file) - 3L), ".qs2")
-        if (file.exists(v2)) { r <- try(qs2::qs_read(v2, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v2, ...)) }
-      } else if (endsWith(tolower(file), ".qs2")) {
-        v1 <- paste0(substr(file, 1, nchar(file) - 4L), ".qs")
-        if (file.exists(v1)) { r <- try(qs2::qs_read(v1, ...), silent = TRUE); if (!inherits(r, "try-error")) return(r); return(qs::qread(v1, ...)) }
-      }
-      stop("ov_qs_read: neither .qs2 nor .qs found for: ", file, call. = FALSE)
-    }
-    ov_qs_save <- function(obj, file, ...) {
-      .args <- list(...)
-      for (.k in c("preset", "nthreads", "check_hash")) .args[[.k]] <- NULL
-      do.call(qs2::qs_save, c(list(object = obj, file = file), .args))
-      invisible(file)
-    }
-    ov_qs_exists <- function(file) {
-      if (file.exists(file)) return(TRUE)
-      if (endsWith(tolower(file), ".qs"))  return(file.exists(paste0(substr(file, 1, nchar(file) - 3L), ".qs2")))
-      if (endsWith(tolower(file), ".qs2")) return(file.exists(paste0(substr(file, 1, nchar(file) - 4L), ".qs")))
-      FALSE
-    }
-  }))
-  RSclient::RS.assign(conn, ".exec_wd", getwd())
-  RSclient::RS.assign(conn, ".exec_func", func)
-  RSclient::RS.assign(conn, ".exec_args", args)
-  RSclient::RS.assign(conn, ".exec_timeout", timeout_sec)
-  RSclient::RS.eval(conn, quote({
-    setwd(.exec_wd)
-    setTimeLimit(elapsed = .exec_timeout, transient = TRUE)
-    on.exit(setTimeLimit(elapsed = Inf))
-    do.call(.exec_func, .exec_args)
-  }))
+  run_func_via_microservice(func, args = args, timeout_sec = timeout_sec)
 }
 
 SetScatterOptions <- function(scaleMode="independent", confLevel=0.95, confMethod="chisq") {
