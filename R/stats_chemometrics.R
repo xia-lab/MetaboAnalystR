@@ -195,7 +195,7 @@ PCA.Anal <- function(mSetObj=NA){
 ## distance matrix, no separate R process and no vegan call are needed; one
 ## permutation costs O(n). Returns c(F, R2, p, n): F value, R-squared, permutation
 ## p-value and the number of samples used (NA rows are dropped).
-.permanova_euclid <- function(pc.mat, grp, cls.type = "disc", permutations = 999L) {
+.permanova_euclid <- function(pc.mat, grp, cls.type = "disc", permutations = 999L, seed = 20261003L) {
   M <- as.matrix(pc.mat)
   ok <- stats::complete.cases(M) & !is.na(grp)
   M <- M[ok, , drop = FALSE]
@@ -226,6 +226,15 @@ PCA.Anal <- function(mSetObj=NA){
   }
 
   obs.stat <- stat(obs)
+  # a fixed seed (the session's random stream is left as it was): the same scores and grouping always
+  # give the same p-value, so the score-plot line, the all-factor table and the pair plot agree
+  if (!is.null(seed)) {
+    had.seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    if (had.seed) old.seed <- get(".Random.seed", envir = .GlobalEnv)
+    on.exit(if (had.seed) assign(".Random.seed", old.seed, envir = .GlobalEnv) else
+              if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    set.seed(seed)
+  }
   fp <- vapply(seq_len(permutations), function(i) stat(sample(obs))[1], numeric(1))
   p <- (sum(fp >= obs.stat[1] - 1e-10 * abs(obs.stat[1])) + 1) / (permutations + 1)
   c(F = obs.stat[1], R2 = obs.stat[2], p = p, n = n)
@@ -238,8 +247,9 @@ PCA.Anal <- function(mSetObj=NA){
 ## overall PERMANOVA on the current score plot plus, for discrete groups, a table of
 ## all group pairs (R2, F, p and the FDR-adjusted p)
 .calculateDistSig <- function(pc.mat, grp, cls.type = "disc",
-                              permutations = getOption("ov.permanova.nperm", 999L)) {
-  all.res <- .permanova_euclid(pc.mat, grp, cls.type, permutations)
+                              permutations = getOption("ov.permanova.nperm", 999L), overall = NULL) {
+  # overall: the F, R2 and p of the same test when it has been computed already (it is not repeated)
+  all.res <- if (is.null(overall)) .permanova_euclid(pc.mat, grp, cls.type, permutations) else overall
   res <- data.frame(F = all.res[["F"]], R2 = all.res[["R2"]], Pr = all.res[["p"]])
 
   pair.res <- NULL
@@ -3056,7 +3066,7 @@ GetPCAPermANOVAMetaText <- function(mSetObj = NA) {
   fmt <- function(x) vapply(x, function(v) if (is.na(v)) "NA" else format(signif(v, 4), scientific = FALSE), character(1))
   tab <- data.frame(Factor = esc(res$Factor), Type = res$Type,
                     Levels = ifelse(is.na(res$Levels), "-", as.character(res$Levels)),
-                    Samples = as.character(res$Samples), F = fmt(res$F.value), R2 = fmt(res$R2),
+                    F = fmt(res$F.value), R2 = fmt(res$R2),
                     p.value = fmt(res$p.value), p.adj.FDR = fmt(res$p.adj), stringsAsFactors = FALSE)
   print(xtable::xtable(tab), type = "html", print.results = FALSE, include.rownames = FALSE,
         sanitize.text.function = identity, html.table.attributes = "border=1 width=100%")
@@ -3386,12 +3396,12 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   dev.off();
 }
 
-ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 999L), cls.type = "disc") {
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 999L), cls.type = "disc", overall = NULL) {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
 
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations)
+  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations, overall = overall)
   
   # Extract the main results
   resTab <- res[[1]][1, ]

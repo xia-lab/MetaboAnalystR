@@ -847,11 +847,17 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   par(xpd = FALSE)
   
   ## ── PERMANOVA & cleanup --------------------------------------------
-  mSetObj$analSet$pca$permanova.res <-
-    ComputePERMANOVA(pc1, pc2,colourVar, 999, colourTyp)
   ## every metadata factor on the same two PCs; a failure here must not lose the plot
-  mSetObj$analSet$pca$permanova.meta <-
-    tryCatch(.permanova_all_meta(pc.all, meta.all, meta.typ, 999L), error = function(e) NULL)
+  pm <- tryCatch(.permanova_all_meta(pc.all, meta.all, meta.typ, 999L), error = function(e) NULL)
+  mSetObj$analSet$pca$permanova.meta <- pm
+  ## the colour factor's overall test is one row of that table: reused, not computed a second time
+  ov <- NULL
+  if (!is.null(pm) && !is.null(meta) && meta %in% pm$Factor) {
+    r <- pm[pm$Factor == meta, , drop = FALSE][1, ]
+    if (!is.na(r$p.value)) ov <- c(F = r$F.value, R2 = r$R2, p = r$p.value)
+  }
+  mSetObj$analSet$pca$permanova.res <-
+    ComputePERMANOVA(pc1, pc2, colourVar, 999, colourTyp, overall = ov)
   par(op); dev.off()
   invisible(.set.mSet(mSetObj))
 }
