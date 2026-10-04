@@ -613,6 +613,8 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   
   ## 1. Re-order full metadata table (in case you need it later)
   meta.inf <- meta.inf[match(pca.rn, rownames(meta.inf)), , drop = FALSE]
+  pc.all <- mSetObj$analSet$pca$x[, c(pcx, pcy), drop = FALSE]   # all samples, for the all-factor PERMANOVA
+  meta.all <- meta.inf
   
   ## ----- colour & shape variables ------------------------------------
   colourVar <- mSetObj$dataSet$cls
@@ -845,8 +847,17 @@ PlotPCA2DScoreMeta <- function(mSetObj = NA, imgName, format = "png", dpi = defa
   par(xpd = FALSE)
   
   ## ── PERMANOVA & cleanup --------------------------------------------
+  ## every metadata factor on the same two PCs; a failure here must not lose the plot
+  pm <- tryCatch(.permanova_all_meta(pc.all, meta.all, meta.typ, 999L), error = function(e) NULL)
+  mSetObj$analSet$pca$permanova.meta <- pm
+  ## the colour factor's overall test is one row of that table: reused, not computed a second time
+  ov <- NULL
+  if (!is.null(pm) && !is.null(meta) && meta %in% pm$Factor) {
+    r <- pm[pm$Factor == meta, , drop = FALSE][1, ]
+    if (!is.na(r$p.value)) ov <- c(F = r$F.value, R2 = r$R2, p = r$p.value)
+  }
   mSetObj$analSet$pca$permanova.res <-
-    ComputePERMANOVA(pc1, pc2,colourVar, 999, colourTyp)
+    ComputePERMANOVA(pc1, pc2, colourVar, 999, colourTyp, overall = ov)
   par(op); dev.off()
   invisible(.set.mSet(mSetObj))
 }

@@ -189,82 +189,115 @@ PCA.Anal <- function(mSetObj=NA){
   return(.set.mSet(mSetObj));
 }
 
-## use a PERMANOVA to partition the Euclidean distance by groups (discrete) or
-# by a continuous covariate, based on the current score plot
-.calculateDistSig <- function(pc.mat, grp, cls.type = "disc",
-                              permutations = getOption("ov.permanova.nperm", 199L)) {
+## PERMANOVA of a score matrix by a grouping (discrete) or a covariate (continuous),
+## computed directly. With Euclidean distances the pseudo-F is a ratio of sums of
+## squares of the centred scores, identical to vegan::adonis2(dist(M) ~ grp), so no
+## distance matrix, no separate R process and no vegan call are needed; one
+## permutation costs O(n). Returns c(F, R2, p, n): F value, R-squared, permutation
+## p-value and the number of samples used (NA rows are dropped).
+.permanova_euclid <- function(pc.mat, grp, cls.type = "disc", permutations = 999L, seed = 20261003L) {
+  M <- as.matrix(pc.mat)
+  ok <- stats::complete.cases(M) & !is.na(grp)
+  M <- M[ok, , drop = FALSE]
+  grp <- grp[ok]
+  n <- nrow(M)
+  na.res <- c(F = NA_real_, R2 = NA_real_, p = NA_real_, n = n)
+  if (n < 3) return(na.res)
+  M <- sweep(M, 2, colMeans(M))
+  tot <- sum(M^2)
 
-  data.dist <- dist(as.matrix(pc.mat), method = "euclidean")
-
-  bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
-  bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  ov_qs_save(list(data_dist = data.dist, grp = grp, cls_type = cls.type, n_perm = permutations), bridge_in, preset = "fast")
-  on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
-
-  run_func_via_microservice(
-    func = function(wd, bridge_in, bridge_out) {
-      setwd(wd)
-      require(vegan)
-      input <- ov_qs_read(bridge_in)
-      data_dist <- input$data_dist
-      grp <- input$grp
-      cls_type <- input$cls_type
-      n_perm <- input$n_perm
-
-      if (cls_type == "cont") {
-        if (!is.numeric(grp)) stop("'grp' must be numeric when cls.type = 'cont'")
-        res <- vegan::adonis2(data_dist ~ grp, permutations = n_perm)
-        pair.res <- NULL
-      } else {
-        grp <- as.factor(grp)
-        res <- vegan::adonis2(data_dist ~ grp, permutations = n_perm)
-        # >= 2, not > 2: a two-group design has exactly one pair, and reporting it
-        # keeps the table describing the groups actually analysed. With > 2 the
-        # two-group case produced nothing, so an earlier multi-group run's table
-        # stayed on disk and was read as if it applied to the current comparison.
-        if (length(levels(grp)) >= 2) {
-          co <- combn(unique(as.character(grp)), 2)
-          nco <- ncol(co)
-          out <- data.frame(matrix(NA, nrow = nco, ncol = 5))
-          names(out) <- c('pairs', 'SumOfSqs', 'F.Model', 'R2', 'pval')
-          for (j in 1:nco) {
-            ij <- grp %in% c(co[1, j], co[2, j])
-            Dij <- as.dist(as.matrix(data_dist)[ij, ij])
-            fij <- data.frame(fij = grp[ij])
-            a <- vegan::adonis2(Dij ~ fij, data = fij, permutations = n_perm)
-            out[j, 1] <- paste(co[1, j], 'vs', co[2, j])
-            out[j, 2] <- a$SumOfSqs[1]; out[j, 3] <- a$F[1]
-            out[j, 4] <- a$R2[1]; out[j, 5] <- a$`Pr(>F)`[1]
-          }
-          out$p.adj <- p.adjust(out$pval, method = "fdr")
-          out$SumOfSqs <- NULL
-          pair.res <- out
-        } else {
-          pair.res <- NULL
-        }
-      }
-      ov_qs_save(list(res = res, pair.res = pair.res), bridge_out, preset = "fast")
-    },
-    args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
-    timeout_sec = 300
-  )
-
-  result <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
-  if (is.null(result)) {
-    warning("PERMANOVA failed")
-    return(list(NULL, NULL))
+  if (cls.type == "cont") {
+    obs <- as.numeric(grp)
+    if (stats::var(obs) == 0) return(na.res)
+    stat <- function(x) {
+      xc <- x - mean(x)
+      b <- sum(crossprod(M, xc)^2) / sum(xc^2)
+      c(b / ((tot - b) / (n - 2)), b / tot)
+    }
+  } else {
+    obs <- as.integer(droplevels(as.factor(grp)))
+    g <- max(obs)
+    if (g < 2 || n <= g) return(na.res)
+    nk <- tabulate(obs, g)
+    stat <- function(idx) {
+      b <- sum(sweep(rowsum(M, idx), 1, sqrt(nk), "/")^2)
+      c((b / (g - 1)) / ((tot - b) / (n - g)), b / tot)
+    }
   }
-  if (!is.null(result$pair.res)) {
-    rownames(result$pair.res) <- result$pair.res$pairs
-    result$pair.res$pairs <- NULL
-    result$pair.res <- signif(result$pair.res, 5)
-    fast.write.csv(result$pair.res, file = "pca_pairwise_permanova.csv")
+
+  obs.stat <- stat(obs)
+  # a fixed seed (the session's random stream is left as it was): the same scores and grouping always
+  # give the same p-value, so the score-plot line, the all-factor table and the pair plot agree
+  if (!is.null(seed)) {
+    had.seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    if (had.seed) old.seed <- get(".Random.seed", envir = .GlobalEnv)
+    on.exit(if (had.seed) assign(".Random.seed", old.seed, envir = .GlobalEnv) else
+              if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) rm(".Random.seed", envir = .GlobalEnv), add = TRUE)
+    set.seed(seed)
+  }
+  fp <- vapply(seq_len(permutations), function(i) stat(sample(obs))[1], numeric(1))
+  p <- (sum(fp >= obs.stat[1] - 1e-10 * abs(obs.stat[1])) + 1) / (permutations + 1)
+  c(F = obs.stat[1], R2 = obs.stat[2], p = p, n = n)
+}
+
+.permanova_euclid_p <- function(pc.mat, grp, cls.type = "disc", permutations = 999L) {
+  unname(.permanova_euclid(pc.mat, grp, cls.type, permutations)["p"])
+}
+
+## overall PERMANOVA on the current score plot plus, for discrete groups, a table of
+## all group pairs (R2, F, p and the FDR-adjusted p)
+.calculateDistSig <- function(pc.mat, grp, cls.type = "disc",
+                              permutations = getOption("ov.permanova.nperm", 999L), overall = NULL) {
+  # overall: the F, R2 and p of the same test when it has been computed already (it is not repeated)
+  all.res <- if (is.null(overall)) .permanova_euclid(pc.mat, grp, cls.type, permutations) else overall
+  res <- data.frame(F = all.res[["F"]], R2 = all.res[["R2"]], Pr = all.res[["p"]])
+
+  pair.res <- NULL
+  if (cls.type != "cont") {
+    grp <- as.factor(grp)
+    lvs <- levels(droplevels(grp[!is.na(grp)]))
+    # >= 2, not > 2: a two-group design has exactly one pair, and reporting it
+    # keeps the table describing the groups actually analysed.
+    if (length(lvs) >= 2) {
+      co <- combn(lvs, 2)
+      out <- data.frame(F.Model = numeric(ncol(co)), R2 = numeric(ncol(co)),
+                        pval = numeric(ncol(co)), row.names = paste(co[1, ], "vs", co[2, ]))
+      for (j in seq_len(ncol(co))) {
+        ij <- !is.na(grp) & grp %in% co[, j]
+        r <- .permanova_euclid(as.matrix(pc.mat)[ij, , drop = FALSE], grp[ij], "disc", permutations)
+        out[j, ] <- c(r[["F"]], r[["R2"]], r[["p"]])
+      }
+      out$p.adj <- p.adjust(out$pval, method = "fdr")
+      pair.res <- signif(out, 5)
+    }
+  }
+
+  if (!is.null(pair.res)) {
+    fast.write.csv(pair.res, file = "pca_pairwise_permanova.csv")
   } else {
     # Nothing to report for this design: drop any table a previous run left behind
     # rather than let it be read as the current result.
     unlink("pca_pairwise_permanova.csv")
   }
-  return(list(result$res, result$pair.res))
+  return(list(res, pair.res))
+}
+
+## PERMANOVA of every metadata factor on the same two PCs (the iPCA score plot shows a
+## single factor as colour; this tests all of them). meta.info is a data frame with
+## one column per factor and meta.types gives "disc" or "cont" for each column.
+.permanova_all_meta <- function(pc.mat, meta.info, meta.types, permutations = 999L) {
+  rows <- lapply(seq_len(ncol(meta.info)), function(k) {
+    ty <- if (identical(as.character(meta.types[[k]]), "cont")) "cont" else "disc"
+    v <- meta.info[[k]]
+    r <- .permanova_euclid(pc.mat, v, ty, permutations)
+    nlev <- if (ty == "disc") nlevels(droplevels(as.factor(v[!is.na(v)]))) else NA_integer_
+    data.frame(Factor = colnames(meta.info)[k], Type = if (ty == "cont") "continuous" else "discrete",
+               Levels = nlev, Samples = r[["n"]], F.value = r[["F"]], R2 = r[["R2"]], p.value = r[["p"]],
+               stringsAsFactors = FALSE)
+  })
+  out <- do.call(rbind, rows)
+  out$p.adj <- p.adjust(out$p.value, method = "fdr")
+  out[order(out$p.value, na.last = TRUE), , drop = FALSE]
 }
 
 
@@ -3025,6 +3058,20 @@ GetPCAPermANOVAText<-function(mSetObj){
   return(myT);
 }
 
+GetPCAPermANOVAMetaText <- function(mSetObj = NA) {
+  mSetObj <- .get.mSet(mSetObj)
+  res <- mSetObj$analSet$pca$permanova.meta
+  if (is.null(res) || nrow(res) == 0) return("")
+  esc <- function(x) gsub(">", "&gt;", gsub("<", "&lt;", gsub("&", "&amp;", x)))
+  fmt <- function(x) vapply(x, function(v) if (is.na(v)) "NA" else format(signif(v, 4), scientific = FALSE), character(1))
+  tab <- data.frame(Factor = esc(res$Factor), Type = res$Type,
+                    Levels = ifelse(is.na(res$Levels), "-", as.character(res$Levels)),
+                    F = fmt(res$F.value), R2 = fmt(res$R2),
+                    p.value = fmt(res$p.value), p.adj.FDR = fmt(res$p.adj), stringsAsFactors = FALSE)
+  print(xtable::xtable(tab), type = "html", print.results = FALSE, include.rownames = FALSE,
+        sanitize.text.function = identity, html.table.attributes = "border=1 width=100%")
+}
+
 # get which number of components give best performance
 GetPLSBestTune<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -3349,12 +3396,12 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   dev.off();
 }
 
-ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 199L), cls.type = "disc") {
+ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 999L), cls.type = "disc", overall = NULL) {
   # Combine PC1 and PC2 scores into a matrix
   pc.mat <- cbind(pc1, pc2)
 
   # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations)
+  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations, overall = overall)
   
   # Extract the main results
   resTab <- res[[1]][1, ]
@@ -3382,17 +3429,9 @@ ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.perm
   )
 }
 
-ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = getOption("ov.permanova.nperm", 199L)) {
-  # Combine PC1 and PC2 scores into a matrix
-  pc.mat <- cbind(pc1, pc2)
-
-  # Calculate PERMANOVA significance
-  res <- .calculateDistSig(pc.mat, cls, cls.type, permutations = numPermutations)
-
-  # Extract the main results
-  resTab <- res[[1]][1, ]
-
-  return(signif(resTab$Pr, 5))
+ComputePERMANOVAstat <- function(pc1, pc2, cls, cls.type, numPermutations = getOption("ov.permanova.nperm", 999L)) {
+  # only the overall p-value is needed here (the pair-plot panels): no group-pair table
+  signif(.permanova_euclid_p(cbind(pc1, pc2), cls, cls.type, numPermutations), 5)
 }
 
 ComputeMultiVarTest <- function(pc1, pc2, cls, numPermutations = 999) {
