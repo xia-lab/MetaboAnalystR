@@ -230,9 +230,12 @@ PlotRF.VIPMeta <- function(mSetObj = NA,
   .set.mSet(mSetObj)
 }
 
-PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta"){
+PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta", norm.data=NULL, cls.init=NULL){
   mSetObj <- .get.mSet(mSetObj);
-  if(type == "meta"){
+  own.data <- !is.null(norm.data) && !is.null(cls.init);   # data given by the caller (elastic net)
+  if(own.data){
+    # norm.data and cls.init as given
+  }else if(type == "meta"){
     norm.data <- mSetObj$dataSet$norm.meta
     cls.init <- mSetObj$dataSet$cls.rf
   }else{
@@ -314,7 +317,7 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
     bg[m,] <- (col[nc:1])[rank(mns[m,])];
   }
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+  if(!own.data && mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.factor(as.numeric(levels(cls.init))[cls.init]);
   }else{
     cls <- cls.init;
@@ -376,7 +379,9 @@ PlotImpVarCont <- function(mSetObj  = NA,
                            feat.num = 15,
                            nBins    = 3,
                            color.BW = FALSE,
-                           type     = "meta") {
+                           type     = "meta",
+                           norm.data = NULL,
+                           y         = NULL) {
   
   mSetObj <- .get.mSet(mSetObj)
   rf_mod  <- mSetObj$analSet$rf
@@ -389,7 +394,9 @@ PlotImpVarCont <- function(mSetObj  = NA,
   names(imp.top) <- NULL
   
   ## ── fetch data and response ---------------------------------------
-  if (type == "meta") {
+  if (!is.null(norm.data) && !is.null(y)) {
+    y <- as.numeric(y)   # data given by the caller (elastic net)
+  } else if (type == "meta") {
     norm.data <- mSetObj$dataSet$norm.meta
     y         <- as.numeric(mSetObj$dataSet$cls.rf)
   } else {

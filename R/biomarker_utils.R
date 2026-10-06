@@ -159,48 +159,7 @@ SetCurrentGroups <- function(mSetObj=NA, grps){
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 
-# Elastic-net fit that survives a small cross-validation fold.
-#
-# cv.glmnet needs enough members per class to hold folds out; inside MCCV the
-# training subset is a fraction of the data, so it fails there and returned NULL.
-# The caller then had no feature ranking, built no models, and the results page
-# showed an empty "Best model (max AUC)". Fall back to a plain glmnet path and
-# pick a mid-path lambda, which always yields coefficients.
-# Returns list(fit, s) or NULL.
-# Tie-free elastic-net importance: total |beta| across the whole lambda path.
-#
-# |beta| at a SINGLE lambda is mostly exact zeros, and GetImpFeatureMat ranks each
-# CV run with rank(-imp), which AVERAGES ties — so every zero-coefficient feature
-# receives the same rank and "Selected Frequency" collapses to 1.0 for all of
-# them. Used by BOTH RankFeatures and Predict.class: imp.cv (what the frequency
-# plot actually ranks) is produced by Predict.class, so fixing only the former
-# left the plot unchanged.
-.ov_enet_imp <- function(x, y, feat.names) {
-  fit <- try(glmnet::glmnet(as.matrix(x), as.factor(y), family = "binomial", alpha = 0.5), silent = TRUE);
-  if (inherits(fit, "try-error")) {
-    ef <- .ov_enet_fit(as.matrix(x), y);
-    if (is.null(ef)) return(NULL);
-    v <- abs(as.matrix(stats::coef(ef$fit, s = ef$s))[-1, 1]);
-  } else {
-    v <- rowSums(abs(as.matrix(stats::coef(fit))))[-1];
-  }
-  names(v) <- feat.names;
-  v
-}
-
-.ov_enet_fit <- function(x, y) {
-  if (!requireNamespace("glmnet", quietly = TRUE)) return(NULL);
-  y <- as.factor(y);
-  nfold <- max(3, min(5, min(table(y))));
-  fit <- try(glmnet::cv.glmnet(x, y, family = "binomial", alpha = 0.5, nfolds = nfold), silent = TRUE);
-  if (!inherits(fit, "try-error")) {
-    return(list(fit = fit, s = "lambda.min"));
-  }
-  fit2 <- try(glmnet::glmnet(x, y, family = "binomial", alpha = 0.5), silent = TRUE);
-  if (inherits(fit2, "try-error")) return(NULL);
-  lam <- fit2$lambda[max(1L, ceiling(length(fit2$lambda) / 2L))];
-  list(fit = fit2, s = lam);
-}
+# Elastic-net helpers (.ov_enet_fit, .ov_enet_imp) are in stats_enet.R, shared with the elastic net page of the statistics modules.
 
 RankFeatures <- function(x.in, y.in, method, lvNum){
   if(method == "rf"){ # use randomforest mean decrease accuracy
