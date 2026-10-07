@@ -1009,6 +1009,7 @@ GetKeggEntryMappingTable <- function(mSetObj=NA){
         colnames(csv.res)<-c("Query", "Entrez", "Symbol", "Name", "Comment");
 
         sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+        if (exists("ov_require_ref_sqlite", mode = "function")) ov_require_ref_sqlite(sqlite.path);
         #print(paste("DEBUG: Initial sqlite.path =", sqlite.path));
         #print(paste("DEBUG: url.pre =", url.pre));
         if(!file.exists(sqlite.path)){

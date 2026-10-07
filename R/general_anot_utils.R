@@ -546,6 +546,7 @@ doGeneIDMapping <- function(q.vec, org, type){
 doGeneEntryMapping <- function(q.vec, org, type){
 
   sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+  if (exists("ov_require_ref_sqlite", mode = "function")) ov_require_ref_sqlite(sqlite.path);
   #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
   sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
   sqlite.path <- .ensure.sqlite.db(sqlite.path, sqlite_url);
@@ -607,6 +608,7 @@ doAllGeneIDMapping <- function(gene.vec, org, idType){
 
 convert2KeggEntry <- function(q.vec, type, org){
     sqlite.path <- paste0(url.pre, "genes_entries_130_species.sqlite");
+    if (exists("ov_require_ref_sqlite", mode = "function")) ov_require_ref_sqlite(sqlite.path);
     #"https://www.xialab.ca/resources/sqlite/hsa_genes.sqlite"
     sqlite_url <- paste0("https://www.xialab.ca/resources/sqlite/genes_entries_130_species.sqlite");
     sqlite.path <- .ensure.sqlite.db(sqlite.path, sqlite_url);
