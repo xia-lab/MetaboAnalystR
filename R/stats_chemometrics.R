@@ -6,9 +6,13 @@
 #' Get scatter plot options from session (safe, with defaults)
 #' Returns list: level, method ("chisq"/"f"), type ("norm"/"t" for stat_ellipse),
 #'               use.asp (TRUE if uniform scaling), scaleMode
-#' @param default.level fallback confidence level if session not available
+#' @param default.level fallback confidence level if session not available.
+#'   A level of 0 (the "Display 95% confidence region" box unchecked) means no
+#'   ellipses and is never overridden by the session's confidence level.
 .get.scatter.params <- function(default.level = 0.95) {
   level <- default.level
+  ellipse.off <- is.numeric(default.level) && length(default.level) == 1 &&
+                 !is.na(default.level) && default.level <= 0
   method <- "chisq"
   type <- "norm"
   scaleMode <- "independent"
@@ -16,7 +20,7 @@
   tryCatch({
     if (exists("GetScatterOptions")) {
       opts <- GetScatterOptions()
-      if (!is.null(opts$confidenceLevel)) level <- opts$confidenceLevel
+      if (!is.null(opts$confidenceLevel) && !ellipse.off) level <- opts$confidenceLevel
       if (!is.null(opts$confMethod)) method <- opts$confMethod
       if (!is.null(opts$scaleMode)) scaleMode <- opts$scaleMode
       if (!is.null(opts$hideTightEllipse)) hideTightEllipse <- opts$hideTightEllipse
@@ -78,6 +82,8 @@ GetEllipseRadius <- function(level, method, n) {
 .compute.group.ellipse <- function(x, y, params, npoints = 100) {
   n <- length(x)
   if (n < 3) return(matrix(NA, npoints, 2))
+  # Confidence region switched off by the user: an all-NA slice draws nothing
+  if (!is.finite(params$level) || params$level <= 0) return(matrix(NA, npoints, 2))
   groupVar <- var(cbind(x, y), na.rm = TRUE)
   axisRatio <- .ellipse.axis.ratio(x, y)
   if (is.na(axisRatio)) return(matrix(NA, npoints, 2))
