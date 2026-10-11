@@ -48,7 +48,7 @@ test_that("when the cutoff was never set, the top 10% by |score| is tested, as b
   expect_match(mSet$msgSet$rich.msg, "top `10%` by \\|score\\|")
 })
 
-test_that("an explicit top share equals the default and changes the hits when it changes", {
+test_that("an explicit top percentage equals the default and changes the hits when it changes", {
   mSet <- rl.mset(rl.fc)
   base <- CalculateHyperScore(mSet, "mummi_like")
   same <- CalculateHyperScore(SetRankedListCutoff(mSet, "top", 0.10), "mummi_like")
@@ -124,7 +124,7 @@ test_that("an explicit direction beats the default for the score kind", {
   expect_equal(sort(used$hits), rl.hmdb(mSet, c(5, 6, 7, 8, 10, 11, 12, 13, 16, 17, 18, 19, 20)))
 })
 
-test_that("the top share of a p-value list is the smallest p", {
+test_that("the top percentage of a p-value list is the smallest p", {
   mSet <- rl.mset(rl.p, "p")
   mSet <- CalculateHyperScore(mSet, "mummi_like")
   # 10% of 20 = 2: p .0005 (Lactate) and .001 (Glucose)
@@ -136,7 +136,7 @@ test_that("a score cutoff on a list with no score is refused in plain words", {
   rl.reset.errors()
   expect_equal(SetRankedListCutoff(mSet, "score", 1), 0)
   expect_match(rl.last.error(), "no scores")
-  expect_match(rl.last.error(), "top share")
+  expect_match(rl.last.error(), "top percentage")
 })
 
 test_that("a score cutoff that no compound passes is refused naming the cutoff", {

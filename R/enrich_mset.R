@@ -679,7 +679,7 @@ Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec, scoreType="fc"){
 #'before. What was tested is recorded in mSetObj$analSet$ranked.cutoff.used and read back,
 #'in words, by GetRankedListCutoffMsg.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param cutoff.by "top" (default): the top share of the list; "score": the compounds whose
+#'@param cutoff.by "top" (default): the top percentage of the list; "score": the compounds whose
 #'|score| passes a cutoff. A score cutoff needs the list to carry a score (Setup.CmpdRankScore).
 #'@param cutoff For "top", the share as a fraction (0.10 = the top 10 percent; above 0, at most 1).
 #'For "score", the score cutoff (zero or larger); on a p-value list it is the p-value itself.
@@ -695,7 +695,7 @@ SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff
   mSetObj <- .get.mSet(mSetObj);
 
   if(!is.character(cutoff.by) || length(cutoff.by) != 1 || !cutoff.by %in% c("top", "score")){
-    AddErrMsg("The hits of a ranked list are chosen by the top share or by a score cutoff!");
+    AddErrMsg("The hits of a ranked list are chosen by the top percentage or by a score cutoff!");
     return(0);
   }
   cutoff <- suppressWarnings(as.numeric(cutoff));
@@ -706,7 +706,7 @@ SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff
 
   if(cutoff.by == "top"){
     if(cutoff <= 0 || cutoff > 1){
-      AddErrMsg("The top share must be above 0 and at most 100 percent!");
+      AddErrMsg("The top percentage must be above 0 and at most 100 percent!");
       return(0);
     }
     mSetObj$paramSet$ranked.cutoff <- list(by="top", value=cutoff, dir=NA_character_);
@@ -715,7 +715,7 @@ SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff
 
   score <- mSetObj$dataSet$cmpd.rank.score;
   if(is.null(score) || !any(is.finite(score))){
-    AddErrMsg("Your list has no scores, so a score cutoff cannot be applied. Choose the top share instead, or give each compound a score.");
+    AddErrMsg("Your list has no scores, so a score cutoff cannot be applied. Choose the top percentage instead, or give each compound a score.");
     return(0);
   }
   if(cutoff < 0){

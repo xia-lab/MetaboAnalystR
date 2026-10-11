@@ -34,7 +34,7 @@
   if(by == "score"){
     if(is.null(rank.score.map)){
       return(list(ok = FALSE, msg = paste0("Your list has no scores, so a score cutoff cannot be applied. ",
-                                           "Choose the top share instead, or give each compound a score.")));
+                                           "Choose the top percentage instead, or give each compound a score.")));
     }
     is.p <- identical(score.type, "p");
     sc <- as.numeric(rank.score.map[vec]);
