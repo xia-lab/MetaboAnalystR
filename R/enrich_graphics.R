@@ -297,6 +297,10 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
   if(.on.public.web){
     # Use the ALL / Original ID data for the network
     mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
+    # the "sets and compounds" view of the same network; the sets-only view above is the default
+    # and must not depend on it
+    tryCatch(PlotEnrichNet.Bipartite(mSetObj$analSet$ora.hits, folds.all, pvals.all),
+             error=function(e){ message("The sets and compounds network was not written: ", conditionMessage(e)); });
   }
   
   return(.set.mSet(mSetObj));
@@ -432,6 +436,9 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=defau
   if(.on.public.web){
     # Use ALL data for Network
     mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
+    # the "sets and compounds" view of the same network (see PlotORA)
+    tryCatch(PlotEnrichNet.Bipartite(mSetObj$analSet$qea.hits, folds.all, pvals.all),
+             error=function(e){ message("The sets and compounds network was not written: ", conditionMessage(e)); });
   }
   
   mSetObj$imgSet$qea <-imgName;
@@ -1057,7 +1064,9 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   wd <- melt(w);
   wd <- wd[wd[,1] != wd[,2],];
   wd <- wd[!is.na(wd[,3]),];
-  g <- graph_from_data_frame(wd[,-3], directed=F);
+  # a single set has no pair to build the graph from: name its one vertex explicitly
+  g <- graph_from_data_frame(wd[,-3], directed=F,
+                             vertices=if(n < 2) data.frame(name=id, stringsAsFactors=FALSE) else NULL);
   E(g)$width <- sqrt(wd[,3]*20);
   g <- delete_edges(g, E(g)[wd[,3] < 0.25]);
   #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
@@ -1099,6 +1108,112 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   sink();
   
   return(g);  
+}
+
+#' PlotEnrichNet.Bipartite
+#' @description The "sets and compounds" view of the enrichment network: the metabolite sets of
+#' PlotEnrichNet.Overview (the same top 50, the same size and colour rules) plus the compounds of
+#' your query that hit them, one edge from a set to each of its hit compounds. A compound hit by
+#' several sets joins them. Written as JSON for the network panel of the result page; the
+#' sets-only view stays PlotEnrichNet.Overview's. To keep the picture readable at most
+#' \code{max.members} compounds are drawn: every set contributes up to \code{max.per.set} of its
+#' hit compounds (fewer when many sets are shown), the ones it shares with the most other sets
+#' first, and a compound that is drawn is joined to every drawn set it hit. The layout is
+#' deterministic (Kamada-Kawai), so the same result always gives the same picture.
+#' @param hits Named list: metabolite set -> its hit compounds (analSet$ora.hits or qea.hits)
+#' @param folds Fold enrichment (hits/expected) per set, as given to PlotEnrichNet.Overview
+#' @param pvals P value per set, named by set and ordered most significant first, as given to
+#' PlotEnrichNet.Overview
+#' @param file The JSON file to write
+#' @param max.sets Number of sets drawn at most, 50 as in the overview
+#' @param max.members Number of compounds drawn at most
+#' @param max.per.set Number of compounds each set contributes at most
+#' @export
+#' @import igraph
+
+PlotEnrichNet.Bipartite <- function(hits, folds, pvals, file="msea_network_bipartite.json",
+                                    max.sets=50, max.members=100, max.per.set=10){
+
+  # the file of an earlier run must never be shown for this one
+  unlink(file);
+
+  if(is.null(names(pvals)) || length(folds) != length(pvals)){
+    stop("PlotEnrichNet.Bipartite needs the fold enrichment and the p value of each metabolite set, named by set!");
+  }
+  if(length(pvals) > max.sets){
+    folds <- folds[1:max.sets];
+    pvals <- pvals[1:max.sets];
+  }
+  ids <- names(pvals);
+  n <- length(ids);
+  if(n == 0){
+    return(invisible(NULL));
+  }
+
+  # the hit compounds of each set drawn
+  set.hits <- lapply(ids, function(s){
+    h <- as.character(hits[[s]]);
+    unique(h[!is.na(h) & nzchar(h)]);
+  });
+  names(set.hits) <- ids;
+  all.cpds <- unique(unlist(set.hits, use.names=FALSE));
+  n.sets.hit <- tabulate(match(unlist(set.hits, use.names=FALSE), all.cpds), nbins=length(all.cpds));
+  names(n.sets.hit) <- all.cpds;
+
+  # cap: each set offers its most widely shared compounds first (ties by name, C-locale order)
+  per.set <- max(1, min(max.per.set, floor(max.members / n)));
+  chosen <- lapply(set.hits, function(h){
+    head(h[order(-n.sets.hit[h], h, method="radix")], per.set);
+  });
+  members <- unique(unlist(chosen, use.names=FALSE));
+
+  # a compound node never takes the id of a set
+  mem.ids <- paste0("cpd:", members);
+  while(any(mem.ids %in% ids)){
+    mem.ids <- paste0("cpd:", mem.ids);
+  }
+
+  # set -> compound, for every drawn compound the set hit
+  from <- character(0);
+  to <- character(0);
+  for(i in seq_len(n)){
+    hit.inx <- match(intersect(set.hits[[i]], members), members);
+    from <- c(from, rep(ids[i], length(hit.inx)));
+    to <- c(to, mem.ids[hit.inx]);
+  }
+
+  g <- igraph::graph_from_data_frame(data.frame(from=from, to=to, stringsAsFactors=FALSE), directed=FALSE,
+                                     vertices=data.frame(name=c(ids, mem.ids), stringsAsFactors=FALSE));
+  if(igraph::ecount(g) == 0 || igraph::vcount(g) < 3){
+    pos.xy <- igraph::layout_in_circle(g);
+  }else{
+    pos.xy <- igraph::layout_with_kk(g);
+  }
+  pos.xy <- round(pos.xy * 100, 1);
+
+  # same size and colour rules as PlotEnrichNet.Overview: size by fold enrichment, colour by the
+  # position of the p value
+  set.sizes <- as.numeric(folds) + 3;
+  set.cols <- heat.colors(n);
+  nodes <- c(
+    lapply(seq_len(n), function(i){
+      list(id=ids[i], label=ids[i], kind="set", size=set.sizes[i], color=set.cols[i],
+           x=pos.xy[i,1], y=pos.xy[i,2]);
+    }),
+    lapply(seq_along(members), function(j){
+      list(id=mem.ids[j], label=members[j], kind="member", size=2, color="#6BAED6",
+           x=pos.xy[n+j,1], y=pos.xy[n+j,2]);
+    })
+  );
+  edges <- lapply(seq_along(from), function(k){
+    list(id=as.character(k), source=from[k], target=to[k]);
+  });
+
+  netData <- list(nodes=nodes, edges=edges,
+                  summary=list(sets=n, members=length(members), members_total=length(all.cpds)));
+  writeLines(enc2utf8(RJSONIO::toJSON(netData)), file, useBytes=TRUE);
+
+  return(invisible(netData));
 }
 
 PrepareSifDownloads <- function(mSetObj=NA){
