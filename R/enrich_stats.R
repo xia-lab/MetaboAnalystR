@@ -732,6 +732,275 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   return(.set.mSet(mSetObj));
 }
 
+#'GSEA for a metabolite concentration table (phenotype permutation)
+#'@description Tests every metabolite set of the current library for a coordinated difference between the
+#'sample groups of a concentration table, with gene set enrichment analysis (GSEA). The compounds measured in
+#'the data are ranked by a per-compound statistic (t statistic for two groups, F statistic for more than two
+#'groups, t statistic of the correlation for a continuous outcome), the enrichment score (ES) of a set is the
+#'maximum deviation of the weighted running sum (weight: the absolute statistic), and the significance of the
+#'ES comes from permuting the SAMPLE labels: the statistic of every compound is recomputed for each permutation,
+#'so that the correlation between compounds is kept in the null distribution. The background is the set of
+#'compounds measured in the data: a library set is cut to its measured members, and a set with fewer than
+#'minSize or more than maxSize measured members is not tested. With two groups or a continuous outcome the ES is
+#'two-sided (a set can be enriched among the compounds higher or lower in the first group); with more than two
+#'groups the statistic has no sign and only enrichment at the top of the ranking is scored. NES is the ES divided
+#'by the mean of the permuted ES of the same sign, the p value is the share of the permuted ES of that sign as
+#'large as the observed one (with the observed one counted), and the FDR is the Benjamini-Hochberg adjustment.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param nperm Number of permutations of the sample labels (default 1000)
+#'@param minSize Smallest number of measured compounds of a set that is tested (default 3)
+#'@param maxSize Largest number of measured compounds of a set that is tested (default 300)
+#'@param seed Optional integer to make the permutations reproducible
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=300, seed=NA){
+
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(!exists("current.msetlib")){
+    current.msetlib <<- ov_qs_read("current.msetlib.qs");
+  }
+
+  # the table with the compound names of the library (as the Global Test reads it)
+  nm.map <- GetFinalNameMap(mSetObj);
+  valid.inx <- !(is.na(nm.map$hmdb)| duplicated(nm.map$hmdb));
+  nm.map <- nm.map[valid.inx,];
+  orig.nms <- nm.map$query;
+
+  hmdb.inx <- match(colnames(mSetObj$dataSet$norm), orig.nms);
+  hit.inx <- !is.na(hmdb.inx);
+  msea.data <- as.matrix(mSetObj$dataSet$norm[,hit.inx, drop=FALSE]);
+  colnames(msea.data) <- nm.map$hmdb[hmdb.inx[hit.inx]];
+
+  current.mset <- current.msetlib$member;
+  if(mSetObj$dataSet$use.metabo.filter && !is.null(mSetObj$dataSet$metabo.filter.hmdb)){
+    current.mset <- lapply(current.msetlib$member, function(x){x[x %in% mSetObj$dataSet$metabo.filter.hmdb]})
+    mSetObj$dataSet$filtered.mset <- current.mset;
+  }
+  if(length(current.mset) < 2){
+    AddErrMsg("Cannot perform enrichment analysis on a single metabolite sets!");
+    return(0);
+  }
+
+  # the background is what was measured: a set keeps its measured members only
+  hits <- lapply(current.mset, function(x){x[x %in% colnames(msea.data)]});
+  set.num <- unlist(lapply(current.mset, length), use.names = FALSE);
+
+  cls.type <- if(is.null(mSetObj$dataSet$cls.type)) "disc" else mSetObj$dataSet$cls.type;
+  cls <- mSetObj$dataSet$cls;
+  if(cls.type == "cont"){
+    cls <- as.numeric(as.character(cls));
+  }else{
+    cls <- droplevels(as.factor(cls));
+  }
+
+  res <- .gsea.table.engine(msea.data, cls, hits, nperm=nperm, minSize=minSize, maxSize=maxSize, seed=seed);
+  if(is.character(res)){
+    AddErrMsg(res);
+    return(0);
+  }
+  if(nrow(res$table) == 0){
+    AddErrMsg(paste0("No metabolite set has between ", minSize, " and ", maxSize, " measured compounds. Choose another library."));
+    return(0);
+  }
+
+  stat.nm <- switch(res$design, two = "t statistic of the two groups", multi = "F statistic of the groups",
+                    cont = "t statistic of the correlation with the outcome");
+  mSetObj$msgSet$rich.msg <- paste0("The enrichment analysis method is ```GSEA``` with permutation of the sample labels.",
+    "\n\n- Compounds are ranked by the ", stat.nm, ".",
+    "\n\n- ", res$nperm, " permutations of the sample labels; the background is the ", ncol(msea.data), " measured compounds.",
+    "\n\n- Sets tested: ", nrow(res$table), " (", minSize, " to ", maxSize, " measured compounds each).",
+    if(res$few.perm) paste0("\n\n- Only ", format(res$n.distinct, digits=3), " different arrangements of the labels exist, so no p value is smaller than about ", signif(1/res$n.distinct, 2), "."),
+    if(res$small.group) "\n\n- A group has fewer than 7 samples; GSEA with permutation of the sample labels is not reliable then." else "");
+
+  set.names <- rownames(res$table);
+  mSetObj$analSet$set.num <- set.num;
+  mSetObj$analSet$qea.hits <- hits;
+  mSetObj$analSet$msea.data <- msea.data;
+  mSetObj$analSet$qea.pvals <- res$cmpd.p;
+  mSetObj$analSet$qea.method <- "gsea";
+
+  tab <- res$table;
+  raw.p <- tab$p;
+  res.mat <- cbind(set.num[match(set.names, names(hits))], tab$size, tab$ES, tab$NES, raw.p,
+                   p.adjust(raw.p, "holm"), p.adjust(raw.p, "fdr"));
+  rownames(res.mat) <- set.names;
+  colnames(res.mat) <- c("Total Cmpd", "Hits", "ES", "NES", "Raw p", "Holm p", "FDR");
+  res.mat <- res.mat[order(res.mat[,5], -abs(res.mat[,4])), , drop = FALSE];
+  mSetObj$analSet$qea.mat <- signif(res.mat, 5);
+  fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
+  ExportResultMatArrow(mSetObj$analSet$qea.mat, "qea_result");
+
+  return(.set.mSet(mSetObj));
+}
+
+# The numbers of CalculateGseaTableScore, with no session around them.
+# data: samples x compounds (numeric matrix, column names are the compound names of the sets);
+# cls: a factor (two or more groups) or a numeric outcome; sets: a named list of compound names.
+# Returns an error message (a character), or list(table, design, nperm, cmpd.p, ...) where table has one
+# row per tested set: size (measured members), ES, NES, p.
+.gsea.table.engine <- function(data, cls, sets, nperm=1000, minSize=3, maxSize=300, seed=NA){
+
+  n <- nrow(data);
+  m <- ncol(data);
+  if(is.null(colnames(data)) || m < 3){
+    return("Too few compounds with a matched name to run GSEA!");
+  }
+  if(length(cls) != n){
+    return("The outcome does not match the samples of the data!");
+  }
+  continuous <- is.numeric(cls);
+  if(continuous){
+    design <- "cont";
+    if(n < 4 || stats::sd(cls) == 0){
+      return("The outcome is constant or has too few samples for GSEA!");
+    }
+  }else{
+    cls <- droplevels(as.factor(cls));
+    k <- nlevels(cls);
+    if(k < 2){
+      return("GSEA needs at least two groups!");
+    }
+    if(any(table(cls) < 2)){
+      return("Every group needs at least two samples for GSEA!");
+    }
+    design <- if(k == 2) "two" else "multi";
+  }
+  signed <- design != "multi";
+
+  nperm <- max(round(nperm), 10);
+  if(!is.na(seed)){
+    set.seed(seed);
+  }
+
+  # how many different arrangements of the labels there are
+  if(continuous){
+    n.distinct <- exp(lgamma(n + 1));
+    small.group <- n < 14;
+  }else{
+    gs <- as.numeric(table(cls));
+    n.distinct <- exp(lgamma(n + 1) - sum(lgamma(gs + 1)));
+    small.group <- any(gs < 7);
+  }
+  few.perm <- n.distinct < nperm;
+
+  # the sets: the measured members, within the size limits
+  idx <- lapply(sets, function(x){ unique(stats::na.omit(match(x, colnames(data)))) });
+  size <- lengths(idx);
+  keep <- size >= minSize & size <= maxSize;
+  idx <- idx[keep];
+  if(length(idx) == 0){
+    return(list(table=data.frame(size=integer(0), ES=numeric(0), NES=numeric(0), p=numeric(0)), design=design, nperm=nperm,
+                cmpd.p=numeric(0), few.perm=few.perm, n.distinct=n.distinct, small.group=small.group));
+  }
+
+  obs.stat <- .gsea.table.stat(data, cls, design);
+  obs.es <- .gsea.table.es(obs.stat, idx, signed);
+
+  null.es <- matrix(0, nrow=length(idx), ncol=nperm);
+  for(b in seq_len(nperm)){
+    perm.cls <- cls[sample.int(n)];
+    null.es[,b] <- .gsea.table.es(.gsea.table.stat(data, perm.cls, design), idx, signed);
+  }
+
+  nes <- p <- numeric(length(idx));
+  for(i in seq_along(idx)){
+    nl <- null.es[i,];
+    if(obs.es[i] >= 0){
+      same <- nl[nl >= 0];
+      ref <- mean(same);
+      nes[i] <- if(length(same) > 0 && ref > 0) obs.es[i] / ref else NA_real_;
+      p[i] <- (1 + sum(same >= obs.es[i])) / (1 + length(same));
+    }else{
+      same <- nl[nl < 0];
+      ref <- -mean(same);
+      nes[i] <- if(length(same) > 0 && ref > 0) obs.es[i] / ref else NA_real_;
+      p[i] <- (1 + sum(same <= obs.es[i])) / (1 + length(same));
+    }
+  }
+
+  # the test of each compound by itself (for the compound plots of a set)
+  cmpd.p <- switch(design,
+    two = 2 * stats::pt(-abs(obs.stat), df = max(n - 2, 1)),
+    cont = 2 * stats::pt(-abs(obs.stat), df = max(n - 2, 1)),
+    multi = stats::pf(obs.stat, nlevels(cls) - 1, n - nlevels(cls), lower.tail = FALSE));
+  names(cmpd.p) <- colnames(data);
+
+  tab <- data.frame(size=as.integer(lengths(idx)), ES=obs.es, NES=nes, p=p, row.names=names(idx));
+  list(table=tab, design=design, nperm=nperm, cmpd.p=cmpd.p, few.perm=few.perm, n.distinct=n.distinct,
+       small.group=small.group, obs.stat=obs.stat);
+}
+
+# the statistic of every compound (column of X) for the outcome y
+.gsea.table.stat <- function(X, y, design){
+  n <- nrow(X);
+  if(design == "cont"){
+    yc <- y - mean(y);
+    Xc <- sweep(X, 2, colMeans(X));
+    r <- as.vector(crossprod(yc, Xc)) / sqrt(sum(yc^2) * colSums(Xc^2));
+    r[!is.finite(r)] <- 0;
+    r <- pmax(pmin(r, 1 - 1e-12), -(1 - 1e-12));
+    return(r * sqrt((n - 2) / (1 - r^2)));
+  }
+  g <- as.integer(y);
+  k <- max(g);
+  if(k == 2){
+    i1 <- g == 1;
+    X1 <- X[i1, , drop=FALSE];
+    X2 <- X[!i1, , drop=FALSE];
+    n1 <- nrow(X1); n2 <- nrow(X2);
+    m1 <- colMeans(X1); m2 <- colMeans(X2);
+    v1 <- colSums(sweep(X1, 2, m1)^2) / (n1 - 1);
+    v2 <- colSums(sweep(X2, 2, m2)^2) / (n2 - 1);
+    t <- (m1 - m2) / sqrt(v1 / n1 + v2 / n2);
+    t[!is.finite(t)] <- 0;
+    return(t);
+  }
+  grand <- colMeans(X);
+  ssb <- 0; ssw <- 0;
+  for(j in seq_len(k)){
+    Xj <- X[g == j, , drop=FALSE];
+    mj <- colMeans(Xj);
+    ssb <- ssb + nrow(Xj) * (mj - grand)^2;
+    ssw <- ssw + colSums(sweep(Xj, 2, mj)^2);
+  }
+  f <- (ssb / (k - 1)) / (ssw / (n - k));
+  f[!is.finite(f)] <- 0;
+  f;
+}
+
+# the enrichment score of every set (a list of positions in stat): the maximum deviation from zero of the
+# running sum, weighted by |stat|. signed = FALSE scores the top of the ranking only.
+.gsea.table.es <- function(stat, idx, signed){
+  m <- length(stat);
+  rk <- integer(m);
+  rk[order(stat, decreasing=TRUE)] <- seq_len(m);
+  w <- abs(stat);
+  vapply(idx, function(ix){
+    r <- rk[ix];
+    o <- order(r);
+    r <- r[o];
+    k <- length(r);
+    wt <- w[ix][o];
+    tot <- sum(wt);
+    if(!is.finite(tot) || tot <= 0){
+      wt <- rep(1, k);
+      tot <- k;
+    }
+    phit <- cumsum(wt) / tot;
+    pmiss <- (r - seq_len(k)) / (m - k);
+    up <- max(phit - pmiss);
+    if(!signed){
+      return(up);
+    }
+    down <- min(c(0, phit[-k]) - pmiss);
+    if(up >= -down) up else down;
+  }, numeric(1));
+}
+
 #'Single sample profiling to compare with
 #'@description reference concentrations stored in the library
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
