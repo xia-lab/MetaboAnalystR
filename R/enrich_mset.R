@@ -671,6 +671,87 @@ Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec, scoreType="fc"){
   return(.set.mSet(mSetObj));
 }
 
+#'Set the hits tested by the permutation-based enrichment on a complete ranked list
+#'@description For a COMPLETE ranked list, the permutation-based method (CalculateHyperScore /
+#'CalculateOraScore with method "mummi_like") tests a set of "hits" for over-representation
+#'against the whole list. This chooses that set. It applies to both metabolite set enrichment
+#'and pathway analysis; when it is never called the top 10 percent of the list is tested, as
+#'before. What was tested is recorded in mSetObj$analSet$ranked.cutoff.used and read back,
+#'in words, by GetRankedListCutoffMsg.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param cutoff.by "top" (default): the top share of the list; "score": the compounds whose
+#'|score| passes a cutoff. A score cutoff needs the list to carry a score (Setup.CmpdRankScore).
+#'@param cutoff For "top", the share as a fraction (0.10 = the top 10 percent; above 0, at most 1).
+#'For "score", the score cutoff (zero or larger); on a p-value list it is the p-value itself.
+#'@param cutoff.dir For "score" only: ">=" (hits have |score| at or above the cutoff) or "<="
+#'(at or below). When not given it follows the kind of score: ">=" for a fold change or
+#'statistic, "<=" for a p-value. The direction used is recorded.
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff.dir=NULL){
+  mSetObj <- .get.mSet(mSetObj);
+
+  if(!is.character(cutoff.by) || length(cutoff.by) != 1 || !cutoff.by %in% c("top", "score")){
+    AddErrMsg("The hits of a ranked list are chosen by the top share or by a score cutoff!");
+    return(0);
+  }
+  cutoff <- suppressWarnings(as.numeric(cutoff));
+  if(length(cutoff) != 1 || !is.finite(cutoff)){
+    AddErrMsg("The cutoff for the hits of a ranked list must be a number!");
+    return(0);
+  }
+
+  if(cutoff.by == "top"){
+    if(cutoff <= 0 || cutoff > 1){
+      AddErrMsg("The top share must be above 0 and at most 100 percent!");
+      return(0);
+    }
+    mSetObj$paramSet$ranked.cutoff <- list(by="top", value=cutoff, dir=NA_character_);
+    return(.set.mSet(mSetObj));
+  }
+
+  score <- mSetObj$dataSet$cmpd.rank.score;
+  if(is.null(score) || !any(is.finite(score))){
+    AddErrMsg("Your list has no scores, so a score cutoff cannot be applied. Choose the top share instead, or give each compound a score.");
+    return(0);
+  }
+  if(cutoff < 0){
+    AddErrMsg("The score cutoff is compared with |score|, so it must be zero or larger!");
+    return(0);
+  }
+  if(is.null(cutoff.dir) || length(cutoff.dir) != 1 || is.na(cutoff.dir)){
+    cutoff.dir <- if(identical(mSetObj$dataSet$cmpd.rank.score.type, "p")) "<=" else ">=";
+  }
+  if(!cutoff.dir %in% c(">=", "<=")){
+    AddErrMsg("The direction of the score cutoff must be >= or <=!");
+    return(0);
+  }
+  mSetObj$paramSet$ranked.cutoff <- list(by="score", value=cutoff, dir=cutoff.dir);
+  return(.set.mSet(mSetObj));
+}
+
+#'What the last permutation-based enrichment tested, in words
+#'@description Reads mSetObj$analSet$ranked.cutoff.used (left by CalculateHyperScore /
+#'CalculateOraScore with method "mummi_like"), for example "Over-representation was tested
+#'for the top 10% (8) of your 82 compounds against all 82." or "... for the 12 compounds
+#'with |score| >= 1 of your 82 against all 82." The direction is written >= / <=. Empty
+#'when the last analysis was not permutation-based.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@author Jeff Xia \email{jeff.xia@mcgill.ca}
+#'McGill University, Canada
+#'License: GNU GPL (>= 2)
+#'@export
+#'
+GetRankedListCutoffMsg <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  used <- mSetObj$analSet$ranked.cutoff.used;
+  if(is.null(used)) return("");
+  paste0("Over-representation was tested for ", used$clause, ".");
+}
+
 #'Read a ranked compound list (name + fold change + p-value/FDR) for preranked GSEA
 #'@description The data-loading entry point for the terminal/API mode counterpart
 #'to pasting a one-column ranked list in the web upload page: reads a table with

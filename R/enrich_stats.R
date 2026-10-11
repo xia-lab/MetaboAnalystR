@@ -16,6 +16,58 @@
   vec[order(-abs(sc))];
 }
 
+# Which compounds of a COMPLETE ranked list are the "hits" tested for over-representation
+# against the whole list (the permutation-based method's "significant" set). `spec` is what
+# SetRankedListCutoff stored (mSetObj$paramSet$ranked.cutoff), or NULL when it was never set:
+# then the top `default.frac` of the list, which is what the method always did.
+#   by = "top"   the top `value` share (a fraction, 0 < value <= 1), ordered by |score| when the
+#                list carries a score and by the submitted order when it does not;
+#   by = "score" the compounds whose |score| `dir` `value` (dir ">=" or "<="). A p-value list is
+#                stored as -log10(p) (Setup.CmpdRankScore), so for score.type "p" the comparison
+#                is made on the p-value itself -- what the user typed -- not on its log.
+# Returns list(ok, msg) when nothing can be tested, else list(ok = TRUE, hits, by, cutoff, dir,
+# n.hits, n.list). The comparison has a relative tolerance of 1e-9: -log10 and back is not
+# exact, and a p of exactly 0.05 must stay a hit of "p <= 0.05".
+.ranked.list.hits <- function(vec, rank.score.map, score.type, spec, default.frac = 0.10){
+  n <- length(vec);
+  by <- if(is.null(spec)) "top" else spec$by;
+  if(by == "score"){
+    if(is.null(rank.score.map)){
+      return(list(ok = FALSE, msg = paste0("Your list has no scores, so a score cutoff cannot be applied. ",
+                                           "Choose the top share instead, or give each compound a score.")));
+    }
+    is.p <- identical(score.type, "p");
+    sc <- as.numeric(rank.score.map[vec]);
+    val <- if(is.p) 10^(-sc) else abs(sc);
+    dir <- spec$dir;
+    cutoff <- spec$value;
+    pass <- is.finite(val) & (if(dir == ">=") val >= cutoff * (1 - 1e-9) else val <= cutoff * (1 + 1e-9));
+    hits <- unique(vec[pass]);
+    if(length(hits) == 0){
+      return(list(ok = FALSE, msg = paste0("No compound has |score| ", dir, " ", format(cutoff, digits = 6, trim = TRUE),
+                                           " among the ", n, " compounds of your list. Change the cutoff or its direction.")));
+    }
+    return(list(ok = TRUE, hits = hits, by = "score", cutoff = cutoff, dir = dir, n.hits = length(hits), n.list = n));
+  }
+  frac <- if(is.null(spec)) default.frac else spec$value;
+  sig.n <- floor(n * frac + 1e-9);
+  sig.n <- max(1, min(sig.n, n));
+  hits <- unique(.rank.for.top.fraction(vec, rank.score.map)[seq_len(sig.n)]);
+  list(ok = TRUE, hits = hits, by = "top", cutoff = frac, dir = NA_character_, n.hits = length(hits), n.list = n);
+}
+
+# What was tested, in words (the result page, the report): "the top 10% (8) of your 82
+# compounds against all 82" / "the 12 compounds with |score| >= 1 of your 82 against all 82".
+.ranked.list.cutoff.clause <- function(used){
+  if(identical(used$by, "score")){
+    paste0("the ", used$n.hits, if(used$n.hits == 1) " compound" else " compounds", " with |score| ", used$dir, " ",
+           format(used$cutoff, digits = 6, trim = TRUE), " of your ", used$n.list, " against all ", used$n.list);
+  }else{
+    paste0("the top ", format(round(used$cutoff * 100, 2), trim = TRUE), "% (", used$n.hits, ") of your ",
+           used$n.list, " compounds against all ", used$n.list);
+  }
+}
+
 #'Over-representation analysis using hypergeometric tests
 #'@description Over-representation analysis using hypergeometric tests
 #'The probability is calculated from obtaining equal or higher number
@@ -145,6 +197,9 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
   res.mat[,2] <- q.size * (set.num / uniq.count)
   res.mat[,3] <- hit.num
 
+  # what a ranked-list cutoff selected is recorded by the permutation-based method only
+  mSetObj$analSet$ranked.cutoff.used <- NULL;
+
   if(method == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     mSetObj$msgSet$rich.msg <- "The selected metabolite set enrichment method is `Fisher's exact test`.";
@@ -156,12 +211,15 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
     # the background universe, not the full library), the hypergeometric universe
     # here is q.size (the measured/ranked list size), not uniq.count (the full
     # library, which only classical hyperg/fisher above use).
-    top.frac <- 0.10;
     perm.num <- 100;
 
-    sig.n <- floor(length(ora.vec.filtered) * top.frac);
-    sig.n <- max(1, min(sig.n, length(ora.vec.filtered)));
-    sig.vec <- unique(.rank.for.top.fraction(ora.vec.filtered, rank.score.map)[seq_len(sig.n)]);
+    cut <- .ranked.list.hits(ora.vec.filtered, rank.score.map, mSetObj$dataSet$cmpd.rank.score.type,
+                             mSetObj$paramSet$ranked.cutoff);
+    if(!cut$ok){
+      AddErrMsg(cut$msg);
+      return(0);
+    }
+    sig.vec <- cut$hits;
     sig.n <- length(sig.vec);
 
     measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec.filtered))}), use.names=FALSE);
@@ -190,10 +248,16 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
 
     hit.num <- obs.hits;
     hits <- lapply(current.mset, function(x){intersect(x, sig.vec)});
+    mSetObj$analSet$ranked.cutoff.used <- c(cut[c("by", "cutoff", "dir", "n.hits", "n.list", "hits")],
+                                            list(clause = .ranked.list.cutoff.clause(cut)));
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected metabolite set enrichment method is `Permutation-based (Mummichog-inspired)`.\n\n",
-      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`",
-      if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order", "\n",
+      "- Significant-feature cutoff: ",
+      if(cut$by == "score") paste0("`|score| ", cut$dir, " ", format(cut$cutoff, digits = 6, trim = TRUE), "` (",
+                                   cut$n.hits, " of ", cut$n.list, " compounds)")
+      else paste0("top `", format(round(cut$cutoff * 100, 2), trim = TRUE), "%`",
+                  if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order"),
+      "\n",
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){
