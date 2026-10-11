@@ -1057,7 +1057,9 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   wd <- melt(w);
   wd <- wd[wd[,1] != wd[,2],];
   wd <- wd[!is.na(wd[,3]),];
-  g <- graph_from_data_frame(wd[,-3], directed=F);
+  # a single set has no pair to build the graph from: name its one vertex explicitly
+  g <- graph_from_data_frame(wd[,-3], directed=F,
+                             vertices=if(n < 2) data.frame(name=id, stringsAsFactors=FALSE) else NULL);
   E(g)$width <- sqrt(wd[,3]*20);
   g <- delete_edges(g, E(g)[wd[,3] < 0.25]);
   #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));

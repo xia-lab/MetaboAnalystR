@@ -133,6 +133,9 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
   res.mat[,2]<-q.size*(set.num/uniq.count);
   res.mat[,3]<-hit.num;
   
+  # what a ranked-list cutoff selected is recorded by the permutation-based method only
+  mSetObj$analSet$ranked.cutoff.used <- NULL;
+
   if(method == "fisher"){
     res.mat[,4] <- GetFisherPvalue(hit.num, q.size, set.num, uniq.count);
     mSetObj$msgSet$rich.msg <- "The selected over-representation analysis method is `Fishers' exact test`.";
@@ -157,9 +160,15 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
       }
     }
 
-    sig.n <- floor(length(ora.vec) * top.frac)
-    sig.n <- max(1, min(sig.n, length(ora.vec)))
-    sig.vec <- unique(.rank.for.top.fraction(ora.vec, rank.score.map)[seq_len(sig.n)])
+    # The Top Hits setting (SetRankedListCutoff) wins; with none, the top fraction above
+    # (the older pathqea.mummi.top.frac parameter, else 10%).
+    cut <- .ranked.list.hits(ora.vec, rank.score.map, mSetObj$dataSet$cmpd.rank.score.type,
+                             mSetObj$paramSet$ranked.cutoff, top.frac)
+    if(!cut$ok){
+      AddErrMsg(cut$msg)
+      return(0)
+    }
+    sig.vec <- cut$hits
     sig.n <- length(sig.vec)
 
     measured.set.num <- unlist(lapply(current.mset, function(x){length(intersect(x, ora.vec))}), use.names=FALSE)
@@ -189,10 +198,16 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     res.mat[,4] <- (perm.le.count + 1) / (perm.num + 1)
     hit.num <- obs.hits
     hits <- lapply(current.mset, function(x){intersect(x, sig.vec)})
+    mSetObj$analSet$ranked.cutoff.used <- c(cut[c("by", "cutoff", "dir", "n.hits", "n.list", "hits")],
+                                            list(clause = .ranked.list.cutoff.clause(cut)))
     mSetObj$msgSet$rich.msg <- paste0(
       "The selected over-representation analysis method is `Mummichog`.\n\n",
-      "- Significant-feature cutoff: top `", round(top.frac * 100, 2), "%`",
-      if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order", "\n",
+      "- Significant-feature cutoff: ",
+      if(cut$by == "score") paste0("`|score| ", cut$dir, " ", format(cut$cutoff, digits = 6, trim = TRUE), "` (",
+                                   cut$n.hits, " of ", cut$n.list, " compounds)")
+      else paste0("top `", format(round(cut$cutoff * 100, 2), trim = TRUE), "%`",
+                  if(!is.null(rank.score.map)) " by |score| (largest change in either direction)" else " by list order"),
+      "\n",
       "- Permutations: `", perm.num, "`"
     );
   } else if(method == "gsea_like"){
