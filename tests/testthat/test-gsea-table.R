@@ -97,13 +97,78 @@ test_that("a continuous outcome ranks by the correlation", {
   expect_gt(r$table["planted", "NES"], 1.5)
 })
 
-test_that("the same seed gives the same result and a table with too few samples is refused or warned", {
+test_that("the same seed gives the same result, and a table that cannot be analysed is refused", {
   d <- gt.make()
   a <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, gt.sets(), nperm = 100, seed = 7)
   b <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, gt.sets(), nperm = 100, seed = 7)
   expect_identical(a$table, b$table)
   expect_true(is.character(MetaboAnalystR:::.gsea.table.engine(d$X[c(1, 13, 14), ], factor(c("A", "B", "B")), gt.sets(), nperm = 50)))
-  few <- MetaboAnalystR:::.gsea.table.engine(d$X[c(1:3, 13:15), ], factor(rep(c("A", "B"), each = 3)), gt.sets(), nperm = 500, seed = 8)
-  expect_true(few$few.perm)       # only 20 arrangements of the labels exist
-  expect_true(few$small.group)
+  expect_true(is.character(MetaboAnalystR:::.gsea.table.engine(d$X, factor(rep("A", 24)), gt.sets(), nperm = 50)))
+})
+
+test_that("a group with fewer than 7 samples switches the permutation of the samples to the permutation of the features", {
+  d <- gt.make()
+  big <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, gt.sets(), nperm = 100, seed = 8)
+  expect_equal(big$mode, "samples"); expect_false(big$switched)
+  small.X <- d$X[c(1:6, 13:18), ]; small.cls <- factor(rep(c("A", "B"), each = 6))
+  sw <- MetaboAnalystR:::.gsea.table.engine(small.X, small.cls, gt.sets(), nperm = 500, seed = 8)
+  expect_equal(sw$mode, "features"); expect_true(sw$switched); expect_true(sw$small.group)
+  expect_lt(sw$n.distinct, 1000)                 # 6 + 6 samples: 924 arrangements, the case the warning names
+  forced <- MetaboAnalystR:::.gsea.table.engine(small.X, small.cls, gt.sets(), nperm = 1000, seed = 8, autoSwitch = FALSE)
+  expect_equal(forced$mode, "samples"); expect_false(forced$switched); expect_true(forced$few.perm)
+  seven <- MetaboAnalystR:::.gsea.table.engine(d$X[c(1:7, 13:19), ], factor(rep(c("A", "B"), each = 7)), gt.sets(), nperm = 100, seed = 8)
+  expect_equal(seven$mode, "samples")            # 7 per group is enough
+  cont <- MetaboAnalystR:::.gsea.table.engine(d$X[1:6, ], c(1, 3, 2, 5, 4, 6), gt.sets(), nperm = 100, seed = 8)
+  expect_equal(cont$mode, "features")            # a continuous outcome with 6 samples
+})
+
+test_that("permuting the features finds a planted set and gives the same observed scores as permuting the samples", {
+  d <- gt.make()
+  f <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, gt.sets(), nperm = 500, seed = 9, permute = "features")
+  s <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, gt.sets(), nperm = 500, seed = 9, permute = "samples")
+  expect_equal(f$mode, "features"); expect_false(f$switched)
+  expect_equal(f$table$ES, s$table$ES, tolerance = 1e-12)
+  expect_equal(rownames(f$table)[which.min(f$table$p)], "planted")
+  expect_lt(f$table["planted", "p"], 0.02)
+  expect_gt(f$table["planted", "NES"], 1.5)
+})
+
+test_that("permuting the features with a random ranking gives about uniform p values", {
+  set.seed(77)
+  X <- matrix(rnorm(20 * 80), 20, 80); colnames(X) <- paste0("C", 1:80)
+  cls <- factor(rep(c("A", "B"), each = 10))
+  sets <- lapply(1:150, function(i) paste0("C", sample(80, sample(4:20, 1))))
+  names(sets) <- paste0("S", 1:150)
+  r <- MetaboAnalystR:::.gsea.table.engine(X, cls, sets, nperm = 400, seed = 10, permute = "features")
+  expect_gt(mean(r$table$p), 0.40); expect_lt(mean(r$table$p), 0.60)
+  expect_lt(mean(r$table$p < 0.05), 0.12)
+})
+
+test_that("permuting the features agrees with fgsea's simple permutation on the same ranking", {
+  skip_if_not_installed("fgsea")
+  skip_if_not(exists("fgseaSimple", envir = asNamespace("fgsea")), "fgseaSimple is not in this fgsea")
+  d <- gt.make(seed = 15)
+  sets <- gt.sets(n.random = 12)
+  mine <- MetaboAnalystR:::.gsea.table.engine(d$X, d$cls, sets, nperm = 3000, seed = 11, permute = "features")
+  stat <- mine$obs.stat; names(stat) <- colnames(d$X)
+  set.seed(12)
+  ref <- suppressWarnings(fgsea::fgseaSimple(sets, stat, nperm = 3000, minSize = 3, maxSize = 300))
+  ref <- as.data.frame(ref); rownames(ref) <- ref$pathway
+  common <- intersect(rownames(mine$table), rownames(ref))
+  expect_gt(length(common), 10)
+  expect_equal(mine$table[common, "ES"], ref[common, "ES"], tolerance = 1e-9)
+  expect_lt(max(abs(mine$table[common, "NES"] - ref[common, "NES"]), na.rm = TRUE), 0.35)
+  expect_gt(cor(log10(mine$table[common, "p"]), log10(ref[common, "pval"])), 0.9)
+})
+
+test_that("feature permutation works for more than two groups and for a continuous outcome", {
+  set.seed(41)
+  X <- matrix(rnorm(30 * 50), 30, 50); colnames(X) <- paste0("C", 1:50)
+  cls <- factor(rep(c("A", "B", "C"), each = 10)); X[cls == "C", 1:7] <- X[cls == "C", 1:7] + 2
+  sets <- list(planted = paste0("C", 1:7), other = paste0("C", 20:30), other2 = paste0("C", 31:44))
+  r <- MetaboAnalystR:::.gsea.table.engine(X, cls, sets, nperm = 400, seed = 12, permute = "features")
+  expect_true(all(r$table$ES >= 0)); expect_equal(rownames(r$table)[which.min(r$table$p)], "planted")
+  y <- rnorm(30); X2 <- matrix(rnorm(30 * 50), 30, 50); colnames(X2) <- paste0("C", 1:50); X2[, 1:7] <- X2[, 1:7] + 1.2 * y
+  r2 <- MetaboAnalystR:::.gsea.table.engine(X2, y, sets, nperm = 400, seed = 13, permute = "features")
+  expect_equal(rownames(r2$table)[which.min(r2$table$p)], "planted")
 })

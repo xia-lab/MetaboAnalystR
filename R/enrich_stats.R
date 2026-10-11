@@ -732,31 +732,40 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
   return(.set.mSet(mSetObj));
 }
 
-#'GSEA for a metabolite concentration table (phenotype permutation)
+#'GSEA for a metabolite concentration table
 #'@description Tests every metabolite set of the current library for a coordinated difference between the
 #'sample groups of a concentration table, with gene set enrichment analysis (GSEA). The compounds measured in
 #'the data are ranked by a per-compound statistic (t statistic for two groups, F statistic for more than two
-#'groups, t statistic of the correlation for a continuous outcome), the enrichment score (ES) of a set is the
-#'maximum deviation of the weighted running sum (weight: the absolute statistic), and the significance of the
-#'ES comes from permuting the SAMPLE labels: the statistic of every compound is recomputed for each permutation,
-#'so that the correlation between compounds is kept in the null distribution. The background is the set of
-#'compounds measured in the data: a library set is cut to its measured members, and a set with fewer than
-#'minSize or more than maxSize measured members is not tested. With two groups or a continuous outcome the ES is
-#'two-sided (a set can be enriched among the compounds higher or lower in the first group); with more than two
-#'groups the statistic has no sign and only enrichment at the top of the ranking is scored. NES is the ES divided
-#'by the mean of the permuted ES of the same sign, the p value is the share of the permuted ES of that sign as
-#'large as the observed one (with the observed one counted), and the FDR is the Benjamini-Hochberg adjustment.
+#'groups, t statistic of the correlation for a continuous outcome), and the enrichment score (ES) of a set is the
+#'maximum deviation of the weighted running sum (weight: the absolute statistic). The significance of the ES
+#'comes from one of two permutations. With permute = "samples" (the default) the SAMPLE labels are permuted and the
+#'statistic of every compound is recomputed for each permutation, so that the correlation between compounds (co-regulated
+#'metabolites, adducts) is kept in the null distribution; it needs enough samples, and when a group has fewer than
+#'minGroup samples (7) the analysis switches to feature permutation (autoSwitch = TRUE) and says so. With permute =
+#'"features" the compounds of the ranking are permuted: the null distribution of a set of k compounds is that of random
+#'sets of k measured compounds on the observed ranking, as for a pre-ranked list. The background is the set of compounds
+#'measured in the data: a library set is cut to its measured members, and a set with fewer than minSize or more than
+#'maxSize measured members is not tested. With two groups or a continuous outcome the ES is two-sided (a set can be
+#'enriched among the compounds higher or lower in the first group); with more than two groups the statistic has no sign
+#'and only enrichment at the top of the ranking is scored. NES is the ES divided by the mean of the permuted ES of the
+#'same sign, the p value is the share of the permuted ES of that sign as large as the observed one (with the observed
+#'one counted), and the FDR is the Benjamini-Hochberg adjustment.
+#'The table has the layout of the Global Test: its third and fourth columns are the ES and the expected ES (the mean
+#'permuted ES of the same sign, with the sign of the ES), so that their ratio, the enrichment ratio of the plots, is
+#'the absolute NES; the file of the results has the signed NES as a column.
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
-#'@param nperm Number of permutations of the sample labels (default 1000)
+#'@param nperm Number of permutations (default 1000)
 #'@param minSize Smallest number of measured compounds of a set that is tested (default 3)
 #'@param maxSize Largest number of measured compounds of a set that is tested (default 300)
 #'@param seed Optional integer to make the permutations reproducible
+#'@param permute "samples" (default) or "features"
+#'@param autoSwitch Switch from "samples" to "features" when a group has fewer than 7 samples (default TRUE)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: GNU GPL (>= 2)
 #'@export
 #'
-CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=300, seed=NA){
+CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=300, seed=NA, permute="samples", autoSwitch=TRUE){
 
   mSetObj <- .get.mSet(mSetObj);
 
@@ -797,7 +806,8 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
     cls <- droplevels(as.factor(cls));
   }
 
-  res <- .gsea.table.engine(msea.data, cls, hits, nperm=nperm, minSize=minSize, maxSize=maxSize, seed=seed);
+  res <- .gsea.table.engine(msea.data, cls, hits, nperm=nperm, minSize=minSize, maxSize=maxSize, seed=seed,
+                            permute=permute, autoSwitch=autoSwitch);
   if(is.character(res)){
     AddErrMsg(res);
     return(0);
@@ -807,14 +817,27 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
     return(0);
   }
 
+  # what to tell the user when the permutation was not the one asked for, or is weak
+  note <- "";
+  if(res$switched){
+    note <- paste0("Sample size per group is too small (n < ", res$min.group, ") for robust phenotype permutation",
+                   if(res$n.distinct < 1000) " (fewer than 1,000 different arrangements of the sample labels exist)" else "",
+                   ". Automatically switched to Feature Permutation.");
+  }else if(res$mode == "samples" && res$few.perm){
+    note <- paste0("Only ", format(res$n.distinct, digits=3), " different arrangements of the sample labels exist, so no p value is smaller than about ",
+                   signif(1/res$n.distinct, 2), ".");
+  }
+  mSetObj$analSet$gsea.table.note <- note;
+  mSetObj$analSet$gsea.table.mode <- res$mode;
+
   stat.nm <- switch(res$design, two = "t statistic of the two groups", multi = "F statistic of the groups",
                     cont = "t statistic of the correlation with the outcome");
-  mSetObj$msgSet$rich.msg <- paste0("The enrichment analysis method is ```GSEA``` with permutation of the sample labels.",
+  perm.nm <- if(res$mode == "samples") "permutations of the sample labels" else "permutations of the compounds (feature permutation)";
+  mSetObj$msgSet$rich.msg <- paste0("The enrichment analysis method is ```GSEA``` with ", if(res$mode == "samples") "permutation of the sample labels." else "permutation of the compounds.",
     "\n\n- Compounds are ranked by the ", stat.nm, ".",
-    "\n\n- ", res$nperm, " permutations of the sample labels; the background is the ", ncol(msea.data), " measured compounds.",
+    "\n\n- ", res$nperm, " ", perm.nm, "; the background is the ", ncol(msea.data), " measured compounds.",
     "\n\n- Sets tested: ", nrow(res$table), " (", minSize, " to ", maxSize, " measured compounds each).",
-    if(res$few.perm) paste0("\n\n- Only ", format(res$n.distinct, digits=3), " different arrangements of the labels exist, so no p value is smaller than about ", signif(1/res$n.distinct, 2), "."),
-    if(res$small.group) "\n\n- A group has fewer than 7 samples; GSEA with permutation of the sample labels is not reliable then." else "");
+    if(nzchar(note)) paste0("\n\n- ", note) else "");
 
   set.names <- rownames(res$table);
   mSetObj$analSet$set.num <- set.num;
@@ -823,27 +846,56 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
   mSetObj$analSet$qea.pvals <- res$cmpd.p;
   mSetObj$analSet$qea.method <- "gsea";
 
+  # The table has the layout of the Global Test (statistic and expected value in the third and fourth columns),
+  # so that the bar chart, the dot plot and the network read it as they do there: the ratio of the two is the
+  # enrichment ratio, and here it is the NES (ES divided by the mean permuted ES of the same sign).
   tab <- res$table;
   raw.p <- tab$p;
-  res.mat <- cbind(set.num[match(set.names, names(hits))], tab$size, tab$ES, tab$NES, raw.p,
+  exp.es <- tab$ES / abs(tab$NES);   # the sign of the ES, so that ES / expected ES is the positive |NES|
+  bad <- !is.finite(exp.es) | exp.es == 0;
+  exp.es[bad] <- tab$ES[bad];
+  res.mat <- cbind(set.num[match(set.names, names(hits))], tab$size, tab$ES, exp.es, raw.p,
                    p.adjust(raw.p, "holm"), p.adjust(raw.p, "fdr"));
   rownames(res.mat) <- set.names;
-  colnames(res.mat) <- c("Total Cmpd", "Hits", "ES", "NES", "Raw p", "Holm p", "FDR");
-  res.mat <- res.mat[order(res.mat[,5], -abs(res.mat[,4])), , drop = FALSE];
+  colnames(res.mat) <- c("Total Cmpd", "Hits", "ES", "Expected ES", "Raw p", "Holm p", "FDR");
+  ord <- order(res.mat[,5], -abs(res.mat[,3] / res.mat[,4]));
+  res.mat <- res.mat[ord, , drop = FALSE];
   mSetObj$analSet$qea.mat <- signif(res.mat, 5);
-  fast.write.csv(mSetObj$analSet$qea.mat, file="msea_qea_result.csv");
+  fast.write.csv(cbind(mSetObj$analSet$qea.mat, NES = signif(tab$NES[ord], 5)), file="msea_qea_result.csv");
   ExportResultMatArrow(mSetObj$analSet$qea.mat, "qea_result");
 
   return(.set.mSet(mSetObj));
 }
 
+#'The note of the last GSEA of a table
+#'@description What the last GSEA of a concentration table has to tell the user: the switch to feature permutation
+#'for a small group, or the few arrangements of the sample labels. Empty when there is nothing to tell.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetGseaTableNote <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  note <- mSetObj$analSet$gsea.table.note;
+  if(is.null(note)) "" else note;
+}
+
+#'The permutation used by the last GSEA of a table ("samples" or "features")
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetGseaTableMode <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mode <- mSetObj$analSet$gsea.table.mode;
+  if(is.null(mode)) "" else mode;
+}
+
 # The numbers of CalculateGseaTableScore, with no session around them.
 # data: samples x compounds (numeric matrix, column names are the compound names of the sets);
 # cls: a factor (two or more groups) or a numeric outcome; sets: a named list of compound names.
-# Returns an error message (a character), or list(table, design, nperm, cmpd.p, ...) where table has one
+# Returns an error message (a character), or list(table, design, mode, nperm, cmpd.p, ...) where table has one
 # row per tested set: size (measured members), ES, NES, p.
-.gsea.table.engine <- function(data, cls, sets, nperm=1000, minSize=3, maxSize=300, seed=NA){
+.gsea.table.engine <- function(data, cls, sets, nperm=1000, minSize=3, maxSize=300, seed=NA, permute="samples",
+                               autoSwitch=TRUE, minGroup=7){
 
+  permute <- match.arg(permute, c("samples", "features"));
   n <- nrow(data);
   m <- ncol(data);
   if(is.null(colnames(data)) || m < 3){
@@ -876,16 +928,27 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
     set.seed(seed);
   }
 
-  # how many different arrangements of the labels there are
+  # how many different arrangements of the labels there are, and whether a group is too small to permute them
   if(continuous){
     n.distinct <- exp(lgamma(n + 1));
-    small.group <- n < 14;
+    small.group <- n < minGroup;
+    min.group <- n;
   }else{
     gs <- as.numeric(table(cls));
     n.distinct <- exp(lgamma(n + 1) - sum(lgamma(gs + 1)));
-    small.group <- any(gs < 7);
+    small.group <- any(gs < minGroup);
+    min.group <- min(gs);
   }
   few.perm <- n.distinct < nperm;
+
+  mode <- permute;
+  switched <- FALSE;
+  if(permute == "samples" && autoSwitch && small.group){
+    mode <- "features";
+    switched <- TRUE;
+  }
+  out <- list(design=design, mode=mode, switched=switched, nperm=nperm, few.perm=few.perm, n.distinct=n.distinct,
+              small.group=small.group, min.group=minGroup);
 
   # the sets: the measured members, within the size limits
   idx <- lapply(sets, function(x){ unique(stats::na.omit(match(x, colnames(data)))) });
@@ -893,22 +956,35 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
   keep <- size >= minSize & size <= maxSize;
   idx <- idx[keep];
   if(length(idx) == 0){
-    return(list(table=data.frame(size=integer(0), ES=numeric(0), NES=numeric(0), p=numeric(0)), design=design, nperm=nperm,
-                cmpd.p=numeric(0), few.perm=few.perm, n.distinct=n.distinct, small.group=small.group));
+    out$table <- data.frame(size=integer(0), ES=numeric(0), NES=numeric(0), p=numeric(0));
+    out$cmpd.p <- numeric(0);
+    return(out);
   }
 
   obs.stat <- .gsea.table.stat(data, cls, design);
   obs.es <- .gsea.table.es(obs.stat, idx, signed);
 
-  null.es <- matrix(0, nrow=length(idx), ncol=nperm);
-  for(b in seq_len(nperm)){
-    perm.cls <- cls[sample.int(n)];
-    null.es[,b] <- .gsea.table.es(.gsea.table.stat(data, perm.cls, design), idx, signed);
+  # the null distribution of the ES of each set
+  if(mode == "samples"){
+    null.es <- matrix(0, nrow=length(idx), ncol=nperm);
+    for(b in seq_len(nperm)){
+      perm.cls <- cls[sample.int(n)];
+      null.es[,b] <- .gsea.table.es(.gsea.table.stat(data, perm.cls, design), idx, signed);
+    }
+    null.of <- function(i) null.es[i,];
+  }else{
+    # random sets of the same size on the observed ranking
+    by.size <- list();
+    for(sz in unique(lengths(idx))){
+      rand <- lapply(seq_len(nperm), function(b) sample.int(m, sz));
+      by.size[[as.character(sz)]] <- .gsea.table.es(obs.stat, rand, signed);
+    }
+    null.of <- function(i) by.size[[as.character(length(idx[[i]]))]];
   }
 
   nes <- p <- numeric(length(idx));
   for(i in seq_along(idx)){
-    nl <- null.es[i,];
+    nl <- null.of(i);
     if(obs.es[i] >= 0){
       same <- nl[nl >= 0];
       ref <- mean(same);
@@ -929,9 +1005,10 @@ CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=3
     multi = stats::pf(obs.stat, nlevels(cls) - 1, n - nlevels(cls), lower.tail = FALSE));
   names(cmpd.p) <- colnames(data);
 
-  tab <- data.frame(size=as.integer(lengths(idx)), ES=obs.es, NES=nes, p=p, row.names=names(idx));
-  list(table=tab, design=design, nperm=nperm, cmpd.p=cmpd.p, few.perm=few.perm, n.distinct=n.distinct,
-       small.group=small.group, obs.stat=obs.stat);
+  out$table <- data.frame(size=as.integer(lengths(idx)), ES=obs.es, NES=nes, p=p, row.names=names(idx));
+  out$cmpd.p <- cmpd.p;
+  out$obs.stat <- obs.stat;
+  out;
 }
 
 # the statistic of every compound (column of X) for the outcome y
