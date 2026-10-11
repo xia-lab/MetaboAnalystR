@@ -712,6 +712,10 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
 
   mSetObj$analSet$qea.pvals <- my.res$pvals;
   gt.res <- my.res$gt.res;
+  # the result of the Global Test is the current one: what a GSEA of the table left (method, note) is not
+  mSetObj$analSet$qea.method <- "globaltest";
+  mSetObj$analSet$gsea.table.mode <- "";
+  mSetObj$analSet$gsea.table.note <- "";
 
   raw.p <- gt.res[,1];
   bonf.p <- p.adjust(raw.p, "holm");
@@ -876,6 +880,16 @@ GetGseaTableNote <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   note <- mSetObj$analSet$gsea.table.note;
   if(is.null(note)) "" else note;
+}
+
+#'The method of the current result of the quantitative enrichment of a table ("gsea", "globaltest", or "" when there is none)
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetQeaMethod <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$analSet$qea.mat)) return("");
+  m <- mSetObj$analSet$qea.method;
+  if(is.null(m)) "globaltest" else m;
 }
 
 #'The permutation used by the last GSEA of a table ("samples" or "features")
