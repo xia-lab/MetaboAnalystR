@@ -129,8 +129,10 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
       keep.idx <- keep.idx[!is.na(keep.idx)]
       if (length(keep.idx) > 0) {
         use_layout_graph <- TRUE
-        if (!is.null(layout_json$edges) && length(layout_json$edges) > 0) {
-          edge_mat <- do.call(rbind, lapply(layout_json$edges, function(e) c(e$source, e$target)))
+        # the overview of sets that share nothing has edge entries without a source and a target
+        layout_edge_list <- Filter(function(e) !is.null(e$source) && !is.null(e$target), layout_json$edges)
+        if (length(layout_edge_list) > 0) {
+          edge_mat <- do.call(rbind, lapply(layout_edge_list, function(e) c(e$source, e$target)))
           colnames(edge_mat) <- c("source", "target")
           layout_edges <- as.data.frame(edge_mat, stringsAsFactors = FALSE)
         } else {
@@ -175,7 +177,8 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   ## 4.  Ensure we still have at least two pathways
   if (nrow(enr.mat) < 2) {
-    AddErrMsg("Fewer than two pathways to display — aborting network build.")
+    AddErrMsg(paste0("Fewer than two ", if (anal.opt %in% c("msetora", "msetqea", "msetssp")) "metabolite sets" else "pathways",
+                     " to display — aborting network build."))
     return(0)
   }
   
@@ -330,6 +333,15 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   }
   
   # Define helper functions
+  # a gradient needs a range: values that are all the same (every set with one p value or the same
+  # number of hits) get the middle colour of it
+  my.gradient <- function(x){
+    if(length(unique(x)) < 2){
+      return(rep(ComputeColorGradient(c(0, 0.5, 1), "black", F)[2], length(x)))
+    }
+    ComputeColorGradient(x, "black", F)
+  }
+
   my.normalize <- function(x){
     if(max(x) == min(x)) return(rep(0.5, length(x)))
     return((x - min(x)) / (max(x) - min(x)))
@@ -347,8 +359,8 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
   
   # Compute colors based on p-values
   normalized_pvalues <- -log10(vertex_pvals + min(vertex_pvals)/2)
-  vertex_colors <- ComputeColorGradient(normalized_pvalues, "black", F)
-  vertex_colorsw <- ComputeColorGradient(normalized_pvalues, "black", F)
+  vertex_colors <- my.gradient(normalized_pvalues)
+  vertex_colorsw <- my.gradient(normalized_pvalues)
   
   V(g)$color <- vertex_colors
   V(g)$colorw <- vertex_colorsw
@@ -492,10 +504,8 @@ my.enrich.net <- function(mSetObj=NA, netNm="mummichog_net", overlapType="mixed"
     ## (A)  TOPOLOGY score for pathway nodes  – use degree() here
     path.deg     <- igraph::degree(bg)[ pathway.idx ]
     path.norm    <- my.normalize(path.deg)                       # 0–1
-    V(bg)$color [ pathway.idx ] <-
-      ComputeColorGradient(path.norm,  "black",  FALSE)
-    V(bg)$colorw[ pathway.idx ] <-
-      ComputeColorGradient(path.norm,  "black",  FALSE)
+    V(bg)$color [ pathway.idx ] <- my.gradient(path.norm)
+    V(bg)$colorw[ pathway.idx ] <- my.gradient(path.norm)
     
     
     # Color significant compounds
