@@ -590,7 +590,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
       AddErrMsg("The sample size of each group should be more than 10!");
       return (0);
     } else {
-      doLogisticRegMdl(mSetObj, x.train.all, y.train.all, x.test.all, y.test.all);
+      mSetObj <- doLogisticRegMdl(mSetObj, x.train.all, y.train.all, x.test.all, y.test.all);
     }
   }
   #######################
@@ -901,6 +901,9 @@ doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
   LRperf.xtable <<- print(xtable::xtable(LRperf, align="r|ccc"), include.rownames=TRUE, floating=FALSE,
                           type = "html", print.results=F, xtable.width=600,
                           html.table.attributes="border=1 width=600");
+  
+  # the equation, convergence flag and CV statistics live on mSetObj; the caller must keep this copy
+  return(mSetObj);
 }
 
 #'Plot ROC for the logistic regression model
