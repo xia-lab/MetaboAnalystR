@@ -849,16 +849,30 @@ doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
   model <- glm(fmla, data=data.xy, family=binomial(link="logit"), na.action="na.omit");
   
   # if model with selected variables is failed, the use the stepwise variable selection
+  n.selected <- ncol(x);
+  stepwise <- FALSE;
   if((!model$converged) | (model$deviance < 1)){
     model <- step(model, trace=0);
     fmla <- model$formula;
+    stepwise <- TRUE;
   }
   
+  # The model's terms are named V1..Vn; they are given back their feature names BY NAME. Stepwise selection keeps only some terms, and
+  # naming them by position labelled whatever term was kept with the FIRST selected feature's name.
+  name.map <- setNames(names.x.origin, names(x));
+  .lr.feature.names <- function(nms) { hit <- nms %in% names(name.map); nms[hit] <- name.map[nms[hit]]; nms };
   mdlSummary <- summary(model)$coefficients;
-  dimnames(mdlSummary)[[1]][-1] <- names.x.origin;
+  rownames(mdlSummary) <- .lr.feature.names(rownames(mdlSummary));
+  n.kept <- sum(names(coef(model)) %in% names(name.map) & !is.na(coef(model)));
+  mSetObj$analSet$LR$LRnote <- if (stepwise && n.kept < n.selected) {
+    paste0("Stepwise selection kept ", n.kept, " of the ", n.selected, " selected features: the model with all of them did not converge.");
+  } else "";
   # prob.out <- predict(model, x.cv.test, type="response");
   
-  Odds <- round(exp(cbind(OR=coef(model), confint(model))), 2)[,1];
+  # The odds ratio of each term, in the rows of the coefficient table. confint(model) was computed only to be thrown away (column 1 is the
+  # odds ratio itself), and its profiling throws on a model stepwise selection reduced to separating features ("need at least two non-NA
+  # values to interpolate") - which aborted the fit and left the page showing the PREVIOUS selection's equation (owner, 12 Oct 2026).
+  Odds <- round(exp(coef(model))[names(coef(model)) %in% c("(Intercept)", names(name.map)) & !is.na(coef(model))], 2);
   # Odds <- round(exp(OR=coef(model)), 2);
   Odds[1] <- "-";
   LRmodel <- cbind(round(mdlSummary,3), Odds);
@@ -870,7 +884,7 @@ doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
                            html.table.attributes="border=1 width=600" );
   
   coefTable <- coef(model);
-  names(coefTable)[-1] <- names.x.origin;
+  names(coefTable) <- .lr.feature.names(names(coefTable));
   if (model$converged & model$deviance > 1) {
     mSetObj$analSet$LR$LReq <- genLREquation(coefTable);
     mSetObj$analSet$LR$LRConverged <- "TRUE";
@@ -3444,6 +3458,12 @@ GetLRConvergence <- function(mSetObj=NA){
 GetLREquation <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(mSetObj$analSet$LR$LReq);
+}
+
+GetLRNote <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  note <- mSetObj$analSet$LR$LRnote;
+  return(if (is.null(note)) "" else note);
 }
 
 GetLRmodelTable <- function(){
