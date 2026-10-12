@@ -14,9 +14,7 @@
 #' @export
 ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics = "NA") {
   tryCatch({
-    # Use confidence level from session if available
-    level <- tryCatch(.get.confidence.level(), error = function(e) as.numeric(level))
-    level <- as.numeric(level)
+    level <- .resolve.encasing.level(level)
 
     # Read data in master
     res <- .get.rdt.set()
@@ -57,7 +55,9 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
     # Single subprocess call for all ellipsoid computations via bridge files
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    ov_qs_save(list(coords_per_group = coords_per_group, level = level, group_names = group_names), bridge_in, preset = "fast")
+    # Per-group radius computed in master so the session's chisq/F choice is honoured
+    t_vals <- vapply(coords_per_group, function(cc) .get.ellipsoid.t(level, 3, nrow(cc)), numeric(1))
+    ov_qs_save(list(coords_per_group = coords_per_group, t_vals = t_vals, group_names = group_names), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_microservice(
@@ -67,15 +67,8 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
         require(rgl)
         input <- ov_qs_read(bridge_in)
         coords_list <- input$coords_per_group
-        level <- input$level
+        t_vals <- input$t_vals
         group_names <- input$group_names
-
-        # Mahalanobis distance threshold at the requested confidence level for
-        # a 3-variable covariance — single scalar applied to every group, since
-        # we receive one `level` from the caller. Previous code referenced
-        # t_vals[i] which was never defined inside the subprocess closure and
-        # blew up with "object 't_vals' not found" for every group.
-        t_val <- sqrt(qchisq(level, df = 3))
 
         result_list <- vector("list", length(coords_list))
         for (i in seq_along(coords_list)) {
@@ -88,7 +81,7 @@ ComputeEncasingBatch <- function(filenm, type, groups_json, level = 0.95, omics 
             pos <- cov(coords, y = NULL, use = "everything")
             center <- colMeans(coords)
             mesh <- list()
-            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
+            mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_vals[i])
             result_list[[i]] <- list(group = group_names[i], mesh = mesh, error = NULL)
           }, error = function(e) {
             result_list[[i]] <<- list(group = group_names[i], mesh = list(), error = e$message)

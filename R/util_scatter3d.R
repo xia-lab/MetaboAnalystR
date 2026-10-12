@@ -24,13 +24,17 @@ my.json.scatter <- function(filenm, containsLoading=F, scaleMode=NULL){
   orig.pos.xyz <- res$xyz;
   }
 
-  ticksX <- pretty(range(orig.pos.xyz[,1]*1.2),10, bound=F);
-  ticksY <- pretty(range(orig.pos.xyz[,2]*1.2),10, bound=F);
-  ticksZ <- pretty(range(orig.pos.xyz[,3]*1.2),10, bound=F);
+  # Widen the axes to hold every group's confidence ellipsoid, as the 2D score
+  # plots widen xlim/ylim to hold their ellipses -- otherwise a small or elongated
+  # group's ellipsoid runs far outside the plotted box.
+  ell.range <- .ellipsoid.axis.ranges(orig.pos.xyz, res$facA)
+  ticksX <- pretty(range(orig.pos.xyz[,1]*1.2, ell.range[,1]),10, bound=F);
+  ticksY <- pretty(range(orig.pos.xyz[,2]*1.2, ell.range[,2]),10, bound=F);
+  ticksZ <- pretty(range(orig.pos.xyz[,3]*1.2, ell.range[,3]),10, bound=F);
 
   if (scaleMode == "uniform") {
     # Uniform scaling: preserves proportions between axes
-    maxVal <- max(abs(orig.pos.xyz))
+    maxVal <- max(abs(rbind(orig.pos.xyz, ell.range)))
     if (maxVal > 0) {
       pos.xyz <- orig.pos.xyz / maxVal
     } else {
@@ -356,11 +360,45 @@ Get3DScatterOptions <- GetScatterOptions
   }
 }
 
+# Axis-aligned extent of each group's confidence ellipsoid, in the same units as xyz.
+# The bounding box of {x : (x-c)' S^-1 (x-c) <= t^2} is c +/- t*sqrt(diag(S)), so no
+# mesh is needed. Groups mirror the viewer: one ellipsoid per level of a discrete
+# factor, or one over all samples for a continuous one; groups with < 4 samples get
+# no ellipsoid in the viewer and are skipped here too.
+# Returns a matrix of min/max rows (empty when there is no ellipsoid).
+.ellipsoid.axis.ranges <- function(xyz, fac) {
+  xyz <- as.matrix(xyz[, 1:3, drop = FALSE])
+  if (is.null(fac) || length(fac) != nrow(xyz)) return(xyz[0, , drop = FALSE])
+  grp <- if (is.numeric(fac) && !is.factor(fac)) rep("all", nrow(xyz)) else as.character(fac)
+  level <- .resolve.encasing.level(NA)
+  out <- lapply(split(seq_len(nrow(xyz)), grp), function(idx) {
+    if (length(idx) < 4) return(NULL)
+    S <- cov(xyz[idx, , drop = FALSE])
+    if (any(!is.finite(S))) return(NULL)
+    half <- .get.ellipsoid.t(level, 3, length(idx)) * sqrt(pmax(diag(S), 0))
+    ctr <- colMeans(xyz[idx, , drop = FALSE])
+    rbind(ctr - half, ctr + half)
+  })
+  out <- do.call(rbind, out)
+  if (is.null(out)) xyz[0, , drop = FALSE] else out
+}
+
+# Resolve the confidence level for an ellipsoid request: the level passed from the
+# 3D viewer wins when it is a valid probability; otherwise fall back to the session
+# option (default 0.95). Previously the session value always won, so the viewer's
+# confidence control had no effect.
+.resolve.encasing.level <- function(level) {
+  level <- suppressWarnings(as.numeric(level))
+  if (length(level) != 1 || is.na(level) || level <= 0 || level >= 1) {
+    level <- tryCatch(as.numeric(.get.confidence.level()), error = function(e) 0.95)
+  }
+  if (length(level) != 1 || is.na(level) || level <= 0 || level >= 1) level <- 0.95
+  level
+}
+
 ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
   tryCatch({
-    # Use confidence level from session if available
-    level <- tryCatch(.get.confidence.level(), error = function(e) as.numeric(level))
-    level <- as.numeric(level)
+    level <- .resolve.encasing.level(level)
     names <- strsplit(names.vec, "; ")[[1]]
 
     # Read data in master
@@ -383,7 +421,9 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
     # Only rgl::ellipse3d in subprocess via bridge files
     bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
     bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-    ov_qs_save(list(coords = coords, level = level), bridge_in, preset = "fast")
+    # Radius computed here (master) so the session's chisq/F choice is honoured
+    t_val <- .get.ellipsoid.t(level, 3, nrow(coords))
+    ov_qs_save(list(coords = coords, t_val = t_val), bridge_in, preset = "fast")
     on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
     run_func_via_microservice(
@@ -394,7 +434,7 @@ ComputeEncasing <- function(filenm, type, names.vec, level=0.95, omics="NA"){
         input <- ov_qs_read(bridge_in)
         pos <- cov(input$coords, y = NULL, use = "everything")
         center <- colMeans(input$coords)
-        t_val <- sqrt(qchisq(input$level, 3))
+        t_val <- input$t_val
         mesh <- list()
         mesh[[1]] <- rgl::ellipse3d(x = as.matrix(pos), centre = center, t = t_val)
         ov_qs_save(mesh, bridge_out, preset = "fast")
