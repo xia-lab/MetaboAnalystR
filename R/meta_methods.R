@@ -591,7 +591,7 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
   }
   
   fishersum <- function(pvec){
-    return(sum(-2*log10(pvec)))
+    return(sum(-2*log(pvec)))   # Fisher's statistic uses the natural log (log10 made it 2.3x too small)
   }
   
   if(method=="stouffer"){
@@ -613,7 +613,8 @@ combinePvals <- function(pvalonesided,nrep,BHth=0.05, method) {
     rpvalpvalc2 = 1-pchisq(fsum2, df=(ncol(data)*2));
     
     # report the min of two direction calculation
-    rpvalpvalc <- pmin(rpvalpvalc1, rpvalpvalc2);
+    # both directions were tested, so double the smaller p (otherwise the type I error is 2x nominal)
+    rpvalpvalc <- pmin(1, 2 * pmin(rpvalpvalc1, rpvalpvalc2));
     
     # adding direction information
     statpvalc <- pmax(fsum1, fsum2);
