@@ -723,7 +723,9 @@ SetupMetaStats <- function(mSetObj, BHth){
   mSetObj$analSet$meta.stat <- meta.stat;
   
   # save the result
-  res <- cbind(ID=metade.genes, meta.mat);
+  # direction agreement across studies for a p-value combination, before the combined columns
+  agree <- if("CombinedTstat" %in% colnames(meta.mat)) .metaDirectionAgreement(fc.mat, meta.mat[, "CombinedTstat"], rownames(meta.mat)) else NULL;
+  res <- cbind(ID=metade.genes, agree, meta.mat);
   metastat.method <- mSetObj$dataSet$metastat.method 
   fast.write.csv(res, file=paste("meta_sig_features_", metastat.method, ".csv", sep=""), row.names=F);
   return(mSetObj);

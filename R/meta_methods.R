@@ -518,7 +518,25 @@ if(!exists('meta.mat')){
   mdata.all <- mSetObj$mdata.all
 
   sel.nms <- names(mdata.all)[mdata.all==1];
-  c(substring(sel.nms, 0, nchar(sel.nms)-4), colnames(meta.mat));
+  agree.nms <- if(.metaHasAgreement(meta.mat, mSetObj$analSet$fc.mat)) c("Agree", "Discordant") else character(0);
+  c(substring(sel.nms, 0, nchar(sel.nms)-4), agree.nms, colnames(meta.mat));
+}
+
+# Direction agreement for a p-value combination: for each feature, the number of studies whose fold change has the
+# sign of the combined statistic (CombinedTstat is negative when the lower tail, i.e. a negative fold change, won),
+# and whether any study points the other way (1 = discordant).
+.metaDirectionAgreement <- function(fc.mat, stat, ids = names(stat)){
+  idx <- if(is.null(ids)) seq_len(nrow(fc.mat)) else match(ids, rownames(fc.mat));
+  s <- sign(as.matrix(fc.mat)[idx, , drop = FALSE]);
+  d <- sign(as.numeric(stat));
+  agree <- rowSums(s == d, na.rm = TRUE);
+  discordant <- as.integer(rowSums(s == -d & d != 0, na.rm = TRUE) > 0);
+  agree[is.na(idx)] <- NA; discordant[is.na(idx)] <- NA;   # a feature with no per-study fold change is left blank
+  cbind(Agree = agree, Discordant = discordant);
+}
+
+.metaHasAgreement <- function(meta.mat, fc.mat){
+  !is.null(meta.mat) && "CombinedTstat" %in% colnames(meta.mat) && !is.null(fc.mat);
 }
 
 
@@ -542,10 +560,16 @@ GetMetaResultMatrix <- function(mSetObj = NA, single.type="fc"){
   meta.stat <- mSetObj$analSet$meta.stat;
 
   colnms <- GetMetaResultColNames();
+  # direction agreement across studies (p-value combination only), before the combined columns so the combined
+  # p-value stays the last column
+  agree <- NULL;
+  if(.metaHasAgreement(meta.mat, fc.mat)){
+    agree <- .metaDirectionAgreement(fc.mat, meta.mat[, "CombinedTstat"], rownames(meta.mat));
+  }
   if(single.type == "fc"){
-    meta.mat <- cbind(fc.mat, meta.mat);
+    meta.mat <- cbind(fc.mat, agree, meta.mat);
   }else{
-    meta.mat <- cbind(pval.mat, meta.mat);
+    meta.mat <- cbind(pval.mat, agree, meta.mat);
   }
   # print(head(meta.mat));
   # print("getting metares");
