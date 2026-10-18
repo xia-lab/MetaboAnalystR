@@ -428,6 +428,8 @@ SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
   if(is.na(pn) || pn < 10){
     pn <- 100;
   }
+  # at most 10,000: each permutation scores every pathway, and a typed 10^6 would hold the R session for many minutes
+  pn <- min(pn, 10000L);
   mSetObj$paramSet$pathqea.mummi.top.frac <- frac;
   mSetObj$paramSet$pathqea.mummi.perm.num <- pn;
   return(.set.mSet(mSetObj));
