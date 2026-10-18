@@ -17,5 +17,5 @@ all compatible datasets.
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

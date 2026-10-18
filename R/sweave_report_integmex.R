@@ -10,7 +10,7 @@
 #'@param usrName Input the name of the user
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
   
@@ -30,7 +30,7 @@ CreateIntegPathwayAnalysisRnwReport<-function(mSetObj, usrName){
 #'Integrated pathwayr analysis report introduction
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayAnalIntr <- function(){
   descr <- c("\\section{Background}\n",
@@ -58,7 +58,7 @@ CreateIntegratedPathwayAnalIntr <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, viewingCanada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
   
@@ -100,7 +100,7 @@ CreateIntegratedPathwayAnalInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
   
@@ -120,7 +120,7 @@ CreateIntegratedPathwayNameMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
   
@@ -140,7 +140,7 @@ CreateIntegratedPathwayGeneMapTable <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayDoc <- function(mSetObj=NA){
   
@@ -225,7 +225,7 @@ CreateIntegratedPathwayDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateIntegratedPathwayResultsTable <- function(mSetObj=NA){
   

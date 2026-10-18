@@ -222,7 +222,7 @@
 #'@usage ElasticNet.Anal(mSetObj=NA, alpha=0.5, nfolds=10, outcome="NA", rule="1se")
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 ElasticNet.Anal <- function(mSetObj = NA, alpha = 0.5, nfolds = 10, outcome = "NA", rule = "1se") {
   mSetObj <- .get.mSet(mSetObj)

@@ -49,7 +49,7 @@ The second default is width = 0, where the width is 7.2. Otherwise users can inp
 
 \item{unit}{Numeric, unit size controlling the height/width of each cell in the heatmap.
 McGill University, Canada
-License: GNU GPL (>= 2)}
+License: MIT}
 
 \item{corrCutoff}{set corrCutoff}
 }

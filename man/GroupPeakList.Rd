@@ -35,5 +35,5 @@ The default bw is 30 for LCMS, and 5 for GCMS.
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

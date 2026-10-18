@@ -5,7 +5,7 @@
 #'@param dist.name Input distance method 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 template.match <- function(x, template, dist.name) {
   k <- cor.test(x,template, method=dist.name);
@@ -117,7 +117,7 @@ Match.Pattern <- function(mSetObj  = NA,
 #'@param searchType searchType, default is "feature"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dpi=default.dpi, width=NA){
@@ -191,7 +191,7 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
 #'@param fz Numeric, font size for labels in the heatmap.
 #'@param unit Numeric, unit size controlling the height/width of each cell in the heatmap.
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@import gplots
 #'
@@ -374,7 +374,7 @@ if (grepl("^p-", cor.method) || grepl("^partial_", cor.method)) {
 #'@description '@param #same as PlotCorrHeatMap
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -643,7 +643,7 @@ GenerateTemplates <- function(mSetObj=NA){
 #'@param varName Input the variable name
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 FeatureCorrelation <- function(mSetObj = NA, dist.name, varName) {
   mSetObj <- .get.mSet(mSetObj)

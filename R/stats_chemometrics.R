@@ -148,7 +148,7 @@ GetEllipseRadius <- function(level, method, n) {
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'@param mSetObj Input name of the created mSet Object
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PCA.Anal <- function(mSetObj=NA){
@@ -350,7 +350,7 @@ PCA.Anal <- function(mSetObj=NA){
 #'@param axisOpt Input the axis option 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PCA.Flip <- function(mSetObj=NA, axisOpt){
@@ -381,7 +381,7 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 #'@usage PlotPCAPairSummary(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -405,7 +405,7 @@ PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -486,7 +486,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
@@ -633,7 +633,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@usage PlotPCA3DScore(mSetObj=NA, imgName, format="json", inx1, inx2, inx3)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -761,7 +761,7 @@ PlotPCA3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 UpdatePCA.Loading<- function(mSetObj=NA, plotType){
@@ -775,7 +775,7 @@ UpdatePCA.Loading<- function(mSetObj=NA, plotType){
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@usage PlotPCALoading(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -863,7 +863,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@description Rotate PCA analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@usage PlotPCABiplot(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2)
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
@@ -990,7 +990,7 @@ p <- ggplot() +
 #'@param reg Logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
@@ -1047,7 +1047,7 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 #'@description Plot PLS pairwise summary
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -1073,7 +1073,7 @@ PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'@description Plot PLS score plot
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@param mSetObj Input name of the created mSet Object
 #'@param imgName Input a name for the plot
 #'@param format Select the image format, "png", or "pdf".
@@ -1224,7 +1224,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx3){
@@ -1334,7 +1334,7 @@ PlotPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, inx
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 UpdatePLS.Loading<- function(mSetObj=NA, plotType){
@@ -1356,7 +1356,7 @@ UpdatePLS.Loading<- function(mSetObj=NA, plotType){
 #'@param inx2 Numeric, indicate the number of the principal component for the y-axis of the loading plot.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2){
@@ -1432,7 +1432,7 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #' @importFrom caret train varImp plsda R2
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCVComp(mSetObj), choice="Q2", segments = 10){
   
@@ -1522,7 +1522,7 @@ PLSDA.CV <- function(mSetObj=NA, cvOpt="loo", foldNum=5, compNum=GetDefaultPLSCV
 #'@param topnum Number of top variables to label in the biplot
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2,topnum=10){
 
@@ -1654,7 +1654,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 #'@param type Type of accuracy, if "accu" indicate prediction accuracy, else "sep" is separation distance
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PLSDA.Permut <- function(mSetObj=NA, num=100, type="accu"){
@@ -1770,7 +1770,7 @@ checkCVperformed <- function(mSetObj=NA){
 #'@param color.BW Logical, true to use black and white, or false to not
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, type, feat.nm, feat.num, color.BW=FALSE){
@@ -1823,7 +1823,7 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
 #'@param color.BW Use black-white for plot (T) or colors (F)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
@@ -1934,7 +1934,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -1989,7 +1989,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defaul
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -2031,7 +2031,7 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
 #'@param reg Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
@@ -2098,7 +2098,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 #'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
@@ -2223,7 +2223,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 #'"none" to label no variables.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
@@ -2246,7 +2246,7 @@ UpdateOPLS.Splot<- function(mSetObj=NA, plotType){
 #'@param plotType plotType for the image, can be "all" or "custom"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dpi=default.dpi, width=NA){
@@ -2443,7 +2443,7 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
 #'@param num Input the number of permutations, default is set to 100.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 OPLSDA.Permut<-function(mSetObj=NA, num=100){
@@ -2500,7 +2500,7 @@ OPLSDA.Permut<-function(mSetObj=NA, num=100){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -2584,7 +2584,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dp
 #'@param validOpt INput the valid option
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfold", foldNum=5, doCV=FALSE){
@@ -2656,7 +2656,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 #'@param pc.num Numeric, indicate the number of principle components
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
@@ -2691,7 +2691,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 #'@param cex.opt Character, controls label size adjustment: "na" resets to default (1.0), "increase" enlarges, or any other value shrinks. Default is "na".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, reg=0.95, show=1, grey.scale=0, cex.opt="na"){
@@ -2821,7 +2821,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 #'@param inx3 Numeric, indicate the number of the principal component for the z-axis of the loading plot.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSPLS3DScore <- function(mSetObj=NA, imgName, format="json", inx1=1, inx2=2, inx3=3){
@@ -2953,7 +2953,7 @@ PlotSPLS3DLoading <- function(mSetObj=NA, imgName, format="json", inx1, inx2, in
 #'@param viewOpt Detailed view "detail" 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx, viewOpt="detail"){
@@ -3002,7 +3002,7 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -3236,7 +3236,7 @@ GetPCALoadMat <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 GetMaxPCAComp <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

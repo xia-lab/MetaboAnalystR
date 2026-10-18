@@ -11,7 +11,7 @@ ASCAfun.res(X, Fac)
 
 \item{Fac}{Numeric 
 McGill University, Canada
-License: GNU GPL (>= 2)}
+License: MIT}
 }
 \description{
 Perform ASCA

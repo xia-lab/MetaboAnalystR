@@ -17,7 +17,7 @@
 #'@param vis.type Character, visualization type for the pathway network output. Default is an empty string.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 UpdateIntegPathwayAnalysis <- function(mSetObj=NA, qids, file.nm, topo="dc", enrich="hyper", libOpt="integ",vis.type=""){
   mSetObj <- .get.mSet(mSetObj);

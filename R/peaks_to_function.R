@@ -8,14 +8,14 @@
 ### 4) companion web interface on MetaboAnalyst - the "MS Peaks to Pathways" module
 ### @authors J. Chong \email{jasmine.chong@mail.mcgill.ca}, J. Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT
 
 #'Save adduct names for mapping
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@param qvec Input the vector to query
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.AdductData <- function(mSetObj=NA, qvec){
@@ -32,7 +32,7 @@ Setup.AdductData <- function(mSetObj=NA, qvec){
 #'@param version version of mummichog
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
   
@@ -75,7 +75,7 @@ SetPeakEnrichMethod <- function(mSetObj=NA, algOpt, version="v2"){
 #'"both" for both p-values and effect-sizes.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 # Map peak-list column headers to the canonical m.z / p.value / t.score / r.t roles.
 # Matching is case-insensitive and tolerant of common header variants (e.g. "Mz",
@@ -311,7 +311,7 @@ Read.PeakListData <- function(mSetObj=NA, filename = NA,
 #'@param type Input the name of mummichog analysis type, usually 'mpt'.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 SetPeakFormat <-function(mSetObj=NA, type = "mpt"){
   mSetObj <- .get.mSet(mSetObj);
@@ -348,7 +348,7 @@ GetPeakFormat <- function(mSetObj=NA){
 #'@param mode ion mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 Convert2Mummichog <- function(mSetObj=NA,
@@ -589,7 +589,7 @@ Convert2Mummichog <- function(mSetObj=NA,
 #'@param force_primary_ion Character, if "yes", only mz features that match compounds with a primary ion are kept.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 UpdateInstrumentParameters <- function(mSetObj=NA, 
@@ -623,7 +623,7 @@ UpdateInstrumentParameters <- function(mSetObj=NA,
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SanityCheckMummichogData <- function(mSetObj=NA){
@@ -988,7 +988,7 @@ SanityCheckMummichogData <- function(mSetObj=NA){
 #'@param fraction fraction value for mummichog running
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
@@ -1036,7 +1036,7 @@ SetMummichogPvalFromPercent <- function(mSetObj=NA, fraction){
 #'@param cutoff cutoff value for mummichog running
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SetMummichogPval <- function(mSetObj=NA, cutoff){
@@ -1120,7 +1120,7 @@ SetMetaPeaksPvals <- function(mSetObj=NA){
 #'@param permNum Numeric, input the number of permutations to perform. Default is 100.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformPSEA <- function(mSetObj=NA, lib, libVersion, minLib = 3, permNum = 100, init=T){
@@ -3568,7 +3568,7 @@ json.res <- list(
 #'@param mSetObj Input the name of the created mSetObj object 
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformCurrencyMapping <- function(mSetObj = NA){
@@ -3606,7 +3606,7 @@ PerformCurrencyMapping <- function(mSetObj = NA){
 #'@param add.mode Adduct mode, positive or negative
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformAdductMapping <- function(mSetObj=NA, add.mode){
@@ -3717,7 +3717,7 @@ new_adduct_mzlist <- function(mSetObj=NA, mw){
 #'@param rt_tol Numeric. Input the retention time tolerance used for determining ECs (in seconds).
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
   
@@ -3758,7 +3758,7 @@ UpdateEC_Rules <- function(mSetObj = NA, force_primary_ion, rt_tol){
 #' @param num_annot number of annotations for top plotting
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 
 PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = default.dpi, width = 9, labels = "default",
@@ -3878,7 +3878,7 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = defaul
 #' @param scale.axis logical, TRUE to scale
 #' @author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 #' @import scales
 PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = default.dpi, width = 9, labels = "default", 
@@ -4545,7 +4545,7 @@ mz_tolerance <- function(mz, ms.type){
 #'@param input_mzs The vector of randomly drawn m/z features.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 make_cpdlist <- function(mSetObj=NA, input_mzs){
   cpd <- unique(unlist(mSetObj$mz2cpd_dict[input_mzs]));
@@ -4560,7 +4560,7 @@ make_cpdlist <- function(mSetObj=NA, input_mzs){
 #'@param input_mzs The vector of randomly drawn m/z features.
 #'@author Jasmine Chong, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 make_ecpdlist <- function(mSetObj=NA, input_mzs){
   ecpd <- unique(unlist(mSetObj$mz2ec_dict[input_mzs]));

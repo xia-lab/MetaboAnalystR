@@ -18,7 +18,7 @@
 #'@param multilevel Designate multilevel design, "NULL" by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 splsda <- function(X,
@@ -460,7 +460,7 @@ internal_mint.block = function (A, indY = NULL,  design = 1 - diag(length(A)), t
 # Performance prediction for PLS-DA and sPLS-DA
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT
 perf.splsda <- function(object,
                         dist = c("all", "max.dist", "centroids.dist", "mahalanobis.dist"),
                         constraint = FALSE,
@@ -1226,7 +1226,7 @@ MCVfold.splsda = function(
 #'@param penalty Default set to NULL
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 sparse.mint.block_iteration = function(A, design, study = NULL, keepA.constraint = NULL, keepA = NULL,
                                       scheme = "horst", init = "svd", max.iter = 100, tol = 1e-06, verbose = TRUE, bias = FALSE,
@@ -2624,7 +2624,7 @@ Check.entry.pls = function(X, Y, ncomp, keepX, keepY, keepX.constraint, keepY.co
 #'@param Y Input data
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 map = function (Y)
 {

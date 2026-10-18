@@ -5,7 +5,7 @@
 #'@param time.fac Input the time factor
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 aov.mixed <- function(x){
   unlist(anova_test(x ~ exp.fac*time.fac + Error(aov.sbj/time.fac),
@@ -23,7 +23,7 @@ aov.2wayrep <- function(x){
 #'@param x Input the data 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 aov.1wayrep <- function(x){
   unlist(anova_test(x ~ time.fac + Error(aov.sbj/time.fac),
@@ -36,7 +36,7 @@ aov.1wayrep <- function(x){
 #'@param x Input data to perform 2-way ANOVA
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 aov.2way <- function(x){
   res <- suppressMessages(anova_test(x ~ aov.facA * aov.facB, 
                                     data = data.frame(x = x, aov.facA = aov.facA, aov.facB = aov.facB)));
@@ -57,7 +57,7 @@ aov.2way <- function(x){
 #'@param topN Integer, the maximum number of top significant features to retain. Default is 200.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05, 
@@ -327,7 +327,7 @@ ANOVA2.Anal <-function(mSetObj=NA, thresh=0.05,
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -383,7 +383,7 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@param colorGradient Character, color scheme for the plot. Default is "heat".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 #'

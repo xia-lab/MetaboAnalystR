@@ -9,7 +9,7 @@
 #'@param dpi image dpi, integer
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@import siggenes
 SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, delta=0, imgName, dpi=default.dpi){
@@ -95,7 +95,7 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
@@ -141,7 +141,7 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
@@ -173,7 +173,7 @@ PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
 #'@param dpi dpi value of images
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA0, imgSig, dpi = default.dpi){
   mSetObj <- .get.mSet(mSetObj);
@@ -256,7 +256,7 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'@usage PlotEBAM.Cmpd(mSetObj=NA, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
@@ -293,7 +293,7 @@ GetSAMDeltaRange <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetSuggestedSAMDelta <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

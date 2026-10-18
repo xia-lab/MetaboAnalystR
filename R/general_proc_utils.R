@@ -12,7 +12,7 @@
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SanityCheckData <- function(mSetObj=NA){
@@ -382,7 +382,7 @@ if (n.blank == 0) {
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformSanityClosure <- function(mSetObj=NA){
@@ -413,7 +413,7 @@ PerformSanityClosure <- function(mSetObj=NA){
 #'passes the threshold); if FALSE (default) apply globally across all samples.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 RemoveMissingByPercent <- function(mSetObj = NA,
@@ -514,7 +514,7 @@ fetchReplaceMsg <- function(mSetObj = NA) {
 #'@param grpMeasure Logical, if TRUE use group-specific measurement for imputation. Default is FALSE.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
@@ -579,7 +579,7 @@ ImputeMissingVar <- function(mSetObj=NA, method="lod", grpLod=F, grpMeasure=F){
 #'@return Returns 1 if "BLANK" is found in class labels; otherwise returns 0.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CheckContainsBlank <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -618,7 +618,7 @@ CheckContainsBlank <- function(mSetObj=NA){
 #'@param blank.threshold blank.threshold value
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 FilterVariable <- function(mSetObj=NA, qc.filter="F", rsd, var.filter="iqr", var.cutoff=NULL, 
@@ -1097,7 +1097,7 @@ UpdateSampleGroups<-function(mSetObj=NA, metadata="NA"){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 ContainMissing <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

@@ -10,7 +10,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichRnwReport<-function(mSetObj, usrName){
   
@@ -40,7 +40,7 @@ CreateEnrichRnwReport<-function(mSetObj, usrName){
 #'Metabolite enrichment analysis report introduction
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichIntr <- function(){
   descr <- c("\\section{Background}\n",
@@ -71,7 +71,7 @@ CreateEnrichIntr <- function(){
 #'Metabolite enrichment analysis report overview
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichOverview <- function(){
   descr <- c("\\section{MSEA Overview}\n",
@@ -91,7 +91,7 @@ CreateEnrichOverview <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichInputDoc <- function(mSetObj=NA){
   
@@ -145,7 +145,7 @@ CreateEnrichInputDoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichProcessDoc <- function(mSetObj=NA){
   
@@ -185,7 +185,7 @@ CreateEnrichProcessDoc <- function(mSetObj=NA){
 #'Metabolite enrichment analysis report, analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichAnalDoc <- function(){
   
@@ -237,7 +237,7 @@ CreateEnrichAnalDoc <- function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichORAdoc <- function(mSetObj=NA){
   
@@ -307,7 +307,7 @@ CreateEnrichORAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichSSPdoc <- function(mSetObj=NA){
   
@@ -350,7 +350,7 @@ CreateEnrichSSPdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateEnrichQEAdoc<-function(mSetObj=NA){
   

@@ -6,7 +6,7 @@
 #'@param randomOn Set random, default is 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 RF.Anal <- function(mSetObj=NA, treeNum=500, tryNum=7, randomOn=1){
@@ -72,7 +72,7 @@ GetRandomNumbers <- function(){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -131,7 +131,7 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -185,7 +185,7 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -251,7 +251,7 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@param cvType Cross-validation type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 RSVM.Anal <- function(mSetObj=NA, cvType){
@@ -294,7 +294,7 @@ RSVM.Anal <- function(mSetObj=NA, cvType){
 #'@usage PlotRSVM.Classification(mSetObj, imgName, format, dpi, width)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -342,7 +342,7 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defau
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
@@ -432,7 +432,7 @@ CreateLadder <- function(Ntotal, Nmin=5){
 #'The top important gene in each level are those high-freqent ones
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 RSVM <- function(x, y, ladder, CVtype, CVnum=0){
   ## check if y is binary response
@@ -576,7 +576,7 @@ PlotConfusion <- function(clsConf){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetRFOOB <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   errors = mSetObj$analSet$rf$err.rate;
@@ -597,7 +597,7 @@ GetSigTable.RF <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetRFSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(CleanNumber(mSetObj$analSet$rf.sigmat))
@@ -627,7 +627,7 @@ GetRFConf.Table <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetRFConfMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   signif(mSetObj$analSet$rf$confusion,3);
@@ -649,7 +649,7 @@ GetRFConfColNames <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetSVMSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);

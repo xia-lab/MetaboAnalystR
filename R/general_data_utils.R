@@ -66,7 +66,7 @@ Reload.scripts.on.demand <- function(){
 #'@param paired indicate if the data is paired or not. Logical, default set to FALSE
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@import methods
 
@@ -365,7 +365,7 @@ UpdateDataObjects <- function(data.type, anal.type, paired=FALSE){
 #'@param design Input the design type
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 SetDesignType <-function(mSetObj=NA, design){
   mSetObj <- .get.mSet(mSetObj);
@@ -435,7 +435,7 @@ GetRCommandHistory <- function(mSetObj=NA){
 #'through an API call to the Metabolomics Workbench).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 Read.TextData <- function(mSetObj=NA, filePath, format="rowu", 
@@ -773,7 +773,7 @@ if (isTRUE(mSetObj$dataSet$containsBlank) && n.blank < min.n.blank) {
 #'@param filePath Set file path
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 ReadPairFile <- function(filePath="pairs.txt"){
@@ -793,7 +793,7 @@ ReadPairFile <- function(filePath="pairs.txt"){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 SaveTransformedData <- function(mSetObj=NA){
   return(my.save.data(mSetObj));
@@ -823,7 +823,7 @@ Read.mzTab <- function(mSetObj=NA, filename, identifier = "name") {
 #'@param foldername Name of the folder containing the NMR or MS peak list files to read.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 Read.PeakList<-function(mSetObj=NA, foldername="upload"){
@@ -897,7 +897,7 @@ SetCmpdSummaryType <- function(mSetObj=NA, type){
 #'@param count img count number
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, format="png", dpi=default.dpi, width=NA){
@@ -1299,7 +1299,7 @@ PlotCmpdSummary <- function(mSetObj=NA, cmpdNm, meta="NA", meta2="NA",count=0, f
 #'@param qvec Input the vector to query
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.MapData <- function(mSetObj=NA, qvec){
@@ -1408,7 +1408,7 @@ GetCurrentCmpdImgSize <- function(mSetObj=NA){
 #'@param exp.fac exp.fac
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 # 
 
@@ -1572,7 +1572,7 @@ GetMetabolonCMPDIDs <- function(mSetObj = NA){
 #'from the Metabolomics Workbench.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 GetNMDRStudy <- function(mSetObj=NA, StudyID){
   

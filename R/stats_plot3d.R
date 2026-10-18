@@ -2,7 +2,7 @@
 ### Description: 3D scatter plot for PDF report (not used for web display)
 ### Author: Jeff Xia, jeff.xia@mcgill.ca
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT
 
 Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel, 
                    angle =angl, color=cols, pch=pchs){
@@ -27,7 +27,7 @@ Plot3D <- function(x, y, z, xlab= xlabel, ylab=ylabel, zlab=zlabel,
 #'the plot, if your mSetObj is named mSet, type "mSet$imgSet$pca.3d" inro your R console, and the 3D plot will appear.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@usage PlotPCA3DScoreImg(mSetObj=NA, imgName, 
 #'format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl)
 #'@param mSetObj Input name of the created mSet Object.
@@ -123,7 +123,7 @@ PlotPCA3DScoreImg <- function(mSetObj=NA, imgName, format="png",
 #'@param angl Input the angle
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
@@ -194,7 +194,7 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@param angl Input the angle
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
@@ -265,7 +265,7 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@param angl Input the angle
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 

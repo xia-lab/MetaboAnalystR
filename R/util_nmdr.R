@@ -49,7 +49,7 @@ my.get.nmdr.data <- function(StudyID){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}, Jasmine Chong
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 ListNMDRStudies <- function(mSetObj=NA){
   

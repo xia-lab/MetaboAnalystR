@@ -70,7 +70,7 @@ PerformApproxMatch <- function(mSetObj=NA, q, lipid){
 #'@param can_nm Input the candidate name.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SetCandidate <- function(mSetObj=NA, query_nm, can_nm){
@@ -160,7 +160,7 @@ CrossReferencingAPI <- function(mSetObj=NA, inputType){
 #'@param lipid Logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 GetCandidateList <- function(mSetObj=NA, lipid){

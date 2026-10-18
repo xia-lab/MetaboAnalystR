@@ -51,7 +51,7 @@ GetCovDnIDs <- function(mSetObj=NA){
 #'@param selectedMeta selected Meta elements
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -370,7 +370,7 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
 #'@param nBins Integer, number of bins for grouping feature importance values in the partial dependence plot. Default is 3.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotImpVarCont <- function(mSetObj  = NA,
@@ -1493,7 +1493,7 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetMultiRFSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   return(CleanNumber(mSetObj$analSet$rf.sigmat.mf))

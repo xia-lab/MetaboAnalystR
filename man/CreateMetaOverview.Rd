@@ -16,5 +16,5 @@ For Metadata Overview
 \author{
 Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

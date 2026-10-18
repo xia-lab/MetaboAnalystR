@@ -24,7 +24,7 @@ SetCachexiaSetUsed <- function(mSetObj=NA, used){
 #'@param excludeNum Users input the mimimum number compounds within selected metabolite sets (metabolitesets < excludeNum)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
@@ -106,7 +106,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
 #'@param filePath Input the path to the user's uploaded metabolite set library
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.UserMsetLibData<-function(mSetObj=NA, filePath){
@@ -203,7 +203,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
 #'@param type Input the data type (name or compound)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SearchMsetLibraries<-function(mSetObj=NA, query, type){
@@ -233,7 +233,7 @@ SearchMsetLibraries<-function(mSetObj=NA, query, type){
 #'@param query Input the query to search
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SearchByCompound <- function(mSetObj=NA, query){
@@ -334,7 +334,7 @@ SearchByCompound <- function(mSetObj=NA, query){
 #'@param query Input the query to search 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SearchByName <- function(mSetObj=NA, query){
@@ -385,7 +385,7 @@ SearchByName <- function(mSetObj=NA, query){
 #'KEGG pathway library or "v2018" for the KEGG pathway library version prior to November 2019. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
@@ -422,7 +422,7 @@ SetKEGG.PathLib<-function(mSetObj=NA, libNm, lib.version){
 #'@param libNm Input library name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
@@ -447,7 +447,7 @@ SetSMPDB.PathLib<-function(mSetObj=NA, libNm){
 #'@param filePath Input the path to the user's list of KEGG pathway ids
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
@@ -503,7 +503,7 @@ Setup.KEGGReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'@param filePath Input the path to the user's list of HMDB compound names 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
@@ -563,7 +563,7 @@ Setup.HMDBReferenceMetabolome<-function(mSetObj=NA, filePath){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetMsetNames<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
     if(!exists("current.msetlib")){
@@ -630,7 +630,7 @@ SetMetabolomeFilter<-function(mSetObj=NA, TorF){
 #'@param scoreVec Numeric vector, same length and order as dataSet$cmpd
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec, scoreType="fc"){
@@ -688,7 +688,7 @@ Setup.CmpdRankScore <- function(mSetObj=NA, scoreVec, scoreType="fc"){
 #'statistic, "<=" for a p-value. The direction used is recorded.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff.dir=NULL){
@@ -742,7 +742,7 @@ SetRankedListCutoff <- function(mSetObj=NA, cutoff.by="top", cutoff=0.10, cutoff
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetRankedListCutoffMsg <- function(mSetObj=NA){
@@ -775,7 +775,7 @@ GetRankedListCutoffMsg <- function(mSetObj=NA){
 #'(-log10(p-value), unsigned -- for a list with no fold-change column).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Setup.CmpdRankData <- function(mSetObj=NA, filePath, rankMetric="signed_p"){

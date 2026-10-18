@@ -1,7 +1,7 @@
 ### Various enrichment analysis algorithms
 ### Jeff Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT
 
 # The "significant" top fraction of a ranked list for the permutation-based method. With a
 # real per-compound score (Setup.CmpdRankScore) the fraction is taken by |score| — the
@@ -86,7 +86,7 @@
 #'instead of KEGG pathway topology (no Impact/topology column here).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
@@ -393,7 +393,7 @@ CalculateHyperScore <- function(mSetObj=NA, method="hyperg"){
 #'actually present in the ranked list (same convention fgsea itself uses).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateGseaScore <- function(mSetObj=NA, minSize=3, maxSize=500){
@@ -578,7 +578,7 @@ ExportOraMembershipJson <- function(mSetObj=NA){
 #'@param covariates Optional covariates to include in the globaltest model. Default is NA (no covariates).
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
@@ -766,7 +766,7 @@ CalculateGlobalTestScore <- function(mSetObj=NA, covariates=NA){
 #'@param autoSwitch Switch from "samples" to "features" when a group has fewer than 7 samples (default TRUE)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateGseaTableScore <- function(mSetObj=NA, nperm=1000, minSize=3, maxSize=300, seed=NA, permute="samples", autoSwitch=TRUE){
@@ -1097,7 +1097,7 @@ GetGseaTableMode <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateSSP<-function(mSetObj=NA){
@@ -1395,7 +1395,7 @@ GetSSP.Notes<-function(mSetObj=NA, nm){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 GetSSPTable<-function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1416,7 +1416,7 @@ GetSSPTable<-function(mSetObj=NA){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetHTMLMetSet<-function(mSetObj=NA, msetNm){
@@ -1465,7 +1465,7 @@ GetHTMLMetSet<-function(mSetObj=NA, msetNm){
 #'@param msetInx Input the index of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetMetSetName<-function(mSetObj=NA, msetInx){

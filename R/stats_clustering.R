@@ -11,7 +11,7 @@
 #'@param clstDist Method to calculate clustering distance 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, smplDist, clstDist){
@@ -100,7 +100,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@param neigb Default is set to 'gaussian'
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
@@ -123,7 +123,7 @@ SOM.Anal <- function(mSetObj=NA, x.dim, y.dim, initMethod, neigb = 'gaussian'){
 #'@param facet logical
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@import ggplot2
 #'@export
 #'
@@ -247,7 +247,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA
 #'@param clust.num Numeric, input the number of clusters for K-means analysis
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Kmeans.Anal <- function(mSetObj=NA, clust.num){
@@ -270,7 +270,7 @@ Kmeans.Anal <- function(mSetObj=NA, clust.num){
 #'@param facet logical, TRUE to plot in multiple facets
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, colpal="default", facet=FALSE){
@@ -377,7 +377,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 #'@param labels labels to show, default is "T"
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@import ggplot2
 #'@export
 
@@ -500,7 +500,7 @@ PlotClustPCA <- function(mSetObj,
 #'@param download Logical, if TRUE generate a static downloadable heatmap instead of the interactive version. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, dataOpt, scaleOpt, 
@@ -589,7 +589,7 @@ PlotSubHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
 #'@param maxFeature Integer, maximum number of features to display. Default is 2000.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
@@ -901,7 +901,7 @@ PlotHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@description '@param #same as PlotHeatMap
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -1154,7 +1154,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 #'@param j Index of Y
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetSOMClusterMembers <- function(mSetObj=NA, i, j){
   mSetObj <- .get.mSet(mSetObj);
   cls <- mSetObj$dataSet$cls;
@@ -1174,7 +1174,7 @@ GetSOMClusterMembers <- function(mSetObj=NA, i, j){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 GetAllSOMClusterMembers <- function(mSetObj=NA){
   
@@ -1228,7 +1228,7 @@ GetClassLabel<-function(mSetObj=NA, inx){
 #'@param i Input the cluster index
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetKMClusterMembers <- function(mSetObj=NA, i){
   mSetObj <- .get.mSet(mSetObj);
 
@@ -1275,7 +1275,7 @@ GetAllKMClusterMembers <- function(mSetObj=NA){
 #'@param total Input the total
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 GetXYCluster<-function(total){
   if(total>16){

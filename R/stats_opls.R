@@ -3,7 +3,7 @@
 # Configuration for web vs local usage
 # Jeff Xia \email{jeff.xia@mcgill.ca}
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT
 perform_opls <- function (x, y = NULL, predI = NA, orthoI = 0, crossvalI = 7, log10L = FALSE, permI = 20, .on.public.web = TRUE,
                           scaleC = "none", ...) {
   xMN <- x;

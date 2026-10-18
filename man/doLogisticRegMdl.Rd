@@ -23,5 +23,5 @@ Develop a Logistic Regression Model with all of the combined k-fold CV subsets
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

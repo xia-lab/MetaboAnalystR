@@ -20,6 +20,6 @@ Fits a linear model per feature and returns logFC (model coefficient)
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 Compute logFC and moderated p-values using limma linear model
 }

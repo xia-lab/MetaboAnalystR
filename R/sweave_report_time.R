@@ -11,7 +11,7 @@
 #'@param usrName Input the name of the user
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
   
@@ -48,7 +48,7 @@ CreateTimeSeriesRnwReport <- function(mSetObj, usrName){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateTimeSeriesIOdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -108,7 +108,7 @@ CreateTimeSeriesIOdoc <- function(mSetObj=NA){
 #'Metabolomic pathway analysis, time-series analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 InitTimeSeriesAnal <- function(){
   descr <- c("\\section{Statistical Analysis [metadata table]}",
@@ -168,7 +168,7 @@ CreateTimeSeriesAnalNullMsg<-function(){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateMetaOverview <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -220,7 +220,7 @@ CreateMetaOverview <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateiPCAdoc <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -262,7 +262,7 @@ CreateiPCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateCorHeatmap <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -304,7 +304,7 @@ CreateCorHeatmap <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
@@ -349,7 +349,7 @@ CreateCovAdj <- function(mSetObj=NA){ ## need to figure out the image still
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateCorAnalysis <- function(mSetObj=NA){
   
@@ -389,7 +389,7 @@ CreateCorAnalysis <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateAOV2doc <- function(mSetObj=NA){
   
@@ -447,7 +447,7 @@ CreateAOV2doc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateASCAdoc <- function(mSetObj=NA){
   
@@ -641,7 +641,7 @@ CreateASCAdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateMBdoc <- function(mSetObj=NA){
   
@@ -679,7 +679,7 @@ CreateMBdoc <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jessica Ewald \email{jessica.ewald@mail.mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CreateRandomForest <- function(mSetObj=NA){
   

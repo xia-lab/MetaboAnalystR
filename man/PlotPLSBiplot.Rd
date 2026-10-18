@@ -30,5 +30,5 @@ variables based on VIP values for selected components.
 \author{
 Jeff Xia\email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }

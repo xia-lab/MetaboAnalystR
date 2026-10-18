@@ -5,7 +5,7 @@
 #'FALSE = no batch effect adjustment.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 CheckMetaDataConsistency <- function(mSetObj=NA, combat=TRUE) {
   
@@ -194,7 +194,7 @@ GetMetaProcMsg <- function(mSetObj=NA){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformEachDEAnal <- function(mSetObj=NA){
@@ -248,7 +248,7 @@ if(!exists('metastat.meta')){
 #'@param BHth Numeric input to set the significance level. By default it is 0.05. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformPvalCombination <- function(mSetObj=NA, method="stouffer", BHth=0.05){
@@ -334,7 +334,7 @@ if(!exists('metastat.meta')){
 #'@param minVote Numeric input to set the minimum vote-count. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformVoteCounting <- function(mSetObj=NA, BHth = 0.05, minVote){
@@ -416,7 +416,7 @@ if(!exists('metastat.meta')){
 #'@param BHth Numeric input to set the significance level. By default it is 0.05. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformMetaMerge<-function(mSetObj=NA, BHth=0.05){

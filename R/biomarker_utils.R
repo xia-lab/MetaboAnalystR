@@ -2,7 +2,7 @@
 ### Subset data, train, rank
 ### Jeff Xia \email{jeff.xia@mcgill.ca}
 ### McGill University, Canada
-### License: GNU GPL (>= 2)
+### License: MIT
 
 # ROCR::prediction treats the alphabetically-last label as the positive class, but
 # Predict.class returns the probability of the SECOND factor level. Those agree only
@@ -26,7 +26,7 @@ GetLabelOrdering <- function(labels){
 #'@param feat.len Input the feature length
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetFeatureNumbers <- function(feat.len){
@@ -57,7 +57,7 @@ GetFeatureNumbers <- function(feat.len){
 #'@param nRuns By default set to 30
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30, rseed = 28051968){
 
@@ -120,7 +120,7 @@ GetTrainTestSplitMat <- function(y, propTraining = 2/3, nRuns = 30, rseed = 2805
 #'@param grps Input the groups
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetCurrentGroups <- function(mSetObj=NA, grps){
@@ -157,7 +157,7 @@ SetCurrentGroups <- function(mSetObj=NA, grps){
 #'@param lvNum Input the number of levels
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 # Elastic-net helpers (.ov_enet_fit, .ov_enet_imp) are in stats_enet.R, shared with the elastic net page of the statistics modules.
 
@@ -225,7 +225,7 @@ RankFeatures <- function(x.in, y.in, method, lvNum){
 #'@param clust.num Numeric, input the number of clusters for cluster-analysis
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 CalculateFeatureRanking <- function(mSetObj=NA, clust.num=5){
@@ -312,7 +312,7 @@ UpdateKmeans <- function(mSetObj=NA, clust.num=5){
 #'@param mode Input the selected mode for biomarker analysis, "univ" for univariate ROC curve analysis,
 #'"explore" for multivariate ROC curve analysis, and "test" for ROC curve based model creation and evaluation.
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SetAnalysisMode <- function(mSetObj=NA, mode){
@@ -336,7 +336,7 @@ SetAnalysisMode <- function(mSetObj=NA, mode){
 #'@param propTraining Input the proportion of samples to use for training 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum=2, propTraining=2/3){
@@ -483,7 +483,7 @@ PerformCV.explore <- function(mSetObj=NA, cls.method, rank.method="auroc", lvNum
 #'@param nRuns Input the number of MCCV runs, by default it is 100 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=100){
@@ -642,7 +642,7 @@ PerformCV.test <- function(mSetObj=NA, method, lvNum, propTraining=2/3, nRuns=10
 #'@param imp.out Logical, set to F by default
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 Predict.class <- function(x.train, y.train, x.test, clsMethod="pls", lvNum, imp.out=F){
   
@@ -743,7 +743,7 @@ genLREquation <- function(coef.mdl){
 #'@param run.stepwise Logistic Regression
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 .do.CVTest.LRmodel <- function(data.in, fmla.in, kfold=10, run.stepwise=FALSE){
   
@@ -824,7 +824,7 @@ genLREquation <- function(coef.mdl){
 #'@param y.test Input the Y test set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
   
   # use 10-fold CV as default; or LOOCV if sample size < 10
@@ -931,7 +931,7 @@ doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
 #'@param sp.bin Numeric, default is set to 0.01. 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #' @importFrom pROC smooth plot.roc
 #' @importFrom Cairo Cairo
 #'@export
@@ -987,7 +987,7 @@ PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
 #'@param resp Input responses
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 multi.stat <- function(pred, resp) {
   
   in.dat <- na.omit(cbind(pred,resp));
@@ -1036,7 +1036,7 @@ multi.stat <- function(pred, resp) {
 #'@param param Logical, False by default 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetCIs <- function(data, param=F){
   means <- colMeans(data, na.rm=T);
@@ -1081,7 +1081,7 @@ GetCIs <- function(data, param=F){
 #'the number must be between 0 and 1.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 Perform.UnivROC <- function(mSetObj=NA, feat.nm, 
@@ -1189,7 +1189,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
 #'@param isQuery logical
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=default.dpi, isOpt, isQuery){
 
@@ -1294,7 +1294,7 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=defa
 #'@param showPred Show predicted samples
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) {
@@ -1446,7 +1446,7 @@ PlotProbView <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl
 #'@param showPred Show predicted samples
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) {
@@ -1613,7 +1613,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'ROC curve, the number must be between 0 and 1.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
@@ -1741,7 +1741,7 @@ PlotROC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx,
 #'@param cutoff Input the threshold to limit the calculation of the ROC curve, the number must be between 0 and 1.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export 
 
 PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
@@ -1923,7 +1923,7 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
@@ -1975,7 +1975,7 @@ PlotAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
@@ -2030,7 +2030,7 @@ PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
 #'@param feat.num Input the number of features to include in the plot, by default it is 15.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
@@ -2198,7 +2198,7 @@ PlotImpBiomarkers <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 #'@param propTraining Numeric, input the fraction of samples to set aside for training. Default is set to 2/3.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3){
@@ -2271,7 +2271,7 @@ Perform.Permut<-function(mSetObj=NA, perf.measure, perm.num, propTraining = 2/3)
 #'@param clsMethod Method to predict class, by default it is PLS
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 Get.pred <- function(x.train, y.train, x.test, y.test, clsMethod="pls"){
   
@@ -2300,7 +2300,7 @@ Get.pred <- function(x.train, y.train, x.test, y.test, clsMethod="pls"){
 #'@param perm.vec Input permutation vector 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PreparePermResult<-function(perm.vec){
@@ -2341,7 +2341,7 @@ PreparePermResult<-function(perm.vec){
 #'the default dpi is 72. It is suggested that for high-resolution images, select a dpi of 300.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
@@ -2421,7 +2421,7 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
 #'@param cutoff Numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 Get.pAUC <- function(x, y, focus, cutoff) {
   
@@ -2462,7 +2462,7 @@ Get.pAUC <- function(x, y, focus, cutoff) {
 #'@param avg.method Input the name of the method to compute the average curve
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 ComputeAverageCurve<-function(perf, avg.method){
   # now get the average curve
@@ -2522,7 +2522,7 @@ ComputeAverageCurve<-function(perf, avg.method){
 #'@param perf Input the performance 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 ComputeHighLow <- function(perf){
   all.alphas <- unlist(perf@alpha.values);
@@ -2564,7 +2564,7 @@ ComputeHighLow <- function(perf){
 #'@param factor2 Name of the second factor level for binary classification; default is "NA"
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PrepareROCData <- function(mSetObj=NA, sel.meta="NA", factor1="NA", factor2="NA") {
@@ -2735,7 +2735,7 @@ SetCustomData <- function(mSetObj=NA, selected.cmpds, selected.smpls){
 #'@param feat.nm Input the feature name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PrepareROCDetails <- function(mSetObj=NA, feat.nm){
@@ -2782,7 +2782,7 @@ PrepareROCDetails <- function(mSetObj=NA, feat.nm){
 #'@param format Select the image format, "png", or "pdf". 
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotDetailROC <- function(mSetObj=NA, imgName, thresh, sp, se, dpi=default.dpi, format="png"){
@@ -2829,7 +2829,7 @@ GetAccuracyInfo<-function(mSetObj=NA){
 #'@param x An Rpart object
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 Get.rpart.summary <- function(x) {
   frame <- x$frame
@@ -2880,7 +2880,7 @@ Get.rpart.summary <- function(x) {
 #'@param perf Performance object from ROCR
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetMeanROC<-function(perf){
   perf@alpha.values <- lapply(perf@alpha.values,
@@ -2927,7 +2927,7 @@ ContainNewSamples <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetNewSampleNames <- function(mSetObj=NA){
@@ -3049,7 +3049,7 @@ Get.Fstat <-  function(x, fac, var.equal=TRUE) {
 #'@param imgNm Input the image name
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
@@ -3139,7 +3139,7 @@ GetROC.coords <- function(mSetObj=NA, fld.nm, val, plot=TRUE, imgNm){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetLassoFreqs <- function(mSetObj=NA){
@@ -3167,7 +3167,7 @@ GetLassoFreqs <- function(mSetObj=NA){
 #'@param cls Input class labels
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 #' Compute logFC and moderated p-values using limma linear model
 #' @description Fits a linear model per feature and returns logFC (model coefficient)
@@ -3205,7 +3205,7 @@ GetROCTtestP <- function(data, cls){
 #'@param rseed Input the random seed
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 createCVset <- function(groupN, kfold, rseed)
 {
@@ -3234,7 +3234,7 @@ createCVset <- function(groupN, kfold, rseed)
 #'@param cls Input class labels
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 GetROCLassoFreq <- function(data, cls){
   
@@ -3338,7 +3338,7 @@ GetROCLassoFreq <- function(data, cls){
 #'@param bestFeatNum Numeric
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
   
@@ -3416,7 +3416,7 @@ GetImpFeatureMat <- function(mSetObj=NA, feat.outp, bestFeatNum){
 #'@param comp Numeric, input the number of components, by default it is 2
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 Get.VIP <- function(pls.obj, comp=2){
   # only use the top two comps

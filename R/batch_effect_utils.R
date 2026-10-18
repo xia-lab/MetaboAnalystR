@@ -8,7 +8,7 @@
 #' @param missingEstimate Approach to estimate the missing values
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 #' 
 Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate){
@@ -206,7 +206,7 @@ Read.BatchDataBC<-function(mSetObj=NA, filePath, format, label, missingEstimate)
 #'@param missingEstimate Approach to estimate the missing values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
@@ -413,7 +413,7 @@ Read.BatchDataTB<-function(mSetObj=NA, filePath, format, missingEstimate){
 #'@param format Input the format of the batch files
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
@@ -592,7 +592,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
@@ -613,7 +613,7 @@ PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center
 #'@import BiocParallel
 #'@author Zhiqiang Pang, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
@@ -668,7 +668,7 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'@param method method of correction
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, width=NA,method){
@@ -776,7 +776,7 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, wi
 #'@param method method of correction
 #'@author Zhiqiang Pang \email{zhiqiang.pang@mail.mcgill.ca}, Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 plot.sample.trend <- function(mSetObj, imgName, format="png", dpi=default.dpi, width=NA,method){
@@ -889,7 +889,7 @@ ResetBatchData <- function(mSetObj=NA){
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'
 CreateSemiTransColors <- function(cls){
   

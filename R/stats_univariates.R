@@ -9,7 +9,7 @@
 #'@param fc.method Character, the method to compute fold change: "classical" (default, mean/median ratio) or "limma" (log2 fold change via limma moderated model).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 # ---------------------------------------------------------------------------
@@ -176,7 +176,7 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
 #'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
@@ -279,7 +279,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 #'@param cmpType Numeric, 0 or 1
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -390,7 +390,7 @@ GetFC <- function(mSetObj=NA, paired=FALSE, cmpType){
 #'@param tt.method Character, the t-test method to use: "classical" (default), "welch", "student", "wilcox" (non-parametric), or "limma" (moderated t-test).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
@@ -609,7 +609,7 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
@@ -717,7 +717,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
 #'@param fc.method Character, the fold change method: "classical" (default) or "limma". When "limma" is used, moderated t-statistics are also applied.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 Volcano.Anal <- function(mSetObj=NA, paired=FALSE, fcthresh,
@@ -836,7 +836,7 @@ fast.write.csv(signif(all.var, 5), file="volcano_all.mat");
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 
@@ -851,7 +851,7 @@ PlotVolcano <- function(mSetObj=NA, imgName, plotLbl, plotTheme, format="png", d
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 aof <- function(x, cls) {
   aov(x ~ cls);
 }
@@ -863,7 +863,7 @@ aof <- function(x, cls) {
 #'@param cls Input class labels
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 kwtest <- function(x, cls) {
   kruskal.test(x ~ cls);
 }
@@ -874,7 +874,7 @@ kwtest <- function(x, cls) {
 #'@param thresh Numeric, input the alpha threshold 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 FisherLSD <- function(aov.obj, thresh){
   return(my.lsd.test(aov.obj,"cls", alpha=thresh));
 }
@@ -885,7 +885,7 @@ FisherLSD <- function(aov.obj, thresh){
 #'@param cut.off Input numeric cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 parseTukey <- function(tukey, cut.off){
   inx <- tukey$cls[,"p adj"] <= cut.off;
   .posthocPairs(rownames(tukey$cls)[inx], tukey$cls[inx, "p adj"]);
@@ -907,7 +907,7 @@ parseTukey <- function(tukey, cut.off){
 #'@param cut.off Numeric, set cut-off
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 parseFisher <- function(fisher, cut.off){
   inx <- fisher[,"pvalue"] <= cut.off;
   .posthocPairs(rownames(fisher)[inx], fisher[inx, "pvalue"]);
@@ -922,7 +922,7 @@ parseFisher <- function(fisher, cut.off){
 #' @param all_results Logical, if TRUE, it will output the ANOVA results for all compounds 
 #' @author Jeff Xia\email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 #'
 ANOVA.Anal<-function(mSetObj=NA, nonpar=FALSE, thresh=0.05, all_results=FALSE) {
@@ -1140,7 +1140,7 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
 #'@param interactive Logical, if TRUE returns an interactive plotly figure instead of a static image. Default is FALSE.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, width=NA,interactive=F){
@@ -1221,7 +1221,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.   
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotCmpdView <- function(mSetObj=NA, cmpdNm, format="png", dpi=default.dpi, width=NA){
@@ -1460,7 +1460,7 @@ GetSigTable.TT <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetTTSigMat <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
@@ -1538,7 +1538,7 @@ GetTtestSigFileName <- function(mSetObj=NA){
 #'@param nonpar Use non-parametric tests, default is set to FALSE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetTtestRes <- function(mSetObj=NA, paired=FALSE, equal.var=TRUE, nonpar=F){
   
   mSetObj <- .get.mSet(mSetObj);
@@ -1628,7 +1628,7 @@ GetFtestRes <- function(mSetObj=NA, nonpar=F){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 
 GetUnivReport <- function(mSetObj=NA){
   return(my.univ.report(mSetObj));
@@ -1733,7 +1733,7 @@ GetVolcanoCmpds <- function(mSetObj=NA){
 #'@param dec Logical, default set to TRUE
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetTopInx <- function(vec, n, dec=T){
   inx <- order(vec, decreasing = dec)[1:n];
   # convert to T/F vec

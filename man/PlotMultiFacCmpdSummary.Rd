@@ -38,5 +38,5 @@ Plot compound summary for multi-linear regression tool
 \author{
 Jessica Ewald\email{jessica.ewald@mcgill.ca}
 McGill University, Canada
-License: GPL-3 License
+License: MIT
 }

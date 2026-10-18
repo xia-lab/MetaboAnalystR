@@ -6,7 +6,7 @@
 #'in columns and paired (colp), or in columns and unpaired (colu).
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
@@ -46,7 +46,7 @@ ReadIndData <- function(mSetObj=NA, dataName, format="colu"){
 #'@param dataSet Input dataset to be registered in R. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 RegisterData <- function(mSetObj=NA, dataSet){
@@ -68,7 +68,7 @@ RegisterData <- function(mSetObj=NA, dataSet){
 #'@param dataName Input name of the dataset to perform the sanity check.  
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 # 
 SanityCheckIndData<-function(mSetObj=NA, dataName){
@@ -324,7 +324,7 @@ RemoveData <- function(dataName){
 #'@param mSetObj Input name of the created mSet Object
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 SelectMultiData <- function(mSetObj=NA){
@@ -371,7 +371,7 @@ GetAllDataNames <- function(){
 #'@param auto.opt Performs auto-scaling of data (1), or no (0). 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PerformIndNormalization <- function(mSetObj=NA, dataName, norm.opt, auto.opt){
@@ -444,7 +444,7 @@ PerformDataNormalization <- function(data, norm.opt){
 #'@param fc.lvl Numeric, input the fold-change (FC) cutoff. 
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 PerformLimmaDE<-function(mSetObj=NA, dataName, p.lvl=0.1, fc.lvl=0.0){
   
@@ -528,7 +528,7 @@ GetLimmaResTable<-function(fit.obj){
 #'@param dpi dpi value for the image.
 #'@author Jeff Xia\email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = default.dpi){
   if(!exists('metastat.meta')){

@@ -709,7 +709,7 @@ mSetObj$analSet$combFacdf <- meta;
 #'@param version version
 #'@author Jessica Ewald\email{jessica.ewald@mcgill.ca}
 #'McGill University, Canada
-#'License: GPL-3 License
+#'License: MIT
 #'@export
 #'
 PlotMultiFacCmpdSummary <- function(mSetObj=NA, cmpdNm, meta,meta2, version, format="png", dpi=default.dpi, width=NA){

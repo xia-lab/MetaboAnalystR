@@ -12,7 +12,7 @@
 #'@param method is "fisher", "hyperg", "mummi_like" (permutation-based), or "gsea_like" (preranked GSEA)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
@@ -445,7 +445,7 @@ SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
 #'global ancova is "ga", and mummichog-inspired rank enrichment is "mummi_like".
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 # contains three inner functions to be compatible with microservice
@@ -761,7 +761,7 @@ GetQEA.pathNames <- function(mSetObj=NA){
 #'@param kegg.ids Input the list of KEGG ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetupSMPDBLinks <- function(kegg.ids){
@@ -787,7 +787,7 @@ SetupSMPDBLinks <- function(kegg.ids){
 #'@param smpdb.ids Input the list of SMPD ids to add SMPDB links
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 SetupKEGGLinks <- function(smpdb.ids){
@@ -816,7 +816,7 @@ SetupKEGGLinks <- function(smpdb.ids){
 #'@param msetNm Input the name of the metabolite set
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 GetHTMLPathSet <- function(mSetObj=NA, msetNm){
@@ -1240,7 +1240,7 @@ GetORA.keggIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetORA.smpdbIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){
@@ -1257,7 +1257,7 @@ GetORA.smpdbIDs <- function(mSetObj=NA){
 #'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 GetQEA.keggIDs <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   if(mSetObj$pathwaylibtype == "KEGG"){

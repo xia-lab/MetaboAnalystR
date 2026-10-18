@@ -11,7 +11,7 @@
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=default.dpi, width=NA){
@@ -162,7 +162,7 @@ PlotQEA.MetSet<-function(mSetObj=NA, setNM, format="png", dpi=default.dpi, width
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=default.dpi, width=NA){
@@ -240,7 +240,7 @@ PlotConcRange<-function(mSetObj=NA, nm, format="png", dpi=default.dpi, width=NA)
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA, topN = 25){
@@ -315,7 +315,7 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
 #'@param topN Integer, the maximum number of top sets (by p-value) to display. Default is 25.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotCmpdRankGsea <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, topN=25){
@@ -387,7 +387,7 @@ PlotCmpdRankGsea <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@param topN Integer, the maximum number of top pathways to display in the bar plot. Default is 25.
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, width=NA, topN=25){
@@ -447,7 +447,7 @@ PlotQEA.Overview <-function(mSetObj=NA, imgName, imgOpt, format="png", dpi=defau
 #'@param pvals Input the p-values
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 #'
 PlotMSEA.Overview <- function(folds, pvals){
@@ -491,7 +491,7 @@ PlotMSEA.Overview <- function(folds, pvals){
 #'The second default is width = 0, where the width is 7.2. Otherwise users can input their own width.  
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 
 PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="png", dpi=default.dpi, width=NA, maxNameLen = 40, topN=25){
@@ -598,7 +598,7 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
 #'@param topN Cap on the number of sets shown; default 100 matches the viewer
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
-#'License: GNU GPL (>= 2)
+#'License: MIT
 #'@export
 PlotORAMembership <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, topN=100){
 
@@ -724,7 +724,7 @@ concplot <- function(mn, lower, upper, labels=NULL,
 # so that the small p value is bigger, located on top of the color key
 # Jeff Xia, jeff.xia@mcgill.ca
 # McGill University, Canada
-# License: GNU GPL (>= 2)
+# License: MIT
 #' @exportS3Method
 image.plot <- function(..., add = FALSE, nlevel = 64,
                        horizontal = FALSE, legend.shrink = 0.9, legend.width = 1.2,
@@ -1017,7 +1017,7 @@ image.plot.plt <- function(x, add = FALSE, legend.shrink = 0.9,
 #' @param layoutOpt Input the layout option, default is set to layout.fruchterman.reingold
 #' @author Jeff Xia \email{jeff.xia@mcgill.ca}
 #' McGill University, Canada
-#' License: GNU GPL (>= 2)
+#' License: MIT
 #' @export
 #' @import igraph
 

@@ -29,5 +29,5 @@ Generate PCA pairwise summary plots with metadata overlays.
 \author{
 Jeff Xia \email{jeff.xia@mcgill.ca}
 McGill University, Canada
-License: GNU GPL (>= 2)
+License: MIT
 }
