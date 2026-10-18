@@ -466,10 +466,14 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
   
   if(CVtype == "LOO"){
     CVnum <- nSample
-  }else{
+  }else if(CVtype == "bootstrape"){
     if(CVnum == 0 ){
       CVnum <- nSample
     }
+  }else{
+    ## N-fold: each sample is tested once (before, it ran nSample random splits, whose cost grew with the square of the samples)
+    CVnum <- min(as.integer(CVtype), nSample)
+    folds <- sample(rep(seq_len(CVnum), length.out = nSample))
   }
   
   ## vector for test error and number of tests
@@ -492,8 +496,8 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
         TestInd <- SampInd[ which(!(SampInd %in% TrainInd ))];
       }else{
         ## Nfold
-        TrainInd <- sample(SampInd, nSample*(CVtype-1)/CVtype);
-        TestInd <- SampInd[ which(!(SampInd %in% TrainInd ))];
+        TestInd <- SampInd[folds == i];
+        TrainInd <- SampInd[-TestInd];
       }
     }
     
@@ -503,7 +507,7 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
     xTrain <- x[TrainInd, ]
     yTrain <- y[TrainInd]
     
-    xTest  <- x[TestInd,]
+    xTest  <- x[TestInd, , drop = FALSE]
     yTest  <- y[TestInd]
     
     ## index of the genes used in the
@@ -520,11 +524,8 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
       ## for "LOO", the test data should be as.data.frame, matrxi will trigger error #####
       ###################################################################################
       svmres <- e1071::svm(xTrain[, SelInd], yTrain, scale=T, type="C-classification", kernel="linear" )
-      if( CVtype == "LOO" ){
-        svmpred <- predict(svmres, as.data.frame(xTest[SelInd], nrow=1) )
-      }else{
-        svmpred <- predict(svmres, xTest[, SelInd] )
-      }
+      ## one test sample (LOO, or a fold of one) stays a one-row matrix
+      svmpred <- predict(svmres, xTest[, SelInd, drop = FALSE] )
       ErrVec[gLevel] <- ErrVec[gLevel] + sum(svmpred != yTest )
       
       ## weight vector
