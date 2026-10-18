@@ -374,9 +374,28 @@ GetORA.pathNames <- function(mSetObj=NA){
 # permutations are too coarse for their p-values to be reliable. The run goes ahead; this says so.
 .path.perm.coverage <- function(n, alternatives){
   if (is.na(n) || n >= 100) return("")
-  paste0("Only ", n, " measured compounds are available to the permutation-based method; it needs at least 100 ",
+  paste0("Only ", n, " measured compounds are available to this competitive method (permutation-based or GSEA); it needs at least 100 ",
          "for reliable p-values (with fewer, random sets of the same size are too few to tell pathways apart). ",
          "Consider ", alternatives, " instead.")
+}
+
+#'The number of compounds a pathway test can use, before it runs
+#'@description Compounds with a KEGG ID (or an HMDB ID for SMPDB libraries); for a concentration table, only
+#'those still in the processed data. The pathway page shows it under the competitive methods, which need
+#'at least 100.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param lib.type "KEGG" or "SMPDB"
+#'@export
+GetPathTestableCount <- function(mSetObj=NA, lib.type="KEGG"){
+  mSetObj <- .get.mSet(mSetObj);
+  nm.map <- tryCatch(GetFinalNameMap(mSetObj), error = function(e) NULL);
+  if (is.null(nm.map) || nrow(nm.map) == 0) return(0L);
+  if (!is.null(mSetObj$dataSet$norm) && exists("anal.type") && identical(anal.type, "pathqea")) {
+    nm.map <- nm.map[nm.map$query %in% colnames(mSetObj$dataSet$norm), , drop = FALSE];
+  }
+  ids <- if (identical(lib.type, "SMPDB")) nm.map$hmdbid else nm.map$kegg;
+  ids <- ids[!is.na(ids) & nzchar(ids) & ids != "NA"];
+  length(unique(ids))
 }
 
 #'The coverage warning of the last permutation-based pathway enrichment
@@ -646,6 +665,40 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       if (!is.null(cov.df)) paste0("\n- Covariates (", paste(colnames(cov.df), collapse = ", "),
                                    ") are NOT adjusted for: the permutation method ranks compounds by an unadjusted univariate p-value. ",
                                    "Use Globaltest or GlobalAncova to adjust for them.") else "",
+      if (nzchar(perm.warn)) paste0("\n- **Warning:** ", perm.warn) else "")
+  } else if(method == "gsea_like"){
+    # GSEA of the table on the pathway sets: the same engine as the enrichment module's GSEA of a table
+    # (.gsea.table.engine): compounds ranked by the group statistic, sample labels permuted (switched to
+    # compound permutation when a group is small), a pathway keeps its measured compounds.
+    perm.num <- 100
+    tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+    if(length(tmp.perm) == 1 && !is.na(tmp.perm) && tmp.perm >= 10) perm.num <- tmp.perm
+    cls.type <- if(is.null(mSetObj$dataSet$cls.type)) "disc" else mSetObj$dataSet$cls.type
+    cls <- mSetObj$dataSet$cls
+    cls <- if(cls.type == "cont") as.numeric(as.character(cls)) else droplevels(as.factor(cls))
+    gs <- .gsea.table.engine(as.matrix(path.data), cls, hits, nperm = perm.num, minSize = 1, maxSize = 100000,
+                             seed = 20261018, permute = "samples", autoSwitch = TRUE)
+    if(is.character(gs)){
+      AddErrMsg(gs)
+      return(0)
+    }
+    set.sizes <- vapply(hits, length, FUN.VALUE = integer(1))
+    gsea.p <- rep(1, length(hits)); names(gsea.p) <- names(hits)
+    tested <- intersect(rownames(gs$table), names(hits))
+    gsea.p[tested] <- gs$table[tested, "p"]
+    qea.res <- cbind(set.sizes, gsea.p)
+    rownames(qea.res) <- names(hits)
+    M <- length(unique(unlist(hits, use.names = FALSE)))
+    perm.warn <- .path.perm.coverage(M, "Globaltest or GlobalAncova")
+    mSetObj$analSet$qea.gsea <- list(mode = gs$mode, switched = gs$switched, nperm = perm.num,
+                                     NES = setNames(gs$table$NES, rownames(gs$table)))
+    perm.nm <- if(gs$mode == "samples") "permutations of the sample labels" else "permutations of the compounds (feature permutation)"
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected pathway enrichment analysis method is ```GSEA``` on the table.\n\n",
+      "- Compounds are ranked by the group statistic; ", perm.num, " ", perm.nm, ".",
+      if(gs$switched) "\n- A group is too small for robust phenotype permutation: switched to feature permutation." else "",
+      if (!is.null(cov.df)) paste0("\n- Covariates (", paste(colnames(cov.df), collapse = ", "),
+                                   ") are NOT adjusted for. Use Globaltest or GlobalAncova to adjust for them.") else "",
       if (nzchar(perm.warn)) paste0("\n- **Warning:** ", perm.warn) else "")
   } else {
     AddErrMsg(paste0("Unknown pathway enrichment method: ", method))
