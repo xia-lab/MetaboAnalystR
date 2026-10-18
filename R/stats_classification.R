@@ -521,7 +521,6 @@ RSVM <- function(x, y, ladder, CVtype, CVnum=0){
       ###################################################################################
       ## note the scale is changed to T or it never returns sometime for unscaled data ###
       ## note: the classification performance is idenpendent of about scale is T/F  #####
-      ## for "LOO", the test data should be as.data.frame, matrxi will trigger error #####
       ###################################################################################
       svmres <- e1071::svm(xTrain[, SelInd], yTrain, scale=T, type="C-classification", kernel="linear" )
       ## one test sample (LOO, or a fold of one) stays a one-row matrix
