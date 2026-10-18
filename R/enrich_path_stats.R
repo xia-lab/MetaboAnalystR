@@ -616,7 +616,10 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       "- Significant compounds: the top ```", round(top.frac * 100, 2), "%``` of the ", M,
       " measured compounds in these pathways by univariate p-value (", sig.n, " compounds)\n",
       "- Pathway p-value: the share of ```", perm.num, "``` random sets of ", sig.n,
-      " measured compounds whose hypergeometric p-value is at least as small", cov.label)
+      " measured compounds whose hypergeometric p-value is at least as small",
+      if (!is.null(cov.df)) paste0("\n- Covariates (", paste(colnames(cov.df), collapse = ", "),
+                                   ") are NOT adjusted for: the permutation method ranks compounds by an unadjusted univariate p-value. ",
+                                   "Use Globaltest or GlobalAncova to adjust for them.") else "")
   } else {
     AddErrMsg(paste0("Unknown pathway enrichment method: ", method))
     return(0)
