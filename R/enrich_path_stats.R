@@ -343,6 +343,11 @@ CalculateOraScore <- function(mSetObj=NA, nodeImp, method){
     res.mat <- res.mat[ord.inx,];
   }
   
+  perm.warn <- if (method %in% c("mummi_like", "gsea_like"))
+    .path.perm.coverage(q.size, "Fisher's exact or the hypergeometric test") else ""
+  mSetObj$analSet$path.perm.warning <- perm.warn;
+  if (nzchar(perm.warn)) mSetObj$msgSet$rich.msg <- paste0(mSetObj$msgSet$rich.msg, "\n\n- **Warning:** ", perm.warn);
+
   mSetObj$analSet$ora.mat <- signif(res.mat,5);
   mSetObj$analSet$ora.hits <- hits;
   mSetObj$analSet$node.imp <- nodeImp;
@@ -363,6 +368,25 @@ GetORA.pathNames <- function(mSetObj=NA){
   mSetObj <- .get.mSet(mSetObj);
   hit.inx <- match(rownames(mSetObj$analSet$ora.mat), current.kegglib$path.ids);
   return(names(current.kegglib$path.ids)[hit.inx]);
+}
+
+# The permutation-based methods draw random sets from the compounds they test: with fewer than 100, the
+# permutations are too coarse for their p-values to be reliable. The run goes ahead; this says so.
+.path.perm.coverage <- function(n, alternatives){
+  if (is.na(n) || n >= 100) return("")
+  paste0("Only ", n, " measured compounds are available to the permutation-based method; it needs at least 100 ",
+         "for reliable p-values (with fewer, random sets of the same size are too few to tell pathways apart). ",
+         "Consider ", alternatives, " instead.")
+}
+
+#'The coverage warning of the last permutation-based pathway enrichment
+#'@description "" when the last pathway enrichment was not permutation-based or tested at least 100 compounds.
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@export
+GetPathPermWarning <- function(mSetObj=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  w <- mSetObj$analSet$path.perm.warning;
+  if (is.null(w)) "" else w
 }
 
 #'Set the parameters of the permutation-based (mummichog-style) pathway enrichment
@@ -511,6 +535,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
   }
 
   cov.label <- if (!is.null(cov.df)) paste0("\n- Covariates adjusted for: ```", paste(colnames(cov.df), collapse=", "), "```") else ""
+  perm.warn <- ""
   if(method == "gt"){
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```Globaltest```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
@@ -605,6 +630,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     }
     if (is.null(old.seed)) rm(".Random.seed", envir = globalenv()) else assign(".Random.seed", old.seed, envir = globalenv())
     emp.p <- (le.count + 1) / (perm.num + 1)
+    perm.warn <- .path.perm.coverage(M, "Globaltest or GlobalAncova")
 
     # same two columns as globaltest / GlobalAncova give: compounds tested in the pathway, then p
     qea.res <- cbind(set.sizes, emp.p)
@@ -619,13 +645,15 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
       " measured compounds whose hypergeometric p-value is at least as small",
       if (!is.null(cov.df)) paste0("\n- Covariates (", paste(colnames(cov.df), collapse = ", "),
                                    ") are NOT adjusted for: the permutation method ranks compounds by an unadjusted univariate p-value. ",
-                                   "Use Globaltest or GlobalAncova to adjust for them.") else "")
+                                   "Use Globaltest or GlobalAncova to adjust for them.") else "",
+      if (nzchar(perm.warn)) paste0("\n- **Warning:** ", perm.warn) else "")
   } else {
     AddErrMsg(paste0("Unknown pathway enrichment method: ", method))
     return(0)
   }
 
   # Store intermediate data
+  mSetObj$analSet$path.perm.warning <- perm.warn;
   mSetObj$analSet$qea.univp <- signif(univ.p,7);
   mSetObj$analSet$node.imp <- nodeImp;
   mSetObj$dataSet$norm.path <- path.data;
