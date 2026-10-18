@@ -56,7 +56,6 @@ RcppExport SEXP binYonX_multi(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SE
 RcppExport SEXP impute_with_linear_interpolation(SEXP, SEXP);
 RcppExport SEXP impute_with_linear_interpolation_base(SEXP, SEXP, SEXP);
 RcppExport SEXP breaks_on_nBins(SEXP, SEXP, SEXP, SEXP);
-RcppExport SEXP fmatch(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
   {"C_imodwt",         (DL_FUNC) &C_imodwt,          8},
@@ -83,7 +82,6 @@ static const R_CallMethodDef CallEntries[] = {
   {"impute_with_linear_interpolation",  (DL_FUNC) &impute_with_linear_interpolation,  2},
   {"impute_with_linear_interpolation_base",  (DL_FUNC) &impute_with_linear_interpolation_base,  3},
   {"breaks_on_nBins",  (DL_FUNC) &breaks_on_nBins,  4},
-  {"fmatch",  (DL_FUNC) &fmatch,  5},
   {"_MetaboAnalystR_melt_dataframe", (DL_FUNC) &_MetaboAnalystR_melt_dataframe, 8},
   {NULL, NULL, 0}
 };

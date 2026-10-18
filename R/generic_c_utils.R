@@ -40,9 +40,4 @@ C_modwt_r <- function(X,N,j, L, ht, gt,W, V){
   
 ############# ============ ------------- Bin bottom ----------- ============ ###########
 
-## Internal C fucntion - fmatch
-## ref: https://cran.r-project.org/web/packages/fastmatch/index.html
-fmatch_r <- function(x, table, nomatch = NA_integer_, incomparables = NULL){
-  .Call("fmatch", x, table, nomatch, incomparables, FALSE)
-}
   
