@@ -365,6 +365,31 @@ GetORA.pathNames <- function(mSetObj=NA){
   return(names(current.kegglib$path.ids)[hit.inx]);
 }
 
+#'Set the parameters of the permutation-based (mummichog-style) pathway enrichment
+#'@description The top fraction of compounds used as significant and the number of permutations, for
+#'CalculateQeaScore(method = "mummi_like") and CalculateOraScore(method = "mummi_like" / "gsea_like").
+#'@param mSetObj Input the name of the created mSetObj (see InitDataObjects)
+#'@param top.fraction Fraction of top-ranked compounds used as significant (0-1, default 0.10)
+#'@param perm.num Number of permutations for the empirical p-values (at least 10, default 100)
+#'@export
+SetPathQeaMummiParams <- function(mSetObj=NA, top.fraction=0.10, perm.num=100){
+  mSetObj <- .get.mSet(mSetObj);
+  if(is.null(mSetObj$paramSet)){
+    mSetObj$paramSet <- list();
+  }
+  frac <- suppressWarnings(as.numeric(top.fraction));
+  if(is.na(frac) || frac <= 0 || frac > 1){
+    frac <- 0.10;
+  }
+  pn <- suppressWarnings(as.integer(perm.num));
+  if(is.na(pn) || pn < 10){
+    pn <- 100;
+  }
+  mSetObj$paramSet$pathqea.mummi.top.frac <- frac;
+  mSetObj$paramSet$pathqea.mummi.perm.num <- pn;
+  return(.set.mSet(mSetObj));
+}
+
 #'Calculate quantitative enrichment score
 #'@description Calculate quantitative enrichment score
 #'@usage CalculateQeaScore(mSetObj=NA, nodeImp, method)
@@ -515,7 +540,7 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     )
 
     qea.res <- if (file.exists(bridge_out)) ov_qs_read(bridge_out) else NULL
-  }else{
+  } else if(method == "ga"){
     mSetObj$msgSet$rich.msg <- paste0("The selected pathway enrichment analysis method is ```GlobalAncova```.",
       " Both GlobalTest and GlobalAncova support built-in covariate adjustment within the statistical model, ",
       "which is statistically more rigorous than adjusting the data separately before testing.\n\n",
@@ -543,6 +568,58 @@ CalculateQeaScore <- function(mSetObj=NA, nodeImp, method, covariates=NA){
     )
 
     qea.res <- if (file.exists(bridge_out2)) ov_qs_read(bridge_out2) else NULL
+  } else if(method == "mummi_like"){
+    # Mummichog-style permutation test on the table: each measured compound's univariate p-value
+    # (univ.p above) ranks it; the top fraction are the hits; a pathway's p-value is the share of
+    # random hit sets of the same size, drawn from the measured compounds, that do at least as well
+    # (hypergeometric p as the statistic). This branch was added on 2026-04-10 and lost in a later
+    # sync, after which "mummi_like" silently ran GlobalAncova.
+    top.frac <- 0.10
+    tmp.frac <- suppressWarnings(as.numeric(mSetObj$paramSet$pathqea.mummi.top.frac))
+    if(length(tmp.frac) == 1 && !is.na(tmp.frac) && tmp.frac > 0 && tmp.frac <= 1) top.frac <- tmp.frac
+    perm.num <- 100
+    tmp.perm <- suppressWarnings(as.integer(mSetObj$paramSet$pathqea.mummi.perm.num))
+    if(length(tmp.perm) == 1 && !is.na(tmp.perm) && tmp.perm >= 10) perm.num <- tmp.perm
+
+    measured <- unique(unlist(hits, use.names = FALSE))
+    pvals <- univ.p[measured]
+    pvals[is.na(pvals)] <- 1
+    M <- length(measured)
+    sig.n <- max(1L, min(M, as.integer(floor(M * top.frac))))
+    ord <- order(pvals, names(pvals))
+    sig.ids <- names(pvals)[ord][seq_len(sig.n)]
+
+    set.sizes <- vapply(hits, length, FUN.VALUE = integer(1))
+    obs.hits <- vapply(hits, function(ids) length(intersect(ids, sig.ids)), FUN.VALUE = integer(1))
+    obs.p <- stats::phyper(obs.hits - 1, set.sizes, M - set.sizes, sig.n, lower.tail = FALSE)
+
+    # reproducible permutations without disturbing the session's random stream
+    old.seed <- if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) get(".Random.seed", envir = globalenv()) else NULL
+    set.seed(20260410)
+    le.count <- integer(length(hits))
+    for(b in seq_len(perm.num)){
+      perm.sig <- sample(measured, size = sig.n, replace = FALSE)
+      perm.hits <- vapply(hits, function(ids) length(intersect(ids, perm.sig)), FUN.VALUE = integer(1))
+      perm.p <- stats::phyper(perm.hits - 1, set.sizes, M - set.sizes, sig.n, lower.tail = FALSE)
+      le.count <- le.count + as.integer(perm.p <= obs.p)
+    }
+    if (is.null(old.seed)) rm(".Random.seed", envir = globalenv()) else assign(".Random.seed", old.seed, envir = globalenv())
+    emp.p <- (le.count + 1) / (perm.num + 1)
+
+    # same two columns as globaltest / GlobalAncova give: compounds tested in the pathway, then p
+    qea.res <- cbind(set.sizes, emp.p)
+    rownames(qea.res) <- names(hits)
+    mSetObj$analSet$qea.mummi <- list(top.frac = top.frac, perm.num = perm.num, n.measured = M, n.sig = sig.n,
+                                      sig.hits = obs.hits, sig.ids = sig.ids)
+    mSetObj$msgSet$rich.msg <- paste0(
+      "The selected pathway enrichment analysis method is ```Mummichog``` (permutation-based).\n\n",
+      "- Significant compounds: the top ```", round(top.frac * 100, 2), "%``` of the ", M,
+      " measured compounds in these pathways by univariate p-value (", sig.n, " compounds)\n",
+      "- Pathway p-value: the share of ```", perm.num, "``` random sets of ", sig.n,
+      " measured compounds whose hypergeometric p-value is at least as small", cov.label)
+  } else {
+    AddErrMsg(paste0("Unknown pathway enrichment method: ", method))
+    return(0)
   }
 
   # Store intermediate data
