@@ -245,7 +245,6 @@ ComputeContDoseLimmaResTable<-function(mSetObj=NA, p.thresh=0.05, coef.thresh=0.
   res.all <- ov_qs_read("limma.sig.qs");
   fit_res <- ov_qs_read("limma_fit_res.qs")
   cor_res <- ov_qs_read(file = "limma_cor_res.qs")
-  save(mSetObj, file = "mSetObj___ComputeContDoseLimmaResTable.rda")
   fdr.bool <- as.logical(fdr.bool);
   
   colNum <- ncol(res.all);

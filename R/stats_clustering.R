@@ -285,7 +285,6 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   
   mSetObj <- .get.mSet(mSetObj);
   clust.num <- max(mSetObj$analSet$kmeans$cluster);
-  save(mSetObj, clust.num, file = "PlotKmeans___mSetObj.rda")
   if(clust.num>20) return();
   # calculate arrangement of panel
   ylabel<- GetAbundanceLabel(mSetObj$dataSet$type);

@@ -983,7 +983,6 @@ updateSpectra3DPCA <- function(featureNM = 100, msopt = "false"){
                                    round(mSet@peakfilling[["FeatureGroupTable"]]@listData$rtmed, 2))[sort(selectRow_idx)];
     
   }
-save(selectRow_idx, file = 'selectRow_idx.rda')
   sort(selectRow_idx) -> selectRow_idx
   if(msopt=="true"){
     if(file.exists("compound_msn_results_index.qs")){
@@ -1126,7 +1125,6 @@ retrieveAlgorithmInfo <- function(){
 #' @param sample sample name
 #' @noRd
 plotSingleXIC <- function(mSet = NA, featureNum = NULL, sample = NULL, showlabel = TRUE) {
-  save(mSet, featureNum, sample, showlabel, file = "plotSingleXIC__args.rda")
   if(.on.public.web){
     load("mSet.rda")
   } else {
@@ -3128,7 +3126,6 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
     mSetObj[["analSet"]][["peak_mtx"]] <- peak_mtx
   }
   
-  save(featurelabel, result_num, sub_idx, imageNM, ppm, format, mSetObj, file = "mSetObj___2839.rda")
   #cat("==== fragDB_path ---> ", fragDB_path, "\n");
 
   fl <- gsub("mz|sec|min", "", featurelabel)
@@ -3209,7 +3206,6 @@ PerformMirrorPlottingWeb <- function(mSetObj=NA,
   
   # Save the interactive plot with ggplot
   imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
-  save(p1, file = "p1.rda")
   # px <- plotly::ggplotly(p1);
   px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
@@ -3310,7 +3306,6 @@ PerformMirrorPlotting <- function(mSetObj=NA,
   mSetObj <- .get.mSet(mSetObj);
   MirrorPlotting <- OptiLCMS:::MirrorPlotting;
   parse_ms2peaks <- OptiLCMS:::parse_ms2peaks;
-  save(mSetObj, MirrorPlotting,  parse_ms2peaks,peak_idx, sub_idx, interactive, ppm, file = "PerformMirrorPlotting_input.rda" )
   if(is.null(mSetObj[["analSet"]][["ms2res"]])){
     #stop("Your mSet object does not contain MS2 analysis results!")
     mSet_raw <- ov_qs_read("msn_mset_result.qs")
@@ -3484,7 +3479,6 @@ file_path <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.d
   # Save the interactive plot with ggplot
   options(bitmapType = 'cairo')
   imageNM <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.dpi, ".png")
-  save(p1, file = "p1.rda")
   px <- plotly::ggplotly(p1);
   # px <- ggplotly_modified(p1, tempfile_path = paste0(getwd(), "/temp_file4plotly"));
   #pxl <- list(px$x$data,px$x$layout,px$x$config);
@@ -3541,7 +3535,6 @@ file_path <- paste0("mirror_plotting_", result_num, "_", sub_idx, "_", default.d
   }
   
   if(interactive){
-    save(px, file = "px.rda")
     print(px)
   }
   saveRDS(px, file = paste0(gsub(".png|.svg|.pdf", "", imageNM), ".rds"))
@@ -3600,7 +3593,6 @@ getExposomeInfo <- function(mSetObj=NA, featurelabel, subidx){
       mSetObj[["analSet"]][["DBAnnoteRes"]] -> DBAnnoteRes
       mSetObj[["analSet"]][["peak_mtx"]] -> peak_mtx
     }
-  save(featurelabel,peak_mtx, DBAnnoteRes, mSetObj, file = "getExposomeInfo.rda")
     fl <- gsub("mz|sec|min", "", featurelabel)
     fl <- strsplit(fl,"@")[[1]]
     mz <- as.double(fl[1])

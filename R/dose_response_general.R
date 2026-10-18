@@ -318,7 +318,6 @@ PerformDRFit <- function(mSetObj=NA, ncpus=4){
       {
         
         fit <- Exp4
-        save(fit, kcrit, AICdigits, dset, file = "fit_line301.rda")
         # collect parameters
         AIC.i <- round(AIC(fit, k = kcrit), digits = AICdigits)
         lof.pval.i <- neill.test(fit, dset$dose, display = FALSE)
@@ -818,7 +817,6 @@ FilterDRFit <- function(mSetObj=NA){
 
   mSetObj <- .get.mSet(mSetObj);
   f.drc <- mSetObj$dataSet$drcfit.obj;
-  save(mSetObj, file = "mSetObj___FilterDRFit.rda")
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
 
@@ -853,7 +851,6 @@ FilterDRFit <- function(mSetObj=NA){
   
   mSetObj$dataSet$drcfit.obj <- f.drc;
   print("Completed FilterDRFit!");
-  save(mSetObj, file = "mSetObj___FilterDRFit2.rda")
   return(.set.mSet(mSetObj));
 }
 
@@ -861,7 +858,6 @@ FilterDRFitCont <- function(mSetObj=NA){
   
   mSetObj <- .get.mSet(mSetObj);
   f.drc <- mSetObj$dataSet$drcfit.obj;
-  save(mSetObj, file = "mSetObj___FilterDRFit3.rda")
   require(data.table)
   lof.pval <- as.numeric(lof.pval)
   
@@ -895,7 +891,6 @@ FilterDRFitCont <- function(mSetObj=NA){
   
   mSetObj$dataSet$drcfit.obj <- f.drc;
   print("Completed FilterDRFit!");
-  save(mSetObj, file = "mSetObj___FilterDRFit4.rda")
   return(.set.mSet(mSetObj));
 }
 
@@ -905,7 +900,6 @@ FilterDRFitCont <- function(mSetObj=NA){
 PerformBMDCalc <- function(mSetObj=NA, ncpus=4){
 
   mSetObj <- .get.mSet(mSetObj);
-  save(mSetObj, file = "mSetObj___PerformBMDCalc.rda")
 
   #save.image("TestDose44.RData");
 

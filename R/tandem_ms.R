@@ -1544,7 +1544,6 @@ plotms2Mirror <- function(mSetObj=NA, feature, index){
 
 plotrawms2Mirror <- function(mSetObj=NA, feature, index){
     mSetObj <- .get.mSet(mSetObj);
-    save(mSetObj, file = "mSetObj___plotrawms2Mirror.rda")
     cat("plotrawms2Mirror == feature ===> ", feature, "\n")
     cat("plotrawms2Mirror == index   ===> ", index, "\n")
 
