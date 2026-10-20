@@ -1433,10 +1433,6 @@ rowcolFt =  function(x, fac, var.equal, which = 1L) {
 
 rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
     
-  #if(.on.public.web){
-  #  dyn.load(.getDynLoadPath());
-  #}
-
   if (!missing(tstatOnly) && (!is.logical(tstatOnly) || is.na(tstatOnly)))
       stop(sQuote("tstatOnly"), " must be TRUE or FALSE.")
   
@@ -1447,27 +1443,8 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
   if (typeof(x) == "integer")
       x[] <- as.numeric(x)
 
-  ## Vectorised pure-R t-tests, the statistics genefilter::rowttests reports (pooled variance for two groups, one-sample for one):
-  ## no compiled routine is needed (the XiaLabCppLib one was dropped, 20 Oct 2026, and MetaboAnalystR compiles none).
-  xm <- as.matrix(if (which == 2L) t(x) else x)
-  rv <- function(m, mu) {
-    nn <- if (na.rm) rowSums(!is.na(m)) else ncol(m)
-    rowSums((m - mu)^2, na.rm = na.rm) / (nn - 1)
-  }
-  cnt <- function(m) if (na.rm) rowSums(!is.na(m)) else rep(ncol(m), nrow(m))
-  x0 <- xm[, which(f$fac == 0L), drop = FALSE]
-  m0 <- rowMeans(x0, na.rm = na.rm); n0 <- cnt(x0)
-  if (f$nrgrp == 1L) {
-    df <- n0 - 1
-    cc <- list(statistic = as.numeric(m0 / sqrt(rv(x0, m0) / n0)), dm = as.numeric(m0), df = df)
-  } else {
-    x1 <- xm[, which(f$fac == 1L), drop = FALSE]
-    m1 <- rowMeans(x1, na.rm = na.rm); n1 <- cnt(x1)
-    df <- n0 + n1 - 2
-    vp <- ((n0 - 1) * rv(x0, m0) + (n1 - 1) * rv(x1, m1)) / df
-    cc <- list(statistic = as.numeric((m0 - m1) / sqrt(vp * (1 / n0 + 1 / n1))), dm = as.numeric(m0 - m1), df = df)
-  }
-  if (!na.rm) cc$df <- cc$df[1]
+  cc = .rowcolttests(x, f$fac, f$nrgrp, which, na.rm)
+    
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,
                    row.names = dimnames(x)[[which]])
@@ -1477,6 +1454,45 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
 
   attr(res, "df") = cc$df    
   return(res)
+}
+
+## rowcoltt() and checkfac() follow genefilter (W. Huber, Artistic-2.0), whose compiled routine this
+## package no longer carries. .rowcolttests() gives the same numbers in vectorised base R: the one- or
+## two-sample (pooled variance) t statistic, mean difference and degrees of freedom of every row
+## (which = 1) or column (which = 2) of x. 'fac' holds 0/1, NA leaves a sample out; with na.rm = TRUE an
+## NA value is left out of its test (a NaN is not an NA: it is kept and makes the statistic NaN), and a
+## test with an empty group is NA throughout.
+.rowcolttests = function(x, fac, nrgrp, which, na.rm) {
+  if (!is.matrix(x) || !is.double(x))
+    stop("Invalid argument 'x': must be a real matrix.")
+  if (!is.logical(na.rm) || length(na.rm) != 1L || is.na(na.rm))
+    stop("'na.rm' must be TRUE or FALSE")
+  xm <- if (which == 2L) t(x) else x
+  if (length(fac) != ncol(xm))
+    stop(sprintf("length(fac)=%d, %s(x)=%d, should be the same.", length(fac),
+                 if (which == 2L) "nrow" else "ncol", ncol(xm)))
+  grp <- function(g) {                       # n, mean and sum of squares about the mean, per test
+    m <- xm[, which(fac == g), drop = FALSE]
+    gone <- if (na.rm) is.na(m) & !is.nan(m) else matrix(FALSE, nrow(m), ncol(m))
+    n <- ncol(m) - rowSums(gone)
+    mu <- rowSums(replace(m, gone, 0)) / n
+    list(n = n, mean = mu, ss = rowSums(replace((m - mu)^2, gone, 0)))
+  }
+  g0 <- grp(0L)
+  if (nrgrp == 1L) {
+    df <- g0$n - 1
+    dm <- g0$mean
+    stat <- sqrt(df * g0$n) * dm / sqrt(g0$ss)
+    none <- g0$n == 0
+  } else {
+    g1 <- grp(1L)
+    df <- g0$n + g1$n - 2
+    dm <- g0$mean - g1$mean
+    stat <- sqrt(df * g0$n * g1$n / (g0$n + g1$n)) * dm / sqrt(g0$ss + g1$ss)
+    none <- g0$n == 0 | g1$n == 0
+  }
+  df[none] <- dm[none] <- stat[none] <- NA_real_
+  list(statistic = as.numeric(stat), dm = as.numeric(dm), df = as.numeric(df))
 }
 
 checkfac = function(fac) {

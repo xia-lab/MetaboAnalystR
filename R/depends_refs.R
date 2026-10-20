@@ -171,32 +171,17 @@ melt_check <- function(data, id.vars, measure.vars, variable.name, value.name) {
   list(id = id.vars, measure = measure.vars)
 }
 melt_dataframe <- function(data, id_ind, measure_ind, variable_name, value_name, measure_attributes, factorsAsStrings, valueAsFactor) {
-    call_cpp <- function(pkg, sym) tryCatch(
-        .Call(sym, PACKAGE = pkg, data, id_ind, measure_ind, variable_name,
-              value_name, measure_attributes, factorsAsStrings, valueAsFactor),
-        error = function(e) NULL)
-
-    res <- NULL
-    # Bypass: use the MetaboAnalystR backend in the Master session
-    if(exists(".pro.cpp.bypass", envir = .GlobalEnv) && isTRUE(get(".pro.cpp.bypass", envir = .GlobalEnv))){
-        res <- call_cpp('MetaboAnalystR', '_MetaboAnalystR_melt_dataframe')
-    }
-    if(is.null(res)){
-        res <- call_cpp('MetaboAnalystR', '_MetaboAnalystR_melt_dataframe')
-    }
-    if(is.null(res)){
-        # No compiled backend available — MetaboAnalystR loaded from its R sources,
-        # not installed as a compiled package. Fall back to
-        # reshape2's own C implementation (called fully-qualified so it uses reshape2's
-        # native routine, NOT this shadowed melt.data.frame — no recursion).
-        res <- reshape2:::melt.data.frame(
-            data,
-            id.vars = names(data)[id_ind + 1L],
-            measure.vars = names(data)[measure_ind + 1L],
-            variable.name = variable_name,
-            value.name = value_name)
-    }
-    res
+    # reshape2's own implementation: this package once carried a copy of its C++ and called that first.
+    # Called fully qualified so it is reshape2's routine, NOT this shadowed melt.data.frame (no recursion).
+    if (!requireNamespace("reshape2", quietly = TRUE))
+        stop("melt() needs the 'reshape2' package: install.packages(\"reshape2\")", call. = FALSE)
+    reshape2:::melt.data.frame(
+        data,
+        id.vars = names(data)[id_ind + 1L],
+        measure.vars = names(data)[measure_ind + 1L],
+        variable.name = variable_name,
+        value.name = value_name,
+        factorsAsStrings = factorsAsStrings)
 }
 normalize_melt_arguments <- function(data, measure.ind, factorsAsStrings) {
   

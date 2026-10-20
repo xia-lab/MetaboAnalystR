@@ -12,10 +12,6 @@
 #' License: MIT
 my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
   mSetObj <- .get.mSet(mSetObj);
-
-  if(.on.public.web){
-    dyn.load(.getDynLoadPath());
-  }
   
   msg <- c("The uploaded files are peak lists and intensities data.");
   
@@ -146,14 +142,13 @@ my.parse.peaklist<-function(mSetObj=NA, foldername="upload"){
 #'McGill University, Canada
 #'License: MIT
 descendMin <- function(y, istart = which.max(y)) {
-   
-  if (!is.double(y)) y <- as.double(y)
-  unlist(.C("DescendMin",
-            y,
-            length(y),
-            as.integer(istart-1),
-            ilower = integer(1),
-            iupper = integer(1))[4:5]) + 1
+  # walk down both sides of the peak at istart to the nearest minimum
+  n <- length(y)
+  lo <- istart
+  while (lo > 1 && !isTRUE(y[lo - 1] >= y[lo])) lo <- lo - 1
+  hi <- istart
+  while (hi < n && !isTRUE(y[hi + 1] >= y[hi])) hi <- hi + 1
+  c(ilower = lo, iupper = hi)
 }
 
 #'Perform utilities for peak grouping
@@ -164,15 +159,9 @@ descendMin <- function(y, istart = which.max(y)) {
 #'McGill University, Canada
 #'License: MIT
 findEqualGreaterM <- function(x, values) {
-  
-  if (!is.double(x)) x <- as.double(x)
-  if (!is.double(values)) values <- as.double(values)
-  .C("FindEqualGreaterM",
-     x,
-     length(x),
-     values,
-     length(values),
-     index = integer(length(values)))$index + 1
+  # for each value, the index of the first element of x (ascending) not below it; the values are
+  # read in turn and the index never moves back
+  cummax(findInterval(values, x, left.open = TRUE)) + 1
 }
 
 #'Perform utilities for peak grouping
@@ -186,17 +175,16 @@ findEqualGreaterM <- function(x, values) {
 #'License: MIT
 #'
 rectUnique <- function(m, order = seq(length = nrow(m)), xdiff = 0, ydiff = 0) {
-  
-  nr <- nrow(m)
-  nc <- ncol(m)
-  if (!is.double(m))
-    m <- as.double(m)
-  .C("RectUnique",
-     m,
-     as.integer(order-1),
-     nr,
-     nc,
-     as.double(xdiff),
-     as.double(ydiff),
-     logical(nrow(m)))[[7]]
+  # TRUE for each rectangle (columns x1, x2, y1, y2) that overlaps no earlier kept one
+  keep <- logical(nrow(m))
+  kept <- integer(0)
+  for (io in order) {
+    apart <- m[io, 1] - m[kept, 2] > xdiff | m[kept, 1] - m[io, 2] > xdiff |
+             m[io, 3] - m[kept, 4] > ydiff | m[kept, 3] - m[io, 4] > ydiff
+    if (all(apart)) {
+      keep[io] <- TRUE
+      kept <- c(kept, io)
+    }
+  }
+  keep
 }

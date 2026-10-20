@@ -12,15 +12,15 @@ Depends: R (>= 4.0), methods
 License: MIT + file LICENSE
 Encoding: UTF-8
 Imports: 
-    RBGL, RColorBrewer, RSQLite, Cairo, Rcpp (>= 1.0.5), ggplot2, BiocParallel, Rserve, rlang, 
+    RBGL, RColorBrewer, RSQLite, Cairo, ggplot2, BiocParallel, Rserve, rlang, 
     jsonlite, plyr, purrr, data.table, vctrs, pROC, caret, crmn, dplyr, edgeR, fgsea, glasso, gplots, igraph, impute,
     pcaMethods, plotly, scales, tibble, siggenes, lattice, MASS
 Suggests: 
     graph, htmltools, pls, ellipse, scatterplot3d, randomForest, caTools, e1071, som, RJSONIO, rjson, ROCR,
     globaltest, GlobalAncova, Rgraphviz, preprocessCore, genefilter, pheatmap, sva, limma, fitdistrplus,
     lars, Hmisc, magrittr, xtable, KEGGgraph, metap, entropy, rsm, httr, knitr, rmarkdown, devtools, testthat, 
-    visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc, qs, progress, MSnbase, OptiLCMS, fastmatch
+    visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc, qs, progress, MSnbase, OptiLCMS, fastmatch,
+    vegan, waveslim, reshape2
 VignetteBuilder: knitr
-LinkingTo: Rcpp
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
