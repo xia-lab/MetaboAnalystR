@@ -272,9 +272,7 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
         exp.fac <- nfacA;
       }
       # now make sure time fac is ordered
-      lvls <- levels(time.fac);
-      time.points <- as.numeric(as.character(lvls));
-      ord.lvls <- lvls[order(time.points)];
+      ord.lvls <- .orderTimeLevels(levels(time.fac));   # "6h" before "24h": as.numeric read such labels as NA
       time.fac <- ordered(time.fac, levels = ord.lvls);
       mSetObj$dataSet$time.fac <- time.fac;
       mSetObj$dataSet$exp.fac <- exp.fac;

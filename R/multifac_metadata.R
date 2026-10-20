@@ -1,3 +1,39 @@
+#' .orderTimeLevels
+#' @description The levels of a time factor in the order of the time each names: a number alone or with a time word or
+#'   unit ("0", "6h", "30 min", "Day 1", "T0", "Week2"); units are converted, so "30min" < "2h" < "1d". A hyphen after a
+#'   word is a separator ("Day-1") unless that makes two levels name the same time ("D-1", "D1"): then it is a minus.
+#'   QC and BLANK levels keep their order after the time points; when any other level names no time ("baseline", "S1")
+#'   the levels are returned as given. Alphabetical order put "24h" before "6h" and, on a numeric column read as text, 10 before 2.
+#' @param lvls character vector of levels
+#' @noRd
+.orderTimeLevels <- function(lvls) {
+  lvls <- as.character(lvls)
+  hours <- c(s = 1/3600, sec = 1/3600, secs = 1/3600, second = 1/3600, seconds = 1/3600,
+             min = 1/60, mins = 1/60, minute = 1/60, minutes = 1/60,
+             h = 1, hr = 1, hrs = 1, hour = 1, hours = 1, d = 24, day = 24, days = 24,
+             w = 168, wk = 168, wks = 168, week = 168, weeks = 168,
+             mo = 730.485, mon = 730.485, month = 730.485, months = 730.485,
+             y = 8765.82, yr = 8765.82, yrs = 8765.82, year = 8765.82, years = 8765.82)
+  words <- c("t", "tp", "time", "timepoint", "visit", "v", "d", "day", "w", "wk", "week", "mo", "month",
+             "h", "hr", "hour", "min", "y", "yr", "year")
+  pat <- "^(?:([a-z]+)[ _.]*(-?)[ _.]*)?(-?[0-9]+(?:\\.[0-9]+)?)[ _.]*([a-z]*)$"
+  one <- function(l, minus) {
+    l <- tolower(trimws(l))
+    g <- regmatches(l, regexec(pat, l, perl = TRUE))[[1]]
+    if (length(g) < 5L) return(NA_real_)
+    if (nzchar(g[2]) && !(g[2] %in% words)) return(NA_real_)
+    if (nzchar(g[5]) && is.na(hours[g[5]])) return(NA_real_)
+    v <- as.numeric(g[4]); if (minus && identical(g[3], "-")) v <- -v
+    u <- if (nzchar(g[5])) g[5] else if (nzchar(g[2]) && !is.na(hours[g[2]])) g[2] else NA_character_
+    if (is.na(u)) v else v * hours[[u]]
+  }
+  at <- vapply(lvls, one, numeric(1), minus = FALSE, USE.NAMES = FALSE)
+  timed <- is.finite(at)
+  if (sum(timed) < 2L || !all(timed | grepl("^(qc|blank)", lvls, ignore.case = TRUE))) return(lvls)
+  if (anyDuplicated(at[timed])) at <- vapply(lvls, one, numeric(1), minus = TRUE, USE.NAMES = FALSE)
+  c(lvls[timed][order(at[timed])], lvls[!timed])
+}
+
 #' ReadMetaData
 #'
 #' @param mSetObj metaboanalyst object, initialized by InitDataObjects("pktable", "mf", FALSE)
@@ -131,6 +167,9 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
       AddErrMsg("The time points group must be labeled as <b>Time</b>");
       return(0);
     }
+    # the time points in time order, so samples, profiles and models follow time ("6h" before "24h")
+    tcol <- which(tolower(colnames(meta.cols)) == "time")[1];
+    meta.cols[[tcol]] <- factor(as.character(meta.cols[[tcol]]), levels = .orderTimeLevels(levels(meta.cols[[tcol]])));
 
     if((mSetObj$dataSet$design.type =="time0" && ncol(meta.cols) != 2 ) || !"subject" %in% tolower(colnames(meta.cols)) ){
       AddErrMsg("Make sure the metadata table contains two columns named: time and subject!");
@@ -200,7 +239,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
         facB.lbl <- colnames(meta.cols)[2];
         facB <- meta.cols[,2];    
         mSetObj$dataSet$facB.type <- is.numeric(facB);
-        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- as.factor(as.character(facB));
+        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- factor(as.character(facB), levels = .orderTimeLevels(levels(droplevels(facB))));
         mSetObj$dataSet$facB.lbl <- facB.lbl;
 
     }else{ # time0
@@ -208,7 +247,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
         facA.lbl <- colnames(meta.cols)[1];
         cls.lbl <- facA <- meta.cols[,1];
         mSetObj$dataSet$facA.type <- is.numeric(facA);
-        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- as.factor(as.character(facA));
+        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- factor(as.character(facA), levels = .orderTimeLevels(levels(droplevels(facA))));
         mSetObj$dataSet$facA.lbl <- facA.lbl;
     }
   }
