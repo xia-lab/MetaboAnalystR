@@ -826,7 +826,7 @@ QueryLiteratureMelodiPresto <- function(exposure, outcome) {
   )
 
   # --- Shared project-wide cache: all users benefit from cached results ---
-  cache_dir <- paste0(rpath, "/libs/melodi_cache");
+  cache_dir <- .get.my.lib.path("melodi_cache");
   if(!dir.exists(cache_dir)) dir.create(cache_dir, recursive=TRUE);
   cache_key <- paste(sort(c(exposure, outcome)), collapse="|");
   cache_hash <- substr(digest::digest(cache_key, algo="md5"), 1, 12);
@@ -1348,7 +1348,7 @@ QueryGeneLiterature <- function(disease) {
   print(paste0("[QueryGeneLiterature] Terms: ", paste(search_terms, collapse=", ")));
 
   # --- Shared project-wide cache: all users benefit from cached results ---
-  cache_dir <- paste0(rpath, "/libs/melodi_cache");
+  cache_dir <- .get.my.lib.path("melodi_cache");
   if(!dir.exists(cache_dir)) dir.create(cache_dir, recursive=TRUE);
   cache_key <- paste(sort(c(search_terms, disease)), collapse="|");
   cache_hash <- substr(digest::digest(cache_key, algo="md5"), 1, 12);

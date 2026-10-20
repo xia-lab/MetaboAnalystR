@@ -55,7 +55,7 @@ SetCurrentMsetLib <- function(mSetObj=NA, libname, excludeNum=0){
     if(need_reload) {
         destfile <- paste(libname, ".qs", sep = "");
         if(.on.public.web){
-            my.qs  <- paste(rpath, "libs/msets/", destfile, sep="");
+            my.qs  <- .get.my.lib.path(paste0("msets/", destfile));
             current.msetlib <- ov_qs_read(my.qs);
         } else {
             my.qs <- paste("https://www.metaboanalyst.ca/resources/libs/msets/", destfile, sep="");
@@ -184,7 +184,7 @@ Get.ConcRef<-function(mSetObj=NA, cmpd.nm){
   
   if(!exists('conc.db')){
     if(.on.public.web){
-      conc.db <<-  .readDataTable(paste0(rpath ,"libs/cmpd_conc.csv"));
+      conc.db <<-  .readDataTable(.get.my.lib.path("cmpd_conc.csv"));
     }else{
       conc.db <<-  .readDataTable("https://www.metaboanalyst.ca/resources/libs/cmpd_conc.csv");
     }

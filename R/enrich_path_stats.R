@@ -1281,12 +1281,12 @@ GetQEA.smpdbIDs <- function(mSetObj=NA){
 }
 
 GetOrgPathLbl <-function(mSetObj=NA){
-  org = read.csv(paste0(rpath ,"libs/orgpath.csv"))
+  org = read.csv(.get.my.lib.path("orgpath.csv"))
   return(org$label);
 }
 
 GetOrgPathVal <-function(mSetObj=NA){
-  org = read.csv(paste0(rpath ,"libs/orgpath.csv"))
+  org = read.csv(.get.my.lib.path("orgpath.csv"))
   return(org$id);
 }
 
