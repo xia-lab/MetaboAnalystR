@@ -5,9 +5,11 @@
 #'   QC and BLANK levels keep their order after the time points; when any other level names no time ("baseline", "S1")
 #'   the levels are returned as given. Alphabetical order put "24h" before "6h" and, on a numeric column read as text, 10 before 2.
 #' @param lvls character vector of levels
+#' @param stated the order the user gave these levels (SetMetaLevelOrder), or NULL: that order is the time, whatever the labels name
 #' @noRd
-.orderTimeLevels <- function(lvls) {
+.orderTimeLevels <- function(lvls, stated = NULL) {
   lvls <- as.character(lvls)
+  if (length(stated)) return(.applyStatedLevels(lvls, stated))
   hours <- c(s = 1/3600, sec = 1/3600, secs = 1/3600, second = 1/3600, seconds = 1/3600,
              min = 1/60, mins = 1/60, minute = 1/60, minutes = 1/60,
              h = 1, hr = 1, hrs = 1, hour = 1, hours = 1, d = 24, day = 24, days = 24,
@@ -32,6 +34,60 @@
   if (sum(timed) < 2L || !all(timed | grepl("^(qc|blank)", lvls, ignore.case = TRUE))) return(lvls)
   if (anyDuplicated(at[timed])) at <- vapply(lvls, one, numeric(1), minus = TRUE, USE.NAMES = FALSE)
   c(lvls[timed][order(at[timed])], lvls[!timed])
+}
+
+#' .metaLevelKey
+#' @description The R-safe form of a name or a level ("Day 1" -> "Day_1", "HIV+" -> "HIVpos"): a sheet written R-safe and the order
+#'   the user gave it in the spelling it had before are the same names.
+#' @noRd
+.metaLevelKey <- function(x) {
+  x <- trimws(as.character(x))
+  x <- gsub("+", "pos", x, fixed = TRUE)
+  x <- gsub("[^A-Za-z0-9_-]+", "_", x)
+  sub("^[^A-Za-z0-9]+", "", x)
+}
+
+#' .statedLevels
+#' @description The order the user gave metadata column `name` (SetMetaLevelOrder), matched by its name or its R-safe form; NULL when none.
+#' @noRd
+.statedLevels <- function(orders, name) {
+  if (!length(orders) || is.null(name) || is.na(name)) return(NULL)
+  hit <- which(names(orders) == name)
+  if (!length(hit)) hit <- which(.metaLevelKey(names(orders)) == .metaLevelKey(name))
+  if (!length(hit)) return(NULL)
+  orders[[hit[1L]]]
+}
+
+#' .applyStatedLevels
+#' @description `lvls` in the order the user gave them: the stated levels the column holds first, in that order, then every other
+#'   level where it was. A level is matched by its spelling or its R-safe form.
+#' @noRd
+.applyStatedLevels <- function(lvls, stated) {
+  lvls <- as.character(lvls)
+  first <- character(0)
+  for (s in as.character(stated)) {
+    h <- if (s %in% lvls) s else lvls[.metaLevelKey(lvls) == .metaLevelKey(s)][1L]
+    if (!is.na(h) && !(h %in% first)) first <- c(first, h)
+  }
+  if (!length(first)) return(lvls)
+  c(first, setdiff(lvls, first))
+}
+
+#' SetMetaLevelOrder
+#' @description The order the user gave the levels of a metadata column (first = the reference, the control, the first time point).
+#'   ReadMetaData reads it when it reads the sheet, so every factor built from the column - and the time points of a time design,
+#'   which "6h" / "pre" / "post" labels cannot order on their own - follow it. Call it before ReadMetaData.
+#' @param mSetObj metaboanalyst object
+#' @param metaName the metadata column, as the sheet names it
+#' @param levels the column's levels in the order wanted
+#' @export
+SetMetaLevelOrder <- function(mSetObj = NA, metaName, levels) {
+  mSetObj <- .get.mSet(mSetObj)
+  ord <- mSetObj$dataSet$meta.level.order
+  if (is.null(ord)) ord <- list()
+  ord[[metaName]] <- as.character(levels)
+  mSetObj$dataSet$meta.level.order <- ord
+  return(.set.mSet(mSetObj))
 }
 
 #' ReadMetaData
@@ -160,6 +216,13 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   meta.cols <- metadata[ , -1, drop = FALSE]
   meta.cols[] <- lapply(meta.cols, factor)
 
+  # the order the user gave a column's levels (SetMetaLevelOrder) leads: it is the factor's level order, so the first level is the reference
+  lvl.ord <- mSetObj$dataSet$meta.level.order;
+  for (nm in colnames(meta.cols)) {
+    st <- .statedLevels(lvl.ord, nm);
+    if (length(st)) meta.cols[[nm]] <- factor(as.character(meta.cols[[nm]]), levels = .applyStatedLevels(levels(meta.cols[[nm]]), st));
+  }
+
   if(mSetObj$dataSet$design.type =="time" | mSetObj$dataSet$design.type =="time0"){
     # determine time factor
     if(!"time" %in% tolower(colnames(meta.cols))){
@@ -169,7 +232,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
     }
     # the time points in time order, so samples, profiles and models follow time ("6h" before "24h")
     tcol <- which(tolower(colnames(meta.cols)) == "time")[1];
-    meta.cols[[tcol]] <- factor(as.character(meta.cols[[tcol]]), levels = .orderTimeLevels(levels(meta.cols[[tcol]])));
+    meta.cols[[tcol]] <- factor(as.character(meta.cols[[tcol]]), levels = .orderTimeLevels(levels(meta.cols[[tcol]]), .statedLevels(lvl.ord, colnames(meta.cols)[tcol])));
 
     if((mSetObj$dataSet$design.type =="time0" && ncol(meta.cols) != 2 ) || !"subject" %in% tolower(colnames(meta.cols)) ){
       AddErrMsg("Make sure the metadata table contains two columns named: time and subject!");
@@ -239,7 +302,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
         facB.lbl <- colnames(meta.cols)[2];
         facB <- meta.cols[,2];    
         mSetObj$dataSet$facB.type <- is.numeric(facB);
-        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- factor(as.character(facB), levels = .orderTimeLevels(levels(droplevels(facB))));
+        mSetObj$dataSet$orig.facB <- mSetObj$dataSet$facB <- factor(as.character(facB), levels = .orderTimeLevels(levels(droplevels(facB)), .statedLevels(lvl.ord, facB.lbl)));
         mSetObj$dataSet$facB.lbl <- facB.lbl;
 
     }else{ # time0
@@ -247,7 +310,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
         facA.lbl <- colnames(meta.cols)[1];
         cls.lbl <- facA <- meta.cols[,1];
         mSetObj$dataSet$facA.type <- is.numeric(facA);
-        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- factor(as.character(facA), levels = .orderTimeLevels(levels(droplevels(facA))));
+        mSetObj$dataSet$orig.facA <- mSetObj$dataSet$facA <- factor(as.character(facA), levels = .orderTimeLevels(levels(droplevels(facA)), .statedLevels(lvl.ord, facA.lbl)));
         mSetObj$dataSet$facA.lbl <- facA.lbl;
     }
   }
