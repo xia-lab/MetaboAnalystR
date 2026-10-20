@@ -177,18 +177,16 @@ melt_dataframe <- function(data, id_ind, measure_ind, variable_name, value_name,
         error = function(e) NULL)
 
     res <- NULL
-    # Bypass: use MetaboAnalystR backend to avoid XiaLabCppLib in Master session
+    # Bypass: use the MetaboAnalystR backend in the Master session
     if(exists(".pro.cpp.bypass", envir = .GlobalEnv) && isTRUE(get(".pro.cpp.bypass", envir = .GlobalEnv))){
         res <- call_cpp('MetaboAnalystR', '_MetaboAnalystR_melt_dataframe')
-    } else if(.on.public.web && requireNamespace("XiaLabCppLib", quietly = TRUE)){
-        res <- call_cpp('XiaLabCppLib', '_XiaLabCppLib_melt_dataframe')
     }
     if(is.null(res)){
         res <- call_cpp('MetaboAnalystR', '_MetaboAnalystR_melt_dataframe')
     }
     if(is.null(res)){
-        # No compiled backend available — e.g. a self-hosted deployment without the
-        # private XiaLabCppLib and without a compiled MetaboAnalystR. Fall back to
+        # No compiled backend available — MetaboAnalystR loaded from its R sources,
+        # not installed as a compiled package. Fall back to
         # reshape2's own C implementation (called fully-qualified so it uses reshape2's
         # native routine, NOT this shadowed melt.data.frame — no recursion).
         res <- reshape2:::melt.data.frame(
