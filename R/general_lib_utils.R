@@ -3,6 +3,23 @@
 #' Need to specify the file URL and the destfile. 
 #' @param filenm Input the name of the file to download
 #' @param sub.dir sub.dir
+# Where a reference library file is read from. The Metabolomics libraries (compound_db.qs,
+# msets/, smpdb/, ...) can sit in a downloadable pack folder instead of the webapp, so that
+# folder is asked first: $OMICS_LIB_DIR/metabolomics/libs/<rel>. A file the pack does not hold,
+# or no OMICS_LIB_DIR at all, reads <rpath>libs/<rel> exactly as before. rel = "" answers the
+# library folder itself. Package-local on purpose: this package must not depend on the app's own scripts.
+.get.my.lib.path <- function(rel){
+    rel <- sub("^/+", "", rel);
+    pack <- Sys.getenv("OMICS_LIB_DIR", "");
+    if(nzchar(pack)){
+        ext <- file.path(sub("/+$", "", pack), "metabolomics", "libs", rel);
+        if(file.exists(ext)){
+            return(ext);
+        }
+    }
+    paste0(rpath, "libs/", rel);
+}
+
 # read binary qs files
 # sub.dir is sub folder, leave NULL is under main lib folder
 .get.my.lib <- function(filenm, sub.dir=NULL){
@@ -11,7 +28,7 @@
         sub.dir <- paste0(sub.dir, "/");
     }
     if(.on.public.web){
-        lib.path <- paste0(rpath, "/libs/", sub.dir, filenm);
+        lib.path <- .get.my.lib.path(paste0(sub.dir, filenm));
         # In-session cache: these library .qs files are large and read-only, and the
         # same one is requested many times in a single run (compound name-mapping
         # reads it once per enrichment library), so re-reading from disk on every
