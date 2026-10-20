@@ -1,0 +1,16 @@
+MetaboAnalystR is MIT licensed (see LICENSE). The parts below come from other authors and keep their licences.
+
+src/c/nncgc.c
+  Maarten van Iterson, from the Bioconductor package SSPA 2.30.0 (src/nncgc.c), GPL (>= 2).
+  It adapts cgmin, the conjugate-gradient minimiser of optim() in R (src/appl/optim.c, R Core
+  Team, GPL (>= 2); after J. C. Nash, Compact Numerical Methods for Computers, Algorithm 22).
+  The file is unchanged apart from the notice at its top. The shared library built from it is
+  covered by the GPL (>= 2). Only the power analysis uses it (nncg() in R/util_sspa.R). SSPA is
+  not in the current Bioconductor release, so there is no package to call instead.
+
+R/general_misc_utils.R: rowcoltt() and checkfac()
+  The interface follows genefilter (W. Huber, Artistic-2.0). The arithmetic is vectorised base R
+  (.rowcolttests); no genefilter code is compiled or called.
+
+Packages called in place of code this package once carried (installed by the user, listed under
+Suggests): vegan (decorana, GPL-2), waveslim (modwt, imodwt, BSD-3-Clause), reshape2 (melt, MIT).

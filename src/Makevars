@@ -1,23 +1,3 @@
-CXX_STD = CXX11
-
-# R does not recursively compile sources in subdirectories by default.
-# Explicitly list object files under src/c and src/cpp for Unix builds.
-BATCHOBJECTS=cpp/decorana.o c/Internal_utils_batch.o
-UTILSOBJECTS=c/util.o c/nncgc.o cpp/melt.o
-XCMSOBJECTS=c/mzROI.o c/xcms_binners.o
-INITOBJECT=Exports.o
-OBJECTS=$(BATCHOBJECTS) $(UTILSOBJECTS) $(XCMSOBJECTS) $(INITOBJECT)
-
-# Resolve Rcpp's include directory at compile time. Works on Linux
-# (cloud), macOS (Apple-clang), and Windows without baking in any
-# per-host absolute path. system.file() returns the directory of the
-# currently-installed Rcpp package on whichever R is running the build.
-RCPP_INC := $(shell "$(R_HOME)/bin/Rscript" -e "cat(system.file('include', package='Rcpp'))")
-
-PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -I"$(RCPP_INC)"
-PKG_CFLAGS   = -I"$(RCPP_INC)"
-
-# No Fortran sources in this package (decorana was rewritten in C++
-# upstream, commit 039c691). Omit $(FLIBS) so macOS setups without
-# gfortran at /opt/gfortran/... don't trip on libemutls_w at link time.
-PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS)
+# The only native code left is nncgc.c (GPL, see inst/COPYRIGHTS); everything else is R.
+# R does not recursively compile sources in subdirectories by default, so list the object.
+OBJECTS = c/nncgc.o init.o

@@ -1,3 +1,20 @@
+/*
+ * nncgc: conjugate-gradient minimiser that stops when the solution would leave the non-negative
+ * orthant (used by the power-analysis step, nncg() in R/util_sspa.R).
+ *
+ * Copyright (C) Maarten van Iterson. Taken unchanged from the Bioconductor package SSPA 2.30.0
+ * (src/nncgc.c; SSPA is not in the current Bioconductor release). It adapts cgmin,
+ * the conjugate-gradient minimiser of optim() in R (src/appl/optim.c, R Core Team; after
+ * J. C. Nash, Compact Numerical Methods for Computers, Algorithm 22).
+ *
+ * This file is free software; you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+ * the GNU General Public License for more details. Unlike the rest of this package (MIT), the
+ * library built from this file is therefore covered by the GPL; see inst/COPYRIGHTS.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
