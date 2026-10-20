@@ -272,7 +272,9 @@ Normalization <- function(mSetObj=NA, rowNorm, transNorm, scaleNorm, ref=NULL, r
         exp.fac <- nfacA;
       }
       # now make sure time fac is ordered
-      ord.lvls <- .orderTimeLevels(levels(time.fac));   # "6h" before "24h": as.numeric read such labels as NA
+      tlbl <- if(tolower(mSetObj$dataSet$facA.lbl) == "time") mSetObj$dataSet$facA.lbl else mSetObj$dataSet$facB.lbl;
+      # "6h" before "24h": as.numeric read such labels as NA; the order the user gave the time points (SetMetaLevelOrder) leads
+      ord.lvls <- .orderTimeLevels(levels(time.fac), .statedLevels(mSetObj$dataSet$meta.level.order, tlbl));
       time.fac <- ordered(time.fac, levels = ord.lvls);
       mSetObj$dataSet$time.fac <- time.fac;
       mSetObj$dataSet$exp.fac <- exp.fac;
