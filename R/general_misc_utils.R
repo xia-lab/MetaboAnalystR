@@ -1260,12 +1260,10 @@ PerformFastUnivTests <- function(data, cls, var.equal=TRUE){
     }
 
     if(class(res) == "try-error") {
-        # Self-hosted fallback: the native two-group t-test routine used by
-        # rowcoltt() (XiaLabCppLib / .Call("rowcolttests")) is unavailable on
-        # this build, so rowcoltt() errors and 2-group comparisons would yield
-        # NA p-values. Compute a vectorized two-sample t-test in pure R so the
-        # p-values are still produced. >2-group uses pure-R rowcolFt above and
-        # never reaches here.
+        # Fallback when rowcoltt() itself errors (e.g. a feature-level problem in
+        # the matrix): a vectorized two-sample t-test in pure R so the p-values
+        # are still produced. >2-group uses pure-R rowcolFt above and never
+        # reaches here.
         lev <- levels(cls);
         if(length(lev) == 2){
             g1 <- data[, cls == lev[1], drop=FALSE];
@@ -1449,12 +1447,27 @@ rowcoltt =  function(x, fac, tstatOnly, which, na.rm) {
   if (typeof(x) == "integer")
       x[] <- as.numeric(x)
 
-  if(.on.public.web){
-      require("XiaLabCppLib")
-      cc = XiaLabCppLib::rowcolttestsR(x, f$fac, f$nrgrp, which-1L, na.rm)
-  } else {
-      cc = .Call("rowcolttests", x, f$fac, f$nrgrp, which-1L, na.rm, PACKAGE="MetaboAnalystR")
+  ## Vectorised pure-R t-tests, the statistics genefilter::rowttests reports (pooled variance for two groups, one-sample for one):
+  ## no compiled routine is needed (the XiaLabCppLib one was dropped, 20 Oct 2026, and MetaboAnalystR compiles none).
+  xm <- as.matrix(if (which == 2L) t(x) else x)
+  rv <- function(m, mu) {
+    nn <- if (na.rm) rowSums(!is.na(m)) else ncol(m)
+    rowSums((m - mu)^2, na.rm = na.rm) / (nn - 1)
   }
+  cnt <- function(m) if (na.rm) rowSums(!is.na(m)) else rep(ncol(m), nrow(m))
+  x0 <- xm[, which(f$fac == 0L), drop = FALSE]
+  m0 <- rowMeans(x0, na.rm = na.rm); n0 <- cnt(x0)
+  if (f$nrgrp == 1L) {
+    df <- n0 - 1
+    cc <- list(statistic = as.numeric(m0 / sqrt(rv(x0, m0) / n0)), dm = as.numeric(m0), df = df)
+  } else {
+    x1 <- xm[, which(f$fac == 1L), drop = FALSE]
+    m1 <- rowMeans(x1, na.rm = na.rm); n1 <- cnt(x1)
+    df <- n0 + n1 - 2
+    vp <- ((n0 - 1) * rv(x0, m0) + (n1 - 1) * rv(x1, m1)) / df
+    cc <- list(statistic = as.numeric((m0 - m1) / sqrt(vp * (1 / n0 + 1 / n1))), dm = as.numeric(m0 - m1), df = df)
+  }
+  if (!na.rm) cc$df <- cc$df[1]
   res = data.frame(statistic = cc$statistic,
                    dm        = cc$dm,
                    row.names = dimnames(x)[[which]])
