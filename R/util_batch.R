@@ -1,4 +1,4 @@
-my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
+my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL, plot=TRUE){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -447,14 +447,17 @@ my.batch.correct <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL)
     mSetObj$dataSet$interbatch_dis <- interbatch_dis
     
   }
-  cat("Start ploting PCA ... \n")
-  if(.on.public.web){ 
-    PlotPCA.overview(mSetObj, imgName, method=Method); #mSetObj <- mSet 
-  } else { 
-    mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method) 
-  };
-  plot.sample.trend(mSetObj,paste0(imgName,"trend_"),method=Method);
-  plot.sample.dist(mSetObj,paste0(imgName,"dist_"))
+  mSetObj$dataSet$batch.method <- Method;
+  if(plot){
+    cat("Start ploting PCA ... \n")
+    if(.on.public.web){ 
+      PlotPCA.overview(mSetObj, imgName, method=Method); #mSetObj <- mSet 
+    } else { 
+      mSetObj <- PlotPCA.overview(mSetObj, imgName, method=Method) 
+    };
+    plot.sample.trend(mSetObj,paste0(imgName,"trend_"),method=Method);
+    plot.sample.dist(mSetObj,paste0(imgName,"dist_"))
+  }
   best.table <- mSetObj$dataSet$adjusted.mat
   
   # save the meta-dataset
