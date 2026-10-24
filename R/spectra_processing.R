@@ -2924,27 +2924,51 @@ return(p1)
 
 PerformResultSummary <- function(mSet = NA) {
 
+  # GC-MS metaMS fallback produces no mSet.rda — return a table-based summary.
+  if (is.na(mSet) && !file.exists("mSet.rda")) {
+    csv <- tryCatch(read.csv("metaboanalyst_input.csv", check.names = FALSE), error = function(e) NULL)
+    gcAnno <- tryCatch(read.csv("gcms_annotated_compound_table.csv", check.names = FALSE), error = function(e) NULL)
+    featureN <- if (!is.null(csv) && nrow(csv) > 1) nrow(csv) - 1L else "unknown number of"
+    cmpdsN   <- if (!is.null(gcAnno)) nrow(gcAnno) else 0L
+    msgs <- c(
+      "GC-MS spectra processing complete (metaMS deconvolution + EI-library annotation).",
+      paste0(featureN, " features have been detected and aligned across all samples.")
+    )
+    if (cmpdsN > 0) msgs <- c(msgs, paste0(cmpdsN, " features annotated against the GC-MS spectral library."))
+    return(msgs)
+  }
+
   if(is.na(mSet)){load("mSet.rda")}
   IntroMsg <- paste0("MetaboAnalyst has finished raw spectra processing with OptiLCMS (", packageVersion("OptiLCMS"), "): ");
-  ProcessingMsg <- paste0("There are ", length(mSet@rawOnDisk@phenoData@data[["sample_name"]]), 
-                          " samples of ", length(unique(mSet@rawOnDisk@phenoData@data[["sample_group"]])), 
-                          " groups (", paste(unique(mSet@rawOnDisk@phenoData@data[["sample_group"]]), collapse = ", "), ") included for processing!")
+
+  rawDisk <- tryCatch(mSet@rawOnDisk, error = function(e) NULL)
+  if (!is.null(rawDisk)) {
+    ProcessingMsg <- paste0("There are ", length(rawDisk@phenoData@data[["sample_name"]]),
+                            " samples of ", length(unique(rawDisk@phenoData@data[["sample_group"]])),
+                            " groups (", paste(unique(rawDisk@phenoData@data[["sample_group"]]), collapse = ", "), ") included for processing!")
+  } else {
+    ProcessingMsg <- "Raw spectra processing complete."
+  }
   FeatureMsg <- paste0("Total of ", nrow(mSet@dataSet) - 1, " features have been detected and aligned across the whole sample list.")
   ppmMsg <- paste0("The mass deviation of this study was estimated/set as ", mSet@params$ppm, " ppm.")
-  
-  isoNum <- length(which(mSet@peakAnnotation[["camera_output"]][["isotopes"]] !=""));
-  addNum <- length(which(mSet@peakAnnotation[["camera_output"]][["adduct"]] !=""));
-  nonNum <- length(which(mSet@peakAnnotation[["camera_output"]][["adduct"]] =="" & 
-                           mSet@peakAnnotation[["camera_output"]][["isotopes"]] ==""));
 
-  IsotopMsg <- paste0(isoNum, 
-                      " features (",round(isoNum/nrow(mSet@dataSet)*100,2),
+  if (is.null(tryCatch(mSet@peakAnnotation[["camera_output"]], error = function(e) NULL))) {
+    mSet@peakAnnotation[["camera_output"]] <- data.frame(isotopes = character(0), adduct = character(0))
+  }
+  cam <- mSet@peakAnnotation[["camera_output"]]
+  isoNum <- length(which(cam[["isotopes"]] != ""))
+  addNum <- length(which(cam[["adduct"]]   != ""))
+  nonNum <- length(which(cam[["adduct"]] == "" & cam[["isotopes"]] == ""))
+
+  totalN <- max(1L, nrow(mSet@dataSet))
+  IsotopMsg <- paste0(isoNum,
+                      " features (",round(isoNum/totalN*100,2),
                       "%) have been annotated as isotopes.")
-  AdductsMsg <- paste0(addNum, 
-                       " features (",round(addNum/nrow(mSet@dataSet)*100,2),
+  AdductsMsg <- paste0(addNum,
+                       " features (",round(addNum/totalN*100,2),
                        "%) have been annotated as adducts.")
-  NonMsg <- paste0(nonNum, 
-                       " features (",round(nonNum/nrow(mSet@dataSet)*100,2),
+  NonMsg <- paste0(nonNum,
+                       " features (",round(nonNum/totalN*100,2),
                        "%) cannot be annotated.")
   
   formulas <- unique(mSet@peakAnnotation$massMatching$Formula);
