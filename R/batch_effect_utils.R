@@ -583,6 +583,7 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'"WaveICA","EigenMS","QC_RLSC","ANCOVA","RUV_random","RUV_2","RUV_s","RUV_r","RUV_g","NOMIS" and "CCMN".
 #'@param center The center point of the batch effect correction, based on "QC" or "", which means correct 
 #'to minimize the distance between batches.
+#'@param plot TRUE (default) draws the three figures; FALSE computes only (draw them with PlotBatchOverview, PlotBatchTrend and PlotBatchDistance).
 #'@importFrom plyr join ddply . summarise id
 #'@importFrom dplyr rename mutate select enquo tbl_vars group_vars grouped_df group_vars
 #'@import edgeR
@@ -595,8 +596,44 @@ Read.SignalDriftData<-function(mSetObj=NA, filePath, format){
 #'License: MIT
 #'@export
 #'
-PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL){
-  return(my.batch.correct(mSetObj, imgName, Method, center));
+PerformBatchCorrection <- function(mSetObj=NA, imgName=NULL, Method=NULL, center=NULL, plot=TRUE){
+  return(my.batch.correct(mSetObj, imgName, Method, center, plot));
+}
+
+#'Plot the batch correction overview
+#'@description PCA score plots before and after the correction, drawn from the
+#'corrected data that PerformBatchCorrection stored (run it first; with plot=FALSE
+#'it computes only, and this function and the two below draw its figures).
+#'@param mSetObj Input name of the created mSet Object
+#'@param imgName Input a name for the plot
+#'@param format Select the image format, "png", or "pdf".
+#'@param dpi Input the dpi.
+#'@param width Input the width.
+#'@export
+PlotBatchOverview <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  mSetObj <- PlotPCA.overview(mSetObj, imgName, format, dpi, width, method=mSetObj$dataSet$batch.method);
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot the batch correction's sample trends
+#'@description Eigentrends of the raw and the corrected data (see PlotBatchOverview).
+#'@inheritParams PlotBatchOverview
+#'@export
+PlotBatchTrend <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  plot.sample.trend(mSetObj, imgName, format, dpi, width, method=mSetObj$dataSet$batch.method);
+  return(.set.mSet(mSetObj));
+}
+
+#'Plot the batch correction's inter-batch distances
+#'@description Distance between batches for each correction method (see PlotBatchOverview).
+#'@inheritParams PlotBatchOverview
+#'@export
+PlotBatchDistance <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
+  mSetObj <- .get.mSet(mSetObj);
+  plot.sample.dist(mSetObj, imgName, format, width, dpi);
+  return(.set.mSet(mSetObj));
 }
 
 #'Signal Drift Correction
