@@ -1241,18 +1241,29 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   both.mat <- mSetObj$analSet$cov.mat
   both.mat <- both.mat[order(-both.mat[,"pval.adj"]),]
   logp_val <- mSetObj$analSet$cov$thresh
-  topFeature <- 5;
-  if(nrow(both.mat) < topFeature){
-    topFeature <- nrow(both.mat);
-  }
   
   mSetObj$imgSet$covAdj <- imgName;
+
+  # The plot data is what DrawCovariateMap reads: the per-feature p-values with and without adjustment, and the threshold.
+  pd <- list(both.mat = both.mat, threshold = logp_val, margin.config = mSetObj$imgSet$margin.config);
+  fig <- DrawCovariateMap(pd, imgName, format, dpi, interactive);
+  if(interactive){
+    return(fig);
+  }
+  .ov_plot_data(imgName, pd, "DrawCovariateMap", list(imgName = imgName, format = format, dpi = dpi));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the covariate-adjustment scatter from its plot data alone (pd: both.mat, threshold, margin.config).
+# imgName is the file name itself, as for PlotCovariateMap.
+DrawCovariateMap <- function(pd, imgName="NA", format="png", dpi=default.dpi, interactive=F){
+  both.mat <- pd$both.mat
+  threshold <- pd$threshold
   
   width <- 11;
   height <- 8.18;
   
   library(plotly)
-  threshold <- logp_val               
   
   both.mat$category <- ifelse(both.mat$pval.no > threshold & both.mat$pval.adj > threshold, "Significant in both",
                        ifelse(both.mat$pval.no > threshold & both.mat$pval.adj <= threshold, "Significant in pval.no only",
@@ -1279,7 +1290,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
   
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p,width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = pd$margin.config)
     return(ggp_build);
   }else{
     # Add text labels for top 10 most significant features on static plot
@@ -1296,7 +1307,7 @@ PlotCovariateMap <- function(mSetObj, theme="default", imgName="NA", format="png
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=width, height=height, type=format);
     print(p)
     dev.off()
-    return(.set.mSet(mSetObj));
+    return(invisible(NULL))
   }
 }
 

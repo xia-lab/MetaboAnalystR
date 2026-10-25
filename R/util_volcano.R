@@ -11,16 +11,8 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   #save.image("volc.RData");
   mSetObj <- .get.mSet(mSetObj);
 
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
-  if(is.na(width)){
-    w <- 10;
-  }else if(width == 0){
-    w <- 8;
-  }else{
-    w <- width;
-  }
-  h <- w*6/10;
   
   mSetObj$imgSet$volcano <- imgName;
   
@@ -41,11 +33,37 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
   de$Status[vcn$inx.p & vcn$inx.down] <- "DOWN";
   de$Status <- as.factor(de$Status);
 
-  # Method-standard: persist the figure's underlying data table (fold-change,
-  # p-value, status per feature) so the AI "Refine" control can re-plot from data
-  # and users can regenerate the figure in any tool. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("volcano", de), error = function(e) NULL)
+  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme, labelNum=labelNum);
+
+  # The plot data is what DrawVolcano reads: the per-feature table, the significant set and the thresholds -- nothing of the session.
+  pd <- list(de = de, imp.inx = imp.inx,
+             min.xthresh = vcn$min.xthresh, max.xthresh = vcn$max.xthresh, thresh.y = vcn$thresh.y,
+             margin.config = mSetObj$imgSet$margin.config);
+  res <- DrawVolcano(pd, img.base, plotLbl, plotTheme, format, dpi, width, labelNum, interactive);
+  if(interactive){
+    return(res);
+  }
+  .ov_plot_data(imgName, pd, "DrawVolcano",
+                list(imgName = img.base, plotLbl = plotLbl, plotTheme = plotTheme, format = format, dpi = dpi, width = width, labelNum = labelNum),
+                export = list(volcano = de));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the volcano plot from its plot data alone (pd: de, imp.inx, min.xthresh, max.xthresh, thresh.y, margin.config).
+DrawVolcano <- function(pd, imgName="NA", plotLbl=T, plotTheme=0, format="png", dpi=default.dpi, width=NA, labelNum=5, interactive=F){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 10;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width;
+  }
+  h <- w*6/10;
+
+  de <- pd$de;
+  imp.inx <- pd$imp.inx;
 
   # Rank by p-value (primary, higher -log10(p) = more significant) then FC (tiebreaker)
   de$combinedRank <- order(order(-de$p.log, -abs(de$fc.log)))
@@ -89,8 +107,8 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
                           limits = fc_range, space = "Lab", na.value = "grey", guide = "colourbar") +
         scale_size_continuous(name = "P-value", range = c(1, 6), limits = c(0, 8), breaks = c(0, 1, 1.3, 2, 3), labels = c("1.0", "0.1", "0.05", "0.01", "0.001")) +
         scale_y_continuous(expand = expansion(mult = c(0.02, 0.08))) +
-        geom_vline(xintercept = c(vcn$min.xthresh, vcn$max.xthresh), linetype = "dashed", color = "black") +
-        geom_hline(yintercept = vcn$thresh.y, linetype = "dashed", color = "black") +
+        geom_vline(xintercept = c(pd$min.xthresh, pd$max.xthresh), linetype = "dashed", color = "black") +
+        geom_hline(yintercept = pd$thresh.y, linetype = "dashed", color = "black") +
         labs(x = "log2(FC)", y = "-log10(p-value)") +
         coord_cartesian(clip = "off") +
         theme_minimal() +
@@ -102,7 +120,6 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
                                        segment.color = "grey50", segment.size = 0.3,
                                        size = 3, seed = 123);
   }
-  mSetObj$analSet$volcano.plot.config <- list(plotLbl=plotLbl, plotTheme=plotTheme, labelNum=labelNum);
   
   if(!interactive){
     if(plotTheme == 0){
@@ -132,7 +149,7 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
 
   if(interactive){
     library(plotly);
-    ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 900, height = 600, margin = mSetObj$imgSet$margin.config)
+    ggp_build <- layout(ggplotly(p, tooltip = c("label", "P.Value", "Fold.Change")), autosize = FALSE, width = 900, height = 600, margin = pd$margin.config)
     fig <- plotly_build(ggp_build)
     vec <- rep("rgba(22,22,22,1)", nrow(de))
     attr(vec, "apiSrc") <- TRUE
@@ -145,5 +162,5 @@ my.plot.volcano <- function(mSetObj=NA, imgName="NA", plotLbl=T, plotTheme=0, fo
     dev.off();
   }
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
