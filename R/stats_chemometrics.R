@@ -2144,12 +2144,13 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
 #'Add reg (regression i.e. if class order matters)
 #'@param mSetObj Input name of the created mSet Object
 #'@param reg Logical
+#'@param ortho.num Number of orthogonal components to fit; NA (the default) lets ropls choose it by cross-validation
 #'@author Jeff Xia \email{jeff.xia@mcgill.ca}
 #'McGill University, Canada
 #'License: MIT
 #'@export
 #'
-OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
+OPLSR.Anal<-function(mSetObj=NA, reg=FALSE, ortho.num=NA){
   mSetObj <- .get.mSet(mSetObj);
 
   mSetObj$analSet$opls.reg <- reg;
@@ -2167,7 +2168,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
 
   bridge_in <- paste0(tempdir(), "/bridge_", paste0(sample(letters,6,replace=TRUE), collapse=""), "_in.qs")
   bridge_out <- sub("_in.qs", "_out.qs", bridge_in)
-  ov_qs_save(list(data=datmat, cls=cls, cv.num=cv.num), bridge_in, preset = "fast")
+  ov_qs_save(list(data=datmat, cls=cls, cv.num=cv.num, ortho.num=ortho.num), bridge_in, preset = "fast")
   on.exit(unlink(c(bridge_in, bridge_out)), add = TRUE)
 
   run_func_via_microservice(
@@ -2178,7 +2179,7 @@ OPLSR.Anal<-function(mSetObj=NA, reg=FALSE){
       if(file.exists(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"))){
         source(paste0(rpath, "rscripts/MetaboAnalystR/R/stats_opls.R"), local = FALSE)
       }
-      res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=NA, crossvalI=input$cv.num)
+      res <- perform_opls(input$data, input$cls, predI=1, permI=0, orthoI=input$ortho.num, crossvalI=input$cv.num)
       ov_qs_save(res, bridge_out, preset = "fast")
     },
     args = list(wd = getwd(), bridge_in = bridge_in, bridge_out = bridge_out),
