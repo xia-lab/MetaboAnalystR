@@ -181,7 +181,34 @@ FC.Anal <- function(mSetObj=NA, fc.thresh=2, cmp.type = 0, paired=FALSE, fc.meth
 #'
 PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$fc <- imgName;
+
+  fc = mSetObj$analSet$fc;
+
+  fc_data <- data.frame(
+    x = 1:length(fc$fc.log),
+    y = fc$fc.log,
+    Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
+    label = names(fc$inx.imp)
+  )
+
+  # The plot data is what DrawFC reads: the fold-change table, nothing of the session.
+  pd <- list(fc_data = fc_data);
+  fig <- DrawFC(pd, img.base, format, dpi, width, interactive);
+  if(interactive){
+    return(fig);
+  }
+  .ov_plot_data(imgName, pd, "DrawFC", list(imgName = img.base, format = format, dpi = dpi, width = width), export = list(fc = fc_data));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the fold-change plot from its plot data alone (pd$fc_data: x, y, Significance, label).
+DrawFC <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
   library(scales);
+  library(ggplot2);
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -191,30 +218,9 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     w <- width;
   }
   h <- w*6/8;
-  
-  mSetObj$imgSet$fc <- imgName;
-  
-  
-  fc = mSetObj$analSet$fc;
-  
-  library(ggplot2);
-  fc_data <- data.frame(
-    x = 1:length(fc$fc.log),
-    y = fc$fc.log,
-    Significance = ifelse(fc$inx.imp, "Significant", "Unsignificant"),
-    label = names(fc$inx.imp)
-  )
 
-  # Method-standard: persist the figure's underlying data table so the AI
-  # "Refine" control can re-plot from data and users can regenerate the figure
-  # in any tool. Helper lives in wf_method.R; guard so the public
-  # package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("fc", fc_data), error = function(e) NULL)
+  fc_data <- pd$fc_data;
 
-  # Get the maximum absolute fold change for plotting limits
-  topVal <- max(abs(fc$fc.log))
-  ylim <- c(-topVal, topVal)
-  
   # Assign colors based on significance and fold change
   fc_data$ColorValue <- ifelse(fc_data$Significance == "Significant", fc_data$y, NA)
   fc_data$ColorValue <- as.numeric(fc_data$ColorValue) # Ensure this is numeric
@@ -267,7 +273,7 @@ PlotFC <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(fc_data, !is.na(top_label)))
     print(p);
     dev.off();
-    return(.set.mSet(mSetObj));
+    return(invisible(NULL));
   }
 }
 
@@ -613,19 +619,10 @@ Ttests.Anal <- function(mSetObj=NA, nonpar=F, threshp=0.05, paired=FALSE,
 #'@export
 #'
 PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
-  library(ggplot2)
-  library(scales);
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 8;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w * 6 / 8;
   
   mSetObj$imgSet$tt <- imgName;
   
@@ -639,13 +636,37 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     FDR = mSetObj$analSet$tt$fdr.p
   )
 
-  # Method-standard: persist the figure's underlying data table (p-value, FDR,
-  # significance per feature) for Refine + cross-tool regeneration. Helper lives
-  # in wf_method.R; guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("tt", tt_data), error = function(e) NULL)
+  # The plot data is what DrawTT reads: the per-feature table, the threshold, the adjustment method and the axis label.
+  pd <- list(tt_data = tt_data,
+             p.thresh = mSetObj$analSet$tt$raw.thresh,
+             adjust.method = mSetObj$analSet$tt$adjust.method,
+             xlab = GetVariableLabel(mSetObj$dataSet$type));
+  fig <- DrawTT(pd, img.base, format, dpi, width, interactive);
+  if(interactive){
+    return(fig);
+  }
+  .ov_plot_data(imgName, pd, "DrawTT", list(imgName = img.base, format = format, dpi = dpi, width = width), export = list(tt = tt_data));
+  return(.set.mSet(mSetObj));
+}
 
-  p.thresh <- mSetObj$analSet$tt$raw.thresh
-  adjust.method <- mSetObj$analSet$tt$adjust.method
+# Draws the t-test plot from its plot data alone (pd: tt_data, p.thresh, adjust.method, xlab).
+DrawTT <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, interactive=F){
+  library(ggplot2)
+  library(scales);
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 8;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w * 6 / 8;
+
+  tt_data <- pd$tt_data;
+  p.thresh <- pd$p.thresh
+  adjust.method <- pd$adjust.method
   # Assuming your data frame is set up correctly as tt_data
   tt_data$p_log_rescaled <- rescale(tt_data$p_log)  # Rescale p_log for sizing
   # Create a copy of p_log to use for coloring significant points
@@ -667,7 +688,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
     scale_fill_gradient(low = low.fill, high = high.fill, na.value = "darkgrey", guide = "colourbar", name="-log(FDR.p)") +
     scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
-    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(FDR.p)") +
+    labs(x = pd$xlab, y = "-log10(FDR.p)") +
     geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "blue", size=0.5) # Add horizontal line at p-value threshold
 
   }else{
@@ -677,7 +698,7 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     scale_color_gradient(low = "black", high = "black", na.value = "black", guide="none") +
     scale_fill_gradient(low = low.fill, high = high.fill, na.value = "darkgrey", guide = "colourbar", name="-log(raw.p)") +
     scale_size_continuous(range = c(1, 4), guide="none") + # Adjust size range as needed
-    labs(x = GetVariableLabel(mSetObj$dataSet$type), y = "-log10(raw.p)") +
+    labs(x = pd$xlab, y = "-log10(raw.p)") +
     geom_hline(yintercept = -log10(p.thresh), linetype = "dashed", color = "blue", size=0.5) # Add horizontal line at p-value threshold
   }
   
@@ -697,9 +718,8 @@ PlotTT <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA,
     p <- p + ggrepel::geom_text_repel(aes(label = top_label), data = subset(tt_data, !is.na(top_label)))
     print(p);
     dev.off();
+    return(invisible(NULL));
   }
-  
-  return(.set.mSet(mSetObj));
 }
 
 #'Perform Volcano Analysis
@@ -1144,21 +1164,10 @@ Calculate.ANOVA.posthoc <- function(mSetObj=NA, post.hoc="fisher", thresh=0.05, 
 #'@export
 #'
 PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, width=NA,interactive=F){
-  library(plotly)
-  library(ggplot2)
   mSetObj <- .get.mSet(mSetObj)
   
-  lod <- mSetObj$analSet$aov$p.log
+  img.base <- imgName;
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  
-  if (is.na(width)) {
-    w <- 9
-  } else if (width == 0) {
-    w <- 7
-  } else {
-    w <- width
-  }
-  h <- w * 6 / 9
   
   mSetObj$imgSet$anova <- imgName
   
@@ -1172,6 +1181,34 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
     inx.imp = aov$inx.imp,
     fdr.p = aov$fdr.p
   )
+  
+  # The plot data is what DrawANOVA reads: the per-feature table and the axis label.
+  pd <- list(df = df, xlab = GetVariableLabel(mSetObj$dataSet$type));
+  fig <- DrawANOVA(pd, img.base, format, dpi, width, interactive);
+  if(interactive){
+    return(fig);
+  }
+  .ov_plot_data(imgName, pd, "DrawANOVA", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ANOVA plot from its plot data alone (pd: df (seq, label, p.log, p.value, inx.imp, fdr.p), xlab).
+DrawANOVA <- function(pd, imgName="", format="png", dpi=default.dpi, width=NA, interactive=F){
+  library(plotly)
+  library(ggplot2)
+  
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  
+  if (is.na(width)) {
+    w <- 9
+  } else if (width == 0) {
+    w <- 7
+  } else {
+    w <- width
+  }
+  h <- w * 6 / 9
+  
+  df <- pd$df;
   df$p.log <- as.numeric(df$p.log)
   df$color_value <- ifelse(df$inx.imp == 1, df$p.log, NA)
   
@@ -1181,7 +1218,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
     geom_point(aes(color = color_value, size = p.log)) + # Use color_value for color scale
     scale_color_gradient(low = "yellow", high = "red", na.value = "darkgrey", name="-log10(raw-p)") + # Gradient from light blue to dark grey
     labs(
-      x = GetVariableLabel(mSetObj$dataSet$type),
+      x = pd$xlab,
       y = "-log10(raw-p)",
     ) +
     theme_minimal()+
@@ -1206,7 +1243,7 @@ PlotANOVA <- function(mSetObj=NA, imgName="", format="png", dpi=default.dpi, wid
     print(p)
     dev.off();
   }
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot Compound View 

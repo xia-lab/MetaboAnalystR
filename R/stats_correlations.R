@@ -424,6 +424,28 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.d
     load_rcolorbrewer()
   }
   
+  img.base <- imgName;
+  mSetObj$imgSet$corr.heatmap <- paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  # The plot data is what DrawStaticCorrHeatMap reads: the correlation matrix.
+  pd <- list(corr.mat = corr.mat);
+  new.ord <- DrawStaticCorrHeatMap(pd, img.base, format, dpi, width, colors, viewOpt, fix.col, no.clst);
+  .ov_plot_data(mSetObj$imgSet$corr.heatmap, pd, "DrawStaticCorrHeatMap",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, colors = colors, viewOpt = viewOpt,
+                     fix.col = fix.col, no.clst = no.clst));
+
+  if(!no.clst){ # when no clustering, tree_row is NA
+    mSetObj$analSet$pwcor$new.ord <- new.ord;
+  }
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the static correlation heat map from its plot data alone (pd$corr.mat); returns the row order of the clustering
+# (NULL when there is none).
+DrawStaticCorrHeatMap<-function(pd, imgName, format="png", dpi=default.dpi, width=NA, colors, viewOpt, fix.col, no.clst){
+  corr.mat <- pd$corr.mat;
+
   # set up parameter for heatmap
    if(colors=="gbr"){
     colors <- grDevices::colorRampPalette(c("green", "black", "red"), space="rgb")(256);
@@ -461,8 +483,6 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.d
       w <- 7.2;
     }
     h <- w;
-    mSetObj$imgSet$corr.heatmap <- imgName;
-    
   }else{
     if(ncol(corr.mat) > 50){
       myH <- ncol(corr.mat)*12 + 40;
@@ -481,7 +501,6 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.d
     }else{
       w <- h <- 7.2;
     }
-    mSetObj$imgSet$corr.heatmap <- imgName;
   }
   
   if(format=="pdf"){
@@ -547,13 +566,11 @@ PlotStaticCorrHeatMap<-function(mSetObj=NA, imgName, format="png", dpi=default.d
   dev.off();
   # print("corretation static==============================");
 
+  new.ord <- NULL;
   if(!no.clst){ # when no clustering, tree_row is NA
     new.ord <- res$tree_row$order;
-    corr.mat <- corr.mat[new.ord, new.ord];
-    mSetObj$analSet$pwcor$new.ord <- new.ord;
   }
-
-  return(.set.mSet(mSetObj));
+  return(new.ord);
 }
 
 

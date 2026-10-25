@@ -911,6 +911,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
                         colV=T, var.inx=NULL, border=T, grp.ave=F, show.legend=T, show.annot.legend=T, includeRowNames=T){
 
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$heatmap <- imgName;
   
@@ -956,6 +957,32 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   }else{
     hc.cls <- cls;
   }
+
+  # The plot data is what DrawStaticHeatMap reads: the plotted matrix (samples x features), the groups and the
+  # session's group colours as they are now.
+  pd <- list(hc.dat = hc.dat, hc.cls = hc.cls, cls = cls, cls.type = cls.type, cls.class = cls.class,
+             ordered.cls = ordered.cls, includeRowNames = includeRowNames, col.vec = get0("colVec"));
+  ok <- DrawStaticHeatMap(pd, img.base, format, dpi, width, scaleOpt, smplDist, clstDist, palette, fzCol, fzRow,
+                          viewOpt, rowV, colV, border, grp.ave, show.legend, show.annot.legend);
+  if(identical(ok, 0)){
+    return(0);
+  }
+  .ov_plot_data(imgName, pd, "DrawStaticHeatMap",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, scaleOpt = scaleOpt, smplDist = smplDist,
+                     clstDist = clstDist, palette = palette, fzCol = fzCol, fzRow = fzRow, viewOpt = viewOpt, rowV = rowV,
+                     colV = colV, border = border, grp.ave = grp.ave, show.legend = show.legend, show.annot.legend = show.annot.legend));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the static heat map from its plot data alone
+# (pd: hc.dat, hc.cls, cls, cls.type, cls.class, ordered.cls, includeRowNames, col.vec).
+# Returns 0 when the Bray-Curtis distance could not be computed, NULL otherwise.
+DrawStaticHeatMap <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, scaleOpt, smplDist, clstDist, palette,
+                              fzCol, fzRow, viewOpt="detail", rowV=T, colV=T, border=T, grp.ave=F, show.legend=T, show.annot.legend=T){
+  hc.dat <- pd$hc.dat; hc.cls <- pd$hc.cls; cls <- pd$cls;
+  cls.type <- pd$cls.type; cls.class <- pd$cls.class; ordered.cls <- pd$ordered.cls;
+  includeRowNames <- pd$includeRowNames;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   # set up colors for heatmap
   if(palette=="gbr"){
@@ -1021,7 +1048,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
     }
     # set up color schema for samples
     
-    col.def <- GetColorSchema(hc.cls, palette == "gray");
+    col.def <- GetColorSchema(hc.cls, palette == "gray", pd$col.vec);
     cols <- ExpandSchema(cls, col.def);
 
     uniq.cols <- col.def;  
@@ -1138,7 +1165,7 @@ PlotStaticHeatMap <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
     heatmap(hc.dat, Rowv = rowTree, Colv=colTree, col = colors, scale="column");
 
   }
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 ##############################################

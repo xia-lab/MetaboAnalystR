@@ -446,26 +446,13 @@ RangeNorm<-function(x){
 PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   #save.image("normsum.RData");
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
 
-  if(is.na(width)){
-    w <- 10.5; h <- 12.5;
-  }else if(width==0){
-    w = 7.2
-    h = 9.5
-  }else if(width>0){
-    w = width
-    h = width*1.25
-  }
-  
   mSetObj$imgSet$norm <- imgName
   
   proc.data <- ov_qs_read("data_proc.qs");
 
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE))
-  
   # since there may be too many compounds, only plot a subsets (50) in box plot
   # but density plot will use all the data
   
@@ -494,42 +481,74 @@ PlotNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   rangex.norm <- range(norm_dt[, norm.inx, drop=FALSE], na.rm=T);
   
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
-  y.label<-GetVariableLabel(mSetObj$dataSet$type);
+
+  # The plot data is what DrawNormSummary reads: the per-feature means for the density plots and the (at most 50)
+  # sampled features for the box plots, before and after normalization -- not the two full tables.
+  pd <- list(pre.mean = apply(proc.data, 2, mean, na.rm=TRUE),
+             norm.mean = apply(norm_dt, 2, mean, na.rm=TRUE),
+             pre.box = proc.data[,pre.inx, drop=FALSE], norm.box = norm_dt[, norm.inx, drop=FALSE],
+             names = namesVec, rangex.pre = rangex.pre, rangex.norm = rangex.norm, x.label = x.label,
+             no.density = (anal.type == "roc" & mSetObj$dataSet$roc_cols == 1));
+  DrawNormSummary(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawNormSummary", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the feature view of the normalization summary from its plot data alone
+# (pd: pre.mean, norm.mean, pre.box, norm.box, names, rangex.pre, rangex.norm, x.label, no.density).
+DrawNormSummary <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  if(is.na(width)){
+    w <- 10.5; h <- 12.5;
+  }else if(width==0){
+    w = 7.2
+    h = 9.5
+  }else if(width>0){
+    w = width
+    h = width*1.25
+  }
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  
+  layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE))
+  
+  namesVec <- pd$names; x.label <- pd$x.label;
   
   # fig 1
-  if(anal.type == "roc" & mSetObj$dataSet$roc_cols == 1){
+  if(pd$no.density){
     op<-par(mar=c(4,7,4,0), xaxt="s");
     plot.new()
   }else{
     op<-par(mar=c(4,7,4,0), xaxt="s");
-    plot(density(apply(proc.data, 2, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
+    plot(density(pd$pre.mean), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
     mtext("Density", 2, 5);
     mtext("Before Normalization",3, 1)
   }
   
   # fig 2
   op<-par(mar=c(7,7,0,0), xaxt="s");
-  boxplot(proc.data[,pre.inx, drop=FALSE], names=namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T, show.names=T);
+  boxplot(pd$pre.box, names=namesVec, ylim=pd$rangex.pre, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(x.label, 1, 5);
   
   # fig 3
-  if(anal.type == "roc" & mSetObj$dataSet$roc_cols == 1){
+  if(pd$no.density){
     op<-par(mar=c(4,7,4,2), xaxt="s");
     plot.new()
   }else{
     op<-par(mar=c(4,7,4,2), xaxt="s");
-    plot(density(apply(norm_dt, 2, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
+    plot(density(pd$norm.mean), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
     mtext("After Normalization",3, 1);
   }
 
   # fig 4
   op<-par(mar=c(7,7,0,2), xaxt="s");
-  boxplot(norm_dt[,norm.inx, drop=FALSE], names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", horizontal=T, show.names=T);
+  boxplot(pd$norm.box, names=namesVec, ylim=pd$rangex.norm, las = 2, col="lightgreen", horizontal=T, show.names=T);
   mtext(paste("Normalized",x.label),1, 5);
   
   dev.off();
-  
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 
@@ -551,23 +570,12 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
 
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 10.5; h <- 12.5;
-  }else if(width == 0){
-    w <- 7.2;h <- 9.5;
-  }else if(width>0){
-    w = width
-    h = width*1.25
-    # w <- 7.2; h <- 9;
-  }
   
   proc.data <- ov_qs_read("data_proc.qs");
   mSetObj$imgSet$summary_norm <-imgName;
   
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE));
-
   # since there may be too many samples, only plot a subsets (50) in box plot
   # but density plot will use all the data
   
@@ -592,31 +600,60 @@ PlotSampleNormSummary <- function(mSetObj=NA, imgName, format="png", dpi=default
   rangex.norm <- range(norm.data.subset, na.rm=T);
 
   x.label<-GetAbundanceLabel(mSetObj$dataSet$type);
-  y.label<-"Samples";
+
+  # The plot data is what DrawSampleNormSummary reads: the per-sample means for the density plots and the (at most
+  # 50) sampled samples for the box plots, before and after normalization -- not the two full tables.
+  pd <- list(pre.mean = apply(proc.data, 1, mean, na.rm=TRUE),
+             norm.mean = apply(mSetObj$dataSet$norm, 1, mean, na.rm=TRUE),
+             pre.box = t(proc.data.pre), norm.box = t(norm.data.subset),
+             names = namesVec, rangex.pre = rangex.pre, rangex.norm = rangex.norm, x.label = x.label);
+  DrawSampleNormSummary(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawSampleNormSummary", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the sample view of the normalization summary from its plot data alone
+# (pd: pre.mean, norm.mean, pre.box, norm.box, names, rangex.pre, rangex.norm, x.label).
+DrawSampleNormSummary <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 10.5; h <- 12.5;
+  }else if(width == 0){
+    w <- 7.2;h <- 9.5;
+  }else if(width>0){
+    w = width
+    h = width*1.25
+    # w <- 7.2; h <- 9;
+  }
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  layout(matrix(c(1,2,2,2,3,4,4,4), 4, 2, byrow = FALSE));
+
+  namesVec <- pd$names; x.label <- pd$x.label;
 
   # fig 1
   op<-par(mar=c(6.5,7,0,0), xaxt="s");
-  plot(density(apply(proc.data, 1, mean, na.rm=TRUE)), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
+  plot(density(pd$pre.mean), col='darkblue', las =2, lwd=2, main="", xlab="", ylab="");
   mtext(x.label, 1, 4);
   mtext("Density", 2, 5);
 
   # fig 2
   op<-par(mar=c(5.75,8,4,0), xaxt="s");
-  boxplot(t(proc.data.pre), names= namesVec, ylim=rangex.pre, las = 2, col="lightgreen", horizontal=T);
+  boxplot(pd$pre.box, names= namesVec, ylim=pd$rangex.pre, las = 2, col="lightgreen", horizontal=T);
   mtext("Before Normalization", 3,1)
 
   # fig 3
   op<-par(mar=c(6.5,7,0,2), xaxt="s");
-  plot(density(apply(mSetObj$dataSet$norm, 1, mean, na.rm=TRUE)), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
+  plot(density(pd$norm.mean), col='darkblue', las=2, lwd =2, main="", xlab="", ylab="");
   mtext(paste("Normalized",x.label),1, 4)
 
   # fig 4
   op<-par(mar=c(5.75,8,4,2), xaxt="s");
-  boxplot(t(norm.data.subset), names=namesVec, ylim=rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
+  boxplot(pd$norm.box, names=namesVec, ylim=pd$rangex.norm, las = 2, col="lightgreen", ylab="", horizontal=T);
   mtext("After Normalization", 3, 1);
   dev.off();
-
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Update data for filtering

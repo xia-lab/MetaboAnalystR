@@ -32,6 +32,18 @@
   invisible(1);
 }
 
+# Plot-data hook. A plotter hands over what its drawing reads (`data`, small, never the mSetObj), the NAME of the
+# Draw<X> function in this package that draws from it alone (`draw`) and that function's other arguments (`args`,
+# named). Whoever wants the plot data sets options(ov.plot_data_hook = function(img, data, draw, args) ...); when
+# nobody does, or the hook fails, this does nothing -- the package names nothing outside itself.
+# `export` (optional): a named list of the data frames / matrices behind the figure, e.g. list(fc = fc_data); the hook keeps each
+# as the downloadable <name>_data.csv the figure has always had.
+.ov_plot_data <- function(img, data, draw, args = list(), export = NULL) {
+  h <- getOption("ov.plot_data_hook")
+  if (is.function(h)) tryCatch(if (is.null(export)) h(img, data, draw, args) else h(img, data, draw, args, export), error = function(e) NULL)
+  invisible(NULL)
+}
+
 # Limit of detection (1/5 of min for each var)
 .replace.by.lod <- function(x){
     lod <- min(x[x>0], na.rm=T)/5;
@@ -857,16 +869,17 @@ UpdateGraphSettings <- function(mSetObj=NA, colVec, shapeVec){
     return(.set.mSet(mSetObj));
 }
 
-GetShapeSchema <- function(my.cls, show.name=0, grey.scale=0){
+# shape.vec / col.vec default to the session's shapeVec / colVec; a Draw<X> function passes the copies its plot data holds.
+GetShapeSchema <- function(my.cls, show.name=0, grey.scale=0, shape.vec=get0("shapeVec"), col.vec=get0("colVec")){
 
   lvs <- levels(my.cls); 
   grp.num <- length(lvs);
 
-  if(exists("shapeVec") && all(shapeVec >= 0)){
+  if(!is.null(shape.vec) && all(shape.vec >= 0)){
     # double check in case user excluded some groups
-    shapes <- shapeVec[names(colVec) %in% levels(my.cls)];
+    shapes <- shape.vec[names(col.vec) %in% levels(my.cls)];
 
-    if(all(shapeVec == 0)){
+    if(all(shape.vec == 0)){
        shapes <- rep(21, grp.num);
     }
   }else{
@@ -935,17 +948,18 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-GetColorSchema <- function(my.cls, grayscale=F){
+# col.vec defaults to the session's colVec; a Draw<X> function passes the copy its plot data holds.
+GetColorSchema <- function(my.cls, grayscale=F, col.vec=get0("colVec")){
   
    lvs <- levels(my.cls); 
    grp.num <- length(lvs);
    if(grayscale){
       dist.cols <- colorRampPalette(c("grey90", "grey30"))(grp.num);
       names(dist.cols) <- lvs;
-   }else if(exists("colVec") && length(colVec) >0 && !any(colVec =="#NA")){
+   }else if(!is.null(col.vec) && length(col.vec) >0 && !any(col.vec =="#NA")){
 
       # make sure to sync with cls in case user exclude some groups
-      dist.cols <- colVec[names(colVec) %in% levels(my.cls)];
+      dist.cols <- col.vec[names(col.vec) %in% levels(my.cls)];
 
    }else{             
       if(grp.num <= 18){ # update color and respect default

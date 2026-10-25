@@ -132,8 +132,9 @@ GetEllipseRadius <- function(level, method, n) {
 #' @param data data frame with one row per sample
 #' @param xcol,ycol names of the x/y coordinate columns
 #' @param groupcol name of the grouping column
-.ellipse.layer.data <- function(data, xcol, ycol, groupcol) {
-  if (!isTRUE(.get.scatter.params()$hideTightEllipse)) return(data)
+#' @param params list from .get.scatter.params() (the session's now, unless a Draw<X> passes the one its plot data holds)
+.ellipse.layer.data <- function(data, xcol, ycol, groupcol, params = .get.scatter.params()) {
+  if (!isTRUE(params$hideTightEllipse)) return(data)
   groups <- as.character(data[[groupcol]])
   isTight <- vapply(split(seq_len(nrow(data)), groups), function(idx) {
     ratio <- .ellipse.axis.ratio(data[[xcol]][idx], data[[ycol]][idx])
@@ -421,16 +422,26 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   
   mSetObj <- .get.mSet(mSetObj);
   
-  stds <-mSetObj$analSet$pca$std[1:scree.num];
   pcvars<-mSetObj$analSet$pca$variance[1:scree.num];
   cumvars<-mSetObj$analSet$pca$cum.var[1:scree.num];
 
-  # Method-standard: persist the figure's underlying data table for Refine +
-  # cross-tool regeneration. Helper lives in wf_method.R; guard so
-  # the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(
-    WfSaveFigureData("pca_scree", data.frame(PC = seq_along(pcvars), VarianceExplained = pcvars, CumulativeVariance = cumvars)),
-    error = function(e) NULL)
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$pca.scree <- imgName;
+
+  # The plot data is what DrawPCAScree reads: the variance explained per component and its running total.
+  pd <- list(pcvars = pcvars, cumvars = cumvars, scree.num = scree.num);
+  DrawPCAScree(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPCAScree", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(pca_scree = data.frame(PC = seq_along(pcvars), VarianceExplained = pcvars, CumulativeVariance = cumvars)));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PCA scree plot from its plot data alone (pd: pcvars, cumvars, scree.num).
+DrawPCAScree <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  pcvars <- pd$pcvars;
+  cumvars <- pd$cumvars;
+  scree.num <- pd$scree.num;
 
   ylims <- range(c(pcvars,cumvars));
   extd<-(ylims[2]-ylims[1])/10
@@ -447,8 +458,6 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   }
   h <- w*2/3;
   
-  mSetObj$imgSet$pca.scree <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,6,3));
   plot(pcvars, type='l', col='blue', main='Scree plot', xlab='PC index', ylab='Variance explained', ylim=c(miny, maxy), axes=F)
@@ -463,7 +472,7 @@ PlotPCAScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   axis(2);
   axis(1, 1:length(pcvars), 1:length(pcvars));
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Create 2D PCA score plot
@@ -514,13 +523,43 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   pc2 = mSetObj$analSet$pca$x[, pcy];
   text.lbls<-substr(names(pc1),1,14) # some names may be too long
 
-  # Method-standard: persist the figure's underlying data table (PC scores +
-  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(
-    WfSaveFigureData("pca_score2d", data.frame(Sample = names(pc1), PCx = pc1, PCy = pc2, Group = mSetObj$dataSet$cls)),
-    error = function(e) NULL)
-  
+  if(cls.type == "disc"){
+    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+      cls <- as.factor(as.numeric(levels(cls))[cls]);
+    }
+  }
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$pca_score2d <- imgName;
+
+  # The plot data is what DrawPCA2DScore reads: the scores, the groups, the confidence-region settings and the
+  # session's group colours / shapes as they are now.
+  pd <- list(pc1 = pc1, pc2 = pc2, xlabel = xlabel, ylabel = ylabel, text.lbls = text.lbls,
+             cls = cls, cls.type = cls.type, sp = sp, pca.cex = pca.cex,
+             col.vec = get0("colVec"), shape.vec = get0("shapeVec"));
+  DrawPCA2DScore(pd, img.base, format, dpi, width, show, grey.scale);
+  .ov_plot_data(imgName, pd, "DrawPCA2DScore",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, show = show, grey.scale = grey.scale),
+                export = list(pca_score2d = data.frame(Sample = names(pc1), PCx = pc1, PCy = pc2, Group = mSetObj$dataSet$cls)));
+
+  if(nrow(mSetObj[['dataSet']][['meta.info']])<=200){
+    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls)
+    mSetObj$analSet$pca$permanova.res <-permanova_results;
+  }
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the 2D PCA score plot from its plot data alone
+# (pd: pc1, pc2, xlabel, ylabel, text.lbls, cls, cls.type, sp, pca.cex, col.vec, shape.vec).
+DrawPCA2DScore <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, show=1, grey.scale=0){
+  pc1 <- pd$pc1; pc2 <- pd$pc2;
+  xlabel <- pd$xlabel; ylabel <- pd$ylabel;
+  text.lbls <- pd$text.lbls;
+  cls <- pd$cls; cls.type <- pd$cls.type;
+  sp <- pd$sp;
+  pca.cex <- pd$pca.cex;
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -531,19 +570,11 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
   h <- w-1; # margin big
   
-  mSetObj$imgSet$pca_score2d <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op<-par(mar=c(5,5,3,8));
   
   if(cls.type == "disc"){
     # obtain ellipse points to the scatter plot for each category
-    
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
-      cls <- as.factor(as.numeric(levels(cls))[cls]);
-    }else{
-      cls <- cls;
-    }
     
     lvs <- levels(cls);
     pts.array <- array(0, dim=c(100,2,length(lvs)));
@@ -561,7 +592,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
     ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
     
-    col.def <- GetColorSchema(cls, grey.scale==1);
+    col.def <- GetColorSchema(cls, grey.scale==1, pd$col.vec);
     cols <- ExpandSchema(cls, col.def);
     
     plot(pc1, pc2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot",
@@ -580,7 +611,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       }
     }
     
-    pchs.def <- GetShapeSchema(cls, show, grey.scale);
+    pchs.def <- GetShapeSchema(cls, show, grey.scale, pd$shape.vec, pd$col.vec);
     pchs <- ExpandSchema(cls, pchs.def);
     if(grey.scale) {
       cols <- rep("black", length(cols));
@@ -592,7 +623,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
       if(length(col.def) == 1){
         points(pc1, pc2, pch=pchs, col=cols, cex=1.0*pca.cex);
       }else{
-        if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+        if(grey.scale == 1 | (!is.null(pd$shape.vec) && all(pd$shape.vec>=0))){
           my.cols <- adjustcolor(cols, alpha.f = 0.4);
           my.cols[pchs == 21] <- "black";
           points(pc1, pc2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*pca.cex);
@@ -621,12 +652,7 @@ PlotPCA2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
   par(op);
   dev.off();
-
-  if(nrow(mSetObj[['dataSet']][['meta.info']])<=200){
-    permanova_results <- ComputePERMANOVA(pc1, pc2, mSetObj$dataSet$cls)
-    mSetObj$analSet$pca$permanova.res <-permanova_results;
-  }
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Create 3D PCA score plot
@@ -805,13 +831,28 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   colnames(loadings)<-c(ldName1, ldName2);
   mSetObj$analSet$pca$imp.loads<-loadings; # set up the loading matrix
 
-  # Method-standard: persist the figure's underlying data table for Refine +
-  # cross-tool regeneration. Helper lives in wf_method.R; guard so
-  # the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_loading", loadings), error = function(e) NULL)
-
   # Arrow export for zero-copy Java access (PCA loadings)
   ExportResultMatArrow(loadings, "pca_load");
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$pca.loading <- imgName;
+
+  # The plot data is what DrawPCALoading reads: the loadings of the two components and which features to label.
+  pd <- list(loadings = loadings, ldName1 = ldName1, ldName2 = ldName2,
+             plotType = mSetObj$analSet$pca$loading.type, custom.cmpds = mSetObj$custom.cmpds);
+  mSetObj$pca.axis.lims <- DrawPCALoading(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPCALoading", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(pca_loading = loadings));
+  return(.set.mSet(mSetObj));
+  
+}
+
+# Draws the PCA loading plot from its plot data alone (pd: loadings, ldName1, ldName2, plotType, custom.cmpds).
+# Returns the axis limits of the plot (par("usr")).
+DrawPCALoading <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  loadings <- pd$loadings; ldName1 <- pd$ldName1; ldName2 <- pd$ldName2; plotType <- pd$plotType;
 
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -823,15 +864,12 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   }
   h <- w;
 
-  mSetObj$imgSet$pca.loading <- imgName;
-  plotType <- mSetObj$analSet$pca$loading.type;
-
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   par(mar=c(6,5,2,6));
   plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
 
-  mSetObj$pca.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
   
@@ -846,8 +884,8 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     }
     text(loadings[lbl.inx,1],loadings[lbl.inx,2], labels=substr(rownames(loadings)[lbl.inx], 1, 16), pos=4, col="blue", xpd=T);
   }else if(plotType == "custom"){
-    if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- rownames(loadings) %in% mSetObj$custom.cmpds;
+    if(length(pd$custom.cmpds) > 0){
+      hit.inx <- rownames(loadings) %in% pd$custom.cmpds;
       text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
     }
   }else{
@@ -855,8 +893,7 @@ PlotPCALoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   }
   
   dev.off();
-  return(.set.mSet(mSetObj));
-  
+  return(axis.lims);
 }
 
 #'Create PCA Biplot, set xpd = T to plot outside margin
@@ -886,20 +923,11 @@ PlotPCABiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   lam <- mSetObj$analSet$pca$sdev[choices]
   n <- NROW(scores)
   lam <- lam * sqrt(n);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- width;
-  }
-  h <- w;
   
     mSetObj$imgSet$pca.biplot<-imgName;
 
-    library(ggplot2)
-    library(ggrepel)
     library(dplyr)
     #library(factoextra) 
     #pca <- prcomp(mSetObj$dataSet$norm, scale=F);
@@ -925,11 +953,6 @@ ind_data <- data.frame(
   Group = cls
 )
 
-  # Method-standard: persist the figure's underlying data table (sample scores +
-  # group) for Refine + cross-tool regeneration. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(WfSaveFigureData("pca_biplot", ind_data), error = function(e) NULL)
-
 loadings <- pca$rotation
 var_data <- data.frame(
   PC1 = loadings[, choices[1]] * lam[1],
@@ -943,15 +966,40 @@ scaling_factor <- max(abs(ind_data$PC1), abs(ind_data$PC2)) / max(abs(var_data$P
 var_data$PC1 <- var_data$PC1 * scaling_factor
 var_data$PC2 <- var_data$PC2 * scaling_factor
 
-group_names <- levels(ind_data$Group)  
-group_palette <- setNames(ggsci::pal_npg("nrc")(length(group_names)), group_names)
-
- cols <- GetColorSchema(cls); 
   xlabel = paste("PC",inx1, "(", round(100*mSetObj$analSet$pca$variance[inx1],1), "%)");
  ylabel = paste("PC",inx2, "(", round(100*mSetObj$analSet$pca$variance[inx2],1), "%)");
+
+  # The plot data is what DrawPCABiplot reads: the sample scores, the labelled feature arrows, the confidence-region
+  # settings and the session's group colours as they are now.
+  pd <- list(ind_data = ind_data, var_data = var_data, cls = cls, xlabel = xlabel, ylabel = ylabel,
+             sp = .get.scatter.params(), col.vec = get0("colVec"));
+  DrawPCABiplot(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPCABiplot", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(pca_biplot = ind_data));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PCA biplot from its plot data alone (pd: ind_data, var_data, cls, xlabel, ylabel, sp, col.vec).
+DrawPCABiplot <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+
+  library(ggplot2)
+  library(ggrepel)
+  ind_data <- pd$ind_data; var_data <- pd$var_data; xlabel <- pd$xlabel; ylabel <- pd$ylabel;
+
+ cols <- GetColorSchema(pd$cls, FALSE, pd$col.vec); 
 p <- ggplot() +
   geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-  stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group"), aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
+  stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group", pd$sp), aes(x = PC1, y = PC2, fill = Group, color = Group), type = pd$sp$type, level = pd$sp$level, geom = "polygon", alpha = 0.2) +
   geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
   geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
@@ -978,7 +1026,7 @@ p <- ggplot() +
   print(p );
   dev.off();
 
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'PLS analysis using oscorespls (Orthogonal scores algorithm)
@@ -1103,16 +1151,8 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     pls.cex <<- pls.cex - 0.1;
   }
 
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- width;
-  }
-  h <- w-1; # margin big
-  
   
   cls1 <- mSetObj$dataSet$cls
   cls.type <- mSetObj$dataSet$cls.type
@@ -1123,10 +1163,42 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   lv2 <- mSetObj$analSet$plsr$scores[,inx2];
   xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$plsr$Xvar[inx1]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
   ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+
+  # The plot data is what DrawPLS2DScore reads: the scores, the groups, the confidence-region settings and the
+  # session's group colours / shapes as they are now.
+  pd <- list(lv1 = lv1, lv2 = lv2, xlabel = xlabel, ylabel = ylabel, text.lbls = text.lbls,
+             cls1 = cls1, cls.type = cls.type, sp = sp, pls.cex = pls.cex,
+             col.vec = get0("colVec"), shape.vec = get0("shapeVec"));
+  DrawPLS2DScore(pd, img.base, format, dpi, width, show, grey.scale);
+  .ov_plot_data(imgName, pd, "DrawPLS2DScore",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, show = show, grey.scale = grey.scale));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the 2D PLS-DA score plot from its plot data alone
+# (pd: lv1, lv2, xlabel, ylabel, text.lbls, cls1, cls.type, sp, pls.cex, col.vec, shape.vec).
+DrawPLS2DScore <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, show=1, grey.scale=0){
+  lv1 <- pd$lv1; lv2 <- pd$lv2;
+  xlabel <- pd$xlabel; ylabel <- pd$ylabel;
+  text.lbls <- pd$text.lbls;
+  cls1 <- pd$cls1; cls.type <- pd$cls.type;
+  sp <- pd$sp;
+  pls.cex <- pd$pls.cex;
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w-1; # margin big
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,8));
-  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
   
@@ -1152,7 +1224,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
  
-  col.def <- GetColorSchema(cls, grey.scale==1);
+  col.def <- GetColorSchema(cls, grey.scale==1, pd$col.vec);
   cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
@@ -1170,7 +1242,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     }
   }
   
-  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale, pd$shape.vec, pd$col.vec);
   pchs <- ExpandSchema(cls, pchs.def);
 
   if(grey.scale) {
@@ -1183,7 +1255,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*pls.cex);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+      if(grey.scale == 1 | (!is.null(pd$shape.vec) && all(pd$shape.vec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
         points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*pls.cex);
@@ -1209,9 +1281,7 @@ PlotPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   
   par(op);
   dev.off();
-
-
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot PLS 3D score plot
@@ -1528,6 +1598,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
 
   mSetObj <- .get.mSet(mSetObj);
   plsr <- mSetObj$analSet$plsr
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pls.biplot <- imgName;
     
@@ -1536,17 +1607,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   lam <- apply(scores[,choices], 2, sd)
   n <- NROW(scores)
   lam <- lam * sqrt(n);
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- width;
-  }
-  h <- w;
    
-  library(ggplot2)
-  library(ggrepel)
   library(dplyr)
   # factoextra not needed here — removed dead import
  
@@ -1583,21 +1644,47 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   
   var_data$PC1 <- var_data$PC1 * scaling_factor
   var_data$PC2 <- var_data$PC2 * scaling_factor
- 
-  cols <- GetColorSchema(cls); 
+
+  xlabel <- paste("Component", inx1, " (", round(100*plsr$Xvar[inx1]/plsr$Xtotvar,1), "%)", sep = "")
+  ylabel <- paste("Component", inx2, " (", round(100*plsr$Xvar[inx2]/plsr$Xtotvar,1), "%)", sep = "")
+
+  # The plot data is what DrawPLSBiplot reads: the sample scores, the labelled feature arrows, the confidence-region
+  # settings and the session's group colours as they are now.
+  pd <- list(ind_data = ind_data, var_data = var_data, cls = cls, xlabel = xlabel, ylabel = ylabel,
+             sp = .get.scatter.params(), col.vec = get0("colVec"));
+  DrawPLSBiplot(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLSBiplot", list(imgName = img.base, format = format, dpi = dpi, width = width));
+   return(.set.mSet(mSetObj));
+}
+
+# Draws the PLS-DA biplot from its plot data alone (pd: ind_data, var_data, cls, xlabel, ylabel, sp, col.vec).
+DrawPLSBiplot <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w;
+
+  library(ggplot2)
+  library(ggrepel)
+  ind_data <- pd$ind_data; var_data <- pd$var_data;
+
+  cols <- GetColorSchema(pd$cls, FALSE, pd$col.vec); 
   
   p <- ggplot() +
     geom_point(data = ind_data, aes(x = PC1, y = PC2, color = Group), size =3.5, alpha = 0.7) +
-    stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group"), aes(x = PC1, y = PC2, fill = Group, color = Group), type = .get.scatter.params()$type, level = .get.scatter.params()$level, geom = "polygon", alpha = 0.2) +
+    stat_ellipse(data = .ellipse.layer.data(ind_data, "PC1", "PC2", "Group", pd$sp), aes(x = PC1, y = PC2, fill = Group, color = Group), type = pd$sp$type, level = pd$sp$level, geom = "polygon", alpha = 0.2) +
     geom_segment(data = var_data, aes(x = 0, y = 0, xend = PC1, yend = PC2),
                color = "black", arrow = arrow(length = unit(0.2, "cm")), linewidth = 0.5, show.legend = FALSE) +
     geom_text_repel(data = var_data, aes(x = PC1, y = PC2, label = Variable),
                     size = 4, color = "#3B3B3B", max.overlaps = Inf, segment.color = "#636363") +
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey") +
     geom_vline(xintercept = 0, linetype = "dashed", color = "grey") +
-    labs(title = "Biplot",
-         x = paste("Component", inx1, " (", round(100*plsr$Xvar[inx1]/plsr$Xtotvar,1), "%)", sep = ""),
-         y = paste("Component", inx2, " (", round(100*plsr$Xvar[inx2]/plsr$Xtotvar,1), "%)", sep = "")) +
+    labs(title = "Biplot", x = pd$xlabel, y = pd$ylabel) +
     theme_minimal() +
     scale_color_manual(values = cols) +
     scale_fill_manual(values = cols) +
@@ -1616,7 +1703,7 @@ PlotPLSBiplot <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   print(p );
   dev.off();
-   return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 ########################################
@@ -1777,6 +1864,31 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
   
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$pls.imp<-imgName;
+
+  if(type=="vip"){
+    mSetObj$analSet$plsda$imp.type <- "vip";
+    vips <- mSetObj$analSet$plsr$vip.mat[,feat.nm];
+    imp <- .ImpVarData(mSetObj, vips, "VIP scores", feat.num, color.BW);
+  }else{
+    mSetObj$analSet$plsda$imp.type <- "coef";
+    data<-mSetObj$analSet$plsda$coef.mat[,feat.nm];
+    imp <- .ImpVarData(mSetObj, data, "Coefficients", feat.num, color.BW);
+  }
+
+  # The plot data is what DrawPLS.Imp reads: the top features, their per-group means and the number of groups.
+  pd <- list(imp = imp, cls.len = length(levels(mSetObj$dataSet$cls)));
+  DrawPLS.Imp(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLS.Imp", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PLS-DA important-features plot from its plot data alone (pd: imp (see .ImpVarData), cls.len).
+DrawPLS.Imp <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
 
   if(is.na(width)){
@@ -1788,10 +1900,8 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
   }
   h <- w-1; # margin is big
   
-  mSetObj$imgSet$pls.imp<-imgName;
-
   # re-adjust width based on group size
-  cls.len <- length(levels(mSetObj$dataSet$cls));
+  cls.len <- pd$cls.len;
   rt.mrg <- cls.len + 3;
   w <- w + rt.mrg/72; # convert to inch
 
@@ -1799,19 +1909,10 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
   
   op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
 
-  if(type=="vip"){
-    mSetObj$analSet$plsda$imp.type <- "vip";
-    vips <- mSetObj$analSet$plsr$vip.mat[,feat.nm];
-    PlotImpVar(mSetObj, vips, "VIP scores", feat.num, color.BW);
-  }else{
-    mSetObj$analSet$plsda$imp.type <- "coef";
-    data<-mSetObj$analSet$plsda$coef.mat[,feat.nm];
-    PlotImpVar(mSetObj, data, "Coefficients", feat.num, color.BW);
-  }
+  DrawImpVar(pd$imp);
   par(op);
   dev.off();
-  
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot PLS important variables,
@@ -1827,6 +1928,11 @@ PlotPLS.Imp <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
 #'@export
 #'
 PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
+  DrawImpVar(.ImpVarData(mSetObj, imp.vec, xlbl, feat.num, color.BW));
+}
+
+# What the important-variable plot reads: the top features, their per-group means and the group labels.
+.ImpVarData <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   
   mSetObj <- .get.mSet(mSetObj);
   
@@ -1858,6 +1964,21 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
   vip.nms <- substr(names(imp.vec), 1, 14);
   names(imp.vec) <- NULL;
   
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+  
+  list(imp.vec = imp.vec, vip.nms = vip.nms, mns = mns, cls.lbl = levels(cls),
+       feat.num = feat.num, xlbl = xlbl, color.BW = color.BW);
+}
+
+# Draws the important-variable plot (dot chart plus per-group heat key) on the open device from the data of .ImpVarData.
+DrawImpVar <- function(pd){
+  imp.vec <- pd$imp.vec; vip.nms <- pd$vip.nms; mns <- pd$mns;
+  feat.num <- pd$feat.num; xlbl <- pd$xlbl; color.BW <- pd$color.BW;
+  
   # modified for B/W color
   dotcolor <- ifelse(color.BW, "darkgrey", "#585855");
   dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.3);
@@ -1887,13 +2008,7 @@ PlotImpVar <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE){
     bg[m,] <- (col[nc:1])[rank(mns[m,])];
   }
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
-  }else{
-    cls <- mSetObj$dataSet$cls;
-  }
-  
-  cls.lbl <- levels(cls);
+  cls.lbl <- pd$cls.lbl;
   
   for (n in 1:ncol(mns)){
     points(x,y, bty="n", pch=22, bg=bg[,n], cex=3);
@@ -2116,6 +2231,39 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     opls.cex <<- opls.cex - 0.1;
   }
 
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$opls.score2d <- imgName;
+  
+  lv1 <- mSetObj$analSet$oplsda$scoreMN[,1];
+  lv2 <- mSetObj$analSet$oplsda$orthoScoreMN[,1];
+  xlabel <- paste("T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["p1", "R2X"],1), "%)");
+  ylabel <- paste("Orthogonal T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["o1", "R2X"],1), "%)");
+  
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+
+  # The plot data is what DrawOPLS2DScore reads: the scores, the groups, the confidence-region settings and the
+  # session's group colours / shapes as they are now.
+  pd <- list(lv1 = lv1, lv2 = lv2, xlabel = xlabel, ylabel = ylabel, text.lbls = text.lbls,
+             cls = cls, sp = sp, opls.cex = opls.cex,
+             col.vec = get0("colVec"), shape.vec = get0("shapeVec"));
+  DrawOPLS2DScore(pd, img.base, format, dpi, width, show, grey.scale);
+  .ov_plot_data(imgName, pd, "DrawOPLS2DScore",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, show = show, grey.scale = grey.scale));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the 2D OPLS-DA score plot from its plot data alone
+# (pd: lv1, lv2, xlabel, ylabel, text.lbls, cls, sp, opls.cex, col.vec, shape.vec).
+DrawOPLS2DScore<-function(pd, imgName, format="png", dpi=default.dpi, width=NA, show=1, grey.scale=0){
+  lv1 <- pd$lv1; lv2 <- pd$lv2;
+  xlabel <- pd$xlabel; ylabel <- pd$ylabel;
+  text.lbls <- pd$text.lbls;
+  cls <- pd$cls;
+  sp <- pd$sp;
+  opls.cex <- pd$opls.cex;
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -2127,18 +2275,9 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   }
   h <- w;
   
-  mSetObj$imgSet$opls.score2d <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
 
   par(mar=c(5,5,3,8));
-  
-  lv1 <- mSetObj$analSet$oplsda$scoreMN[,1];
-  lv2 <- mSetObj$analSet$oplsda$orthoScoreMN[,1];
-  xlabel <- paste("T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["p1", "R2X"],1), "%)");
-  ylabel <- paste("Orthogonal T score [1]", "(", round(100*mSetObj$analSet$oplsda$modelDF["o1", "R2X"],1), "%)");
-  
-  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
   lvs <- levels(cls);
@@ -2157,7 +2296,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   xlims<-c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims<-c(yrg[1]-y.ext, yrg[2]+y.ext);
 
-  col.def <- GetColorSchema(cls, grey.scale==1);
+  col.def <- GetColorSchema(cls, grey.scale==1, pd$col.vec);
   cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
@@ -2175,7 +2314,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     }
   }
   
-  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale, pd$shape.vec, pd$col.vec);
   pchs <- ExpandSchema(cls, pchs.def);
 
   if(grey.scale) {
@@ -2188,7 +2327,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*opls.cex);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+      if(grey.scale == 1 | (!is.null(pd$shape.vec) && all(pd$shape.vec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
         points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*opls.cex);
@@ -2213,7 +2352,7 @@ PlotOPLS2DScore<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   par(op);  
 
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Update OPLS loadings
@@ -2333,25 +2472,11 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png",
   
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7.2;
-  }else{
-    w <- width;
-  }
-  h <- w-1;
   
   mSetObj$imgSet$opls.vip <- imgName;
   
-  cls.len <- length(levels(mSetObj$dataSet$cls));
-  rt.mrg <- cls.len + 3;
-  w <- w + rt.mrg/72; # convert to inch
-
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
-  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
-
   if(type=="vip"){
     impNm <- "VIP scores";
     mSetObj$analSet$oplsda$imp.type <- "vip";
@@ -2374,10 +2499,12 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png",
   ord.inx <- rev(order(data));
   vip.mat <- vip.mat[ord.inx,];
   mSetObj$analSet$oplsda$vip.mat <- vip.mat;
-  PlotImpVar(mSetObj, data, impNm, feat.num, color.BW);
 
-  par(op);
-  dev.off();
+  # The plot data is what DrawOPLS.Imp reads: the top features, their per-group means and the number of groups.
+  pd <- list(imp = .ImpVarData(mSetObj, data, impNm, feat.num, color.BW),
+             cls.len = length(levels(mSetObj$dataSet$cls)));
+  DrawOPLS.Imp(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawOPLS.Imp", list(imgName = img.base, format = format, dpi = dpi, width = width));
   
   fast.write.csv(vip.mat, file="oplsda_vip.csv");
 
@@ -2385,6 +2512,32 @@ PlotOPLS.Imp <- function(mSetObj=NA, imgName, format="png",
   ExportResultMatArrow(vip.mat, "opls_vip");
 
   return(.set.mSet(mSetObj));
+}
+
+# Draws the OPLS-DA important-features plot from its plot data alone (pd: imp (see .ImpVarData), cls.len).
+DrawOPLS.Imp <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7.2;
+  }else{
+    w <- width;
+  }
+  h <- w-1;
+  
+  cls.len <- pd$cls.len;
+  rt.mrg <- cls.len + 3;
+  w <- w + rt.mrg/72; # convert to inch
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");  
+  op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
+
+  DrawImpVar(pd$imp);
+
+  par(op);
+  dev.off();
+  return(invisible(NULL));
 }
 
 #'Plot OPLS
@@ -2708,6 +2861,45 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
     spls.cex <<- spls.cex - 0.1;
   }
 
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$spls.score2d <- imgName;
+  
+  lv1 <- mSetObj$analSet$splsr$variates$X[,inx1];
+  lv2 <- mSetObj$analSet$splsr$variates$X[,inx2];
+  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx1],1), "%)");
+  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
+  
+  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
+  
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+
+  # The plot data is what DrawSPLS2DScore reads: the scores, the groups, the confidence-region settings and the
+  # session's group colours / shapes as they are now.
+  pd <- list(lv1 = lv1, lv2 = lv2, xlabel = xlabel, ylabel = ylabel, text.lbls = text.lbls,
+             cls = cls, sp = sp, spls.cex = spls.cex,
+             col.vec = get0("colVec"), shape.vec = get0("shapeVec"));
+  DrawSPLS2DScore(pd, img.base, format, dpi, width, show, grey.scale);
+  .ov_plot_data(imgName, pd, "DrawSPLS2DScore",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, show = show, grey.scale = grey.scale));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the 2D sPLS-DA score plot from its plot data alone
+# (pd: lv1, lv2, xlabel, ylabel, text.lbls, cls, sp, spls.cex, col.vec, shape.vec).
+DrawSPLS2DScore <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, show=1, grey.scale=0){
+  lv1 <- pd$lv1; lv2 <- pd$lv2;
+  xlabel <- pd$xlabel; ylabel <- pd$ylabel;
+  text.lbls <- pd$text.lbls;
+  cls <- pd$cls;
+  sp <- pd$sp;
+  spls.cex <- pd$spls.cex;
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -2718,24 +2910,10 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   }
   h <- w-1; # big margin
   
-  mSetObj$imgSet$spls.score2d <- imgName;
-  
-  lv1 <- mSetObj$analSet$splsr$variates$X[,inx1];
-  lv2 <- mSetObj$analSet$splsr$variates$X[,inx2];
-  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx1],1), "%)");
-  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$splsr$explained_variance$X[inx2],1), "%)");
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,8));
-  text.lbls <- substr(rownames(mSetObj$dataSet$norm),1,12) # some names may be too long
   
   # obtain ellipse points to the scatter plot for each category
-  
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
-  }else{
-    cls <- mSetObj$dataSet$cls;
-  }
   
   lvs <- levels(cls);
   pts.array <- array(0, dim=c(100,2,length(lvs)));
@@ -2753,7 +2931,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   xlims <- c(xrg[1]-x.ext, xrg[2]+x.ext);
   ylims <- c(yrg[1]-y.ext, yrg[2]+y.ext);
   
-  col.def <- GetColorSchema(cls, grey.scale==1);
+  col.def <- GetColorSchema(cls, grey.scale==1, pd$col.vec);
   cols <- ExpandSchema(cls, col.def);
   
   plot(lv1, lv2, xlab=xlabel, xlim=xlims, ylim=ylims, ylab=ylabel, type='n', main="Scores Plot", asp=if(sp$use.asp) 1 else NA);
@@ -2771,7 +2949,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
     }
   }
   
-  pchs.def <- GetShapeSchema(cls, show, grey.scale);
+  pchs.def <- GetShapeSchema(cls, show, grey.scale, pd$shape.vec, pd$col.vec);
   pchs <- ExpandSchema(cls, pchs.def);
 
   if(grey.scale) {
@@ -2784,7 +2962,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
     if (length(col.def) == 1) {
       points(lv1, lv2, pch=pchs, col=cols, cex=1.0*spls.cex);
     } else {
-      if(grey.scale == 1 | (exists("shapeVec") && all(shapeVec>=0))){
+      if(grey.scale == 1 | (!is.null(pd$shape.vec) && all(pd$shape.vec>=0))){
         my.cols <- adjustcolor(cols, alpha.f = 0.4);
         my.cols[pchs == 21] <- "black";
         points(lv1, lv2, pch=pchs, col=my.cols, bg=adjustcolor(cols, alpha.f = 0.4), cex=1.8*spls.cex);
@@ -2808,7 +2986,7 @@ PlotSPLS2DScore <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   par(op);
 
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'3D SPLS-DA score plot

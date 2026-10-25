@@ -78,6 +78,30 @@ GetRandomNumbers <- function(){
 PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$rf.cls <- imgName;
+
+  if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
+  }else{
+    cls <- mSetObj$dataSet$cls;
+  }
+
+  # The plot data is what DrawRF.Classify reads: the forest's error curves, not the forest.
+  rf <- mSetObj$analSet$rf;
+  pd <- list(rf = list(type = rf$type, err.rate = rf$err.rate, ntree = rf$ntree, test = rf$test),
+             n.cls = length(levels(mSetObj$dataSet$cls)), cls.lbl = levels(cls));
+  DrawRF.Classify(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawRF.Classify", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(rf_cls = as.data.frame(rf$err.rate)));
+  return(.set.mSet(mSetObj));
+  
+}
+
+# Draws the Random Forest error-rate plot from its plot data alone (pd: rf (type, err.rate, ntree, test), n.cls, cls.lbl).
+DrawRF.Classify <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -89,34 +113,21 @@ PlotRF.Classify <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   }
   h <- w*5/8;
   
-  mSetObj$imgSet$rf.cls <- imgName;
-
-  # Method-standard: persist the figure's underlying data table (OOB error rate
-  # per tree) for Refine + cross-tool regeneration. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(
-    WfSaveFigureData("rf_cls", as.data.frame(mSetObj$analSet$rf$err.rate)),
-    error = function(e) NULL)
+  requireNamespace("randomForest", quietly = TRUE);   # plot() of a forest is randomForest's method
+  rf <- structure(pd$rf, class = "randomForest");
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   #par(mfrow=c(2,1));
   par(mar=c(4,4,3,2));
-  cols <- rainbow(length(levels(mSetObj$dataSet$cls))+1);
-  plot(mSetObj$analSet$rf, main="Random Forest classification", col=cols);
+  cols <- rainbow(pd$n.cls+1);
+  plot(rf, main="Random Forest classification", col=cols);
   
-  if(mSetObj$dataSet$type.cls.lbl=="integer"){
-    cls <- as.factor(as.numeric(levels(mSetObj$dataSet$cls))[mSetObj$dataSet$cls]);
-  }else{
-    cls <- mSetObj$dataSet$cls;
-  }
-  
-  legend("topright", legend = c("Overall", levels(cls)), lty=2, lwd=1, col=cols);
+  legend("topright", legend = c("Overall", pd$cls.lbl), lty=2, lwd=1, col=cols);
   
   #PlotConfusion(analSet$rf$confusion);
   
   dev.off();
-  return(.set.mSet(mSetObj));
-  
+  return(invisible(NULL));
 }
 
 #'Plot Random Forest variable importance
@@ -140,13 +151,22 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   
   vip.score <- rev(sort(mSetObj$analSet$rf$importance[,"MeanDecreaseAccuracy"]));
 
-  # Method-standard: persist the figure's underlying data table (importance per
-  # feature) for Refine + cross-tool regeneration. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(
-    WfSaveFigureData("rf_imp", data.frame(Feature = names(vip.score), MeanDecreaseAccuracy = as.numeric(vip.score))),
-    error = function(e) NULL)
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$rf.imp <- imgName;
+  
+  # The plot data is what DrawRF.VIP reads: the top features, their per-group means and the number of groups.
+  pd <- list(imp = .ImpVarData(mSetObj, vip.score, "MeanDecreaseAccuracy"),
+             cls.len = length(levels(mSetObj$dataSet$cls)));
+  DrawRF.VIP(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawRF.VIP", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(rf_imp = data.frame(Feature = names(vip.score), MeanDecreaseAccuracy = as.numeric(vip.score))));
+  
+  return(.set.mSet(mSetObj));
+}
 
+# Draws the Random Forest variable-importance plot from its plot data alone (pd: imp (see .ImpVarData), cls.len).
+DrawRF.VIP <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -157,20 +177,19 @@ PlotRF.VIP <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
     w <- width;
   }
   h <- w-1;
-  mSetObj$imgSet$rf.imp <- imgName;
   
   # re-adjust width based on group size
-  cls.len <- length(levels(mSetObj$dataSet$cls));
+  cls.len <- pd$cls.len;
   rt.mrg <- cls.len + 3;
   w <- w + rt.mrg/72; # convert to inch
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
-  PlotImpVar(mSetObj, vip.score, "MeanDecreaseAccuracy");
+  DrawImpVar(pd$imp);
   par(op);
   dev.off();
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot Random Forest outliers
@@ -199,16 +218,25 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   }
 
   col.def <- GetColorSchema(cls);
-  cols <- ExpandSchema(cls, col.def);
   
   dist.res <- randomForest::outlier(mSetObj$analSet$rf);
 
-  # Method-standard: persist the figure's underlying data table (outlying measure
-  # per sample) for Refine + cross-tool regeneration. Helper lives in wf_method.R
-  # guard so the public package still runs standalone.
-  if (exists("WfSaveFigureData")) tryCatch(
-    WfSaveFigureData("rf_outlier", data.frame(Sample = names(dist.res), Group = cls, OutlyingMeasure = as.numeric(dist.res))),
-    error = function(e) NULL)
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$rf.outlier <- imgName;
+  
+  # The plot data is what DrawRF.Outlier reads: the outlying measure per sample, the groups and their colours.
+  pd <- list(dist.res = dist.res, cls = cls, col.def = col.def);
+  DrawRF.Outlier(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawRF.Outlier", list(imgName = img.base, format = format, dpi = dpi, width = width),
+                export = list(rf_outlier = data.frame(Sample = names(dist.res), Group = cls, OutlyingMeasure = as.numeric(dist.res))));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the Random Forest outlier plot from its plot data alone (pd: dist.res, cls, col.def).
+DrawRF.Outlier <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  dist.res <- pd$dist.res; cls <- pd$cls; col.def <- pd$col.def;
+  cols <- ExpandSchema(cls, col.def);
 
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
@@ -219,8 +247,6 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     w <- width;
   }
   h <- w*7/9;
-  
-  mSetObj$imgSet$rf.outlier <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   layout(matrix(c(1,2), 1, 2, byrow = TRUE), width=c(4,1));
@@ -242,7 +268,7 @@ PlotRF.Outlier <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   legend("center", legend =names(col.def), pch=15, col=col.def);
   
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Recursive Support Vector Machine (R-SVM)
