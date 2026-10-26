@@ -334,6 +334,29 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$anova2 <- imgName;
+  
+  # The plot data is what DrawANOVA2 reads: for a repeated-measures design the -log10(p) of every feature, which are
+  # significant and the threshold; for a two-factor design the Venn counts of the three effects.
+  if(mSetObj$dataSet$design.type == "time0"){
+    pd <- list(design.type = "time0", lod = mSetObj$analSet$aov2$p.log, inx.imp = mSetObj$analSet$aov2$inx.imp,
+               thresh = mSetObj$analSet$aov2$thresh);
+  }else{
+    pd <- list(design.type = "two-way", vennC = mSetObj$analSet$aov2$vennC);
+  }
+  DrawANOVA2(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawANOVA2", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+  
+}
+
+# Draws the repeated-measures / two-way ANOVA summary from its plot data alone (pd: design.type and, by design,
+# lod, inx.imp, thresh or vennC).
+DrawANOVA2 <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -343,31 +366,28 @@ PlotANOVA2 <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
     w <- width;
   }
   
-  mSetObj$imgSet$anova2 <- imgName;
-  
-  if(mSetObj$dataSet$design.type == "time0"){
+  if(pd$design.type == "time0"){
     w <- 9;
     h <- w*6/9;
-    lod <- mSetObj$analSet$aov2$p.log;
+    lod <- pd$lod;
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
     plot(lod, ylab="-log10(p)", xlab = "Index", main="One-way repeated measures ANOVA", type="n");
-    red.inx<- which(mSetObj$analSet$aov2$inx.imp);
-    blue.inx <- which(!mSetObj$analSet$aov2$inx.imp);
+    red.inx<- which(pd$inx.imp);
+    blue.inx <- which(!pd$inx.imp);
     points(red.inx, lod[red.inx], bg="red", cex=1.2, pch=21);
     points(blue.inx, lod[blue.inx], bg="green", pch=21);
-    abline (h=mSetObj$analSet$aov2$thresh, lty=3);
+    abline (h=pd$thresh, lty=3);
     dev.off();
   }else{
     h <- w;
     title <- "Two-way ANOVA"; # note within/between subject is left to user 
     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-    plotVennDiagram(mSetObj$analSet$aov2$vennC, circle.col=c("red", "blue", "green"), mar=c(0,0,2,0));
+    plotVennDiagram(pd$vennC, circle.col=c("red", "blue", "green"), mar=c(0,0,2,0));
     mtext(title, NORTH<-3, line=0.25, cex=1.5);
     dev.off();
   }
   
-  return(.set.mSet(mSetObj));
-  
+  return(invisible(NULL));
 }
 
 #'Perform PCA analysis, prepare file for interactive liveGraphics3D

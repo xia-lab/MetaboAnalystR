@@ -150,6 +150,20 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
     }
   }
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$corr <- imgName;
+
+  # The plot data is what DrawPatternCorr reads: the correlation table of the features (at most the 25 most significant) and the title.
+  pd <- list(cor.res = cor.res, title = title);
+  DrawPatternCorr(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPatternCorr", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the correlation bar plot of the features correlated with a pattern from its plot data alone (pd: cor.res, title).
+DrawPatternCorr <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  cor.res <- pd$cor.res; title <- pd$title;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- h <- 8;
@@ -158,7 +172,6 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
   }else{
     w <- h <- width;
   }
-  mSetObj$imgSet$corr <- imgName;
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,6,4,3))
   rownames(cor.res)<-substr(rownames(cor.res), 1, 18);
@@ -168,7 +181,7 @@ PlotCorr <- function(mSetObj=NA, imgName, searchType="feature", format="png", dp
   rownames(cor.res) <- NULL;
   barplot(cor.res[,1], space=c(0.5, rep(0, nrow(cor.res)-1)), xlim=c(-1,1), xaxt="n", col = cols, add=T,horiz=T);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Pattern hunter, corr heatmap

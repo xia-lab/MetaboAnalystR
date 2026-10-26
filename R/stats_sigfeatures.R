@@ -101,6 +101,22 @@ SAM.Anal <- function(mSetObj=NA, method="d.stat", paired=FALSE, varequal=TRUE, d
 PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$sam.fdr <- imgName;
+  
+  # The plot data is what DrawSAM.FDR reads: the delta table (FDR and number of features called by delta) and the chosen delta.
+  pd <- list(mat.fdr = mSetObj$analSet$sam@mat.fdr, delta = mSetObj$analSet$sam.delta);
+  DrawSAM.FDR(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawSAM.FDR", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the SAM delta / FDR plots from their plot data alone (pd: mat.fdr, delta).
+DrawSAM.FDR <- function(pd, imgName, format="png", dpi, width=NA){
+  mat.fdr <- pd$mat.fdr; delta <- pd$delta;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -109,11 +125,8 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   }
   h <- w*3/5;
   
-  mSetObj$imgSet$sam.fdr <- imgName;
-  delta <- mSetObj$analSet$sam.delta;
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow=c(1,2), mar=c(5,6,4,1));
-  mat.fdr <- mSetObj$analSet$sam@mat.fdr;
   plot(mat.fdr[,"Delta"],mat.fdr[,"FDR"],xlab='Delta',ylab=NA,type="b", col='blue', las=2);
   abline(v = delta, lty=3, col="magenta");
   mtext("FDR", side=2, line=5);
@@ -127,7 +140,7 @@ PlotSAM.FDR <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   mtext(paste("Delta:", delta, " FDR:", my.fdr, " Sig. cmpds:", my.sigs), line=-2, side = 3, outer = TRUE, font=2)
   dev.off();
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot SAM 

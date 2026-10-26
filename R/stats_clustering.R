@@ -32,12 +32,30 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   # build the tree
   hc_tree <- hclust(dist.mat, method=clstDist);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  mSetObj$imgSet$tree <- imgName;
+
+  # The plot data is what DrawHCTree reads: the tree, the sample names, the groups and the session's group colours as they are now.
+  pd <- list(hc_tree = hc_tree, smpl.nms = rownames(hc.dat), cls = mSetObj$dataSet$cls,
+             cls.type = mSetObj$dataSet$cls.type, type.cls.lbl = mSetObj$dataSet$type.cls.lbl,
+             clstDist = clstDist, col.vec = get0("colVec"));
+  DrawHCTree(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawHCTree", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the sample dendrogram from its plot data alone (pd: hc_tree, smpl.nms, cls, cls.type, type.cls.lbl, clstDist, col.vec).
+DrawHCTree <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  hc_tree <- pd$hc_tree; cls <- pd$cls; clstDist <- pd$clstDist;
+  
   # plot the tree
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
     minH <- 630;
-    myH <- nrow(hc.dat)*10 + 150;
+    myH <- length(pd$smpl.nms)*10 + 150;
     if(myH < minH){
       myH <- minH;
     }   
@@ -48,18 +66,15 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
     w <- h <- 7.2;
   }
   
-  mSetObj$imgSet$tree <- imgName;
-  cls <- mSetObj$dataSet$cls;
-
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(cex=0.8, mar=c(4,2,2,8));
-  if(mSetObj$dataSet$cls.type == "disc"){
+  if(pd$cls.type == "disc"){
     clusDendro <- as.dendrogram(hc_tree);
 
-    col.def <- GetColorSchema(cls);
+    col.def <- GetColorSchema(cls, FALSE, pd$col.vec);
     cols <- ExpandSchema(cls, col.def);
 
-    names(cols) <- rownames(hc.dat);
+    names(cols) <- pd$smpl.nms;
     labelColors <- cols[hc_tree$order];
     colLab <- function(n){
       if(is.leaf(n)) {
@@ -75,10 +90,10 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
     plot(clusDendro,horiz=T,axes=T);
     par(cex=1);
     
-    if(mSetObj$dataSet$type.cls.lbl=="integer"){
+    if(pd$type.cls.lbl=="integer"){
       legend.nm <- as.character(sort(as.factor(as.numeric(levels(cls))[cls])));
     }else{
-      legend.nm <- as.character(mSetObj$dataSet$cls);
+      legend.nm <- as.character(cls);
     }
     
     legend("topleft", legend = unique(legend.nm), pch=15, col=unique(cols), bty = "n");
@@ -88,7 +103,7 @@ PlotHCTree <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   }
   dev.off();
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'SOM analysis
@@ -148,6 +163,36 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA
   ylabel<-GetAbundanceLabel(mSetObj$dataSet$type);
   clust<-mSetObj$analSet$som$visual;
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$som <- imgName;
+  
+  ### NEW PLOTS
+  group <- paste(clust[,1], clust[,2], sep = "_")
+  clust.num <- length(unique(group))
+  
+  df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = group, clust[,-3], mSetObj$dataSet$norm, check.names = F)
+  long <- data.table::melt(setDT(df), id.vars = c("Samples", "Cluster", "x", "y"), variable.name = "Feature")
+  long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
+  long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
+  long.dt <- setDF(long.dt)
+  
+  # The plot data is what DrawSOM reads: the long table of every feature's value per sample and cluster
+  # (with each cluster's min, max and median), the SOM's x dimension and the number of clusters.
+  pd <- list(long.dt = long.dt, xdim = xdim, clust.num = clust.num);
+  DrawSOM(pd, img.base, format, dpi, width, colpal, facet);
+  .ov_plot_data(imgName, pd, "DrawSOM", list(imgName = img.base, format = format, dpi = dpi, width = width, colpal = colpal, facet = facet));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the SOM cluster profiles from their plot data alone (pd: long.dt, xdim, clust.num).
+DrawSOM <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, colpal = "default", facet=TRUE){
+  library(ggplot2)
+  long.dt <- pd$long.dt; xdim <- pd$xdim; clust.num <- pd$clust.num;
+  
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -166,19 +211,6 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA
   }else if(xdim > 1){
     w <- w + 3
   }
-  
-  mSetObj$imgSet$som <- imgName;
-  
-  ### NEW PLOTS
-  group <- paste(clust[,1], clust[,2], sep = "_")
-  clust.num <- length(unique(group))
-  
-  df <- data.frame(Samples = as.factor(rownames(mSetObj$dataSet$norm)), Cluster = group, clust[,-3], mSetObj$dataSet$norm, check.names = F)
-  long <- data.table::melt(setDT(df), id.vars = c("Samples", "Cluster", "x", "y"), variable.name = "Feature")
-  long.dt <- setDT(long)[, ymax:= max(value), by=list(Feature, Cluster)]
-  long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
-  long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
-  long.dt <- setDF(long.dt)
   
   p <- ggplot(long.dt, aes(x = Feature, y = median, group = Cluster, color = Cluster)) + 
     geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=Cluster), linetype=0, alpha = 0.25) + 
@@ -238,7 +270,7 @@ PlotSOM <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA
   
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'K-means analysis
@@ -288,15 +320,8 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   if(clust.num>20) return();
   # calculate arrangement of panel
   ylabel<- GetAbundanceLabel(mSetObj$dataSet$type);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 8;
-  }else{
-    w <- width;
-  }
-  h <- w*8/9;
   
   mSetObj$imgSet$kmeans <- imgName;
   
@@ -306,6 +331,30 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
   long.dt <- setDT(long.dt)[, ymin:= min(value), by=list(Feature, Cluster)]
   long.dt <- setDT(long.dt)[, median:= median(value), by=list(Feature, Cluster)]
   long.dt <- setDF(long.dt)
+  
+  # The plot data is what DrawKmeans reads: the long table of every feature's value per sample and cluster
+  # (with each cluster's min, max and median) and the number of clusters.
+  pd <- list(long.dt = long.dt, clust.num = clust.num);
+  DrawKmeans(pd, img.base, format, dpi, width, colpal, facet);
+  .ov_plot_data(imgName, pd, "DrawKmeans", list(imgName = img.base, format = format, dpi = dpi, width = width, colpal = colpal, facet = facet));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the K-means cluster profiles from their plot data alone (pd: long.dt, clust.num).
+DrawKmeans <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, colpal="default", facet=FALSE){
+  library(ggplot2)
+  long.dt <- pd$long.dt; clust.num <- pd$clust.num;
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 8;
+  }else{
+    w <- width;
+  }
+  h <- w*8/9;
   
   p <- ggplot(long.dt, aes(x = Feature, y = median, group = Cluster, color = Cluster)) + 
     geom_ribbon(aes(ymin=ymin, ymax=ymax, fill=Cluster), linetype=0, alpha = 0.25) + 
@@ -360,7 +409,7 @@ PlotKmeans <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width
 
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot K-means summary PCA plot
@@ -397,6 +446,7 @@ PlotClustPCA <- function(mSetObj,
 
   mSetObj <- .get.mSet(mSetObj);
 
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(anal == "km"){
@@ -411,15 +461,6 @@ PlotClustPCA <- function(mSetObj,
   }
   
   if(clust.num>20) return();
-  
-  if(is.na(width)){
-    w <- 9;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w*8/9;
   
   data <- mSetObj$dataSet$norm
   
@@ -444,6 +485,30 @@ PlotClustPCA <- function(mSetObj,
   
   xlabel = paste("PC",1, "(", round(100*var.pca[1],1), "%)");
   ylabel = paste("PC",2, "(", round(100*var.pca[2],1), "%)");
+
+  # The plot data is what DrawClustPCA reads: the PCA scores with each sample's cluster and class, the axis labels,
+  # the sample labels and the number of clusters.
+  pd <- list(df_out = df_out, xlabel = xlabel, ylabel = ylabel, text.lbls = text.lbls, clust.num = clust.num);
+  DrawClustPCA(pd, img.base, format, dpi, width, colpal, labels);
+  .ov_plot_data(imgName, pd, "DrawClustPCA", list(imgName = img.base, format = format, dpi = dpi, width = width, colpal = colpal, labels = labels));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the cluster PCA plot from its plot data alone (pd: df_out, xlabel, ylabel, text.lbls, clust.num).
+DrawClustPCA <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, colpal="default", labels = "T"){
+  library(ggplot2)
+  df_out <- pd$df_out; xlabel <- pd$xlabel; ylabel <- pd$ylabel; text.lbls <- pd$text.lbls; clust.num <- pd$clust.num;
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(is.na(width)){
+    w <- 9;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w*8/9;
   
   p <- ggplot(df_out, aes(x=PC1, y=PC2, color=Class))
   p <- p + geom_point(size = 5) + xlab(xlabel) + ylab(ylabel) + theme_bw() 
@@ -463,7 +528,7 @@ PlotClustPCA <- function(mSetObj,
   }
   
   ggsave(p, filename = imgName, dpi=dpi, width=w, height=h, limitsize = FALSE)
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Create Sub Heat Map Plot

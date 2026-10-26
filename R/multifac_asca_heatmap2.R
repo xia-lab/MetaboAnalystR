@@ -1253,6 +1253,23 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
   
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$asca.scree <- imgName;
+  
+  asca <- ov_qs_read("asca.qs");
+  models <- asca$models;
+  
+  # The plot data is what DrawASCAModelScree reads: the variation explained by each component of every model (a, b, ab and the residual).
+  pd <- list(var.exp = lapply(models, function(m) m$var.exp[,1]));
+  DrawASCAModelScree(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawASCAModelScree", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ASCA scree plots of each model from their plot data alone (pd: var.exp, a list of the explained variability by component per model).
+DrawASCAModelScree <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -1264,16 +1281,13 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
   }
   h <- w;
   
-  mSetObj$imgSet$asca.scree <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, type=format, width=w, height=h,  bg="white");
-  asca <- ov_qs_read("asca.qs");
-  models <- asca$models;
+  models <- pd$var.exp;
   # note four plots, model a, b, ab and res
   par(mfrow=c(2,2),oma=c(0,0,3,0), cex=1.0)
   
   for ( i in 1: length (models)) {
-    pc.var <- models[[i]]$var.exp[,1];
+    pc.var <- models[[i]];
     if(length(pc.var) > 8){
       pc.var <- pc.var[1:8];
     }
@@ -1286,7 +1300,7 @@ PlotASCAModelScree <- function(mSetObj=NA, imgName, format="png", dpi=default.dp
   }
   title("Scree plots of each model", outer=TRUE)
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot score plots of each ASCA model for component 1 against time
@@ -1318,6 +1332,26 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
     lbls <- as.character(levels(mSetObj$dataSet$facB));
     fac.lbl <- mSetObj$dataSet$facB.lbl;
   }
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(type == "a"){
+    mSetObj$imgSet$asca.modelA <- imgName;
+  }else{
+    mSetObj$imgSet$asca.modelB <- imgName;
+  }
+  
+  # The plot data is what DrawASCAModel reads: the model's scores and explained variation, its factor labels and levels.
+  pd <- list(scores = md$scores, var.exp = md$var.exp, facNum = md$facNum, lbls = lbls, fac.lbl = fac.lbl);
+  DrawASCAModel(pd, img.base, format, dpi, width, colorBW);
+  .ov_plot_data(imgName, pd, "DrawASCAModel", list(imgName = img.base, format = format, dpi = dpi, width = width, colorBW = colorBW));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ASCA model score plots (component 1 to 3 against the factor levels) from their plot data alone
+# (pd: scores, var.exp, facNum, lbls, fac.lbl).
+DrawASCAModel <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, colorBW=FALSE){
+  md <- list(scores = pd$scores, var.exp = pd$var.exp, facNum = pd$facNum); lbls <- pd$lbls; fac.lbl <- pd$fac.lbl;
   pcNum <- md$facNum;
   
   # plot at most top 3 PCs
@@ -1334,12 +1368,6 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
     w <- width;
   }
   h <- w*h.adj;
-  
-  if(type == "a"){
-    mSetObj$imgSet$asca.modelA <- imgName;
-  }else{
-    mSetObj$imgSet$asca.modelB <- imgName;
-  }
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow = c(1, pcNum), cex=1.0);
@@ -1363,7 +1391,7 @@ PlotASCAModel<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, widt
   }
   
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot ASCA interaction plots 
@@ -1389,6 +1417,23 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.d
   md <- asca$models$Model.ab;
   ab.lbls <- as.character(levels(mSetObj$dataSet$facA));
   ba.lbls <- as.character(levels(mSetObj$dataSet$facB));
+  
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$asca.modelAB <- imgName;
+  
+  # The plot data is what DrawASCAInteraction reads: the interaction model's scores and explained variation, and the level labels of both factors.
+  pd <- list(scores = md$scores, var.exp = md$var.exp, facNum = md$facNum, ab.lbls = ab.lbls, ba.lbls = ba.lbls,
+             nB = length(levels(mSetObj$dataSet$facB)));
+  DrawASCAInteraction(pd, img.base, format, dpi, colorBW, width);
+  .ov_plot_data(imgName, pd, "DrawASCAInteraction", list(imgName = img.base, format = format, dpi = dpi, colorBW = colorBW, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ASCA interaction plots from their plot data alone (pd: scores, var.exp, facNum, ab.lbls, ba.lbls, nB).
+DrawASCAInteraction <- function(pd, imgName, format="png", dpi=default.dpi, colorBW=FALSE, width=NA){
+  md <- list(scores = pd$scores, var.exp = pd$var.exp, facNum = pd$facNum); ab.lbls <- pd$ab.lbls; ba.lbls <- pd$ba.lbls;
   pcNum <- md$facNum;
   if(pcNum > 3){
     pcNum <- 3;
@@ -1403,8 +1448,6 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.d
     w <- width;
   }
   h <- 8;
-  
-  mSetObj$imgSet$asca.modelAB <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   lmat<-matrix(1:(4*pcNum), nrow=4, byrow=F);
@@ -1428,7 +1471,7 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.d
     scores <- md$scores[,j];
     
     #b y & a x
-    md.scores <- matrix(scores, nrow=length(levels(mSetObj$dataSet$facB)), byrow=T);
+    md.scores <- matrix(scores, nrow=pd$nB, byrow=T);
     
     
     # note, matplot plot each col, need to transpose
@@ -1473,7 +1516,7 @@ PlotASCAInteraction <- function(mSetObj=NA, imgName, format="png", dpi=default.d
   }
   dev.off();
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot the important variables for each factor
@@ -1516,6 +1559,26 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
     lbl <- "Interaction";
   }
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  if(type == "a"){
+    mSetObj$imgSet$asca.impA<-imgName;
+  }else if(type == "b"){
+    mSetObj$imgSet$asca.impB<-imgName;
+  }else{
+    mSetObj$imgSet$asca.impAB<-imgName;
+  }
+  
+  # The plot data is what DrawAscaImpVar reads: each feature's leverage and SPE, the two cut-offs and the factor's label.
+  pd <- list(lvg = lvg, spe = spe, lv.cutoff = lv.cutoff, spe.cutoff = spe.cutoff, lbl = lbl);
+  DrawAscaImpVar(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawAscaImpVar", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ASCA important-variables (leverage against SPE) plot from its plot data alone (pd: lvg, spe, lv.cutoff, spe.cutoff, lbl).
+DrawAscaImpVar <- function(pd, imgName, format, dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 7;
@@ -1526,18 +1589,10 @@ PlotAscaImpVar <- function(mSetObj=NA, imgName, format, dpi, width=NA, type){
   }
   h <- w*6/7;
   
-  if(type == "a"){
-    mSetObj$imgSet$asca.impA<-imgName;
-  }else if(type == "b"){
-    mSetObj$imgSet$asca.impB<-imgName;
-  }else{
-    mSetObj$imgSet$asca.impAB<-imgName;
-  }
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  PlotSigVar(lvg, spe, lv.cutoff, spe.cutoff,lbl);
+  PlotSigVar(pd$lvg, pd$spe, pd$lv.cutoff, pd$spe.cutoff, pd$lbl);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Supporting function for plotting important variables for each factor
@@ -1946,6 +2001,7 @@ PlotMetaHeatmap <- function(mSetObj=NA, clustSelOpt="both", smplDist="pearson", 
 #'@export
 
 PlotStaticMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm",includeRowNames=T, imgName, format="png", dpi=96, width=NA){
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj <- .get.mSet(mSetObj);
 
@@ -1958,6 +2014,20 @@ PlotStaticMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="b
 
   met <- sapply(metaData, function(x) as.integer(x))
   rownames(met) <- smp.nms;
+
+  # The plot data is what DrawStaticMetaHeatmap reads: the metadata as integer codes (what is clustered) and as given (what is written in the cells).
+  pd <- list(met = met, metaData = metaData);
+  DrawStaticMetaHeatmap(pd, img.base, format, dpi, width, viewOpt, clustSelOpt, smplDist, clstDist, colorGradient, includeRowNames);
+  .ov_plot_data(imgName, pd, "DrawStaticMetaHeatmap",
+                list(imgName = img.base, format = format, dpi = dpi, width = width, viewOpt = viewOpt, clustSelOpt = clustSelOpt,
+                     smplDist = smplDist, clstDist = clstDist, colorGradient = colorGradient, includeRowNames = includeRowNames));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the static metadata heatmap from its plot data alone (pd: met, metaData).
+DrawStaticMetaHeatmap <- function(pd, imgName, format="png", dpi=96, width=NA, viewOpt="detailed", clustSelOpt="both", smplDist="pearson", clstDist="average", colorGradient="bwm", includeRowNames=T){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  met <- pd$met; metaData <- pd$metaData;
 
   plot_dims <- get_pheatmap_dims(met, NA, viewOpt, width);
   h <- plot_dims$height;
@@ -2042,7 +2112,7 @@ PlotStaticMetaHeatmap <- function(mSetObj=NA, viewOpt="detailed", clustSelOpt="b
                        color = colors,
                        display_numbers=displayText);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Generate correlation heatmap for metadata

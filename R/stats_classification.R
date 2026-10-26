@@ -328,6 +328,22 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defau
   mSetObj <- .get.mSet(mSetObj);
   
   res <- mSetObj$analSet$svm$Error;
+  
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$svm.class <- imgName;
+  
+  # The plot data is what DrawRSVM.Classification reads: the error rate by number of variables and the best level.
+  pd <- list(res = res, best.inx = mSetObj$analSet$svm$best.inx);
+  DrawRSVM.Classification(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawRSVM.Classification", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the recursive SVM error-rate plot from its plot data alone (pd: res, best.inx).
+DrawRSVM.Classification <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  res <- pd$res;
   edge <- (max(res)-min(res))/100; # expand y uplimit for text
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -340,19 +356,17 @@ PlotRSVM.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defau
   }
   h <- w*6/8;
   
-  mSetObj$imgSet$svm.class <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(res,type='l',xlab='Number of variables (levels)',ylab='Error Rate',
        ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
        main="Recursive SVM classification")
   text(res,labels =paste(100*round(res,3),'%'), adj=c(-0.3, -0.5), srt=45, xpd=T)
   
-  points(res, col=ifelse(1:length(res)==mSetObj$analSet$svm$best.inx,"red","blue"));
+  points(res, col=ifelse(1:length(res)==pd$best.inx,"red","blue"));
   axis(2);
   axis(1, 1:length(res), names(res));
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Recursive Support Vector Machine (R-SVM) plot of important variables
@@ -377,6 +391,20 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
   
   sigs <- mSetObj$analSet$svm$sig.mat;
   data <- sigs[,1];
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$svm <- imgName;
+
+  # The plot data is what DrawRSVM.Cmpd reads: the top features, their per-group means and the number of groups.
+  pd <- list(imp = .ImpVarData(mSetObj, data, "Frequency"), cls.len = length(levels(mSetObj$dataSet$cls)));
+  DrawRSVM.Cmpd(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawRSVM.Cmpd", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the recursive SVM important-variables plot from its plot data alone (pd: imp (see .ImpVarData), cls.len).
+DrawRSVM.Cmpd <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -386,20 +414,18 @@ PlotRSVM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     w <- width;
   }
   h <- w-1;
-  
-  mSetObj$imgSet$svm <- imgName;
 
   # re-adjust width based on group size
-  cls.len <- length(levels(mSetObj$dataSet$cls));
+  cls.len <- pd$cls.len;
   rt.mrg <- cls.len + 3;
   w <- w + rt.mrg/72; # convert to inch
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
-  PlotImpVar(mSetObj, data, "Frequency");
+  DrawImpVar(pd$imp);
   par(op);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'R-code for R-SVM
