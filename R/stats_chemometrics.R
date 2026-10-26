@@ -396,9 +396,10 @@ PCA.Flip <- function(mSetObj=NA, axisOpt){
 PlotPCAPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   mSetObj <- .get.mSet(mSetObj);
   pclabels <- paste("PC", 1:pc.num, "\n", round(100*mSetObj$analSet$pca$variance[1:pc.num],1), "%");
+  img.base <- imgName;
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pca.pair <- imgName;
-  Plot.PairScatter(mSetObj$analSet$pca$x[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
+  .PairScatterPlot(mSetObj$analSet$pca$x[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, img.base, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -1109,11 +1110,12 @@ PLSR.Anal <- function(mSetObj=NA, reg=FALSE){
 PlotPLSPairSummary <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$pls.pair <- imgName;
   vars <- round(100*mSetObj$analSet$plsr$Xvar[1:pc.num]/mSetObj$analSet$plsr$Xtotvar,1);
   pclabels <- paste("Component", 1:pc.num, "\n", vars, "%"); 
-  Plot.PairScatter(mSetObj$analSet$plsr$scores[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
+  .PairScatterPlot(mSetObj$analSet$plsr$scores[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, img.base, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -1448,6 +1450,25 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   # Arrow export for zero-copy Java access (PLS loadings)
   ExportResultMatArrow(loadings, "pls_load");
 
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$pls.loading <- imgName;
+
+  # The plot data is what DrawPLSLoading reads: the loadings of the two components and which features to label.
+  pd <- list(loadings = loadings, ldName1 = ldName1, ldName2 = ldName2,
+             plotType = mSetObj$analSet$plsr$loading.type, hit.inx = colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds,
+             custom.n = length(mSetObj$custom.cmpds));
+  mSetObj$pls.axis.lims <- DrawPLSLoading(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLSLoading", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PLS loading plot from its plot data alone (pd: loadings, ldName1, ldName2, plotType, hit.inx, custom.n).
+# Returns the axis limits of the plot (par("usr")).
+DrawPLSLoading <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  loadings <- pd$loadings; ldName1 <- pd$ldName1; ldName2 <- pd$ldName2; plotType <- pd$plotType;
+
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -1458,15 +1479,12 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   }
   h <- w;
   
-  mSetObj$imgSet$pls.loading <- imgName;
-  plotType <- mSetObj$analSet$plsr$loading.type;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   par(mar=c(6,4,4,5));
   plot(loadings[,1],loadings[,2], las=2, xlab=ldName1, ylab=ldName2);
   
-  mSetObj$pls.axis.lims <- par("usr"); # x1, x2, y1 ,y2
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
   grid(col = "lightgray", lty = "dotted", lwd = 1);
   points(loadings[,1],loadings[,2], pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
   
@@ -1481,8 +1499,8 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
     }
     text(loadings[lbl.inx,1],loadings[lbl.inx,2], labels=substr(rownames(loadings)[lbl.inx], 1, 16), pos=4, col="blue", xpd=T);
   }else if(plotType == "custom"){
-    if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
+    if(pd$custom.n > 0){
+      hit.inx <- pd$hit.inx;
       text(loadings[hit.inx,1],loadings[hit.inx,2], labels=rownames(loadings)[hit.inx], pos=4, col="blue", xpd=T);
     }
   }else{
@@ -1490,7 +1508,7 @@ PlotPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, w
   }
   
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(axis.lims);
 }
 
 #' PLS-DA classification and feature selection
@@ -2060,6 +2078,21 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defaul
   colnames(res) <- 1:ncol(res);
   best.num <- mSetObj$analSet$plsda$best.num;
   choice <- mSetObj$analSet$plsda$choice;
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$pls.class <- imgName;
+  
+  # The plot data is what DrawPLS.Classification reads: R2, Q2 and accuracy by number of components, the best number and the criterion.
+  pd <- list(res = res, best.num = best.num, choice = choice);
+  DrawPLS.Classification(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLS.Classification", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PLS-DA classification performance plot from its plot data alone (pd: res, best.num, choice).
+DrawPLS.Classification <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  res <- pd$res; best.num <- pd$best.num; choice <- pd$choice;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -2070,8 +2103,6 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defaul
     w <- width;
   }
   h <- w*5/7;
-  
-  mSetObj$imgSet$pls.class <- imgName;
   
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,2,7)); # put legend on the right outside
@@ -2089,7 +2120,7 @@ PlotPLS.Classification <- function(mSetObj=NA, imgName, format="png", dpi=defaul
   xpos <- ncol(res)*3 + ncol(res) + 1;
   legend(xpos, 1.0, rownames(res), fill = c("lightblue", "mistyrose","lightcyan"), xpd=T);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 
@@ -2114,6 +2145,21 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
   bw.vec <- mSetObj$analSet$plsda$permut;
   len <- length(bw.vec);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$pls.permut <- imgName;
+  
+  # The plot data is what DrawPLS.Permutation reads: the permutation statistics (the first is the observed one) and its p-value.
+  pd <- list(bw.vec = bw.vec, permut.p = mSetObj$analSet$plsda$permut.p);
+  DrawPLS.Permutation(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLS.Permutation", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the PLS-DA permutation histogram from its plot data alone (pd: bw.vec, permut.p).
+DrawPLS.Permutation <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  bw.vec <- pd$bw.vec;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -2124,8 +2170,6 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
   }
   h <- w*6/8;
   
-  mSetObj$imgSet$pls.permut <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,2,4));
   hst <- hist(bw.vec, breaks = "FD", freq=T,
@@ -2134,9 +2178,9 @@ PlotPLS.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.d
   # add the indicator using original label
   h <- max(hst$counts)
   arrows(bw.vec[1], h/5, bw.vec[1], 0, col="red", lwd=2);
-  text(bw.vec[1], h/3.5, paste('Observed \n statistic \n', mSetObj$analSet$plsda$permut.p), xpd=T);
+  text(bw.vec[1], h/3.5, paste('Observed \n statistic \n', pd$permut.p), xpd=T);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Perform OPLS-DA
@@ -2407,34 +2451,18 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
     pcorr1 <- matrix(c(pcorr1, corr1), ncol=1)
   }
   
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w <- h <- 8;
-  }else if(width == 0){
-    w <- h <- 8;
-  }else{
-    w <- h <- width;
-  }
   
   mSetObj$imgSet$opls.loading<-imgName;
   mSetObj$analSet$oplsda$splot.type <- plotType;
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mar=c(5,5,4,7))
-  plot(p1, pcorr1, type="n", xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance");
-  grid(col="lightgrey", lty=3, lwd = 1);
-  points(p1, pcorr1, pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
-  opls.axis.lims <- par("usr");
-  if(plotType=="all"){
-    text(p1, pcorr1, labels=colnames(s), cex=0.8, pos=4, xpd=TRUE, col="blue");
-  }else if(plotType == "custom"){
-    if(length(mSetObj$custom.cmpds) > 0){
-      hit.inx <- colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds;
-      text(p1[hit.inx], pcorr1[hit.inx], labels=colnames(s)[hit.inx], pos=4, xpd=TRUE, col="blue");
-    }
-  }else{
-    # do nothing
-  }
-  dev.off();
+
+  # The plot data is what DrawOPLS.Splot reads: each feature's covariance and correlation with the predictive score,
+  # and which features to label.
+  pd <- list(p1 = p1, pcorr1 = pcorr1, feat.nms = colnames(s), plotType = plotType,
+             hit.inx = colnames(mSetObj$dataSet$norm) %in% mSetObj$custom.cmpds, custom.n = length(mSetObj$custom.cmpds));
+  opls.axis.lims <- DrawOPLS.Splot(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawOPLS.Splot", list(imgName = img.base, format = format, dpi = dpi, width = width));
   splot.mat <- cbind(jitter(p1),p1, pcorr1);
   rownames(splot.mat) <- colnames(s); 
   colnames(splot.mat) <- c("jitter", "p[1]","p(corr)[1]");
@@ -2450,6 +2478,39 @@ PlotOPLS.Splot <- function(mSetObj=NA, imgName, plotType="all", format="png", dp
   ExportResultMatArrow(splot.mat[,c(1,3)], "opls_splot");
 
   return(.set.mSet(mSetObj));
+}
+
+# Draws the OPLS-DA S-plot from its plot data alone (pd: p1, pcorr1, feat.nms, plotType, hit.inx, custom.n).
+# Returns the axis limits of the plot (par("usr")).
+DrawOPLS.Splot <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  p1 <- pd$p1; pcorr1 <- pd$pcorr1; plotType <- pd$plotType;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w <- h <- 8;
+  }else if(width == 0){
+    w <- h <- 8;
+  }else{
+    w <- h <- width;
+  }
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mar=c(5,5,4,7))
+  plot(p1, pcorr1, type="n", xlab="p[1]", ylab ="p(corr)[1]", main = "Feature Importance");
+  grid(col="lightgrey", lty=3, lwd = 1);
+  points(p1, pcorr1, pch=19, col=adjustcolor("magenta", alpha.f = 0.4));
+  opls.axis.lims <- par("usr");
+  if(plotType=="all"){
+    text(p1, pcorr1, labels=pd$feat.nms, cex=0.8, pos=4, xpd=TRUE, col="blue");
+  }else if(plotType == "custom"){
+    if(pd$custom.n > 0){
+      hit.inx <- pd$hit.inx;
+      text(p1[hit.inx], pcorr1[hit.inx], labels=pd$feat.nms[hit.inx], pos=4, xpd=TRUE, col="blue");
+    }
+  }else{
+    # do nothing
+  }
+  dev.off();
+  return(opls.axis.lims);
 }
 
 # 
@@ -2556,6 +2617,29 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   
   mSetObj <- .get.mSet(mSetObj);
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$opls.class <- imgName;
+  
+  # the model R2Y and Q2Y
+  modBarDF <- mSetObj$analSet$oplsda$modelDF[!(rownames(mSetObj$analSet$oplsda$modelDF) %in% c("rot")), ];
+  mod.dat <- data.matrix(modBarDF[!rownames(modBarDF)%in% ("sum"), c("R2X", "R2Y", "Q2")]);
+  mod.dat <- t(mod.dat);
+
+  # The plot data is what DrawOPLS.MDL reads: R2X, R2Y and Q2 of the model, by component.
+  pd <- list(mod.dat = mod.dat);
+  DrawOPLS.MDL(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawOPLS.MDL", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  fast.write.csv(mod.dat, file="oplsda_model.csv");
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the OPLS-DA model (R2X, R2Y, Q2) bar plot from its plot data alone (pd: mod.dat).
+DrawOPLS.MDL <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  mod.dat <- pd$mod.dat;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -2567,14 +2651,8 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   }
   h <- w*6/9;
   
-  mSetObj$imgSet$opls.class <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  # the model R2Y and Q2Y
   par(mar=c(5,5,4,8)); # put legend on the right outside
-  modBarDF <- mSetObj$analSet$oplsda$modelDF[!(rownames(mSetObj$analSet$oplsda$modelDF) %in% c("rot")), ];
-  mod.dat <- data.matrix(modBarDF[!rownames(modBarDF)%in% ("sum"), c("R2X", "R2Y", "Q2")]);
-  mod.dat <- t(mod.dat);
   bplt <- barplot(mod.dat,beside=TRUE, names.arg = colnames(mod.dat),xlab = "");
   axis(2, lwd.ticks=1);
   barplot(mod.dat,add = TRUE, beside = TRUE, col = c("lightblue", "mistyrose", "lavender"));
@@ -2583,10 +2661,7 @@ PlotOPLS.MDL <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wid
   ypos <- max(mod.dat)/2;
   legend(xpos, ypos, legend = c("R2X", "R2Y", "Q2"), pch=15, col=c("lightblue", "mistyrose", "lavender"), xpd=T, bty="n");
   dev.off();
-  
-  fast.write.csv(mod.dat, file="oplsda_model.csv");
-  
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Perform OPLS-DA permutation
@@ -2683,6 +2758,30 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dp
     pq <- paste("p = ", signif(p, digits=5), " (", better.qhits, "/", perm.num, ")", sep="");
   }
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  # The plot data is what DrawOPLS.Permutation reads: the permuted R2Y and Q2 (the first of each is the observed one)
+  # and the two p-value texts.
+  pd <- list(r.vec = r.vec, q.vec = q.vec, pr = pr, pq = pq);
+  DrawOPLS.Permutation(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawOPLS.Permutation", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  mSetObj$imgSet$opls.permut <- imgName;
+  
+  msg <- paste("Empirical p-values Q2: ", pq, " and R2Y: ", pr);
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(msg);
+  }else{
+    print(msg);
+    return(.set.mSet(mSetObj));
+  }
+}
+
+# Draws the OPLS-DA permutation histogram from its plot data alone (pd: r.vec, q.vec, pr, pq).
+DrawOPLS.Permutation <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  r.vec <- pd$r.vec; q.vec <- pd$q.vec; pr <- pd$pr; pq <- pd$pq;
   rng <- range(c(r.vec, q.vec, 1));
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -2716,17 +2815,7 @@ PlotOPLS.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dp
   legend(1, h/3, legend = c("Perm R2Y", "Perm Q2"), pch=15, col=c("lightblue", "mistyrose"), xpd=T, bty="n");
   
   dev.off();
-  
-  mSetObj$imgSet$opls.permut <- imgName;
-  
-  msg <- paste("Empirical p-values Q2: ", pq, " and R2Y: ", pr);
-  if(.on.public.web){
-    .set.mSet(mSetObj)
-    return(msg);
-  }else{
-    print(msg);
-    return(.set.mSet(mSetObj));
-  }
+  return(invisible(NULL));
 }
 
 #'Perform SPLS-DA
@@ -2816,6 +2905,7 @@ SPLSR.Anal <- function(mSetObj=NA, comp.num, var.num, compVarOpt, validOpt="Mfol
 PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, pc.num){
   
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$spls.pair <- imgName;
 
@@ -2824,7 +2914,7 @@ PlotSPLSPairSummary<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   }
   vars <- round(100*mSetObj$analSet$splsr$explained_variance$X,1);
   pclabels <- paste("Component", 1:pc.num, "\n", vars, "%");
-  Plot.PairScatter(mSetObj$analSet$splsr$variates$X[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, format, dpi, width);
+  .PairScatterPlot(mSetObj$analSet$splsr$variates$X[,1:pc.num], pclabels, mSetObj$dataSet$cls, mSetObj$dataSet$cls.type, imgName, img.base, format, dpi, width);
   return(.set.mSet(mSetObj));
 }
 
@@ -3141,6 +3231,22 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   
   imp.vec <- abs(mSetObj$analSet$splsr$loadings$X[,inx]);
   imp.vec <- imp.vec[imp.vec > 0];
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$spls.imp <- imgName;
+  
+  # The plot data is what DrawSPLSLoading reads: the top features, their per-group means and the number of groups.
+  pd <- list(imp = .ImpVarData(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE),
+             cls.len = length(levels(mSetObj$dataSet$cls)));
+  DrawSPLSLoading(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawSPLSLoading", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the SPLS-DA loading (importance) plot from its plot data alone (pd: imp (see .ImpVarData), cls.len).
+DrawSPLSLoading <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 8;
@@ -3152,21 +3258,19 @@ PlotSPLSLoading <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
   }
   h <- w-1;
   
-  mSetObj$imgSet$spls.imp <- imgName;
-  
-  cls.len <- length(levels(mSetObj$dataSet$cls));
+  cls.len <- pd$cls.len;
   rt.mrg <- cls.len + 3;
   w <- w + rt.mrg/72; # convert to inch
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   op <- par(mar=c(5,7,3,rt.mrg)); # update right side margin with the number of class
-  PlotImpVar(mSetObj, imp.vec, paste ("Loadings", inx), 999, FALSE);
+  DrawImpVar(pd$imp);
 
   par(op);
   dev.off();
   
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Create SPLS-DA classification plot
@@ -3190,6 +3294,21 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=def
   
   res <- mSetObj$analSet$splsr$error.rate;
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  mSetObj$imgSet$splsda.class <- imgName;
+  
+  # The plot data is what DrawSPLSDA.Classification reads: the error rate by number of components.
+  pd <- list(res = res);
+  DrawSPLSDA.Classification(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawSPLSDA.Classification", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the SPLS-DA classification error plot from its plot data alone (pd: res).
+DrawSPLSDA.Classification <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  res <- pd$res;
   edge <- (max(res)-min(res))/100; # expand y uplimit for text
   
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
@@ -3202,8 +3321,6 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=def
   }
   h <- w*6/8;
   
-  mSetObj$imgSet$splsda.class <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   plot(res, type='l', xlab='Number of Components', ylab='Error Rate',
        ylim = c(min(res)-5*edge, max(res)+18*edge), axes=F,
@@ -3212,7 +3329,7 @@ PlotSPLSDA.Classification <- function(mSetObj=NA, imgName, format="png", dpi=def
   axis(2);
   axis(1, 1:length(res), names(res));
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 ##############################################
@@ -3510,10 +3627,21 @@ GetSPLSSigColNames <- function(mSetObj=NA, type){
   }
 }
 
-# internal called by all pair plots
-Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, width){
+# internal called by all pair plots: draws the scatter matrix and offers its plot data (the group colours and shapes as they are now)
+.PairScatterPlot <- function(mat, lbls, cls, cls.type, imgName, img.base, format, dpi, width){
+  pd <- list(mat = mat, lbls = lbls, cls = cls, cls.type = cls.type, sp = .get.scatter.params(),
+             col.vec = get0("colVec"), shape.vec = get0("shapeVec"));
+  DrawPairScatter(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPairScatter", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  invisible(NULL)
+}
 
-  sp <- .get.scatter.params()
+# Draws the scatter-plot matrix of the first components from its plot data alone (pd: mat, lbls, cls, cls.type, sp, col.vec, shape.vec).
+DrawPairScatter <- function(pd, imgName, format, dpi, width){
+  mat <- pd$mat; lbls <- pd$lbls; cls <- pd$cls; cls.type <- pd$cls.type;
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  sp <- pd$sp
 
   if(is.na(width)){
     w <- 11;
@@ -3524,7 +3652,7 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
   }
   h <- w;
 
-  col.def <- GetColorSchema(cls);
+  col.def <- GetColorSchema(cls, FALSE, pd$col.vec);
   my.col <- ExpandSchema(cls, col.def);
   legend.nm <- names(col.def);
 
@@ -3541,7 +3669,7 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
      omaVal = oma=c(15,3,3,3)
   }
 
-   pchs.def <- GetShapeSchema(cls, 1); # use different shapes here
+   pchs.def <- GetShapeSchema(cls, 1, 0, pd$shape.vec, pd$col.vec); # use different shapes here
    my.pch <- ExpandSchema(cls, pchs.def);
 
   # Panel function that respects asp=1 for uniform scaling
@@ -3579,6 +3707,7 @@ Plot.PairScatter <- function(mat, lbls, cls, cls.type, imgName, format, dpi, wid
     }
   }
   dev.off();
+  return(invisible(NULL));
 }
 
 ComputePERMANOVA <- function(pc1, pc2, cls, numPermutations = getOption("ov.permanova.nperm", 999L), cls.type = "disc", overall = NULL) {

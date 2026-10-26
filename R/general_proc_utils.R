@@ -1280,11 +1280,9 @@ PlotMissingDistr <- function(mSetObj = NA,
   if (grp.type == "cont") {
     grp.vec    <- as.numeric(grp.vec)
     grp.num    <- 0
-    fill_scale <- scale_fill_gradient(low = "#56B1F7", high = "#132B43")
   } else {
     grp.vec    <- factor(grp.vec)
     grp.num    <- length(levels(grp.vec))
-    fill_scale <- scale_fill_discrete()
   }
 
   ## -------- Data frame for plotting -----------------------------------
@@ -1309,6 +1307,35 @@ PlotMissingDistr <- function(mSetObj = NA,
   if (is.na(width) || !is.numeric(width) || width <= 0) {
     width <- 7                           # fallback default
   }
+
+  img.full <- paste0(imgName, "dpi", dpi, ".", format)
+
+  ## The plot data is what DrawMissingDistr reads: the missing percentage and the average abundance of every sample
+  ## with its group, how the group is typed, and the size of the figure.
+  pd <- list(df = df, df2 = df2, groupCol = groupCol, grp.type = grp.type, width = width, height = height);
+  DrawMissingDistr(pd, imgName, format, dpi);
+  .ov_plot_data(img.full, pd, "DrawMissingDistr", list(imgName = imgName, format = format, dpi = dpi));
+
+  ## -------- Book-keeping ----------------------------------------------
+  mSetObj$imgSet$miss.box <- img.full
+  mSetObj$msgSet$plot.msg <- c(
+    mSetObj$msgSet$plot.msg,
+    sprintf("Missing-value boxplot saved (%s, %.1f × %.1f in, %d dpi) – coloured by ‘%s’ (%s).",
+            format, width, height, dpi, groupCol, grp.type)
+  )
+
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the missing-value boxplots (percentage missing and average abundance by group) from their plot data alone
+# (pd: df, df2, groupCol, grp.type, width, height).
+DrawMissingDistr <- function(pd, imgName, format = "png", dpi = default.dpi) {
+  require("ggplot2")
+  require("Cairo");
+  library("patchwork");
+  df <- pd$df; df2 <- pd$df2; groupCol <- pd$groupCol; width <- pd$width; height <- pd$height;
+
+  fill_scale <- if (pd$grp.type == "cont") scale_fill_gradient(low = "#56B1F7", high = "#132B43") else scale_fill_discrete()
 
   img.full <- paste0(imgName, "dpi", dpi, ".", format)
 
@@ -1345,16 +1372,7 @@ PlotMissingDistr <- function(mSetObj = NA,
 
     print(final_combined_plot)
     dev.off()
-
-  ## -------- Book-keeping ----------------------------------------------
-  mSetObj$imgSet$miss.box <- img.full
-  mSetObj$msgSet$plot.msg <- c(
-    mSetObj$msgSet$plot.msg,
-    sprintf("Missing-value boxplot saved (%s, %.1f × %.1f in, %d dpi) – coloured by ‘%s’ (%s).",
-            format, width, height, dpi, groupCol, grp.type)
-  )
-
-  return(.set.mSet(mSetObj))
+  return(invisible(NULL))
 }
 
 
@@ -1427,21 +1445,11 @@ PlotMissingHeatmap <- function(mSetObj = NA,
 
   # Heatmap plot
   img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  Cairo::Cairo(file = img.full, width = 8, height = 7.2, unit = "in", dpi = dpi, type = format)
 
-  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
-    geom_tile(color = "grey90") +
-    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
-    theme_minimal(base_size = 13) +
-    theme(
-      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
-      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
-      legend.position = "top",
-      panel.grid = element_blank()
-    )
-
-  print(p)
-  dev.off()
+  # The plot data is what DrawMissingHeatmap reads: the long table of missing / present per sample and feature.
+  pd <- list(df = df, hide_feat_labels = hide_feat_labels);
+  DrawMissingHeatmap(pd, imgName, format, dpi);
+  .ov_plot_data(img.full, pd, "DrawMissingHeatmap", list(imgName = imgName, format = format, dpi = dpi));
 
   # Book-keeping
   mSetObj$imgSet$miss.heatmap <- img.full
@@ -1477,6 +1485,31 @@ PlotMissingHeatmap <- function(mSetObj = NA,
   write(json.out, file = paste0(imgName, ".json"));
 
   return(.set.mSet(mSetObj))
+}
+
+# Draws the missing-value heatmap from its plot data alone (pd: df (Sample, Feature, Missing), hide_feat_labels).
+DrawMissingHeatmap <- function(pd, imgName, format = "png", dpi = 150) {
+  require("ggplot2")
+  require("Cairo")
+  df <- pd$df; hide_feat_labels <- pd$hide_feat_labels;
+
+  img.full <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  Cairo::Cairo(file = img.full, width = 8, height = 7.2, unit = "in", dpi = dpi, type = format)
+
+  p <- ggplot(df, aes(x = Feature, y = Sample, fill = Missing)) +
+    geom_tile(color = "grey90") +
+    scale_fill_manual(values = c("Present" = "white", "Missing" = "red")) +
+    theme_minimal(base_size = 13) +
+    theme(
+      axis.text.x = if (hide_feat_labels) element_blank() else element_text(angle = 90, vjust = 0.5, hjust = 1),
+      axis.ticks.x = if (hide_feat_labels) element_blank() else element_line(),
+      legend.position = "top",
+      panel.grid = element_blank()
+    )
+
+  print(p)
+  dev.off()
+  return(invisible(NULL))
 }
 
 
