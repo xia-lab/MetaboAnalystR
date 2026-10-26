@@ -465,16 +465,9 @@ PlotPathSummary<-function(mSetObj=NA,
   # RecordRCommand()'s return value (which is 1 on the public web).
   mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotPathSummary(mSet, ', isTRUE(show.grid), ', "', imgName, '", "', format, '", ', dpi, ')'));
 
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
 
-  if(is.na(width)){
-    w <- 6;
-  }else if(width == 0){
-    w <- 6;
-  }else{
-    w <- width;
-  }
-  h <- w;
   mSetObj$imgSet$path.overview<-imgName;
 
   if(jointGlobal){
@@ -510,16 +503,43 @@ PlotPathSummary<-function(mSetObj=NA,
   data$pval <- orig.y;
   mSetObj$analSet$pathSummaryDf <- data;
 
+  # The plot data is what DrawPathSummary reads: each pathway's impact and -log10(p), the bubble radius and colour,
+  # the pathway names (for the clickable circles), the axis labels and the largest values the axes reach.
+  pd <- list(x = x, y = y, radi.vec = radi.vec, bg.vec = bg.vec, path.nms = path.nms,
+             xlabNM = xlabNM, ylabNM = ylabNM, max_x = max_x, max_y = max_y);
+  mSetObj$imgSet$circleInfo <- DrawPathSummary(pd, img.base, format, dpi, width, show.grid);
+  .ov_plot_data(imgName, pd, "DrawPathSummary", list(imgName = img.base, format = format, dpi = dpi, width = width, show.grid = isTRUE(show.grid)));
+
+  tbl <- CreatePathwayMemberTableRMD(mSetObj);
+  mSetObj$analSet$pathwayMemberTable <- tbl
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the pathway overview (impact against -log10(p) bubbles) from its plot data alone
+# (pd: x, y, radi.vec, bg.vec, path.nms, xlabNM, ylabNM, max_x, max_y). Returns the circle positions the page's mouse-over reads.
+DrawPathSummary <- function(pd, imgName, format="png", dpi=default.dpi, width=NA, show.grid=FALSE){
+  x <- pd$x; y <- pd$y; radi.vec <- pd$radi.vec; bg.vec <- pd$bg.vec; path.nms <- pd$path.nms;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  if(is.na(width)){
+    w <- 6;
+  }else if(width == 0){
+    w <- 6;
+  }else{
+    w <- width;
+  }
+  h <- w;
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   op <- par(mar=c(6,5,2,3));
   plot(x,
        y,
        type="n",
        axes=F,
-       xlab=xlabNM,
-       ylab=ylabNM,
-       xlim = c(min(x), max_x),
-       ylim = c(min(y), max_y)
+       xlab=pd$xlabNM,
+       ylab=pd$ylabNM,
+       xlim = c(min(x), pd$max_x),
+       ylim = c(min(y), pd$max_y)
   );
   axis(1);
   axis(2);
@@ -532,14 +552,11 @@ PlotPathSummary<-function(mSetObj=NA,
   # convert to pixel positions, only for web interaction dpi=default.dpi
   #if(dpi == 72){
     width.px <- height.px <- w*100;
-    mSetObj$imgSet$circleInfo <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, path.nms);
+    circle.info <- CalculateCircleInfo(x, y, radi.vec, width.px, height.px, path.nms);
   #}
   par(op);
   dev.off();
-
-  tbl <- CreatePathwayMemberTableRMD(mSetObj);
-  mSetObj$analSet$pathwayMemberTable <- tbl
-  return(.set.mSet(mSetObj));
+  return(circle.info);
 }
 
 #'Plot pathway summary for slide reports using ggplot2 style

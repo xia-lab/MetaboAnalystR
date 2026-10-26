@@ -2143,6 +2143,7 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
                                 interactive  = FALSE) {
 
   ## ── 1 · load objects & metadata ------------------------------------
+  img.base <- imgName
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
   dpi     <- as.numeric(dpi)
 
@@ -2225,6 +2226,32 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
   }
   height <- width * 0.75
 
+  ## ── 4/5 · colour scale and ggplot: built from the plot data (.MetaCorrHeatmapPlot) -----------------
+  # The plot data is what DrawMetaCorrHeatmap reads: the upper-triangle correlation table with its labels and the text size.
+  pd <- list(melted = melted, textSize = textSize);
+  pd$width <- width; pd$height <- height;
+
+  ## ── 6 · output: Plotly or static -----------------------------------
+  if (interactive) {
+    library(plotly)
+    p <- .MetaCorrHeatmapPlot(pd, colorGradient)
+    margin <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
+    return(layout(ggplotly(p), autosize = FALSE,
+                  width = 800, height = 600, margin = margin))
+  } else {
+    mSetObj$imgSet$meta.corhm <- imgName  # keep old slot name
+    .set.mSet(mSetObj)                    # persist path before plotting
+    DrawMetaCorrHeatmap(pd, img.base, format, dpi, colorGradient)
+    .ov_plot_data(imgName, pd, "DrawMetaCorrHeatmap", list(imgName = img.base, format = format, dpi = dpi, colorGradient = colorGradient))
+    if (.on.public.web) return(1) else return(.set.mSet(mSetObj))
+  }
+}
+
+# The metadata correlation heatmap (the static figure and the interactive view are one ggplot): pd = list(melted, textSize).
+.MetaCorrHeatmapPlot <- function(pd, colorGradient = "default") {
+  melted <- pd$melted; textSize <- pd$textSize
+  require(ggplot2);
+
   ## ── 4 · colour scales ----------------------------------------------
   colour_scale <- switch(tolower(colorGradient),
     gbr     = scale_fill_gradient2(low = "green", mid = "black", high = "red",
@@ -2245,7 +2272,6 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
                                    midpoint = 0, limits = c(-1, 1), name = "Correlation")
   )
 
-  ## ── 5 · build ggplot ------------------------------------------------
   load_ggplot()      # helper in your code base – loads ggplot2 & themes
   library(scales)
 
@@ -2264,21 +2290,19 @@ PlotMetaCorrHeatmap <- function(mSetObj      = NA,
          coord_fixed() +
          geom_text(aes(label = label), size = textSize, colour = "black")
 
-  ## ── 6 · output: Plotly or static -----------------------------------
-  if (interactive) {
-    library(plotly)
-    margin <- list(l = 50, r = 50, b = 20, t = 20, pad = 0.5)
-    return(layout(ggplotly(p), autosize = FALSE,
-                  width = 800, height = 600, margin = margin))
-  } else {
-    mSetObj$imgSet$meta.corhm <- imgName  # keep old slot name
-    .set.mSet(mSetObj)                    # persist path before plotting
-    Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
-                 width = width, height = height, type = format, bg = "white")
-    print(p)
-    dev.off()
-    if (.on.public.web) return(1) else return(.set.mSet(mSetObj))
-  }
+  return(p)
+}
+
+# Draws the metadata correlation heatmap from its plot data alone (pd: melted, textSize, width, height).
+DrawMetaCorrHeatmap <- function(pd, imgName, format = "png", dpi = 96, colorGradient = "default") {
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  dpi     <- as.numeric(dpi)
+  p <- .MetaCorrHeatmapPlot(pd, colorGradient)
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
+               width = pd$width, height = pd$height, type = format, bg = "white")
+  print(p)
+  dev.off()
+  return(invisible(NULL))
 }
 
 # Get lower triangle of the correlation matrix
