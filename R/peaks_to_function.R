@@ -3789,10 +3789,46 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = defaul
   # Create the data frame
   df <- data.frame(y, x, pathnames)
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if (anal.type0 == "mummichog") {
+    mSetObj$imgSet$mummi.plot<- imgName
+  }else{
+    mSetObj$imgSet$mummi.gsea.plot<- imgName
+  }
+
+  
+  
+  if (anal.type0 == "mummichog") {
+    list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattermum.json")
+  } else {
+    list_data <- list(pval = unname(y), enr = unname(mat[, 5]), pathnames = pathnames)
+    write(RJSONIO::toJSON(list_data), "scattergsea.json")
+  }
+
+  # The plot data is what DrawPeaks2Paths reads: each pathway's -log10(p) and enrichment factor (or NES) and the kind of analysis.
+  pd <- list(df = df, anal.type0 = anal.type0);
+  if(interactive){
+    library(plotly);
+    p <- .Peaks2PathsPlot(pd, num_annot);
+    ggp_build <- layout(ggplotly(p, width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
+    return(ggp_build);
+  }else{
+    DrawPeaks2Paths(pd, img.base, format, dpi, width, num_annot);
+    .ov_plot_data(imgName, pd, "DrawPeaks2Paths", list(imgName = img.base, format = format, dpi = dpi, width = width, num_annot = num_annot));
+    return(.set.mSet(mSetObj));
+  }
+  
+}
+
+# The pathway scatter (the static figure and the interactive view are one ggplot): pd = list(df (y, x, pathnames), anal.type0).
+.Peaks2PathsPlot <- function(pd, num_annot = 5){
+  df <- pd$df; y <- df$y; x <- df$x; pathnames <- df$pathnames; anal.type0 <- pd$anal.type0;
+  
   # Generate ggplot
   library(ggplot2);
   library(ggrepel)
-  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if (anal.type0 == "mummichog") {
   # set circle size based on enrichment factor
   radi.vec <- sqrt(abs(x))
@@ -3809,7 +3845,6 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = defaul
   # Add text labels for top num_annot points
   top_indices <- head(order(-df$y), num_annot)
   p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
-  mSetObj$imgSet$mummi.plot<- imgName
 
   }else{
   # set circle size based on P-val
@@ -3825,38 +3860,26 @@ PlotPeaks2Paths <- function(mSetObj=NA, imgName="", format = "png", dpi = defaul
     theme_minimal();
   top_indices <- head(order(-df$y), num_annot)
   p <- p + geom_text_repel(aes(label = pathnames), data = df[top_indices, ], size = 3)
-  mSetObj$imgSet$mummi.gsea.plot<- imgName
   }
+  return(p)
+}
 
-  
-  
-  if (anal.type0 == "mummichog") {
-    list_data <- list(pval = unname(y), enr = unname(x), pathnames = pathnames)
-    write(RJSONIO::toJSON(list_data), "scattermum.json")
-  } else {
-    list_data <- list(pval = unname(y), enr = unname(mat[, 5]), pathnames = pathnames)
-    write(RJSONIO::toJSON(list_data), "scattergsea.json")
-  }
-
-  if(interactive){
-    library(plotly);
-    ggp_build <- layout(ggplotly(p, width = 800, height = 600, tooltip = c("text")), autosize = FALSE, margin = mSetObj$imgSet$margin.config)
-    return(ggp_build);
-  }else{
-    if(is.na(width)){
-       w <- 7;
-     }else if(width == 0){
-       w <- 7;
-     }else{
-       w <- width;
-     }
-     h <- w;
-     Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
-     print(p);
-     dev.off()
-     return(.set.mSet(mSetObj));
-  }
-  
+# Draws the pathway scatter from its plot data alone (pd: df, anal.type0).
+DrawPeaks2Paths <- function(pd, imgName, format = "png", dpi = default.dpi, width = 9, num_annot = 5){
+  p <- .Peaks2PathsPlot(pd, num_annot);
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+     w <- 7;
+   }else if(width == 0){
+     w <- 7;
+   }else{
+     w <- width;
+   }
+   h <- w;
+   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);
+   print(p);
+   dev.off()
+   return(invisible(NULL));
 }
 #' PlotPSEAIntegPaths
 #' @description Plots both the original mummichog and the GSEA results by combining p-values
@@ -3934,15 +3957,6 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = def
     bg="white";
   }
   
-  if(is.na(width)){
-    w <- 7;
-  }else if(width == 0){
-    w <- 7;
-  }else{
-    w <- width;
-  }
-  h <- w;
-  
   df <- data.frame(path.nms, x, y, combined_value)
   
   if(labels == "default"){
@@ -3951,31 +3965,13 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = def
     all.inx <- mummi.inx | gsea.inx;
   }
   
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   mSetObj$imgSet$integpks.plot <- imgName
   
-  library(ggplot2)
   library(plotly)
-  library(ggrepel)  # Load ggrepel for improved label placement
   
   df$radi.vec <- radi.vec;
-  
-  # Find the top 5 pathways based on the combined values of x and y
-  top_5 <- df[order(df$combined_value, decreasing = TRUE), ][1:5, ]
-  
-  # Generate a heatmap color scale based on the combined values of x and y, reversed
-  p <- ggplot(df, aes(x = x, y = y, text = paste("Pathway:", path.nms, 
-                                                 "<br>GSEA p-val:", signif(10^-x, 4), 
-                                                 "<br>Mummichog p-val:", signif(10^-y, 4)))) +
-    geom_point(aes(size = radi.vec, color = combined_value), alpha = 0.7) +  # Slightly increase transparency
-    geom_text_repel(data = top_5, aes(label = path.nms), size = 3) +  # Add repelling labels for top 5 pathways
-    scale_color_gradientn(colors = rev(heat.colors(10)), name="Combined Score") +  # Reversed heat colors
-    scale_size_continuous(range = c(1, 5), guide="none") +  # Reduced size range to match Mummichog
-    labs(x = "GSEA -log10(p)", y = "Mummichog -log10(p)") +
-    theme_minimal() +
-    theme(legend.position = "none",  # Remove the legend
-          panel.background = element_rect(fill = "white"),  # Set panel background to white
-          plot.background = element_rect(fill = "white"))   # Set plot background to white
   
   json_data <- list(pval=unname(y), enr=unname(x), metap= unname(combo.p), pathnames=pathnames);
   sink("scatterinteg.json");
@@ -4009,11 +4005,53 @@ PlotPSEAIntegPaths <- function(mSetObj=NA, imgName="", format = "png", dpi = def
       )
     return(plotly_p);
   }else{
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);   
-    print(p)
-    dev.off();
+    # The plot data is what DrawPSEAIntegPaths reads: each pathway's names, the two -log10(p) (rescaled), their sum and the circle radius.
+    pd <- list(df = df);
+    DrawPSEAIntegPaths(pd, img.base, format, dpi, width);
+    .ov_plot_data(imgName, pd, "DrawPSEAIntegPaths", list(imgName = img.base, format = format, dpi = dpi, width = width));
     return(.set.mSet(mSetObj));
   }
+}
+
+# Draws the mummichog / GSEA integration scatter from its plot data alone (pd: df (path.nms, x, y, combined_value, radi.vec)).
+DrawPSEAIntegPaths <- function(pd, imgName, format = "png", dpi = default.dpi, width = 9){
+  df <- pd$df;
+  
+  if(is.na(width)){
+    w <- 7;
+  }else if(width == 0){
+    w <- 7;
+  }else{
+    w <- width;
+  }
+  h <- w;
+  
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  library(ggplot2)
+  library(ggrepel)  # Load ggrepel for improved label placement
+  
+  # Find the top 5 pathways based on the combined values of x and y
+  top_5 <- df[order(df$combined_value, decreasing = TRUE), ][1:5, ]
+  
+  # Generate a heatmap color scale based on the combined values of x and y, reversed
+  p <- ggplot(df, aes(x = x, y = y, text = paste("Pathway:", path.nms, 
+                                                 "<br>GSEA p-val:", signif(10^-x, 4), 
+                                                 "<br>Mummichog p-val:", signif(10^-y, 4)))) +
+    geom_point(aes(size = radi.vec, color = combined_value), alpha = 0.7) +  # Slightly increase transparency
+    geom_text_repel(data = top_5, aes(label = path.nms), size = 3) +  # Add repelling labels for top 5 pathways
+    scale_color_gradientn(colors = rev(heat.colors(10)), name="Combined Score") +  # Reversed heat colors
+    scale_size_continuous(range = c(1, 5), guide="none") +  # Reduced size range to match Mummichog
+    labs(x = "GSEA -log10(p)", y = "Mummichog -log10(p)") +
+    theme_minimal() +
+    theme(legend.position = "none",  # Remove the legend
+          panel.background = element_rect(fill = "white"),  # Set panel background to white
+          plot.background = element_rect(fill = "white"))   # Set plot background to white
+  
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format);   
+  print(p)
+  dev.off();
+  return(invisible(NULL));
 }
 
 

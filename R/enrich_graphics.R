@@ -273,6 +273,28 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
   names(folds.plot) <- GetShortNames(rownames(res.mat.plot));
   pvals.plot <- res.mat.plot[,4];
   
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  
+  # record img
+  mSetObj$imgSet$ora <- imgName
+  mSetObj$imgSet$current.img <- imgName;
+  
+  # The plot data is what DrawMSEAOverview reads: the enrichment ratio and p-value of the top sets (short names).
+  pd <- list(folds = folds.plot, pvals = pvals.plot);
+  DrawMSEAOverview(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawMSEAOverview", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  if(.on.public.web){
+    # Use the ALL / Original ID data for the network
+    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
+  }
+  
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the enrichment overview bar chart from its plot data alone (pd: folds, pvals), for PlotORA.
+DrawMSEAOverview <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   
   if(is.na(width)){
@@ -284,22 +306,12 @@ PlotORA <- function(mSetObj=NA, imgName, imgOpt, format="png", dpi=default.dpi, 
   }
   h <- w;
   
-  # record img
-  mSetObj$imgSet$ora <- imgName
-  mSetObj$imgSet$current.img <- imgName;
-  
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   
   # Use the TopN / Renamed data for the barplot
-  PlotMSEA.Overview(folds.plot, pvals.plot);
+  PlotMSEA.Overview(pd$folds, pd$pvals);
   dev.off();
-  
-  if(.on.public.web){
-    # Use the ALL / Original ID data for the network
-    mSetObj$analSet$enrich.net <- PlotEnrichNet.Overview(folds.all, pvals.all);
-  }
-  
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot rank-based (GSEA) metabolite-set enrichment overview
@@ -548,6 +560,27 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
     )
   }
   
+  img.base <- imgName;
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  
+  # The plot data is what DrawEnrichDotPlot reads: each set's name, p-value and enrichment ratio, and the two ends of the colour scale.
+  pd <- list(df = df, col.lo = my.cols[1], col.hi = my.cols[length(my.cols)]);
+  DrawEnrichDotPlot(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawEnrichDotPlot", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  
+  if(enrichType == "ora"){
+    mSetObj$imgSet$ora_dot <- imgName
+  } else if(enrichType == "qea"){
+    mSetObj$imgSet$qea_dot <- imgName
+  }
+  mSetObj$imgSet$current.img <- imgName
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the enrichment dot plot from its plot data alone (pd: df (Name, rawp, logp, folds), col.lo, col.hi).
+DrawEnrichDotPlot <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  library(ggplot2)
+  df <- pd$df; my.cols <- c(pd$col.lo, pd$col.hi);
   maxp <- max(df$rawp, na.rm = TRUE)
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
   
@@ -573,14 +606,7 @@ PlotEnrichDotPlot <- function(mSetObj=NA, enrichType = "ora", imgName, format="p
   p$labels$size   <- "Enrichment Ratio"
   
   ggsave(p, filename = imgName, dpi = dpi, width = w, height = h)
-  
-  if(enrichType == "ora"){
-    mSetObj$imgSet$ora_dot <- imgName
-  } else if(enrichType == "qea"){
-    mSetObj$imgSet$qea_dot <- imgName
-  }
-  mSetObj$imgSet$current.img <- imgName
-  return(.set.mSet(mSetObj))
+  return(invisible(NULL))
 }
 
 #'Plot the compound x metabolite-set membership heatmap.
@@ -654,15 +680,29 @@ PlotORAMembership <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
   # via RecordRCommand()'s return value (which is 1 on the public web).
   mSetObj$cmdSet <- c(mSetObj$cmdSet, paste0('PlotORAMembership(mSet, "', imgName, '", "', format, '", ', dpi, ')'));
 
+  img.base <- imgName;
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$mset_membership <- imgName;
+  mSetObj$imgSet$current.img     <- imgName;
+
+  # The plot data is what DrawORAMembership reads: the binary compound x set membership matrix and the set labels.
+  pd <- list(mat = mat, col.lbl = col.lbl);
+  DrawORAMembership(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawORAMembership", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the compound x metabolite-set membership heatmap from its plot data alone (pd: mat, col.lbl).
+DrawORAMembership <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  mat <- pd$mat; col.lbl <- pd$col.lbl;
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep="");
 
   # Page sizing — width grows with columns, height with rows. Match the
   # general "wider when many columns" feel of the bar / dot plots.
   w <- if(!is.na(width) && width > 0) width else max(10, min(20, ncol(mat) * 0.13 + 4));
   h <- max(6, min(20, nrow(mat) * 0.18 + 3.5));
-
-  mSetObj$imgSet$mset_membership <- imgName;
-  mSetObj$imgSet$current.img     <- imgName;
 
   Cairo::Cairo(file=imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar = c(14, 14, 3, 1));
@@ -687,7 +727,7 @@ PlotORAMembership <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi
 
   dev.off();
 
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 
