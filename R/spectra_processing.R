@@ -1767,6 +1767,13 @@ InitializaPlan <- function(){
 #' @param filename filename to check
 #' @export
 CentroidCheck <- function(filename){
+  # Trust the mzML "centroid spectrum" flag: dense vendor centroids (e.g. Waters MassLynx MS1, ~40k sticks/scan) fail the m/z-gap guess below
+  if (grepl("\\.mzML$", filename, ignore.case = TRUE)) {
+    fh <- mzR::openMSfile(filename);
+    cen <- mzR::header(fh, seq_len(min(50, length(fh))))$centroided;
+    mzR::close(fh);
+    if (length(cen) > 0 && !anyNA(cen) && all(cen)) return(TRUE);
+  }
   return(OptiLCMS::CentroidCheck(filename));
 }
 
