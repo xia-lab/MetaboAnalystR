@@ -21,6 +21,7 @@ Suggests:
     lars, Hmisc, magrittr, xtable, KEGGgraph, metap, entropy, rsm, httr, knitr, rmarkdown, devtools, testthat, 
     visNetwork, ggraph, RSclient, car, gdata, huge, ppcor, ctc, qs, progress, MSnbase, OptiLCMS, fastmatch,
     vegan, waveslim, reshape2
+Remotes: xia-lab/OptiLCMS
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
