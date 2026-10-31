@@ -159,18 +159,28 @@ DrawSAM.FDR <- function(pd, imgName, format="png", dpi, width=NA){
 
 PlotSAM.Cmpd <- function(mSetObj=NA, imgName, format="png", dpi, width=NA){
     mSetObj <- .get.mSet(mSetObj);
+    img.base <- imgName;
     imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-    if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 7 }else{ w <- width }
 
-    # sam.plot2() is a custom function only available in parent session — run directly
-    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
-    sam.plot2(mSetObj$analSet$sam, mSetObj$analSet$sam.delta)
-    dev.off()
+    # The plot data is what DrawSAMCmpd reads: the SAM result and the delta it is drawn at, nothing of the session.
+    pd <- list(sam = mSetObj$analSet$sam, delta = mSetObj$analSet$sam.delta);
+    DrawSAMCmpd(pd, img.base, format, dpi, width);
+    .ov_plot_data(imgName, pd, "DrawSAMCmpd", list(imgName = img.base, format = format, dpi = dpi, width = width));
 
     mSetObj$imgSet$sam.cmpd <- imgName;
     if(.on.public.web){
     }
     return(.set.mSet(mSetObj))
+}
+
+# Draws the SAM plot from its plot data alone (pd$sam: the SAM result object, pd$delta: the delta drawn at).
+DrawSAMCmpd <- function(pd, imgName, format="png", dpi, width=NA){
+    imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+    if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 7 }else{ w <- width }
+    Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
+    sam.plot2(pd$sam, pd$delta)
+    dev.off()
+    invisible(imgName)
 }
 
 #'For EBAM analysis 
@@ -274,16 +284,26 @@ EBAM.Init <- function(mSetObj=NA, isPaired, isVarEq, nonPar, A0=-99, delta, imgA
 #'
 PlotEBAM.Cmpd<-function(mSetObj=NA, imgName, format="png", dpi, width=NA){
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 8 }else{ w <- width }
 
-  # plotEbam() is a custom function only available in parent session — run directly
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
-  plotEbam(mSetObj$analSet$ebam, mSetObj$analSet$ebam.delta)
-  dev.off()
+  # The plot data is what DrawEBAMCmpd reads: the EBAM result and the delta it is drawn at.
+  pd <- list(ebam = mSetObj$analSet$ebam, delta = mSetObj$analSet$ebam.delta);
+  DrawEBAMCmpd(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawEBAMCmpd", list(imgName = img.base, format = format, dpi = dpi, width = width));
 
   mSetObj$imgSet$ebam.cmpd <- imgName;
   return(.set.mSet(mSetObj));
+}
+
+# Draws the EBAM plot from its plot data alone (pd$ebam: the EBAM result object, pd$delta: the delta drawn at).
+DrawEBAMCmpd <- function(pd, imgName, format="png", dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){ w <- 8 }else if(width == 0){ w <- 8 }else{ w <- width }
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=w, type=format, bg="white")
+  plotEbam(pd$ebam, pd$delta)
+  dev.off()
+  invisible(imgName)
 }
 
 ##############################################
