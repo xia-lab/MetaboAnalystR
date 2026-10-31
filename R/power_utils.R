@@ -56,9 +56,28 @@ InitPowerAnal <- function(mSetObj=NA, clsOpts){
 #'@import lattice
 
 PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$powerstat<-imgName;
+
+  if(.on.public.web){
+    load_lattice()
+  }
+
+  # The plot data is what DrawPowerStat reads: the pilot data (test statistics and p-values of the features and their
+  # distribution), which SSPA_plot draws four panels from.
+  pd <- list(pdD = mSetObj$analSet$power$pdD);
+  DrawPowerStat(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPowerStat", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the power analysis statistics (test statistics and p-values of the pilot data) from its plot data alone (pd: pdD).
+DrawPowerStat <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -68,16 +87,11 @@ PlotPowerStat <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, wi
     w <- width;
   }
   h <- w;
-  
-  mSetObj$imgSet$powerstat<-imgName;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  if(.on.public.web){
-    load_lattice()
-  }
-  SSPA_plot(mSetObj$analSet$power$pdD);
+  SSPA_plot(pd$pdD);
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Retrieve sample size ladder
@@ -158,14 +172,38 @@ PerformPowerProfiling <- function(mSetObj=NA, fdr.lvl, smplSize){
 #'@export
 
 PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png", dpi=default.dpi, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   Jpred <- GetSampleSizeLadder(smplSize);
   N <- sqrt(Jpred/2);
   # SSPA::predictpower
   pwrD <- predictpower(mSetObj$analSet$power$ssD, samplesizes=N, alpha=fdr.lvl)
-  
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$powerprofile<-imgName;
+
+  # The plot data is what DrawPowerProfile reads: the sample sizes and the predicted power at each.
+  pd <- list(Jpred = Jpred, pwrD = pwrD);
+  DrawPowerProfile(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPowerProfile", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  power.mat <- signif(cbind(Jpred, pwrD), 5);
+  colnames(power.mat) <- c("Sample Size (per group)", "Predicted power");
+  fast.write.csv(power.mat, file="predicted_sample_powers.csv");
+  mSetObj$analSet$power.mat <- power.mat;
+
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(pwrD);
+  }
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the predicted power against the sample size from its plot data alone (pd: Jpred, pwrD).
+DrawPowerProfile <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -174,28 +212,16 @@ PlotPowerProfile <- function(mSetObj=NA, fdr.lvl, smplSize, imgName, format="png
   }else{
     w <- width;
   }
-  
+
   h <- w*(6/9);
-  
-  mSetObj$imgSet$powerprofile<-imgName;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plot(Jpred, pwrD, type="n", ylim=c(0,1), ylab="Predicted power", xlab="Sample Size (per group)");
+  plot(pd$Jpred, pd$pwrD, type="n", ylim=c(0,1), ylab="Predicted power", xlab="Sample Size (per group)");
   grid(col = "lightgray", lty = "dotted", lwd = 1);
-  lines(Jpred, pwrD, lwd=4, col="orange");
-  points(Jpred, pwrD, pch=17);
+  lines(pd$Jpred, pd$pwrD, lwd=4, col="orange");
+  points(pd$Jpred, pd$pwrD, pch=17);
   dev.off();
-  
-  power.mat <- signif(cbind(Jpred, pwrD), 5);
-  colnames(power.mat) <- c("Sample Size (per group)", "Predicted power");
-  fast.write.csv(power.mat, file="predicted_sample_powers.csv");
-  mSetObj$analSet$power.mat <- power.mat;
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(pwrD);
-  }
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 ##############################################

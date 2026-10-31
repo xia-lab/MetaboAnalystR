@@ -255,33 +255,51 @@ ElasticNet.Anal <- function(mSetObj = NA, alpha = 0.5, nfolds = 10, outcome = "N
 PlotEnet.CV <- function(mSetObj = NA, imgName, format = "png", dpi = default.dpi, width = NA) {
   mSetObj <- .get.mSet(mSetObj)
   en <- mSetObj$analSet$enet
+  img.base <- imgName
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  mSetObj$imgSet$enet.cv <- imgName
+  # The plot data is what DrawEnet.CV reads: the cross-validation curve (error and its band at each lambda, the number of
+  # selected features) and the two lambdas to mark; an empty figure says so when the analysis has no result.
+  if (is.null(en) || !is.null(en$err)) {
+    pd <- list(empty = TRUE)
+  } else {
+    cv <- en$cv
+    pd <- list(empty = FALSE, type = en$type, lambda = cv$lambda, cvm = cv$cvm, cvup = cv$cvup, cvlo = cv$cvlo,
+               nzero = cv$nzero, lambda.min = cv$lambda.min, lambda.1se = cv$lambda.1se)
+  }
+  DrawEnet.CV(pd, img.base, format, dpi, width)
+  .ov_plot_data(imgName, pd, "DrawEnet.CV", list(imgName = img.base, format = format, dpi = dpi, width = width))
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the elastic net cross-validation curve from its plot data alone (pd: empty, or type, lambda, cvm, cvup, cvlo, nzero,
+# lambda.min, lambda.1se).
+DrawEnet.CV <- function(pd, imgName, format = "png", dpi = default.dpi, width = NA) {
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
   w <- .enet_img_size(width, 8)
   h <- w * 0.72
-  mSetObj$imgSet$enet.cv <- imgName
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
-  if (is.null(en) || !is.null(en$err)) {
+  if (pd$empty) {
     .enet_msg_plot("No elastic net result to show")
   } else {
-    cv <- en$cv
-    ll <- log(cv$lambda)
-    ylab <- if (en$type == "disc") "Cross-validation misclassification error" else "Cross-validation mean-squared error"
+    ll <- log(pd$lambda)
+    ylab <- if (pd$type == "disc") "Cross-validation misclassification error" else "Cross-validation mean-squared error"
     op <- par(mar = c(4.6, 4.8, 4.2, 1.5))
-    plot(ll, cv$cvm, type = "n", xlab = expression(log(lambda)), ylab = ylab, ylim = range(cv$cvup, cv$cvlo),
+    plot(ll, pd$cvm, type = "n", xlab = expression(log(lambda)), ylab = ylab, ylim = range(pd$cvup, pd$cvlo),
          main = "", las = 1)
-    segments(ll, cv$cvlo, ll, cv$cvup, col = "#B8C4D2")
-    points(ll, cv$cvm, pch = 20, col = "#3A6186", cex = 0.8)
-    abline(v = log(cv$lambda.min), lty = 2, col = "#21395C")
-    abline(v = log(cv$lambda.1se), lty = 3, col = "#89253E", lwd = 1.5)
+    segments(ll, pd$cvlo, ll, pd$cvup, col = "#B8C4D2")
+    points(ll, pd$cvm, pch = 20, col = "#3A6186", cex = 0.8)
+    abline(v = log(pd$lambda.min), lty = 2, col = "#21395C")
+    abline(v = log(pd$lambda.1se), lty = 3, col = "#89253E", lwd = 1.5)
     ix <- unique(round(seq(1, length(ll), length.out = 8)))
-    axis(3, at = ll[ix], labels = cv$nzero[ix], tick = TRUE, cex.axis = 0.85)
+    axis(3, at = ll[ix], labels = pd$nzero[ix], tick = TRUE, cex.axis = 0.85)
     mtext("Number of selected features", side = 3, line = 2.4, cex = 0.9)
     legend("topleft", bty = "n", cex = 0.85, lty = c(2, 3), col = c("#21395C", "#89253E"), lwd = c(1, 1.5),
            legend = c("lambda with minimum error", "largest lambda within 1 SE"))
     par(op)
   }
   dev.off()
-  return(.set.mSet(mSetObj))
+  return(invisible(NULL))
 }
 
 #'Plot the importance of the selected features
@@ -294,38 +312,61 @@ PlotEnet.CV <- function(mSetObj = NA, imgName, format = "png", dpi = default.dpi
 PlotEnet.Imp <- function(mSetObj = NA, imgName, format = "png", dpi = default.dpi, width = NA, feat.num = 15) {
   mSetObj <- .get.mSet(mSetObj)
   en <- mSetObj$analSet$enet
+  img.base <- imgName
   imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
-  w <- .enet_img_size(width, 8)
   mSetObj$imgSet$enet.imp <- imgName
   sig <- if (!is.null(en) && is.null(en$err)) en$sigmat else NULL
   n <- if (is.null(sig)) 0 else min(feat.num, nrow(sig))
   imp <- if (n > 0) stats::setNames(sig$Importance[seq_len(n)], rownames(sig)[seq_len(n)]) else NULL
-  h <- w - 1
-  if (n >= 2 && identical(en$meta, FALSE) && en$type == "disc") {
-    rt.mrg <- nlevels(mSetObj$dataSet$cls) + 3   # as the Random Forest figure: room for the class strip
-    w <- w + rt.mrg / 72
-  } else if (n >= 2) {
-    h <- max(5, n * 0.35 + 2)
-  }
-  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  # The plot data is what DrawEnet.Imp reads: the message of an empty figure, or the selected features' importance (alone for a
+  # single feature) with, for two or more, what their dot chart and class strip read.
   if (n == 0) {
-    .enet_msg_plot(if (is.null(en)) "No elastic net result to show" else "No feature was selected")
+    pd <- list(kind = "message", n = n, msg = if (is.null(en)) "No elastic net result to show" else "No feature was selected")
   } else if (n < 2) {
-    dotchart(imp, bg = "#585855", xlab = "Importance", cex = 1.3)   # a single feature has no class strip to draw
+    pd <- list(kind = "one", n = n, imp = imp)   # a single feature has no class strip to draw
   } else if (identical(en$meta, FALSE) && en$type == "disc") {
-    op <- par(mar = c(5, 7, 3, rt.mrg))
-    PlotImpVar(mSetObj, imp, "Importance", feat.num = n)
-    par(op)
+    pd <- list(kind = "rf", n = n, rt.mrg = nlevels(mSetObj$dataSet$cls) + 3,   # as the Random Forest figure: room for the class strip
+               imp = .ImpVarData(mSetObj, imp, "Importance", feat.num = n))
   } else {
     d <- .enet_xy(mSetObj, en$outcome)
     if (en$type == "disc") {
-      PlotImpVarDisc(mSetObj, imp, "Importance", feat.num = n, type = "meta", norm.data = d$x, cls.init = d$y)
+      pd <- list(kind = "disc", n = n, imp = .ImpVarDiscData(mSetObj, imp, "Importance", feat.num = n, type = "meta", norm.data = d$x, cls.init = d$y))
     } else {
-      PlotImpVarCont(mSetObj, imp, "Importance", feat.num = n, type = "meta", norm.data = d$x, y = d$y)
+      pd <- list(kind = "cont", n = n, imp = .ImpVarContData(mSetObj, imp, "Importance", feat.num = n, type = "meta", norm.data = d$x, y = d$y))
     }
   }
-  dev.off()
+  DrawEnet.Imp(pd, img.base, format, dpi, width)
+  .ov_plot_data(imgName, pd, "DrawEnet.Imp", list(imgName = img.base, format = format, dpi = dpi, width = width))
   return(.set.mSet(mSetObj))
+}
+
+# Draws the importance of the selected features from its plot data alone (pd: kind "message" (msg), "one" (imp), "rf" (rt.mrg,
+# imp of .ImpVarData), "disc" (imp of .ImpVarDiscData) or "cont" (imp of .ImpVarContData), and n).
+DrawEnet.Imp <- function(pd, imgName, format = "png", dpi = default.dpi, width = NA) {
+  imgName <- paste(imgName, "dpi", dpi, ".", format, sep = "")
+  w <- .enet_img_size(width, 8)
+  h <- w - 1
+  if (pd$kind == "rf") {
+    w <- w + pd$rt.mrg / 72
+  } else if (pd$n >= 2) {
+    h <- max(5, pd$n * 0.35 + 2)
+  }
+  Cairo::Cairo(file = imgName, unit = "in", dpi = dpi, width = w, height = h, type = format, bg = "white")
+  if (pd$kind == "message") {
+    .enet_msg_plot(pd$msg)
+  } else if (pd$kind == "one") {
+    dotchart(pd$imp, bg = "#585855", xlab = "Importance", cex = 1.3)
+  } else if (pd$kind == "rf") {
+    op <- par(mar = c(5, 7, 3, pd$rt.mrg))
+    DrawImpVar(pd$imp)
+    par(op)
+  } else if (pd$kind == "disc") {
+    DrawImpVarDisc(pd$imp)
+  } else if (!is.null(pd$imp)) {
+    DrawImpVarCont(pd$imp)
+  }
+  dev.off()
+  return(invisible(NULL))
 }
 
 .enet_fmt <- function(x, digits = 4) {

@@ -1651,27 +1651,44 @@ PlotSigVar <- function(x, y, xline, yline, title){
 #'@export
 #'
 PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   asca <- ov_qs_read("asca.qs");
 
   perm.mat <- asca$perm.mat;
   perm.p <- asca$perm.p;
-  
+
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  
+
+  mSetObj$imgSet$asca.perm <- imgName;
+
+  # The plot data is what DrawASCA.Permutation reads: the permutation statistics of the three models (the first row is the
+  # observed one) and the p-values.
+  pd <- list(perm.mat = perm.mat, perm.p = perm.p);
+  DrawASCA.Permutation(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawASCA.Permutation", list(imgName = img.base, format = format, dpi = dpi, width = width));
+  return(.set.mSet(mSetObj));
+
+}
+
+# Draws the ASCA permutation test result from its plot data alone (pd: perm.mat, perm.p).
+DrawASCA.Permutation <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  perm.mat <- pd$perm.mat;
+  perm.p <- pd$perm.p;
+
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
   if(is.na(width)){
     w <- 8;
   }else if(width == 0){
     w <- 7;
-    
+
   }else{
     w <- width;
   }
   h <-2*w;
-  
-  mSetObj$imgSet$asca.perm <- imgName;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mfrow=c(3,1), cex=1.0);
   nms <- colnames(perm.mat);
@@ -1679,7 +1696,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.
     limX <-range(perm.mat[,i])*c(0.9, 1.1);
     hst <- hist(perm.mat[-1,i], breaks = "FD", freq=T, xlim = limX, axes=F, bty="l",
                 ylab="Frequency", xlab= 'Permutation test statistics', col="gray", main=nms[i]);
-    
+
     ticks <- heckbert(limX[1], limX[2], 8);
     axis(1, at=ticks);
     # add the indicator using original label
@@ -1688,8 +1705,7 @@ PlotASCA.Permutation <- function(mSetObj=NA, imgName, format="png", dpi=default.
     text(perm.mat[1,i], h/2, paste('Observed \n statistic \n', perm.p[i]), xpd=T);
   }
   dev.off();
-  return(.set.mSet(mSetObj));
-  
+  return(invisible(NULL));
 }
 
 ##############################################

@@ -709,19 +709,12 @@ PerformSignalDriftCorrection <- function(mSetObj=NA, imgName=NULL){
 #'@export
 #'
 PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, width=NA,method){
-  
+
   #mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  if(is.na(width)){
-    w  <- 11;
-  }else{
-    w <- width;
-  }
-  h <- 6;
 
   mSetObj$imgSet$pca.batch.overview <- imgName;
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(mfrow=c(1,2));   
   nlbls <-  mSetObj$dataSet$batch.cls;
   dt <- mSetObj$dataSet$table;
   if(any(is.infinite(dt))){
@@ -733,29 +726,23 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, wi
   ## plot score plot
   pc1 = pca$x[, 1];
   pc2 = pca$x[, 2];
-  
+
   xlabel = paste("PC1", "(", round(100*var.pca[1],1), "%)");
   ylabel = paste("PC2", "(", round(100*var.pca[2],1), "%)");
-  
+
   semi.cols <- CreateSemiTransColors(mSetObj$dataSet$batch.cls);
   if (all(semi.cols == "")){
     semi.cols <- "#FF000080"
   };
-  plot(pc1, pc2, xlab=xlabel, ylab=ylabel, pch=21, bg=semi.cols, col="gray", cex=1.6, main="Before Adjustment");
-  legend("topright", legend=unique(nlbls), pch=15, col=unique(semi.cols));
-  
-  qcInx <- substr(names(pc1), 0, 2) == "QC";
-  if(sum(qcInx) > 0){
-    points(pc1[qcInx], pc2[qcInx], pch=3, cex=2, lwd=2);
-  }
-  
+  before <- list(pc1 = pc1, pc2 = pc2, xlabel = xlabel, ylabel = ylabel, semi.cols = semi.cols, main = "Before Adjustment");
+
   df_tmp<-apply(mSetObj$dataSet$adjusted.mat,2,FUN = function(x){
     if(length(which(x==0))==length(x)){
       x[1]<-0.000001;
       return(x)
     } else {x}
   })
-  
+
   table<-df_tmp;
   table[is.na(table)] <- 0;
   table[is.nan(table)] <- 0;
@@ -765,40 +752,69 @@ PlotPCA.overview <- function(mSetObj, imgName, format="png", dpi=default.dpi, wi
   if(length(which(same)) > 0){
     table <- table[, -which(same)]
   }
-  
-  
+
+
   #a1<-mSetObj$dataSet$adjusted.mat
   mSetObj$dataSet$adjusted.mat <- table;
   pca <- prcomp(mSetObj$dataSet$adjusted.mat, center=T, scale=T);
   sum.pca<-summary(pca);
   var.pca<-sum.pca$importance[2,]; # variance explained by each PC
-  
+
   ## plot score plot
   pc1 = pca$x[, 1];
   pc2 = pca$x[, 2];
-  
+
   xlabel = paste("PC1", "(", round(100*var.pca[1],1), "%)");
   ylabel = paste("PC2", "(", round(100*var.pca[2],1), "%)");
-  
+
   main_name<-paste0("After Adjustment_",method)
-  
+
   semi.cols <- CreateSemiTransColors(mSetObj$dataSet$batch.cls);
   if (all(semi.cols == "")){
     semi.cols <- "#FF000080"
   };
-  
-  plot(pc1, pc2, xlab=xlabel, ylab=ylabel, pch=21, bg=semi.cols, col="gray", cex=1.6, main=main_name);
-  legend("topright", legend=unique(nlbls), pch=15, col=unique(semi.cols));
-  
-  qcInx <- substr(names(pc1), 0, 2) == "QC";
-  if(sum(qcInx) > 0){
-    points(pc1[qcInx], pc2[qcInx], pch=3, cex=2, lwd=2);
-  }
-  
-  dev.off();
+  after <- list(pc1 = pc1, pc2 = pc2, xlabel = xlabel, ylabel = ylabel, semi.cols = semi.cols, main = main_name);
+
+  # The plot data is what DrawBatchOverview reads: the batch labels and, for the data before and after the adjustment, the
+  # first two principal components of the samples with their axis labels, colours and title.
+  pd <- list(nlbls = nlbls, before = before, after = after);
+  DrawBatchOverview(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawBatchOverview", list(imgName = img.base, format = format, dpi = dpi, width = width));
   return(mSetObj);
   #return(.set.mSet(mSetObj));
-  
+
+}
+
+# Draws the PCA score plots before and after the batch correction from their plot data alone (pd: nlbls, before, after; each
+# panel is pc1, pc2, xlabel, ylabel, semi.cols, main).
+DrawBatchOverview <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  if(is.na(width)){
+    w  <- 11;
+  }else{
+    w <- width;
+  }
+  h <- 6;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(mfrow=c(1,2));
+  nlbls <- pd$nlbls;
+
+  for(panel in list(pd$before, pd$after)){
+    pc1 <- panel$pc1;
+    pc2 <- panel$pc2;
+    semi.cols <- panel$semi.cols;
+    plot(pc1, pc2, xlab=panel$xlabel, ylab=panel$ylabel, pch=21, bg=semi.cols, col="gray", cex=1.6, main=panel$main);
+    legend("topright", legend=unique(nlbls), pch=15, col=unique(semi.cols));
+
+    qcInx <- substr(names(pc1), 0, 2) == "QC";
+    if(sum(qcInx) > 0){
+      points(pc1[qcInx], pc2[qcInx], pch=3, cex=2, lwd=2);
+    }
+  }
+
+  dev.off();
+  return(invisible(NULL));
 }
 
 #'Sample Trend Scatter

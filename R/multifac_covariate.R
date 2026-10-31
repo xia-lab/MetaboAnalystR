@@ -153,20 +153,40 @@ PlotRF.ClassifyMeta <- function(mSetObj = NA,
                                 dpi    = default.dpi,
                                 width  = NA,
                                 type   = "meta") {
-  
+
   mSetObj <- .get.mSet(mSetObj)
   rf_mod  <- mSetObj$analSet$rf
+  img.base <- imgName
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
 
   is.classification <- rf_mod$type == "classification"
-  w <- ifelse(is.na(width), ifelse(is.classification, 9, 6), 
+  mSetObj$imgSet$rf.cls <- imgName
+
+  # The plot data is what DrawRF.ClassifyMeta reads: the model's error curves only (type, number of trees and the OOB error
+  # of each class or the MSE), as a randomForest object that plot() draws -- not the forest itself.
+  pd <- list(is.classification = is.classification,
+             rf = structure(list(type = rf_mod$type, ntree = rf_mod$ntree, err.rate = rf_mod$err.rate,
+                                 mse = rf_mod$mse, test = rf_mod$test), class = "randomForest"))
+  DrawRF.ClassifyMeta(pd, img.base, format, dpi, width)
+  .ov_plot_data(imgName, pd, "DrawRF.ClassifyMeta", list(imgName = img.base, format = format, dpi = dpi, width = width))
+
+  .set.mSet(mSetObj)
+}
+
+# Draws the Random Forest model diagnostic (error against the number of trees) from its plot data alone (pd: is.classification,
+# rf (the error curves of the model)).
+DrawRF.ClassifyMeta <- function(pd, imgName, format = "png", dpi = default.dpi, width = NA) {
+  requireNamespace("randomForest", quietly = TRUE)   # plot() of the model is randomForest's plot method
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  rf_mod <- pd$rf
+  is.classification <- pd$is.classification
+  w <- ifelse(is.na(width), ifelse(is.classification, 9, 6),
               ifelse(width == 0, ifelse(is.classification, 8, 5.5), width))
   h <- w * 5 / 8
-  mSetObj$imgSet$rf.cls <- imgName
 
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
-  
+
   if (is.classification) {
     layout(matrix(c(1, 2), nrow = 2), heights = c(5, 1))
     par(mar = c(4, 4, 3, 2))
@@ -182,7 +202,7 @@ PlotRF.ClassifyMeta <- function(mSetObj = NA,
   }
 
   dev.off()
-  .set.mSet(mSetObj)
+  invisible(NULL)
 }
 
 ## ───────────────────────────────────────────────────────────────────────
@@ -212,26 +232,49 @@ PlotRF.VIPMeta <- function(mSetObj = NA,
   }
 
   xlbl <- gsub("MeanDecrease", "Mean Decrease ", impMeasure)
+  img.base <- imgName
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
 
   n.feat <- length(vip.score)
-  w <- ifelse(is.na(width), 8, ifelse(width == 0, 7, width))
-  h <- max(5, n.feat * 0.35 + 2)  # dynamic height based on feature count
   mSetObj$imgSet$rf.imp <- imgName
+
+  # The plot data is what DrawRF.VIPMeta reads: the number of features (it sets the height) and what the importance dot chart
+  # reads (see .ImpVarContData for a regression model, .ImpVarDiscData for a classification one).
+  regression <- mSetObj$analSet$rf$type == "regression"
+  pd <- list(n.feat = n.feat, regression = regression,
+             imp = if (regression) .ImpVarContData(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta")
+                   else .ImpVarDiscData(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta"))
+  DrawRF.VIPMeta(pd, img.base, format, dpi, width)
+  .ov_plot_data(imgName, pd, "DrawRF.VIPMeta", list(imgName = img.base, format = format, dpi = dpi, width = width))
+  .set.mSet(mSetObj)
+}
+
+# Draws the Random Forest variable-importance plot from its plot data alone (pd: n.feat, regression, imp; imp is NULL when a
+# regression model has none of the ranked features in the data, and nothing is drawn).
+DrawRF.VIPMeta <- function(pd, imgName, format = "png", dpi = default.dpi, width = NA) {
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  w <- ifelse(is.na(width), 8, ifelse(width == 0, 7, width))
+  h <- max(5, pd$n.feat * 0.35 + 2)  # dynamic height based on feature count
 
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
-  if(mSetObj$analSet$rf$type == "regression"){
-    PlotImpVarCont(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta")
-  }else{
-    PlotImpVarDisc(mSetObj, vip.score, xlbl, feat.num = feat.num, type = "meta")
+  if (pd$regression) {
+    if (!is.null(pd$imp)) DrawImpVarCont(pd$imp)
+  } else {
+    DrawImpVarDisc(pd$imp)
   }
   dev.off()
-  .set.mSet(mSetObj)
+  invisible(NULL)
 }
 
 PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta", norm.data=NULL, cls.init=NULL){
   mSetObj <- .get.mSet(mSetObj);
+  DrawImpVarDisc(.ImpVarDiscData(mSetObj, imp.vec, xlbl, feat.num, color.BW, type, norm.data, cls.init));
+}
+
+# What the discrete important-variable plot reads: the top features, their per-group means, the group labels and the right margin.
+# mSetObj is the object .get.mSet gave.
+.ImpVarDiscData <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALSE, type="meta", norm.data=NULL, cls.init=NULL){
   own.data <- !is.null(norm.data) && !is.null(cls.init);   # data given by the caller (elastic net)
   if(own.data){
     # norm.data and cls.init as given
@@ -258,22 +301,21 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
   }else{
     rt.mrg <- 11;
   }
-  op <- par(mar=c(5,7,3,rt.mrg)); # set right side margin with the number of class
-  
+
   if(feat.num <= 0){
     feat.num = 15;
   }
-  
+
   if(feat.num > length(imp.vec)){
     feat.num <- length(imp.vec);
   }
-  
+
   # first get the top subset
   imp.vec <- rev(sort(imp.vec))[1:feat.num];
-  
+
   # reverser the order for display
   imp.vec <- sort(imp.vec);
-  
+
   # as data should already be normalized, use mean/median should be the same
   # mns is a list contains means of all vars at each level
   # conver the list into a matrix with each row contains var averages across different lvls
@@ -282,49 +324,61 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
               apply(x, 2, mean, trim=0.1)
             });
   mns <- t(matrix(unlist(mns), ncol=feat.num, byrow=TRUE));
-  
+
   # vip.nms <-substr(names(imp.vec), 1, 12);
   vip.nms <- substr(names(imp.vec), 1, 14);
   names(imp.vec) <- NULL;
-  
-  # modified for B/W color
-  dotcolor <- ifelse(color.BW, "darkgrey", "#585855");
-  label.cex <- if(feat.num > 25) 0.65 else if(feat.num > 15) 0.75 else 0.9
-  dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.1);
 
-  mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1, cex=label.cex)
-  
-  axis.lims <- par("usr"); # x1, x2, y1 ,y2
-  
-  # get character width
-  shift <- 2*par("cxy")[1];
-  lgd.x <- axis.lims[2] + shift;
-  
-  x <- rep(lgd.x, feat.num);
-  y <- 1:feat.num;
-  par(xpd=T);
-  
-  nc <- ncol(mns);
-  
-  # modified for B/W color
-  colorpalette <- ifelse(color.BW, "Greys", "RdYlBu");
-  col <- colorRampPalette(RColorBrewer::brewer.pal(10, colorpalette))(nc); # set colors for each class
-  if(color.BW) col <- rev(col);
-  
-  # calculate background
-  bg <- matrix("", nrow(mns), nc);
-  for (m in 1:nrow(mns)){
-    bg[m,] <- (col[nc:1])[rank(mns[m,])];
-  }
-  
+  label.cex <- if(feat.num > 25) 0.65 else if(feat.num > 15) 0.75 else 0.9
+
   if(!own.data && mSetObj$dataSet$type.cls.lbl=="integer"){
     cls <- as.factor(as.numeric(levels(cls.init))[cls.init]);
   }else{
     cls <- cls.init;
   }
-  
-  cls.lbl <- levels(cls);
-  
+
+  list(rt.mrg = rt.mrg, imp.vec = imp.vec, vip.nms = vip.nms, mns = mns, cls.lbl = levels(cls),
+       feat.num = feat.num, xlbl = xlbl, color.BW = color.BW, label.cex = label.cex);
+}
+
+# Draws the discrete important-variable plot (dot chart plus per-group heat key) on the open device from the data of .ImpVarDiscData.
+DrawImpVarDisc <- function(pd){
+  imp.vec <- pd$imp.vec; vip.nms <- pd$vip.nms; mns <- pd$mns;
+  feat.num <- pd$feat.num; xlbl <- pd$xlbl; color.BW <- pd$color.BW; label.cex <- pd$label.cex;
+
+  op <- par(mar=c(5,7,3,pd$rt.mrg)); # set right side margin with the number of class
+
+  # modified for B/W color
+  dotcolor <- ifelse(color.BW, "darkgrey", "#585855");
+  dotchart(imp.vec, bg=dotcolor, xlab= xlbl, cex=1.1);
+
+  mtext(side=2, at=1:feat.num, vip.nms, las=2, line=1, cex=label.cex)
+
+  axis.lims <- par("usr"); # x1, x2, y1 ,y2
+
+  # get character width
+  shift <- 2*par("cxy")[1];
+  lgd.x <- axis.lims[2] + shift;
+
+  x <- rep(lgd.x, feat.num);
+  y <- 1:feat.num;
+  par(xpd=T);
+
+  nc <- ncol(mns);
+
+  # modified for B/W color
+  colorpalette <- ifelse(color.BW, "Greys", "RdYlBu");
+  col <- colorRampPalette(RColorBrewer::brewer.pal(10, colorpalette))(nc); # set colors for each class
+  if(color.BW) col <- rev(col);
+
+  # calculate background
+  bg <- matrix("", nrow(mns), nc);
+  for (m in 1:nrow(mns)){
+    bg[m,] <- (col[nc:1])[rank(mns[m,])];
+  }
+
+  cls.lbl <- pd$cls.lbl;
+
   for (n in 1:ncol(mns)){
     points(x,y, bty="n", pch=22, bg=bg[,n], cex=3);
     # now add label
@@ -332,7 +386,7 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
     # shift x, note, this is good for current size
     x <- x + shift/1.25;
   }
-    
+
   # now add color key, padding with more intermediate colors for contiuous band
   ncolor <- 9;
   if(colorpalette == "RdYlBu"){
@@ -340,20 +394,20 @@ PlotImpVarDisc <- function(mSetObj=NA, imp.vec, xlbl, feat.num=15, color.BW=FALS
   }
   col <- colorRampPalette(RColorBrewer::brewer.pal(ncolor, colorpalette))(50)
   if(color.BW) col <- rev(col);
-  
+
   nc <- length(col);
   x <- rep(x[1] + shift, nc);
-  
+
   shifty <- (axis.lims[4]-axis.lims[3])/3;
   starty <- axis.lims[3] + shifty;
   endy <- axis.lims[3] + 2*shifty;
   y <- seq(from = starty, to = endy, length = nc);
-  
+
   points(x,y, bty="n", pch=15, col=rev(col), cex=2);
-  
+
   text(x[1], endy+shifty/8, "High");
   text(x[1], starty-shifty/8, "Low");
-  
+
   par(op);
 }
 
@@ -382,17 +436,32 @@ PlotImpVarCont <- function(mSetObj  = NA,
                            type     = "meta",
                            norm.data = NULL,
                            y         = NULL) {
-  
+
   mSetObj <- .get.mSet(mSetObj)
-  rf_mod  <- mSetObj$analSet$rf
-  
+  pd <- .ImpVarContData(mSetObj, imp.vec, xlbl, feat.num, nBins, color.BW, type, norm.data, y)
+  if (!is.null(pd)) DrawImpVarCont(pd)
+  invisible(.set.mSet(mSetObj))
+}
+
+# What the continuous important-variable plot reads: the top features with their importance, short names and dot colours;
+# NULL (after a warning) when none of the ranked features is in the data. mSetObj is the object .get.mSet gave.
+.ImpVarContData <- function(mSetObj  = NA,
+                            imp.vec  ,
+                            xlbl     ,
+                            feat.num = 15,
+                            nBins    = 3,
+                            color.BW = FALSE,
+                            type     = "meta",
+                            norm.data = NULL,
+                            y         = NULL) {
+
   ## ── top N features ------------------------------------------------
   feat.num <- max(1, min(feat.num, length(imp.vec)))
   imp.top  <- sort(rev(sort(imp.vec))[1:feat.num])
   full.nms <- names(imp.top)
   short.nms<- substr(full.nms, 1, 14)
   names(imp.top) <- NULL
-  
+
   ## ── fetch data and response ---------------------------------------
   if (!is.null(norm.data) && !is.null(y)) {
     y <- as.numeric(y)   # data given by the caller (elastic net)
@@ -403,17 +472,17 @@ PlotImpVarCont <- function(mSetObj  = NA,
     norm.data <- mSetObj$dataSet$norm
     y         <- as.numeric(mSetObj$dataSet$cls)
   }
-  
+
   ## ── check feature presence ----------------------------------------
   valid.nms <- full.nms[full.nms %in% colnames(norm.data)]
   if (length(valid.nms) == 0) {
     warning("None of the importance-ranked features are in normalized data.")
-    return(invisible(.set.mSet(mSetObj)))
+    return(NULL)
   }
   full.nms <- valid.nms
   feat.num <- length(full.nms)
   short.nms <- substr(full.nms, 1, 14)
-  
+
   ## ── bin y into groups using quantiles -----------------------------
   bins <- cut(
     y,
@@ -421,7 +490,7 @@ PlotImpVarCont <- function(mSetObj  = NA,
     include.lowest = TRUE,
     labels = paste0("Bin", seq_len(nBins))
   )
-  
+
   ## ── compute trimmed means in each bin -----------------------------
   trimmed.means <- by(
     norm.data[, full.nms, drop = FALSE],
@@ -431,28 +500,38 @@ PlotImpVarCont <- function(mSetObj  = NA,
   mat <- do.call(rbind, trimmed.means)
   if (is.null(dim(mat)) || any(dim(mat) == 0)) {
     warning("Failed to compute trimmed means.")
-    return(invisible(.set.mSet(mSetObj)))
+    return(NULL)
   }
-  
+
   ## ── build heatmap coloring matrix ---------------------------------
   palName <- if (color.BW) "Greys" else "Blues"
   binCols <- colorRampPalette(RColorBrewer::brewer.pal(10, palName))(nBins)
   rankMat <- t(apply(mat, 2, rank))
-  
-  op <- par(mar = c(5, 7, 3, 3))  # remove extra right space
-  
+
   ## ── gradient color for main dots ----------------------------------
   colfunc <- colorRampPalette(RColorBrewer::brewer.pal(9, "YlOrRd"))
   clr.vec <- colfunc(length(imp.top))
   ord     <- order(imp.top)
   cols.ordered <- clr.vec
   cols.ordered[ord] <- clr.vec
-  
-  ## ── draw importance dot chart -------------------------------------
+
   label.cex <- if(feat.num > 25) 0.65 else if(feat.num > 15) 0.75 else 0.9
+
+  list(imp.top = imp.top, short.nms = short.nms, feat.num = feat.num, xlbl = xlbl,
+       cols.ordered = cols.ordered, label.cex = label.cex)
+}
+
+# Draws the continuous important-variable plot (dot chart, dots coloured by importance) on the open device from the data of
+# .ImpVarContData.
+DrawImpVarCont <- function(pd) {
+  imp.top <- pd$imp.top
+
+  op <- par(mar = c(5, 7, 3, 3))  # remove extra right space
+
+  ## ── draw importance dot chart -------------------------------------
   dotchart(imp.top,
          pch = 21,
-         xlab = xlbl,
+         xlab = pd$xlbl,
          cex  = 1.1,
          bg   = "white")
 
@@ -460,18 +539,18 @@ PlotImpVarCont <- function(mSetObj  = NA,
   points(x = imp.top,
        y = seq_along(imp.top),
        pch = 21,
-       bg  = cols.ordered,
+       bg  = pd$cols.ordered,
        cex = 1.4)
 
   mtext(side = 2,
-        at    = seq_len(feat.num),
-        text  = short.nms,
+        at    = seq_len(pd$feat.num),
+        text  = pd$short.nms,
         las   = 2,
         line  = 1,
-        cex   = label.cex)
-  
+        cex   = pd$label.cex)
+
   par(op)
-  invisible(.set.mSet(mSetObj))
+  invisible(NULL)
 }
 
 
@@ -1661,17 +1740,36 @@ PlotRF.RegressionDetail <- function(mSetObj = NA,
     return(invisible(.set.mSet(mSetObj)))
   }
 
+  img.base <- imgName
+  imgName <- paste0(imgName, "dpi", dpi, ".", format)
+  mSetObj$imgSet$rf.reg.detail <- imgName
+
+  obs  <- rf_mod$y
+  pred <- rf_mod$predicted
+
+  # The plot data is what DrawRF.RegressionDetail reads: the observed and the OOB-predicted values with R-squared and
+  # Spearman's rho.
+  pd <- list(obs = obs, pred = pred,
+             r2 = cor(obs, pred, use = "complete.obs")^2,
+             rho = cor(obs, pred, method = "spearman", use = "complete.obs"))
+  DrawRF.RegressionDetail(pd, img.base, format, dpi, width)
+  .ov_plot_data(imgName, pd, "DrawRF.RegressionDetail", list(imgName = img.base, format = format, dpi = dpi, width = width))
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the Random Forest regression detail (observed against predicted, and their ranks) from its plot data alone (pd: obs,
+# pred, r2, rho).
+DrawRF.RegressionDetail <- function(pd, imgName, format = "png", dpi = default.dpi, width = NA) {
   imgName <- paste0(imgName, "dpi", dpi, ".", format)
   w <- ifelse(is.na(width), 9, ifelse(width == 0, 8, width))
   h <- w * 5 / 8
-  mSetObj$imgSet$rf.reg.detail <- imgName
 
   Cairo::Cairo(file = imgName, unit = "in", dpi = dpi,
                width = w, height = h, type = format, bg = "white")
   par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
 
-  obs  <- rf_mod$y
-  pred <- rf_mod$predicted
+  obs  <- pd$obs
+  pred <- pd$pred
 
   # ── Plot 1: Observed vs Predicted ───────────────────────────────
   plot(obs, pred,
@@ -1679,8 +1777,7 @@ PlotRF.RegressionDetail <- function(mSetObj = NA,
        main = "Observed vs Predicted",
        pch = 16, asp = 1)
   abline(0, 1, lty = 2)
-  r2 <- cor(obs, pred, use = "complete.obs")^2
-  legend("topleft", legend = sprintf("R² = %.3f", r2),
+  legend("topleft", legend = sprintf("R² = %.3f", pd$r2),
          bty = "n", xpd = NA)
 
   # ── Plot 2: Rank vs Rank ────────────────────────────────────────
@@ -1691,12 +1788,11 @@ PlotRF.RegressionDetail <- function(mSetObj = NA,
        main = "Rank-Rank Plot",
        pch = 16, asp = 1)
   abline(0, 1, lty = 2)
-  rho <- cor(obs, pred, method = "spearman", use = "complete.obs")
-  legend("topleft", legend = sprintf("ρ = %.3f", rho),
+  legend("topleft", legend = sprintf("ρ = %.3f", pd$rho),
          bty = "n", xpd = NA)
 
   dev.off()
-  return(.set.mSet(mSetObj))
+  return(invisible(NULL))
 }
 
 partial_shrink <- function(x, method = c("pearson","spearman")){

@@ -198,9 +198,51 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@export
 #'@importFrom plotly plot_ly add_markers layout
 PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$spls.score3d <- imgName;
+
+  spls3d <- list();
+
+  ## need to check if only 2 or 3 components generated
+  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
+    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");
+    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2)], 5));
+    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
+    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
+  }else{
+    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");
+    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2, inx3)], 5));
+  }
+
+  xlabel <- spls3d$score$axis[1]
+  ylabel <- spls3d$score$axis[2]
+  zlabel <- spls3d$score$axis[3]
+
+  # static
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
+  pchs <- as.numeric(cls)+1;
+  uniq.pchs <- unique(pchs);
+
+  # The plot data is what DrawSPLS3DScoreImg reads: the three score vectors, the axis labels, the view angle, the colour and
+  # symbol of each sample and the legend.
+  pd <- list(x = coords[,inx1], y = coords[,inx2], z = coords[,inx3],
+             xlab = xlabel, ylab = ylabel, zlab = zlabel, angle = angl, color = cols, pch = pchs,
+             lgd = names(col.def), lgd.pch = uniq.pchs, lgd.col = col.def);
+  DrawSPLS3DScoreImg(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawSPLS3DScoreImg", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the static 3D sPLS-DA score plot from its plot data alone (pd: x, y, z, xlab, ylab, zlab, angle, color, pch, lgd, lgd.pch, lgd.col).
+DrawSPLS3DScoreImg <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -210,41 +252,16 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     w <- width;
   }
   h <- w;
-  
-  mSetObj$imgSet$spls.score3d <- imgName;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,3));
-  
-  spls3d <- list();
-  
-  ## need to check if only 2 or 3 components generated
-  if(length(mSetObj$analSet$splsr$explained_variance$X)==2){
-    spls3d$score$axis <- paste("Component", c(inx1, inx2), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2)], 1), "%)", sep="");    
-    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2)], 5));
-    spls3d$score$axis <- c(spls3d$score$axis, "Component3 (NA)");
-    coords <- rbind(coords, "comp 3"=rep (0, ncol(coords)));
-  }else{
-    spls3d$score$axis <- paste("Component", c(inx1, inx2, inx3), " (", round(100*mSetObj$analSet$splsr$explained_variance$X[c(inx1, inx2, inx3)], 1), "%)", sep="");    
-    coords <- data.frame(signif(mSetObj$analSet$splsr$variates$X[,c(inx1, inx2, inx3)], 5));
-  }
-  
-  xlabel <- spls3d$score$axis[1]
-  ylabel <- spls3d$score$axis[2]
-  zlabel <- spls3d$score$axis[3]
-  
-  # static
-  cls <- mSetObj$dataSet$cls;
-  col.def <-  GetColorSchema(cls);
-  cols <- ExpandSchema(cls, col.def);
-  pchs <- as.numeric(cls)+1;
-  uniq.pchs <- unique(pchs);
-  Plot3D(coords[,inx1], coords[,inx2], coords[,inx3], xlab= xlabel, ylab=ylabel,
-         zlab=zlabel, angle = angl, color=cols, pch=pchs);
-  legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
+
+  Plot3D(pd$x, pd$y, pd$z, xlab= pd$xlab, ylab=pd$ylab,
+         zlab=pd$zlab, angle = pd$angle, color=pd$color, pch=pd$pch);
+  legend("topleft", legend = pd$lgd, pch=pd$lgd.pch, col=pd$lgd.col);
   dev.off();
-  
-  return(.set.mSet(mSetObj));
+
+  return(invisible(NULL));
 }
 
 
@@ -270,9 +287,38 @@ PlotSPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
 #'@importFrom plotly plot_ly add_markers layout
 
 PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, width=NA, inx1, inx2, inx3, angl){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  img.base <- imgName;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+
+  mSetObj$imgSet$pls.score3d <- imgName;
+
+  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$plsr$Xvar[inx1]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+  zlabel <- paste("Component", inx3, "(", round(100*mSetObj$analSet$plsr$Xvar[inx3]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
+
+  cls <- mSetObj$dataSet$cls;
+  col.def <-  GetColorSchema(cls);
+  cols <- ExpandSchema(cls, col.def);
+
+  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
+  uniq.pchs <- unique(pchs);
+
+  # The plot data is what DrawPLS3DScoreImg reads: the three score vectors, the axis labels, the view angle, the colour and
+  # symbol of each sample and the legend.
+  pd <- list(x = mSetObj$analSet$plsr$score[,inx1], y = mSetObj$analSet$plsr$score[,inx2], z = mSetObj$analSet$plsr$score[,inx3],
+             xlab = xlabel, ylab = ylabel, zlab = zlabel, angle = angl, color = cols, pch = pchs,
+             lgd = names(col.def), lgd.pch = uniq.pchs, lgd.col = col.def);
+  DrawPLS3DScoreImg(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawPLS3DScoreImg", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the static 3D PLS-DA score plot from its plot data alone (pd: x, y, z, xlab, ylab, zlab, angle, color, pch, lgd, lgd.pch, lgd.col).
+DrawPLS3DScoreImg <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
   if(is.na(width)){
     w <- 9;
@@ -282,28 +328,16 @@ PlotPLS3DScoreImg<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, 
     w <- width;
   }
   h <- w;
-  
-  mSetObj$imgSet$pls.score3d <- imgName;
-  
+
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
   par(mar=c(5,5,3,3));
-  
-  xlabel <- paste("Component", inx1, "(", round(100*mSetObj$analSet$plsr$Xvar[inx1]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
-  ylabel <- paste("Component", inx2, "(", round(100*mSetObj$analSet$plsr$Xvar[inx2]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
-  zlabel <- paste("Component", inx3, "(", round(100*mSetObj$analSet$plsr$Xvar[inx3]/mSetObj$analSet$plsr$Xtotvar,1), "%)");
-  
-  cls <- mSetObj$dataSet$cls;
-  col.def <-  GetColorSchema(cls);
-  cols <- ExpandSchema(cls, col.def);
 
-  pchs <- as.numeric(mSetObj$dataSet$cls)+1;
-  uniq.pchs <- unique(pchs);
-  Plot3D(mSetObj$analSet$plsr$score[,inx1], mSetObj$analSet$plsr$score[,inx2], mSetObj$analSet$plsr$score[,inx3], xlab= xlabel, ylab=ylabel,
-         zlab=zlabel, angle =angl, color=cols, pch=pchs);
-  legend("topleft", legend = names(col.def), pch=uniq.pchs, col=col.def);
+  Plot3D(pd$x, pd$y, pd$z, xlab= pd$xlab, ylab=pd$ylab,
+         zlab=pd$zlab, angle =pd$angle, color=pd$color, pch=pd$pch);
+  legend("topleft", legend = pd$lgd, pch=pd$lgd.pch, col=pd$lgd.col);
   dev.off();
 
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #' Pack mesh3d object for JSON serialization

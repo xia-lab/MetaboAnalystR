@@ -93,32 +93,45 @@ performMB <- function(mSetObj=NA, topPerc = 10){
 #'@export
 #'
 PlotMBTimeProfile <- function(mSetObj=NA, cmpdNm, version, format="png", dpi=default.dpi, width=NA){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   imgName <- mSetObj$dataSet$url.var.nms[cmpdNm];
+  img.base <- paste(imgName, "_", version, sep="");
   imgName <- paste(imgName, "_", version, "_dpi", dpi, ".", format, sep="");
 
+  mSetObj$imgSet$mb <- imgName;
+
+  # The plot data is what DrawMBTimeProfile reads: the compound's values by time point and condition (see .MBProfileData).
+  pd <- .MBProfileData(mSetObj, cmpdNm);
+  DrawMBTimeProfile(pd, img.base, format, dpi, width);
+  .ov_plot_data(imgName, pd, "DrawMBTimeProfile", list(imgName = img.base, format = format, dpi = dpi, width = width));
+
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(imgName);
+  }
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the time profile of a compound from its plot data alone (pd: see .MBProfileData). imgName is the name before the "_dpi" suffix.
+DrawMBTimeProfile <- function(pd, imgName, format="png", dpi=default.dpi, width=NA){
+  imgName <- paste(imgName, "_dpi", dpi, ".", format, sep="");
+
   # adjust width based on the time points
-  time.len <- length(levels(mSetObj$dataSet$time.fac));
+  time.len <- pd$tpNum;
   if(is.na(width)){
-    w <- 5.0 + time.len/4; # 4 time points per inch? 
+    w <- 5.0 + time.len/4; # 4 time points per inch?
   }else if(width == 0){
     w <- 5.4;
   }else{
     w <- width;
   }
   h <- 5.4;
-  mSetObj$imgSet$mb <- imgName;
   Cairo::Cairo(file = imgName,  unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  plotProfile(mSetObj, cmpdNm);
+  DrawMBProfile(pd);
   dev.off();
-  
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(imgName);  
-  }
-  
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 # Used in higher function
@@ -139,11 +152,17 @@ mb.MANOVA <- function (object, times, D, size, nu = NULL, Lambda = NULL, beta.d 
 #'@export
 #'
 plotProfile <-function (mSetObj=NA, varName) {
-  
+  DrawMBProfile(.MBProfileData(mSetObj, varName));
+}
+
+# What the time profile reads: the variable folded into one column per sample (a row per time point) with its colour and
+# condition, the time point labels, the number of time points and the variable's name.
+.MBProfileData <-function (mSetObj=NA, varName) {
+
   mSetObj <- .get.mSet(mSetObj);
   varInx <- colnames(mSetObj$dataSet$norm) == varName;
   var <- mSetObj$dataSet$norm[,varInx];
-  
+
   time.fac <- mSetObj$dataSet$time.fac;
   exp.fac <- mSetObj$dataSet$exp.fac;
 
@@ -173,17 +192,24 @@ plotProfile <-function (mSetObj=NA, varName) {
     colVec <- c(colVec, subCol);
     lvlVec <- c(lvlVec, subLvl);
   }
-  
+
+  #time.lbl <- unique(as.character(time.fac));
+  list(varMat = varMat, colVec = colVec, lvlVec = lvlVec, time.lbl = unique(levels(time.fac)),
+       tpNum = tpNum, varName = varName);
+}
+
+# Draws the variable across time points (x), coloured by experimental condition, on the open device from the data of .MBProfileData.
+DrawMBProfile <- function (pd) {
+  varMat <- pd$varMat; colVec <- pd$colVec; lvlVec <- pd$lvlVec; time.lbl <- pd$time.lbl;
+
   # increase y lim for legend
   ylim <- GetExtendRange(range(varMat));
-  
+
   # note, matplot plot each col, need to transpose
   matplot(varMat, type="b", pch=19, lty=1, col=colVec,ylim=ylim,
           xlab="Time", ylab="Abundance",
-          main=varName,axes=FALSE);
-  
-  #time.lbl <- unique(as.character(time.fac));
-  time.lbl <- unique(levels(time.fac));
+          main=pd$varName,axes=FALSE);
+
   if(!is.null(lvlVec)){
     lgd <- unique(lvlVec);
     if(length(lgd)>0){

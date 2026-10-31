@@ -937,47 +937,68 @@ doLogisticRegMdl <- function(mSetObj, x.train, y.train, x.test, y.test){
 #'@export
 #'
 PlotROC.LRmodel <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, show.conf=FALSE, sp.bin=0.01) {
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- h <- 8;
   mSetObj$imgSet$roc.lr <- imgName;
-  
+
   rStat <- mSetObj$analSet$LR$rStat;
 
   roc.object <- rStat$cv.robj;
   y.origin <- rStat$cv.y;
   y.pred <- rStat$cv.pred;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  op <- par(mar=c(5,4,3,3));
-  
+
   # auc.ci <- ci.auc(roc.object, method="bootstrap", boot.n=500, progress="none");
   auc.lbl <- paste("Area under the curve (AUC) = ", round(roc.object$ci[2],3), sep="");
   ci.lbl  <- paste("95% CI: ", round(roc.object$ci[1],3), " - ", round(roc.object$ci[3],3),sep="");
   perform.lbl <- paste(auc.lbl,"\n", ci.lbl, sep="");
-  
-  # plot ROC of specific model and save the table for details
+
+  # The plot data is what DrawROC.LRmodel reads: the ROC curve to draw (with the bootstrapped band and the smoothed curve
+  # when the confidence band is shown) and the AUC label.
+  pd <- list(show.conf = show.conf, perform.lbl = perform.lbl);
   if(show.conf){
     # of: se (sensitivity), sp (specificity), thresholds, auc
     r.new <- roc(y.origin ~ y.pred, ci=T, of="se", sp=seq(0,1,sp.bin));
-    pROC::plot.roc(r.new, add=F, ci.type="bars", ci.col="green", col="darkolivegreen", lty="dotted", legacy.axes=T,
+    pd$roc <- r.new;
+    pd$roc.smooth <- pROC::smooth(r.new, method="density", n=512);
+  } else {
+    pd$roc <- roc.object;
+  }
+
+  DrawROC.LRmodel(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawROC.LRmodel", list(imgName = img.base, format = format, dpi = dpi));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the logistic regression ROC curve from its plot data alone (pd: show.conf, perform.lbl, roc, and roc.smooth when
+# the confidence band is shown).
+DrawROC.LRmodel <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- h <- 8;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  op <- par(mar=c(5,4,3,3));
+
+  # plot ROC of specific model and save the table for details
+  if(pd$show.conf){
+    pROC::plot.roc(pd$roc, add=F, ci.type="bars", ci.col="green", col="darkolivegreen", lty="dotted", legacy.axes=T,
                    xlab="1 - Specificity (False positive rate)", ylab="Sensitivity (True positive rate)",
                    cex.axis=1.0, cex.lab=1.0);
-    pROC::plot.roc(pROC::smooth(r.new, method="density", n=512), add=T, col="blue", lwd=1);
+    pROC::plot.roc(pd$roc.smooth, add=T, col="blue", lwd=1);
     legend("bottomright", legend=c("Empirical","Smoothed", "95% CI"), cex=1.0, col=c(par("fg"), "blue", "green"), lwd=3, lty=c(3,1,1) );
-    
-    text(0.7, 0.4, perform.lbl, adj=c(0,1), col="black", cex=1.0);
+
+    text(0.7, 0.4, pd$perform.lbl, adj=c(0,1), col="black", cex=1.0);
   } else {
-    pROC::plot.roc(roc.object, add=F, ci.type="no", col="blue", legacy.axes=T,
+    pROC::plot.roc(pd$roc, add=F, ci.type="no", col="blue", legacy.axes=T,
                    xlab="1 - Specificity (False positive rate)", ylab="Sensitivity (True positive rate)",
                    cex.axis=1.0, cex.lab=1.0, lwd=2, lty=1 );
-    text(0.7, 0.4, perform.lbl, adj=c(0,1), col="black", cex=1.0);
+    text(0.7, 0.4, pd$perform.lbl, adj=c(0,1), col="black", cex=1.0);
   }
-  
+
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 
@@ -1084,21 +1105,22 @@ GetCIs <- function(data, param=F){
 #'License: MIT
 #'@export
 
-Perform.UnivROC <- function(mSetObj=NA, feat.nm, 
-                            version, format="png", 
-                            dpi=default.dpi, isAUC, isOpt, 
+Perform.UnivROC <- function(mSetObj=NA, feat.nm,
+                            version, format="png",
+                            dpi=default.dpi, isAUC, isOpt,
                             optMethod, isPartial, measure, cutoff){
-  
+
   mSetObj <- .get.mSet(mSetObj);
-  
+
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
+  img.base <- paste("roc_univ_", imgName, "_", version, sep="");
   imgName = paste("roc_univ_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
-  
+
   data_ori_norm <- mSetObj$dataSet$norm
   if(!is.null(mSetObj$dataSet$norm.orig)){
     data_ori_norm <- mSetObj$dataSet$norm.orig
   }
-  
+
   x <- data_ori_norm[, feat.nm];
   y <- mSetObj$dataSet$cls;
 
@@ -1112,9 +1134,7 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
   }else{
     roc.obj <- pROC::roc(y, x, percent = F);
   }
-  
-  w <- h <- 6; 
-  
+
   if(length(mSetObj$imgSet$roc.univ.name)==0){
     mSetObj$imgSet$roc.univ.name <- feat.nm;
     mSetObj$imgSet$roc.univ.plot <- imgName;
@@ -1126,54 +1146,78 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
     } else {
       mSetObj$imgSet$roc.univ.name <- c(mSetObj$imgSet$roc.univ.name, feat.nm);
       mSetObj$imgSet$roc.univ.plot <- c(mSetObj$imgSet$roc.univ.plot, imgName);
-    }   
+    }
   }
   #mSetObj$imgSet$roc.univ.plot <- imgName;
   #mSetObj$imgSet$roc.univ.name <- feat.nm;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  par(oma=c(0,0,1,0));
-  par(mar=c(4,4,4,4)+.1);
-  
+
   opt.thresh = NA;
-  
-  # first plot ROC curve
+
+  # The plot data is what DrawUnivROC reads: the ROC curve, the bootstrapped band when the AUC band is asked for, the AUC
+  # text and the optimal cut-off point with its label.
+  pd <- list(roc = roc.obj, isAUC = isAUC, main = feat.nm);
   if(isAUC){
-    pROC::plot.roc(roc.obj, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
-                   xlab = "False positive rate", ylab="True positive rate", main=feat.nm);
-    ci.obj <- pROC::ci.se(roc.obj, specificities=seq(0, 1, 0.05), boot.n=200, progress="none");
-    ROCR::plot(ci.obj,type="shape",col="#0000ff22");
-  }else{
-    pROC::plot.roc(roc.obj, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
-                   xlab = "False positive rate", ylab="True positive rate",
-                   auc.polygon=TRUE, auc.polygon.col="#0000ff22", main=feat.nm);
+    pd$ci.obj <- pROC::ci.se(roc.obj, specificities=seq(0, 1, 0.05), boot.n=200, progress="none");
   }
-  
+
   auc.ci <- pROC::ci.auc(roc.obj, method="bootstrap", boot.n=500, progress="none");
   roc.obj$ci <- auc.ci;
   auc.lbl <- paste("AUC: ", round(roc.obj$ci[2],3), sep="");
   ci.lbl <- paste("(", round(roc.obj$ci[1],3), "-", round(roc.obj$ci[3],3), ")", sep="");
-  text(0.5, 0.5, paste(auc.lbl, "\n", ci.lbl, sep=""), adj=c(0,1), col="navy");
-  
+  pd$auc.txt <- paste(auc.lbl, "\n", ci.lbl, sep="");
+
+  pd$isOpt <- isOpt;
   if(isOpt){
-    par(xpd=T);
     opt.ps <- data.frame(pROC::coords(roc.obj, "best", best.method=optMethod, transpose = TRUE));
     opt.thresh <- opt.ps["threshold",]
-    points(opt.ps["specificity",], opt.ps["sensitivity",], pch=19, col="red");
     lbls=paste(signif(opt.ps["threshold",],3), "(", round(opt.ps["specificity",],1), ", ", round(opt.ps["sensitivity",],1), ")", sep="");
-    text(opt.ps["specificity",], opt.ps["sensitivity",], adj=c(-.05,1.25), label=lbls);
+    pd$opt <- list(sp = opt.ps["specificity",], se = opt.ps["sensitivity",], lbl = lbls);
   }
-  
-  dev.off();
-  
+
+  DrawUnivROC(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawUnivROC", list(imgName = img.base, format = format, dpi = dpi));
+
   mSetObj$analSet$opt.thresh <- opt.thresh
-  
+
   if(.on.public.web){
     .set.mSet(mSetObj);
     return(imgName);
   }else{
     return(.set.mSet(mSetObj));
   }
+}
+
+# Draws the univariate ROC curve of a feature from its plot data alone (pd: roc, isAUC, main, ci.obj (when isAUC), auc.txt,
+# isOpt, opt (sp, se, lbl; when isOpt)). imgName is the name before the "_dpi" suffix.
+DrawUnivROC <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "_dpi", dpi, ".", format, sep="");
+  w <- h <- 6;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+  par(oma=c(0,0,1,0));
+  par(mar=c(4,4,4,4)+.1);
+
+  # first plot ROC curve
+  if(pd$isAUC){
+    pROC::plot.roc(pd$roc, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
+                   xlab = "False positive rate", ylab="True positive rate", main=pd$main);
+    ROCR::plot(pd$ci.obj,type="shape",col="#0000ff22");
+  }else{
+    pROC::plot.roc(pd$roc, print.auc=F, legacy.axes=TRUE, col="navy", grid=T,
+                   xlab = "False positive rate", ylab="True positive rate",
+                   auc.polygon=TRUE, auc.polygon.col="#0000ff22", main=pd$main);
+  }
+
+  text(0.5, 0.5, pd$auc.txt, adj=c(0,1), col="navy");
+
+  if(pd$isOpt){
+    par(xpd=T);
+    points(pd$opt$sp, pd$opt$se, pch=19, col="red");
+    text(pd$opt$sp, pd$opt$se, adj=c(-.05,1.25), label=pd$opt$lbl);
+  }
+
+  dev.off();
+  return(invisible(NULL));
 }
 
 #'Plot a boxplot view of a selected compound
@@ -1194,33 +1238,31 @@ Perform.UnivROC <- function(mSetObj=NA, feat.nm,
 PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=default.dpi, isOpt, isQuery){
 
   mSetObj <- .get.mSet(mSetObj);
-  
+
   if(.on.public.web){
     load_ggplot()
   }
-  
+
   data_ori_norm <- mSetObj$dataSet$norm
   if(!is.null(mSetObj$dataSet$norm.orig)){
     data_ori_norm <- mSetObj$dataSet$norm.orig
   }
-  
+
   imgName <- mSetObj$dataSet$url.var.nms[feat.nm];
+  img.base <- paste("roc_boxplot_", imgName, "_", version, sep="");
   imgName = paste("roc_boxplot_", imgName, "_", version, "_dpi", dpi, ".", format, sep="");
-  
+
   x <- data_ori_norm[, feat.nm];
 
   # mSetObj$dataSet$cls.orig.roc defined in PrepareROCData, only for the purpose of plotting boxplot if "Others" is selected when more than two factors.
-  if(!is.null(mSetObj$dataSet$cls.orig.roc)){ 
+  if(!is.null(mSetObj$dataSet$cls.orig.roc)){
     y <- mSetObj$dataSet$cls.orig.roc;
   }else{
     y <- mSetObj$dataSet$cls;
   }
 
-
-  w <- 200/72;
-  h <- 400/72; 
   col <- GetColorSchema(y);
-  
+
   if(length(mSetObj$imgSet$roc.univ.boxplot)==0){
     mSetObj$imgSet$roc.univ.boxplot <- imgName;
     mSetObj$imgSet$roc.univ.name2 <- feat.nm;
@@ -1231,19 +1273,50 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=defa
     } else {
       mSetObj$imgSet$roc.univ.name2 <- c(mSetObj$imgSet$roc.univ.name2, feat.nm);
       mSetObj$imgSet$roc.univ.boxplot <- c(mSetObj$imgSet$roc.univ.boxplot, imgName);
-    }   
+    }
   }
-  
+
   #mSetObj$imgSet$roc.univ.boxplot <- imgName;
-  
+
+  # The plot data is what DrawRocUnivBoxPlot reads: the feature's values with their class, the class colours, the cut-off
+  # lines to add and the seed of the jitter (drawn here, so that a redraw puts every point where this one did).
+  pd <- list(conc = x, class = y, col = col, feat.nm = feat.nm, isOpt = isOpt, isQuery = isQuery,
+             jitter.seed = sample.int(.Machine$integer.max, 1L));
+  if(isOpt){
+    pd$opt.thresh <- mSetObj$analSet$opt.thresh
+  }
+
+  if(isQuery){
+    pd$thresh <- as.numeric(mSetObj$analSet$roc.obj$thresh)
+  }
+
+  DrawRocUnivBoxPlot(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawRocUnivBoxPlot", list(imgName = img.base, format = format, dpi = dpi));
+
+  if(.on.public.web){
+    .set.mSet(mSetObj);
+    return(imgName);
+  }else{
+    return(.set.mSet(mSetObj));
+  }
+
+}
+
+# Draws the boxplot of a feature by class (with the cut-off lines) from its plot data alone (pd: conc, class, col, feat.nm,
+# isOpt, isQuery, jitter.seed, and opt.thresh / thresh when asked for). imgName is the name before the "_dpi" suffix.
+DrawRocUnivBoxPlot <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "_dpi", dpi, ".", format, sep="");
+  w <- 200/72;
+  h <- 400/72;
+
   Cairo::Cairo(file=imgName, unit="in", width=w, height=h, type=format, bg="white", dpi=dpi);
   par(oma=c(0,0,1,0));
   par(mar=c(4,4,4,4)+.1);
-  df <- data.frame(conc = x, class = y)
-  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1)
+  df <- data.frame(conc = pd$conc, class = pd$class)
+  p <- ggplot2::ggplot(df, aes(x=class, y=conc, fill=class)) + geom_boxplot(notch=FALSE, outlier.shape = NA, outlier.colour=NA) + theme_bw() + geom_jitter(size=1, position=position_jitter(seed=pd$jitter.seed))
   p <- p + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), legend.position = "none")
   p <- p + stat_summary(fun=mean, colour="yellow", geom="point", shape=18, size=3, show.legend = FALSE)
-  p <- p + labs(title = feat.nm)
+  p <- p + labs(title = pd$feat.nm)
   p <- p + theme(
     # Titles and Labels
     plot.title = element_text(size = 13, face = "bold", hjust = 0.5), # Centered, bold, 15pt font
@@ -1253,27 +1326,21 @@ PlotRocUnivBoxPlot <- function(mSetObj, feat.nm, version, format="png", dpi=defa
     # Grid lines
     panel.grid.major.y = element_blank(), # Remove major Y grid lines as per original request
     plot.margin = margin(t=0.45, r=0.25, b=1.5, l=0.25, "cm")
-  ) 
-  p <- p + scale_fill_manual(values=col)
-  if(isOpt){
-    opt.thresh <- mSetObj$analSet$opt.thresh
+  )
+  p <- p + scale_fill_manual(values=pd$col)
+  if(pd$isOpt){
+    opt.thresh <- pd$opt.thresh
     p <- p + geom_hline(aes(yintercept=opt.thresh), colour="red")
   }
-  
-  if(isQuery){
-    thresh <- as.numeric(mSetObj$analSet$roc.obj$thresh)
+
+  if(pd$isQuery){
+    thresh <- pd$thresh
     p <- p + geom_hline(aes(yintercept=thresh), colour="red")
   }
-  
+
   print(p)
   dev.off()
-  if(.on.public.web){
-    .set.mSet(mSetObj);
-    return(imgName);
-  }else{
-    return(.set.mSet(mSetObj));
-  }
-  
+  return(invisible(NULL));
 }
 
 #'Plot a summary view of the classification result
@@ -1466,59 +1533,76 @@ DrawProbView <- function(pd, imgName, format="png", dpi=default.dpi){
 #'@export
 
 PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, show, showPred) {
-  
+
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
-  
+
   smpl.nms <- rownames(mSetObj$dataSet$norm);
   prob.vec <- rep(0.5, length(smpl.nms));
   names(prob.vec) <- smpl.nms;
-  
+
   probs <- MergeDuplicates(unlist(mSetObj$analSet$ROCtest$pred.cv));
-  
+
   prob.vec[names(probs)] <- probs;
-  
+
   nms <- names(prob.vec);
   ord.inx <- order(nms);
   prob.vec <- prob.vec[ord.inx];
   cls <- mSetObj$dataSet$cls[ord.inx];
   # remember to update the nms itself!
   nms <- names(prob.vec);
-  
+
   # get html confusion matrix
   pred.out <- as.factor(ifelse(prob.vec > 0.5, 1, 0));
   act.cls <- as.numeric(cls)-1;
-  
+
   prob.res <- data.frame(Probability=prob.vec, Predicted=pred.out, Actual=act.cls);
-  
+
   write.table(prob.res, file="roc_pred_prob1.csv", sep=",", col.names = TRUE);
-  
+
   conf.res <- table(pred.out, act.cls);
   mSetObj$analSet$conf.table <- xtable::xtable(conf.res, caption="Confusion Matrix (Cross-Validation)");
-  mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )     
-  
+  mSetObj$analSet$conf.mat <- print(mSetObj$analSet$conf.table, type = "html", print.results=F, caption.placement="top", html.table.attributes="border=1 width=150" )
+
   if(anal.mode == "test"){
     if(!is.null(mSetObj$dataSet$test.data)){
-      
+
       test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
       test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
-      
+
       test.df <- data.frame(Prob_HoldOut=mSetObj$analSet$ROCtest$test.res, Predicted_HoldOut=test.pred, Actual_HoldOut=test.cls);
       suppressMessages(write.table(test.df, file="roc_pred_prob1.csv", sep=",", append=TRUE, col.names = TRUE));
-      
+
       test.res <- table(test.pred, test.cls);
-      mSetObj$analSet$conf.mat.test <- print(xtable::xtable(test.res, 
+      mSetObj$analSet$conf.mat.test <- print(xtable::xtable(test.res,
                                                             caption="Confusion Matrix (Hold-out)"),
                                              type = "html", print.results=F, xtable.width=120, caption.placement="top",
                                              html.table.attributes="border=1 width=150" );
     }
   }
-  
+
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 9; h <- 7;
 
   mSetObj$imgSet$roc.testprob.plot <- imgName;
   mSetObj$imgSet$roc.testprob.name <- mdl.inx
+
+  # The plot data is what DrawProbViewTest reads: each sample's predicted probability and true class, the names of the
+  # misclassified to label, and the hold-out samples when they are shown.
+  pd <- list(prob.vec = prob.vec, cls = cls, nms = nms, show = show, showPred = showPred,
+             test.res = mSetObj$analSet$ROCtest$test.res, test.cls = mSetObj$dataSet$test.cls,
+             test.nms = rownames(mSetObj$dataSet$test.data));
+  DrawProbViewTest(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawProbViewTest", list(imgName = img.base, format = format, dpi = dpi));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the predicted-probability view of the biomarker tester from its plot data alone (pd: prob.vec, cls, nms, show,
+# showPred, test.res, test.cls, test.nms).
+DrawProbViewTest <- function(pd, imgName, format="png", dpi=default.dpi){
+  prob.vec <- pd$prob.vec; cls <- pd$cls; nms <- pd$nms; show <- pd$show; showPred <- pd$showPred;
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- 9; h <- 7;
 
   Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
 
@@ -1546,32 +1630,32 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
 
   par(xpd=T);
-  
+
   test.y <- test.x <- 0;
   if(showPred){
-    test.x <- mSetObj$analSet$ROCtest$test.res;
+    test.x <- pd$test.res;
     test.y <- (((seq_along(test.x) * 0.6180339887) %% 1) - 0.5) * 1.5;
-    
-    pchs <- ifelse(as.numeric(mSetObj$dataSet$test.cls) == 1, 1, 19);
+
+    pchs <- ifelse(as.numeric(pd$test.cls) == 1, 1, 19);
     points(test.x, test.y, pch=pchs, cex=1.5, col="red");
   }
-  
-  if(show == 1){ 
-    
+
+  if(show == 1){
+
     # add labels for sample classified wrong
     # the idea is to add labels to the left side for those with prob < 0.5
     # and add labels to the right side of the point for those with prob > 0.5
-    # leave 0.5 out 
-    
+    # leave 0.5 out
+
     # first wrong pred as 1 (right side)
     act.ones <- as.numeric(cls)-1 == 1;
     pred.vec <- ifelse(prob.vec > 0.5, 1, 0);
-    
+
     wrong.inx <- (pred.vec != as.numeric(cls)-1) & pred.vec == 1;
     if(sum(wrong.inx) > 0){
       text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=4);
     }
-    
+
     # first wrong pred as 0 (left side)
     act.zeros <- as.numeric(cls)-1 == 0;
     pred.vec <- ifelse(prob.vec < 0.5, 0, 0.5);
@@ -1579,22 +1663,22 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
     if(sum(wrong.inx) > 0){
       text(prob.vec[wrong.inx], y[wrong.inx], nms[wrong.inx], pos=2);
     }
-    
+
     if(showPred){
-      nms <- rownames(mSetObj$dataSet$test.data);
-      
-      act.ones <- as.numeric(mSetObj$dataSet$test.cls)-1 == 1;
-      act.zeros <- as.numeric(mSetObj$dataSet$test.cls)-1 == 0;
-      
+      nms <- pd$test.nms;
+
+      act.ones <- as.numeric(pd$test.cls)-1 == 1;
+      act.zeros <- as.numeric(pd$test.cls)-1 == 0;
+
       # leave 0.5 there
       pred.vec <- ifelse(test.x > 0.5, 1, 0.5);
-      wrong.inx <- (pred.vec != as.numeric(mSetObj$dataSet$test.cls)-1) & act.ones;
+      wrong.inx <- (pred.vec != as.numeric(pd$test.cls)-1) & act.ones;
       if(sum(wrong.inx) > 0){
         text(test.x[wrong.inx], test.y[wrong.inx], nms[wrong.inx], pos=4, cex=0.9);
       }
-      
+
       pred.vec <- ifelse(test.x < 0.5, 0, 0.5);
-      wrong.inx <- pred.vec != as.numeric(mSetObj$dataSet$test.cls)-1 & act.zeros;
+      wrong.inx <- pred.vec != as.numeric(pd$test.cls)-1 & act.zeros;
       if(sum(wrong.inx) > 0){
         text(test.x[wrong.inx], test.y[wrong.inx], nms[wrong.inx], pos=2, cex=0.9);
       }
@@ -1602,7 +1686,7 @@ PlotProbViewTest <- function(mSetObj=NA, imgName, format="png", dpi=default.dpi,
   }
   par(op)
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 
@@ -1792,20 +1876,16 @@ DrawROC <- function(pd, imgName, format="png", dpi=default.dpi){
 #'@export 
 
 PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.inx, avg.method, show.conf, show.holdout, focus="fpr", cutoff = 1.0){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
-  
+
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 8; h <- 8;
   mSetObj$imgSet$roc.testcurve.plot <- imgName;
   mSetObj$imgSet$roc.testcurve.name <- mdl.inx
   mSetObj$imgSet$roc.testcurve.method <- avg.method
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
-  op <- par(mar=c(5,4,3,3));
-  
+
   if(anal.mode=="explore" && mdl.inx == 0){ # compare all models
     preds <- mSetObj$analSet$ROCtest$pred.list;
     # Ensure preds is a list (it may be a single S4 prediction object from ROCtest)
@@ -1815,33 +1895,17 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     auroc <- mSetObj$analSet$ROCtest$auc.vec;
     perf <- ROCR::performance(preds[[1]], "tpr", "fpr");
     perf.avg <- ComputeAverageCurve(perf, avg.method);
+    curves <- list(list(x = perf.avg@x.values[[1]], y = perf.avg@y.values[[1]]));
 
     cols <- (1:length(preds))+1;
-    ROCR::plot(perf.avg@x.values[[1]], perf.avg@y.values[[1]], type="n", axes=F,
-               xlim=c(0,1), ylim=c(0,1),
-               xlab="1-Specificity (False positive rate)",
-               ylab="Sensitivity (True positive rate)"
-    );
-
-    box()
-    axis(side=2)
-    lab.at <- seq(0, 1, 0.2);
-    grid.at <- seq(0, 1, 0.1);
-    lab.labels <- lab.at
-    axis(side=1, at=lab.at, labels=as.graphicsAnnot(sprintf( "%.1f", lab.labels)));
-    abline(v=grid.at, lty=3, col="lightgrey");
-    abline(h=grid.at, lty=3, col="lightgrey");
-    lines(perf.avg@x.values[[1]], perf.avg@y.values[[1]], col=cols[1]);
     # Only loop through additional models if there are more than one
     if(length(preds) > 1) {
       for(i in 2:length(preds)){
         perf <- ROCR::performance(preds[[i]], "tpr", "fpr");
         avg <- ComputeAverageCurve(perf, avg.method);
-        lines(avg@x.values[[1]], avg@y.values[[1]], col=cols[i]);
+        curves[[i]] <- list(x = avg@x.values[[1]], y = avg@y.values[[1]]);
       }
     }
-
-    best.inx <- which.max(auroc);
 
     # now add and format legends to the bottom right corner
     feats <- c("Var.", names(preds));
@@ -1855,14 +1919,11 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     cis <- mSetObj$analSet$multiROC$auc.ci;
     cis <- c("CI", cis);
     legends <- paste(feats, vals, cis, sep="");
-    
-    pch <- c(NA, rep(15, length(preds)));
-    cols <- c(NA, cols);
-    
-    legend("bottomright", legend = legends, pch=15, col=cols);
-    
-  }else if(mdl.inx > 0 && anal.mode=="explore"){ 
-    
+
+    pd <- list(mode = "all", curves = curves, cols = cols, legends = legends);
+
+  }else if(mdl.inx > 0 && anal.mode=="explore"){
+
     preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv[[mdl.inx]], mSetObj$analSet$ROCtest$true.cv,
                               label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[mdl.inx],3);
@@ -1873,37 +1934,21 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     x.all <- perf.avg@x.values[[1]];
     lgd <- paste("Area under the curve (AUC) =", auroc, "\n",
                  "95% CI:", auc.ci);
-    
-    ROCR::plot(x.all, y.all, type="n", axes=F,
-               xlim=c(0,1), ylim=c(0,1),
-               xlab="1-Specificity (False positive rate)",
-               ylab="Sensitivity (True positive rate)"
-    );
-    
-    box()
-    axis(side=2)
-    lab.at <- seq(0, 1, 0.2);
-    grid.at <- seq(0, 1, 0.1);
-    lab.labels <- lab.at
-    axis(side=1, at=lab.at, labels=as.graphicsAnnot(sprintf( "%.1f", lab.labels)));
-    abline(v=grid.at, lty=3, col="lightgrey");
-    abline(h=grid.at, lty=3, col="lightgrey");
-    lines(x.all, y.all, type="l", lwd=2, col="blue");
-    
+
+    pd <- list(mode = "one", x.all = x.all, y.all = y.all, lgd = lgd, show.conf = show.conf);
     if(show.conf){
       res <- ComputeHighLow(perf);
-      suppressWarnings(polygon(c(x.all, rev(x.all)), c(res$con.low, rev(res$con.high)), col="#0000ff22"))
+      pd$con.low <- res$con.low;
+      pd$con.high <- res$con.high;
     }
-    
-    legend("center", legend = lgd, bty="n");
-    
+
   }else{ # plot ROC of specific model and save the table for details
-    
+
     preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv,
                               label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
     auroc <- round(mSetObj$analSet$ROCtest$auc.vec[1],3)
     auc.ci <- mSetObj$analSet$ROCtest$auc.ci;
-    
+
     perf <- ROCR::performance(preds, "tpr", "fpr");
     perf.avg <- ComputeAverageCurve(perf, avg.method);
     y.all <- perf.avg@y.values[[1]];
@@ -1911,16 +1956,89 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     # to draw a roc curve line from (0,0)
     y.all <- c(0.0, y.all);
     x.all <- c(0.0, x.all);
-    
+
     lgd <- paste("Area under the curve (AUC) =", auroc, "\n",
                  "95% CI:", auc.ci);
-    
+
+    pd <- list(mode = "test", x.all = x.all, y.all = y.all, lgd = lgd, show.conf = show.conf, show.holdout = show.holdout);
+    if(show.conf){
+      res <- ComputeHighLow(perf);
+      pd$con.low <- res$con.low;
+      pd$con.high <- res$con.high;
+    }
+    if(show.holdout){
+
+      roc.obj <- pROC::roc(mSetObj$dataSet$test.cls, mSetObj$analSet$ROCtest$test.res, percent = F);
+      test.x <- 1-roc.obj$spec;
+      test.y <- roc.obj$sens;
+
+      lbls <- c("Type", "CV","Holdout");
+      lbls <- sprintf("%-10s",lbls);
+
+      test.auc <- round(roc.obj$auc[[1]],3);
+      aucs <- c("AUC", auroc, test.auc);
+
+      pd$test.x <- test.x;
+      pd$test.y <- test.y;
+      pd$test.lgd <- paste(lbls, aucs, sep="");
+    }
+  }
+
+  # The plot data is what DrawROCTest reads: the average ROC curve of each model (or of the chosen one) with its legend and,
+  # for one model, the 95% band and the hold-out curve.
+  DrawROCTest(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawROCTest", list(imgName = img.base, format = format, dpi = dpi));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the ROC curve(s) of the biomarker tester from the plot data alone (pd: mode "all" (curves, cols, legends), "one" (x.all,
+# y.all, lgd, show.conf, con.low, con.high) or "test" (the same, from (0,0), and show.holdout, test.x, test.y, test.lgd)).
+DrawROCTest <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- 8; h <- 8;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+  op <- par(mar=c(5,4,3,3));
+
+  if(pd$mode == "all"){ # compare all models
+    curves <- pd$curves; cols <- pd$cols;
+    ROCR::plot(curves[[1]]$x, curves[[1]]$y, type="n", axes=F,
+               xlim=c(0,1), ylim=c(0,1),
+               xlab="1-Specificity (False positive rate)",
+               ylab="Sensitivity (True positive rate)"
+    );
+
+    box()
+    axis(side=2)
+    lab.at <- seq(0, 1, 0.2);
+    grid.at <- seq(0, 1, 0.1);
+    lab.labels <- lab.at
+    axis(side=1, at=lab.at, labels=as.graphicsAnnot(sprintf( "%.1f", lab.labels)));
+    abline(v=grid.at, lty=3, col="lightgrey");
+    abline(h=grid.at, lty=3, col="lightgrey");
+    lines(curves[[1]]$x, curves[[1]]$y, col=cols[1]);
+    # Only loop through additional models if there are more than one
+    if(length(curves) > 1) {
+      for(i in 2:length(curves)){
+        lines(curves[[i]]$x, curves[[i]]$y, col=cols[i]);
+      }
+    }
+
+    pch <- c(NA, rep(15, length(curves)));
+    cols <- c(NA, cols);
+
+    legend("bottomright", legend = pd$legends, pch=15, col=cols);
+
+  }else if(pd$mode == "one"){
+    x.all <- pd$x.all; y.all <- pd$y.all;
+
     ROCR::plot(x.all, y.all, type="n", axes=F,
                xlim=c(0,1), ylim=c(0,1),
                xlab="1-Specificity (False positive rate)",
                ylab="Sensitivity (True positive rate)"
     );
-    
+
     box()
     axis(side=2)
     lab.at <- seq(0, 1, 0.2);
@@ -1930,34 +2048,46 @@ PlotROCTest<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi, mdl.in
     abline(v=grid.at, lty=3, col="lightgrey");
     abline(h=grid.at, lty=3, col="lightgrey");
     lines(x.all, y.all, type="l", lwd=2, col="blue");
-    
-    if(show.conf){
-      res <- ComputeHighLow(perf);            
+
+    if(pd$show.conf){
+      suppressWarnings(polygon(c(x.all, rev(x.all)), c(pd$con.low, rev(pd$con.high)), col="#0000ff22"))
+    }
+
+    legend("center", legend = pd$lgd, bty="n");
+
+  }else{ # plot ROC of specific model and save the table for details
+    x.all <- pd$x.all; y.all <- pd$y.all;
+
+    ROCR::plot(x.all, y.all, type="n", axes=F,
+               xlim=c(0,1), ylim=c(0,1),
+               xlab="1-Specificity (False positive rate)",
+               ylab="Sensitivity (True positive rate)"
+    );
+
+    box()
+    axis(side=2)
+    lab.at <- seq(0, 1, 0.2);
+    grid.at <- seq(0, 1, 0.1);
+    lab.labels <- lab.at
+    axis(side=1, at=lab.at, labels=as.graphicsAnnot(sprintf( "%.1f", lab.labels)));
+    abline(v=grid.at, lty=3, col="lightgrey");
+    abline(h=grid.at, lty=3, col="lightgrey");
+    lines(x.all, y.all, type="l", lwd=2, col="blue");
+
+    if(pd$show.conf){
       # to draw a roc curve line from (0,0)
       # suppressWarnings(polygon(c(x.all, rev(x.all)), c(res$con.low, rev(res$con.high)), col="#0000ff22"))
-      suppressWarnings(polygon(c(x.all, rev(x.all)), c(c(0,res$con.low), c(rev(res$con.high),0)), col="#0000ff22"))
+      suppressWarnings(polygon(c(x.all, rev(x.all)), c(c(0,pd$con.low), c(rev(pd$con.high),0)), col="#0000ff22"))
     }
-    if(show.holdout){
-      
-      roc.obj <- pROC::roc(mSetObj$dataSet$test.cls, mSetObj$analSet$ROCtest$test.res, percent = F);
-      test.x <- 1-roc.obj$spec;
-      test.y <- roc.obj$sens;
-      
-      lbls <- c("Type", "CV","Holdout");
-      lbls <- sprintf("%-10s",lbls);
-      
-      test.auc <- round(roc.obj$auc[[1]],3);
-      aucs <- c("AUC", auroc, test.auc);
-      
-      lgd <- paste(lbls, aucs, sep="");
-      lines(test.x, test.y, type="l", lwd=2, col="magenta");
-      legend("bottomright", legend = lgd, pch=c(NA, 15, 15), col=c(NA, "blue", "magenta"));
+    if(pd$show.holdout){
+      lines(pd$test.x, pd$test.y, type="l", lwd=2, col="magenta");
+      legend("bottomright", legend = pd$test.lgd, pch=c(NA, 15, 15), col=c(NA, "blue", "magenta"));
     }else{
-      legend("center", legend = lgd,  bty="n");
-    }       
+      legend("center", legend = pd$lgd,  bty="n");
+    }
   }
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Plot classification performance using different features for Multi-Biomarker
@@ -2039,39 +2169,54 @@ DrawAccuracy <- function(pd, imgName, format="png", dpi=default.dpi){
 #'@export
 
 PlotTestAccuracy<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
-  
+
   mSetObj <- .get.mSet(mSetObj);
   anal.mode <- mSetObj$analSet$mode;
-  
+
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 8; h <- 4;
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
+
   y.vec <- mSetObj$analSet$ROCtest$accu.mat[1,];
-  ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
-  #boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
-  #stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
-  boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.7, 0.7), xlab="Predictive Accuracy", horizontal = TRUE);
-  stripchart(y.vec, method = "jitter", add = T, pch=19);
   accu.info <- paste ("The average accuracy based on 100 cross validations is", round(mean(y.vec), 3));
-  
+
   mSetObj$imgSet$roc.testpred <- imgName;
-  
+
   if(!is.null(mSetObj$dataSet$test.cls)){
     test.pred <- ifelse(mSetObj$analSet$ROCtest$test.res > 0.5, 1, 0);
     test.cls <- as.numeric(mSetObj$dataSet$test.cls)-1;
-    
+
     hit <- sum(test.pred == test.cls);
     percent <- round(hit/length(test.cls), 3);
     accu.info <- paste(accu.info, ". The accuracy for hold out data prediction is ",  percent,
                        "(", hit, "/",  length(test.cls), ").", sep="");
   }
-  
+
   mSetObj$analSet$ROCtest$accu.info <- accu.info;
-  
-  dev.off();
+
+  # The plot data is what DrawTestAccuracy reads: the accuracy of each cross validation and the vertical jitter of its
+  # points (drawn here, so that a redraw puts every point where this one did).
+  pd <- list(y.vec = y.vec, jitter = stats::runif(length(y.vec), -0.1, 0.1));
+  DrawTestAccuracy(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawTestAccuracy", list(imgName = img.base, format = format, dpi = dpi));
   return(.set.mSet(mSetObj));
+}
+
+# Draws the cross-validated accuracy of the biomarker tester from its plot data alone (pd: y.vec, jitter).
+DrawTestAccuracy <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- 8; h <- 4;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+  y.vec <- pd$y.vec;
+  ylim.ext <- GetExtendRange (y.vec, 12); # first increase ylim by 1/12
+  #boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.5, 0.5), ylab="Predictive Accuracy");
+  #stripchart(t(mSetObj$analSet$ROCtest$accu.mat), method = "jitter", vertical=T, add = T, pch=19);
+  boxplot(y.vec, col="#0000ff22", ylim=ylim.ext, outline=FALSE, boxwex=c(0.7, 0.7), xlab="Predictive Accuracy", horizontal = TRUE);
+  points(y.vec, 1 + pd$jitter, pch=19);   # what stripchart(y.vec, method = "jitter", add = T, pch=19) draws, from the saved jitter
+
+  dev.off();
+  return(invisible(NULL));
 }
 
 #'Plot selected compounds by their percentage frequency
@@ -2420,30 +2565,24 @@ PreparePermResult<-function(perm.vec){
 #'@export
 #'
 Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
-  
+
   mSetObj <- .get.mSet(mSetObj);
+  img.base <- imgName;
   imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
-  w <- 8; h <- 8;
   mSetObj$imgSet$roc.perm.plot <- imgName;
-  
+
   if(mSetObj$analSet$ROCtest$perm.res$perf.measure == "auroc"){
     mSetObj$imgSet$roc.perm.method <- "auroc"
   }else{
     mSetObj$imgSet$roc.perm.method <- "predictive accuracy"
   }
-  
-  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
-  
+
   if(mSetObj$analSet$ROCtest$perm.res$perf.measure == "auroc"){
-    ROCR::plot(mSetObj$analSet$ROCtest$perm.res$perf.obj, col="grey", lwd=1, lty=2,
-               xlab="1-Specificity (False Positive rate)",
-               ylab="Sensitivity (True Positive rate)");
-    
-    # now add the original ROC
-    
+
+    # the original ROC, to go over the permuted ones
+
     preds <- ROCR::prediction(mSetObj$analSet$ROCtest$pred.cv, mSetObj$analSet$ROCtest$true.cv,
                               label.ordering = GetLabelOrdering(mSetObj$analSet$ROCtest$true.cv));
-    auroc <- round(mSetObj$analSet$ROCtest$auc.vec[1],3)
     perf <- ROCR::performance(preds, "tpr", "fpr");
     # need to replace Inf with 1
     alpha.vals <- perf@alpha.values;
@@ -2452,10 +2591,7 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
       x[x==-Inf] <- 0;
       x
     });
-    
-    
-    ROCR::plot(perf,lwd=2,avg="threshold", col="blue", add=T);
-    
+
     # calculate p value
     perm.vec <- mSetObj$analSet$ROCtest$perm.res$auc.vec;
     better.hits <- sum(perm.vec[-1]>=perm.vec[1]);
@@ -2466,18 +2602,48 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
       p <- better.hits/num;
       p <- paste("p =", signif(p, digits=5));
     }
-    legend("center", legend = paste('Empirical p-value: ', p), bty="n", cex=1.5);
+
+    # The plot data is what DrawPermutation reads: the ROC curves of the permutations and the original one, and the p-value.
+    pd <- list(measure = "auroc", perm.perf = mSetObj$analSet$ROCtest$perm.res$perf.obj, perf = perf, p = p);
   }else{ # accuracies
     perms <- PreparePermResult(mSetObj$analSet$ROCtest$perm.res$acc.vec);
-    perm.vec <- perms$permut;
-    perm.p <- perms$permut.p;
-    
+
+    # The plot data is what DrawPermutation reads: the statistic of every permutation (the first is the original) and its p-value.
+    pd <- list(measure = "accuracy", perm.vec = perms$permut, perm.p = perms$permut.p);
+  }
+
+  DrawPermutation(pd, img.base, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawPermutation", list(imgName = img.base, format = format, dpi = dpi));
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the result of the permutation tests of the biomarker tester from its plot data alone (pd: measure "auroc" (perm.perf,
+# perf, p) or "accuracy" (perm.vec, perm.p)).
+DrawPermutation <- function(pd, imgName, format="png", dpi=default.dpi){
+  imgName = paste(imgName, "dpi", dpi, ".", format, sep="");
+  w <- 8; h <- 8;
+
+  Cairo::Cairo(file = imgName, unit="in", dpi=dpi, width=w, height=h, type=format, bg="white");
+
+  if(pd$measure == "auroc"){
+    ROCR::plot(pd$perm.perf, col="grey", lwd=1, lty=2,
+               xlab="1-Specificity (False Positive rate)",
+               ylab="Sensitivity (True Positive rate)");
+
+    # now add the original ROC
+    ROCR::plot(pd$perf,lwd=2,avg="threshold", col="blue", add=T);
+
+    legend("center", legend = paste('Empirical p-value: ', pd$p), bty="n", cex=1.5);
+  }else{ # accuracies
+    perm.vec <- pd$perm.vec;
+    perm.p <- pd$perm.p;
+
     op<-par(mar=c(5,5,2,4));
-    
+
     xlim.ext <- GetExtendRange (perm.vec, 10);
     hst <- hist(perm.vec[-1], breaks = "FD", freq=T, ylab="Frequency", xlim=xlim.ext, xaxt="n", xlab= 'Permutation test statistics', col="lightblue", main="");
     axis(1);
-    
+
     # add the indicator using original label
     h <- max(hst$counts)
     arrows(perm.vec[1], h/5, perm.vec[1], 0, col="red", lwd=2);
@@ -2485,7 +2651,7 @@ Plot.Permutation<-function(mSetObj=NA, imgName, format="png", dpi=default.dpi){
     par(op);
   }
   dev.off();
-  return(.set.mSet(mSetObj));
+  return(invisible(NULL));
 }
 
 #'Calculate partial area under ROC curve
