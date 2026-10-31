@@ -452,11 +452,31 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
   cls.type <- mSetObj$dataSet$cls.type   # "cont" or "disc"
   xlab     <- ifelse(cls.type == "cont", "log10(FC)", "AveFC (max |Δ|)")
 
+  outFile <- paste0(imgNm, "_dpi", dpi, ".", format)
+
+  # The plot data is what DrawDoseVolcano reads: the fold change and p value of every feature, its category, the
+  # legend labels and the two thresholds drawn.
+  pd <- list(df = df, labels = labels, colours = colours, xlab = xlab,
+             p.thresh = doseRes$p.thresh, fc.thresh = doseRes$fc.thresh)
+  DrawDoseVolcano(pd, imgNm, format, dpi)
+  .ov_plot_data(outFile, pd, "DrawDoseVolcano", list(imgNm = imgNm, format = format, dpi = dpi))
+
+  mSetObj$imgSet$dose_volcano_filename <- outFile
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the dose-response volcano from its plot data alone (pd$df: logFC, negLogP and category per feature).
+DrawDoseVolcano <- function(pd, imgNm, format="png", dpi=default.dpi){
+  df <- pd$df
+  labels <- pd$labels
+  colours <- pd$colours
+  xlab <- pd$xlab
+
   require(ggplot2)
   p <- ggplot(df, aes(x = logFC, y = negLogP, colour = category)) +
        geom_point(alpha = 0.9, size = 1.5) +
-       geom_hline(yintercept = -log10(doseRes$p.thresh),  linetype = "dashed") +
-       geom_vline(xintercept = c(-doseRes$fc.thresh, doseRes$fc.thresh),
+       geom_hline(yintercept = -log10(pd$p.thresh),  linetype = "dashed") +
+       geom_vline(xintercept = c(-pd$fc.thresh, pd$fc.thresh),
                   linetype = "dashed") +
        scale_colour_manual(values = colours,
                            breaks = names(colours),
@@ -475,7 +495,5 @@ doseRes$fc.thresh <- if (is.null(doseRes$fc.thresh) ||
                type   = format, bg  = "white")
   print(p)
   dev.off()
-
-  mSetObj$imgSet$dose_volcano_filename <- outFile
-  return(.set.mSet(mSetObj))
+  invisible(outFile)
 }

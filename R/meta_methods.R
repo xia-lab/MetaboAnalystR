@@ -837,22 +837,16 @@ if(!exists('metastat.meta')){
   xlim <- GetExtendRange(pca.res$PC1)
   ylim <- GetExtendRange(pca.res$PC2)
 
-  pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions, shape = Datasets)) +
-    geom_point(size = 4, alpha = 0.6) +
-    scale_color_discrete(name = "Conditions") +
-    scale_shape_discrete(name = "Datasets") +
-    xlab(xlabel) + ylab(ylabel) +
-    xlim(xlim) + ylim(ylim) +
-    theme_bw()
+  # The plot data is what DrawMetaPCA reads: the first two scores of every sample, its condition and dataset, the
+  # axis labels and limits. The PCA itself is computed here, not in the drawing.
+  pd <- list(pca.res = pca.res[, c("PC1", "PC2")], Conditions = Conditions, Datasets = Datasets,
+             xlabel = xlabel, ylabel = ylabel, xlim = xlim, ylim = ylim)
+  pcafig <- DrawMetaPCA(pd, imgNm, format, dpi)
 
   # Save static image
   img.path <- paste0(imgNm, "dpi", dpi, ".", format)
   plotlyNm <- paste0(imgNm, ".rda")
-  dpi <- as.numeric(dpi)
-
-  Cairo::Cairo(file = img.path, width = 8, height = 6, type = format, bg = "white", units = "in", dpi = dpi)
-  print(pcafig)
-  dev.off()
+  .ov_plot_data(img.path, pd, "DrawMetaPCA", list(imgNm = imgNm, format = format, dpi = dpi))
 
   # Save image path and plotly name
   mSetObj$imgSet$qc_meta_pca <- img.path
@@ -867,6 +861,37 @@ if(!exists('metastat.meta')){
   save(ggp_build, file = plotlyNm)
 
   return(.set.mSet(mSetObj))
+}
+
+# Draws the meta-analysis PCA from its plot data alone (pd$pca.res: PC1 and PC2 per sample, pd$Conditions and
+# pd$Datasets: factors over the samples). Returns the ggplot, which the interactive version is made from.
+DrawMetaPCA <- function(pd, imgNm, format, dpi) {
+  require(ggplot2)
+  require(Cairo)
+
+  pca.res <- pd$pca.res
+  Conditions <- pd$Conditions
+  Datasets <- pd$Datasets
+  xlabel <- pd$xlabel
+  ylabel <- pd$ylabel
+  xlim <- pd$xlim
+  ylim <- pd$ylim
+
+  pcafig <- ggplot(pca.res, aes(x = PC1, y = PC2, color = Conditions, shape = Datasets)) +
+    geom_point(size = 4, alpha = 0.6) +
+    scale_color_discrete(name = "Conditions") +
+    scale_shape_discrete(name = "Datasets") +
+    xlab(xlabel) + ylab(ylabel) +
+    xlim(xlim) + ylim(ylim) +
+    theme_bw()
+
+  img.path <- paste0(imgNm, "dpi", dpi, ".", format)
+  dpi <- as.numeric(dpi)
+
+  Cairo::Cairo(file = img.path, width = 8, height = 6, type = format, bg = "white", units = "in", dpi = dpi)
+  print(pcafig)
+  dev.off()
+  invisible(pcafig)
 }
 
 
@@ -885,7 +910,6 @@ if(!exists('metastat.meta')){
 
   img.path <- paste0(imgNm, "dpi", dpi, ".", format)
   plotlyNm <- paste0(imgNm, ".rda")
-  dpi <- as.numeric(dpi)
 
   # Prepare data
   df <- data.frame(dat, stringsAsFactors = FALSE)
@@ -895,15 +919,10 @@ if(!exists('metastat.meta')){
   conv$ind <- gsub("-", ".", conv$ind)
   df1 <- merge(df, conv, by = "ind")
 
-  g <- ggplot(df1, aes(x = values)) +
-    geom_line(aes(color = class, group = ind), stat = "density", alpha = 0.3) +
-    geom_line(aes(color = class), stat = "density", alpha = 0.6, size = 1.5) +
-    theme_bw()
-
-  # Save static image
-  Cairo::Cairo(file = img.path, width = 10, height = 6, type = format, bg = "white", dpi = dpi, unit = "in")
-  print(g)
-  dev.off()
+  # The plot data is what DrawMetaDensity reads: every sample's values (ind) and the dataset (class) it belongs to.
+  pd <- list(df1 = df1)
+  g <- DrawMetaDensity(pd, imgNm, format, dpi)
+  .ov_plot_data(img.path, pd, "DrawMetaDensity", list(imgNm = imgNm, format = format, dpi = dpi))
 
   # Save image and plotly metadata
   mSetObj$imgSet$qc_meta_density <- img.path
@@ -918,6 +937,29 @@ if(!exists('metastat.meta')){
   save(ggp_build, file = plotlyNm)
 
   return(.set.mSet(mSetObj));
+}
+
+# Draws the meta-analysis density plot from its plot data alone (pd$df1: values, ind and class per observation).
+# Returns the ggplot, which the interactive version is made from.
+DrawMetaDensity <- function(pd, imgNm, format, dpi = default.dpi) {
+  require(ggplot2)
+  require(Cairo)
+
+  df1 <- pd$df1
+
+  img.path <- paste0(imgNm, "dpi", dpi, ".", format)
+  dpi <- as.numeric(dpi)
+
+  g <- ggplot(df1, aes(x = values)) +
+    geom_line(aes(color = class, group = ind), stat = "density", alpha = 0.3) +
+    geom_line(aes(color = class), stat = "density", alpha = 0.6, size = 1.5) +
+    theme_bw()
+
+  # Save static image
+  Cairo::Cairo(file = img.path, width = 10, height = 6, type = format, bg = "white", dpi = dpi, unit = "in")
+  print(g)
+  dev.off()
+  invisible(g)
 }
 
 ToggleMetaRes <- function(mSetObj=NA, type) {

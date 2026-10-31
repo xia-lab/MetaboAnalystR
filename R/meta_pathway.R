@@ -674,17 +674,16 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     }else{
       if(networkType == "static"){
         # static plot
-        library(ggraph)
-        p <- ggraph(g, layout=layout) + theme_void() +
-          geom_edge_fan(color="gray20", width=0.5, alpha=0.5) +
-          geom_node_point(color=V(g)$color, size=V(g)$size, alpha = 0.95) +
-          geom_node_text(aes(label = V(g)$name), size = netTextSize, repel=TRUE, nudge_y = 0.05, nudge_x = 0.05, check_overlap = TRUE) +
-          # 10% space above/to the side of x
-          scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
-          scale_x_continuous(expand = expansion(mult = c(.1, .1)))
-        
         filename <- paste0(anal.type0, "_network", ".png")
-        ggsave(p, filename=filename, width = netPlotSize, height = netPlotSize)
+
+        # The plot data is what DrawPathwayMetaNetwork reads: the nodes (name, colour, size), the edges, the layout
+        # name and the seed that places the labels. The layout (kk) is worked out in the drawing, deterministically.
+        ed <- as_edgelist(g)
+        pd <- list(nodes = data.frame(name = V(g)$name, color = V(g)$color, size = V(g)$size, stringsAsFactors = FALSE),
+                   edges = data.frame(from = ed[,1], to = ed[,2], stringsAsFactors = FALSE),
+                   layout = layout, netTextSize = netTextSize, seed = sample.int(.Machine$integer.max, 1L))
+        DrawPathwayMetaNetwork(pd, filename, "png", 300, netPlotSize)
+        .ov_plot_data(filename, pd, "DrawPathwayMetaNetwork", list(imgName = filename, format = "png", dpi = 300, width = netPlotSize))
         
       }else{ 
         # interactive plot
@@ -805,32 +804,6 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     df$Study <- sub("mummichoginput", "", df$Study);
     df$Study <- as.factor(df$Study);
     
-    p <- ggplot(df, aes(x = Study, y = Pathway)) +
-      geom_point(aes(col = `p-value`, size = `enrichment ratio`)) + 
-      theme(legend.key=element_blank(), 
-            axis.text = element_text(size = bubbleFontSize),
-            axis.text.x = element_text(angle = 45, hjust = 1),
-            panel.background = element_blank(),
-            panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
-            axis.title.x=element_blank(),
-            axis.title.y=element_blank()) +
-      scale_y_discrete(limits = rev(metap_order)) + 
-      guides(size = guide_legend(order = 0))
-    
-    if(bubble_colorType == "brewer"){
-      pal <- brewer.pal(n = 8, bubble_palette)
-      p <- p + scale_colour_gradientn(colours = pal)
-    }else{
-      
-      check.palette <- bubble_palette %in% c("viridis", "magma", "plasma", "inferno")
-      
-      if(!check.palette){
-        bubble_palette <- "viridis"
-      }
-      
-      p <- p + scale_color_viridis_c(option=bubble_palette, direction = -1)
-    }
-    
     if(missing(width)) {
         width <- bubblePlotSize;
     }
@@ -855,13 +828,14 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
     # filename <- paste0(imgName, width,"_", dpi,".", format)
     filename <- paste0(imgName, "dpi", dpi,".", format)
 
-    ggsave(p, 
-           filename=filename,
-           device= format,
-           width = width, 
-           height = height,
-           dpi = dpi)
-    
+    # The plot data is what DrawPathwayMetaBubble reads: one row per pathway and study (p-value, enrichment ratio),
+    # the pathway order on the axis, the font size and the colour scale.
+    pd <- list(df = df, metap_order = metap_order, bubbleFontSize = bubbleFontSize,
+               bubble_colorType = bubble_colorType, bubble_palette = bubble_palette)
+    p <- DrawPathwayMetaBubble(pd, imgName, format, dpi, width, height)
+    .ov_plot_data(filename, pd, "DrawPathwayMetaBubble",
+                  list(imgName = imgName, format = format, dpi = dpi, width = width, height = height))
+
     if(bubble_interactive){
       library(plotly)
       ax <- list(
@@ -888,6 +862,78 @@ PlotPathwayMetaAnalysis <- function(mSetObj = NA, imgName, plotType = "heatmap",
   
 }
 
+
+# Draws the pathway meta-analysis bubble plot from its plot data alone (pd$df: Pathway, Study, p-value and enrichment
+# ratio per pathway and study; pd$metap_order: the pathway order on the axis). Returns the ggplot, which the
+# interactive version is made from.
+DrawPathwayMetaBubble <- function(pd, imgName, format = "png", dpi = 300, width = 7, height = 5){
+    require(ggplot2);
+    require(RColorBrewer);
+
+    df <- pd$df
+    metap_order <- pd$metap_order
+    bubbleFontSize <- pd$bubbleFontSize
+    bubble_colorType <- pd$bubble_colorType
+    bubble_palette <- pd$bubble_palette
+
+    p <- ggplot(df, aes(x = Study, y = Pathway)) +
+      geom_point(aes(col = `p-value`, size = `enrichment ratio`)) + 
+      theme(legend.key=element_blank(), 
+            axis.text = element_text(size = bubbleFontSize),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            panel.background = element_blank(),
+            panel.border = element_rect(colour = "black", fill = NA, size = 0.5),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank()) +
+      scale_y_discrete(limits = rev(metap_order)) + 
+      guides(size = guide_legend(order = 0))
+    
+    if(bubble_colorType == "brewer"){
+      pal <- brewer.pal(n = 8, bubble_palette)
+      p <- p + scale_colour_gradientn(colours = pal)
+    }else{
+      
+      check.palette <- bubble_palette %in% c("viridis", "magma", "plasma", "inferno")
+      
+      if(!check.palette){
+        bubble_palette <- "viridis"
+      }
+      
+      p <- p + scale_color_viridis_c(option=bubble_palette, direction = -1)
+    }
+    
+
+    filename <- paste0(imgName, "dpi", dpi,".", format)
+
+    ggsave(p,
+           filename=filename,
+           device= format,
+           width = width,
+           height = height,
+           dpi = dpi)
+    invisible(p)
+}
+
+# Draws the pathway overlap network from its plot data alone (pd$nodes: name, color and size per pathway; pd$edges: from
+# and to). imgName is the file written, extension included. The static network has always been saved at 300 dpi.
+DrawPathwayMetaNetwork <- function(pd, imgName, format = "png", dpi = 300, width = 7.5){
+    library(ggraph)
+
+    g <- graph_from_data_frame(pd$edges, directed = FALSE, vertices = pd$nodes)
+    layout <- pd$layout
+    netTextSize <- pd$netTextSize
+
+    p <- ggraph(g, layout=layout) + theme_void() +
+      geom_edge_fan(color="gray20", width=0.5, alpha=0.5) +
+      geom_node_point(color=V(g)$color, size=V(g)$size, alpha = 0.95) +
+      geom_node_text(aes(label = V(g)$name), size = netTextSize, repel=TRUE, nudge_y = 0.05, nudge_x = 0.05, check_overlap = TRUE, seed = pd$seed) +
+      # 10% space above/to the side of x
+      scale_y_continuous(expand = expansion(mult = c(.1, .1))) +
+      scale_x_continuous(expand = expansion(mult = c(.1, .1)))
+
+    ggsave(p, filename=imgName, width = width, height = width, dpi = dpi)
+    invisible(p)
+}
 
 ## R functions used to define the adducts for met-analysis
 Customize.MetaAdduct <- function(mSet, name, name2, qvec, mode){

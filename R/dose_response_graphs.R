@@ -23,9 +23,6 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
   cls.type <- dataSet$cls.type
   data <- t(dataSet$norm)
 
-  require(ggplot2)
-  require(scales)
-
   exposure <- dataSet$drcfit.obj$dose
   labels <- unique(exposure)
 
@@ -35,6 +32,42 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
 
   # Main data
   df <- data.frame(Dose = exposure, Expression = data[feat.id,])
+
+  # Save the plot
+  feat.id <- CleanNames(feat.id)
+  imgName <- paste("Metabolite_", feat.id, "_", model.nm, ".", format, sep = "")
+
+  # The plot data is what DrawMetaboliteDRCurve reads: the points, the fit parameters, the BMD interval, the axis scale.
+  pd <- list(df = df, exposure = exposure, labels = labels, feat.lbl = feat.lbl, model.nm = model.nm,
+             cls.type = cls.type, b = b, c = c, d = d, e = e, bmdl = bmdl, bmd = bmd, bmdu = bmdu, scale = scale)
+  DrawMetaboliteDRCurve(pd, imgName, format, dpi)
+  .ov_plot_data(imgName, pd, "DrawMetaboliteDRCurve", list(imgName = imgName, format = format, dpi = dpi))
+
+  dataSet$PlotMetaboliteDRCurve <- imgName
+  mSetObj$dataSet <- dataSet
+
+  if(.on.public.web){
+    .set.mSet(mSetObj)
+    return(imgName)
+  } else {
+    return(.set.mSet(mSetObj))
+  }
+}
+
+# Draws the dose-response curve from its plot data alone. imgName is the file written, extension included.
+DrawMetaboliteDRCurve <- function(pd, imgName, format="png", dpi=default.dpi){
+  require(ggplot2)
+  require(scales)
+
+  df <- pd$df
+  exposure <- pd$exposure
+  labels <- pd$labels
+  feat.lbl <- pd$feat.lbl
+  model.nm <- pd$model.nm
+  cls.type <- pd$cls.type
+  b <- pd$b; c <- pd$c; d <- pd$d; e <- pd$e
+  bmdl <- pd$bmdl; bmd <- pd$bmd; bmdu <- pd$bmdu
+  scale <- pd$scale
 
   # Base plot
   p <- ggplot(data = df, aes(x = Dose, y = Expression)) +
@@ -105,22 +138,10 @@ PlotMetaboliteDRCurve <- function(mSetObj=NA, feat.id, feat.lbl, model.nm, b, c,
     }
   }
 
-  # Save the plot
-  feat.id <- CleanNames(feat.id)
-  imgName <- paste("Metabolite_", feat.id, "_", model.nm, ".", format, sep = "")
   Cairo::Cairo(file = imgName, width = 5, height = 5.25, type = format, unit = "in", dpi = dpi, bg = "white")
   print(p)
   dev.off()
-
-  dataSet$PlotMetaboliteDRCurve <- imgName
-  mSetObj$dataSet <- dataSet
-
-  if(.on.public.web){
-    .set.mSet(mSetObj)
-    return(imgName)
-  } else {
-    return(.set.mSet(mSetObj))
-  }
+  invisible(imgName)
 }
 
 
@@ -160,6 +181,23 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=default.dpi, format="png"){
     bmd.res <- rbind(bmd.res, missing_row)
   }
 
+  # Output image
+  img.base <- imgNm
+  imgNm <- paste(imgNm, "dpi", dpi, ".", format, sep = "")
+
+  # The plot data is what DrawDRModelBars reads: the best-fit model and the convergence flag of every feature.
+  pd <- list(bmd.res = bmd.res[, c("mod.name", "all.pass")])
+  DrawDRModelBars(pd, img.base, format, dpi)
+  .ov_plot_data(imgNm, pd, "DrawDRModelBars", list(imgNm = img.base, format = format, dpi = dpi))
+
+  mSetObj$imgSet$PlotDRModelBars <- imgNm
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the best-fit model bars from their plot data alone (pd$bmd.res: mod.name and all.pass of every feature).
+DrawDRModelBars <- function(pd, imgNm, format="png", dpi=default.dpi){
+  bmd.res <- pd$bmd.res
+
   # Generate the plot
   require(ggplot2)
   p <- ggplot(bmd.res, aes(x = mod.name, fill = as.character(all.pass))) +
@@ -179,9 +217,7 @@ PlotDRModelBars <- function(mSetObj=NA, imgNm, dpi=default.dpi, format="png"){
   Cairo::Cairo(file = imgNm, width = 8, height = 6, unit = "in", dpi = dpi, type = format, bg = "white")
   print(p)
   dev.off()
-
-  mSetObj$imgSet$PlotDRModelBars <- imgNm
-  return(.set.mSet(mSetObj))
+  invisible(imgNm)
 }
 
 PlotDRHistogram <- function(mSetObj = NA,
@@ -194,9 +230,6 @@ PlotDRHistogram <- function(mSetObj = NA,
 
   mSetObj <- .get.mSet(mSetObj)
   dataSet <- mSetObj$dataSet
-
-  require(ggplot2)
-  require(Cairo)
 
   s.pods <- sensPOD(mSetObj, pod = c("feat.20", "feat.10th", "mode"), scale)
 
@@ -213,7 +246,26 @@ PlotDRHistogram <- function(mSetObj = NA,
     xTitle <- "Feature-level BMD"
   }
 
-  bmd.df <- data.frame(bmd = bmd.vals)
+  imgFile <- paste0(imgNm, "dpi", dpi, ".", format)
+
+  # The plot data is what DrawDRHistogram reads: the feature-level BMDs and the three POD lines, already on the chosen scale.
+  pd <- list(bmd = bmd.vals, s.pods = s.pods, xTitle = xTitle)
+  DrawDRHistogram(pd, imgNm, format, dpi, width)
+  .ov_plot_data(imgFile, pd, "DrawDRHistogram", list(imgNm = imgNm, format = format, dpi = dpi, width = width))
+
+  mSetObj$imgSet$PlotDRHistogram <- imgFile
+  return(.set.mSet(mSetObj))
+}
+
+# Draws the BMD histogram from its plot data alone (pd$bmd: feature-level BMDs, pd$s.pods: the named POD values,
+# pd$xTitle: the axis title).
+DrawDRHistogram <- function(pd, imgNm, format="png", dpi=default.dpi, width=NA){
+  require(ggplot2)
+  require(Cairo)
+
+  bmd.df <- data.frame(bmd = pd$bmd)
+  s.pods <- pd$s.pods
+  xTitle <- pd$xTitle
 
   pod.cols <- c(
     gene20         = "#D62728",
@@ -260,7 +312,6 @@ PlotDRHistogram <- function(mSetObj = NA,
       panel.background = element_blank()
     )
 
-
   if (is.na(width) || width <= 0) {
     w <- 10      # ★ wider (previously 7)
     h <- 5
@@ -281,7 +332,5 @@ PlotDRHistogram <- function(mSetObj = NA,
 
   print(p)
   dev.off()
-
-  mSetObj$imgSet$PlotDRHistogram <- imgFile
-  return(.set.mSet(mSetObj))
+  invisible(imgFile)
 }

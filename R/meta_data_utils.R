@@ -560,11 +560,9 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = default
 
   my.w <- 3.2;
   my.h <- 4;
-  if(num == 1){
-    Cairo::Cairo(file = imgName, unit="in", width=my.w, height=my.h, type=format, bg="white", dpi = dpi);
-    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl), fill="#0000ff22",
-                     xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
-  }else{
+  data.lbl <- NULL;
+  layout <- NULL;
+  if(num != 1){
     # calculate layout
     if(num < 6){
       layout <- c(num, 1);
@@ -575,35 +573,58 @@ PlotSelectedFeature<-function(mSetObj=NA, gene.id, format = "png", dpi = default
       my.h <- 7;
       my.w <- 2*rn;
     }
-    
-    Cairo::Cairo(file = imgName, unit="in", width=my.w, height=my.h, type=format, bg="white", dpi = dpi);
+
     data.lbl <- as.character(metastat.meta$data.lbl);
     data.lbl <- substr(data.lbl, 0, nchar(data.lbl)-4);
-    
+
     # get counts in each data, same order as a levels
     counts <- table(data.lbl);
-    # back to factor 
+    # back to factor
     data.lbl <- factor(data.lbl);
-    
+
     # get new lbls to cut potential long names, and add sample numbers
     nlbls <- data.lbl;
     levels(nlbls) <- abbreviate(levels(nlbls),9);
     nlbls <- paste(levels(nlbls), "( n=", as.vector(counts), ")");
     # update labels
     data.lbl <- factor(data.lbl, labels=nlbls);
-    # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
-    myplot <- bwplot(metastat.meta$plot.data[gene.id,] ~ as.character(metastat.meta$cls.lbl) | data.lbl, 
+  }
+
+  # The plot data is what DrawSelectedFeature reads: the feature's values and class of every sample, the dataset panel
+  # each belongs to (more than one dataset), the layout and the size. Nothing of metastat.meta.
+  # some time the transformed plot.data can switch class label, use the original data, need to be similar scale
+  pd <- list(num = num, y = metastat.meta$plot.data[gene.id,], cls = as.character(metastat.meta$cls.lbl),
+             data.lbl = data.lbl, symb = symb, layout = layout, my.w = my.w, my.h = my.h);
+  DrawSelectedFeature(pd, imgName, format, dpi);
+  .ov_plot_data(imgName, pd, "DrawSelectedFeature", list(imgName = imgName, format = format, dpi = dpi));
+
+  mSetObj$paramSet$cmpd.img.name <-  imgName;
+  mSetObj$paramSet$cmpd.img.size <- paste0("width:", my.w, "in; height:", my.h, "in;");
+
+  return(.set.mSet(mSetObj));
+}
+
+# Draws the feature's box plot from its plot data alone. imgName is the file written, extension included.
+DrawSelectedFeature <- function(pd, imgName, format="png", dpi=default.dpi){
+  y <- pd$y;
+  cls <- pd$cls;
+  data.lbl <- pd$data.lbl;
+  symb <- pd$symb;
+  layout <- pd$layout;
+
+  Cairo::Cairo(file = imgName, unit="in", width=pd$my.w, height=pd$my.h, type=format, bg="white", dpi = dpi);
+  if(pd$num == 1){
+    myplot <- bwplot(y ~ cls, fill="#0000ff22",
+                     xlab="Class", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)))
+  }else{
+    myplot <- bwplot(y ~ cls | data.lbl,
                      xlab="Datasets", ylab="Expression Pattern", main=symb, scales=list(x=list(rot=30)),
                      fill="#0000ff22", layout=layout);
   }
-  
-  print(myplot); 
+
+  print(myplot);
   dev.off();
-
-  mSetObj$paramSet$cmpd.img.name <-  imgName;
-  mSetObj$paramSet$cmpd.img.size <- paste0("width:", my.w, "in; height:", my.h, "in;"); 
-
-  return(.set.mSet(mSetObj));
+  invisible(imgName);
 }
 
 ##############################################
