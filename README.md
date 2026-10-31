@@ -96,6 +96,10 @@ devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes
 # Step 2: Install MetaboAnalystR without documentation
 devtools::install_github("xia-lab/MetaboAnalystR", build = TRUE, build_vignettes = FALSE)
 
+# Step 3: Install or update OptiLCMS, needed for raw LC-MS spectra processing.
+# Updating MetaboAnalystR does not update it; run this again to get its fixes.
+devtools::install_github("xia-lab/OptiLCMS", build = TRUE, build_vignettes = FALSE)
+
 ```
 
 #### Option B) Clone Github and install locally
