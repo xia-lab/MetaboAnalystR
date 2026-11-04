@@ -211,10 +211,7 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   keep.idx  <- smpl.nms %in% data.smpl.nms
   metadata  <- metadata[keep.idx, , drop = FALSE]
   smpl.nms  <- smpl.nms[keep.idx]
-  # In the order of the DATA's samples: a sample's group is its name's, never its row in the sheet.
-  # meta.info, cls and cls_orig below are read by position against the abundance matrix (a one-factor
-  # SanityCheckData sorts the matrix rows with an index built from them), so a sheet in another order than
-  # the data columns gave samples the wrong group with no error.
+  # Put the rows in the same order as the data's samples, so each sample keeps its own group.
   ord.inx   <- order(match(smpl.nms, data.smpl.nms))
   metadata  <- metadata[ord.inx, , drop = FALSE]
   smpl.nms  <- smpl.nms[ord.inx]
