@@ -117,6 +117,18 @@ ReadMetaData <- function(mSetObj = NA, metafilename) {
   smpl.nms    <- CleanNames(metadata[[1]])
   data.smpl.nms <- names(mSetObj$dataSet$url.smp.nms)
 
+  # The sheet can be read again after SanityCheckData has run (a different column chosen as the class).
+  # SanityCheckData puts the sample names in class order, while the data it reads again is in the data
+  # file's own order, so the rows of the new sheet would be matched to the wrong samples. Put the names
+  # back in the data file's order first; when they are in it already (the first read), nothing changes.
+  if (file.exists("data_orig_0.qs")) {
+    orig.nms <- rownames(ov_qs_read("data_orig_0.qs"))
+    if (!identical(data.smpl.nms, orig.nms) && setequal(data.smpl.nms, orig.nms)) {
+      mSetObj$dataSet$url.smp.nms <- mSetObj$dataSet$url.smp.nms[orig.nms]
+      data.smpl.nms <- orig.nms
+    }
+  }
+
   nm.hits <- data.smpl.nms %in% smpl.nms
 
   ## ---------- QC-aware handling of missing rows ----------
