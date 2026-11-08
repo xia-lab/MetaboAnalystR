@@ -826,7 +826,7 @@ PlotEnrichNet.Overview <- function(folds, pvals, layoutOpt=layout_with_fr){
   g <- graph_from_data_frame(wd[,-3], directed=F,
                              vertices=if(n < 2) data.frame(name=id, stringsAsFactors=FALSE) else NULL);
   E(g)$width <- sqrt(wd[,3]*20);
-  g <- delete_edges(g, E(g)[wd[,3] < 0.25]);
+  g <- enrich_net_keep_edges(g, geneSets);   # >= 2 shared and Jaccard >= 0.25 (utils_enrichnet.R)
   #idx <- unlist(sapply(V(g)$name, function(x) which(x == id)));
   #cols <- color_scale("red", "#E5C494");
   #V(g)$color <- cols[sapply(pvalue, getIdx, min(pvalue), max(pvalue))];
