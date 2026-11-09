@@ -242,6 +242,8 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
     # progress 120
     cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 8/12: MS/MS data deconvolution is starting... \n\'),ecol = \'\',progress = 120)";
     ms2db_lib <- if(nzchar(Sys.getenv("OMICS_LIB_DIR",""))) file.path(sub("/+$","",Sys.getenv("OMICS_LIB_DIR","")), "MS2ID_Complete_v09102023.sqlite") else "";
+    # deconvolution runs on one core: each extra worker gets a full copy of the imported scans
+    # (4 dense Waters DDA files: 3.4 GB on one core, 15.8 GB on two, only ~6% faster)
     if(nzchar(ms2db_lib) && file.exists(ms2db_lib)){  # shared sqlite library directory
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
                                     ppm1 = ", param_list$ppm1,
@@ -250,7 +252,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     ", window_size = ", param_list$win_size,
                                     ", intensity_thresh = ", param_list$intensity_threshold,
                                     ", database_path = \'", ms2db_lib, "\',
-                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco,
+                                    ncores = 1L, decoOn = ", param_list$enabledDDADeco,
                                     ", useEntropy = ", param_list$useentropy, ")");
     } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
@@ -260,7 +262,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     ", window_size = ", param_list$win_size,
                                     ", intensity_thresh = ", param_list$intensity_threshold, 
                                     ", database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\',
-                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ncores = 1L, decoOn = ", param_list$enabledDDADeco, 
                                     ", useEntropy = ", param_list$useentropy, ")");
     } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")) {
       cmd_deco <- paste0("mSet <- PerformDDADeconvolution(mSet,
@@ -270,7 +272,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     ", window_size = ", param_list$win_size,
                                     ", intensity_thresh = ", param_list$intensity_threshold, 
                                     ", database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\',
-                                    ncores = 4L, decoOn = ", param_list$enabledDDADeco, 
+                                    ncores = 1L, decoOn = ", param_list$enabledDDADeco, 
                                     ", useEntropy = ", param_list$useentropy, ")");
     }
 
@@ -324,7 +326,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                     ppm2 = ", param_list$ppm2,
                                     ", sn = 12,
                                     filtering = ", param_list$filtering, ",
-                                    ncores = 4L)");
+                                    ncores = max(1L, as.integer(Sys.getenv(\'SLURM_CPUS_PER_TASK\', \'2\'))))");
     str <- paste0(str, ";\n", cmd_deco)
     str <- paste0(str, ";\n", "mSet@MSnData[[\'peak_mtx_idx\']] <- idx");
     # progress 140
@@ -354,7 +356,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                      ppm2 = ", param_list$ppm2, ",
                                      rt_tol = 5,
                                      database_path = \'", ms2db_lib, "\',
-                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ",
+                                     use_rt = FALSE, enableNL = FALSE, ncores = max(1L, as.integer(Sys.getenv(\'SLURM_CPUS_PER_TASK\', \'2\'))), useEntropy = ", param_list$useentropy, ",
                                      databaseOptions =", param_list$db_opt, ")");
   } else if(file.exists("/data/COMPOUND_DBs/Curated_DB/v09102023/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
@@ -362,7 +364,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                      ppm2 = ", param_list$ppm2, ",
                                      rt_tol = 5, 
                                      database_path = \'/data/glassfish/ms2databases/MS2ID_Complete.sqlite\', 
-                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = max(1L, as.integer(Sys.getenv(\'SLURM_CPUS_PER_TASK\', \'2\'))), useEntropy = ", param_list$useentropy, ", 
                                      databaseOptions =", param_list$db_opt, ")");
   } else if (file.exists("/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite")){
     cmd_seareching <- paste0("mSet <- PerformDBSearchingBatch (mSet,
@@ -370,7 +372,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
                                      ppm2 = ", param_list$ppm2, ",
                                      rt_tol = 5, 
                                      database_path = \'/home/glassfish/sqlite/MS2ID_Complete_v09102023.sqlite\', 
-                                     use_rt = FALSE, enableNL = FALSE, ncores = 4L, useEntropy = ", param_list$useentropy, ", 
+                                     use_rt = FALSE, enableNL = FALSE, ncores = max(1L, as.integer(Sys.getenv(\'SLURM_CPUS_PER_TASK\', \'2\'))), useEntropy = ", param_list$useentropy, ", 
                                      databaseOptions =", param_list$db_opt, ")");
   }
 
@@ -384,7 +386,7 @@ CreateMS2RawRscript <- function(guestName, planString, mode = "dda"){
   cmd_prgs <- "OptiLCMS:::MessageOutput(mes = paste0(\'Step 11/12: MS/MS data processing result exporting.. \n\'),ecol = \'\',progress = 190)";
   str <- paste0(str, ";\n", cmd_prgs)
   cmd_export <- "mSet <- PerformResultsExport (mSet, type = 0L,
-                                  topN = 10L, ncores = 4L)";
+                                  topN = 10L, ncores = max(1L, as.integer(Sys.getenv(\'SLURM_CPUS_PER_TASK\', \'2\'))))";
   str <- paste0(str, ";\n", cmd_export)
 
   cmd_metabolome <- "mSet <- OptiLCMS:::PerformMetabolomeClassify(mSet, path_repo =\'/home/glassfish/projects/metabolome_lib/complete_metabolome_taxonomies_lib.qs\')"
