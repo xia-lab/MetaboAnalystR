@@ -1430,124 +1430,102 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
       AddErrMsg("Package 'ppcor'  is required for partial correlations.");
       return(0);
     }
-    if (!requireNamespace("glasso", quietly = TRUE)) {
-      AddErrMsg("Package 'glasso' is required for graphical-lasso fallback.");
-      return(0);
-    }
     
-    ## 2a · build full matrix  (target + features + optional covariates)
-    full.mat <- cbind(target = tgt.var, input.data)
-    
-    if (!is.null(cov.vec) && length(cov.vec) > 0 && !all(cov.vec == "NA")) {
-      cov.vec <- intersect(cov.vec, colnames(covariates))
-      if (length(cov.vec) > 0)
-        full.mat <- cbind(full.mat, covariates[, cov.vec, drop = FALSE])
-    }
-    
-    nSam <- nrow(full.mat)
-    nVar <- ncol(full.mat)
-    
-    if (nVar > 1000) {
-        AddErrMsg("A maximum of 1000 features is supported for partial correlation analysis. Please apply a stricter filtering.")
-        return(0)
-    }
-
-    ## 2b · HIGH-DIMENSION branch (graphical lasso) --------------------
-    if (nVar >= nSam + 5) {
-      
-      if (!requireNamespace("BigQuic", quietly = TRUE)) {
-        AddErrMsg("Package 'BigQuic' is required (install.packages('BigQuic')).");
-        return(0);
-      }
-      
-      X <- scale(full.mat)                       # always standardise
-      S <- cov(X, use = "pairwise")              # only for λ heuristic
-      
-      # --- choose λ --------------------------------------------------------
-      # small λ → dense Ω, large λ → sparse Ω ; heuristic below is fast
-      lambda <- 0.1 * median(abs(S[upper.tri(S)]))
-      
-      # --- run BigQUIC  ----------------------------------------------------
-      ##  use_ram = TRUE returns everything in R (no on-disk files)
-      bq <- BigQuic::BigQuic(X = X, lambda = lambda,
-                             numthreads = parallel::detectCores(logical = FALSE),
-                             use_ram    = TRUE, verbose = 0)
-      
-      # BigQuic result
-      Omega <- bq$precision_matrices[[1]]  # usually a sparse dgCMatrix
-      
-      # Ensure names (BigQuic may not set them)
-      if (is.null(dimnames(Omega))) {
-        vars <- colnames(full.mat)
-        dimnames(Omega) <- list(vars, vars)
-      }
-      
-      # Diagonal (sparse-safe) and guards
-      d <- Matrix::diag(Omega)                 # vector of length p
-      # protect against zeros/negatives/NA
-      bad <- !is.finite(d) | d <= 0
-      if (any(bad)) {
-        # small ridge to avoid division by zero
-        eps <- 1e-8
-        d[bad] <- eps
-      }
-      
-      # Indices
-      target.row <- which(colnames(full.mat) == "target")
-      feat.cols  <- match(colnames(input.data), colnames(full.mat))
-      
-      # ❗ Compute ONLY what we need: target ↔ features partial correlations
-      #    r_j = - Ω_{target,j} / sqrt( Ω_{target,target} * Ω_{j,j} )
-      den_t  <- sqrt(d[target.row])
-      den_js <- sqrt(d[feat.cols])
-      
-      num <- Omega[target.row, feat.cols, drop = TRUE]     # sparse extract -> numeric
-      r   <- - num / (den_t * den_js)
-      
-      # Simple large-sample z/p approximations (same as before)
-      pv <- 2 * pnorm(-abs(r) * sqrt(nSam - 3))
-      tt <- sign(r) * qnorm(1 - pv/2)
-      
-      cor.res <- cbind(correlation = r,
-                       `t-stat`    = tt,
-                       `p-value`   = pv)
+    ## 2a · covariates chosen: each feature against the target, controlling for the covariates only
+    cov.vec <- intersect(cov.vec, colnames(covariates))
+    if (length(cov.vec) > 0) {
+      Z <- covariates[, cov.vec, drop = FALSE]
+      cor.res <- t(apply(input.data, 2, function(x) tryCatch({
+        pt <- ppcor::pcor.test(x, tgt.var, Z, method = dist.name)
+        c(pt$estimate, pt$statistic, pt$p.value)
+      }, error = function(e) rep(NA_real_, 3))))
+      colnames(cor.res) <- c("correlation", "t-stat", "p-value")
     } else {
-      
-      pc <- ppcor::pcor(full.mat, method = dist.name)
-      
-      ## restore dimnames if ppcor dropped them
-      if (is.null(dimnames(pc$estimate))) {
-        vars <- colnames(full.mat)
-        dimnames(pc$estimate)  <- list(vars, vars)
-        dimnames(pc$statistic) <- list(vars, vars)
-        dimnames(pc$p.value)   <- list(vars, vars)
-        warning("pcor() returned matrix without dimnames; restored.")
-      }
-      
-      t.row  <- "target"
-      f.cols <- colnames(input.data)
-      
-      r  <- pc$estimate [t.row,  f.cols]
-      tt <- pc$statistic[t.row,  f.cols]
-      pv <- pc$p.value  [t.row,  f.cols]
-      
-      # remove features with NA stats (singular cov)
-      keep <- !is.na(r) & !is.na(pv)
-      if (!all(keep)) {
-        warning(sprintf(
-          "Dropped %d feature(s) with NA partial-cor statistics.",
-          sum(!keep)
-        ))
-      }
-      r  <- r [keep]
-      tt <- tt[keep]
-      pv <- pv[keep]
-      
-      cor.res <- cbind(correlation = r,
-                       `t-stat`    = tt,
-                       `p-value`   = pv)
-    }
+      ## 2b · no covariates: each feature against the target, given all other features
+      full.mat <- cbind(target = tgt.var, input.data)
+
+      nSam <- nrow(full.mat)
+      nVar <- ncol(full.mat)
     
+      if (nVar > 1000) {
+          AddErrMsg("A maximum of 1000 features is supported for partial correlation analysis. Please apply a stricter filtering.")
+          return(0)
+      }
+
+      ## 2c · more variables than samples: shrinkage precision matrix
+      if (nVar >= nSam + 5) {
+      
+        # Schäfer-Strimmer shrinkage: well-conditioned when p > n, seconds even at the 1000-variable cap
+        Omega <- corpcor::invcov.shrink(scale(full.mat), verbose = FALSE)
+        dimnames(Omega) <- list(colnames(full.mat), colnames(full.mat))
+
+        # Diagonal (sparse-safe) and guards
+        d <- Matrix::diag(Omega)                 # vector of length p
+        # protect against zeros/negatives/NA
+        bad <- !is.finite(d) | d <= 0
+        if (any(bad)) {
+          # small ridge to avoid division by zero
+          eps <- 1e-8
+          d[bad] <- eps
+        }
+      
+        # Indices
+        target.row <- which(colnames(full.mat) == "target")
+        feat.cols  <- match(colnames(input.data), colnames(full.mat))
+      
+        # ❗ Compute ONLY what we need: target ↔ features partial correlations
+        #    r_j = - Ω_{target,j} / sqrt( Ω_{target,target} * Ω_{j,j} )
+        den_t  <- sqrt(d[target.row])
+        den_js <- sqrt(d[feat.cols])
+      
+        num <- Omega[target.row, feat.cols, drop = TRUE]     # sparse extract -> numeric
+        r   <- - num / (den_t * den_js)
+      
+        # Simple large-sample z/p approximations (same as before)
+        pv <- 2 * pnorm(-abs(r) * sqrt(nSam - 3))
+        tt <- sign(r) * qnorm(1 - pv/2)
+      
+        cor.res <- cbind(correlation = r,
+                         `t-stat`    = tt,
+                         `p-value`   = pv)
+      } else {
+      
+        pc <- ppcor::pcor(full.mat, method = dist.name)
+      
+        ## restore dimnames if ppcor dropped them
+        if (is.null(dimnames(pc$estimate))) {
+          vars <- colnames(full.mat)
+          dimnames(pc$estimate)  <- list(vars, vars)
+          dimnames(pc$statistic) <- list(vars, vars)
+          dimnames(pc$p.value)   <- list(vars, vars)
+          warning("pcor() returned matrix without dimnames; restored.")
+        }
+      
+        t.row  <- "target"
+        f.cols <- colnames(input.data)
+      
+        r  <- pc$estimate [t.row,  f.cols]
+        tt <- pc$statistic[t.row,  f.cols]
+        pv <- pc$p.value  [t.row,  f.cols]
+      
+        # remove features with NA stats (singular cov)
+        keep <- !is.na(r) & !is.na(pv)
+        if (!all(keep)) {
+          warning(sprintf(
+            "Dropped %d feature(s) with NA partial-cor statistics.",
+            sum(!keep)
+          ))
+        }
+        r  <- r [keep]
+        tt <- tt[keep]
+        pv <- pv[keep]
+      
+        cor.res <- cbind(correlation = r,
+                         `t-stat`    = tt,
+                         `p-value`   = pv)
+      }
+    
+    }
   } else {
     
     cbtempl.results <- apply(input.data, 2,
@@ -1557,8 +1535,7 @@ FeatureCorrelationMeta <- function(mSetObj     = NA,
   }
   
   ## ── 4 · finish up  (FDR, ordering, export) ─────────────────────────
-  rownames(cor.res) <- colnames(input.data)
-  
+  # every branch keeps the feature names; the ppcor branch may have dropped features
   cor.res <- cbind(cor.res,
                    FDR = p.adjust(cor.res[, "p-value"], "fdr"))
   
